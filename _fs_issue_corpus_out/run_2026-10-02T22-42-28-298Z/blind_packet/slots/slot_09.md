@@ -1,0 +1,58 @@
+# slot_09
+
+<!-- SCENE NUMBER AND CARD DELIBERATELY ABSENT. The mapping is in
+     KEY_SEALED.json, which must not be opened until the scoresheet is filled. -->
+
+## prose
+
+I stand at the table, the foreign token still resting against the wood.
+
+Lantern light catches its edges, markings I do not recognize.
+
+Seren kneels beside me, her composure unbroken.
+
+Julian stands across from me, gaze steady on the token.
+
+The Dohkar's accusation still hangs in the air between us.
+
+Patrons glance away, voices low.
+
+The token has changed the weight of everything said.
+
+Julian steps closer without looking at me.
+
+JULIAN: "I had nothing to do with that token arriving."
+
+His voice lands flat, too quick to fill the space.
+
+Seren watches him without flinching.
+
+I feel the denial settle wrong against my ribs.
+
+The token remains untouched between us.
+
+Patrons continue their low murmurs.
+
+Julian's stillness draws my gaze back to his face.
+
+His words do not match the way he holds himself.
+
+The Dohkar's reach still presses through every glance.
+
+I feel the suspicion tighten like a thread I cannot loosen.
+
+Julian waits without reaching for the token.
+
+The denial sits between us, unfinished.
+
+Seren's eyes move from him to the token and back.
+
+The tavern air feels heavier with every breath I hold.
+
+I could ask him why the token stopped at his sleeve.
+
+Or I could press the storyteller still murmuring nearby.
+
+The Dohkar's announcement still blocks any clean escape.
+
+Confront Julian's denial or press the storyteller for the token's origin.

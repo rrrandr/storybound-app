@@ -1,0 +1,67 @@
+{
+  "WARNING": "DO NOT OPEN until the scoresheet is filled and saved.",
+  "seed": 20261002,
+  "arm": "A",
+  "mapping": [
+    {
+      "slot": "slot_01",
+      "scene": 7,
+      "baked": false,
+      "card": "Reversal"
+    },
+    {
+      "slot": "slot_02",
+      "scene": 4,
+      "baked": false,
+      "card": "Boundary"
+    },
+    {
+      "slot": "slot_03",
+      "scene": 1,
+      "baked": true,
+      "card": null
+    },
+    {
+      "slot": "slot_04",
+      "scene": 6,
+      "baked": false,
+      "card": "The Bargain"
+    },
+    {
+      "slot": "slot_05",
+      "scene": 5,
+      "baked": false,
+      "card": "The Refusal"
+    },
+    {
+      "slot": "slot_06",
+      "scene": 9,
+      "baked": false,
+      "card": "Confession"
+    },
+    {
+      "slot": "slot_07",
+      "scene": 3,
+      "baked": false,
+      "card": "Reversal"
+    },
+    {
+      "slot": "slot_08",
+      "scene": 2,
+      "baked": false,
+      "card": null
+    },
+    {
+      "slot": "slot_09",
+      "scene": 10,
+      "baked": false,
+      "card": "Boundary"
+    },
+    {
+      "slot": "slot_10",
+      "scene": 8,
+      "baked": false,
+      "card": "Reversal"
+    }
+  ]
+}

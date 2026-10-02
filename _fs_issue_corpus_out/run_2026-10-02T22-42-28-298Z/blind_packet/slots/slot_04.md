@@ -1,0 +1,62 @@
+# slot_04
+
+<!-- SCENE NUMBER AND CARD DELIBERATELY ABSENT. The mapping is in
+     KEY_SEALED.json, which must not be opened until the scoresheet is filled. -->
+
+## prose
+
+The chamber is empty when I return.
+
+Lantern light pools across the low stone table.
+
+The folded paper rests exactly where the Dohkar left it.
+
+No one entered after I fled.
+
+The Dohkar never received it from Julian's hand.
+
+Yet the seal is there, unbroken.
+
+I step closer.
+
+Footsteps sound behind me.
+
+Julian stops at the table edge without a word.
+
+LIRAEL: "It was not on the table when the Dohkar left."
+
+The words leave before I can stop them.
+
+LIRAEL: "No one placed it there."
+
+Julian watches the paper without touching it.
+
+JULIAN: "The Dohkar accepted it."
+
+His voice stays even.
+
+I reach for the edge of the paper.
+
+The seal is Julian's.
+
+But he never unfolded it in this room.
+
+The wish bent the path.
+
+Seren's words reached farther than any rite allows.
+
+LIRAEL: "You did not bring it here."
+
+JULIAN: "The Dohkar read it all the same."
+
+I draw my hand back.
+
+The paper lies between us, impossible and accepted.
+
+I could ask how it arrived.
+
+Or I could accept the lie and walk free.
+
+Julian waits without looking at me.
+
+The choice sits heavier than the paper.

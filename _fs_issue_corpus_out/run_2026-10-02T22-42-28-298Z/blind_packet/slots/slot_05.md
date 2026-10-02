@@ -1,0 +1,56 @@
+# slot_05
+
+<!-- SCENE NUMBER AND CARD DELIBERATELY ABSENT. The mapping is in
+     KEY_SEALED.json, which must not be opened until the scoresheet is filled. -->
+
+## prose
+
+The Dohkar stands across the low stone table.
+
+Grass bends under my bare feet as I hold still.
+
+THE DOHKAR: "The review remains open."
+
+The Answer rests between us, silent.
+
+Footsteps cross the grass behind me.
+
+Julian stops at the table edge.
+
+JULIAN: "This statement addresses the conduct in question."
+
+He places folded paper on the stone.
+
+The Dohkar reaches for it without hesitation.
+
+My fingers press into the sash edge.
+
+The paper carries his seal at the bottom.
+
+JULIAN: "It confirms no interference occurred."
+
+The Dohkar unfolds the page and reads.
+
+Grass rustles once under a shift of weight.
+
+Julian remains two steps back from the table.
+
+JULIAN: "The matter may now close without further inquiry."
+
+The Dohkar nods once and folds the paper again.
+
+My throat tightens around the words I could speak.
+
+Julian watches the Dohkar without moving closer.
+
+The statement rests between them, accepted.
+
+I could let the lie stand and walk free.
+
+Or I could name what the paper hides.
+
+The Dohkar turns the paper over once.
+
+Julian waits without looking my way.
+
+The grass straightens where the Dohkar stood.

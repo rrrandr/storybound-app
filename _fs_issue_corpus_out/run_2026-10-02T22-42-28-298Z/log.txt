@@ -1,0 +1,266 @@
+=== ONE FULL FS ISSUE — 10 SCENES, FATE-CARD DRIVEN ===
+  mode    : LIVE, authorized $2.90
+  seed    : 20261002   arm: A   output: _fs_issue_corpus_out/run_2026-10-02T22-42-28-298Z
+
+RESERVATION (from the shared estimator, _live_spend_ledger.mjs)
+  planner  : $0.023175
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.156975
+  scene 1 is FS's BAKED opening — fixed, authored, ZERO provider calls, not reserved
+  transport retries allowed: 1 per stage per scene, so every stage is reserved 2x — a dispatched call that never returns may still have billed
+  9 generated scene(s) × $0.156975 × 2 = $2.825550
+  within authorization — $0.074450 headroom
+
+BRINGING UP FIRST SACRIFICE
+  ok   the baked opening mounted
+  ok   scene 1 committed as scenes[0]
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  lane menus declared on plan scene(s): 2 — the lane gate is INERT everywhere else
+
+── scene 1/10
+  ok   scene 1: the baked opening captured (>=200 chars)
+  ok   scene 1: no planner, no author
+   BAKED opening: 7605 chars, no dispatch
+
+── scene 2/10
+  ok   scene 2: the advance refused until the choice was recorded
+    [DISPATCH] planner scene 2 — est $0.018476 (committed $0.018476, timeout 120s)
+  ok   scene 2: the choice was recorded by the prompt's handler
+   axis choice: "run"
+        measured $0.004390 (receipted; total measured $0.004390)
+    [DISPATCH] author scene 2 — est $0.131145 (committed $0.149621, timeout 300s)
+        measured $0.081886 (receipted; total measured $0.086276)
+  ok   scene 2: the staged scene MOUNTED
+  ok   scene 2: prose is non-empty and NOT the baked opening
+  ok   scene 2: prose differs from the previous scene
+   lane route: SIGNAL
+   stages: ["planner:dispatched","author:dispatched","memory:replayed"]
+   prose 897   facts 0   activated 0   verdicts 0
+   notable:
+     · [CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconst
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":47662,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp"
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":47662,"promptPreview":"PRIMARY DIRECTIVE: Depict
+
+── scene 3/10
+  ok   scene 3: the gate was OPEN at the moment of submission
+  ok   scene 3: the authored Fate cards were exposed
+  ok   scene 3: the drawn card was played through the production handler
+   cards: 5   drew #0 "Reversal"
+    [DISPATCH] verifier scene 3 — est $0.007864 (committed $0.157485, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007864 (this is NOT $0; total unmeasured $0.007864)
+    [DISPATCH] planner scene 3 — est $0.010819 (committed $0.168305, timeout 120s)
+        measured $0.007191 (receipted; total measured $0.093466)
+    [DISPATCH] author scene 3 — est $0.136050 (committed $0.304355, timeout 300s)
+        measured $0.086925 (receipted; total measured $0.180391)
+  ok   scene 3: the staged scene MOUNTED
+  ok   scene 3: prose is non-empty and NOT the baked opening
+  ok   scene 3: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1435   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":57081,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL-Kontext","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":57081,"promptPreview":"PRIMARY DIRECTIVE: De
+     · [IMAGE-GEN] {"provider":"BFL-Kontext","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","times
+     · [IMAGE-GEN] {"provider":"BFL-Kontext","context":"visualize","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":57081,"promptPreview":"PRIMARY DIRECTIVE: De
+
+── scene 4/10
+  ok   scene 4: the gate was OPEN at the moment of submission
+  ok   scene 4: the authored Fate cards were exposed
+  ok   scene 4: the drawn card was played through the production handler
+   cards: 5   drew #2 "Boundary"
+    [DISPATCH] verifier scene 4 — est $0.007790 (committed $0.312144, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007790 (this is NOT $0; total unmeasured $0.015654)
+    [DISPATCH] planner scene 4 — est $0.010578 (committed $0.322722, timeout 120s)
+        measured $0.006895 (receipted; total measured $0.187286)
+    [DISPATCH] author scene 4 — est $0.131112 (committed $0.453834, timeout 300s)
+        measured $0.087468 (receipted; total measured $0.274754)
+  ok   scene 4: the staged scene MOUNTED
+  ok   scene 4: prose is non-empty and NOT the baked opening
+  ok   scene 4: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1582   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":60005,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":60005,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"Gemini","context":"cg-cover","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":14037,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+
+── scene 5/10
+  ok   scene 5: the gate was OPEN at the moment of submission
+  ok   scene 5: the authored Fate cards were exposed
+  ok   scene 5: the drawn card was played through the production handler
+   cards: 5   drew #1 "The Refusal"
+    [DISPATCH] verifier scene 5 — est $0.007914 (committed $0.461748, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007914 (this is NOT $0; total unmeasured $0.023568)
+    [DISPATCH] planner scene 5 — est $0.010578 (committed $0.472326, timeout 120s)
+        measured $0.006782 (receipted; total measured $0.281536)
+    [DISPATCH] author scene 5 — est $0.129407 (committed $0.601733, timeout 300s)
+        measured $0.084807 (receipted; total measured $0.366343)
+  ok   scene 5: the staged scene MOUNTED
+  ok   scene 5: prose is non-empty and NOT the baked opening
+  ok   scene 5: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1113   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":58153,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":58153,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"Network","status":"FAILED","promptLength":58153,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+
+── scene 6/10
+  ok   scene 6: the gate was OPEN at the moment of submission
+  ok   scene 6: the authored Fate cards were exposed
+  ok   scene 6: the drawn card was played through the production handler
+   cards: 5   drew #1 "The Bargain"
+    [DISPATCH] verifier scene 6 — est $0.007800 (committed $0.609533, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007800 (this is NOT $0; total unmeasured $0.031368)
+    [DISPATCH] planner scene 6 — est $0.010495 (committed $0.620028, timeout 120s)
+        measured $0.006281 (receipted; total measured $0.372624)
+    [DISPATCH] author scene 6 — est $0.134332 (committed $0.754360, timeout 300s)
+        measured $0.089815 (receipted; total measured $0.462439)
+  ok   scene 6: the staged scene MOUNTED
+  ok   scene 6: prose is non-empty and NOT the baked opening
+  ok   scene 6: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1069   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":52140,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":52140,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"Gemini","context":"cg-cover","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":13966,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+
+── scene 7/10
+  ok   scene 7: the gate was OPEN at the moment of submission
+  ok   scene 7: the authored Fate cards were exposed
+  ok   scene 7: the drawn card was played through the production handler
+   cards: 5   drew #1 "Reversal"
+    [DISPATCH] verifier scene 7 — est $0.007811 (committed $0.762171, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007811 (this is NOT $0; total unmeasured $0.039178)
+    [DISPATCH] planner scene 7 — est $0.010497 (committed $0.772668, timeout 120s)
+        measured $0.006496 (receipted; total measured $0.468935)
+    [DISPATCH] author scene 7 — est $0.127948 (committed $0.900617, timeout 300s)
+        measured $0.084815 (receipted; total measured $0.553750)
+  ok   scene 7: the staged scene MOUNTED
+  ok   scene 7: prose is non-empty and NOT the baked opening
+  ok   scene 7: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1156   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":59011,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":59011,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"Gemini","context":"cg-cover","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":13724,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+
+── scene 8/10
+  ok   scene 8: the gate was OPEN at the moment of submission
+  ok   scene 8: the authored Fate cards were exposed
+  ok   scene 8: the drawn card was played through the production handler
+   cards: 5   drew #1 "Reversal"
+    [DISPATCH] verifier scene 8 — est $0.007800 (committed $0.908417, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007800 (this is NOT $0; total unmeasured $0.046978)
+    [DISPATCH] planner scene 8 — est $0.010488 (committed $0.918905, timeout 120s)
+        measured $0.006707 (receipted; total measured $0.560457)
+    [DISPATCH] author scene 8 — est $0.127889 (committed $1.046793, timeout 300s)
+        measured $0.083438 (receipted; total measured $0.643895)
+  ok   scene 8: the staged scene MOUNTED
+  ok   scene 8: prose is non-empty and NOT the baked opening
+  ok   scene 8: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1880   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":52524,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":52524,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [FATE-WISH] salience=0.83 signals={"fatelands":true,"npcFate":true,"stakes":true,"sacrifice":true,"openDebt":false} candidates=2 included=2 [bargain+refusal]
+
+── scene 9/10
+  ok   scene 9: the gate was OPEN at the moment of submission
+  ok   scene 9: the authored Fate cards were exposed
+  ok   scene 9: the drawn card was played through the production handler
+   cards: 5   drew #4 "Confession"
+    [DISPATCH] verifier scene 9 — est $0.007806 (committed $1.054599, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007806 (this is NOT $0; total unmeasured $0.054784)
+    [DISPATCH] planner scene 9 — est $0.010565 (committed $1.065164, timeout 120s)
+        measured $0.006253 (receipted; total measured $0.650149)
+    [DISPATCH] author scene 9 — est $0.128184 (committed $1.193348, timeout 300s)
+        measured $0.085028 (receipted; total measured $0.735177)
+  ok   scene 9: the staged scene MOUNTED
+  ok   scene 9: prose is non-empty and NOT the baked opening
+  ok   scene 9: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched","memory:replayed"]
+   prose 1914   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":61095,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":61095,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"Gemini","context":"cg-cover","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":14031,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+
+── scene 10/10
+  ok   scene 10: the gate was OPEN at the moment of submission
+  ok   scene 10: the authored Fate cards were exposed
+  ok   scene 10: the drawn card was played through the production handler
+   cards: 5   drew #4 "Boundary"
+    [DISPATCH] verifier scene 10 — est $0.007799 (committed $1.201146, timeout 120s)
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.007799 (this is NOT $0; total unmeasured $0.062583)
+    [DISPATCH] planner scene 10 — est $0.010490 (committed $1.211636, timeout 120s)
+        measured $0.005991 (receipted; total measured $0.741168)
+    [DISPATCH] author scene 10 — est $0.128283 (committed $1.339919, timeout 300s)
+        measured $0.086370 (receipted; total measured $0.827537)
+  ok   scene 10: the staged scene MOUNTED
+  ok   scene 10: prose is non-empty and NOT the baked opening
+  ok   scene 10: prose differs from the previous scene
+   lane route: NO_LANE_MENU
+   stages: ["verifier:dispatched","planner:dispatched","author:dispatched"]
+   prose 1364   facts 0   activated 0   verdicts 1
+   notable:
+     · [IMAGE-GEN] {"provider":"Gemini","context":"visualize","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":51939,"promptPreview":"PRIMARY DIRECTIVE: Depict
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":51939,"promptPreview":"PRIMARY DIRECTIVE: Depict the
+     · [IMAGE-GEN] {"provider":"BFL","context":"visualize","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2
+     · [IMAGE-GEN] {"provider":"Gemini","context":"cg-cover","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":13925,"promptPreview":"PRIMARY DIRECTIVE: Depict 
+
+── PER-SCENE RECORD
+  scene | prose | cards | drew | route      | facts | activated | verdicts | stages
+      1 |  7605 |     - |    - | -          |     0 |         0 |        0 | 
+      2 |   897 |     - |    - | signal     |     0 |         0 |        0 | planner:dispatched,author:dispatched,memory:replayed
+      3 |  1435 |     5 |   #0 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      4 |  1582 |     5 |   #2 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      5 |  1113 |     5 |   #1 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      6 |  1069 |     5 |   #1 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      7 |  1156 |     5 |   #1 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      8 |  1880 |     5 |   #1 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+      9 |  1914 |     5 |   #4 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched,memory:replayed
+     10 |  1364 |     5 |   #4 | no_lane_menu |     0 |         0 |        1 | verifier:dispatched,planner:dispatched,author:dispatched
+
+  blind packet: _fs_issue_corpus_out/run_2026-10-02T22-42-28-298Z/blind_packet  (10 shuffled slots, key sealed separately)
+
+SPEND
+  MEASURED (receipts): $0.827537
+  UNMEASURED         : $0.062583 estimated across 8 call(s) with no receipt
+      · verifier on ministral-8b-2512 — estimated $0.007864
+      · verifier on ministral-8b-2512 — estimated $0.007790
+      · verifier on ministral-8b-2512 — estimated $0.007914
+      · verifier on ministral-8b-2512 — estimated $0.007800
+      · verifier on ministral-8b-2512 — estimated $0.007811
+      · verifier on ministral-8b-2512 — estimated $0.007800
+      · verifier on ministral-8b-2512 — estimated $0.007806
+      · verifier on ministral-8b-2512 — estimated $0.007799
+  TOTAL EXPOSURE     : $0.890120 of $2.90  (30.7%)
+  NOTE: the unmeasured figure is an ESTIMATE, not a receipt. Real spend for those
+        calls is whatever the provider billed, and is not knowable from this run.
+
+59/59 checks passed
+artefacts: _fs_issue_corpus_out/run_2026-10-02T22-42-28-298Z

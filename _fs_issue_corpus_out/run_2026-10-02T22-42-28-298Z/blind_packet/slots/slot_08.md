@@ -1,0 +1,36 @@
+# slot_08
+
+<!-- SCENE NUMBER AND CARD DELIBERATELY ABSENT. The mapping is in
+     KEY_SEALED.json, which must not be opened until the scoresheet is filled. -->
+
+## prose
+
+The Dohkar's voice rises over the crimson grass.
+
+THE PRESIDING DOHKAR: "Lirael's conduct will now be subject to a preliminary review before the assembly."
+
+The words settle like a net.
+
+I keep my head down, the torn band hanging at my throat.
+
+The assembly watches.
+
+Julian has not moved from the edge.
+
+The Dohkar turns toward the gathering.
+
+THE PRESIDING DOHKAR: "The rite and the ruling on the Sacrificiant's conduct are mine."
+
+My fingers tighten around The Answer.
+
+Julian's stillness draws the room's attention without effort.
+
+I feel the weight of every eye that does not turn to him.
+
+The Dohkar's words move the confrontation into procedure.
+
+I remain where I stand, shame posture holding me in place.
+
+The choice presses closer.
+
+I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it.
