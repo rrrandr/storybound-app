@@ -1,0 +1,283 @@
+=== EVERY APPROVED FATE-CHOSEN OUTCOME ===
+
+unm.dohkar_demand_unmade
+[FSC] compiled fate_chosen — unm.dohkar_demand_unmade delta=historical_replacement
+  ok     reachable from its wording
+  ok     ask-class stop
+  ok     temporalOperation historical_replacement
+  ok     no targeted population
+  ok     memory effects: none
+  ok     ceases exactly 1
+  ok     establishes exactly 2
+  ok     cost none
+  ok     historical replacement carries priorHistoryReplaced
+  ok     prompt names the outcome
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries CEASES review.demanded_by_dohkar
+  ok     prompt states the cost honestly
+unm.time_gives_way
+[FSC] compiled fate_chosen — unm.time_gives_way pop=population.scene_present[5] invokerScope=in_population delta=historical_replacement
+  ok     reachable from its wording
+  ok     ask-class undo
+  ok     temporalOperation historical_replacement
+  ok     roster is the declared population
+  ok     roster members exact
+  ok     invokerScope in_population
+  ok     memory effects: interr.julian_questioned_lirael + lirael.scene1_disposition
+  ok     every memory effect carries the frozen roster
+  ok     ceases exactly 6
+  ok     establishes exactly 5
+  ok     cost none
+  ok     historical replacement carries priorHistoryReplaced
+  ok     prompt names the outcome
+  ok     prompt lists every affected party by story label
+  ok     prompt states no one present is outside the effect
+  ok     prompt states LIRAEL IS AFFECTED
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries memory effect interr.julian_questioned_lirael
+  ok     prompt carries memory effect lirael.scene1_disposition
+  ok     prompt carries CEASES interr.julian_questioned_lirael
+  ok     prompt carries CEASES interr.dohkar_interrupted
+  ok     prompt carries CEASES interr.choice_arose
+  ok     prompt carries CEASES lirael.scene1_disposition
+  ok     prompt carries CEASES answer.handed_to_lirael
+  ok     prompt carries CEASES answer.lirael_authorized_to_hold
+  ok     prompt states the cost honestly
+unm.the_accusation_unmade
+[FSC] compiled fate_chosen — unm.the_accusation_unmade delta=historical_replacement
+  ok     reachable from its wording
+  ok     ask-class escape
+  ok     temporalOperation historical_replacement
+  ok     no targeted population
+  ok     memory effects: none
+  ok     ceases exactly 1
+  ok     establishes exactly 1
+  ok     cost none
+  ok     historical replacement carries priorHistoryReplaced
+  ok     prompt names the outcome
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries CEASES accusation.family_accused
+  ok     prompt states the cost honestly
+unm.the_claim_unmade
+[FSC] compiled fate_chosen — unm.the_claim_unmade delta=historical_replacement
+  ok     reachable from its wording
+  ok     ask-class escape
+  ok     temporalOperation historical_replacement
+  ok     no targeted population
+  ok     memory effects: none
+  ok     ceases exactly 3
+  ok     establishes exactly 2
+  ok     cost none
+  ok     historical replacement carries priorHistoryReplaced
+  ok     prompt names the outcome
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries CEASES auth.dohkar_claims_rite_and_ruling
+  ok     prompt carries CEASES auth.venue_named_formal_inquiry
+  ok     prompt carries CEASES auth.julian_claimed_convene_preside
+  ok     prompt states the cost honestly
+unm.the_turning_forgotten
+[FSC] compiled fate_chosen — unm.the_turning_forgotten pop=population.assembly[5] invokerScope=in_population delta=none
+  ok     reachable from its wording
+  ok     ask-class unseen
+  ok     temporalOperation none
+  ok     roster is the declared population
+  ok     roster members exact
+  ok     invokerScope in_population
+  ok     memory effects: twist.assembly_turned
+  ok     every memory effect carries the frozen roster
+  ok     ceases exactly nothing
+  ok     establishes exactly nothing
+  ok     cost none
+  ok     prompt names the outcome
+  ok     prompt lists every affected party by story label
+  ok     prompt states no one present is outside the effect
+  ok     prompt states LIRAEL IS AFFECTED
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries memory effect twist.assembly_turned
+  ok     prompt states the cost honestly
+unm.the_custody_unremembered
+[FSC] compiled fate_chosen — unm.the_custody_unremembered pop=population.scene_present[5] invokerScope=in_population delta=none
+  ok     reachable from its wording
+  ok     ask-class silence
+  ok     temporalOperation none
+  ok     roster is the declared population
+  ok     roster members exact
+  ok     invokerScope in_population
+  ok     memory effects: answer.owned_by_institution + answer.entrusted_to_julian
+  ok     every memory effect carries the frozen roster
+  ok     ceases exactly nothing
+  ok     establishes exactly nothing
+  ok     cost she_forgets_whose_it_is
+  ok     prompt names the outcome
+  ok     prompt lists every affected party by story label
+  ok     prompt states no one present is outside the effect
+  ok     prompt states LIRAEL IS AFFECTED
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries memory effect answer.owned_by_institution
+  ok     prompt carries memory effect answer.entrusted_to_julian
+  ok     prompt states the cost honestly
+unm.standing_dissolved
+[FSC] compiled fate_chosen — unm.standing_dissolved delta=current_state_transition
+  ok     reachable from its wording
+  ok     ask-class authority
+  ok     temporalOperation current_state_transition
+  ok     no targeted population
+  ok     memory effects: none
+  ok     ceases exactly 1
+  ok     establishes exactly 1
+  ok     cost escalation_invited
+  ok     historical replacement carries priorHistoryReplaced
+  ok     prompt names the outcome
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt carries CEASES auth.julian_standing_to_convene
+  ok     prompt states the cost honestly
+unm.the_shunning
+[FSC] compiled fate_chosen — unm.the_shunning pop=population.withdrawing_from_lirael[4] delta=additive_canon_change
+  ok     reachable from its wording
+  ok     ask-class solitude
+  ok     temporalOperation additive_canon_change
+  ok     roster is the declared population
+  ok     roster members exact
+  ok     memory effects: none
+  ok     ceases exactly nothing
+  ok     establishes exactly 1
+  ok     cost undefended
+  ok     prompt names the outcome
+  ok     prompt lists every affected party by story label
+  ok     prompt names every NOT AFFECTED party individually
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     aftermath beat is non-empty authored text
+  ok     prompt forbids visible wish-energy
+  ok     prompt forbids an Answer verdict
+  ok     prompt forbids extra cost and new canon
+  ok     prompt states the cost honestly
+
+=== EVERY APPROVED EXACT READING ===
+
+mem.exact.assembly_forgets_twist
+[FSC] compiled exact_reading — mem.exact.assembly_forgets_twist pop=population.assembly[5] invokerScope=in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost none
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the outcome
+mem.exact.assembly_forgets_twist
+[FSC] compiled exact_reading — mem.exact.assembly_forgets_twist pop=population.assembly[5] invokerScope=in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost none
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the outcome
+mem.exact.guests_forget_twist
+[FSC] compiled exact_reading — mem.exact.guests_forget_twist pop=population.guests[1] invokerScope=not_in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope not_in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost none
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the NOT AFFECTED individually
+  ok     prompt names the outcome
+mem.exact.institution_forgets_custody
+[FSC] compiled exact_reading — mem.exact.institution_forgets_custody pop=population.scene_present[5] invokerScope=in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost custody_unclaimed
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the outcome
+mem.exact.julian_forgets_interrogation
+[FSC] compiled exact_reading — mem.exact.julian_forgets_interrogation invokerScope=not_in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope not_in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost intimacy_unwitnessed
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the NOT AFFECTED individually
+  ok     prompt names the outcome
+mem.exact.dohkar_forgets_authority
+[FSC] compiled exact_reading — mem.exact.dohkar_forgets_authority invokerScope=not_in_population delta=none
+  ok     reachable from its exact wording
+  ok     mode is exact_reading (no ranking applies)
+  ok     affected parties exact
+  ok     invokerScope not_in_population
+  ok     memory atoms exact
+  ok     NO canonical delta (memory never ceases a fact)
+  ok     cost authority_vacuum
+  ok     prompt says EXACT
+  ok     prompt carries a REQUIRED aftermath beat
+  ok     prompt forbids visible wish-energy
+  ok     prompt names the NOT AFFECTED individually
+  ok     prompt names the outcome
+
+=== cross-cutting invariants ===
+[FSC] compiled fate_chosen — unm.the_custody_unremembered pop=population.scene_present[5] invokerScope=in_population delta=none
+  ok   custody_unremembered leaves the entrustment GOVERNING
+  ok   custody_unremembered leaves title GOVERNING
+  ok   custody_unremembered leaves the authorization and its expiry intact
+[FSC] compiled fate_chosen — unm.standing_dissolved delta=current_state_transition
+  ok   standing_dissolved leaves the historical claim standing
+  ok   standing_dissolved leaves the ENTRUSTMENT untouched (office-bound)
+  ok   standing_dissolved voids only the current standing
+[FSC] compiled fate_chosen — unm.time_gives_way pop=population.scene_present[5] invokerScope=in_population delta=historical_replacement
+  ok   time_gives_way leaves the entrustment untouched
+  ok   time_gives_way leaves the twist GOVERNING
+  ok   time_gives_way ceases the handoff and its authorization
+[FSC] compiled fate_chosen — unm.the_claim_unmade delta=historical_replacement
+  ok   claim_unmade leaves Julian’s independent demand standing (row 4 still arrives)
+
+PASS  242/242 assertions

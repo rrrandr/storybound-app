@@ -1,0 +1,60 @@
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+=== SERVED-APP DELIVERY CONTROL (fail-closed gate: matched requests stubbed, unmatched aborted — $0) ===
+
+A. the app exposes the delivery surface
+  ok   _fscAttachToAuthorPayload exposed
+  ok   _fscAssertDelivered exposed
+  ok   _fscBoundaryDigest exposed
+  ok   _fscPayloadIntegrity (render precheck) exposed
+
+B. delivery is independent of legacy Fate-weave state
+  ok   a consequence compiles with no weave state
+  ok   attach delivers the BRIEF into a bare payload
+  ok   attach does NOT deliver the machine spec heading
+  ok   attach does NOT deliver the outcome id
+  ok   the machine spec is still rendered, for scoring
+  ok   assertion PASSES on the attached payload
+  ok   assertion FAILS on a payload without it
+  ok   failure reason is absent_from_payload
+  ok   a stable digest is produced
+
+C. an ALTERED payload is rejected
+  ok   the whole brief passes
+  ok   a truncated brief is rejected
+  ok     reason is partial_in_payload
+  ok   a reworded brief is rejected
+
+D. the REAL generation funnel, and the TERMINAL AUTHOR request
+  provider calls attempted : 4  (all stubbed — fail-closed gate, $0, nothing left the machine)
+  gate.unstubbed() (undeclared/aborted) : 4
+    ABORTED: http://localhost:3000/api/csp-report  reason=no registered stub or real-lane for this path
+    ABORTED: http://localhost:3000/api/config  reason=no registered stub or real-lane for this path
+    ABORTED: http://localhost:3000/api/csp-report  reason=no registered stub or real-lane for this path
+    ABORTED: http://localhost:3000/api/geo  reason=no registered stub or real-lane for this path
+  author-instruction requests identified by role+markers : 1
+  funnel stages reached, in order:
+    1. /api/mistral-proxy  role=STRUCTURE_GENERATOR msgs=2 bytes=35736 markers=0
+         sys: DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorable physical marker fo
+    2. /api/mistral-proxy  role=STRUCTURE_GENERATOR msgs=2 bytes=1465 markers=0
+         sys: You rewrite 5 body-tell fields for a romance heroine bible so they are FAMILY-DIVERSE and character-specific. 
+    3. /api/proxy  role=STRUCTURE_GENERATOR msgs=2 bytes=26079 markers=1
+         sys: You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE
+    4. /api/proxy  role=STRUCTURE_GENERATOR msgs=2 bytes=221020 markers=4
+         sys: You are a screenplay-native cinematic-romance writer for an adult-romance visual novel. You write the scene DI
+  ok   at least one terminal author request was made
+  TERMINAL: 221020 bytes  role=STRUCTURE_GENERATOR  /api/proxy
+  ok   TERMINAL AUTHOR REQUEST carries the author BRIEF
+  ok     it does NOT carry the outcome id
+  ok     it does NOT carry the EFFECT BOUNDARY heading
+  ok     it does NOT carry the AFTERMATH BEAT heading
+  ok     it does NOT carry the machine spec's FORBIDDEN INVENTIONS bullets
+  ok     it does NOT carry the NOT AFFECTED scope
+  ok     it does NOT state LIRAEL IS AFFECTED
+  ok   EVERY author request carries the brief, not just one
+  ok   NO author request carries any machine-spec heading
+  ok   no delivery failure was recorded during a healthy run
+
+PASS  28/28 assertions

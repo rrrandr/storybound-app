@@ -1,0 +1,11 @@
+=== FS CG PLANNER CAPTURE — ONE CALL, ONE ATTEMPT ===
+  mode    : ESTIMATE ONLY
+  branch  : A
+  output  : _fs_planner_capture_out/run_2026-10-02T14-08-22-296Z
+
+RESERVATION
+  one planner call : $0.023175
+  author, verifier, memory, scaffold: ABORTED — not reserved, cannot be billed
+  TOTAL            : $0.023175
+
+ESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.

@@ -1,0 +1,60 @@
+=== SCENE-CARD PURITY: SOURCE → SINK (no network, $0) ===
+    static target: public/app.js
+
+A. the sink has ONE writer, and it is guarded  [STATIC]
+  ok   _sceneStateCard is assigned in exactly 2 places (null reset + the one writer)
+  ok   the one writer refuses a non-deterministic card
+  ok   a deterministic card builder exists
+
+B. WRITER 1 — the post-prose scene scorer  [STATIC]
+  ok   writer 1 block located
+  ok   writer 1 does NOT assign _sceneStateCard
+  ok     writer 1 declares no `setting:` card key
+  ok     writer 1 declares no `charactersPresent:` card key
+  ok     writer 1 declares no `protagonistStatus:` card key
+  ok     writer 1 declares no `decisiveChange:` card key
+  ok     writer 1 declares no `activeInterlocutor:` card key
+  ok     writer 1 declares no `protagonistAlone:` card key
+  ok   writer 1 is marked diagnostic-only
+
+C. WRITER 2 — the delivery verifier's tableau  [STATIC]
+  ok   writer 2 block located
+  ok   writer 2 builds the card DETERMINISTICALLY
+  ok   writer 2 no longer maps the verifier tableau into a card
+  ok     writer 2 reads no `_tab.setting` into a card
+  ok     writer 2 reads no `_tab.charactersPresent` into a card
+  ok     writer 2 reads no `_tab.protagonistStatus` into a card
+  ok     writer 2 reads no `_tab.decisiveChange` into a card
+  ok     writer 2 reads no `_tab.activeInterlocutor` into a card
+  ok     writer 2 reads no `_tab.protagonistAlone` into a card
+  ok   the discarded tableau is logged, not stored
+
+D. the deterministic card carries no model interpretation  [BEHAVIOURAL]
+  ok   card.source is "deterministic"
+  ok     `setting` is empty (null)
+  ok     `charactersPresent` is empty ([])
+  ok     `protagonistStatus` is empty (null)
+  ok     `decisiveChange` is empty (null)
+  ok     `activeInterlocutor` is empty (null)
+  ok     `protagonistAlone` is empty (false)
+
+E. permitted continuity sources ARE available  [BEHAVIOURAL]
+  ok   the sealed fact is present, byte-identical
+  ok   the sealed proposal reference is present
+  ok   the accepted scene text is present as a VERBATIM tail
+  ok   activation is "pending" before commit
+  ok   activation is "delivered" after commit
+
+F. the sink refuses model-shaped cards  [BEHAVIOURAL]
+   attempts: ["refused","refused","refused"]
+  ok   all model-shaped cards are refused
+  ok   the sink is untouched by them
+  ok   the legitimate deterministic card installs
+
+G. SOURCE → SINK: no model field reaches planner input  [BEHAVIOURAL]
+  ok   no planted model value appears in the planner-facing anchor
+  ok   the anchor does NOT fabricate a presence claim
+  ok   the anchor still directs the author to the scene's final lines
+  ok   the card JSON itself contains no planted value
+
+41/41 passed

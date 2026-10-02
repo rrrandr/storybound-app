@@ -1,0 +1,55 @@
+=== CONTINUATION DELIVERY GAP (no network, no model, $0) ===
+
+1. the committer has exactly ONE production call site
+   call sites found: 1
+     app.js:101004  _commitTransition(pp.id, 'scene' + o.scene + '_transition', o.scene);
+  ok   exactly one call site
+  ok     and it passes a per-proposal sealed id, not prevProposal.proposalRef
+  ok     and the ref comes from the pending sealed store
+
+   what sets prevProposal.proposalRef:
+     if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
+  ok   proposalRef is assigned from a seal
+  ok     and that seal is minted kind:"state_change"
+
+   every use of the continuation seal carrier:
+     app.js:100791  try { if (window.state) window.state._activeContinuationSeal = null; } catch (_) {}
+     app.js:100841  if (window.state) window.state._activeContinuationSeal = {
+     app.js:238337  var _ctSeal = state && state._activeContinuationSeal;
+  ok   the continuation seal is written, cleared, and READ EXACTLY ONCE
+  ok     and its only reader is the author-block attachment
+
+2. the two seals are distinct records
+  ok   a state_change seal exists
+  ok     carrying NO pending entities
+  ok   a continuation seal exists
+  ok     carrying the pending institution with its aliases
+  ok     and the two ids are DIFFERENT
+
+3. THE GAP — the production ref points at the state_change seal
+  ok   _priorSceneStateChange.proposalRef resolves to kind "state_change"
+  ok   committing it writes a fact
+  ok     and that fact is the STATE_CHANGE fact, not the continuation fact
+  ok   THE CONTINUATION FACT IS ABSENT FROM CANON
+  ok   THE INSTITUTION NEVER ENTERS THE ACTIVE REGISTER
+  ok     nothing was activated at all
+   register after the production commit: ["Wren","Cassel"]
+
+4. the machinery is CORRECT when handed the right reference
+  ok   committing the CONTINUATION ref does write its fact
+  ok     and admits the institution into the active register
+  ok     repeated delivery stays idempotent — exactly one continuation fact
+  ok     and the entity count does not grow
+
+5. WHAT IS STUBBED HERE, stated rather than glossed
+   · _commitScene itself was NOT run: it calls the RUNTIME COMMIT verifier, which is a
+     paid model call. This control calls _commitTransition directly, exactly as
+     _commitScene's DELIVERED branch does, with exactly the ref production supplies.
+   · so delivery ADJUDICATION (DELIVERED/PARTIAL/MISSED) is not exercised — only what
+     happens on a DELIVERED verdict, which is where the gap is.
+   · no prose was rendered and no author ran; this is a wiring trace, not a scene test.
+
+   CONSEQUENCE FOR THE TWO-SCENE RUNNER: checks 4 and 6 cannot pass as the code stands,
+   in one scene or two. The ref that reaches the committer is the state_change seal.
+
+22/22 passed

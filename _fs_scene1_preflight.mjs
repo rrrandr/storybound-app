@@ -25,7 +25,7 @@
 //   6. the failed-setup abort contract, tested on its own with setup deliberately broken
 import fs from 'fs';
 import { chromium } from 'playwright-core';
-import { stageOf, isProviderEndpoint, NON_PROVIDER_ENDPOINTS, plannerFor, AUTHOR, MEMORY,
+import { stageOf, isProviderEndpoint, NON_PROVIDER_ENDPOINTS, fsPlannerCaptured, AUTHOR, MEMORY,
   refsFromVerifierRequest, verifierVerdict } from './_replay_fixtures.mjs';
 
 let pass = 0, fail = 0;
@@ -207,8 +207,12 @@ const DIA = 'Seren, stop — take it back, take the words back now.';
 // Provider calls are FIXTURE-SERVED from here: production code genuinely dispatches, and the
 // recorded corpus genuinely answers, so the seam is exercised without billing anything. Unknown
 // stages are recorded and ABORTED — an abort is not a charge.
+// THE PLANNER IS SERVED THE REAL CAPTURED FS REPLY, not the synthetic story's envelope. The
+// synthetic fixture drew "[OBJECTIVE:REJECTED] no local_objective; no posture_read; no present
+// cast" — a FIXTURE failure that read like a product one. fsPlannerCaptured() throws if nothing has
+// been captured, so this can never quietly fall back to the wrong shape.
 const seamServe = (stage, usr) => {
-  if (stage === 'planner') { try { return plannerFor(2); } catch (_) { return null; } }
+  if (stage === 'planner') { return fsPlannerCaptured(); }
   if (stage === 'author') return AUTHOR;
   if (stage === 'memory') return MEMORY;
   if (stage === 'verifier') return verifierVerdict(refsFromVerifierRequest(usr));

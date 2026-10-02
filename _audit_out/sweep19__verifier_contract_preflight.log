@@ -1,0 +1,58 @@
+=== VERIFIER CONTRACT PREFLIGHT (provider-free, $0) ===
+
+1. consumer audit — what actually reads each verifier field
+   _tab (tableau): LOG-ONLY
+  ok      _tab (tableau) has no consumer beyond logging
+   _replacement (dominant_replacement): LOG-ONLY
+  ok      _replacement (dominant_replacement) has no consumer beyond logging
+   _txnPos (transition_position): LOG-ONLY
+  ok      _txnPos (transition_position) has no consumer beyond logging
+   _firstIrrev (first_irreversible_position): LOG-ONLY
+  ok      _firstIrrev (first_irreversible_position) has no consumer beyond logging
+
+   so the two Roman named are REMOVED from the requested contract
+  ok   tableau is no longer requested
+  ok   dominant_replacement is no longer requested
+  ok     and the JSON example no longer shows them
+  ok   the position metrics are KEPT (telemetry, two integers)
+  ok   slots_check is KEPT — it is genuinely consumed (forces MISSED)
+  ok   per_proposal is KEPT with verbatim evidence required
+
+   and the per-proposal guard fields are REQUESTED
+  ok   each entry is asked for its own precondition_evidence
+  ok     with the downgrade rule stated to the model
+  ok   each entry is asked for a reason naming the cause
+  ok     and the three non-delivery causes are defined
+
+2. does a WORST-CASE two-proposal reply fit the configured budget?
+   configured max_tokens: 900
+  ok   max_tokens is a fixed bound, and large enough for the guard fields
+  ok     it exceeds the originally-stated 600-700 — recorded as a deviation
+   worst-case reply: 2346 chars ≈ 587 tokens
+  ok   the worst case fits inside max_tokens
+  ok     with at least 25% headroom
+   the SAME reply with tableau + dominant_replacement: ≈ 680 tokens
+  ok   removing them saved real budget
+  ok     and the untrimmed shape would NOT have fit the old 280 budget
+
+3. the real parse + adjudication path consumes a worst-case reply
+  ok   a markdown-FENCED worst-case reply parses
+  ok     with per_proposal intact
+  ok   both proposals were adjudicated by their own refs
+  ok     both committed
+  ok     and the institution activated with its aliases
+  ok   a TRUNCATED reply still does not parse — the failure mode stays fail-closed
+
+4. RUN 17's EXACT SHAPE now refuses
+   {"verdict":{"ref":"prop:1301:1","commit":false,"status":"DELIVERED","reason":"precondition_absent","downgraded":true,"preconditionSource":"shared_slots_check","why":["DELIVERED but its precondition evidence (shared_slots_check) is empty or unusable — the event could not have happened, so delivery is DOWNGRADED and nothing is committed"],"kind":"state_change"},"facts":0}
+  ok   a per-proposal DELIVERED with an EMPTY shared precondition is NOT committed
+  ok     flagged as a downgrade, source shared_slots_check
+  ok     and nothing entered canon
+
+5. scope
+   This measures SERIALIZATION and PARSE capacity, not model behaviour. Run 15 already
+   showed the live verifier produces a correct per_proposal judgement; what it could
+   not do was fit it in 280 tokens. Whether a live reply now fits is the one thing the
+   next paid run measures.
+
+29/29 passed

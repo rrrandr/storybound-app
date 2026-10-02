@@ -1,0 +1,46 @@
+=== SEAL-GATE CONTROL (no network, no model, $0) ===
+
+1. a NON-SEALING draw withholds the author
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+   planner served=1  author released=0 blocked=0
+   STAGES SEEN: ["bible","other","bible","other","other","other","planner"]
+   handler: "rejected"
+  ok   the handler refused the proposal
+  ok     no continuation seal exists
+  ok     the AUTHOR WAS NEVER RELEASED — the expensive stage is withheld
+  FAIL   and the gate actively blocked it (it was reached and refused, not merely absent)  — blocked=0
+
+2. a SEALING draw releases the author exactly once
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+   planner served=1  author released=0 blocked=0
+   STAGES SEEN: ["bible","other","bible","other","other","other","planner"]
+  ok   the proposal sealed
+  ok     a continuation seal exists
+  FAIL   the author WAS released  — released=0
+  ok     and never blocked on that draw
+
+3. the gate reads the LIVE store, so a seal cannot be manufactured
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/beta-events
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+    at run (/Users/romantsukerman/storybound-app/_seal_gate_control.mjs:127:28)
+    at async file:///Users/romantsukerman/storybound-app/_seal_gate_control.mjs:172:15 {
+  log: []
+}
+
+Node.js v25.3.0

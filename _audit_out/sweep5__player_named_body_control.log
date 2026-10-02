@@ -1,0 +1,90 @@
+=== PLAYER-NAMED-BODY CONTROL (no network, no model, $0) ===
+
+0. the grader vocabulary and the app guard vocabulary are IDENTICAL
+  ok   body nouns match
+  ok   adjunct nouns match
+  ok   persistence fields match
+
+1. legitimate scene-local unknowns are PRESERVED (the other half of the test)
+  ok     names nothing continuing: "Someone will answer for this before the week is "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "Whoever governs this place will come and find he"
+  ok       and the validator accepts it
+  ok     names nothing continuing: "The toll road will be watched more closely now."
+  ok       and the validator accepts it
+  ok     names nothing continuing: "Word of the burning will travel faster than she "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "She has no idea who heard the bell, and that is "
+  ok       and the validator accepts it
+  ok     names nothing continuing: "a magistrate will be sent to take her statement"
+  ok       and the validator accepts it
+
+2. continuing bodies in ORDINARY LOWERCASE are caught (the definite guard miss)
+  ok     "the commission" is detected
+  ok       rejected as a persistence violation
+  ok     "the council" is detected
+  ok       rejected as a persistence violation
+  ok     "their chambers" is detected
+  ok       rejected as a persistence violation
+  ok     "its clerk" is detected
+  ok       rejected as a persistence violation
+  ok     "the tribunal" is detected
+  ok       rejected as a persistence violation
+  ok     "the board" is detected
+  ok       rejected as a persistence violation
+  ok     "the magistrate" is detected
+  ok       rejected as a persistence violation
+  ok     "a commission" is detected
+  ok       rejected as a persistence violation
+  ok     "the hearing" is detected
+  ok       rejected as a persistence violation
+  ok     none of these needed a capital letter
+
+2b. the definite/indefinite asymmetry is deliberate
+  ok   "a magistrate" (indefinite official) stays a legitimate unknown
+  ok   "the magistrate" (a particular official) is caught
+  ok   "a commission" (an institution coming into being) is caught
+
+3. the EXACT saved live case C reply — the one the old guard passed
+   forward_pressure: "the commission must now respond to the sealed demand"
+   branch_a        : "appear at the commission chambers to testify in person"
+   pressure_scope  : "scene_local"
+  ok   forward_pressure is flagged
+  ok     the commission is identified by name
+  ok   the proposal is detected as RELYING on it across fields
+  ok     the reliance spans forward_pressure AND a later branch
+  ok     and the exit state
+  ok   the validator now REJECTS it
+  ok     as a persistence violation
+  ok     and the reason states the player-named-body rule
+
+   and processed end to end it writes NOTHING
+  ok   outcome is rejected
+  ok     zero facts
+  ok     no continuation seal
+  ok     and it was NOT recorded as a scene-local pressure either
+
+   the node-side grader reaches the same verdict independently
+  ok   grader: forward_pressure check is RED
+  ok   grader: reliance check is RED
+  ok   grader detects the same head noun as the app
+
+4. PATH (a): the player-named body ADOPTED as durable canon
+  ok   the proposal seals
+  ok     as Tier 2
+  ok     with a backend-minted pending id
+  ok     declaring it is what makes the SAME branch_a/exit_state legitimate
+
+5. PATH (b): provisional — legitimate only when nothing relies on the body
+  ok   provisional with NO continuing reliance is accepted
+  ok     recorded as explicitly non-durable
+  ok   provisional WHILE RELYING on the body is REJECTED
+  ok     even though forward_pressure itself names nothing
+  ok     the reason offers both legal exits
+
+6. ESTABLISHED canon may be referenced freely — referencing is not creation
+  ok   an established commission in forward_pressure is allowed
+  ok     and relying on it across fields is allowed too
+  ok   a body declared in THIS proposal's introduces[] is not "undeclared"
+
+64/64 passed

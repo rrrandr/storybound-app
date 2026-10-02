@@ -1,0 +1,60 @@
+=== NARRATIVE-INDEX SEAM PARITY (no network, $0) ===
+
+A. the seam is a pure delegation — no new logic  [STATIC]
+  ok   the seam exists
+  ok   its body returns _currentIssueIndex() and nothing else
+  ok   it declares no transition, terminal, or new state
+
+B. EVERY issueArcs index read goes through the seam  [STATIC]
+   7 indexed issueArcs reads at lines: 30927, 45212, 48925, 66178, 93255, 175096, 228264
+  ok   there are indexed issueArcs reads to check
+  ok     line 30927 indexes from the narrative seam
+  ok     line 45212 indexes from the narrative seam
+  ok     line 48925 indexes from the narrative seam
+  ok     line 66178 indexes from the narrative seam
+  ok     line 93255 indexes from the narrative seam
+  ok     line 175096 indexes from the narrative seam
+  ok     line 228264 indexes from the narrative seam
+
+C. billing consumers still read the PAID index  [STATIC]
+  ok   `preview/paywall idempotency` still on the paid index
+  ok   `next-issue label` still on the paid index
+  ok   `state.nextIssueNumber` still on the paid index
+  ok   `issue-one claim` still on the paid index
+  ok   `begin-button charge` still on the paid index
+  ok   `charge-declined (CG)` still on the paid index
+  ok   `refund popup issue match` still on the paid index
+  ok   `first-scene-of-later-issue gate` still on the paid index
+
+D. ambiguous consumers are UNCHANGED, pending a decision  [STATIC]
+  ok   `relationship-span index` left on the paid index
+  ok   `cliffhanger-family memo key` left on the paid index
+  ok   `secret-quest selection` left on the paid index
+  ok   `descLedger issue key` left on the paid index
+  ok   `embodiment-ledger stamp` left on the paid index
+
+E. the paid-unit boundary is unchanged  [STATIC]
+  ok   boundary body located
+  ok   still computes the index from scene count
+  ok   still renders the prior issue cover
+  ok   still refreshes the back-cover synopsis
+  ok   still ticks the secret quest
+  ok   still clears purchase status so the next charge fires
+  ok   still writes the PAID counter, never a narrative one
+
+F. the seam is installed and reachable  [BEHAVIOURAL]
+  ok   window.currentNarrativeIssueIndex is a function
+
+G. the accessor equals the paid-unit index at every value  [BEHAVIOURAL]
+  ok   issueIndexInRun=unset → narrative=1 paid=1
+  ok   issueIndexInRun=null → narrative=1 paid=1
+  ok   issueIndexInRun=0 → narrative=1 paid=1
+  ok   issueIndexInRun=1 → narrative=1 paid=1
+  ok   issueIndexInRun=2 → narrative=2 paid=2
+  ok   issueIndexInRun=5 → narrative=5 paid=5
+  ok   issueIndexInRun=9 → narrative=9 paid=9
+  ok   issueIndexInRun=37 → narrative=37 paid=37
+  ok   the seam adds no state key
+  ok   the seam is read-only
+
+42/42 passed

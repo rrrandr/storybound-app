@@ -1,0 +1,77 @@
+1. state-change DELIVERED + continuation MISSED → only the state-change commits
+  ok   both proposals were pending
+  ok   the state_change committed
+  ok     the continuation did NOT
+  ok   exactly one fact in canon, the state_change one
+  ok   A DELIVERED STATE-CHANGE DID NOT ACTIVATE THE CONTINUATION
+  ok     the institution is absent from the register
+
+2. continuation DELIVERED + state-change MISSED → only the continuation commits
+  ok   the continuation committed
+  ok     the state_change did NOT
+  ok   exactly one fact in canon, the continuation one
+  ok     and it is the sealed content, byte-identical
+  ok     with sealed provenance
+  ok   NOW the institution IS in the register — the continuation activated itself
+  ok     with its sealed aliases intact
+
+3. both DELIVERED → both exact sealed records commit, once each
+  ok   two facts in canon
+  ok     one per sealed ref
+  ok     every fact sealed-provenance
+  ok     and the institution activated
+
+4. neither DELIVERED (PARTIAL + MISSED) → neither commits
+  ok   no facts
+  ok     nothing activated
+  ok     a PARTIAL state_change stays pending
+
+5. REPEATED adjudication does not duplicate either record
+  ok   the first pass committed both
+  ok   two further passes add NOTHING
+  ok     and the second pass saw NO pending proposals — first-write-wins
+  ok     the entity was not duplicated
+  ok     and the record identity is unchanged
+
+6. LEGACY single-proposal output cannot commit a continuation
+  ok   the state_change took the legacy verdict
+  ok     the continuation got NO verdict from it
+  ok     exactly one fact, the state_change one
+  ok     THE CONTINUATION WAS NOT ACCIDENTALLY ACTIVATED
+  ok     and the reason names the kind mismatch
+   6b. a legacy verdict whose ref matches NOTHING commits nothing
+  ok   no fact was written
+  ok     both proposals stay pending
+
+7. unknown refs and verifier interpretation cannot commit anything
+  ok   an invented ref prop:999:1 was never adjudicated
+  ok     and the real loop REPORTED it as discarded
+  ok     only this scene's real pending refs were considered
+  ok   the continuation committed its SEALED content, not the verifier's "fact"
+  ok     the verifier's own fact text is NOT in canon
+  ok     nor its tableau decisiveChange
+  ok     nor its dominant_replacement
+
+8. DELIVERED with a citation that is not in the prose does NOT commit
+  ok   no fact was written
+  ok     the verdict says why
+  ok     and nothing activated
+
+9. STATIC — the one-writer rule and the loop wiring in _commitScene
+   _commitTransition call sites: [101004]
+  ok   _commitTransition is still called from ONE place in _commitScene's adjudication
+  ok     and it receives a sealed REFERENCE (pp.id), never text
+  ok   the loop iterates the PENDING STORE, not the verifier list
+  ok     unknown verifier refs are explicitly discarded and logged
+  ok   the legacy fallback is restricted to the state_change ref
+  ok     and _commitScene supplies that ref from prevProposal
+  ok   the verifier prompt asks for per_proposal with verbatim evidence
+
+10. WHAT IS STUBBED
+   · _commitScene was NOT run end to end: its verifier call is a paid model call.
+     This control drives _pendingSealedForScene + _adjudicateSealedProposal + the real
+     _commitTransition, with verifier payloads as fixtures, and asserts the loop wiring
+     statically. Delivery JUDGEMENT is therefore not exercised — everything downstream
+     of a judgement is.
+
+49/49 passed

@@ -1,0 +1,40 @@
+=== FS CG PLANNER CAPTURE — ONE CALL, ONE ATTEMPT ===
+  mode    : LIVE, authorized $0.02
+  branch  : A
+  output  : _fs_planner_capture_out/run_2026-10-02T13-52-38-343Z
+
+RESERVATION
+  one planner call : $0.017550
+  author, verifier, memory, scaffold: ABORTED — not reserved, cannot be billed
+  TOTAL            : $0.017550
+  within authorization — $0.002450 headroom
+  ok   the FS launch definition is reachable
+  ok   the baked scene 1 mounted
+  ok   it mounted with no provider call
+  ok   the production unlock committed scene 1
+  ok   the preview was finalized
+  ok   the authored axis is readable
+  axis: "run in shame vs remain and see where Julian was taking it"
+  ok   the first advance REFUSED and mounted the decision prompt
+  ok   and it dispatched NOTHING while the choice was unrecorded
+    [DISPATCH] the one planner call — estimated $0.019130
+  ok   the choice was recorded by the prompt's own handler
+  recorded: {"axis":"run in shame vs remain and see where Julian was taking it","choice":"run","label":"run in shame","source":"resume","at":1790949195912,"storyId":"cb72e3a7-dd3b-4269-8719-afb2fa0cdaa0"}  [click via in-page el.click() — host not rendered in this harness]
+        measured $0.013438 (receipted; total measured $0.013438)
+  ok   the planner was reached
+  ok   AT MOST ONE planner request was ever answered
+  ok   no live planner call beyond the first
+  ok   nothing but the planner was ever answered
+  ok   the planner REQUEST was preserved
+  ok   the planner RESPONSE was preserved
+
+  THE REPLY WAS REJECTED. That is still the shape evidence this run was for:
+    · [CONTINUATION:REJECT] scene=1 :: pressure_scope "scene_local" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_
+
+SPEND
+  MEASURED (receipts): $0.013438
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.013438 of $0.02  (67.2%)
+
+15/15 checks passed
+artefacts: _fs_planner_capture_out/run_2026-10-02T13-52-38-343Z

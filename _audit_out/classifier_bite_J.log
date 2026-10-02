@@ -1,0 +1,10 @@
+file:///Users/romantsukerman/storybound-app/_sample_classifier_control.mjs:16
+import { classifySample } from './_continuation_durable_grader.mjs';
+         ^^^^^^^^^^^^^^
+SyntaxError: The requested module './_continuation_durable_grader.mjs' does not provide an export named 'classifySample'
+    at #asyncInstantiate (node:internal/modules/esm/module_job:302:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:405:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:654:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.3.0

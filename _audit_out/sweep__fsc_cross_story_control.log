@@ -1,0 +1,47 @@
+=== CROSS-STORY SCOPE OF THE TEMPT CONSEQUENCE COMPILER (no network, $0) ===
+
+  story                       ask        outcome                     brief  leaked canon
+  starter_the_first_taste    undo       (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    escape     (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    unseen     (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    silence    (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    authority  (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    solitude   (story_has_no_authored_fate_canon)    0  —
+  starter_the_first_taste    stop       (story_has_no_authored_fate_canon)    0  —
+  starter_first_sacrifice    undo       unm.time_gives_way           1015  Lirael,Seren,Dohkar,Julian,The Answer,the assembly,the rite
+  starter_first_sacrifice    escape     unm.the_claim_unmade          587  Lirael,Dohkar,Julian
+  starter_first_sacrifice    unseen     unm.the_turning_forgotten     746  Lirael,Seren,Dohkar,Julian,the assembly
+  starter_first_sacrifice    silence    unm.the_custody_unremembered  905  Lirael,Julian,The Answer,the assembly
+  starter_first_sacrifice    authority  unm.standing_dissolved        501  Lirael,Julian
+  starter_first_sacrifice    solitude   unm.the_shunning              545  Lirael,Seren,Dohkar
+  starter_first_sacrifice    stop       unm.time_gives_way           1015  Lirael,Seren,Dohkar,Julian,The Answer,the assembly,the rite
+  starter_glass_house        undo       (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        escape     (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        unseen     (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        silence    (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        authority  (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        solitude   (story_has_no_authored_fate_canon)    0  —
+  starter_glass_house        stop       (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        undo       (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        escape     (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        unseen     (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        silence    (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        authority  (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        solitude   (story_has_no_authored_fate_canon)    0  —
+  starter_famous_fate        stop       (story_has_no_authored_fate_canon)    0  —
+
+A. the compiler must REFUSE to compile for a story it has no authored canon for
+  ok   no non-Fatelands story compiles a Fatelands outcome
+
+B. no non-Fatelands story receives ANY Fate material in its author payload
+  ok   no author brief is emitted for a non-Fatelands story
+  ok   no machine spec is emitted for a non-Fatelands story
+
+C. no Fatelands proper noun reaches a non-Fatelands writer
+  ok   zero canon leaks into other starter Books
+
+D. First Sacrifice itself still works — the scoping must not break the authored path
+  ok   First Sacrifice compiles an outcome for every ask class
+  ok   First Sacrifice still emits a substantive author brief
+
+6/6 passed

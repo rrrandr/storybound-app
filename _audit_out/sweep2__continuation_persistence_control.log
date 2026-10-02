@@ -1,0 +1,33 @@
+=== CONTINUATION PERSISTENCE (no network, no model, $0) ===
+
+1. UNNAMED toll authority — legitimate scene-local pressure
+  ok   accepted as a no-change continuation
+  ok     recorded as scene_local
+  ok     explicitly marked NOT durable
+  ok     no fact, no entity, nothing in the register
+
+2. DURABLE pressure must declare its continuing referent
+  ok   durable + empty introduces is REJECTED
+  ok     flagged as a persistence violation
+  ok     the reason names the requirement
+  ok   the same pressure WITH a declared institution seals
+  ok     as Tier 2
+  ok     with a pending backend-minted id
+
+3. forward_pressure is never a second canon channel
+  ok   a durable institution named ONLY in forward_pressure is REJECTED
+  ok     flagged as a persistence violation
+  ok     the reason names the undeclared referent
+  ok     and says forward_pressure is never a second canon channel
+  ok   the UNNAMED phrasing of the same idea still passes
+  ok   naming an ALREADY ESTABLISHED entity is allowed
+
+4. an unnamed prior pressure cannot be reused as an entity
+  ok   referencing it via existingRefs is REJECTED
+  ok     because it does not resolve
+  ok   targeting it in canon_change is REJECTED
+  ok     because it is neither established nor declared here
+  ok   it never became resolvable as canon
+  ok   it never entered the protected register
+
+22/22 passed

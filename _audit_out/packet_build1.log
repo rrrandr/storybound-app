@@ -1,0 +1,23 @@
+=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===
+
+  plan read from the app: issue 1, 20 authored scenes, 8 in the study window
+  sealed future reveals: ["julian_counter_wish","julian_obscuring_wishes"]
+  01_BRANCH_INPUTS.json — 3 branches, 2 from the seed's decision, 1 deliberately off-spine
+  02_OBLIGATION_LEDGER.json — 8 scene rows, 2 sealed reveals, 0 declared beats/obligations
+  00_PREREGISTRATION.md — H1/H2/H3 + 8-dimension rubric + procedure
+  03_SLOTS/ — 24 empty anonymised slots, cryptographically shuffled
+  04_SCORESHEET.csv — 24 rows, 11 columns, empty
+  KEY_SEALED.json — slot → (path, scene), separate file
+
+PACKET INTEGRITY
+  ok   every slot file exists
+  ok   no slot file names its path or scene
+  ok   the key is a SEPARATE file
+  ok     and no other packet file contains the mapping
+  ok   the shuffle is not the identity order
+  ok   all three paths appear 8 times each
+  ok   the obligation ledger came from the app, with real sealed ids
+  ok   the pre-registration states H1 before any prose exists
+  ok   every slot is EMPTY — nothing was generated
+
+9/9 integrity checks passed

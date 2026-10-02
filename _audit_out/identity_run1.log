@@ -1,0 +1,69 @@
+=== ENTITY IDENTITY CONTROL (no network, no model, $0) ===
+
+FIXTURE 1 — empty aliases
+  ok   aliases: [] is REJECTED
+  ok     the reason says a durable entity must declare one
+  ok     and states the label remains a valid fallback
+  ok     and that variants are never guessed
+  ok   a MISSING aliases key is rejected the same way
+  ok   aliases of only blank strings is rejected too
+  ok   the same entity WITH ["the commission"] passes
+
+FIXTURE 2 — duplicate aliases
+  ok   two aliases that normalise alike are REJECTED
+  ok     the reason names the repeat
+  ok   an alias duplicating its OWN canonical label is REJECTED
+  ok   punctuation/whitespace variants normalise alike and are REJECTED
+
+FIXTURE 3 — new LABEL colliding with an EXISTING ALIAS
+  ok   REJECTED
+  ok     and the conflicting entity ID is reported
+  FAIL   with the conflicting VALUE and its field  — ["introduces[0] \"The Commission\" is already established (ent:stage:1) — introducing it again would redefine it; alteration is Tier 3","introduces[0] label \"The Commission\" (normalised \"the commission\") collides with established ent:stage:1 alias \"the commission\" — normalised labels and aliases must be unique within a story, and an ambiguous name is rejected rather than merged or auto-disambiguated"]
+  ok     and says it is never merged or auto-disambiguated
+
+FIXTURE 4 — new ALIAS colliding with an EXISTING LABEL
+  ok   REJECTED
+  ok     and the conflicting entity ID is reported
+  ok     matching through normalisation, not case
+
+FIXTURE 5 — two INTRODUCED entities colliding with each other
+  ok   same alias on both is REJECTED
+  ok     and the reason points at the other introduces[] entry
+  ok   one entity's alias equal to another's label is REJECTED
+  ok   two identical labels in one proposal are REJECTED
+
+FIXTURE 6 — two DISTINCT canonical labels resolve cleanly
+  ok   the proposal is accepted
+  ok     it seals
+  ok     both canonical labels resolve after activation
+  ok     to DIFFERENT entities
+  ok     and both declared aliases resolve too
+  ok     each alias to its own entity
+
+FIXTURE 7 — a valid institution with ["the commission"] ACTIVATES
+  ok   it seals
+  FAIL   sealing admits nothing: zero facts and an empty register  — facts=0 register=2
+  ok     the commit writes exactly one fact
+  ok     AND the declared alias now resolves — the gap the live run exposed, closed
+  ok     the canonical label resolves to the SAME entity
+  ok     and the controlled alias set carries both forms
+
+8. PENDING entities do not participate in global collision checks
+  ok   the first proposal sealed
+  FAIL   the register is still empty while it is pending  — register=2
+  ok     so a later proposal claiming the SAME names is NOT blocked by it
+
+9. ACTIVATION re-checks and FAILS CLOSED
+  ok   the proposal sealed before the name was taken
+  ok     a squatter then took the name in the active register
+  ok     the commit is REFUSED
+  ok     NO fact was written
+  ok     and the pending entity was NOT admitted
+
+10-11. PRESERVED behaviour
+  ok   ordinary scene-local texture is unaffected
+  ok   existingRefs by ID still accepted
+  ok     by LABEL still rejected
+  ok     by ALIAS still rejected
+
+43/46 passed

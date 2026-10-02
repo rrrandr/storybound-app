@@ -1,0 +1,46 @@
+=== COMMIT REFERENTIAL INTEGRITY (no network, $0) ===
+
+A. the sealed pre-author record  [BEHAVIOURAL]
+  ok   a system-minted id is assigned
+  ok   the proposed fact is stored EXACTLY, untruncated
+  ok   the record is frozen
+  ok     and a mutation attempt does not change it
+  ok   provenance carries the posture hash
+  ok   provenance carries an invocation id
+
+B. retry reuses the same sealed proposal  [BEHAVIOURAL]
+  ok   a retried plan for the same scene+posture returns the SAME id
+  ok     and no second record was minted
+
+C. a delivered record is byte-identical to its sealed proposal  [BEHAVIOURAL]
+  ok   the committed fact is byte-identical to the sealed fact
+  ok     which is past the old 200-char truncation point
+  ok   the committed entry carries its proposal reference
+  ok   the committed entry is marked provenanceLink=sealed
+  ok   exactly one fact was committed
+  ok   committing the same reference twice does NOT duplicate
+
+D. verifier-supplied content can never become a fact  [BEHAVIOURAL]
+   attempts: ["rejected","rejected","rejected","rejected","rejected","rejected","rejected"]
+  ok   every unsealed/hostile commit attempt is rejected
+  ok   the fact count is unchanged after all of them
+  ok   no verifier text appears in any committed fact
+
+E. legacy facts stay canon without impersonating sealed ones  [BEHAVIOURAL]
+  ok   a legacy fact is marked provenanceLink=absent_legacy
+  ok     it has NO proposal reference
+  ok     its text is not rewritten
+  ok     and it remains present as active canon
+
+F. the verifier's output surface is narrowed  [STATIC — source properties]
+  ok   _commitScene body was located
+  ok   _commitScene delegates adjudication to the extracted loop
+  ok     passing the legacy state_change ref from prevProposal
+file:///Users/romantsukerman/storybound-app/_commit_integrity_control.mjs:174
+  && !/_commitTransition\(_vP/.test(src) && !/_commitTransition\(_tab/.test(src));
+                                    ^
+
+ReferenceError: src is not defined
+    at file:///Users/romantsukerman/storybound-app/_commit_integrity_control.mjs:174:37
+
+Node.js v25.3.0

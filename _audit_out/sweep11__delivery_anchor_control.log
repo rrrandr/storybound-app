@@ -1,0 +1,63 @@
+=== DETERMINISTIC DELIVERY PRE-CHECK (no network, $0) ===
+
+INSTALLATION
+  ok   _checkDeliveryAnchors is installed
+  ok   _deliveryAnchorAliases is installed
+FIXTURES — the register must actually have issued both entities
+  ok   Julian registered
+  ok   the Answer registered
+  ok   both anchors are sealed in every multi-anchor case
+
+register: Julian=ent:stage:1 aliases=["Julian","the Provast"]
+  ok   the register yields a CONTROLLED alias set, not a bare name
+
+SUCCESS CASES — activation allowed
+  [proper-name success] verdict=anchors_present anchors=["actor:present(Julian)","object:present(the Answer)"]
+  ok   proper-name success: verdict is anchors_present
+  ok     proper-name success: activation occurs
+  [alias success (the Provast / the relic)] verdict=anchors_present anchors=["actor:present(the Provast)","object:present(the relic)"]
+  ok   alias success (the Provast / the relic): verdict is anchors_present
+  ok     alias success (the Provast / the relic): activation occurs
+  ok   an ALIAS alone satisfies the anchor — no proper name required
+
+FAILURE CASES — downgrade, no activation, proposal survives
+  [absent actor] verdict=anchor_missing :: actor "ent:stage:1" absent — no permitted alias [Julian / the Provast] appears in accepted prose
+  ok   absent actor: verdict is anchor_missing
+  ok     absent actor: NO ledger activation
+  ok     absent actor: sealed proposal survives for recovery
+  ok     absent actor: the sealed fact is unaltered
+  ok     absent actor: the sealed anchors are unaltered
+  [absent target object] verdict=anchor_missing :: object "ent:stage:2" absent — no permitted alias [the Answer / the relic] appears in accepted prose
+  ok   absent target object: verdict is anchor_missing
+  ok     absent target object: NO ledger activation
+  ok     absent target object: sealed proposal survives for recovery
+  ok     absent target object: the sealed fact is unaltered
+  ok     absent target object: the sealed anchors are unaltered
+  [evidence not verbatim] verdict=anchor_missing :: 1 verifier evidence quote(s) are not verbatim substrings of the accepted prose
+  ok   evidence not verbatim: verdict is anchor_missing
+  ok     evidence not verbatim: NO ledger activation
+  ok     evidence not verbatim: sealed proposal survives for recovery
+  ok     evidence not verbatim: the sealed fact is unaltered
+  ok     evidence not verbatim: the sealed anchors are unaltered
+  [pronoun-only prose] verdict=anchor_missing :: actor "ent:stage:1" absent — no permitted alias [Julian / the Provast] appears in accepted prose
+  ok   pronoun-only prose: verdict is anchor_missing
+  ok     pronoun-only prose: NO ledger activation
+  ok     pronoun-only prose: sealed proposal survives for recovery
+  ok     pronoun-only prose: the sealed fact is unaltered
+  ok     pronoun-only prose: the sealed anchors are unaltered
+  ok   evidence-not-verbatim is reported as an evidence failure
+  ok   pronoun-only prose fails BOTH anchors (no alias substitution)
+
+INAPPLICABLE CASE — recorded as inapplicable, never as verification
+  verdict=inapplicable :: no concrete participant could be anchored — the lexical check does not apply, and delivery is NOT asserted by it
+  ok   verdict is inapplicable, NOT anchors_present
+  ok     it says so explicitly rather than implying delivery
+  ok     the unresolvable ref is marked unanchorable
+  ok     the sealed proposal survives
+
+ONE-WAY PROPERTY
+  ok   the checker never returns a verdict that could raise MISSED to DELIVERED
+  ok   every sealed fact in every case is byte-intact
+  ok   every sealed anchor set in every case is intact
+
+40/40 passed

@@ -1,0 +1,83 @@
+=== SAMPLE CLASSIFIER CONTROL (no network, no model, $0) ===
+
+1. every bucket is reachable, and each fixture lands in exactly its own
+  ok     good-durable → valid_durable
+  ok       path recorded as "durable"
+  ok     good-scene-local → valid_scene_local
+  ok       path recorded as "scene_local"
+  ok     ev-no-scope → envelope_violation
+  ok       path recorded as null
+  ok     ev-bad-scope → envelope_violation
+  ok       path recorded as null
+  ok     ev-no-purpose → envelope_violation
+  ok       path recorded as "durable"
+  ok     ev-no-canon-key → envelope_violation
+  ok       path recorded as "durable"
+  ok     ev-introduces-not-array → envelope_violation
+  ok       path recorded as "durable"
+  ok     inc-durable-no-derivation → incoherent
+  ok       path recorded as "durable"
+  ok     inc-durable-unidentified → incoherent
+  ok       path recorded as "durable"
+  ok     inc-scene-local-relying → incoherent
+  ok       path recorded as "scene_local"
+  ok     inc-scene-local-names-body → incoherent
+  ok       path recorded as "scene_local"
+  ok     inc-planner-id → incoherent
+  ok       path recorded as "durable"
+
+2. all five buckets were exercised (a bucket never reached proves nothing)
+  ok     valid_durable has at least one fixture
+  ok     valid_scene_local has at least one fixture
+  ok     incoherent has at least one fixture
+  ok     envelope_violation has at least one fixture
+  ok     void has at least one fixture
+
+3. THE THREE REAL SAVED REPLIES classify as the runs actually went
+  ok   run 5 (scene_local while relying) → incoherent
+  ok     path recorded as scene_local
+  ok   run 7 (scene_local while relying) → incoherent
+  ok     path recorded as scene_local
+  ok   run 6 (durable, missing derivation) → incoherent
+  ok     but its PATH is recorded as durable — the distinction the buckets alone lose
+  ok     and the reason names derivation
+
+3b. a TRANSPORT failure is VOID, never a planner fault
+  ok     run 9's actual proxy body → void
+  ok       and no path is attributed
+  ok     no planner call dispatched at all → void
+  ok       and no path is attributed
+  ok     a fetch/transport error → void
+  ok       and no path is attributed
+  ok     an empty content string → void
+  ok       and no path is attributed
+  ok     whitespace-only content → void
+  ok       and no path is attributed
+  ok     run 9's body is NOT filed as an envelope violation — the defect this closes
+  ok     and the reason quotes what actually came back
+
+3c. but CONTENT that arrived and failed the contract is the PLANNER's fault
+  ok   prose instead of JSON → envelope_violation, not void
+  ok     and the reason says content came back
+  ok   a real reply missing a required key → envelope_violation
+  ok   a VALID reply still classifies normally when transport is healthy
+  ok   with NO transport information a null reply is VOID, not attributed to the planner
+
+3d. a failure REASON describes the fault, never the satisfied condition
+   reason now: ["declared scene_local, but forward_pressure NAMES a continuing referent: [\"commission\"]","declared scene_local, but the proposal RELIES on a continuing body persisting: [\"commission in forward_pressure+branch_b\"]"]
+  ok   run 10 sample 1 still classifies as incoherent
+  ok     the reason states the VIOLATION, not the condition
+  ok     it no longer reads as "names NO continuing referent"
+  ok     and it names the offending phrase
+  ok     and the fields it was relied on in
+   empty-alias reason: ["  entry 0 (the Reach Commission) declares no usable aliases (got [])"]
+  ok   an empty alias list reports "declares no usable aliases", not "aliases is a non-empty array"
+  ok   and no reason anywhere reads as a satisfied condition (no bare check names)
+
+4. a durable reply that SEALS is the only thing counted as valid_durable
+  ok   the good durable fixture actually sealed in the live validator
+  ok     and an identical reply whose handler did NOT seal is NOT valid_durable
+  ok   a scene_local reply the handler did NOT accept is NOT valid_scene_local
+  ok   an unparseable reply with no transport info attributes nothing
+
+64/64 passed

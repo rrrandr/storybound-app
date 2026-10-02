@@ -1,0 +1,13 @@
+=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===
+
+  plan read from the app: issue 1, 20 authored scenes, 8 in the study window
+  sealed future reveals: ["julian_counter_wish","julian_obscuring_wishes"]
+  01_BRANCH_INPUTS.json — 3 branches, 2 from the seed's decision, 1 deliberately off-spine
+file:///Users/romantsukerman/storybound-app/_build_quality_study_packet.mjs:154
+if (obligationCount === 0) {
+^
+
+ReferenceError: Cannot access 'obligationCount' before initialization
+    at file:///Users/romantsukerman/storybound-app/_build_quality_study_packet.mjs:154:1
+
+Node.js v25.3.0

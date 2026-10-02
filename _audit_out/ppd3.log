@@ -1,0 +1,14 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: TypeError: window._adjudicateSceneProposals is not a function
+    at adjudicate (eval at evaluate (:311:30), <anonymous>:56:24)
+    at eval (eval at evaluate (:311:30), <anonymous>:71:16)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /Users/romantsukerman/storybound-app/_per_proposal_delivery_control.mjs:50:22 {
+  log: []
+}
+
+Node.js v25.3.0

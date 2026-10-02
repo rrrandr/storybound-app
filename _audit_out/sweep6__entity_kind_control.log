@@ -1,0 +1,52 @@
+=== CONTROLLED ENTITY-KIND VOCABULARY (no network, $0) ===
+
+A. the six permitted kinds all register
+  ok   `named` accepted (Julian)
+  ok   `role` accepted (presiding Dohkar)
+  ok   `artifact` accepted (the Answer)
+  ok   `institution` accepted (the Reach governance)
+  ok   `collective` accepted (the dawn patrol)
+  ok   `place` accepted (Aeryn's Reach)
+
+B. backward compatibility
+  ok   `named` still validates unchanged
+  ok   `role` still validates unchanged
+
+C. a generic prop cannot enter the durable register
+  ok   `object` is REJECTED
+  ok     the rejection names the forbidden kind
+  ok   `prop` is REJECTED
+
+D. the Answer registers AND anchors as an artifact
+  ok   both anchors sealed (character + artifact)
+  ok   the artifact yields a controlled alias set
+   alias-only prose → anchors_present ["actor:present(the Provast)","artifact:present(the relic)"]
+  ok   alias-only prose satisfies BOTH anchors
+  ok   an absent artifact downgrades
+  ok     and names the artifact as the missing participant
+
+E. institution, collective and place are DISTINCT records
+  ok   all six entities have distinct ids
+  ok   the place and its governing institution are separate records
+  ok   a patrol from that institution is its own record
+   ledger kinds: ["artifact","collective","institution","named","named","named","place","role"] (total=8)
+  ok   all six created records are present in the ledger
+  ok     none was merged away
+
+F. aliases resolve ONLY within the correct entity
+  ok   "the Reach" → the place
+  ok   "the governance" → the institution
+  ok   "the patrol" → the collective
+  ok   "the relic" → the artifact
+  ok   no alias resolves across entities
+
+G. non-person kinds can never resolve as a person/speaker
+  ok   the resolver is exported for direct proof
+   {"Julian":"ent:stage:1","the Reach governance":null,"the dawn patrol":null,"the Answer":null,"the relic":null}
+  ok   a named person DOES resolve
+  ok   `the Reach governance` does NOT resolve
+  ok   `the dawn patrol` does NOT resolve
+  ok   `the Answer` does NOT resolve
+  ok   `the relic` does NOT resolve
+
+32/32 passed

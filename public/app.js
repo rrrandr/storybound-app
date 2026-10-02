@@ -100371,6 +100371,47 @@ function _buildAuthorFloorDirective(s) {
 
   // Names that may be referenced freely: established canon, this proposal's own declarations, and
   // the cast. Referencing established canon is always allowed — that is not creation.
+  // THE SEED'S OWN DECLARED COLLECTIVES — established canon, and therefore exempt.
+  //
+  // Measured on the live FS planner capture (2026-10-02, $0.013438). The planner returned a
+  // correct, scene-local continuation for First Sacrifice and the persistence guard REJECTED it:
+  //     pressure_scope "scene_local" but this proposal DEPENDS on a continuing body persisting:
+  //     [assembly] appears in branch_b, event_slots.exit_state
+  // "The assembly" is not a body the planner invented. It is a STRUCTURED seed collective —
+  // STARTER_PLANS[...].scenes[].collectives = [{ id:'the_assembly', label:'the assembly' }] — with
+  // its own canonical description elsewhere in this file. The exemption list was built from the
+  // protected register, the PC/LI names and the reply's own introduces[], so the seed's collectives
+  // were invisible to it and established canon read as an undeclared continuing body.
+  //
+  // The remedy the guard demanded would have been WORSE than the false positive: adopting "the
+  // assembly" into introduces[] as new durable canon would mint a SECOND entity with that label
+  // beside the seed's own collective — precisely the duplicate the identity guard exists to stop.
+  //
+  // ONLY STRUCTURED, CANONICAL NAMES COUNT. Labels, ids and declared aliases from `collectives`.
+  // `presentGroups` is deliberately NOT read: its entries are prose with parentheticals ("the
+  // assembly (unnamed, reacting, no dialogue)"), and matching on prose is the freeform escape hatch
+  // this guard exists to deny. Same rule _validateLocalObjective already applies to `present[]`
+  // (Roman 2026-09-20): a declared collective is valid, but only by the seed's own canonical label.
+  function _seedCollectiveNames() {
+    var out = [];
+    try {
+      var plan = (typeof _activePlan === 'function') ? _activePlan(window.state) : null;
+      ((plan && plan.scenes) || []).forEach(function (row) {
+        ((row && row.collectives) || []).forEach(function (c) {
+          if (!c) return;
+          if (c.label) out.push(String(c.label).toLowerCase());
+          if (c.id) out.push(String(c.id).replace(/_/g, ' ').toLowerCase());
+          (c.aliases || []).forEach(function (a) { if (a) out.push(String(a).toLowerCase()); });
+        });
+      });
+    } catch (_) {}
+    var seen = {};
+    return out.filter(function (n) {
+      if (!n || seen[n]) return false; seen[n] = 1; return true;
+    });
+  }
+  window._seedCollectiveNames = _seedCollectiveNames;
+
   function _knownReferentNames(declaredLabels) {
     var known = [];
     try {
@@ -100380,6 +100421,7 @@ function _buildAuthorFloorDirective(s) {
         (reg[id].aliases || []).forEach(function (a) { known.push(String(a || '').toLowerCase()); });
       }
     } catch (_) {}
+    try { _seedCollectiveNames().forEach(function (n) { known.push(n); }); } catch (_) {}
     try {
       var st = window.state || {};
       [st.playerName, st.name, st.loveInterestName, st.partnerName].forEach(function (n) {

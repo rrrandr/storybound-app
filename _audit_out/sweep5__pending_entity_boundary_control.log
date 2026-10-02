@@ -1,0 +1,51 @@
+=== PENDING vs ACTIVE ENTITY BOUNDARY (no network, no model, $0) ===
+
+  ok   the continuation slice is installed
+
+1. SEALED BUT NOT DELIVERED — pending is invisible to active canon
+  ok   the proposal sealed
+  ok   two pending entities ride on the sealed record
+  ok     and they are frozen with it
+  ok   the ACTIVE ledger did NOT grow
+  ok   the protected register did NOT grow
+  ok   no pending id is in the protected register
+  ok   sealing wrote no fact
+   delivery anchors (scoped to this proposal): anchors_present
+  ok   the DELIVERY path CAN resolve its own pending entities
+  ok   the ACTIVE resolver cannot see them by name
+  ok   the ACTIVE resolver cannot see them by id
+  ok   a LATER proposal cannot use a pending id as an existingRef
+  ok     and the rejection says it does not resolve
+
+4. RETRY reuses the same pending entities — no duplicate ids
+  ok   the retry returns the SAME sealed record
+  ok     with the SAME pending ids
+  ok     the active ledger still did not grow
+  ok     and only one proposal exists
+
+2. DELIVERED ACTIVATION — admitted once, then protected
+  ok   activation occurred
+  ok   the entities entered the active ledger
+  ok   the protected register grew by exactly two
+  ok   both pending ids are NOW protected
+  ok   the active resolver now sees it by name
+  ok     with its sealed id preserved
+  ok   a later proposal CAN now reference it
+  ok     and altering it is derived as Tier 3
+  ok   double activation does NOT duplicate the entities
+
+3. MISSED DELIVERY — never active, never protected, never blocking
+  ok   the missed proposal sealed
+  ok   its anchors are missing from the prose
+  ok   it was NOT activated
+  ok   its entity is NOT in the active ledger
+  ok   its entity is NOT protected
+  ok   the sealed proposal survives for recovery
+  ok   and it does NOT block a later GENUINE introduction of the same name
+
+LEDGER CONTENTS
+   ["The Reach Commission opens an investigation into the burning of Aeryn’s Reach."]
+  ok   exactly one fact was ever activated
+  ok     and no Hollow Assize text reached it
+
+35/35 passed

@@ -18,12 +18,12 @@
   ok     scene 3: the gate was OPEN at the moment of submission
   ok     scene 3: the staged scene MOUNTED
   ok     scene 3: submit latch cleared before the next advance
-   stages: ["memory","verifier","planner","author"]
+   stages: ["memory","verifier","planner","author","memory"]
    gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=3  activated=1
 ── scene 4/4
   ok     scene 4: the gate was OPEN at the moment of submission
   ok     scene 4: the staged scene MOUNTED
-   stages: ["memory","verifier","planner","author","memory"]
+   stages: ["verifier","planner","author","memory"]
    gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=4  activated=1
 
 0. the app's own refusals, per scene

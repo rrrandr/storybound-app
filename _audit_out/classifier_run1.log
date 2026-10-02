@@ -1,0 +1,50 @@
+=== SAMPLE CLASSIFIER CONTROL (no network, no model, $0) ===
+
+1. every bucket is reachable, and each fixture lands in exactly its own
+  ok     good-durable → valid_durable
+  ok       path recorded as "durable"
+  ok     good-scene-local → valid_scene_local
+  ok       path recorded as "scene_local"
+  ok     ev-no-scope → envelope_violation
+  ok       path recorded as null
+  ok     ev-bad-scope → envelope_violation
+  FAIL     path recorded as null  — got "permanent"
+  ok     ev-no-purpose → envelope_violation
+  ok       path recorded as "durable"
+  ok     ev-no-canon-key → envelope_violation
+  ok       path recorded as "durable"
+  ok     ev-introduces-not-array → envelope_violation
+  ok       path recorded as "durable"
+  ok     inc-durable-no-derivation → incoherent
+  ok       path recorded as "durable"
+  ok     inc-durable-unidentified → incoherent
+  ok       path recorded as "durable"
+  ok     inc-scene-local-relying → incoherent
+  ok       path recorded as "scene_local"
+  ok     inc-scene-local-names-body → incoherent
+  ok       path recorded as "scene_local"
+  ok     inc-planner-id → incoherent
+  ok       path recorded as "durable"
+
+2. all four buckets were exercised (a bucket never reached proves nothing)
+  ok     valid_durable has at least one fixture
+  ok     valid_scene_local has at least one fixture
+  ok     incoherent has at least one fixture
+  ok     envelope_violation has at least one fixture
+
+3. THE THREE REAL SAVED REPLIES classify as the runs actually went
+  ok   run 5 (scene_local while relying) → incoherent
+  ok     path recorded as scene_local
+  ok   run 7 (scene_local while relying) → incoherent
+  ok     path recorded as scene_local
+  ok   run 6 (durable, missing derivation) → incoherent
+  ok     but its PATH is recorded as durable — the distinction the buckets alone lose
+  ok     and the reason names derivation
+
+4. a durable reply that SEALS is the only thing counted as valid_durable
+  ok   the good durable fixture actually sealed in the live validator
+  ok     and an identical reply whose handler did NOT seal is NOT valid_durable
+  ok   a scene_local reply the handler did NOT accept is NOT valid_scene_local
+  ok   an unparseable reply is an envelope violation, not a path
+
+38/39 passed

@@ -6,6 +6,7 @@
 import fs from 'fs';
 import { spawnSync } from 'child_process';
 import { R_PLANNER } from './_live_spend_ledger.mjs';
+import { estimateUsd } from './_fsc_cost_guard.mjs';
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
@@ -44,7 +45,25 @@ console.log('\n2. the reservation is exactly one planner call');
   t('the reserved figure IS the shared module\'s R_PLANNER',
     Math.abs(est.reserved - R_PLANNER) < 1e-12,
     'runner=' + est.reserved + ' module=' + R_PLANNER);
-  t('it is $0.017550 to six places', est.reserved.toFixed(6) === '0.017550', est.reserved.toFixed(6));
+  // NOT A FROZEN LITERAL. This check used to assert "$0.017550 to six places", which is exactly the
+  // figure the live run proved too small: the real FS request estimated $0.019130, above it. The
+  // property that matters is that the reservation COVERS the real recorded request, so it is
+  // measured against the preserved planner_request.json rather than against a number I typed.
+  const reqPath = runDirs().map(d => OUTDIR + '/' + d + '/planner_request.json')
+    .filter(p => fs.existsSync(p)).pop();
+  t('a real recorded planner request is available to size against', !!reqPath, 'none found');
+  if (reqPath) {
+    const req = JSON.parse(fs.readFileSync(reqPath, 'utf8'));
+    const realEst = estimateUsd({ messages: [{ content: String(req.system || '') },
+      { content: String(req.user || '') }], max_tokens: req.max_tokens || 1200 },
+      'grok-4-1-fast-reasoning').estimate;
+    t('the reservation COVERS the real recorded request',
+      est.reserved >= realEst,
+      'reserved $' + est.reserved.toFixed(6) + ' vs real request $' + realEst.toFixed(6));
+    console.log('     real recorded request estimates $' + realEst.toFixed(6)
+      + '; reserved $' + est.reserved.toFixed(6)
+      + ' (' + (((est.reserved / realEst) - 1) * 100).toFixed(1) + '% margin)');
+  }
   t('the author is explicitly NOT reserved',
     /author, verifier, memory, scaffold: ABORTED/.test(r.out));
   t('no browser was launched', !fs.existsSync(newest() + '/manifest.json'));

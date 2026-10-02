@@ -1,0 +1,64 @@
+=== CONTINUATION PLANNER — SLICE 1 (no network, no model, $0) ===
+
+INSTALLATION
+  ok   _processContinuationProposal installed
+  ok   _validateContinuationProposal installed
+  ok   _continuationAuthorBlock installed
+
+ESTABLISHED CANON
+  ok   Julian and his office are registered
+  ok   the protected register starts with them
+
+── PATH 1 — TIER 2: additive institution ──
+  ok   the proposal is sealed
+  ok     it is classified Tier 2
+  ok     both declared entities were minted with backend ids
+  ok     the institution and the place kept their distinct kinds
+  ok   SEALING WROTE NO FACT (activation is separate)
+  ok   Julian is untouched — still the Provast
+  ok   the new institution is NOT yet protected — it is pending until delivery
+  ok   the register has NOT grown at seal time
+   anchors: anchors_present ["institution:present","place:present"]
+  ok   delivery anchors are satisfied by alias-only prose
+  ok   activation occurs after delivery
+  ok     the activated fact is byte-identical to the sealed content
+  ok     and carries provenanceLink=sealed
+
+   author material is reader-facing only
+  ok   it states the fact
+  ok   it leaks no id
+  ok   it leaks no tier, basis, target or register vocabulary
+
+   smuggling and redefinition are refused
+  ok   declared Tier 2 while altering a protected office is REJECTED
+  ok     the rejection names it as smuggling
+  ok   re-introducing an established alias is REJECTED
+  ok     because it would redefine rather than introduce
+
+── PATH 2 — TIER 3: protected change needs a causal basis ──
+  ok   Tier 3 with NO basis is rejected
+  ok     the rejection names the basis requirement
+  ok   Tier 3 with an UNRESOLVABLE basis ref is rejected
+  ok     the rejection says the ref does not resolve
+  ok   the same change mislabeled Tier 2 is rejected as smuggling
+  ok   with the RECORDED player posture as basis it is accepted
+  ok     and derived as Tier 3 from the protected target
+  ok   SEALING WROTE NO FACT
+  ok   delivery anchors satisfied by "the Provast"
+  ok   activation occurs only after delivery
+  ok     the fact is byte-identical to the sealed content
+  ok   the author block carries no basis or posture hash
+
+── PATH 3 — NONE is normal ──
+  ok   outcome is none
+  ok     no sealed record was minted
+  ok     the ledger is unchanged
+  ok     exactly two proposals were ever sealed (tier2, tier3)
+  ok     the author block is empty — nothing to render as canon
+
+── prose cannot create a record after the fact ──
+  ok   a raw prose string cannot activate anything
+  ok     the ledger is unchanged by the attempt
+  ok     no prose-derived text is in the ledger
+
+44/44 passed

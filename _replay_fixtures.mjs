@@ -66,6 +66,29 @@ export const MEMORY = JSON.stringify({
   relations: []
 });
 
+// THE CAPTURED FS CG PLANNER REPLY. A real response from the one authorized live FS planner call
+// (2026-10-02, $0.013438 measured). The synthetic story's PLANNER_RAW is a continuation envelope and
+// FS's CG planner wants a different shape — local_objective, local_objective_actor, posture_read,
+// present, reserved, aftermath — which is why replaying the synthetic reply drew
+// "[OBJECTIVE:REJECTED] no local_objective; no posture_read; no present cast".
+//
+// It THROWS rather than falling back. A harness that silently serves the wrong shape reports a
+// product failure that is really a fixture failure, which is exactly the hour this cost once.
+export const fsPlannerCaptured = () => {
+  const root = '_fs_planner_capture_out';
+  if (!fs.existsSync(root)) throw new Error('no _fs_planner_capture_out/ — nothing captured yet');
+  const dirs = fs.readdirSync(root).filter(d => /^run_/.test(d)).sort();
+  for (let i = dirs.length - 1; i >= 0; i--) {
+    const p = root + '/' + dirs[i] + '/planner_response.json';
+    if (!fs.existsSync(p)) continue;
+    const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const c = j.content
+      || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+    if (c && c.indexOf('{') >= 0) return c;
+  }
+  throw new Error('no planner_response.json with content under ' + root);
+};
+
 // A line that really appears in the recorded author prose, so a replayed verdict's evidence quotes
 // survive the production verbatim-citation check instead of being waved through.
 export const TRACER = "The clerk's fingers crack the seal on the parchment I sent.";

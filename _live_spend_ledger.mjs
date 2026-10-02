@@ -30,7 +30,22 @@ const worst = (chars, out) => estimateUsd(
 
 // THE FALLBACK MULTIPLIER IS 1, on measured evidence: the two-case run dispatched exactly one call
 // per stage with no tier fallback, so a x2 was reserving for a contingency that did not occur.
-export const R_PLANNER = worst(30000, 1400);
+//
+// RAISED 30000 -> 45000 CHARS on measurement (Roman 2026-10-02). The live FS planner capture
+// recorded the real request: system 17,255 + user 19,357 = 36,612 chars, 8,352 prompt tokens,
+// max_tokens 1200, 589 completion. The old 30,000-char shape was taken from the SYNTHETIC story's
+// planner and under-reserved the FS one by about 6,600 chars:
+//
+//     reserved at 30,000 chars : $0.017550
+//     the real request estimated: $0.019130   <- ABOVE the reservation
+//     actually measured          : $0.013438
+//
+// Spend came in under both, so nothing overran. The defect is in the bound, not the bill: a
+// reservation the real request can exceed is not a reservation, and at a ceiling of exactly
+// $0.017550 the capture's own pre-dispatch budget check would have BLOCKED the call and the run
+// would have produced nothing. 45,000 chars carries ~23% margin over the measured request; 1400
+// output tokens stays above both the app's 1200 cap and the 589 actually returned.
+export const R_PLANNER = worst(45000, 1400);
 // 240k chars / 8k out. The author is 83% of a scene's reservation and the only stage never yet
 // measured more than twice, which is why Roman held it untightened.
 export const R_AUTHOR = worst(240000, 8000);

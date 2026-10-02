@@ -1,0 +1,51 @@
+=== ALIAS RESOLUTION TRACE (read-only, no network, $0) ===
+
+Q1. Does a label-only entity resolve by ID, label, and alias?
+    stored record: {"label":"Toll Road Commission","aliases":[]}
+  ok   by ID — resolves
+  ok   by EXACT canonical label — resolves
+  ok     and case-insensitively
+  ok     and through punctuation/whitespace normalisation
+  ok   by alias — there are none to resolve by
+  ok   it IS in the protected register regardless
+
+Q3. Does "Toll Road Commission" resolve when aliases: []?
+  ok   YES — the canonical label is already a deterministic identity
+
+Q4. Does "the commission" resolve only when explicitly declared?
+  ok   label-only entity: "the commission" does NOT resolve
+  ok     reason is "unresolved", not a near-miss
+  ok     bare "commission" does NOT resolve either
+  ok     nor does a partial "Toll Road"
+  ok   WITH the alias declared: "the commission" resolves
+  ok     and capitalisation of the alias does not matter
+  ok     but matching is WHOLE-STRING: bare "commission" still fails
+
+Q2. Does a label-only entity satisfy a later existingRef?
+  FAIL existingRefs by ID — accepted  — ["SMUGGLING: declared Tier 2 but alters protected canon [ent:stage:1] — a protected change may not ride in as an additive fact","Tier 3 requires a basis (player_action | fate_outcome | declared_high_authority)"]
+  ok   existingRefs by LABEL — REJECTED (ids only, by contract)
+  ok     and the reason says it does not resolve
+  ok   existingRefs by the undeclared alias form — REJECTED
+  ok   canon_change.targets by LABEL of an ESTABLISHED entity — REJECTED
+  ok     (the Tier 3 by-label finding from the grading control, reconfirmed here)
+
+Q5. What happens on collisions between generic aliases?
+    two bodies both declaring "the commission": ids=["ent:stage:1","ent:stage:2"]
+  ok   the second declaration is accepted (no uniqueness check on aliases)
+  ok   the shared generic alias then resolves to NEITHER — fail-closed
+  ok     and the reason reports the ambiguity with a count
+  ok   each distinct canonical LABEL still resolves cleanly
+    an alias colliding with another entity's LABEL: ids=["ent:stage:1","ent:stage:2"]
+  ok   the contested name resolves to neither
+  ok     the uncontested label still resolves
+    two entities with the SAME label and no aliases: ids=["ent:stage:1","ent:stage:2"]
+  ok   a duplicate label is accepted at proposal time
+  ok     and that label then resolves to neither — the label fallback is NOT collision-proof
+
+Q6 (the live consequence). Sample 3's own sealed wording against its own entity
+    fact    : "The commission has received and logged a formal demand"
+    aliases : ["Toll Road Commission"]
+  ok   the controlled alias set is the bare label only
+  FAIL the sealed fact's OWN phrasing does NOT match any permitted name  — anchor hit = "FN_MISSING"
+
+28/30 trace assertions held

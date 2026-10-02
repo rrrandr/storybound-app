@@ -1,0 +1,108 @@
+=== DURABLE GRADING CONTROL (no network, no model, $0) ===
+
+1. the IDEAL durable reply satisfies every pass criterion
+  ok     pressure_scope is exactly "durable"
+  ok     scope coherence: not a scene_local declaration, nothing to check
+  ok     introduces is an array
+  ok       it is not empty
+  ok       at least one entry is an institution or collective
+  ok       entry 0 (the Reach Commission): label is non-empty
+  ok       entry 0 (the Reach Commission): kind is declared
+  ok       entry 0 (the Reach Commission): future_relevance is non-empty
+  ok       entry 0 (the Reach Commission): justification is non-empty
+  ok       entry 0 (the Reach Commission): aliases is a non-empty array of strings
+  ok     derivation is present (this envelope proposes something durable, so it is owed)
+  ok     no id on any introduced entity
+  ok     no id on canon_change
+  ok     every existingRefs entry resolves to a pre-existing entity
+  ok       none is a fabricated system-format id
+  ok     no established entity is targeted at all (purely additive)
+  ok     every pre-existing entity record is unchanged
+  ok       and none was removed
+
+   and the handler side holds
+  ok     the handler SEALED the proposal
+  ok       it was not rejected as a persistence violation
+  ok       exactly one CONTINUATION-kind seal exists
+  ok       the seal carries the untruncated fact
+  ok       its pending entities carry BACKEND-MINTED ids
+  ok       none of those ids existed before the reply
+  ok     ZERO facts activated — sealing is not committing
+  ok     no unplanned entity entered the ledger
+
+2. each near-miss drives EXACTLY its own criterion red (the bite proof)
+  ok     scope-scene_local: RED on "pressure_scope is exactly "durable""
+  ok     scope-scene_local: RED on "forward_pressure names NO continuing referent"
+  ok       and nothing unrelated went red
+  ok     scope-missing: RED on "pressure_scope is exactly "durable""
+  ok       and nothing unrelated went red
+  ok     no-introduces: RED on "it is not empty"
+  ok     no-introduces: RED on "at least one entry is an institution or collective"
+  ok       and nothing unrelated went red
+  ok     wrong-kind-place: RED on "at least one entry is an institution or collective"
+  ok       and nothing unrelated went red
+  ok     aliases-empty: RED on "aliases is a non-empty array"
+  ok       and nothing unrelated went red
+  ok     aliases-missing: RED on "aliases is a non-empty array"
+  ok       and nothing unrelated went red
+  ok     no-future-relevance: RED on "future_relevance is non-empty"
+  ok       and nothing unrelated went red
+  ok     no-derivation: RED on "derivation is present"
+  ok       and nothing unrelated went red
+  ok     no-derivation-introduces-only: RED on "derivation is present"
+  ok       and nothing unrelated went red
+  ok     planner-supplied-id: RED on "no id on any introduced entity"
+  ok       and nothing unrelated went red
+  ok     planner-supplied-change-id: RED on "no id on canon_change"
+  ok       and nothing unrelated went red
+  ok     fabricated-existing-ref: RED on "every existingRefs entry resolves"
+  ok     fabricated-existing-ref: RED on "none is a fabricated system-format id"
+  ok       and nothing unrelated went red
+  ok     redefine-as-additive: RED on "so it is Tier 3"
+  ok     redefine-as-additive: RED on "carries a complete basis"
+  ok       and nothing unrelated went red
+  ok     redefine-tier3-no-basis: RED on "carries a complete basis"
+  ok       and nothing unrelated went red
+  ok     redefine-by-alias: RED on "so it is Tier 3"
+  ok     redefine-by-alias: RED on "carries a complete basis"
+  ok       and nothing unrelated went red
+  ok     redefine-tier3-with-basis: is LEGITIMATE and passes the reply grading
+  ok     redefine-tier3-by-label: is LEGITIMATE and passes the reply grading
+
+3. reply grading is independent of the handler
+  ok   the additive-smuggle reply was ALSO rejected by the live validator
+  ok     and the grader flags it from the REPLY alone, without consulting that verdict
+  ok   the legitimate Tier 3 + basis reply, targeting established canon BY ID, seals
+  ok   FINDING: the same proposal by LABEL is rejected — targets resolve established canon by id only
+
+3b. derivation is owed for the CHANGE, not for the scene
+  ok   the validator refuses a durable proposal with no derivation
+  ok     and so does an INTRODUCES-ONLY proposal with a null change
+  ok     which is why the contract clause covers introduces, not just canon_change
+  ok   a nothing-durable envelope is NOT asked for a derivation
+
+   the saved run-6 reply, graded: 1 red
+  ok   run 6 is RED on derivation
+  ok     and RED on nothing else — all five criteria were genuinely met
+
+4. no fixture activated canon (sealing is not committing)
+  ok     ideal: zero facts activated
+  ok     scope-scene_local: zero facts activated
+  ok     scope-missing: zero facts activated
+  ok     no-introduces: zero facts activated
+  ok     wrong-kind-place: zero facts activated
+  ok     aliases-empty: zero facts activated
+  ok     aliases-missing: zero facts activated
+  ok     no-future-relevance: zero facts activated
+  ok     no-derivation: zero facts activated
+  ok     no-derivation-introduces-only: zero facts activated
+  ok     planner-supplied-id: zero facts activated
+  ok     planner-supplied-change-id: zero facts activated
+  ok     fabricated-existing-ref: zero facts activated
+  ok     redefine-as-additive: zero facts activated
+  ok     redefine-tier3-no-basis: zero facts activated
+  ok     redefine-by-alias: zero facts activated
+  ok     redefine-tier3-with-basis: zero facts activated
+  ok     redefine-tier3-by-label: zero facts activated
+
+91/91 passed

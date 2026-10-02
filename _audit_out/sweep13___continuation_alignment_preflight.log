@@ -1,0 +1,67 @@
+=== CONTINUATION ALIGNMENT PREFLIGHT (provider-free, $0) ===
+
+  captured scene-1 prose: 1457 chars, from run 18
+
+1. what the captured prose unmistakably stages
+  ok      the seal is cracked
+  ok      the reading BEGINS
+  ok      the acknowledgement is SPOKEN
+  ok      the reading ENDS
+
+   NOTE: the prose stages the reading beginning AND ending ("lowers the parchment"),
+   yet the verifier judged "acknowledges receipt" incomplete. So its standard for
+   RECEIPT is stricter than completion of the reading — recorded, not argued with.
+
+2. the four things must AGREE
+   fact     : "The Toll Road Commission's clerk begins reading the sealed demand aloud in the chamber."
+   purpose  : "Put the sealed demand in front of the body that can act on it, and show its clerk take it up."
+   pressure : "The Toll Road Commission now has the demand in hand and must answer it."
+   anchor   : "Toll Road Commission" aliases ["the commission","the governing commission"]
+   action   : "begins reading" staged by "The clerk clears his throat once and begins to read."
+  ok   the expected completed action is STAGED VERBATIM in the prose
+  ok     and the fact asserts that same action, not a later one
+  ok     the fact claims NOTHING the prose does not stage
+  ok   the fact names the BODY, so it is institutional canon and not scene texture
+  ok   the author-facing PURPOSE describes the same act
+  ok   the author-facing PRESSURE points forward from it, without re-claiming it
+  ok   the ANCHOR resolves in the prose by a controlled name
+  ok     specifically "the commission", which the prose speaks aloud
+
+   and the OLD fact is shown to DISAGREE — which is why run 18 was PARTIAL
+  ok   the old fact asserts a completion the prose does not state verbatim
+  ok     while the aligned fact's action IS stated verbatim
+
+3. the aligned proposal passes the REAL validator and anchor check
+  ok   it seals
+   anchor verdict: "anchors_present"
+  ok   its delivery anchors are PRESENT in the captured prose
+
+4. on a DELIVERED verdict the chain commits and ACTIVATES  [verdict is a FIXTURE]
+  ok   the adjudicator commits it
+  ok     the fact is byte-identical to the sealed content
+  ok     with sealed provenance
+  ok     and the institution ACTIVATES
+
+5. ALIAS RESOLUTION — the measurement activation has never reached live
+   {"activatedId":"ent:stage:1","label":{"name":"Toll Road Commission","ok":true,"id":"ent:stage:1"},"aliases":[{"name":"the commission","ok":true,"id":"ent:stage:1"},{"name":"the governing commission","ok":true,"id":"ent:stage:1"}]}
+  ok   every declared alias resolves to the activated entity
+  ok     and the canonical label resolves to the same entity
+
+6. RUN 18's PARTIAL IS PRESERVED AS LEGITIMATE
+  ok   the old fact under run 18's real verdict still does NOT commit
+  ok     carrying the verifier's own reason, incomplete_rendering
+  ok     nothing committed and nothing activated from it
+  ok   and this control never rewrites a verdict to DELIVERED in the app
+
+7. WHAT THIS DOES AND DOES NOT ESTABLISH
+   ESTABLISHED: the aligned fact claims only what the captured prose stages verbatim;
+                its anchors are present; and on a DELIVERED verdict the chain commits,
+                activates, and resolves every alias AND the label to one entity.
+   NOT ESTABLISHED: that the live verifier will call it DELIVERED. The verdict in
+                section 4 is a FIXTURE. Three runs have shown this verifier's standard
+                is stricter than the proposal wording, and alignment removes the
+                MISMATCH — it does not compel a judgement.
+   NOT TAKEN: changing the AUTHOR PROMPT to require a completed acknowledgement, which
+                is Roman's stated alternative and a separate decision.
+
+26/26 passed

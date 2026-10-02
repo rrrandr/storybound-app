@@ -1,0 +1,55 @@
+=== SEAL-GATE CONTROL (no network, no model, $0) ===
+
+1. a NON-SEALING draw withholds the author
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+   planner served=1  author released=0 blocked=0
+   handler: "rejected"
+  ok   the handler refused the proposal
+  ok     no continuation seal exists
+  ok     the AUTHOR WAS NEVER RELEASED — the expensive stage is withheld
+  FAIL   and the gate actively blocked it (it was reached and refused, not merely absent)  — blocked=0
+
+2. a SEALING draw releases the author exactly once
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+   planner served=1  author released=0 blocked=0
+  ok   the proposal sealed
+  ok     a continuation seal exists
+  FAIL   the author WAS released  — released=0
+  ok     and never blocked on that draw
+
+3. the gate reads the LIVE store, so a seal cannot be manufactured
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+   handler: "rejected"  author released=0 blocked=0
+  ok   a reply CLAIMING durable with no identified referent is refused
+  ok     so no seal exists
+  ok     and the author is STILL withheld — the gate trusts the store, not the claim
+
+4. an empty/garbage planner reply also withholds the author
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+  ok   no seal from a garbage reply
+  ok     author withheld
+
+5. the runner refuses the mode combinations Roman separated
+  ok   --seal-gated with --samples is REFUSED
+  ok     and the message explains both purposes
+  ok   --seal-gated with --planner-only is REFUSED
+  ok   --seal-gated without a case is REFUSED
+
+6. the reservation is the WORST case — all three draws plus author and verifier
+  ok   three planner draws are reserved, not one
+  ok     and the total is $0.183750
+  ok     with the author explicitly described as gated
+
+18/20 passed

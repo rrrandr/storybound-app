@@ -1,0 +1,44 @@
+=== COMMIT REFERENTIAL INTEGRITY (no network, $0) ===
+
+A. the sealed pre-author record  [BEHAVIOURAL]
+  ok   a system-minted id is assigned
+  ok   the proposed fact is stored EXACTLY, untruncated
+  ok   the record is frozen
+  ok     and a mutation attempt does not change it
+  ok   provenance carries the posture hash
+  ok   provenance carries an invocation id
+
+B. retry reuses the same sealed proposal  [BEHAVIOURAL]
+  ok   a retried plan for the same scene+posture returns the SAME id
+  ok     and no second record was minted
+
+C. a delivered record is byte-identical to its sealed proposal  [BEHAVIOURAL]
+  ok   the committed fact is byte-identical to the sealed fact
+  ok     which is past the old 200-char truncation point
+  ok   the committed entry carries its proposal reference
+  ok   the committed entry is marked provenanceLink=sealed
+  ok   exactly one fact was committed
+  ok   committing the same reference twice does NOT duplicate
+
+D. verifier-supplied content can never become a fact  [BEHAVIOURAL]
+   attempts: ["rejected","rejected","rejected","rejected","rejected","rejected","rejected"]
+  ok   every unsealed/hostile commit attempt is rejected
+  ok   the fact count is unchanged after all of them
+  ok   no verifier text appears in any committed fact
+
+E. legacy facts stay canon without impersonating sealed ones  [BEHAVIOURAL]
+  ok   a legacy fact is marked provenanceLink=absent_legacy
+  ok     it has NO proposal reference
+  ok     its text is not rewritten
+  ok     and it remains present as active canon
+
+F. the verifier's output surface is narrowed  [STATIC — source properties]
+  ok   _commitScene body was located
+  FAIL the commit call passes a REFERENCE, not proposal text
+  ok     and the reference comes from the pending sealed store, not the verifier reply
+  ok   the card is built DETERMINISTICALLY, not from the verifier tableau
+  ok   the built card carries NO decisiveChange key
+  ok   dominant_replacement is never persisted (log-only)
+  ok   _commitTransition has exactly one call site in the file
+
+27/28 passed

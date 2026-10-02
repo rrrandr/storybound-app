@@ -1,0 +1,58 @@
+=== CONTINUATION FLAG GATE (no network, no model, $0) ===
+
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+A. PRODUCTION DEFAULT — flag untouched (value: undefined)
+  ok   the flag is undefined
+  ok   _continuationSchemaEnabled() is false
+
+   a proposal-shaped reply is INERT
+  ok   the handler reports disabled
+  ok     outcome is none
+  ok     NOTHING was sealed
+  ok     NO entity was minted
+  ok     the institution is not resolvable
+  ok     NO author carrier was set
+  ok     the ledger is empty
+  ok     activation was not even possible
+  ok     the ledger is still empty after the attempt
+
+   the PROMPTS are unchanged
+  ok   a planner request was assembled
+  ok     it carries NO continuation schema
+  ok     the pre-existing event-slots contract is intact
+  ok   an author request was assembled
+  ok     it carries NO continuation block
+  ok     and no proposal fact text
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/config
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/csp-report
+[NETWORK-GATE] ABORT (undeclared): http://localhost:3000/api/geo
+
+B. EXPLICIT OPT-IN — flag set to true by the runner
+  ok   _continuationSchemaEnabled() is true
+  ok   the same reply now SEALS
+  ok     one proposal exists
+   ledger kinds after mint: ["named","named"] (PC/LI anchors are bootstrapped by _relLedger(true), not proposed)
+  ok     the pending entity is NOT in the active ledger
+  ok     and not yet resolvable as active canon
+  ok     the author carrier IS set
+  ok     sealing wrote no fact
+
+   the schema and author boundary are reached
+  ok   the planner carries the continuation schema
+  ok     with all six entity kinds
+  ok     and the Tier 3 basis requirement
+  ok   the author carries the sealed fact
+  ok     under the already-true heading
+  ok     and still no entity id
+  ok     and still no posture hash
+
+C. the two directions genuinely differ
+  ok   the planner schema is present ONLY under opt-in
+  ok   the author block is present ONLY under opt-in
+  ok   sealing happens ONLY under opt-in
+
+34/34 passed

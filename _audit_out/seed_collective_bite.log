@@ -1,0 +1,36 @@
+=== SEED-COLLECTIVE EXEMPTION CONTROL (provider-free, $0) ===
+
+  captured reply read from _fs_planner_capture_out/run_2026-10-02T13-52-38-343Z/planner_response.json
+  its pressure_scope = "scene_local", canon_change = null, introduces = []
+  seed collectives the guard now knows: ["the assembly"]
+
+1. the seed actually declares the collective (otherwise nothing below means anything)
+  ok   the active seed yields at least one structured collective
+  ok   "the assembly" is among them
+  ok   presentGroups prose did NOT leak in — no parentheticals, no "unnamed"
+
+2. THE REAL CAPTURED REPLY — the established assembly no longer rejects it
+  FAIL no persistence violation is raised  — ["pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pressure_scope \"durable\" with kind, aliases and future_relevance in introduces[]), or return a no-change alternative that does not rely on it"]
+  FAIL nothing complains about a continuing body  — ["pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pressure_scope \"durable\" with kind, aliases and future_relevance in introduces[]), or return a no-change alternative that does not rely on it"]
+  FAIL the reply is ACCEPTED  — rejected :: ["pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pres
+     full why: [
+  "pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pressure_scope \"durable\" with kind, aliases and future_relevance in introduces[]), or return a no-change alternative that does not rely on it"
+]
+
+3. AN UNSEEDED continuing body in the same fields is STILL rejected
+  ok   a persistence violation IS raised
+  ok   the complaint names the unseeded body
+  ok   the reply is REJECTED
+  ok   a lowercase unseeded body ("the tribunal") is rejected too
+
+4. forward_pressure: the seed collective is exempt, an unseeded body is not
+  FAIL "The assembly" in forward_pressure does not trip the guard  — ["pressure_scope \"scene_local\" but forward_pressure names what reads as a continuing referent: [assembly]. Either leave it unnamed, or mark the pressure \"durable\" and declare it in introduces[]. forward_pressure is n
+  ok   "The commission" in forward_pressure still trips it
+
+5. the exemption is scoped to the canonical name, not to the word
+  ok   "the Assembly of Ways" is NOT exempted by "the assembly"
+
+6. a story with no seed gets no exemptions
+  ok   no starter id yields an empty exemption list
+
+10/14 checks passed

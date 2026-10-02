@@ -1,0 +1,56 @@
+=== CONTINUATION ENVELOPE + REAL PARSER (no network, no model, $0) ===
+
+A. the envelope survives REAL serialization + the real parse
+  ok   all six continuation keys survive JSON round-trip
+  ok     canon_change.content survives
+  ok     introduces survives as a populated array
+
+B. NO-CHANGE continuation — purpose and pressure, zero ledger activity
+  ok   outcome is none
+  ok     it was NOT an envelope violation
+  ok     nothing was sealed
+  ok     no entity was minted
+  ok     the ledger is empty
+  ok     no author carrier was set
+
+C. envelope VIOLATIONS are rejected as violations, not as "none"
+  ok   missing scene_purpose is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+  ok   missing forward_pressure is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+  ok   absent canon_change key is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+  ok   introduces not an array is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+  ok   whitespace-only scene_purpose is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+  ok   no envelope at all (the old optional shape) is rejected
+  ok     flagged as an envelope violation
+  ok     with a specific reason
+
+D. a VALID Tier 2 from the real-parsed reply seals and reaches the author
+  ok   the proposal sealed
+  ok     derived as Tier 2
+  ok     the sealed fact is the reply's canon_change.content
+  ok     one pending entity, with a backend id
+  ok     it is NOT in the active ledger at seal time
+  ok     sealing wrote no fact
+   author block: "\nCONTINUATION — ALREADY TRUE (render it; do not add to it):\n  The Reach Commission opens an investigation into the burning of the Reach.\n  This scene exists to: Bring a consequence back onto her from outside the college.\n  Forward pressure: A body she has no standing with is now looking at her.\n"
+  ok   the author block carries the sealed fact
+  ok     and the reader-facing purpose/pressure
+  ok     and no machinery
+  ok   delivery anchors are satisfied
+  ok   activation yields exactly one sealed-provenance fact
+
+E. the handler is actually WIRED into the planner path  [STATIC]
+  ok   _processContinuationProposal has a call site, not just a definition
+  ok     it is called with the RAW parsed reply, not the whitelisted _stateChange
+  ok     and it sits after _priorSceneStateChange is set (pre-author)
+  ok   the planner call still sets no json_schema or tool schema (code, not comments)
+
+42/42 passed
