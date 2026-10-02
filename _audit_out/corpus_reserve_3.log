@@ -1,0 +1,16 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 3
+  mode         : ESTIMATE ONLY ($0, no browser)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T05-36-15-094Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.017550
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.151350
+  × 3 scene(s) = $0.454050
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+ESTIMATE ONLY — no browser launched, nothing dispatched. $0 spent.

@@ -1,0 +1,40 @@
+=== LIVE N-SCENE CORPUS RUNNER ===
+  scenes       : 2
+  mode         : DRY REPLAY (provider-free, $0)
+  branch       : defy
+  input policy : neutral
+  output       : _live_corpus_out/run_2026-10-02T05-34-51-990Z
+
+RESERVATION (worst case per stage, from _live_spend_ledger.mjs)
+  planner  : $0.017550
+  author   : $0.126000
+  verifier : $0.007800
+  one live scene = $0.151350
+  × 2 scene(s) = $0.302700
+  the memory extractor is REPLAYED in every mode and reserves nothing
+
+── scene 1/2
+  ok   scene 1: the staged scene MOUNTED
+  FAIL scene 1: prose captured from the app projection (>=40 chars)  — proseLen=0
+  ok   scene 1: submit latch cleared before the next advance
+   stages   : ["planner:replayed","author:replayed","memory:replayed"]
+   prose    : 0 chars   facts: 0   activated: 0   verdicts: 0
+   app said : ["[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"]
+
+── scene 2/2
+  ok   scene 2: the gate was OPEN at the moment of submission
+  ok   scene 2: the staged scene MOUNTED
+  FAIL scene 2: prose captured from the app projection (>=40 chars)  — proseLen=0
+   stages   : ["verifier:replayed","planner:replayed","author:replayed"]
+   prose    : 0 chars   facts: 2   activated: 1   verdicts: 2
+   verifier asked about: ["prop:2:1","prop:2:2"]
+   app said : ["[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)"]
+
+── PER-SCENE RESULT TABLE
+  scene | prose | facts | activated | verdicts | refs | stages
+      1 |     0 |     0 |         0 |        0 |    0 | planner:replayed,author:replayed,memory:replayed
+      2 |     0 |     2 |         1 |        2 |    2 | verifier:replayed,planner:replayed,author:replayed
+
+SPEND: $0 — nothing was dispatched (dry_replay).
+
+4/6 per-scene checks passed

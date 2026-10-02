@@ -9,24 +9,27 @@
    stages: ["planner","author","memory"]
    gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=0  activated=0
 ── scene 2/4
+  ok     scene 2: the gate was OPEN at the moment of submission
   ok     scene 2: the staged scene MOUNTED
   ok     scene 2: submit latch cleared before the next advance
    stages: ["verifier","planner","author","memory"]
    gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=2  activated=1
 ── scene 3/4
+  ok     scene 3: the gate was OPEN at the moment of submission
   ok     scene 3: the staged scene MOUNTED
   ok     scene 3: submit latch cleared before the next advance
-   stages: []
-   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=2  activated=1
-── scene 4/4
-  ok     scene 4: the staged scene MOUNTED
-   stages: ["verifier","planner","author","memory"]
+   stages: ["verifier","planner","author"]
    gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=3  activated=1
+── scene 4/4
+  ok     scene 4: the gate was OPEN at the moment of submission
+  ok     scene 4: the staged scene MOUNTED
+   stages: ["memory","verifier","planner","author","memory"]
+   gate: {"beat":26,"last":26,"gateShown":true,"microShown":false}  prose=1457  pending=["state_change","continuation"]  facts=4  activated=1
 
 0. the app's own refusals, per scene
    [scene 1] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
    [scene 2] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
-   [scene 3] [STAGED:SUBMIT] Blocked — gate not yet open
+   [scene 3] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
    [scene 4] [STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
 
 1. every scene reached the planner and the author
@@ -34,8 +37,8 @@
   ok     scene 1: author dispatched
   ok     scene 2: planner dispatched
   ok     scene 2: author dispatched
-  FAIL   scene 3: planner dispatched  — []
-  FAIL   scene 3: author dispatched  — []
+  ok     scene 3: planner dispatched
+  ok     scene 3: author dispatched
   ok     scene 4: planner dispatched
   ok     scene 4: author dispatched
 
@@ -56,15 +59,15 @@
   ok     scene 4: gate opened
 
 4. each scene AFTER the first adjudicated the previous scene
-   verifier dispatched on scenes: [2,4]
-  FAIL a verifier ran on every scene from 2 onward  — [2,4]
+   verifier dispatched on scenes: [2,3,4]
+  ok   a verifier ran on every scene from 2 onward
   ok     each verifier call was given real proposal refs
   ok     and the refs were never repeated across scenes — no stale re-adjudication
 
 5. canon grew monotonically, without duplication or corruption
-   facts after each scene: [0,2,2,3]
+   facts after each scene: [0,2,3,4]
    activated after each scene: [0,1,1,1]
-   committedThrough: [null,2,2,3]
+   committedThrough: [null,2,3,4]
   ok   facts never decreased
   ok   facts grew after the first adjudication
   ok   no duplicate fact refs at any point
@@ -72,9 +75,9 @@
   ok   the entity register never shrank
 
 6. THE VERDICT ON HARNESS RELIABILITY
-   the harness broke before 4 scenes — do NOT attempt a paid corpus.
+   4 consecutive scenes survived every boundary with no harness failure.
    This is a RELIABILITY result only. Every scene replayed the SAME author response,
    so the prose is identical scene to scene and NOTHING here says anything about
    forward movement, circling or quality.
 
-32/35 passed
+38/38 passed

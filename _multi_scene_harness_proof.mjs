@@ -32,50 +32,22 @@ const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
 
 const SCENES = 4;
-const RUN13 = '_continuation_live_eval_out/run_2026-10-01T22-08-44-097Z';
-const contentOf = (f) => {
-  const j = JSON.parse(fs.readFileSync(RUN13 + '/' + f, 'utf8'));
-  return j.content || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
-};
-const PLANNER_RAW = contentOf('s1_response_planner_1.json');
-// PER-SCENE DISTINCT INSTITUTION — a LABELLED FIXTURE EDIT, and the first run of this control is
-// what forced it. Replaying one planner reply made every scene introduce the SAME "Toll Road
-// Commission", and from scene 3 onward the identity guard REJECTED it as a redefinition of an
-// entity already activated in scene 1. That is the guard working correctly, not a defect: one
-// institution cannot be introduced as new four times. So each scene introduces its OWN body, which
-// is what a real multi-scene run would do, and leaves the guard's uniqueness rule intact.
-const BODIES = [
-  { label: 'Toll Road Commission', aliases: ['the commission', 'the toll commission'] },
-  { label: 'River Assize', aliases: ['the assize', 'the river assize'] },
-  { label: 'Chancery of Ways', aliases: ['the chancery', 'the ways chancery'] },
-  { label: 'Veilwood Tribunal', aliases: ['the tribunal', 'the veilwood tribunal'] }
-];
-const plannerFor = (scene) => {
-  const b = BODIES[(scene - 1) % BODIES.length];
-  try {
-    const i = PLANNER_RAW.indexOf('{'), j = PLANNER_RAW.lastIndexOf('}');
-    const o = JSON.parse(PLANNER_RAW.slice(i, j + 1));
-    if (!o.introduces || !o.introduces[0] || !o.canon_change) throw new Error('unexpected shape');
-    o.introduces[0].label = b.label;
-    o.introduces[0].aliases = b.aliases.slice();
-    o.canon_change.targets = [b.label];
-    o.canon_change.content = b.label + "'s clerk begins reading the sealed demand aloud in the chamber.";
-    o.forward_pressure = 'The ' + b.label + ' now has the demand in hand and must answer it.';
-    return JSON.stringify(o);
-  } catch (e) {
+// THE FIXTURES MOVED TO _replay_fixtures.mjs so the live runner replays the same corpus in its
+// dry mode. plannerFor now THROWS on an unexpected recorded shape instead of exiting, so the
+// caller decides; this harness still refuses rather than inventing a reply.
+let plannerFor;
+try {
+  const fx = await import('./_replay_fixtures.mjs');
+  plannerFor = (s) => { try { return fx.plannerFor(s); } catch (e) {
     console.error('REFUSED: could not vary the recorded planner reply — ' + (e && e.message));
-    process.exit(4);
-  }
-};
-const AUTHOR = contentOf('s1_response_author_2.json');
-const MEMORY = JSON.stringify({
-  characters: [],
-  scene: { chargeTier: 'low', interpretiveDensity: 'measured', loadedSentenceRatio: 0.0 },
-  sceneState: { setting: null, charactersPresent: [], protagonistStatus: null,
-    decisiveChange: null, activeInterlocutor: null, protagonistAlone: false },
-  relations: []
-});
-const TRACER = "The clerk's fingers crack the seal on the parchment I sent.";
+    process.exit(4); } };
+  var PLANNER_RAW = fx.PLANNER_RAW, AUTHOR = fx.AUTHOR, MEMORY = fx.MEMORY, TRACER = fx.TRACER,
+    stageOf = fx.stageOf, refsFromVerifierRequest = fx.refsFromVerifierRequest,
+    verifierVerdict = fx.verifierVerdict;
+} catch (e) {
+  console.error('REFUSED: replay fixtures unavailable — ' + (e && e.message));
+  process.exit(4);
+}
 
 console.log('=== MULTI-SCENE HARNESS PROOF (provider-free, $0) ===\n');
 console.log('  ' + SCENES + ' consecutive scenes through window._advanceStagedScene');
@@ -106,13 +78,7 @@ await page.route('**/api/**', async (route) => {
   try { const j = JSON.parse(raw || '{}');
     sys = String((j.messages || [])[0]?.content || '');
     usr = String((j.messages || [])[1]?.content || ''); } catch (_) {}
-  const AMARK = [/FORBIDDEN INVENTIONS/i, /SCENE DIRECTIVES/i, /DIRECTIVE/, /write the scene/i,
-    /screenplay-native|cinematic-romance writer|prose author/i].reduce((n, rx) => n + (rx.test(sys) ? 1 : 0), 0);
-  const stage = /RUNTIME COMMIT verifier/.test(sys) ? 'verifier'
-    : (/CHARACTER MEMORY EXTRACTOR/.test(sys) ? 'memory'
-    : (AMARK >= 2 ? 'author'
-    : (/SCENE-SPINE planner|SCENE planner/.test(sys) ? 'planner'
-    : (/BODY BIBLE/.test(sys) ? 'bible' : 'other'))));
+  const stage = stageOf(sys);
   calls.push({ scene: sceneNo, stage });
   const give = (c) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ content: c }) });
@@ -122,17 +88,9 @@ await page.route('**/api/**', async (route) => {
   if (stage === 'verifier') {
     // THE REFS COME OUT OF THE REQUEST. This harness never invents a proposal id; it answers
     // exactly what it was asked about, which is also the only way the reply can be adjudicated.
-    const refs = (usr.match(/ref (prop:\d+:\d+)/g) || []).map(m => m.replace('ref ', ''));
+    const refs = refsFromVerifierRequest(usr);
     verifierSeen.push({ scene: sceneNo, refs });
-    return give(JSON.stringify({
-      delivery: 'DELIVERED', transition_position: 40, first_irreversible_position: 40,
-      per_proposal: refs.map(r => ({ ref: r, delivery: 'DELIVERED', reason: 'delivered',
-        evidence: TRACER, precondition_evidence: TRACER })),
-      slots_check: { precondition_evidence: TRACER, actor_evidence: TRACER,
-        action_evidence: TRACER, target_evidence: TRACER, exit_state_evidence: TRACER,
-        occurred_this_scene: true },
-      actual_exit_state: 'the demand is with the commission'
-    }));
+    return give(verifierVerdict(refs));
   }
   try { await route.abort(); } catch (_) {}
 });

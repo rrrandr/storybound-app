@@ -1,0 +1,67 @@
+=== LIVE CORPUS RUNNER PREFLIGHT (provider-free, $0) ===
+
+1. no authorization, no dispatch — and no browser
+  ok   refuses with exit 2
+  ok   names all three legitimate modes
+  ok   says plainly that it would dispatch real provider calls
+  ok   created NO run directory — it refused before any setup
+
+1b. nonsense arguments are refused, not interpreted
+  ok   --scenes 0 is refused
+  ok   --scenes 11 is refused (a CG issue is 10)
+  ok   an unknown --input-policy is refused
+
+2. --estimate-only quotes the SHARED reservation and spends nothing
+  ok   exits 0
+  ok   the per-scene figure IS the shared module's R_SCENE
+  ok   three scenes reserve exactly 3 x R_SCENE
+  ok   each stage figure matches the module
+  ok   it says nothing was dispatched and no browser launched
+  ok   no response artefact was written
+  ok   no prose was captured — the loop never ran
+
+3. a ceiling below the reservation is REFUSED before dispatch
+  ok   exits 3
+  ok   states both figures
+  ok   records that zero calls were dispatched
+  ok   the recorded reservation is the real one
+  ok   no response artefact was written
+
+4. two scenes in DRY REPLAY — the loop, the capture, the ordering
+   (this launches a browser and walks the real production path; give it a minute)
+  ok   exits 0 with no failed per-scene check
+  ok   the manifest records DRY REPLAY and zero authorization
+  ok   both scenes completed
+  ok   scene 1 captured prose to its own file
+  ok   scene 2 captured prose to its own file
+  ok   the manifest's prose lengths agree with the files on disk
+  ok   scene 1 ran the planner before the author
+  ok   scene 2 ran the planner before the author
+  ok   no verifier call on scene 1 — there is nothing yet to adjudicate
+  ok   the verifier ran on scene 2
+  ok   and it was asked about at least one sealed ref, parsed from its own request
+  ok   every ref it was asked about has the real proposal shape
+  ok   facts grew across the boundary
+  ok   scene 2 recorded per-proposal verdicts
+  ok   the gate reading is recorded per scene
+  ok   the input used is recorded per scene
+  ok   failures and app refusals are recorded per scene (empty is a value, not an absence)
+  ok   no duplicate-stage call was needed (none blocked)
+  ok   the input policy and its risk are both recorded
+  ok   spend is reported as $0 for a provider-free run
+
+5. the runner writes no app state and holds no second copy of the money
+  ok   never writes gateShown
+  ok   never writes the submit latch
+  ok   never calls _commitScene directly
+  ok   never writes a scene projection
+  ok   never writes committed state or the register
+  ok   reads prose only through the app's own projection accessor
+  ok   holds no second copy of the author reservation
+  ok   imports the reservation from the shared module
+  ok   imports the stage classifier rather than rewriting it
+  ok   the live branch records every dispatch through the shared ledger
+  ok   a dispatch is checked against the authorization BEFORE it goes out
+  ok   one attempt per stage per scene is enforced in code
+
+51/51 preflight checks passed
