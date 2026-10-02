@@ -343,7 +343,7 @@ t('  and lists scene 1\'s sealed refs for judgement',
 const after = await page.evaluate(() => {
   const cs = window._ensureCommittedState();
   const reg = window._protectedRegisterIds();
-  return { facts: cs.facts.map(f => ({ ref: f.proposalRef, prov: f.provenanceLink, scene: f.committedAtScene })),
+  return { facts: cs.facts.map(f => ({ fact: f.fact, ref: f.proposalRef, prov: f.provenanceLink, scene: f.committedAtScene })),
     committedThrough: cs._committedThroughScene,
     adjudication: window.state._lastPerProposalAdjudication || null,
     activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')
@@ -367,6 +367,37 @@ t('  committedThroughScene advanced', after.committedThrough != null,
 // ITSELF, both read after the probe.
 //
 // Both shapes are exercised here, provider-free, PINNED FIRST so its assertions are uncontaminated.
+// ── THE NEXT PLANNER MUST SEE THE ACTIVATED INSTITUTION ─────────────────────
+// Run 19 could not measure this: under --live-verifier-only the paid runner's replay branch
+// returned before writing the request, so the assertion read an empty string. Here the scene-2
+// planner request IS captured, and it is assembled AFTER _commitScene has committed and activated —
+// so this is the provider-free proof of the claim that run could not make.
+console.log('\nTHE NEXT PLANNER SEES THE ACTIVATED INSTITUTION');
+const s2Planner = seen.filter(c => c.stage === 'planner').pop();
+const s2Raw = s2Planner ? String(s2Planner.raw || '') : '';
+const s2Unq = s2Raw.replace(/\\"/g, '"');
+const actLabel = (after.activated[0] || {}).label || null;
+// SELECT BY REF, not by guessing at the wording. My first version filtered on /clerk|Commission/i
+// and came back null, so the assertion failed on my selector rather than on the payload.
+const ctRefHere = (after.adjudication && Object.keys(after.adjudication.verdicts || {})
+  .filter(k => (after.adjudication.verdicts[k] || {}).kind === 'continuation')[0]) || null;
+const ctCommitted = (after.facts.filter(f => f.ref === ctRefHere)[0] || {}).fact || null;
+console.log('  scene-2 planner request: ' + s2Raw.length + ' bytes');
+console.log('  activated label: ' + JSON.stringify(actLabel));
+t('a scene-2 planner request was captured', s2Raw.length > 0);
+t('  it carries a COMMITTED WORLD STATE block', /COMMITTED WORLD STATE/.test(s2Unq));
+t('  it names the activated institution', !!actLabel && s2Unq.indexOf(actLabel) >= 0,
+  'label=' + JSON.stringify(actLabel));
+console.log('  continuation ref: ' + JSON.stringify(ctRefHere)
+  + ' fact: ' + JSON.stringify(ctCommitted && String(ctCommitted).slice(0, 60)));
+t('  the continuation fact was identified by its own ref', !!ctCommitted,
+  'refs=' + JSON.stringify(after.facts.map(f => f.ref)) + ' ctRef=' + JSON.stringify(ctRefHere));
+t('  and that committed FACT is in the planner payload',
+  !!ctCommitted && s2Unq.indexOf(String(ctCommitted).slice(0, 48)) >= 0,
+  JSON.stringify(ctCommitted && String(ctCommitted).slice(0, 48)));
+t('  while carrying NO pending-entity machinery', !/ent:stage:\d+/.test(s2Unq),
+  (s2Unq.match(/ent:stage:\d+/) || [''])[0]);
+
 console.log('\nIDEMPOTENCY — the PINNED probe (correct) and the OLD shape (the defect)');
 const vBefore = seen.filter(c => c.stage === 'verifier').length;          // BASELINE, captured FIRST
 const factsBefore = after.facts.map(f => f.ref).sort().join('|');

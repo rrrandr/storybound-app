@@ -611,7 +611,14 @@ const runTwoScene = async (C) => {
         if (!sealed) { try { await route.abort(); } catch (_) {} return; }
       }
       const body = stage === 'planner' ? REPLAY_PLANNER : REPLAY_AUTHOR;
+      // CAPTURE BEFORE FULFILLING. The replay branch used to return straight from route.fulfill,
+      // so the REQUEST was never written and `calls` never recorded it — which is why run 19's
+      // "the next planner payload names it" assertion had nothing to read and failed on an empty
+      // string. The request is the thing under test here; it is saved first.
       say('      [REPLAY] ' + stage + ' — run 13 recorded response (' + body.length + ' chars), $0');
+      write('s' + phase + '_request_' + stage + '_' + (calls.length + 1) + '.json', raw || '');
+      calls.push({ phase, stage, request: raw, response: JSON.stringify({ content: body }),
+        replayed: true });
       return route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify({ content: body }) });
     }
@@ -939,9 +946,23 @@ if (TWO_SCENE) {
     && R.s2.adjudication.verdicts[ctRef] && R.s2.adjudication.verdicts[scRef]),
     JSON.stringify(R.s2.adjudication));
   if (ctFact) {
+    // FIXED. This read `ctFact.scene === (R.s1.pending.length ? 2 : ctFact.scene)` — a nonsense
+    // expression that demanded scene 2 whenever anything was pending, and so failed run 19 on a
+    // record that was entirely correct. The real property: the committed fact is byte-identical to
+    // its SEALED content, carries sealed provenance, and is attributed to the scene its own ref
+    // names (prop:<scene>:<seq>), not to a hardcoded number.
+    const ctSealedFact = ((R.s2.adjudication && R.s2.adjudication.verdicts) || {}) && (function () {
+      const rec = (R.s1.pending || []).filter(p => p.kind === 'continuation')[0] || null;
+      return rec ? rec.id : null;
+    })();
+    const refScene = (function () { const m = /^prop:(\d+):\d+$/.exec(String(ctFact.ref || ''));
+      return m ? Number(m[1]) : null; })();
     t('the CONTINUATION committed its own exact sealed record',
-      ctFact.prov === 'sealed' && ctFact.scene === (R.s1.pending.length ? 2 : ctFact.scene),
-      JSON.stringify(ctFact));
+      ctFact.prov === 'sealed' && refScene !== null && ctFact.scene === refScene,
+      JSON.stringify({ fact: ctFact, refScene: refScene }));
+    t('  and its text is byte-identical to the fact the planner proposed',
+      !!(E.canon_change && ctFact.fact === E.canon_change.content),
+      JSON.stringify([ctFact.fact, E.canon_change && E.canon_change.content]));
     t('  exactly one fact per sealed ref — no duplicates',
       new Set(R.s2.facts.map(f => f.ref)).size === R.s2.facts.length,
       JSON.stringify(R.s2.facts.map(f => f.ref)));
@@ -949,10 +970,19 @@ if (TWO_SCENE) {
       R.s2.activated.length === 1, JSON.stringify(R.s2.activated));
     t('  with its sealed aliases', R.s2.activated.length === 1
       && (R.s2.activated[0].aliases || []).length >= 1, JSON.stringify(R.s2.activated));
-    t('  and the NEXT planner payload names it',
+    t('  the NEXT planner request was captured at all', R.s2PlannerRequest.length > 0,
+      'empty — the replay branch did not record it');
+    t('  and the NEXT planner payload names the activated institution',
       R.s2.activated.length === 1
       && R.s2PlannerRequest.indexOf(String(R.s2.activated[0].label)) >= 0,
-      'label=' + (R.s2.activated.length ? R.s2.activated[0].label : '?'));
+      'label=' + (R.s2.activated.length ? R.s2.activated[0].label : '?')
+      + ' payloadBytes=' + R.s2PlannerRequest.length);
+    t('  carried as COMMITTED WORLD STATE, not as loose text',
+      /COMMITTED WORLD STATE/.test(R.s2PlannerRequest.replace(/\\"/g, '"')),
+      'no committed-state block in the planner payload');
+    t('  and the committed continuation FACT itself is in that payload',
+      !!(ctFact && R.s2PlannerRequest.replace(/\\"/g, '"').indexOf(String(ctFact.fact).slice(0, 48)) >= 0),
+      JSON.stringify(ctFact && String(ctFact.fact).slice(0, 48)));
     t('  while carrying NO pending-entity machinery',
       !/ent:stage:\d+/.test(R.s2PlannerRequest),
       (R.s2PlannerRequest.match(/ent:stage:\d+/) || [''])[0]);

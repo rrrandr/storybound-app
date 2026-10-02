@@ -377,6 +377,26 @@ t('aliases must RESOLVE to the activated entity, not merely appear',
   /every declared alias resolves to the activated entity/.test(runner)
   && /_deliveryAnchorAliases\(x\)/.test(runner));
 
+console.log('\nTHE TWO RUN-19 HARNESS DEFECTS ARE FIXED');
+// COMMENT LINES STRIPPED. The runner's own comment QUOTES the old expression to explain what was
+// wrong with it, so scanning the raw source matched my explanation and reported the defect as
+// still present. This is the self-matching trap that has now bitten three separate scans in this
+// session; a scan for absent CODE must look only at code.
+const runnerCode = runner.split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+t('the nonsense scene comparison is gone from the CODE',
+  !/ctFact\.scene === \(R\.s1\.pending\.length \? 2 : ctFact\.scene\)/.test(runnerCode));
+t('  the scene is now derived from the proposal\'s OWN ref',
+  /\^prop:\(\\d\+\):\\d\+\$/.test(runner) && /ctFact\.scene === refScene/.test(runner));
+t('  and the fact text is compared to what the planner proposed',
+  /ctFact\.fact === E\.canon_change\.content/.test(runner));
+t('the replayed request is CAPTURED BEFORE being fulfilled',
+  /write\('s' \+ phase \+ '_request_' \+ stage[\s\S]{0,200}calls\.push\(\{ phase, stage, request: raw[\s\S]{0,120}replayed: true/.test(runner));
+t('  so the planner-payload assertion has something to read',
+  /the NEXT planner request was captured at all/.test(runner));
+t('  and it checks COMMITTED WORLD STATE context, not a bare substring',
+  /carried as COMMITTED WORLD STATE, not as loose text/.test(runner)
+  && /the committed continuation FACT itself is in that payload/.test(runner));
+
 console.log('\nTHE RUN REPORTS THE DIAGNOSTIC FIELDS');
 t('the per-proposal reason is printed per proposal',
   /reason=' \+ JSON\.stringify\(v\.reason \|\| null\)/.test(runner));
