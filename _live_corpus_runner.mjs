@@ -30,7 +30,9 @@ import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
 import { R_PLANNER, R_AUTHOR, R_VERIFIER, R_SCENE, makeSpendLedger, reservationLines }
   from './_live_spend_ledger.mjs';
-import { plannerFor, AUTHOR as REPLAY_AUTHOR, MEMORY, stageOf, refsFromVerifierRequest, isProviderEndpoint,
+import { findFSDef, launchFS, unlockFS, finalizePreview, readAxis, advanceExpectingGate,
+  chooseBranch } from './_fs_story_setup.mjs';
+import { plannerFor, fsPlannerCaptured, AUTHOR as REPLAY_AUTHOR, MEMORY, stageOf, refsFromVerifierRequest, isProviderEndpoint,
   verifierVerdict } from './_replay_fixtures.mjs';
 
 const ARG = process.argv.slice(2);
@@ -44,8 +46,24 @@ const ESTIMATE_ONLY = ARG.includes('--estimate-only');
 const DRY_REPLAY = ARG.includes('--dry-replay');
 const AUTHORIZED = numArg('--authorize', null);
 const INPUT_POLICY = strArg('--input-policy', 'neutral');
-const BRANCH = strArg('--branch', 'defy');
+// STORY: `fs` is First Sacrifice, the Book the study is about — baked scene 1, the decision prompt,
+// the real branch handler. `synthetic` is the bare staged story the four-scene proof established,
+// kept as a RELIABILITY FIXTURE only: it answers "does the machinery survive N boundaries", never
+// "is the prose any good on the Book we ship".
+const STORY = strArg('--story', 'fs');
+// For FS the arm maps onto the product's own axis. A and B are its two buttons; C takes the SAME
+// axis choice as B and diverges in say/do, because the axis is binary and no third button exists.
+const ARM = strArg('--arm', 'A');
+const BRANCH = strArg('--branch', 'defy');   // synthetic story only
 
+if (!['fs', 'synthetic'].includes(STORY)) {
+  console.error('REFUSED: --story must be fs or synthetic.');
+  process.exit(2);
+}
+if (STORY === 'fs' && !['A', 'B', 'C'].includes(ARM)) {
+  console.error('REFUSED: --arm must be A, B or C.');
+  process.exit(2);
+}
 if (!(SCENES >= 1 && SCENES <= 10)) {
   console.error('REFUSED: --scenes must be 1..10 (a CG issue is 10 scenes).');
   process.exit(2);
@@ -84,10 +102,20 @@ say('  input policy : ' + INPUT_POLICY);
 say('  output       : ' + RUN);
 
 // ── THE RESERVATION, from the one module that defines it ────────────────────
-const reserved = R_SCENE * SCENES;
+// FS'S SCENE 1 IS NOT GENERATED. It is a fixed authored package, displayed and committed with ZERO
+// provider calls (measured: _fs_scene1_preflight.mjs). So an N-scene FS path buys N-1 generated
+// scenes, and reserving N would over-reserve by a whole scene. The synthetic story generates every
+// scene including the first, so there it is N.
+const LIVE_SCENES = (STORY === 'fs') ? Math.max(0, SCENES - 1) : SCENES;
+const reserved = R_SCENE * LIVE_SCENES;
 say('\nRESERVATION (worst case per stage, from _live_spend_ledger.mjs)');
 reservationLines().forEach(say);
-say('  × ' + SCENES + ' scene(s) = $' + reserved.toFixed(6));
+if (STORY === 'fs') {
+  say('  scene 1 is FS\'s BAKED package — fixed, authored, ZERO provider calls, not reserved');
+  say('  × ' + LIVE_SCENES + ' GENERATED scene(s) of ' + SCENES + ' = $' + reserved.toFixed(6));
+} else {
+  say('  × ' + LIVE_SCENES + ' scene(s) = $' + reserved.toFixed(6));
+}
 say('  the memory extractor is REPLAYED in every mode and reserves nothing');
 if (LIVE && reserved > AUTHORIZED) {
   say('\nREFUSED BEFORE DISPATCH: reserved $' + reserved.toFixed(6)
@@ -179,7 +207,13 @@ await page.route('**/api/**', async (route) => {
 
   if (DRY_REPLAY) {
     calls.push({ scene: sceneNo, stage, outcome: 'replayed' });
-    if (stage === 'planner') { try { return give(plannerFor(sceneNo)); }
+    if (stage === 'planner') {
+      // FS's CG planner wants a different reply shape from the synthetic story's continuation
+      // envelope — local_objective, local_objective_actor, posture_read, present, reserved,
+      // aftermath. Serving the synthetic fixture on the FS path draws "[OBJECTIVE:REJECTED] no
+      // local_objective…", a FIXTURE failure that reads like a product one. fsPlannerCaptured()
+      // throws rather than falling back, so that can no longer happen silently.
+      try { return give(STORY === 'fs' ? fsPlannerCaptured() : plannerFor(sceneNo)); }
       catch (e) { say('  REFUSED: ' + e.message); try { await route.abort(); } catch (_) {} return; } }
     if (stage === 'author') return give(REPLAY_AUTHOR);
     if (stage === 'verifier') {
@@ -221,24 +255,53 @@ await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeo
 await page.waitForFunction(() => typeof window._advanceStagedScene === 'function'
   && typeof window._advanceStagedBeat === 'function', { timeout: 20000 });
 
-await page.evaluate(() => {
-  window._continuationProposalSchema = true;
-  window.state = window.state || {};
-  delete window.state._starterId;
-  window.state.storyId = 'story-livecorpus';
-  window.state.world = 'Fatelands';
-  window.state.worldSubtype = 'arcane_binding';
-  window.state.picks = { flavor: 'Arcane Binding', world: 'Fatelands' };
-  window.state.storyLength = 'fling';
-  window.state.playerName = 'Wren';
-  window.state.loveInterestName = 'Cassel';
-  window.state._relationshipLedger = null;
-  window.state._committedState = null;
-  window.state._sealedProposals = null;
-  window.state.turnCount = 1;
-  window.state.renderMode = 'staged_story_mode';
-  window.state._cgScreenplayMode = true;
-});
+// ── BRINGING UP THE STORY ───────────────────────────────────────────────────
+let fsAxis = null, fsSetup = null;
+if (STORY === 'fs') {
+  // THE REAL FS SEQUENCE, from _fs_story_setup.mjs — the same module the FS preflight uses, so the
+  // runner and the preflight cannot disagree about what the path is. Every step is production code.
+  say('\nBRINGING UP FIRST SACRIFICE (the Book the study is about)');
+  const def = await findFSDef(page);
+  if (!def) { say('REFUSED: starter_first_sacrifice is not in STARTER_STORIES.'); process.exit(4); }
+  const mount = await launchFS(page, def);
+  t('FS scene 1 mounted from its baked package', !!mount.mountedAt);
+  t('and it cost nothing — no provider call to display it',
+    calls.filter(c => c.stage === 'planner' || c.stage === 'author').length === 0,
+    JSON.stringify(calls));
+  const unlock = await unlockFS(page, 'corpus-runner');
+  t('the production unlock committed scene 1 as scenes[0]',
+    unlock.returned === true && unlock.state.sceneCount === 1,
+    JSON.stringify(unlock.returned) + ' scenes=' + unlock.state.sceneCount);
+  const fin = await finalizePreview(page);
+  t('the preview was finalized through the production function',
+    fin.ran === true && fin.after.previewActive === false, JSON.stringify(fin));
+  fsAxis = await readAxis(page);
+  t('the authored decision axis is readable', !!fsAxis, JSON.stringify(fsAxis));
+  say('  axis: "' + (fsAxis && fsAxis.axis) + '"');
+  fsSetup = { mount, unlock: unlock.state, finalize: fin, axis: fsAxis };
+} else {
+  // THE SYNTHETIC RELIABILITY FIXTURE. Bare staged story, every scene generated. It is NOT the
+  // Book and answers no question about its prose.
+  say('\nBRINGING UP THE SYNTHETIC RELIABILITY FIXTURE (not First Sacrifice)');
+  await page.evaluate(() => {
+    window._continuationProposalSchema = true;
+    window.state = window.state || {};
+    delete window.state._starterId;
+    window.state.storyId = 'story-livecorpus';
+    window.state.world = 'Fatelands';
+    window.state.worldSubtype = 'arcane_binding';
+    window.state.picks = { flavor: 'Arcane Binding', world: 'Fatelands' };
+    window.state.storyLength = 'fling';
+    window.state.playerName = 'Wren';
+    window.state.loveInterestName = 'Cassel';
+    window.state._relationshipLedger = null;
+    window.state._committedState = null;
+    window.state._sealedProposals = null;
+    window.state.turnCount = 1;
+    window.state.renderMode = 'staged_story_mode';
+    window.state._cgScreenplayMode = true;
+  });
+}
 
 // Read the scene through to the say/do gate, exactly as a reader does. gateShown is never written.
 const readToGate = () => page.evaluate(async () => {
@@ -285,14 +348,74 @@ const snapshot = () => page.evaluate(() => {
 });
 
 // ── THE SCENE LOOP, as proven by the four-scene harness ─────────────────────
+// FS ARMS MAP ONTO THE PRODUCT'S OWN AXIS. A and B are its two buttons. C takes the SAME button as
+// B and diverges only in the words the reader then types, because the axis is binary — there is no
+// third button and no reader can take a third axis choice.
+const FS_ARMS = {
+  A: { button: 'A', action: 'I turn away from the clearing and walk, and I do not look at any of them.',
+       dialogue: 'Nothing. I have nothing to say to any of you.' },
+  B: { button: 'B', action: 'I stay where I am and keep my eyes on Julian, waiting to see what he does next.',
+       dialogue: 'I am still here. Say the rest of it.' },
+  C: { button: 'B', action: 'I stay, and I say out loud what everyone in this clearing is pretending not to know.',
+       dialogue: 'Say whose wish it really was. Say it where they can all hear you.' }
+};
+const fsInputFor = (scene) => {
+  if (scene === 2) return FS_ARMS[ARM];                       // the divergence point
+  return INPUT_POLICY === 'neutral' ? NEUTRAL : FS_ARMS[ARM]; // later scenes
+};
+
 const history = [];
 for (let s = 1; s <= SCENES; s++) {
   sceneNo = s;
   say('\n── scene ' + s + '/' + SCENES);
+
+  // FS SCENE 1 IS ALREADY ON THE PAGE. It is the baked package, displayed and committed by the
+  // setup above with zero provider calls. There is nothing to advance into and nothing to buy, so
+  // the loop records it and moves on. Treating it as a generated scene would both over-reserve and
+  // overwrite the authored opening the study scores as its baseline.
+  if (STORY === 'fs' && s === 1) {
+    const snap0 = await snapshot();
+    const prose0 = String((fsSetup && fsSetup.unlock && fsSetup.unlock.scene0) || snap0.prose || '');
+    write('scene_01_prose.txt', prose0);
+    t('scene 1: the BAKED opening was captured (>=200 chars)', prose0.length >= 200,
+      'len=' + prose0.length);
+    t('scene 1: it cost nothing — no planner, no author',
+      calls.filter(c => c.scene === 1 && (c.stage === 'planner' || c.stage === 'author')).length === 0);
+    history.push({ scene: 1, baked: true, input: null, gate: null, latchClear: true,
+      proseLen: prose0.length, stages: [], verifierRefs: [], facts: snap0.facts,
+      activatedLabels: snap0.activatedLabels, verdicts: snap0.verdicts,
+      committedThrough: snap0.committedThrough, pending: snap0.pending, ctOutcome: snap0.ctOutcome,
+      blocked: [], refusals: [] });
+    say('   BAKED opening: ' + prose0.length + ' chars, no dispatch');
+    continue;
+  }
+
+  // THE DECISION GATE, satisfied through the product's own handler. On FS the first advance out of
+  // scene 1 REFUSES until the reader's choice is recorded: _advanceStagedScene mounts the two-button
+  // prompt and requests nothing. The prompt's handler records the choice AND fires the resume, so
+  // the continuation is requested by production code rather than by a second call from here.
+  if (STORY === 'fs' && s === 2) {
+    const gatedAdv = await advanceExpectingGate(page,
+      'placeholder — the gate must refuse this', 'placeholder');
+    t('scene 2: the advance REFUSED until the choice was recorded',
+      gatedAdv.promptMounted === true, JSON.stringify(gatedAdv));
+    t('scene 2: and it dispatched nothing while unrecorded',
+      calls.filter(c => c.stage === 'planner' || c.stage === 'author').length === 0,
+      JSON.stringify(calls.filter(c => c.stage === 'planner' || c.stage === 'author')));
+    const picked = await chooseBranch(page, FS_ARMS[ARM].button);
+    t('scene 2: the choice was recorded by the prompt\'s own handler',
+      !!(picked.after.decision1 && picked.after.decision1.choice), JSON.stringify(picked.after));
+    say('   arm ' + ARM + ' -> button ' + FS_ARMS[ARM].button + ' -> recorded '
+      + JSON.stringify(picked.after.decision1 && picked.after.decision1.choice)
+      + '  [click via ' + picked.route + ']');
+    // The resume the prompt fired IS the continuation request. Fall through to the waits below
+    // rather than advancing again, which would be a second request for the same scene.
+  }
+
   // THE GATE IS CHECKED AT THE POINT OF USE. A scene's completion tail mounts a FRESH staged
   // session whose gateShown starts false, so a reading taken earlier goes stale and the advance is
   // silently refused with "[STAGED:SUBMIT] Blocked — gate not yet open".
-  if (s > 1) {
+  if (s > 1 && !(STORY === 'fs' && s === 2)) {
     const gd = Date.now() + 120000;
     let open = false;
     while (Date.now() < gd) {
@@ -306,9 +429,11 @@ for (let s = 1; s <= SCENES; s++) {
       'still closed — the advance would be refused');
     if (!open) { say('  ABORTING the loop: submitting into a closed gate measures nothing.'); break; }
   }
-  const inp = inputFor(s);
-  await page.evaluate(({ a, d }) => { try { window._advanceStagedScene(a, d); } catch (_) {} },
-    { a: inp.action, d: inp.dialogue });
+  const inp = (STORY === 'fs') ? fsInputFor(s) : inputFor(s);
+  if (!(STORY === 'fs' && s === 2)) {
+    await page.evaluate(({ a, d }) => { try { window._advanceStagedScene(a, d); } catch (_) {} },
+      { a: inp.action, d: inp.dialogue });
+  }
 
   // Wait for the AUTHOR to answer, then for the session to MOUNT — both on real state.
   const deadline = Date.now() + 180000;
@@ -375,6 +500,19 @@ history.forEach(h => say('  ' + String(h.scene).padStart(5) + ' | '
 
 const manifest = {
   mode: DRY_REPLAY ? 'dry_replay' : 'live',
+  story: STORY,
+  arm: (STORY === 'fs') ? ARM : null,
+  armButton: (STORY === 'fs') ? FS_ARMS[ARM].button : null,
+  axis: fsAxis,
+  fsSetup,
+  bakedScene1: STORY === 'fs',
+  liveScenes: LIVE_SCENES,
+  storyNote: STORY === 'fs'
+    ? 'First Sacrifice: scene 1 is the FIXED baked package (zero provider calls) and scenes 2+ are '
+      + 'generated. The scene-1 decision is recorded through the product\'s own two-button prompt.'
+    : 'SYNTHETIC RELIABILITY FIXTURE — not First Sacrifice. Every scene is generated from bare '
+      + 'state. It measures whether the machinery survives N boundaries and says NOTHING about the '
+      + 'prose of the Book we ship.',
   scenes: SCENES, branch: BRANCH, inputPolicy: INPUT_POLICY,
   inputPolicyNote: INPUT_POLICY === 'neutral'
     ? 'Scenes after the branch point take an IDENTICAL neutral input on every path, so downstream '
