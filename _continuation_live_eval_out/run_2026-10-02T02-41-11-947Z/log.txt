@@ -1,0 +1,103 @@
+=== LIVE CONTINUATION EVALUATION — 1 CASE(S) ===
+    authorized: $0.05
+    output: _continuation_live_eval_out/run_2026-10-02T02-41-11-947Z
+
+PRE-REGISTERED EXPECTATIONS (before any dispatch)
+  A-null     : envelope present, canon_change null, introduces [], outcome none, 0 facts
+  BOTH       : pressure_scope returned as "scene_local" or "durable", and the payload AGREES with it — durable identifies its referent, scene_local proposes no canon.
+  B-pressure : EITHER scene_local + null (nothing sealed, 0 facts, recorded non-durable)
+               OR durable + an identified referent (sealed, at most 1 fact, sealed provenance)
+  C-durable  : pressure_scope durable, >=1 structured introduced institution/collective with
+               future_relevance and aliases, NO planner-supplied ids, and no established
+               entity silently redefined. Graded by _continuation_durable_grader.mjs, whose
+               every criterion is proven RED in _continuation_durable_grading_control.mjs.
+  Either surprise is a reportable finding, not a failure to explain away.
+
+CHAIN RESERVATION (worst case per stage, no fallback doubling)
+  planner  : $0.017550
+  author   : $0.126000
+  verifier : $0.007800
+  NARROW CONTINUATION: the replayed planner reply has ONE field edited —
+    canon_change.content → "The Toll Road Commission's clerk begins reading the sealed demand aloud in the chamber."
+    A LABELLED FIXTURE EDIT, so the continuation's scope matches what the prose stages.
+    A PARTIAL verdict on it stays a legitimate outcome and is never forced to DELIVERED.
+  TWO-SCENE, VERIFIER-ONLY: the planner, author and memory extractor are REPLAYED from
+             run 13 artefacts and the shape-faithful skeleton. The ONLY live provider call
+             is the RUNTIME COMMIT VERIFIER: $0.007800
+             Everything else in the chain is already proven provider-free (23/23).
+  TOTAL    : $0.007800
+  within authorization — $0.042200 headroom
+
+PREFLIGHT GATE (provider-free, $0): _corridor_continuation_preflight.mjs
+  preflight PASSED — the target story has no authored objective and the path is active.
+
+──────── TWO-SCENE ACTIVATION / IDEMPOTENCY — CASE C-durable ────────
+  posture: "I send sealed word to the commission that governs the toll road, demanding they open an investigation into the burning and summon everyone who profited from it."
+  scene 1 seals + renders (author gated on a seal); scene 2 OPENS by adjudicating scene 1
+  through the real _commitScene. Scene 2's author is aborted — no check needs it.
+
+  ── scene 1, draw 1/3
+      [REPLAY] planner — run 13 recorded response (1579 chars), $0
+      [SEAL-GATE] seal prop:3:2 — author replay released
+      [REPLAY] author — run 13 recorded response (23214 chars), $0
+    handler="sealed" authorGate="sealed" pending=["state_change","continuation"]
+    scene 1 prose: projection=1457 chars, StoryPagination=0 chars (empty by design in CG staged mode)
+
+  ── reading scene 1 through to the say/do gate
+      [REPLAY] memory extractor — shape-faithful skeleton, $0
+    {"ok":true,"before":{"beat":0,"last":26,"gateShown":false,"microShown":false},"after":{"beat":26,"last":26,"gateShown":true,"microShown":false},"micros":0}
+
+  ── scene 2 (adjudicates scene 1)
+      [DISPATCH] s2 verifier  7000ch  est $0.006542
+        NO RECEIPT from ministral-8b-2512 — UNMEASURED, estimated $0.006542 (this is NOT $0; total unmeasured $0.006542)
+      [REPLAY] planner — run 13 recorded response (1579 chars), $0
+      [REPLAY] author — run 13 recorded response (23214 chars), $0
+
+  ── re-entering _commitScene on SCENE 1's pinned proposals, twice
+    baseline before re-entry: verifier calls=1 factRefs="prop:3:1|prop:3:2"
+
+=== SCENE 1 ===
+  ok   a continuation proposal sealed in scene 1
+  ok     the author was released only because a seal existed
+  ok     BOTH proposal kinds were pending after scene 1
+  ok     and NOTHING was committed by scene 1
+  ok     scene 1 rendered prose
+
+=== SCENE 2 — adjudication through the real _commitScene ===
+  ok   scene 2 issued a RUNTIME COMMIT VERIFIER request
+  ok     its payload listed BOTH sealed refs for judgement
+  adjudication: {"prop:3:1":{"ref":"prop:3:1","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"per_proposal","why":["precondition=per_proposal","anchors=inapplicable"],"kind":"state_change"},"prop:3:2":{"ref":"prop:3:2","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"per_proposal","why":["precondition=per_proposal","anchors=anchors_present"],"kind":"continuation"}}
+
+  — per-proposal verdict detail —
+    prop:3:1 (state_change): status=DELIVERED reason="delivered" precondition="per_proposal" commit=true
+      why: ["precondition=per_proposal","anchors=inapplicable"]
+    prop:3:2 (continuation): status=DELIVERED reason="delivered" precondition="per_proposal" commit=true
+      why: ["precondition=per_proposal","anchors=anchors_present"]
+  facts: [{"fact":"The sealed letter arrives and is opened by the commission clerk.","ref":"prop:3:1","prov":"sealed","scene":3},{"fact":"The Toll Road Commission's clerk begins reading the sealed demand aloud in the chamber.","ref":"prop:3:2","prov":"sealed","scene":3}]
+  ok   each proposal got its OWN verdict
+  FAIL the CONTINUATION committed its own exact sealed record  — {"fact":"The Toll Road Commission's clerk begins reading the sealed demand aloud in the chamber.","ref":"prop:3:2","prov":"sealed","scene":3}
+  ok     exactly one fact per sealed ref — no duplicates
+  ok   THE INSTITUTION IS IN THE ACTIVE REGISTER
+  ok     with its sealed aliases
+  FAIL   and the NEXT planner payload names it  — label=Toll Road Commission
+  ok     while carrying NO pending-entity machinery
+  alias resolution: {"activatedId":"ent:stage:1","label":{"name":"Toll Road Commission","ok":true,"id":"ent:stage:1"},"aliases":[{"name":"the commission","ok":true,"id":"ent:stage:1"},{"name":"the governing commission","ok":true,"id":"ent:stage:1"}]}
+  ok     every declared alias resolves to the activated entity
+  ok     and the canonical label resolves to the same entity
+  ok   the scene card is deterministic
+  ok     no model-interpretation SCALAR on it carries content
+  ok     and no model-interpretation LIST on it has entries
+  ok   no committed fact carries verifier interpretation vocabulary
+
+=== IDEMPOTENCY — _commitScene re-entered twice on the same scene ===
+  ok   the probe pinned scene 1's own proposals
+  ok     on the matching scene number
+  ok     with the real projection prose
+  ok   NO NEW VERIFIER CALL
+  ok     NO new facts — refs unchanged
+  ok     no duplicate refs
+  ok     the activated entity count did not change
+
+25/27 assertions passed
+MEASURED (receipted): $0.000000  |  UNMEASURED estimated: $0.006542 across 1 call(s)  |  TOTAL EXPOSURE: $0.006542 of $0.05
+Artefacts: _continuation_live_eval_out/run_2026-10-02T02-41-11-947Z
