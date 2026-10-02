@@ -1,0 +1,55 @@
+=== FS LANE CONSISTENCY — 4 PLANNER DRAW(S) ===
+  mode    : LIVE, authorized $0.10
+  arm     : A   output: _fs_lane_sample_out/run_2026-10-02T16-52-31-431Z
+
+RESERVATION
+  one planner draw : $0.023175
+  × 4 = $0.092700
+  author, verifier, memory, scaffold: ABORTED — never reserved, cannot be billed
+  within authorization — $0.007300 headroom
+
+── draw 1/4
+    [DISPATCH] planner draw 1 — estimated $0.019130
+        measured $0.013308 (receipted; total measured $0.013308)
+    verdict: LANE_INCONSISTENT   lane="dohkar_preliminary_review"
+    gate: [CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="dohkar_preliminary_review" but its own proposed event/tactic
+
+── draw 2/4
+    [DISPATCH] planner draw 2 — estimated $0.019130
+        measured $0.013478 (receipted; total measured $0.026787)
+    verdict: LANE_INCONSISTENT   lane="dohkar_preliminary_review"
+    gate: [CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane="dohkar_preliminary_review" but its own proposed event/tactic
+
+── draw 3/4
+    [DISPATCH] planner draw 3 — estimated $0.019130
+        measured $0.004814 (receipted; total measured $0.031601)
+    verdict: ACCEPTED   lane="dohkar_preliminary_review"
+
+── draw 4/4
+    [DISPATCH] planner draw 4 — estimated $0.019130
+        measured $0.004664 (receipted; total measured $0.036265)
+    verdict: ACCEPTED   lane="dohkar_preliminary_review"
+
+── LANE CONSISTENCY
+  draws                : 4
+  ACCEPTED by the gate : 2
+  lane-inconsistent    : 2
+  rejected (other)     : 0
+  undetermined         : 0
+
+  draw | verdict            | declared lane
+     1 | lane_inconsistent  | dohkar_preliminary_review
+     2 | lane_inconsistent  | dohkar_preliminary_review
+     3 | accepted           | dohkar_preliminary_review
+     4 | accepted           | dohkar_preliminary_review
+
+  per-draw acceptance on this sample: 50% (2/4)
+  nine consecutive passes at that rate: 0.2%
+  (arithmetic on a small sample, not a prediction — and a 10-scene run needs all nine)
+
+SPEND
+  MEASURED (receipts): $0.036265
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.036265 of $0.10  (36.3%)
+
+artefacts: _fs_lane_sample_out/run_2026-10-02T16-52-31-431Z

@@ -1,0 +1,38 @@
+=== LANE SIGNAL: EVENT OR WORDING? (provider-free, $0) ===
+
+1. the lane and its signal are readable from the seed
+  ok   the lane was found on a plan row
+  ok   it declares a signal regex
+  ok   at least one authored event frame resolves to this lane
+     lane  : dohkar_preliminary_review  (plan scene 2)
+     signal: /\b(preliminary review|calls? for (?:a )?review|demands? (?:a )?review|recommends? (?:a )?review|warns? of (?:a )?review|review will follow|answer for (?:her|his) conduct|matter (?:of conduc
+     frames: ["eventFrameBySlot.silence","eventFrameBySlot.confession","defaultEventFrame"]
+
+2. THE DECISIVE TEST — does the lane's own authored frame satisfy its own signal?
+     NO MATCH eventFrameBySlot.silence
+     NO MATCH eventFrameBySlot.confession
+     NO MATCH defaultEventFrame
+  ok   this is the finding: at least one AUTHORED frame FAILS the lane's own signal regex
+     FAILING FRAMES: ["eventFrameBySlot.silence","eventFrameBySlot.confession","defaultEventFrame"]
+       · The charged silence after Julian's public claim is what prompts the presiding Dohkar to break it procedurally: he states before the assembly disperses that her conduct will be reviewed and that she will answer for it — W
+       · An admission has just landed — most naturally Lirael's OWN (redirected blame, a self-incriminating deflection, a truth she can no longer keep folded away), though if the reader's own submitted words instead have Julian c
+
+3. the same event, two words: "formal review" vs "preliminary review"
+  ok   "formal review" does NOT satisfy the signal
+  ok   "preliminary review" DOES satisfy it
+  ok   so acceptance turns on the noun phrase, not on the event
+
+4. the four live draws, scored by the product's own regex
+     draw 1: regex=no match   gate=lane_inconsistent
+     draw 2: regex=no match   gate=lane_inconsistent
+     draw 3: regex=match   gate=accepted
+     draw 4: regex=match   gate=accepted
+  ok   every live draw was scored
+  ok   the regex's verdict matches the gate's on every draw
+
+9/9 checks passed
+
+WHAT THIS MEANS, if the checks above are green: the lane gate is a LEXICAL check.
+It rejects a semantically correct proposal that uses a synonym for the lane's own
+noun phrase, and the lane's AUTHORED frame does not satisfy the pattern the product
+judges it by. That is a contract defect, not planner inconsistency.

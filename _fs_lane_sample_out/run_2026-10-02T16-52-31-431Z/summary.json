@@ -1,0 +1,315 @@
+{
+  "samples": 4,
+  "arm": "A",
+  "mode": "live",
+  "plannerFixture": null,
+  "reserved": 0.09269999999999999,
+  "authorized": 0.1,
+  "counts": {
+    "accepted": 2,
+    "lane_inconsistent": 2,
+    "gate_rejected_other": 0,
+    "rejected_before_lane_gate": 0,
+    "undetermined": 0
+  },
+  "results": [
+    {
+      "draw": 1,
+      "verdict": "lane_inconsistent",
+      "authorAttempted": false,
+      "rejected": true,
+      "laneInconsistent": true,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar declares Lirael's conduct will be reviewed and she will answer for it.",
+      "tacticalMove": "Asserting procedural authority to shift confrontation into formal review",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790959991601,
+        "storyId": "99553a9a-843a-4171-a7d3-03382fe69c6e"
+      },
+      "gateLines": [
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label"
+      ],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 2,
+      "verdict": "lane_inconsistent",
+      "authorAttempted": false,
+      "rejected": true,
+      "laneInconsistent": true,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar announces that Lirael's conduct will be reviewed before the assembly.",
+      "tacticalMove": "Advances the milestone by having the Dohkar publicly commit Lirael's conduct to formal review, shifting from ritual accusation into institutional procedure and creating the new problem of her standing at risk.",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790960045482,
+        "storyId": "523dd3ec-902e-42b8-b9f5-4a22921eb584"
+      },
+      "gateLines": [
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+        "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label"
+      ],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "verifier",
+          "outcome": "aborted"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 3,
+      "verdict": "accepted",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "The presiding Dohkar states that Lirael's conduct will be reviewed and that she will answer for it before the assembly.",
+      "tacticalMove": "initiate Dohkar preliminary review of Lirael's conduct to place her qualification at immediate procedural risk",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790960102164,
+        "storyId": "280d6c0a-9c4a-460c-ab9f-4c0ffa9fe2f5"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    },
+    {
+      "draw": 4,
+      "verdict": "accepted",
+      "authorAttempted": true,
+      "rejected": false,
+      "laneInconsistent": false,
+      "declaredLane": "dohkar_preliminary_review",
+      "stateChange": "the presiding Dohkar states that Lirael's conduct will be reviewed and she will answer for it",
+      "tacticalMove": "advance institutional pressure by moving from accusation to Dohkar's formal preliminary review declaration",
+      "pressureScope": "scene_local",
+      "canonChange": null,
+      "introduces": [],
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "decision": {
+        "axis": "run in shame vs remain and see where Julian was taking it",
+        "choice": "run",
+        "label": "run in shame",
+        "source": "resume",
+        "at": 1790960158771,
+        "storyId": "fe053e05-78e4-4756-b736-ed5e1f7a52de"
+      },
+      "gateLines": [],
+      "calls": [
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "other",
+          "outcome": "aborted"
+        },
+        {
+          "stage": "planner",
+          "outcome": "dispatched_live"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        },
+        {
+          "stage": "author",
+          "outcome": "aborted_after_acceptance_signal"
+        }
+      ],
+      "blockedRetries": 0
+    }
+  ],
+  "checks": {
+    "pass": 0,
+    "fail": 0
+  }
+}

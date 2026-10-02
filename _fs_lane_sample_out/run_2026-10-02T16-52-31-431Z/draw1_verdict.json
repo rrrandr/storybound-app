@@ -1,0 +1,137 @@
+{
+  "draw": 1,
+  "verdict": "lane_inconsistent",
+  "authorAttempted": false,
+  "rejected": true,
+  "laneInconsistent": true,
+  "declaredLane": "dohkar_preliminary_review",
+  "stateChange": "The presiding Dohkar declares Lirael's conduct will be reviewed and she will answer for it.",
+  "tacticalMove": "Asserting procedural authority to shift confrontation into formal review",
+  "pressureScope": "scene_local",
+  "canonChange": null,
+  "introduces": [],
+  "axis": "run in shame vs remain and see where Julian was taking it",
+  "decision": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "choice": "run",
+    "label": "run in shame",
+    "source": "resume",
+    "at": 1790959991601,
+    "storyId": "99553a9a-843a-4171-a7d3-03382fe69c6e"
+  },
+  "gateLines": [
+    "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+    "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label"
+  ],
+  "calls": [
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "planner",
+      "outcome": "dispatched_live"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "verifier",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "verifier",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "verifier",
+      "outcome": "aborted"
+    }
+  ],
+  "blockedRetries": 0,
+  "consoleLines": [
+    "%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold",
+    "[CG:HELPERS] ready=true",
+    "[SCENE-DECISION] continuation requested before the reader's choice was recorded — mounting the prompt, requesting nothing",
+    "[SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it",
+    "[SCENE-DECISION] scene 1 → run (resume)",
+    "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+    "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+    "[CG:SCAFFOLD] Bibles ready (1ms) — pc=y li=y antag=n",
+    "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+    "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+    "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+    "[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)",
+    "[CG:SAYDO-SLOT] {\"slot\":null,\"confidence\":\"none\",\"evidence\":[],\"reason\":\"no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame\"}",
+    "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+    "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+    "[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n",
+    "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+    "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+    "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+    "[TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning",
+    "[CONTINUATION:NONE] scene=1 — no durable change proposed; nothing written",
+    "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+    "[CG:STALE-REJECTED] retrying once with the current branch/attempt: the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+    "[CG:SAYDO-SLOT] {\"slot\":null,\"confidence\":\"none\",\"evidence\":[],\"reason\":\"no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame\"}",
+    "[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)",
+    "[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)",
+    "[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n",
+    "[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+    "[TIERED:scaffold] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+    "[TIERED:scaffold] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+    "[TIERED:scaffold] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+    "[CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch",
+    "[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhausted — last error: Failed to fetch)",
+    "[TIERED:runtimeCommitVerifier] attempt 1 tier=primary provider=mistral model=ministral-8b-2512",
+    "[TIERED:runtimeCommitVerifier] primary/mistral/ministral-8b-2512 failed: Failed to fetch",
+    "[TIERED:runtimeCommitVerifier] attempt 2 tier=fallback provider=grok model=grok-4-1-fast-reasoning fallbackReason=\"Failed to fetch\"",
+    "[TIERED:runtimeCommitVerifier] fallback/grok/grok-4-1-fast-reasoning failed: Failed to fetch",
+    "[TIERED:runtimeCommitVerifier] attempt 3 tier=terminal provider=openai model=gpt-4o-mini fallbackReason=\"Failed to fetch\"",
+    "[TIERED:runtimeCommitVerifier] terminal/openai/gpt-4o-mini failed: Failed to fetch",
+    "[ROLLBACK] transition=rejected scene=1 delivery=MISSED → replan from unchanged CommittedState (pendingIntent kept)",
+    "[CG:PLANNER-GATE] REJECTED before author dispatch, scene=1 — the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label",
+    "[CG:STALE-STOP] scene 1 — retry stale: the planner declared chosen_aftermath_lane=\"dohkar_preliminary_review\" but its own proposed event/tactical-move/forces-choice/event-slots does not actually instantiate that lane's content — a declared lane label alone is not enough; the event itself must move into it, not stay inside the same ritual/interrogation moment under a borrowed label — stopped; resumable; no engine switch"
+  ]
+}
