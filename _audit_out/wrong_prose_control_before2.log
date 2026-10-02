@@ -1,0 +1,22 @@
+=== DOES THE VERIFIER READ THE RIGHT SCENE? (provider-free, $0) ===
+
+  ok   the baked opening is committed and non-trivial
+  ok   scene 2 rendered its own prose through the projection
+  ok   and it is NOT the baked opening
+
+WHAT THE VERIFIER WAS GIVEN
+  ok   the verifier was dispatched at all
+   SCENE PROSE block: 4961 chars
+   first 110: get back and could not fake giving. The assembly settled, because this was correct. At the edge of the gathe
+  ok   the SCENE PROSE block was extracted from the request
+   the given text appears in the baked opening : true
+   the given text appears in scene 2 prose      : false
+  FAIL THE VERIFIER WAS GIVEN THE SCENE IT IS JUDGING, not the baked opening  — it was handed the BAKED OPENING — this is the confirmed failure
+  FAIL and scene 2's own opening line is present in what it was given  — scene 2's opening line is absent from the prose the verifier received
+
+5/7 checks passed
+
+SMALLEST REPAIR (app.js ~101764): on the staged/CG path prefer the per-scene
+projection over StoryPagination, instead of treating pagination as authoritative
+whenever it is merely non-empty. Pagination is correct for the literary path; on the
+CG path it holds only the baked opening, forever.

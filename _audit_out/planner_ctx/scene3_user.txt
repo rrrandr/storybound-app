@@ -1,0 +1,17 @@
+THIS SCENE'S OBJECTIVE (authored story spine — the scene's central development to realize NOW as this scene's state_change, NOT a distant target): "THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with
+MUST STILL BE TRUE for the reader after this scene: "No character chooses Tempt Fate. The pressure is NEW, not louder."
+SCENE EXIT STATE (where this scene should leave the story): "NEW PROBLEM: the player must choose."
+  PLAYER DECISION AT THE END OF THIS SCENE: player-facing Tempt Fate threshold — offered, never taken by a character
+  WHAT THAT CHOICE MUST CHANGE: The scene builds the temptation and STOPS. Lirael does not resolve it.
+  Do NOT resolve the central crisis before the player decides. End the scene ON the choice.
+  FORBIDDEN INVENTIONS: do NOT introduce new NAMED characters, new factions or orders, new magical rules or ritual mechanics, new celestial bodies, new locations, or new stakes. Enrich perception, embodiment and phrasing freely — but add no STATE. Every invention becomes canon the next scene has to carry.
+Issue pressures: []
+COMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): []
+PENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: "The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it."
+Prior proposed transition (context): "The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it."
+Reachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.
+
+Continuity (where the last scene ended — context only, NOT the event to repeat): {"forScene":1,"source":"deterministic","sealedProposalRef":"prop:1:1","sealedFact":"The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.","activation":"pending","sceneTail":"d to me. “Everything in her points one way. She believes she did not do this.
+Player action: 
+Player dialogue: 
+Scene index: 2

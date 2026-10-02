@@ -1,0 +1,17 @@
+=== SCENE 3 PLANNER REQUEST ===
+system 11888 chars, user 2531 chars
+
+ALL-CAPS SECTION HEADERS PRESENT (what the planner was actually handed):
+
+CONTINUITY PROBES:
+   PRESENT committed-state / canon facts block
+   PRESENT prior scene prose or recap
+   absent  the baked opening's own text
+   PRESENT seed world truths
+   PRESENT reserved / sealed future events
+   absent  the reader's recorded choice
+   PRESENT the fate card just played
+   PRESENT named cast
+   absent  scene position / plan row
+
+artefacts: _audit_out/planner_ctx/

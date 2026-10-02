@@ -1,0 +1,104 @@
+=== CANON-LOOP FAILURE TRACE (provider-free, $0) ===
+run: _fs_issue_corpus_out/run_2026-10-02T22-42-28-298Z
+
+1. IS THE CAPTURED PROSE THE WHOLE SCENE?
+   scene | author chars | projection | ratio | author shape
+       2 |        11412 |        897 |  0.08 | json:beats(15)
+       3 |        13838 |       1435 |  0.10 | json:beats(17)
+       4 |        20177 |       1582 |  0.08 | json:beats(26)
+       5 |        15915 |       1113 |  0.07 | json:beats(25)
+       6 |        17581 |       1069 |  0.06 | json:beats(28)
+       7 |        20513 |       1156 |  0.06 | json:beats(25)
+       8 |        17717 |       1880 |  0.11 | json:beats(25)
+       9 |        18496 |       1914 |  0.10 | json:beats(26)
+      10 |        21301 |       1364 |  0.06 | json:beats(26)
+   ratio spread: 0.06 – 0.11  (consistent — a rendering, not a cut-off)
+   scene 2: 15/15 author beat texts appear verbatim in the projection
+   scene 3: 16/17 author beat texts appear verbatim in the projection
+   scene 4: 26/26 author beat texts appear verbatim in the projection
+
+2. DID THE MODEL SAY null, OR DID WE?
+   scene 3:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:1:1","delivery":"PARTIAL","evidence":"","precondition_evidence":"Then the charges, laid in the order he thought them: that the wish had been shaped for its supervisor
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:1:1","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : action_evidence,exit_state_evidence   occurred_this_scene=true
+   scene 4:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:2:2","delivery":"MISSED","evidence":"","precondition_evidence":"","reason":"incomplete_rendering"}]
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:2:2","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+   scene 5:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:3:3","delivery":"DELIVERED","evidence":"\"Then the charges, laid in the order he thought them: that the wish had been shaped for its supervisor’s benefit — coerced, o
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:3:3","delivery":null,"reason":null}
+     slots_check empties    : none   occurred_this_scene=true
+   scene 6:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:4:4","delivery":"MISSED","evidence":"","precondition_evidence":"","reason":"incomplete_rendering"}]
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:4:4","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+   scene 7:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:5:5","delivery":"MISSED","evidence":"","precondition_evidence":"Julian. The Provast — the office my father had held before him, over every Chayr in the Veilwood , and
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:5:5","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+   scene 8:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:6:6","delivery":"MISSED","evidence":"","precondition_evidence":"","reason":"incomplete_rendering"}]
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:6:6","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+   scene 9:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:7:7","delivery":"MISSED","evidence":"","precondition_evidence":"","reason":"incomplete_rendering"}]
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:7:7","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+   scene 10:
+     RAW top-level delivery : undefined
+     RAW per_proposal       : [{"ref":"prop:8:8","delivery":"MISSED","evidence":"","precondition_evidence":"","reason":"incomplete_rendering"}]
+     RAW slots_check keys   : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence,occurred_this_scene
+     OUR parsed verdict     : {"ref":"prop:8:8","delivery":null,"reason":"incomplete_rendering"}
+     slots_check empties    : precondition_evidence,actor_evidence,action_evidence,target_evidence,exit_state_evidence   occurred_this_scene=false
+
+3. WHAT DID THE NEXT PLANNER ACTUALLY SEE?
+   scene 2: reply references the reader's own choice · the obligation ledger · named cast   | lane=dohkar_preliminary_review
+   scene 3: reply references named cast   | lane=-
+   scene 4: reply references named cast   | lane=-
+   scene 5: reply references named cast   | lane=-
+   scene 6: reply references named cast   | lane=-
+   scene 7: reply references none   | lane=-
+   scene 8: reply references none   | lane=-
+   scene 9: reply references seed truths · named cast   | lane=-
+   scene 10: reply references named cast   | lane=-
+
+   NOTE: planner REQUESTS were not saved by this run — only responses. What a reply
+   demonstrates knowledge of is evidence the planner was told something, but it is
+   NOT the prompt. Capturing the request is a one-line harness change, listed as the
+   next step rather than guessed at here.
+
+4. THE CARDS ACTUALLY PLAYED (index repetition is not choice repetition)
+   scene 3  #0  "Reversal"
+        offered: Reversal | The Refusal | The Bargain | Silence | Temptation
+   scene 4  #2  "Boundary"
+        offered: The Refusal | Temptation | Boundary | Silence | The Bargain
+   scene 5  #1  "The Refusal"
+        offered: The Bargain | The Refusal | Silence | Reversal | Boundary
+   scene 6  #1  "The Bargain"
+        offered: Reversal | The Bargain | The Refusal | Boundary | Confession
+   scene 7  #1  "Reversal"
+        offered: The Bargain | Reversal | Temptation | Boundary | Silence
+   scene 8  #1  "Reversal"
+        offered: The Refusal | Reversal | Silence | Boundary | The Bargain
+   scene 9  #4  "Confession"
+        offered: The Bargain | Boundary | Reversal | The Refusal | Confession
+   scene 10  #4  "Boundary"
+        offered: Reversal | Confession | Silence | The Bargain | Boundary
+
+=== END TRACE — no provider calls, no changes made ===
