@@ -133,6 +133,24 @@ const TWO_SCENE = ARG.includes('--two-scene');
 // whether the live verifier correctly adjudicates real rendered prose — and collapses the cost from
 // two full scenes to a single verifier call.
 const LIVE_VERIFIER_ONLY = ARG.includes('--live-verifier-only');
+// ── NARROW CONTINUATION (Roman 2026-10-02) ──────────────────────────────────────────────────
+// Run 16's continuation was judged PARTIAL — a LEGITIMATE verdict. The verifier cited the clerk
+// acknowledging the demand and judged the broader claim ("the commission has received a formal
+// demand to open an investigation") only begun. So the activation test needs a continuation fact
+// whose SCOPE the prose can fully satisfy, per Roman: "the clerk acknowledges receipt of the
+// demand" rather than the broader institutional claim.
+//
+// This narrows ONE FIELD of run 13's recorded planner reply — canon_change.content — and leaves
+// the rest, including the institution and its aliases, exactly as the real planner produced them.
+// It is a LABELLED FIXTURE MODIFICATION, reported in the run output, not a pretence that a planner
+// said this. A PARTIAL verdict on it remains a legitimate outcome and is never forced to DELIVERED.
+const NARROW_CONTINUATION = ARG.includes('--narrow-continuation');
+const NARROW_FACT = 'The commission\'s clerk acknowledges receipt of the sealed demand.';
+if (NARROW_CONTINUATION && !LIVE_VERIFIER_ONLY) {
+  console.error('REFUSED: --narrow-continuation modifies the REPLAYED planner reply, so it requires'
+    + ' --live-verifier-only.');
+  process.exit(2);
+}
 if (LIVE_VERIFIER_ONLY && !TWO_SCENE) {
   console.error('REFUSED: --live-verifier-only only applies to --two-scene.');
   process.exit(2);
@@ -201,6 +219,12 @@ if (!PLANNER_ONLY) {
   say('  verifier : $' + R_VERIFIER.toFixed(6));
 } else { say('  (--planner-only: author and verifier are not reserved and will be aborted)'); }
 if (TWO_SCENE && LIVE_VERIFIER_ONLY) {
+  if (NARROW_CONTINUATION) {
+    say('  NARROW CONTINUATION: the replayed planner reply has ONE field edited —');
+    say('    canon_change.content → ' + JSON.stringify(NARROW_FACT));
+    say('    A LABELLED FIXTURE EDIT, so the continuation\'s scope matches what the prose stages.');
+    say('    A PARTIAL verdict on it stays a legitimate outcome and is never forced to DELIVERED.');
+  }
   say('  TWO-SCENE, VERIFIER-ONLY: the planner, author and memory extractor are REPLAYED from');
   say('             run 13 artefacts and the shape-faithful skeleton. The ONLY live provider call');
   say('             is the RUNTIME COMMIT VERIFIER: $' + R_VERIFIER.toFixed(6));
@@ -244,6 +268,30 @@ if (!ARG.includes('--skip-preflight')) {
 }
 
 let spentEstimate = 0, measured = 0;
+// ── COST ACCOUNTING WITH MISSING RECEIPTS (Roman 2026-10-01) ────────────────────────────────
+// ministral-8b returns no `cost_in_usd_ticks`, so the runtime commit verifier billed real money in
+// runs 15 and 16 while MEASURED read $0.000000. A missing receipt is UNMEASURED, never free, and
+// reporting it as $0 understates spend. Every dispatch without a receipt is recorded here with its
+// estimate and its model, and the summary reports measured, unmeasured and TOTAL EXPOSURE.
+const unreceipted = [];          // [{ stage, model, estimate }]
+const unmeasuredTotal = () => unreceipted.reduce((n, u) => n + u.estimate, 0);
+const recordCost = (stage, text, est, model) => {
+  let ticks = null;
+  try { const j = JSON.parse(text); ticks = j && j.usage && j.usage.cost_in_usd_ticks; } catch (_) {}
+  if (typeof ticks === 'number') {
+    measured += ticks * 1e-10;
+    say('        measured $' + (ticks * 1e-10).toFixed(6) + ' (receipted; total measured $'
+      + measured.toFixed(6) + ')');
+    return;
+  }
+  unreceipted.push({ stage, model: model || 'unknown', estimate: est });
+  say('        NO RECEIPT from ' + (model || 'unknown') + ' — UNMEASURED, estimated $'
+    + est.toFixed(6) + ' (this is NOT $0; total unmeasured $' + unmeasuredTotal().toFixed(6) + ')');
+};
+const modelOf = (text) => {
+  try { const j = JSON.parse(text);
+    return (j && j._orchestration && j._orchestration.model) || (j && j.model) || null; } catch (_) { return null; }
+};
 
 const runCase = async (C, sampleIx, opts) => {
   const O = opts || {};
@@ -318,10 +366,7 @@ const runCase = async (C, sampleIx, opts) => {
       const resp = await route.fetch({ timeout: FT });
       const text = await resp.text();
       write(tag + '_response_' + stage + '_' + (calls.length + 1) + '.json', text);
-      try { const j = JSON.parse(text); const ticks = j && j.usage && j.usage.cost_in_usd_ticks;
-        if (typeof ticks === 'number') { measured += ticks * 1e-10;
-          say('      measured $' + (ticks * 1e-10).toFixed(6) + ' (total $' + measured.toFixed(6) + ')'); }
-      } catch (_) {}
+      recordCost(stage, text, est, modelOf(text));
       calls.push({ stage, request: raw, response: text });
       await route.fulfill({ response: resp });
     } catch (e) {
@@ -476,7 +521,28 @@ const recordedContent = (f) => {
     return j.content || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
   } catch (_) { return ''; }
 };
-const REPLAY_PLANNER = recordedContent('s1_response_planner_1.json');
+const REPLAY_PLANNER = (function () {
+  const raw = recordedContent('s1_response_planner_1.json');
+  if (!NARROW_CONTINUATION) return raw;
+  // Narrow exactly one field, in place, and fail loudly rather than silently replaying the broad
+  // fact if the shape is not what we expect.
+  try {
+    const i = raw.indexOf('{'), j = raw.lastIndexOf('}');
+    const obj = JSON.parse(raw.slice(i, j + 1));
+    if (!obj.canon_change || typeof obj.canon_change.content !== 'string') {
+      throw new Error('recorded reply has no canon_change.content to narrow');
+    }
+    const before = obj.canon_change.content;
+    obj.canon_change.content = NARROW_FACT;
+    console.log('[NARROW-CONTINUATION] canon_change.content replaced (LABELLED FIXTURE EDIT)');
+    console.log('   was: ' + JSON.stringify(before));
+    console.log('   now: ' + JSON.stringify(NARROW_FACT));
+    return JSON.stringify(obj);
+  } catch (e) {
+    console.error('REFUSED: could not narrow the recorded planner reply — ' + (e && e.message));
+    process.exit(4);
+  }
+})();
 const REPLAY_AUTHOR = recordedContent('s1_response_author_2.json');
 const MEMORY_SKELETON = JSON.stringify({
   characters: [],
@@ -585,10 +651,7 @@ const runTwoScene = async (C) => {
       const resp = await route.fetch({ timeout: FT });
       const text = await resp.text();
       write('s' + phase + '_response_' + stage + '_' + (calls.length + 1) + '.json', text);
-      try { const j = JSON.parse(text); const ticks = j && j.usage && j.usage.cost_in_usd_ticks;
-        if (typeof ticks === 'number') { measured += ticks * 1e-10;
-          say('        measured $' + (ticks * 1e-10).toFixed(6) + ' (total $' + measured.toFixed(6) + ')'); }
-      } catch (_) {}
+      recordCost(stage, text, est, modelOf(text));
       calls.push({ phase, stage, request: raw, response: text });
       await route.fulfill({ response: resp });
     } catch (e) {
@@ -672,7 +735,7 @@ const runTwoScene = async (C) => {
     + prose1pair.pag.length + ' chars (empty by design in CG staged mode)');
   if (prose1) write('s1_prose.txt', prose1);
 
-  let s2 = null, repeat = null, progression = null;
+  let s2 = null, repeat = null, progression = null, aliasResolution = null;
   if (sealedOk) {
     // ── READ SCENE 1 THROUGH ITS FINAL BEAT ──────────────────────────────────
     // _advanceStagedScene's Guard 1 is `if (active && !active.gateShown) return;`, and gateShown
@@ -738,6 +801,18 @@ const runTwoScene = async (C) => {
         sceneCard: window.state._sceneStateCard || null
       };
     });
+    // ── ALIASES MUST RESOLVE, captured from the live register ────────────────
+    aliasResolution = await page.evaluate(() => {
+      const reg = window._protectedRegisterIds();
+      const act = Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')[0] || null;
+      if (!act) return null;
+      const e = reg[act];
+      const res = (x) => { const v = window._deliveryAnchorAliases(x);
+        return { name: x, ok: !!v.ok, id: v.entityId || null }; };
+      return { activatedId: act, label: res(e.label),
+        aliases: (e.aliases || []).map(res) };
+    });
+
     // ── IDEMPOTENCY through the real path, re-entered twice ──────────────────
     say('\n  ── re-entering _commitScene on the same scene, twice');
     repeat = await page.evaluate(async (prose) => {
@@ -756,6 +831,7 @@ const runTwoScene = async (C) => {
   const plannerReqs = calls.filter(c => c.stage === 'planner');
   await browser.close();
   return { calls, s1, s2, repeat, sealedOk, prose1, retriesBlocked, authorGate, progression,
+    aliasResolution,
     s2PlannerRequest: (plannerReqs.filter(c => c.phase === 2).pop() || {}).request || '' };
 };
 
@@ -790,7 +866,11 @@ if (TWO_SCENE) {
     }
     write('twoscene.json', { verdict: 'boundary_untested', draws, measured, authorized: AUTHORIZED });
     say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
-    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
     say('Artefacts: ' + RUN);
     process.exit(0);
   }
@@ -834,6 +914,20 @@ if (TWO_SCENE) {
     t('  while carrying NO pending-entity machinery',
       !/ent:stage:\d+/.test(R.s2PlannerRequest),
       (R.s2PlannerRequest.match(/ent:stage:\d+/) || [''])[0]);
+    // ALIASES RESOLVE, not merely appear. The institution must be referencable by every declared
+    // natural form AND by its canonical label, all to the same entity — that is what makes a later
+    // scene able to say "the commission" and mean this body.
+    if (R.aliasResolution) {
+      say('  alias resolution: ' + JSON.stringify(R.aliasResolution));
+      t('  every declared alias resolves to the activated entity',
+        R.aliasResolution.aliases.length > 0
+        && R.aliasResolution.aliases.every(a => a.ok && a.id === R.aliasResolution.activatedId),
+        JSON.stringify(R.aliasResolution));
+      t('  and the canonical label resolves to the same entity',
+        R.aliasResolution.label && R.aliasResolution.label.ok
+        && R.aliasResolution.label.id === R.aliasResolution.activatedId,
+        JSON.stringify(R.aliasResolution.label));
+    } else t('  alias resolution was captured', false, 'no aliasResolution recorded');
   } else {
     say('  the continuation did NOT commit — recording the verdict rather than asserting success');
     t('a continuation verdict was recorded', !!(R.s2.adjudication
@@ -880,7 +974,11 @@ if (TWO_SCENE) {
   write('twoscene.json', { verdict: 'boundary_tested', draws, s1: R.s1, s2: R.s2,
     repeat: R.repeat, measured, authorized: AUTHORIZED });
   say('\n' + pass + '/' + (pass + fail) + ' assertions passed');
-  say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+  say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
   say('Artefacts: ' + RUN);
   process.exit(fail ? 1 : 0);
 } else if (SEAL_GATED) {
@@ -965,10 +1063,28 @@ if (TWO_SCENE) {
   }
 }
 
-say('\n=== SPEND ===');
-say('  running estimate : $' + spentEstimate.toFixed(6));
-say('  MEASURED         : $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2)
-  + '  (' + ((measured / AUTHORIZED) * 100).toFixed(1) + '%)');
+const spendReport = () => {
+  const un = unmeasuredTotal();
+  const exposure = measured + un;
+  say('\n=== SPEND ===');
+  say('  running estimate   : $' + spentEstimate.toFixed(6));
+  say('  MEASURED (receipts): $' + measured.toFixed(6));
+  if (unreceipted.length) {
+    say('  UNMEASURED         : $' + un.toFixed(6) + ' estimated across ' + unreceipted.length
+      + ' call(s) with NO receipt — NOT $0:');
+    unreceipted.forEach(u => say('      · ' + u.stage + ' on ' + u.model
+      + ' — estimated $' + u.estimate.toFixed(6)));
+  } else {
+    say('  UNMEASURED         : none — every dispatch returned a receipt');
+  }
+  say('  TOTAL EXPOSURE     : $' + exposure.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2)
+    + '  (' + ((exposure / AUTHORIZED) * 100).toFixed(1) + '%)');
+  if (unreceipted.length) {
+    say('  (exposure, not spend: the unmeasured part is this runner\'s own estimate, and the');
+    say('   provider console is the only ground truth for it)');
+  }
+};
+spendReport();
 
 // ── THE DISTRIBUTION REPORT (sampling mode) ─────────────────────────────────
 if (SAMPLES) {
@@ -1026,7 +1142,11 @@ if (SAMPLES) {
     write('distribution.json', { refused: true, voidCount: buckets.void, samples: rows, buckets,
       hashes, dispatches, blocked, measured, authorized: AUTHORIZED });
     say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
-    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
     say('Artefacts: ' + RUN);
     process.exit(1);
   }
@@ -1078,7 +1198,11 @@ if (SAMPLES) {
   write('distribution.json', { samples: rows, buckets, paths, hashes, dispatches, blocked,
     measured, authorized: AUTHORIZED });
   say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
-  say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+  say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
   say('Artefacts: ' + RUN);
   process.exit(0);
 }
@@ -1110,7 +1234,11 @@ if (SEAL_GATED) {
     write('draws.json', { seal_gated: true, verdict: 'boundary_untested', draws, measured,
       authorized: AUTHORIZED });
     say('\n' + pass + '/' + (pass + fail) + ' harness assertions passed');
-    say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+    say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
     say('Artefacts: ' + RUN);
     process.exit(0);
   }
@@ -1375,6 +1503,10 @@ write('verdict.json', { pass, fail, measured, spentEstimate, authorized: AUTHORI
     ctResult: results[k] && results[k].after.ctResult,
     facts: results[k] && results[k].after.facts })) });
 say('\n' + pass + '/' + (pass + fail) + ' assertions passed');
-say('MEASURED SPEND: $' + measured.toFixed(6) + ' of $' + AUTHORIZED.toFixed(2));
+say('MEASURED (receipted): $' + measured.toFixed(6)
+  + (unreceipted.length ? '  |  UNMEASURED estimated: $' + unmeasuredTotal().toFixed(6)
+    + ' across ' + unreceipted.length + ' call(s)' : '')
+  + '  |  TOTAL EXPOSURE: $' + (measured + unmeasuredTotal()).toFixed(6)
+  + ' of $' + AUTHORIZED.toFixed(2));
 say('Artefacts: ' + RUN);
 process.exit(fail ? 1 : 0);

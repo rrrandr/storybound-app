@@ -346,6 +346,32 @@ t('   leaving the verifier as the ONLY live provider call',
   /is the RUNTIME COMMIT VERIFIER/.test(runner)
   && /\(TWO_SCENE && LIVE_VERIFIER_ONLY\)\s*\n?\s*\? R_VERIFIER/.test(runner));
 
+console.log('\nTHE ACCOUNTING CORRECTION AND THE NARROW-CONTINUATION FIXTURE');
+t('a missing receipt is reported as UNMEASURED, never $0',
+  /NO RECEIPT from/.test(runner) && /this is NOT \$0/.test(runner));
+t('  unreceipted calls are itemised with stage, model and estimate',
+  /unreceipted\.push\(\{ stage, model: model \|\| 'unknown', estimate: est \}\)/.test(runner));
+t('  and the summary reports TOTAL EXPOSURE, not just measured',
+  /TOTAL EXPOSURE/.test(runner) && !/MEASURED SPEND: \$/.test(runner));
+// The caveat spans two say() lines, so the phrase never appears contiguously in the source — my
+// first regex searched for the joined sentence and failed on the line split, not on the code.
+t('  flagged as exposure rather than spend, with the console named as ground truth',
+  /exposure, not spend/.test(runner) && /provider console is the only ground truth/.test(runner));
+t('the narrow-continuation edit is LABELLED, not silent',
+  /LABELLED FIXTURE EDIT/.test(runner) && /NARROW-CONTINUATION/.test(runner));
+t('  it edits exactly one field of the recorded reply',
+  /obj\.canon_change\.content = NARROW_FACT/.test(runner));
+t('  refuses rather than silently replaying the broad fact if the shape is wrong',
+  /has no canon_change\.content to narrow/.test(runner));
+t('  requires --live-verifier-only, since it modifies a REPLAY',
+  /--narrow-continuation modifies the REPLAYED planner reply/.test(runner));
+t('  and NEVER forces a PARTIAL verdict to DELIVERED',
+  /never forced to DELIVERED/.test(runner)
+  && !/delivery = 'DELIVERED'/.test(runner) && !/status = 'DELIVERED'/.test(runner));
+t('aliases must RESOLVE to the activated entity, not merely appear',
+  /every declared alias resolves to the activated entity/.test(runner)
+  && /_deliveryAnchorAliases\(x\)/.test(runner));
+
 console.log('\nWHAT IS STUBBED, and it is exactly one thing');
 console.log('   · the RUNTIME COMMIT VERIFIER\'s reply. Its request was issued by the real');
 console.log('     _commitScene and intercepted at the network boundary; only the model\'s');
