@@ -1,0 +1,68 @@
+[
+  {
+    "phase": "scene2",
+    "url": "/api/mistral-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/chatgpt-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/mistral-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/chatgpt-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/proxy",
+    "stage": "planner",
+    "served": true
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/mistral-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/chatgpt-proxy",
+    "stage": "other",
+    "served": false
+  },
+  {
+    "phase": "scene2",
+    "url": "/api/proxy",
+    "stage": "planner",
+    "served": true
+  }
+]

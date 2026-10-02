@@ -1,0 +1,54 @@
+[
+  {
+    "phase": "mount",
+    "txt": "[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house"
+  },
+  {
+    "phase": "mount",
+    "txt": "[STARTER] Launching \"The First Sacrifice\""
+  },
+  {
+    "phase": "mount",
+    "txt": "[STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian"
+  },
+  {
+    "phase": "mount",
+    "txt": "[STARTER] Locked pre-written title: The First Sacrifice"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:IDENTITY] ledger entities for the seed cast: +3"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED-IMG] mounted 0 occurrence(s): "
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:SETUP] running deferred story initialization…"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)"
+  },
+  {
+    "phase": "mount",
+    "txt": "[BAKED:GATE] Genesis unlocked (harness-abort-test) — starter=starter_first_sacrifice"
+  }
+]

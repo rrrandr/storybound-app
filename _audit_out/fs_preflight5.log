@@ -1,0 +1,87 @@
+=== FS SCENE 1 → SCENE 2 PREFLIGHT (provider-free, $0) ===
+
+1. the baked package is real authored content
+  ok   a package exists for starter_first_sacrifice
+  ok   it is NOT a placeholder
+  ok   it is the CG format
+  ok   it carries real authored beats
+  ok   it declares how it ends rather than leaving it inferred
+     version 1.8.0-editorial, 20 beats, endsAt=oas_interrupt
+
+2. scene 1 mounts from the package with ZERO provider calls
+  ok   the launch definition is reachable
+  ok   the starter id is set
+  ok   the baked scene MOUNTED
+  ok   the fixed cast name came from the seed
+  ok   scene 1 is HELD, not committed — turnCount 0, scenes[] empty
+  ok   the held commit carries the scene text (>=200 chars)
+  ok   the held text is the PACKAGE's authored beats, verbatim
+  ok   ZERO PROVIDER CALLS to display scene 1 — classified by endpoint
+  ok   the Genesis gate is still LOCKED
+  ok   deferred setup has not run yet
+     held text 7605 chars, 20/20 beats verbatim
+     infrastructure endpoints during mount: ["/api/csp-report","/api/config","/api/geo"]
+
+3. the production unlock commits scene 1 and unlocks Genesis, provider-free
+  ok   the unlock SUCCEEDED through the production function
+  ok   deferred setup completed
+  ok   scene 1 is now COMMITTED as scenes[0]
+  ok   the committed scene carries the authored text
+  ok   turnCount stays 0 — it counts COMPLETED continuation turns, not scenes
+  ok   Genesis is unlocked
+  ok   the unlock dispatched ZERO PROVIDER calls — $0, by endpoint
+  ok   its only traffic was infrastructure/telemetry, each a known non-provider endpoint
+     setup traffic: ["/api/beta-events"] (provider: 0)
+     NOTE: the Fortune charge is skipped — it is in-app currency, not provider spend,
+           and _unlockBakedGenesis is where BOTH real unlock routes converge.
+
+5. THE SEAM — fixed scene 1 to generated scene 2
+  ok   the real _finalizePreviewContinuation is reachable and ran
+  ok   the story is no longer a preview
+     tier taste -> fling, previewActive true -> false
+     gates before the choice: {"interruptionPending":false,"interruptionRecord":false,"interruptionSubmitted":false,"sceneDecisions":[]}
+  ok   the advance REFUSED and mounted the decision prompt instead — the product's own gate
+  ok   no provider call was made while the choice was unrecorded
+  ok   the gated advance stashed a resume
+  ok   the authored axis is readable
+     THE REAL AXIS: "run in shame vs remain and see where Julian was taking it"
+       A = run (run in shame)
+       B = remain (remain and see where Julian was taking it)
+     host diagnostics: {"gnPanelDisplay":{"present":true,"rects":0,"display":"none","visibility":"visible"},"storyContent":{"present":true,"rects":0,"display":"none","visibility":"visible"},"prompt":{"present":true,"rects":0,"display":"block","visibility":"visible"},"button":{"present":true,"rects":0,"display":"flex","visibility":"visible"},"activeScreen":null}
+     click route: in-page el.click() — host not rendered in this harness
+  ok   the choice was recorded by the prompt's own handler
+  ok   the gate is satisfied — no decision is needed any more
+  ok   the prompt removed itself
+     recorded: {"axis":"run in shame vs remain and see where Julian was taking it","choice":"run","label":"run in shame","source":"resume","at":1790923683206,"storyId":"d689c2e8-ccdc-416c-b6d8-5792b16d19e7"}
+  ok   the planner was dispatched for scene 2
+  FAIL the author was dispatched for scene 2  — ["other","other","other","other","other","other","planner","other","other","other","planner"]
+  ok   every scene-2 provider call was FIXTURE-SERVED or aborted — none billed
+  FAIL a staged scene 2 MOUNTED with beats  — no _stagedActive.plan.beats
+  ok   scene 2 prose arrived through the normal projection (>=40 chars)
+  FAIL and it is NOT scene 1 — the projection is not stale  — scene1=7605 projection=7605 IDENTICAL
+  FAIL the next gate OPENED
+  ok   committed scene 1 SURVIVED the transition, byte-for-byte
+  ok   scene 1 was not duplicated in the scene list
+  ok   ZERO PROVIDER SPEND on the whole FS path — every call served or aborted, none fetched
+     projection 7605 chars, scenes=1, stages=["other","other","other","other","other","other","planner","other","other","other","planner"]
+     console during the seam:
+       · [CG:STALE-REJECTED] retrying once with the current branch/attempt: local objective not accepted: no local_objective; no posture_read; no present cast;
+       · [CG:SAYDO-SLOT] {"slot":null,"confidence":"none","evidence":[],"reason":"no slot represented: the move is not an admission, an authority challenge, an
+       · [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+       · [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+       · [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+       · [CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch
+       · [CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhau
+       · [CG:STALE-STOP] scene 1 — retry stale: local objective not accepted: no local_objective; no posture_read; no present cast; no local_objective_actor; r
+
+4. the opening is byte-identical across three independent launches
+  ok   all three launches produced a non-empty opening
+  ok   all three are byte-identical
+
+6. the failed-setup abort contract — NOT TESTED HERE
+   _unlockBakedGenesis calls a closure-scoped handleBeginStory, so no external
+   injection can make setup fail. Left to the application; the spend-side abort is
+   covered by _live_corpus_runner_preflight.mjs section 1 (proven red).
+
+40/44 preflight checks passed
+artefacts: _audit_out/fs_scene1_preflight

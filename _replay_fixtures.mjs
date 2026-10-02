@@ -81,6 +81,18 @@ export const verifierVerdict = (refs) => JSON.stringify({
   actual_exit_state: 'the demand is with the commission'
 });
 
+// WHAT COUNTS AS PROVIDER SPEND. One definition, because getting this wrong in either direction is
+// a reporting defect: the FS preflight counted ANY /api/ URL as a provider call and therefore
+// reported "the deferred setup is a PAID step" when the only calls were /api/csp-report,
+// /api/config, /api/geo and /api/beta-events — infrastructure and telemetry. A green assertion
+// built on that reading is worse than a red one.
+export const PROVIDER_ENDPOINT = /\/api\/(proxy|mistral-proxy|chatgpt-proxy|deepseek-proxy)/;
+export const isProviderEndpoint = (url) => PROVIDER_ENDPOINT.test(String(url || ''));
+// Named explicitly so a new infrastructure endpoint shows up as unclassified rather than silently
+// landing in the spend column.
+export const NON_PROVIDER_ENDPOINTS = ['/api/config', '/api/geo', '/api/csp-report',
+  '/api/beta-events', '/api/fortunes', '/api/auth', '/api/supabase'];
+
 // THE STAGE CLASSIFIER, shared. Reads a request's system prompt and says which pipeline stage it
 // is. Both runners route on this; two copies would route differently and the difference would show
 // up as a mystery dispatch.

@@ -1,0 +1,22 @@
+[
+  {
+    "phase": "mount",
+    "url": "/api/csp-report",
+    "stage": "other"
+  },
+  {
+    "phase": "mount",
+    "url": "/api/config",
+    "stage": "other"
+  },
+  {
+    "phase": "mount",
+    "url": "/api/csp-report",
+    "stage": "other"
+  },
+  {
+    "phase": "mount",
+    "url": "/api/geo",
+    "stage": "other"
+  }
+]

@@ -1,0 +1,38 @@
+=== FIRST SACRIFICE FIXED SCENE 1 PREFLIGHT (provider-free, $0) ===
+
+1. the baked package is real authored content, not a placeholder
+  ok   a package exists for starter_first_sacrifice
+  ok   it is NOT a placeholder
+  ok   it is the CG format
+  ok   it carries real authored beats
+  ok   it declares how it ends, rather than leaving it inferred
+     version 1.8.0-editorial, 20 beats, endsAt=oas_interrupt
+
+2. the fixed scene mounts with NO planner and NO author
+  ok   the launch definition is reachable
+  ok   the starter id is set
+  ok   the baked scene MOUNTED
+  ok   the fixed cast names came from the seed
+  ok   scene 1 prose is held, not committed — turnCount 0, scenes[] empty
+  ok   the held commit carries the scene text (>=200 chars)
+  ok   ZERO planner or author calls were attempted to display scene 1
+  ok   the held text is the PACKAGE's authored beats (>=5 matched verbatim)
+  ok   the Genesis gate is still LOCKED
+  ok   deferred story setup has NOT run yet
+     held text 7605 chars, 20 beats verbatim, renderMode=staged_story_mode
+
+3. the unlock runs DEFERRED SETUP, which dispatches real calls
+     the setup attempted 1 provider call(s), all aborted here
+     by stage: {"other":1}
+  ok   the deferred setup DOES want provider calls — it is a PAID step
+  FAIL with every call aborted, the unlock REFUSED  — returned true
+  FAIL and scene 1 stayed UNCOMMITTED  — turnCount=0 scenes=1
+  FAIL and Genesis stayed LOCKED
+  FAIL the app said so itself  — ["[BAKED:SETUP] running deferred story initialization…","[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)","[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)","[BAKED:GATE] Genesis unlocked (harness-preflight) — starter=starter_first_sacrifice"]
+
+4. the opening is byte-identical across three independent launches
+  ok   all three launches produced a non-empty opening
+  ok   all three are byte-identical
+
+18/22 preflight checks passed
+artefacts: _audit_out/fs_scene1_preflight

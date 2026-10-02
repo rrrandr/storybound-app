@@ -30,7 +30,7 @@ import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
 import { R_PLANNER, R_AUTHOR, R_VERIFIER, R_SCENE, makeSpendLedger, reservationLines }
   from './_live_spend_ledger.mjs';
-import { plannerFor, AUTHOR as REPLAY_AUTHOR, MEMORY, stageOf, refsFromVerifierRequest,
+import { plannerFor, AUTHOR as REPLAY_AUTHOR, MEMORY, stageOf, refsFromVerifierRequest, isProviderEndpoint,
   verifierVerdict } from './_replay_fixtures.mjs';
 
 const ARG = process.argv.slice(2);
@@ -148,7 +148,7 @@ await page.route('**/api/**', async (route) => {
   const req = route.request();
   const url = req.url();
   let raw = null; try { raw = req.postData(); } catch (_) {}
-  if (!/\/api\/(proxy|mistral-proxy|chatgpt-proxy|deepseek-proxy)/.test(url)) {
+  if (!isProviderEndpoint(url)) {
     try { await route.abort(); } catch (_) {} return;
   }
   let sys = '', usr = '', body = null;

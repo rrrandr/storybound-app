@@ -1,0 +1,63 @@
+=== FS SCENE 1 → SCENE 2 PREFLIGHT (provider-free, $0) ===
+
+1. the baked package is real authored content
+  ok   a package exists for starter_first_sacrifice
+  ok   it is NOT a placeholder
+  ok   it is the CG format
+  ok   it carries real authored beats
+  ok   it declares how it ends rather than leaving it inferred
+     version 1.8.0-editorial, 20 beats, endsAt=oas_interrupt
+
+2. scene 1 mounts from the package with ZERO provider calls
+  ok   the launch definition is reachable
+  ok   the starter id is set
+  ok   the baked scene MOUNTED
+  ok   the fixed cast name came from the seed
+  ok   scene 1 is HELD, not committed — turnCount 0, scenes[] empty
+  ok   the held commit carries the scene text (>=200 chars)
+  ok   the held text is the PACKAGE's authored beats, verbatim
+  ok   ZERO PROVIDER CALLS to display scene 1 — classified by endpoint
+  ok   the Genesis gate is still LOCKED
+  ok   deferred setup has not run yet
+     held text 7605 chars, 20/20 beats verbatim
+     infrastructure endpoints during mount: ["/api/csp-report","/api/config","/api/geo"]
+
+3. the production unlock commits scene 1 and unlocks Genesis, provider-free
+  ok   the unlock SUCCEEDED through the production function
+  ok   deferred setup completed
+  ok   scene 1 is now COMMITTED as scenes[0]
+  ok   the committed scene carries the authored text
+  ok   turnCount stays 0 — it counts COMPLETED continuation turns, not scenes
+  ok   Genesis is unlocked
+  ok   the unlock dispatched ZERO PROVIDER calls — $0, by endpoint
+  ok   its only traffic was infrastructure/telemetry, each a known non-provider endpoint
+     setup traffic: ["/api/beta-events"] (provider: 0)
+     NOTE: the Fortune charge is skipped — it is in-app currency, not provider spend,
+           and _unlockBakedGenesis is where BOTH real unlock routes converge.
+
+5. THE SEAM — the next staged transition reaches real scene 2 generation
+  FAIL the planner was dispatched for scene 2  — []
+  FAIL the author was dispatched for scene 2  — []
+  FAIL every scene-2 provider call was FIXTURE-SERVED, never billed  — []
+  FAIL a staged scene 2 MOUNTED with beats  — no _stagedActive.plan.beats
+  ok   scene 2 prose arrived through the NORMAL projection (>=40 chars)
+  FAIL the next gate OPENED
+  ok   committed scene 1 SURVIVED the transition, byte-for-byte
+  ok   scene 1 was not duplicated into the scene list
+  ok   NOTHING was billed on the whole FS path — zero unserved provider calls
+     scene 2 projection 7605 chars, scenes=1, stages=[]
+
+4. the opening is byte-identical across three independent launches
+  ok   all three launches produced a non-empty opening
+  ok   all three are byte-identical
+
+6. the failed-setup abort contract (setup deliberately broken)
+  ok   the baked scene mounted before the injection
+  FAIL the unlock REFUSED  — returned true
+  FAIL scene 1 stayed UNCOMMITTED  — scenes=1
+  FAIL Genesis stayed LOCKED
+  FAIL setup is still marked incomplete
+  FAIL the app logged the abort itself  — ["[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)","[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)","[BAKED:GATE] Genesis unlocked (harness-abort-test) — starter=starter_first_sacrifice"]
+
+30/40 preflight checks passed
+artefacts: _audit_out/fs_scene1_preflight
