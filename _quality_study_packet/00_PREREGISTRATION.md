@@ -20,8 +20,23 @@ so it returns 20 — the literary length, not this Book's.
 An earlier draft of this file said 8 per path and 24 total. That number was not derived from anything —
 it was "4-6 plus margin" and was never checked against the issue length. It is removed, not amended.
 
-**H2:** the **off-spine** path (the one the seed does not anticipate) circles **earlier** than the
-two paths taken from the seed's own decision.
+**H2 (restated — the original was built on a decision the product does not offer):** the arm whose
+**player words** go past what the axis anticipates (arm C) circles **earlier** than the arm that
+takes the same axis choice and stays within it (arm B).
+
+The original H2 compared an "off-spine path the seed does not anticipate" against two on-spine
+paths. That comparison is not available. The product's scene-1 decision is a **two-button prompt**
+built from the baked package's own axis:
+
+> **run in shame vs remain and see where Julian was taking it**
+> · A = `run` — run in shame
+> · B = `remain` — remain and see where Julian was taking it
+
+There is no third button, so no third axis choice exists and no reader can take one. The first
+version of this packet derived its three branches from the Scene 1 plan row's prose instead
+("END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was"…), which is authoring notes, not the player's
+choice. Arm C now shares arm B's axis choice and diverges only in say/do. That is a weaker contrast
+than two distinct axis choices, and H2 says so rather than implying otherwise.
 
 **H3:** obligations are silently dropped more often than they are paid off.
 

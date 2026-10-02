@@ -32,6 +32,49 @@ await page.route('**/api/**', r => r.abort());
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 await page.waitForFunction(() => !!window.STARTER_PLANS, { timeout: 20000 });
 
+// ── THE AXIS THE PRODUCT ACTUALLY PRESENTS ──────────────────────────────────
+// The first build derived the three branch inputs from the Scene 1 plan row's own text: "END ON THE
+// DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold."
+// That is NOT the choice the reader is given. The FS scene 1 → 2 preflight drove the real gate and
+// the product mounted a different axis entirely, out of the baked package:
+//
+//     "run in shame vs remain and see where Julian was taking it"
+//
+// A study whose branches do not match the decision the reader makes is measuring a decision the
+// product never offered. So the axis is now READ FROM THE APP through _sceneDecisionAxis(), the same
+// function the decision prompt itself reads, after launching the Book with every /api/ call aborted.
+await page.waitForFunction(() => typeof window._launchStarterStory === 'function'
+  && typeof window._sceneDecisionAxis === 'function', { timeout: 20000 });
+const axis = await page.evaluate(async () => {
+  const list = window.STARTER_STORIES || {};
+  const keys = Array.isArray(list) ? list.map((_, i) => i) : Object.keys(list);
+  let def = null;
+  for (const k of keys) { const d = list[k]; if (d && d.id === 'starter_first_sacrifice') def = d; }
+  if (!def) return { error: 'no starter_first_sacrifice in STARTER_STORIES' };
+  try { await window._launchStarterStory(def); } catch (e) { return { error: 'launch threw: ' + e.message }; }
+  await new Promise(r => setTimeout(r, 5000));
+  let ax = window._sceneDecisionAxis();
+  if (!ax) {
+    // The axis lives on state._bakedEmitted, which the mount hydrates. If it is not there yet, run
+    // the production unlock (provider-free) and read again rather than guessing at the text.
+    try { await window._unlockBakedGenesis('packet-build'); } catch (_) {}
+    await new Promise(r => setTimeout(r, 2000));
+    ax = window._sceneDecisionAxis();
+  }
+  if (!ax) return { error: '_sceneDecisionAxis() returned null after launch and unlock' };
+  return { axis: ax.axis, a: { key: ax.a.key, label: ax.a.label, text: ax.a.text },
+    b: { key: ax.b.key, label: ax.b.label, text: ax.b.text } };
+});
+if (!axis || axis.error) {
+  console.error('REFUSED: could not read the product\'s own decision axis — ' + (axis && axis.error));
+  console.error('  The branch inputs must come from _sceneDecisionAxis(), never from the plan row.');
+  await browser.close();
+  process.exit(5);
+}
+console.log('  THE REAL AXIS, read from _sceneDecisionAxis(): "' + axis.axis + '"');
+console.log('    A = ' + axis.a.key + '  (' + axis.a.label + ')');
+console.log('    B = ' + axis.b.key + '  (' + axis.b.label + ')');
+
 // ── THE REAL PLAN DATA ──────────────────────────────────────────────────────
 const plan = await page.evaluate((SCENES) => {
   const P = window.STARTER_PLANS && window.STARTER_PLANS.starter_first_sacrifice;
@@ -107,40 +150,77 @@ fs.mkdirSync(OUT + '/03_SLOTS', { recursive: true });
 // deliberately OFF-SPINE: a choice the seed does not offer, which is the only way to test whether
 // the planner handles divergence it was not authored for.
 const s1goal = (plan.scenes.find(s => s.n === 1) || {}).goal || '';
-const decisionLine = (s1goal.match(/END ON THE DECISION:[^]*?$/) || [''])[0].slice(0, 400);
+const planDecisionLine = (s1goal.match(/END ON THE DECISION:[^]*?$/) || [''])[0].slice(0, 400);
+
+// THE AXIS IS BINARY, AND THAT CONSTRAINS THE STUDY. _mountSceneDecisionPrompt renders exactly two
+// buttons, A and B, from the baked package. There is no third button, so a third AXIS choice is not
+// reachable through the product's own gate — my earlier "deliberately off-spine" branch was not a
+// path a reader could take.
+//
+// A third arm is still worth having, but it has to diverge where divergence is actually possible:
+// the reader's own say/do words at the gate that follows. So arm C records the SAME axis choice as
+// arm B and differs only in what the player says and does. That is a weaker contrast than two
+// different axis choices, and H2 is restated below to say exactly what it now compares.
 const BRANCHES = {
-  comply: {
-    label: 'comply — hold the line she was told to hold',
-    source: 'the seed\'s own Scene 1 decision, second option',
-    action: 'I hold the line. I keep the gossamer band on and I do not move from the witness row.',
-    dialogue: 'Nothing. I am a witness. I hold.'
+  A_run: {
+    label: axis.a.key + ' — ' + axis.a.label,
+    axisChoice: axis.a.key,
+    source: 'THE PRODUCT\'S OWN AXIS, button A, read from _sceneDecisionAxis()',
+    authoredConsequence: axis.a.text || null,
+    action: 'I turn away from the clearing and walk, and I do not look at any of them.',
+    dialogue: 'Nothing. I have nothing to say to any of you.'
   },
-  defy: {
-    label: 'defy — tear the band away and go to Seren',
-    source: 'the seed\'s own Scene 1 decision, first option',
-    action: 'I tear the gossamer band off my wrist and go to Seren before the wish finishes turning.',
-    dialogue: 'Seren, stop — take it back, take the words back now.'
+  B_remain: {
+    label: axis.b.key + ' — ' + axis.b.label,
+    axisChoice: axis.b.key,
+    source: 'THE PRODUCT\'S OWN AXIS, button B, read from _sceneDecisionAxis()',
+    authoredConsequence: axis.b.text || null,
+    action: 'I stay where I am and keep my eyes on Julian, waiting to see what he does next.',
+    dialogue: 'I am still here. Say the rest of it.'
   },
-  withdraw: {
-    label: 'withdraw — leave the assembly entirely',
-    source: 'DELIBERATELY OFF-SPINE: the seed offers only hold-or-intervene. This branch tests '
-      + 'divergence the plan does not anticipate, which is where circling is most likely.',
-    action: 'I say nothing, step back out of the witness row, and walk out of the assembly.',
-    dialogue: 'Nothing. I leave before anyone can ask me to answer for her.'
+  C_remain_offscript: {
+    label: axis.b.key + ' — ' + axis.b.label + ', with words the axis does not anticipate',
+    axisChoice: axis.b.key,
+    source: 'SAME AXIS CHOICE AS ARM B. The axis offers only two buttons, so a third axis choice '
+      + 'does not exist in the product. This arm diverges at the SAY/DO gate instead: the reader '
+      + 'remains, and then names publicly what the scene left unsaid — a move the authored '
+      + 'consequence for "remain" does not anticipate. It tests branch specificity under an '
+      + 'identical recorded decision, which is a DIFFERENT question from H2\'s original one.',
+    action: 'I stay, and I say out loud what everyone in this clearing is pretending not to know.',
+    dialogue: 'Say whose wish it really was. Say it where they can all hear you.'
   }
 };
 fs.writeFileSync(OUT + '/01_BRANCH_INPUTS.json', JSON.stringify({
   sharedOpening: {
     story: 'starter_first_sacrifice',
     scene: 1,
-    note: 'Scene 1 is a FIXED seed package and is NEVER planner-routed, so all three paths share a '
-      + 'byte-identical opening. Divergence begins at the Scene 1 → 2 decision, which means any '
-      + 'difference downstream is attributable to the CHOICE and not to a different story.',
-    authoredDecision: decisionLine
+    note: 'Scene 1 is a FIXED baked package and is NEVER planner-routed. The FS preflight measured '
+      + 'it: 20/20 beats verbatim from public/starter-scenes.js, byte-identical across three '
+      + 'independent launches, and zero provider calls to display it. So all arms share an '
+      + 'identical opening and any downstream difference is attributable to what the reader did.',
+    howTheChoiceIsMade: 'The product mounts a two-button prompt (_mountSceneDecisionPrompt) built '
+      + 'from the baked package\'s own axis. _advanceStagedScene REFUSES to request a continuation '
+      + 'until the choice is recorded, and dispatches nothing while it is unrecorded — measured in '
+      + 'the FS preflight. The corpus runner must therefore record the decision through the '
+      + 'prompt\'s own handler, not by submitting say/do alone.',
+    theRealAxis: {
+      axis: axis.axis,
+      a: axis.a, b: axis.b,
+      provenance: '_sceneDecisionAxis(), read from the running app at packet build time',
+      binary: 'EXACTLY TWO CHOICES EXIST. There is no third button, so no third axis choice is '
+        + 'reachable. Arm C therefore shares arm B\'s axis choice and diverges in say/do only.'
+    },
+    planRowWordingIsNotTheChoice: {
+      planRowSays: planDecisionLine,
+      correction: 'This is the Scene 1 plan row\'s own prose, and the FIRST version of this packet '
+        + 'derived all three branches from it. It is NOT what the reader is asked. The product '
+        + 'presents the axis above. Recorded here so the error is visible rather than overwritten.'
+    }
   },
   branches: BRANCHES
 }, null, 2));
-console.log('  01_BRANCH_INPUTS.json — 3 branches, 2 from the seed\'s decision, 1 deliberately off-spine');
+console.log('  01_BRANCH_INPUTS.json — 3 arms built FROM THE AXIS: '
+  + Object.values(BRANCHES).map(b => b.axisChoice).join('/') + ' (A/B are the two buttons; C shares B)');
 
 // ── 02. THE OBLIGATION LEDGER, read from the plan ───────────────────────────
 const ledger = {
@@ -217,8 +297,23 @@ so it returns 20 — the literary length, not this Book's.
 An earlier draft of this file said 8 per path and 24 total. That number was not derived from anything —
 it was "4-6 plus margin" and was never checked against the issue length. It is removed, not amended.
 
-**H2:** the **off-spine** path (the one the seed does not anticipate) circles **earlier** than the
-two paths taken from the seed's own decision.
+**H2 (restated — the original was built on a decision the product does not offer):** the arm whose
+**player words** go past what the axis anticipates (arm C) circles **earlier** than the arm that
+takes the same axis choice and stays within it (arm B).
+
+The original H2 compared an "off-spine path the seed does not anticipate" against two on-spine
+paths. That comparison is not available. The product's scene-1 decision is a **two-button prompt**
+built from the baked package's own axis:
+
+> **${axis.axis}**
+> · A = \`${axis.a.key}\` — ${axis.a.label}
+> · B = \`${axis.b.key}\` — ${axis.b.label}
+
+There is no third button, so no third axis choice exists and no reader can take one. The first
+version of this packet derived its three branches from the Scene 1 plan row's prose instead
+(${JSON.stringify(planDecisionLine.slice(0, 90))}…), which is authoring notes, not the player's
+choice. Arm C now shares arm B's axis choice and diverges only in say/do. That is a weaker contrast
+than two distinct axis choices, and H2 says so rather than implying otherwise.
 
 **H3:** obligations are silently dropped more often than they are paid off.
 
@@ -323,7 +418,7 @@ console.log('  04_SCORESHEET.csv — ' + key.length + ' rows, ' + cols.length + 
 fs.writeFileSync(OUT + '/KEY_SEALED.json', JSON.stringify({
   WARNING: 'DO NOT OPEN until 04_SCORESHEET.csv is filled and saved. Opening this first destroys '
     + 'the blind and the study with it.',
-  pathLabels: { A: BRANCHES.comply.label, B: BRANCHES.defy.label, C: BRANCHES.withdraw.label },
+  pathLabels: { A: BRANCHES.A_run.label, B: BRANCHES.B_remain.label, C: BRANCHES.C_remain_offscript.label },
   mapping: key
 }, null, 2));
 console.log('  KEY_SEALED.json — slot → (path, scene), separate file');
@@ -353,17 +448,37 @@ console.log('\nPACKET INTEGRITY');
 t('every slot file exists', key.every(k => fs.existsSync(OUT + '/03_SLOTS/' + k.slot + '.md')));
 t('no slot file names its path or scene',
   key.every(k => { const b = fs.readFileSync(OUT + '/03_SLOTS/' + k.slot + '.md', 'utf8');
-    return !/comply|defy|withdraw/i.test(b) && !new RegExp('scene\\\\s*' + k.scene + '\\\\b', 'i').test(b); }));
+    return !/\brun in shame\b|\bremain and see\b|off-?script/i.test(b) && !new RegExp('scene\\\\s*' + k.scene + '\\\\b', 'i').test(b); }));
 t('the key is a SEPARATE file', fs.existsSync(OUT + '/KEY_SEALED.json'));
 t('  and no other packet file contains the mapping',
   ['00_PREREGISTRATION.md', '01_BRANCH_INPUTS.json', '02_OBLIGATION_LEDGER.json',
    '04_SCORESHEET.csv', 'README.md'].every(f =>
     !/"slot_\d+"\s*,\s*"path"/.test(fs.readFileSync(OUT + '/' + f, 'utf8'))
-    && !/slot_\d+.*(comply|defy|withdraw)/i.test(fs.readFileSync(OUT + '/' + f, 'utf8'))));
+    && !/slot_\d+.*(run in shame|remain and see)/i.test(fs.readFileSync(OUT + '/' + f, 'utf8'))));
 t('the shuffle is not the identity order',
   key.some((k, i) => !(k.path === PATHS[Math.floor(i / SCENES)] && k.scene === (i % SCENES) + 1)));
 t('all three paths appear ' + SCENES + ' times each — ' + (SCENES * PATHS.length) + ' slots total',
   PATHS.every(p => key.filter(k => k.path === p).length === SCENES));
+// THE BRANCHES COME FROM THE PRODUCT, NOT FROM THE PLAN PROSE. This is the check that would have
+// caught the first build: every arm's axisChoice must be one of the two keys the app itself reports.
+t('every arm records an axis choice the APP reports',
+  Object.values(BRANCHES).every(b => b.axisChoice === axis.a.key || b.axisChoice === axis.b.key),
+  JSON.stringify(Object.values(BRANCHES).map(b => b.axisChoice)) + ' vs app '
+  + JSON.stringify([axis.a.key, axis.b.key]));
+t('both of the app\'s buttons are exercised',
+  [axis.a.key, axis.b.key].every(k => Object.values(BRANCHES).some(b => b.axisChoice === k)));
+t('the binary constraint is stated, not glossed',
+  /EXACTLY TWO CHOICES EXIST/.test(fs.readFileSync(OUT + '/01_BRANCH_INPUTS.json', 'utf8')));
+t('the superseded plan-row wording is recorded as superseded',
+  /NOT what the reader is asked/.test(fs.readFileSync(OUT + '/01_BRANCH_INPUTS.json', 'utf8')));
+t('no arm\'s input text was lifted from the plan row\'s decision line',
+  Object.values(BRANCHES).every(b =>
+    !planDecisionLine.toLowerCase().includes(String(b.action).toLowerCase().slice(0, 25))),
+  'an arm reuses the plan-row prose');
+t('H2 is restated against the arms that actually exist',
+  /H2 \(restated/.test(fs.readFileSync(OUT + '/00_PREREGISTRATION.md', 'utf8')));
+t('the preregistration carries the real axis text verbatim',
+  fs.readFileSync(OUT + '/00_PREREGISTRATION.md', 'utf8').includes(axis.axis));
 t('the obligation ledger came from the app, with real sealed ids',
   plan.sealedEvents.length > 0 && plan.sealedEvents.every(e => e.id && e.unsealsAtScene));
 t('the pre-registration states H1 before any prose exists',

@@ -1,0 +1,41 @@
+=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===
+
+  THE REAL AXIS, read from _sceneDecisionAxis(): "run in shame vs remain and see where Julian was taking it"
+    A = run  (run in shame)
+    B = remain  (remain and see where Julian was taking it)
+  plan read from the app: issue 1, 20 authored scenes, 6 in the study window
+  sealed future reveals: ["julian_counter_wish","julian_obscuring_wishes"]
+  CG issue length read from ISSUE_PRICING.cg: 10 scenes — study window 6 per path
+  01_BRANCH_INPUTS.json — 3 arms built FROM THE AXIS: tear_band/remain/remain (A/B are the two buttons; C shares B)
+  02_OBLIGATION_LEDGER.json — 6 scene rows, 2 sealed reveals, 11 declared beats/obligations
+  00_PREREGISTRATION.md — H1/H2/H3 + 8-dimension rubric + procedure
+  03_SLOTS/ — 18 empty anonymised slots, cryptographically shuffled
+  04_SCORESHEET.csv — 18 rows, 11 columns, empty
+  KEY_SEALED.json — slot → (path, scene), separate file
+
+PACKET INTEGRITY
+  ok   every slot file exists
+  ok   no slot file names its path or scene
+  ok   the key is a SEPARATE file
+  ok     and no other packet file contains the mapping
+  ok   the shuffle is not the identity order
+  ok   all three paths appear 6 times each — 18 slots total
+  FAIL every arm records an axis choice the APP reports  — ["tear_band","remain","remain"] vs app ["run","remain"]
+  FAIL both of the app's buttons are exercised
+  ok   the binary constraint is stated, not glossed
+  ok   the superseded plan-row wording is recorded as superseded
+  ok   no arm's input text was lifted from the plan row's decision line
+  ok   H2 is restated against the arms that actually exist
+  ok   the preregistration carries the real axis text verbatim
+  ok   the obligation ledger came from the app, with real sealed ids
+  ok   the pre-registration states H1 before any prose exists
+  ok   the corpus is exactly 6 × 3 = 18 slots
+  ok   the window fits one CG issue, read from the CG row BY NAME
+  ok   no packet file still claims the fabricated 8-per-path / 24-total corpus
+  ok   the preregistration separates: boundary reliability only
+  ok   the preregistration separates: repeated prose = fixture artifact
+  ok   the preregistration separates: repeated Commission = identity-guard check
+  ok   the preregistration separates: activation counts inconclusive
+  ok   every slot is EMPTY — nothing was generated
+
+21/23 integrity checks passed

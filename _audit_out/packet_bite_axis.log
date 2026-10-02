@@ -1,0 +1,4 @@
+=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===
+
+REFUSED: could not read the product's own decision axis — _sceneDecisionAxis() returned null after launch and unlock
+  The branch inputs must come from _sceneDecisionAxis(), never from the plan row.

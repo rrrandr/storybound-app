@@ -1,25 +1,25 @@
 {
   "WARNING": "DO NOT OPEN until 04_SCORESHEET.csv is filled and saved. Opening this first destroys the blind and the study with it.",
   "pathLabels": {
-    "A": "comply — hold the line she was told to hold",
-    "B": "defy — tear the band away and go to Seren",
-    "C": "withdraw — leave the assembly entirely"
+    "A": "run — run in shame",
+    "B": "remain — remain and see where Julian was taking it",
+    "C": "remain — remain and see where Julian was taking it, with words the axis does not anticipate"
   },
   "mapping": [
     {
       "slot": "slot_01",
       "path": "B",
-      "scene": 1
+      "scene": 3
     },
     {
       "slot": "slot_02",
-      "path": "B",
+      "path": "A",
       "scene": 6
     },
     {
       "slot": "slot_03",
       "path": "A",
-      "scene": 5
+      "scene": 1
     },
     {
       "slot": "slot_04",
@@ -34,22 +34,22 @@
     {
       "slot": "slot_06",
       "path": "A",
-      "scene": 6
+      "scene": 5
     },
     {
       "slot": "slot_07",
       "path": "C",
-      "scene": 1
+      "scene": 2
     },
     {
       "slot": "slot_08",
-      "path": "B",
-      "scene": 5
+      "path": "C",
+      "scene": 6
     },
     {
       "slot": "slot_09",
       "path": "A",
-      "scene": 4
+      "scene": 3
     },
     {
       "slot": "slot_10",
@@ -58,43 +58,43 @@
     },
     {
       "slot": "slot_11",
-      "path": "B",
-      "scene": 3
+      "path": "C",
+      "scene": 1
     },
     {
       "slot": "slot_12",
-      "path": "A",
-      "scene": 2
+      "path": "B",
+      "scene": 6
     },
     {
       "slot": "slot_13",
-      "path": "A",
+      "path": "B",
       "scene": 1
     },
     {
       "slot": "slot_14",
-      "path": "A",
-      "scene": 3
-    },
-    {
-      "slot": "slot_15",
       "path": "B",
       "scene": 4
     },
     {
-      "slot": "slot_16",
+      "slot": "slot_15",
       "path": "C",
-      "scene": 2
+      "scene": 4
+    },
+    {
+      "slot": "slot_16",
+      "path": "B",
+      "scene": 5
     },
     {
       "slot": "slot_17",
-      "path": "C",
-      "scene": 6
+      "path": "A",
+      "scene": 4
     },
     {
       "slot": "slot_18",
-      "path": "C",
-      "scene": 4
+      "path": "A",
+      "scene": 2
     }
   ]
 }

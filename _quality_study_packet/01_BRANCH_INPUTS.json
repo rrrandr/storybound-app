@@ -2,27 +2,51 @@
   "sharedOpening": {
     "story": "starter_first_sacrifice",
     "scene": 1,
-    "note": "Scene 1 is a FIXED seed package and is NEVER planner-routed, so all three paths share a byte-identical opening. Divergence begins at the Scene 1 → 2 decision, which means any difference downstream is attributable to the CHOICE and not to a different story.",
-    "authoredDecision": "END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold."
+    "note": "Scene 1 is a FIXED baked package and is NEVER planner-routed. The FS preflight measured it: 20/20 beats verbatim from public/starter-scenes.js, byte-identical across three independent launches, and zero provider calls to display it. So all arms share an identical opening and any downstream difference is attributable to what the reader did.",
+    "howTheChoiceIsMade": "The product mounts a two-button prompt (_mountSceneDecisionPrompt) built from the baked package's own axis. _advanceStagedScene REFUSES to request a continuation until the choice is recorded, and dispatches nothing while it is unrecorded — measured in the FS preflight. The corpus runner must therefore record the decision through the prompt's own handler, not by submitting say/do alone.",
+    "theRealAxis": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "a": {
+        "key": "run",
+        "label": "run in shame",
+        "text": "If she runs: the clearing lets her go, which is worse than being stopped; The Answer is still in her hand when she reaches the trees, and Julian has not followed."
+      },
+      "b": {
+        "key": "remain",
+        "label": "remain and see where Julian was taking it",
+        "text": "If she remains: she stays where the whole assembly can see her, holding The Answer, and lets Julian finish the question the Dohkar tried to end."
+      },
+      "provenance": "_sceneDecisionAxis(), read from the running app at packet build time",
+      "binary": "EXACTLY TWO CHOICES EXIST. There is no third button, so no third axis choice is reachable. Arm C therefore shares arm B's axis choice and diverges in say/do only."
+    },
+    "planRowWordingIsNotTheChoice": {
+      "planRowSays": "END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold.",
+      "correction": "This is the Scene 1 plan row's own prose, and the FIRST version of this packet derived all three branches from it. It is NOT what the reader is asked. The product presents the axis above. Recorded here so the error is visible rather than overwritten."
+    }
   },
   "branches": {
-    "comply": {
-      "label": "comply — hold the line she was told to hold",
-      "source": "the seed's own Scene 1 decision, second option",
-      "action": "I hold the line. I keep the gossamer band on and I do not move from the witness row.",
-      "dialogue": "Nothing. I am a witness. I hold."
+    "A_run": {
+      "label": "run — run in shame",
+      "axisChoice": "run",
+      "source": "THE PRODUCT'S OWN AXIS, button A, read from _sceneDecisionAxis()",
+      "authoredConsequence": "If she runs: the clearing lets her go, which is worse than being stopped; The Answer is still in her hand when she reaches the trees, and Julian has not followed.",
+      "action": "I turn away from the clearing and walk, and I do not look at any of them.",
+      "dialogue": "Nothing. I have nothing to say to any of you."
     },
-    "defy": {
-      "label": "defy — tear the band away and go to Seren",
-      "source": "the seed's own Scene 1 decision, first option",
-      "action": "I tear the gossamer band off my wrist and go to Seren before the wish finishes turning.",
-      "dialogue": "Seren, stop — take it back, take the words back now."
+    "B_remain": {
+      "label": "remain — remain and see where Julian was taking it",
+      "axisChoice": "remain",
+      "source": "THE PRODUCT'S OWN AXIS, button B, read from _sceneDecisionAxis()",
+      "authoredConsequence": "If she remains: she stays where the whole assembly can see her, holding The Answer, and lets Julian finish the question the Dohkar tried to end.",
+      "action": "I stay where I am and keep my eyes on Julian, waiting to see what he does next.",
+      "dialogue": "I am still here. Say the rest of it."
     },
-    "withdraw": {
-      "label": "withdraw — leave the assembly entirely",
-      "source": "DELIBERATELY OFF-SPINE: the seed offers only hold-or-intervene. This branch tests divergence the plan does not anticipate, which is where circling is most likely.",
-      "action": "I say nothing, step back out of the witness row, and walk out of the assembly.",
-      "dialogue": "Nothing. I leave before anyone can ask me to answer for her."
+    "C_remain_offscript": {
+      "label": "remain — remain and see where Julian was taking it, with words the axis does not anticipate",
+      "axisChoice": "remain",
+      "source": "SAME AXIS CHOICE AS ARM B. The axis offers only two buttons, so a third axis choice does not exist in the product. This arm diverges at the SAY/DO gate instead: the reader remains, and then names publicly what the scene left unsaid — a move the authored consequence for \"remain\" does not anticipate. It tests branch specificity under an identical recorded decision, which is a DIFFERENT question from H2's original one.",
+      "action": "I stay, and I say out loud what everyone in this clearing is pretending not to know.",
+      "dialogue": "Say whose wish it really was. Say it where they can all hear you."
     }
   }
 }
