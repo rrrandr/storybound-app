@@ -814,19 +814,39 @@ const runTwoScene = async (C) => {
     });
 
     // ── IDEMPOTENCY through the real path, re-entered twice ──────────────────
-    say('\n  ── re-entering _commitScene on the same scene, twice');
-    repeat = await page.evaluate(async (prose) => {
-      const before = window._ensureCommittedState().facts.length;
-      await window._commitScene(prose, window.state._priorSceneStateChange,
-        (window.state._priorSceneStateChange || {}).sceneProposed);
-      await window._commitScene(prose, window.state._priorSceneStateChange,
-        (window.state._priorSceneStateChange || {}).sceneProposed);
+    // ── IDEMPOTENCY, PINNED (repaired after run 17) ─────────────────────────
+    // The old probe re-entered with window.state._priorSceneStateChange AS IT STOOD after scene 2's
+    // planning — by then a LATER scene's state_change. It therefore adjudicated a DIFFERENT scene
+    // against stale prose, dispatched a SECOND PAID verifier call, and committed a new fact. It now
+    // pins SCENE 1's own proposals from the sealed store and passes the matching scene number.
+    // The verifier BASELINE is captured BEFORE re-entry: the old assertion compared a count to
+    // itself, both read afterwards, and passed with a second verifier call in the same log.
+    const vBeforeRepeat = calls.filter(c => c.stage === 'verifier').length;
+    const factsBeforeRepeat = (R_s2factRefs => R_s2factRefs)((s2 && s2.facts || []).map(f => f.ref).sort().join('|'));
+    say('\n  ── re-entering _commitScene on SCENE 1\'s pinned proposals, twice');
+    say('    baseline before re-entry: verifier calls=' + vBeforeRepeat
+      + ' factRefs=' + JSON.stringify(factsBeforeRepeat));
+    repeat = await page.evaluate(async () => {
+      // The prose comes from the same surface _commitScene's own fallback reads — never a fixture.
+      const prose = String(window._sbLatestProseText(window.state) || '');
+      const st = (window.state._sealedProposals || { byId: {} }).byId;
+      const all = Object.keys(st).map(k => st[k]);
+      const sc = all.filter(x => x.kind === 'state_change').sort((a, b) => a.scene - b.scene)[0] || null;
+      const ct = all.filter(x => x.kind === 'continuation').sort((a, b) => a.scene - b.scene)[0] || null;
+      if (!sc) return { ok: false, why: 'could not pin scene 1 state_change' };
+      const before = window._ensureCommittedState().facts.map(f => f.proposalRef).sort().join('|');
+      const pinnedProposal = { event: sc.fact, proposalRef: sc.id, sceneProposed: sc.scene };
+      await window._commitScene(prose, pinnedProposal, sc.scene);
+      await window._commitScene(prose, pinnedProposal, sc.scene);
       const cs = window._ensureCommittedState();
       const reg = window._protectedRegisterIds();
-      return { before, facts: cs.facts.length,
-        refs: cs.facts.map(f => f.proposalRef),
+      return { ok: true, pinnedScene: sc.scene, scRef: sc.id, ctRef: ct ? ct.id : null,
+        proseLen: prose.length, before,
+        facts: cs.facts.length, refs: cs.facts.map(f => f.proposalRef).sort().join('|'),
         activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated').length };
-    }, prose1);
+    });
+    repeat.vBefore = vBeforeRepeat;
+    repeat.vAfter = calls.filter(c => c.stage === 'verifier').length;
   }
   const plannerReqs = calls.filter(c => c.stage === 'planner');
   await browser.close();
@@ -961,15 +981,21 @@ if (TWO_SCENE) {
       .test(JSON.stringify(R.s2.facts)), JSON.stringify(R.s2.facts).slice(0, 160));
 
   say('\n=== IDEMPOTENCY — _commitScene re-entered twice on the same scene ===');
-  t('the fact count did not change', R.repeat && R.repeat.facts === R.repeat.before,
-    JSON.stringify(R.repeat));
-  t('  no duplicate refs', R.repeat
-    && new Set(R.repeat.refs).size === R.repeat.refs.length, JSON.stringify(R.repeat && R.repeat.refs));
-  t('  the activated entity count did not change', R.repeat && R.repeat.activated <= 1,
-    JSON.stringify(R.repeat));
-  t('  and the verifier was not re-called (committedThrough short-circuits)',
-    R.calls.filter(c => c.stage === 'verifier').length === verifierCalls.length,
-    'verifier calls=' + R.calls.filter(c => c.stage === 'verifier').length);
+  t('the probe pinned scene 1\'s own proposals', !!(R.repeat && R.repeat.ok),
+    JSON.stringify(R.repeat && R.repeat.why));
+  t('  on the matching scene number', !!(R.repeat && R.repeat.pinnedScene != null),
+    JSON.stringify(R.repeat && R.repeat.pinnedScene));
+  t('  with the real projection prose', !!(R.repeat && R.repeat.proseLen >= 40),
+    'proseLen=' + (R.repeat && R.repeat.proseLen));
+  t('NO NEW VERIFIER CALL', !!(R.repeat && R.repeat.vAfter === R.repeat.vBefore),
+    'before=' + (R.repeat && R.repeat.vBefore) + ' after=' + (R.repeat && R.repeat.vAfter));
+  t('  NO new facts — refs unchanged', !!(R.repeat && R.repeat.refs === R.repeat.before),
+    'before=' + (R.repeat && R.repeat.before) + ' after=' + (R.repeat && R.repeat.refs));
+  t('  no duplicate refs', !!(R.repeat
+    && new Set(R.repeat.refs.split('|')).size === R.repeat.refs.split('|').length),
+    JSON.stringify(R.repeat && R.repeat.refs));
+  t('  the activated entity count did not change', !!(R.repeat && R.repeat.activated <= 1),
+    JSON.stringify(R.repeat && R.repeat.activated));
 
   write('twoscene.json', { verdict: 'boundary_tested', draws, s1: R.s1, s2: R.s2,
     repeat: R.repeat, measured, authorized: AUTHORIZED });

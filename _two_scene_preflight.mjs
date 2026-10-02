@@ -372,6 +372,24 @@ t('aliases must RESOLVE to the activated entity, not merely appear',
   /every declared alias resolves to the activated entity/.test(runner)
   && /_deliveryAnchorAliases\(x\)/.test(runner));
 
+console.log('\nTHE REPAIRED IDEMPOTENCY PROBE (run 17 defect)');
+t('the verifier baseline is captured BEFORE re-entry',
+  /const vBeforeRepeat = calls\.filter\(c => c\.stage === 'verifier'\)\.length;/.test(runner)
+  && /repeat\.vAfter = calls\.filter/.test(runner));
+t('  and the assertion compares before to after, not a count to itself',
+  /R\.repeat\.vAfter === R\.repeat\.vBefore/.test(runner)
+  && !/\.length === verifierCalls\.length/.test(runner));
+t('it PINS scene 1\'s own proposals from the sealed store',
+  /all\.filter\(x => x\.kind === 'state_change'\)\.sort\(\(a, b\) => a\.scene - b\.scene\)\[0\]/.test(runner));
+t('  and no longer re-enters with live _priorSceneStateChange',
+  !/_commitScene\(prose, window\.state\._priorSceneStateChange/.test(runner));
+t('  passing the matching scene number', /window\._commitScene\(prose, pinnedProposal, sc\.scene\)/.test(runner));
+t('  with prose read from the real projection, not a fixture',
+  /const prose = String\(window\._sbLatestProseText\(window\.state\) \|\| ''\)/.test(runner));
+t('it asserts no new verifier call, no new facts, unchanged refs',
+  /NO NEW VERIFIER CALL/.test(runner) && /NO new facts — refs unchanged/.test(runner)
+  && /no duplicate refs/.test(runner));
+
 console.log('\nWHAT IS STUBBED, and it is exactly one thing');
 console.log('   · the RUNTIME COMMIT VERIFIER\'s reply. Its request was issued by the real');
 console.log('     _commitScene and intercepted at the network boundary; only the model\'s');

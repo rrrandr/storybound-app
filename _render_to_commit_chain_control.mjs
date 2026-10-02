@@ -349,8 +349,6 @@ const after = await page.evaluate(() => {
     activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')
       .map(k => ({ id: k, label: reg[k].label, aliases: reg[k].aliases || [] })) };
 });
-await browser.close();
-
 console.log('\n  downstream of the dispatch (for the record)');
 console.log('  adjudication: ' + JSON.stringify(after.adjudication && after.adjudication.verdicts));
 console.log('  facts: ' + JSON.stringify(after.facts));
@@ -361,9 +359,89 @@ t('the gate adjudicated scene 1\'s proposals', !!(after.adjudication
 t('  committedThroughScene advanced', after.committedThrough != null,
   String(after.committedThrough));
 
+// ── IDEMPOTENCY PROBE: PINNED vs the OLD SHAPE ──────────────────────────────
+// Run 17's probe re-entered _commitScene with window.state._priorSceneStateChange AS IT STOOD
+// AFTER scene 2's planning — by then pointing at a LATER scene's state_change. It therefore
+// adjudicated a different scene against stale prose, dispatched a SECOND paid verifier call, and
+// committed a new fact. And the assertion that should have caught it compared a verifier count to
+// ITSELF, both read after the probe.
+//
+// Both shapes are exercised here, provider-free, PINNED FIRST so its assertions are uncontaminated.
+console.log('\nIDEMPOTENCY — the PINNED probe (correct) and the OLD shape (the defect)');
+const vBefore = seen.filter(c => c.stage === 'verifier').length;          // BASELINE, captured FIRST
+const factsBefore = after.facts.map(f => f.ref).sort().join('|');
+console.log('  baseline BEFORE re-entry: verifier calls=' + vBefore
+  + ' factRefs=' + JSON.stringify(factsBefore));
+
+const pinned = await page.evaluate(async () => {
+  // THE REAL SCENE-1 PROSE, from the same surface _commitScene's own fallback reads. No fixture
+  // text is handed in — that is the shortcut this whole control exists to avoid.
+  const prose = String(window._sbLatestProseText(window.state) || '');
+  // Pin scene 1's OWN proposals and scene number, from the sealed store rather than from live state.
+  const st = (window.state._sealedProposals || { byId: {} }).byId;
+  const all = Object.keys(st).map(k => st[k]);
+  const sc = all.filter(x => x.kind === 'state_change').sort((a, b) => a.scene - b.scene)[0] || null;
+  const ct = all.filter(x => x.kind === 'continuation').sort((a, b) => a.scene - b.scene)[0] || null;
+  if (!sc || !ct) return { ok: false, why: 'could not pin scene 1 proposals' };
+  const pinnedProposal = { event: sc.fact, proposalRef: sc.id, sceneProposed: sc.scene };
+  await window._commitScene(prose, pinnedProposal, sc.scene);
+  await window._commitScene(prose, pinnedProposal, sc.scene);
+  const cs = window._ensureCommittedState();
+  const reg = window._protectedRegisterIds();
+  return { ok: true, pinnedScene: sc.scene, scRef: sc.id, ctRef: ct.id,
+    facts: cs.facts.map(f => f.proposalRef).sort().join('|'),
+    activated: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated').length,
+    proseLen: prose.length };
+});
+const vAfterPinned = seen.filter(c => c.stage === 'verifier').length;
+console.log('  pinned probe: ' + JSON.stringify(pinned));
+t('the probe pinned scene 1\'s own proposals', pinned.ok === true, JSON.stringify(pinned.why));
+t('  NO new verifier call', vAfterPinned === vBefore,
+  'before=' + vBefore + ' after=' + vAfterPinned);
+t('  NO new facts', pinned.facts === factsBefore,
+  'before=' + factsBefore + ' after=' + pinned.facts);
+t('  refs unchanged', pinned.facts === factsBefore);
+t('  activated entity count unchanged', pinned.activated <= 1, 'activated=' + pinned.activated);
+
+// THE OLD SHAPE, run deliberately to show it breaks. Its canon mutation is EXPECTED.
+const oldShape = await page.evaluate(async () => {
+  const prose = String(window._sbLatestProseText(window.state) || '');
+  const p = window.state._priorSceneStateChange || null;
+  const before = window._ensureCommittedState().facts.map(f => f.proposalRef).sort().join('|');
+  await window._commitScene(prose, p, (p || {}).sceneProposed);
+  const cs = window._ensureCommittedState();
+  return { usedRef: (p || {}).proposalRef || null, usedScene: (p || {}).sceneProposed,
+    before, after: cs.facts.map(f => f.proposalRef).sort().join('|') };
+});
+const vAfterOld = seen.filter(c => c.stage === 'verifier').length;
+console.log('  OLD shape: ' + JSON.stringify(oldShape));
+console.log('  verifier calls after the old shape: ' + vAfterOld);
+t('THE OLD SHAPE IS DEMONSTRABLY WRONG — it targets a DIFFERENT proposal than scene 1\'s',
+  oldShape.usedRef !== pinned.scRef,
+  'old used ' + oldShape.usedRef + ', scene 1 state_change is ' + pinned.scRef);
+t('  and it changes canon or re-calls the verifier, which a retry must not',
+  oldShape.after !== oldShape.before || vAfterOld > vAfterPinned,
+  'facts ' + oldShape.before + ' → ' + oldShape.after + ', verifier ' + vAfterPinned + ' → ' + vAfterOld);
+t('  so the pinned form is not merely tidier, it is the only correct one',
+  pinned.facts === factsBefore && (oldShape.after !== oldShape.before || vAfterOld > vAfterPinned));
+
+await browser.close();
+
 console.log('\nNO FIXTURE WAS HANDED TO _commitScene');
 const self = fs.readFileSync('_render_to_commit_chain_control.mjs', 'utf8');
-t('this control never calls _commitScene directly', !/window\._commitScene\(/.test(self));
+// WHAT MATTERS IS WHAT IS PASSED, NOT WHETHER IT IS CALLED. The idempotency probe legitimately
+// re-enters _commitScene — that IS the retry under test. The prohibition is on handing it FIXTURE
+// TEXT, which would hide whether the render path works. So: every call passes a `prose` variable,
+// and every such variable is read from _sbLatestProseText — the surface _commitScene's own fallback
+// uses — with no string literal anywhere near the call.
+const commitCalls = (self.match(/window\._commitScene\([^)]*\)/g) || []);
+t('every _commitScene call passes a prose VARIABLE, never a literal',
+  commitCalls.length > 0 && commitCalls.every(c => /window\._commitScene\(prose,/.test(c)),
+  JSON.stringify(commitCalls));
+t('  and that prose is read from _sbLatestProseText, not constructed here',
+  /const prose = String\(window\._sbLatestProseText\(window\.state\) \|\| ''\)/.test(self));
+t('  no prose string literal is passed to it',
+  !/window\._commitScene\(\s*['"`]/.test(self));
 t('  it advances scenes through the real entry point', /window\._advanceStagedScene\(/.test(self));
 t('  and the prose entered as the AUTHOR\'S response at the network boundary',
   /if \(stage === 'author'\) return give\(AUTHOR_CONTENT\)/.test(self));
