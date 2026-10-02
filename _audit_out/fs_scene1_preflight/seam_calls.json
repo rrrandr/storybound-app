@@ -52,11 +52,5 @@
     "url": "/api/mistral-proxy",
     "stage": "other",
     "served": false
-  },
-  {
-    "phase": "scene2",
-    "url": "/api/mistral-proxy",
-    "stage": "memory",
-    "served": true
   }
 ]

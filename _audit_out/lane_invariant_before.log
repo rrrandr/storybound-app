@@ -1,0 +1,36 @@
+=== AUTHORED-FRAME / LANE-SIGNAL INVARIANT (provider-free, $0) ===
+
+1. the enumeration found something to check
+  ok   at least one starter plan was read
+  ok   at least one lane/frame pair exists
+     starters: ["starter_first_sacrifice"]
+     lane/frame pairs: 6
+
+2. every frame resolves to a lane that exists in its row's menu
+  ok   no frame points at a lane absent from the menu
+
+3. THE INVARIANT — every authored frame satisfies its own lane's signal
+     VIOLATES dohkar_preliminary_review  ←  eventFrameBySlot.silence  (scene 2)
+     VIOLATES dohkar_preliminary_review  ←  eventFrameBySlot.confession  (scene 2)
+     VIOLATES dohkar_preliminary_review  ←  defaultEventFrame  (scene 2)
+     ok   family_accusation  ←  eventFrameBySlot.boundary  (scene 2)
+     ok   julian_jurisdiction_challenge  ←  eventFrameBySlot.reversal  (scene 2)
+     ok   lirael_defensive_path  ←  eventFrameBySlot.temptation  (scene 2)
+  ok   every lane in a menu declares a signal
+  FAIL NO authored frame violates its own lane's signal  — 3 violation(s): ["dohkar_preliminary_review ← eventFrameBySlot.silence","dohkar_preliminary_review ← eventFrameBySlot.confession","dohkar_preliminary_review ← defaultEventFrame"]
+
+     THE VIOLATIONS, in full — a planner following these is rejected for it:
+       · dohkar_preliminary_review ← eventFrameBySlot.silence
+         signal : /\b(preliminary review|calls? for (?:a )?review|demands? (?:a )?review|recommends? (?:a )?review|warns? of (?:a )?review|review will follow|answer for (?:her|his) conduct
+         frame  : The charged silence after Julian's public claim is what prompts the presiding Dohkar to break it procedurally: he states before the assembly disperses that her conduct will be reviewed and that she wi
+       · dohkar_preliminary_review ← eventFrameBySlot.confession
+         signal : /\b(preliminary review|calls? for (?:a )?review|demands? (?:a )?review|recommends? (?:a )?review|warns? of (?:a )?review|review will follow|answer for (?:her|his) conduct
+         frame  : An admission has just landed — most naturally Lirael's OWN (redirected blame, a self-incriminating deflection, a truth she can no longer keep folded away), though if the reader's own submitted words i
+       · dohkar_preliminary_review ← defaultEventFrame
+         signal : /\b(preliminary review|calls? for (?:a )?review|demands? (?:a )?review|recommends? (?:a )?review|warns? of (?:a )?review|review will follow|answer for (?:her|his) conduct
+         frame  : The presiding Dohkar puts Lirael's conduct formally in question before the assembly — he states that it WILL be reviewed and that she will answer for it, moving the confrontation off the ritual floor 
+
+4. a lane with a signal but no authored frame is reported, not ignored
+  FAIL every lane in a menu has at least one authored frame  — ["lirael_constrained"]
+
+4/6 checks passed

@@ -1,0 +1,25 @@
+=== AUTHORED-FRAME / LANE-SIGNAL INVARIANT (provider-free, $0) ===
+
+1. the enumeration found something to check
+  ok   at least one starter plan was read
+  ok   at least one lane/frame pair exists
+     starters: ["starter_first_sacrifice"]
+     lane/frame pairs: 6
+
+2. every frame resolves to a lane that exists in its row's menu
+  ok   no frame points at a lane absent from the menu
+
+3. THE INVARIANT — every authored frame satisfies its own lane's signal
+     ok   dohkar_preliminary_review  ←  eventFrameBySlot.silence  (scene 2)
+     ok   dohkar_preliminary_review  ←  eventFrameBySlot.confession  (scene 2)
+     ok   dohkar_preliminary_review  ←  defaultEventFrame  (scene 2)
+     ok   family_accusation  ←  eventFrameBySlot.boundary  (scene 2)
+     ok   julian_jurisdiction_challenge  ←  eventFrameBySlot.reversal  (scene 2)
+     ok   lirael_defensive_path  ←  eventFrameBySlot.temptation  (scene 2)
+  ok   every lane in a menu declares a signal
+  ok   NO authored frame violates its own lane's signal
+
+4. a lane with a signal but no authored frame is reported, not ignored
+  FAIL every lane in a menu has at least one authored frame  — ["lirael_constrained"]
+
+5/6 checks passed

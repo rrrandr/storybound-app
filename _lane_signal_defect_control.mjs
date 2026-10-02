@@ -89,15 +89,16 @@ const frameRes = await testIn(lane.frames);
 Object.keys(lane.frames).forEach(k => {
   console.log('     ' + (frameRes[k] ? 'MATCHES  ' : 'NO MATCH ') + k);
 });
+// INVERTED BY THE FIX, DELIBERATELY. When this control was written, all three authored frames for
+// this lane FAILED its own signal, and that red was the finding. The frames have since been
+// rewritten in the lane's own declared vocabulary ("calls for a preliminary review", "answer for
+// her conduct"), so the invariant now HOLDS and this asserts that instead. The historical failure
+// is recorded in _audit_out/lane_invariant_before.log and in the commit that fixed it; the standing
+// guard against regression is _lane_frame_invariant_control.mjs, which enumerates every lane.
 const anyFrameFails = Object.keys(frameRes).some(k => frameRes[k] === false);
-t('this is the finding: at least one AUTHORED frame FAILS the lane\'s own signal regex',
-  anyFrameFails === true,
-  'every authored frame matched — then the gate is not obviously lexical and this control is wrong');
-if (anyFrameFails) {
-  const failing = Object.keys(frameRes).filter(k => !frameRes[k]);
-  console.log('     FAILING FRAMES: ' + JSON.stringify(failing));
-  failing.slice(0, 2).forEach(k => console.log('       · ' + lane.frames[k].slice(0, 220)));
-}
+t('every AUTHORED frame now satisfies its own lane\'s signal (was 3 violations before the fix)',
+  anyFrameFails === false,
+  'violating: ' + JSON.stringify(Object.keys(frameRes).filter(k => !frameRes[k])));
 
 // ── 3. SYNONYM VS LITERAL PHRASE ────────────────────────────────────────────
 // Two sentences describing the same event. Only the noun phrase differs.
