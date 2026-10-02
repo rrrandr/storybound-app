@@ -4,7 +4,7 @@
 //   00_PREREGISTRATION.md   hypothesis + rubric + procedure, written BEFORE any prose exists
 //   01_BRANCH_INPUTS.json   the three divergent branch inputs, derived from the seed's own decision
 //   02_OBLIGATION_LEDGER.json  the REAL obligations and scene metadata, read from STARTER_PLANS
-//   03_SLOTS/slot_NN.md     24 empty, path-anonymised slots in SHUFFLED order
+//   03_SLOTS/slot_NN.md     18 empty, path-anonymised slots in SHUFFLED order
 //   04_SCORESHEET.csv       one row per slot, rubric columns, empty
 //   KEY_SEALED.json         slot → (path, scene). SEPARATE. Not to be opened until scoring is done.
 //   README.md               how to use it without seeing the key
@@ -16,7 +16,12 @@ import crypto from 'node:crypto';
 import { chromium } from 'playwright-core';
 
 const OUT = '_quality_study_packet';
-const SCENES = 8;           // 1..8 — the stall is reported around 4-6, so the window must clear it
+// 6 PER PATH = 18 SCENES (Roman, 2026-10-02). My first build used 8, which I did not ground in
+// anything: it was "4-6 plus margin" and I never checked it against the product. A CG issue is TEN
+// scenes (app.js:86411 — cg: { scenesPerIssue: 10 }), and First Sacrifice is the CG Book, so the
+// 20-row STARTER_PLANS spine I had read is longer than one CG issue. 6 covers the reported 4-6
+// stall window inside a real issue length.
+const SCENES = 6;
 const PATHS = ['A', 'B', 'C'];   // anonymised in the packet; the key maps them to comply/defy/withdraw
 
 console.log('=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===\n');
@@ -32,8 +37,21 @@ const plan = await page.evaluate((SCENES) => {
   const P = window.STARTER_PLANS && window.STARTER_PLANS.starter_first_sacrifice;
   if (!P) return null;
   const rows = (P.scenes || []).filter(r => r && typeof r.n === 'number' && r.n <= SCENES);
+  // THE PRODUCT'S OWN ISSUE LENGTH, read rather than remembered. The study window has to be
+  // justified against this number; my first build asserted 8 from nothing.
+  // READ THE CG ROW BY NAME. `_getActiveIssuePricing()` returns the ACTIVE mode's row, and a fresh
+  // session is literary — it answered 20, which is the literary issue length, not the CG one. First
+  // Sacrifice is the CG Book, so the CG row is the only correct bound. Naming the row is the fix.
+  var pricing = null, pricingSource = null;
+  try {
+    if (typeof ISSUE_PRICING !== 'undefined' && ISSUE_PRICING && ISSUE_PRICING.cg) {
+      pricing = ISSUE_PRICING.cg; pricingSource = 'ISSUE_PRICING.cg';
+    }
+  } catch (_) {}
   return {
     issue: P.issue,
+    issueScenes: (pricing && pricing.scenesPerIssue) || null,
+    issueScenesSource: pricingSource,
     sealedEvents: (P.sealedEvents || []).map(e => ({ id: e.id, label: e.label, unsealsAtScene: e.unsealsAtScene })),
     sceneCount: (P.scenes || []).length,
     // THE REAL FIELD NAMES, inspected rather than guessed. My first version read `hardBeats` and
@@ -65,6 +83,20 @@ if (!plan) { console.error('REFUSED: STARTER_PLANS.starter_first_sacrifice not r
 console.log('  plan read from the app: issue ' + plan.issue + ', ' + plan.sceneCount
   + ' authored scenes, ' + plan.scenes.length + ' in the study window');
 console.log('  sealed future reveals: ' + JSON.stringify(plan.sealedEvents.map(e => e.id)));
+// THE WINDOW MUST FIT A REAL ISSUE. First Sacrifice is the CG Book; a CG issue is scenesPerIssue
+// scenes. A window longer than one issue is not a study of an issue.
+if (plan.issueScenes) {
+  console.log('  CG issue length read from ' + plan.issueScenesSource + ': ' + plan.issueScenes
+    + ' scenes — study window ' + SCENES + ' per path');
+  if (SCENES > plan.issueScenes) {
+    console.error('REFUSED: the ' + SCENES + '-scene window exceeds one CG issue ('
+      + plan.issueScenes + ' scenes). Ground the window in the product, not in a guess.');
+    process.exit(4);
+  }
+} else {
+  console.log('  CG issue length: UNREADABLE from the page — window not cross-checked '
+    + '(recorded as unverified, not assumed)');
+}
 
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT + '/03_SLOTS', { recursive: true });
@@ -170,10 +202,20 @@ a revision after the fact is not a pre-registration.
 
 ## The hypothesis, stated first
 
-**H1 (primary):** circling appears by **scene 6** on **at least one** of the three paths.
+**H1 (primary):** circling appears by **scene ${SCENES}** on **at least one** of the three paths.
 
 "Circling" = a scene whose exit state a reader cannot distinguish from the previous scene's in any
-way they could name. The reported stall is intrinsic around scenes 4-6, so the window runs to 8.
+way they could name.
+
+**The window: ${SCENES} scenes per path, ${SCENES * PATHS.length} scenes total.** The reported stall is
+intrinsic around scenes 4-6, so the window has to reach 6. The upper bound is the product: a CG issue is
+**${plan.issueScenes || 'UNKNOWN (unreadable at build time)'} scenes** (read from
+\`${plan.issueScenesSource || 'nothing — unreadable'}\` at build time, not remembered), and First
+Sacrifice is the CG Book, so ${SCENES} sits inside one issue. The CG row is read **by name**: the
+active-pricing accessor answers for whatever mode the session is in, and a fresh session is literary,
+so it returns 20 — the literary length, not this Book's.
+An earlier draft of this file said 8 per path and 24 total. That number was not derived from anything —
+it was "4-6 plus margin" and was never checked against the issue length. It is removed, not amended.
 
 **H2:** the **off-spine** path (the one the seed does not anticipate) circles **earlier** than the
 two paths taken from the seed's own decision.
@@ -210,6 +252,26 @@ baseline the \`forward\` judgement is made against.
 4. Fill \`04_SCORESHEET.csv\`. Save it.
 5. **Only then** open \`KEY_SEALED.json\`, map slots to (path, scene), and do the \`forward\` pass.
 6. State the verdict against H1/H2/H3 before interpreting anything else.
+
+## Results already in hand, and what they do NOT mean
+
+Four provider-free boundary runs preceded this study. They are recorded here so their results are
+never read as quality findings:
+
+- **The four-scene run proves BOUNDARY RELIABILITY ONLY.** It shows four consecutive scenes can be
+  advanced through the real production entry point without the harness failing. It says nothing
+  about the prose.
+- **The repeated prose in that run is a FIXTURE ARTIFACT.** Every scene replayed one recorded
+  author response, so every scene rendered identical prose. That is not circling and must not be
+  counted as evidence for H1.
+- **The repeated "Toll Road Commission" introductions are an IDENTITY-GUARD CHECK, not a creative
+  failure.** Replaying one planner reply introduced the same institution every scene, and the guard
+  correctly refused it as a redefinition of an already-activated entity. That is the safety rule
+  working; it is not the planner being repetitive.
+- **The activation counts from that run are INCONCLUSIVE.** Activations stayed at 1 while facts grew,
+  and per-scene verdicts were not captured, so the cause is not established. The most consistent
+  explanation is the same fixture artifact — one prose body cannot anchor four different
+  institutions — but it is unproven and must not be cited either way.
 
 ## What this study cannot establish
 
@@ -275,7 +337,7 @@ Order of use:
 2. \`01_BRANCH_INPUTS.json\` — the shared opening and the three branch inputs.
 3. \`02_OBLIGATION_LEDGER.json\` — the obligations and scene metadata needed to score, read from
    the app at build time.
-4. \`03_SLOTS/\` — 24 anonymised slots, shuffled. Scene prose is filled in only after an
+4. \`03_SLOTS/\` — 18 anonymised slots, shuffled. Scene prose is filled in only after an
    authorised generation run.
 5. \`04_SCORESHEET.csv\` — fill this. Save it.
 6. \`KEY_SEALED.json\` — **open last.**
@@ -300,13 +362,39 @@ t('  and no other packet file contains the mapping',
     && !/slot_\d+.*(comply|defy|withdraw)/i.test(fs.readFileSync(OUT + '/' + f, 'utf8'))));
 t('the shuffle is not the identity order',
   key.some((k, i) => !(k.path === PATHS[Math.floor(i / SCENES)] && k.scene === (i % SCENES) + 1)));
-t('all three paths appear 8 times each',
+t('all three paths appear ' + SCENES + ' times each — ' + (SCENES * PATHS.length) + ' slots total',
   PATHS.every(p => key.filter(k => k.path === p).length === SCENES));
 t('the obligation ledger came from the app, with real sealed ids',
   plan.sealedEvents.length > 0 && plan.sealedEvents.every(e => e.id && e.unsealsAtScene));
 t('the pre-registration states H1 before any prose exists',
   /H1 \(primary\):/.test(fs.readFileSync(OUT + '/00_PREREGISTRATION.md', 'utf8'))
   && key.every(k => /no generation has occurred/i.test(fs.readFileSync(OUT + '/03_SLOTS/' + k.slot + '.md', 'utf8'))));
+// THE WINDOW IS GROUNDED, NOT ASSERTED. These three bite on the exact error Roman caught: a corpus
+// size I made up and never checked against the product.
+t('the corpus is exactly ' + SCENES + ' × ' + PATHS.length + ' = ' + (SCENES * PATHS.length) + ' slots',
+  key.length === SCENES * PATHS.length
+  && fs.readdirSync(OUT + '/03_SLOTS').filter(f => /^slot_\d+\.md$/.test(f)).length === SCENES * PATHS.length,
+  'slot files: ' + fs.readdirSync(OUT + '/03_SLOTS').length);
+t('the window fits one CG issue, read from the CG row BY NAME',
+  plan.issueScenesSource === 'ISSUE_PRICING.cg' && plan.issueScenes !== null
+  && SCENES <= plan.issueScenes,
+  'source=' + plan.issueScenesSource + ' issueScenes=' + plan.issueScenes);
+t('no packet file still claims the fabricated 8-per-path / 24-total corpus',
+  ['00_PREREGISTRATION.md', 'README.md', '01_BRANCH_INPUTS.json'].every(f => {
+    const b = fs.readFileSync(OUT + '/' + f, 'utf8');
+    // The preregistration names the retracted number once, as a retraction. Any OTHER occurrence,
+    // and any live claim of 24 slots, is a stale fabrication.
+    const live = b.replace(/An earlier draft of this file said[^]*?not amended\./, '');
+    return !/\b24\b/.test(live) && !/\bscene 8\b/i.test(live) && !/8 scenes per path/i.test(live);
+  }));
+// THE FOUR SEPARATIONS Roman required, carried in the packet itself so a scoring session cannot
+// mistake a boundary-reliability result for a quality result.
+[['boundary reliability only', /BOUNDARY RELIABILITY ONLY/],
+ ['repeated prose = fixture artifact', /FIXTURE ARTIFACT/],
+ ['repeated Commission = identity-guard check', /IDENTITY-GUARD CHECK, not a creative\n  failure/],
+ ['activation counts inconclusive', /activation counts from that run are INCONCLUSIVE/i]]
+  .forEach(([name, re]) => t('the preregistration separates: ' + name,
+    re.test(fs.readFileSync(OUT + '/00_PREREGISTRATION.md', 'utf8'))));
 t('every slot is EMPTY — nothing was generated', key.every(k =>
   /_\(empty — no generation has occurred; this packet is pre-authorisation\)_/
     .test(fs.readFileSync(OUT + '/03_SLOTS/' + k.slot + '.md', 'utf8'))));

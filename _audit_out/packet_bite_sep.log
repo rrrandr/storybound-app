@@ -1,0 +1,31 @@
+=== BUILD QUALITY STUDY PACKET (provider-free, $0) ===
+
+  plan read from the app: issue 1, 20 authored scenes, 6 in the study window
+  sealed future reveals: ["julian_counter_wish","julian_obscuring_wishes"]
+  CG issue length read from ISSUE_PRICING.cg: 10 scenes — study window 6 per path
+  01_BRANCH_INPUTS.json — 3 branches, 2 from the seed's decision, 1 deliberately off-spine
+  02_OBLIGATION_LEDGER.json — 6 scene rows, 2 sealed reveals, 11 declared beats/obligations
+  00_PREREGISTRATION.md — H1/H2/H3 + 8-dimension rubric + procedure
+  03_SLOTS/ — 18 empty anonymised slots, cryptographically shuffled
+  04_SCORESHEET.csv — 18 rows, 11 columns, empty
+  KEY_SEALED.json — slot → (path, scene), separate file
+
+PACKET INTEGRITY
+  ok   every slot file exists
+  ok   no slot file names its path or scene
+  ok   the key is a SEPARATE file
+  ok     and no other packet file contains the mapping
+  ok   the shuffle is not the identity order
+  ok   all three paths appear 6 times each — 18 slots total
+  ok   the obligation ledger came from the app, with real sealed ids
+  ok   the pre-registration states H1 before any prose exists
+  ok   the corpus is exactly 6 × 3 = 18 slots
+  ok   the window fits one CG issue, read from the CG row BY NAME
+  ok   no packet file still claims the fabricated 8-per-path / 24-total corpus
+  ok   the preregistration separates: boundary reliability only
+  FAIL the preregistration separates: repeated prose = fixture artifact
+  ok   the preregistration separates: repeated Commission = identity-guard check
+  FAIL the preregistration separates: activation counts inconclusive
+  ok   every slot is EMPTY — nothing was generated
+
+14/16 integrity checks passed

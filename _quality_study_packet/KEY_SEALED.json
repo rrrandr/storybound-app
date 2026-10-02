@@ -8,123 +8,93 @@
   "mapping": [
     {
       "slot": "slot_01",
-      "path": "A",
-      "scene": 6
-    },
-    {
-      "slot": "slot_02",
-      "path": "A",
-      "scene": 3
-    },
-    {
-      "slot": "slot_03",
       "path": "B",
-      "scene": 3
-    },
-    {
-      "slot": "slot_04",
-      "path": "A",
-      "scene": 2
-    },
-    {
-      "slot": "slot_05",
-      "path": "C",
       "scene": 1
     },
     {
-      "slot": "slot_06",
+      "slot": "slot_02",
+      "path": "B",
+      "scene": 6
+    },
+    {
+      "slot": "slot_03",
+      "path": "A",
+      "scene": 5
+    },
+    {
+      "slot": "slot_04",
       "path": "C",
-      "scene": 8
+      "scene": 3
+    },
+    {
+      "slot": "slot_05",
+      "path": "B",
+      "scene": 2
+    },
+    {
+      "slot": "slot_06",
+      "path": "A",
+      "scene": 6
     },
     {
       "slot": "slot_07",
       "path": "C",
-      "scene": 4
+      "scene": 1
     },
     {
       "slot": "slot_08",
-      "path": "C",
-      "scene": 6
+      "path": "B",
+      "scene": 5
     },
     {
       "slot": "slot_09",
-      "path": "B",
-      "scene": 7
+      "path": "A",
+      "scene": 4
     },
     {
       "slot": "slot_10",
-      "path": "B",
-      "scene": 2
+      "path": "C",
+      "scene": 5
     },
     {
       "slot": "slot_11",
-      "path": "C",
+      "path": "B",
       "scene": 3
     },
     {
       "slot": "slot_12",
       "path": "A",
-      "scene": 5
+      "scene": 2
     },
     {
       "slot": "slot_13",
-      "path": "B",
-      "scene": 6
+      "path": "A",
+      "scene": 1
     },
     {
       "slot": "slot_14",
-      "path": "B",
-      "scene": 8
+      "path": "A",
+      "scene": 3
     },
     {
       "slot": "slot_15",
       "path": "B",
-      "scene": 5
+      "scene": 4
     },
     {
       "slot": "slot_16",
       "path": "C",
-      "scene": 5
+      "scene": 2
     },
     {
       "slot": "slot_17",
-      "path": "A",
-      "scene": 8
+      "path": "C",
+      "scene": 6
     },
     {
       "slot": "slot_18",
-      "path": "A",
-      "scene": 4
-    },
-    {
-      "slot": "slot_19",
-      "path": "A",
-      "scene": 1
-    },
-    {
-      "slot": "slot_20",
-      "path": "B",
-      "scene": 1
-    },
-    {
-      "slot": "slot_21",
-      "path": "B",
-      "scene": 4
-    },
-    {
-      "slot": "slot_22",
       "path": "C",
-      "scene": 7
-    },
-    {
-      "slot": "slot_23",
-      "path": "A",
-      "scene": 7
-    },
-    {
-      "slot": "slot_24",
-      "path": "C",
-      "scene": 2
+      "scene": 4
     }
   ]
 }

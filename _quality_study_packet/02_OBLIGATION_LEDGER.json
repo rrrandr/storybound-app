@@ -195,40 +195,6 @@
       "decision_consequence": null,
       "vectors": null,
       "goalExcerpt": "The PC discovers the wish succeeded in a way that should have been impossible."
-    },
-    {
-      "n": 7,
-      "participants": [],
-      "presentGroups": null,
-      "collectives": null,
-      "sceneFunction": null,
-      "requiredTruth": null,
-      "aftermathTruths": null,
-      "constraints": null,
-      "reservedEvents": null,
-      "exitState": null,
-      "player_decision_required": null,
-      "decision_axis": null,
-      "decision_consequence": null,
-      "vectors": null,
-      "goalExcerpt": "Rumors spread through the city; the PC’s reputation collapses."
-    },
-    {
-      "n": 8,
-      "participants": [],
-      "presentGroups": null,
-      "collectives": null,
-      "sceneFunction": null,
-      "requiredTruth": null,
-      "aftermathTruths": null,
-      "constraints": null,
-      "reservedEvents": null,
-      "exitState": null,
-      "player_decision_required": null,
-      "decision_axis": null,
-      "decision_consequence": null,
-      "vectors": null,
-      "goalExcerpt": "The PC realizes someone else may have intervened."
     }
   ]
 }

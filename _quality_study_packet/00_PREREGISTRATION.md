@@ -8,7 +8,17 @@ a revision after the fact is not a pre-registration.
 **H1 (primary):** circling appears by **scene 6** on **at least one** of the three paths.
 
 "Circling" = a scene whose exit state a reader cannot distinguish from the previous scene's in any
-way they could name. The reported stall is intrinsic around scenes 4-6, so the window runs to 8.
+way they could name.
+
+**The window: 6 scenes per path, 18 scenes total.** The reported stall is
+intrinsic around scenes 4-6, so the window has to reach 6. The upper bound is the product: a CG issue is
+**10 scenes** (read from
+`ISSUE_PRICING.cg` at build time, not remembered), and First
+Sacrifice is the CG Book, so 6 sits inside one issue. The CG row is read **by name**: the
+active-pricing accessor answers for whatever mode the session is in, and a fresh session is literary,
+so it returns 20 — the literary length, not this Book's.
+An earlier draft of this file said 8 per path and 24 total. That number was not derived from anything —
+it was "4-6 plus margin" and was never checked against the issue length. It is removed, not amended.
 
 **H2:** the **off-spine** path (the one the seed does not anticipate) circles **earlier** than the
 two paths taken from the seed's own decision.
@@ -45,6 +55,26 @@ baseline the `forward` judgement is made against.
 4. Fill `04_SCORESHEET.csv`. Save it.
 5. **Only then** open `KEY_SEALED.json`, map slots to (path, scene), and do the `forward` pass.
 6. State the verdict against H1/H2/H3 before interpreting anything else.
+
+## Results already in hand, and what they do NOT mean
+
+Four provider-free boundary runs preceded this study. They are recorded here so their results are
+never read as quality findings:
+
+- **The four-scene run proves BOUNDARY RELIABILITY ONLY.** It shows four consecutive scenes can be
+  advanced through the real production entry point without the harness failing. It says nothing
+  about the prose.
+- **The repeated prose in that run is a FIXTURE ARTIFACT.** Every scene replayed one recorded
+  author response, so every scene rendered identical prose. That is not circling and must not be
+  counted as evidence for H1.
+- **The repeated "Toll Road Commission" introductions are an IDENTITY-GUARD CHECK, not a creative
+  failure.** Replaying one planner reply introduced the same institution every scene, and the guard
+  correctly refused it as a redefinition of an already-activated entity. That is the safety rule
+  working; it is not the planner being repetitive.
+- **The activation counts from that run are INCONCLUSIVE.** Activations stayed at 1 while facts grew,
+  and per-scene verdicts were not captured, so the cause is not established. The most consistent
+  explanation is the same fixture artifact — one prose body cannot anchor four different
+  institutions — but it is unproven and must not be cited either way.
 
 ## What this study cannot establish
 
