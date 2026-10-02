@@ -145,7 +145,14 @@ const LIVE_VERIFIER_ONLY = ARG.includes('--live-verifier-only');
 // It is a LABELLED FIXTURE MODIFICATION, reported in the run output, not a pretence that a planner
 // said this. A PARTIAL verdict on it remains a legitimate outcome and is never forced to DELIVERED.
 const NARROW_CONTINUATION = ARG.includes('--narrow-continuation');
-const NARROW_FACT = 'The commission\'s clerk acknowledges receipt of the sealed demand.';
+// ALIGNED to what the captured prose actually stages (Roman 2026-10-02). The previous value,
+// "The commission's clerk acknowledges receipt of the sealed demand.", asserted a COMPLETED receipt
+// the author never staged: the prose has the clerk BEGIN reading, and run 18's verifier said exactly
+// that — reason "incomplete_rendering", precondition "The clerk clears his throat once and begins
+// to read." Three runs across two scopes produced the same verdict, so the fact now claims only the
+// act the prose states verbatim. Agreement of fact / purpose / pressure / anchor / completed action
+// is proven in _continuation_alignment_preflight.mjs (26/26).
+const NARROW_FACT = 'The Toll Road Commission\'s clerk begins reading the sealed demand aloud in the chamber.';
 if (NARROW_CONTINUATION && !LIVE_VERIFIER_ONLY) {
   console.error('REFUSED: --narrow-continuation modifies the REPLAYED planner reply, so it requires'
     + ' --live-verifier-only.');

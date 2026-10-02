@@ -1,0 +1,126 @@
+=== TWO-SCENE PREFLIGHT (provider-free, $0) ===
+
+SCENE 1 — both proposal kinds sealed, nothing committed
+  ok   the state_change sealed
+  ok   the continuation sealed
+  ok   both are pending for scene 1
+  ok   ZERO facts committed — scene 1 only seals
+  ok   the institution is NOT yet in the active register
+
+   the author block scene 1 would render:
+   "\nCONTINUATION — ALREADY TRUE (render it; do not add to it):\n  The Toll Road Commission received a formal demand to investigate the burning.\n  This scene exists to: Put the demand before a body that can act on it.\n  Forward pressure: The Toll Road Commission will convene over the demand and summon her.\n"
+  ok   the author block carries the sealed fact
+  ok     and no machinery
+
+SCENE 2 — the REAL _commitScene adjudicates scene 1's pending proposals
+   provider requests seen: 5 (verifier: 1)
+  ok   THE REAL _commitScene WAS REACHED — it issued a verifier request
+  ok     the ONLY provider request was that verifier call
+  ok     every non-provider request was aborted, not answered
+  ok     its prompt carries the PER-PROPOSAL contract
+  ok     demanding one entry per ref with verbatim evidence
+  ok     and its own precondition_evidence, downgrade-only
+  ok     plus a reason naming the cause
+  ok     BOTH sealed refs were listed for judgement
+  ok     and scene 1's prose was the text judged
+
+   adjudication result
+   {"prop:1:1":{"ref":"prop:1:1","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"shared_slots_check","why":["precondition=unreported","anchors=inapplicable"],"kind":"state_change"},"prop:1:2":{"ref":"prop:1:2","commit":true,"status":"DELIVERED","reason":"delivered","preconditionSource":"shared_slots_check","why":["precondition=unreported","anchors=anchors_present"],"kind":"continuation"}}
+  ok   both proposals were adjudicated
+  ok     each by its own ref
+
+   what became canon
+   fact: {"fact":"The sealed demand reached the clerk before the bell rang.","ref":"prop:1:1","prov":"sealed","scene":1}
+   fact: {"fact":"The Toll Road Commission received a formal demand to investigate the burning.","ref":"prop:1:2","prov":"sealed","scene":1}
+  ok   exactly two facts committed
+  ok     the state_change fact, by its own ref
+  ok     the CONTINUATION fact, by its own ref, byte-identical to the sealed content
+  ok     both sealed-provenance
+  ok     and attributed to scene 1, not scene 2
+
+   the active register
+   ["Wren","Cassel","Toll Road Commission"]
+  ok   THE INSTITUTION IS NOW ACTIVE — the continuation activated its OWN record
+  ok     exactly one entity activated
+  ok     with the SAME id the proposal minted
+  ok     and the SAME aliases it sealed with
+
+   verifier interpretation stayed out of canon
+  ok   the verifier tableau's decisiveChange is NOT in canon or the card
+  ok     the card is deterministic
+
+   what the NEXT planner reads
+  ok   committed canon carries the continuation fact verbatim
+  ok   the institution is referencable by its declared alias
+  ok     and by its canonical label, to the same entity
+  ok   nothing remains pending for scene 1
+
+IDEMPOTENCY — _commitScene run again on the same scene
+  ok   the fact count is unchanged
+  ok     the entity count is unchanged
+  ok     and the same two refs, no duplicates
+  ok     the verifier was NOT called again — the committedThrough guard short-circuits
+  ok     (committedThroughScene recorded scene 1)
+
+NO CONTROL REIMPLEMENTS THE PRODUCTION LOGIC
+  ok     _two_scene_preflight.mjs contains no copy of the production legacy rule
+  ok     _two_scene_preflight.mjs asserts adjudication and so must call a REAL entry point
+  ok     _per_proposal_delivery_control.mjs contains no copy of the production legacy rule
+  ok     _per_proposal_delivery_control.mjs asserts adjudication and so must call a REAL entry point
+  ok     _continuation_delivery_gap_control.mjs contains no copy of the production legacy rule
+  ok     _continuation_delivery_gap_control.mjs does not assert adjudication outcomes (nothing to reimplement)
+  ok     _seal_gate_control.mjs contains no copy of the production legacy rule
+  ok     _seal_gate_control.mjs does not assert adjudication outcomes (nothing to reimplement)
+  ok   this preflight calls the REAL _commitScene
+  ok     and the REAL continuation handler
+  ok     and never calls _commitTransition itself
+  ok   the per-proposal control drives the REAL adjudication loop
+
+THE PAID --two-scene RUNNER CARRIES THE FOUR FIXES
+  ok   1. it drives the real entry point _advanceStagedScene, not _runCGScreenplayGen
+  ok      and the two-scene path no longer calls _runCGScreenplayGen
+  ok   2. it sets the staged render mode gate
+  ok   3. it READS scene 1 through to the say/do gate via the real beat advance
+  ok      resolving micro-decisions with the real resolver
+  ok      and NEVER sets gateShown or clears a submission latch itself
+  ok   4. it SERVES the memory extractor instead of aborting it
+  ok      with the contract's own skeleton and no interpretation
+  ok   and under --live-verifier-only the planner and author are REPLAYED
+  ok      leaving the verifier as the ONLY live provider call
+
+THE ACCOUNTING CORRECTION AND THE NARROW-CONTINUATION FIXTURE
+  ok   a missing receipt is reported as UNMEASURED, never $0
+  ok     unreceipted calls are itemised with stage, model and estimate
+  ok     and the summary reports TOTAL EXPOSURE, not just measured
+  ok     flagged as exposure rather than spend, with the console named as ground truth
+  ok   the narrow-continuation edit is LABELLED, not silent
+  ok     it edits exactly one field of the recorded reply
+  ok     refuses rather than silently replaying the broad fact if the shape is wrong
+  ok     requires --live-verifier-only, since it modifies a REPLAY
+  ok     and NEVER forces a PARTIAL verdict to DELIVERED
+  ok   aliases must RESOLVE to the activated entity, not merely appear
+
+THE RUN REPORTS THE DIAGNOSTIC FIELDS
+  ok   the per-proposal reason is printed per proposal
+  ok     with the precondition source and downgrade flag
+
+THE REPAIRED IDEMPOTENCY PROBE (run 17 defect)
+  ok   the verifier baseline is captured BEFORE re-entry
+  ok     and the assertion compares before to after, not a count to itself
+  ok   it PINS scene 1's own proposals from the sealed store
+  ok     and no longer re-enters with live _priorSceneStateChange
+  ok     passing the matching scene number
+  ok     with prose read from the real projection, not a fixture
+  ok   it asserts no new verifier call, no new facts, unchanged refs
+
+WHAT IS STUBBED, and it is exactly one thing
+   · the RUNTIME COMMIT VERIFIER's reply. Its request was issued by the real
+     _commitScene and intercepted at the network boundary; only the model's
+     JUDGEMENT is a fixture. The prompt build, parse, slot check, anchor pre-check,
+     adjudication loop, _commitTransition and activation are production code.
+   · the planner and author stages were NOT run: scene 1's seals are constructed
+     through the real sealing functions, and scene 1's prose is a fixture, so this
+     does NOT prove the funnel reaches _commitScene in a live run. That is what the
+     paid two-scene run measures.
+
+79/79 passed
