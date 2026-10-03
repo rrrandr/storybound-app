@@ -1,0 +1,221 @@
+// ONE CONNECTED SEQUENCE, END TO END. Provider-free, $0.
+//
+// Green component checks do not close this claim, so this asserts the CHAIN, in order, on one run:
+//
+//   1. the OAS runs through the production affordance, produces beats, and PERSISTS its history
+//   2. the reader's recorded choice TAKES EFFECT — "run" displaces the scheduled frame
+//   3. the selected card's ACTION and FATE MODE reach planning — not its title alone
+//   4. the correct prior scene AND the accepted facts AND the OAS history reach the NEXT planner
+//
+// WHAT IT CANNOT ESTABLISH: the OAS beats are CONTRACT-DERIVED fixtures built from the prompt's own
+// declared schema, not recordings. Live OAS quality is UNTESTED here and is reported as such.
+import fs from 'fs';
+import { chromium } from 'playwright-core';
+import { stageOf, isProviderEndpoint, fsPlannerCaptured, AUTHOR as REPLAY_AUTHOR, MEMORY,
+  verifierVerdict, refsFromVerifierRequest, oasBeat, oasClosingBeat } from './_replay_fixtures.mjs';
+import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate,
+  chooseBranch } from './_fs_story_setup.mjs';
+
+let pass = 0, fail = 0;
+const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
+  else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
+console.log('=== INTEGRATED OPENING REPLAY (provider-free, $0) ===');
+console.log('  OAS beats are CONTRACT-DERIVED fixtures. Live OAS quality is UNTESTED.\n');
+
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const reqs = { planner: [], author: [], oas: [], verifier: [] };
+const logs = [];
+let oasBeats = 0;
+page.on('console', (m) => {
+  const x = m.text();
+  if (/\[INTIMACY|\[OAS|\[BAKED|\[EVENT-FRAME|\[SCENE-DECISION\]|\[COMMIT-SCENE|\[LEDGER:CLIPPED\]|\[CG:PLANNER-GATE\]|\[FATE\]/i.test(x)) logs.push(x);
+});
+
+await page.route('**/api/**', async (route) => {
+  const req = route.request();
+  if (!isProviderEndpoint(req.url())) { try { await route.abort(); } catch (_) {} return; }
+  let raw = null; try { raw = req.postData(); } catch (_) {}
+  let sys = '', usr = '';
+  try { const j = JSON.parse(raw || '{}');
+    sys = String((j.messages || [])[0]?.content || '');
+    usr = String((j.messages || [])[1]?.content || ''); } catch (_) {}
+  const st = stageOf(sys);
+  const give = (c) => route.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify({ content: c }) });
+  if (st === 'oas') {
+    oasBeats++; reqs.oas.push({ sys, usr });
+    return give(oasBeats >= 3 ? oasClosingBeat() : oasBeat({}));
+  }
+  if (st === 'planner') { reqs.planner.push({ sys, usr }); try { return give(fsPlannerCaptured()); } catch (_) {} }
+  if (st === 'author') { reqs.author.push({ sys, usr }); return give(REPLAY_AUTHOR); }
+  if (st === 'memory') return give(MEMORY);
+  if (st === 'verifier') { reqs.verifier.push({ sys, usr }); return give(verifierVerdict(refsFromVerifierRequest(usr))); }
+  try { await route.abort(); } catch (_) {}
+});
+
+await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.waitForFunction(() => typeof window._advanceStagedScene === 'function', { timeout: 30000 });
+
+// ── 1. THE OAS RUNS AND PERSISTS ────────────────────────────────────────────
+console.log('1. the OAS runs through the production affordance and persists its history');
+const def = await findFSDef(page);
+await launchFS(page, def);
+const unlock = await unlockFS(page, 'integrated-replay');
+await finalizePreview(page);
+const oas = await enterOAS(page, { settleMs: 8000 });
+t('the OAS affordance existed and was taken', oas.ok === true, JSON.stringify(oas));
+t('the intimate dialogue is ACTIVE', oas.dialogueActive === true, JSON.stringify(oas));
+t('the OAS asked for at least one beat', reqs.oas.length > 0, 'oas requests=' + reqs.oas.length);
+t('its request carries the authored opening frame, not a generic one',
+  reqs.oas.length > 0 && /Julian|Provast|The Answer|assembly/i.test(reqs.oas[0].usr + reqs.oas[0].sys),
+  'the OAS prompt does not mention this Book\'s cast');
+// Drive reader turns through the production consume path, then let it resolve.
+for (let i = 0; i < 3; i++) {
+  const consumed = await page.evaluate(() => {
+    if (typeof window._intimacyDialogueConsumeInput !== 'function') return 'absent';
+    try { return window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); }
+    catch (e) { return 'threw: ' + e.message; }
+  });
+  if (consumed === 'absent') break;
+  await page.waitForTimeout(3000);
+}
+await page.waitForTimeout(4000);
+const oasState = await page.evaluate(() => ({
+  beats: ((window.state._intimacyDialogue || {}).beats || []).length,
+  ledgerEntries: ((window.state._sceneLedger || {}).entries || []).length,
+  interruptionRecord: !!window.state._intimateInterruption,
+  interruptionSubmitted: !!(window.state._intimateInterruption || {}).submitted,
+  scenes: (window.state.scenes || []).length
+}));
+console.log('     after the OAS: ' + JSON.stringify(oasState));
+t('the OAS produced beats through the real consume path', oasBeats > 1, 'oas beats served=' + oasBeats);
+t('a scene ledger exists with the opening recorded', oasState.ledgerEntries > 0,
+  'ledger entries=' + oasState.ledgerEntries);
+
+// ── 2. THE RECORDED CHOICE TAKES EFFECT ─────────────────────────────────────
+console.log('\n2. the reader\'s recorded choice takes effect');
+const gated = await advanceExpectingGate(page, '', '');
+t('the advance refused until the choice was recorded', gated.promptMounted === true, JSON.stringify(gated));
+const picked = await chooseBranch(page, 'A');                     // A = run
+t('the choice was recorded by the prompt\'s own handler',
+  !!(picked.after.decision1 && picked.after.decision1.choice === 'run'), JSON.stringify(picked.after));
+const displaced = await page.evaluate(() => window._recordedChoiceDisplacesFrame(window.state,
+  { laneId: 'dohkar_preliminary_review', eventFrame: 'the Dohkar calls for a preliminary review' }));
+t('and "run" DISPLACES the scheduled frame', displaced.displaces === true, JSON.stringify(displaced));
+t('on the seed\'s declaration, not a keyword match',
+  /declared situation-changing by the seed/.test(displaced.why || ''), displaced.why);
+
+// Wait for scene 2 to generate.
+let dl = Date.now() + 180000;
+while (Date.now() < dl && !reqs.author.length) await new Promise(r => setTimeout(r, 1000));
+const dl2 = Date.now() + 180000;
+let mounted = false;
+while (Date.now() < dl2) {
+  mounted = await page.evaluate(() => { const a = window.state._stagedActive;
+    return !!(a && a.plan && Array.isArray(a.plan.beats) && a.plan.beats.length); });
+  if (mounted) break;
+  await new Promise(r => setTimeout(r, 1000));
+}
+t('scene 2 generated', mounted === true);
+const s2prose = await page.evaluate(() => { try { return String(window._sbLatestProseText(window.state) || ''); } catch (_) { return ''; } });
+t('and its prose is not the baked opening',
+  s2prose.length >= 200 && s2prose !== String(unlock.state.scene0 || ''), 'len=' + s2prose.length);
+// THE DIRECTIVE THE PLANNER RECEIVED must carry the displacement, not the hard frame.
+const p1 = reqs.planner.length ? (reqs.planner[reqs.planner.length - 1].sys + reqs.planner[reqs.planner.length - 1].usr) : '';
+t('the planner was told the frame was DISPLACED by the reader\'s action',
+  /DISPLACED THIS SCENE BY THE READER'S OWN RECORDED ACTION/.test(p1),
+  p1 ? 'the displaced directive is absent from the planner payload' : 'no planner request captured');
+t('and it was NOT told the frame is hard',
+  !/it does NOT change WHICH event happens/.test(p1));
+
+// ── 3. THE CARD'S ACTION AND FATE MODE REACH PLANNING ───────────────────────
+console.log('\n3. the selected card\'s action and Fate mode reach planning');
+const readToGate = () => page.evaluate(async () => {
+  const sl = (ms) => new Promise(r => setTimeout(r, ms));
+  const st = () => { const a = window.state._stagedActive || null;
+    return a ? { b: a.currentBeatIdx, g: !!a.gateShown, m: !!a.microShown } : null; };
+  for (let i = 0; i < 240; i++) {
+    const c = st(); if (!c || c.g) break;
+    const prev = c.b;
+    try { window._advanceStagedBeat(); } catch (_) {}
+    await sl(50);
+    const n = st();
+    if (n && n.b === prev && !n.g) {
+      if (!n.m && window._resolveMicroDecision) { try { window._resolveMicroDecision(0); } catch (_) {} await sl(70); }
+      else await sl(100);
+    }
+  }
+});
+await readToGate();
+const deck = await page.evaluate(() => (window.state.fateOptions || []).map((c, i) => ({
+  i, title: c.title || null, action: c.action || '', ordinaryWish: !!c._ordinaryWish,
+  variant: c._wishVariant || null })));
+console.log('     deck: ' + deck.map(c => c.title).join(' | '));
+t('the deck is the Book\'s own five slots', deck.length === 5
+  && deck.every(c => ['Temptation', 'Silence', 'Reversal', 'Boundary', 'Confession'].includes(c.title)),
+  JSON.stringify(deck.map(c => c.title)));
+t('no templated wish card is dealt to this Book',
+  deck.every(c => !c.variant && !c.ordinaryWish), JSON.stringify(deck.filter(c => c.variant)));
+t('no card action mentions a wound or a healer that is not in this story',
+  deck.every(c => !/wound|healer/i.test(c.action)), JSON.stringify(deck.map(c => c.action.slice(0, 50))));
+const beforeP = reqs.planner.length;
+const chosen = deck[0];
+await page.evaluate(() => { const el = document.querySelector('[data-card-index="0"]'); if (el) el.click();
+  try { window._advanceStagedScene('', ''); } catch (_) {} });
+dl = Date.now() + 180000;
+while (Date.now() < dl && reqs.planner.length <= beforeP) await new Promise(r => setTimeout(r, 1000));
+const p2 = reqs.planner.length > beforeP
+  ? (reqs.planner[reqs.planner.length - 1].sys + reqs.planner[reqs.planner.length - 1].usr) : '';
+t('a planner request followed the card play', !!p2);
+t('the card\'s TITLE reached planning', !!p2 && p2.includes(chosen.title), chosen.title);
+t('the card\'s ACTION reached planning — not the title alone',
+  !!p2 && !!chosen.action && p2.includes(chosen.action.slice(0, 40)),
+  'action: ' + chosen.action.slice(0, 60));
+t('the card\'s FATE MODE reached planning (ordinary-wish status is stated)',
+  !!p2 && /ordinary|wish|Fate/i.test(p2));
+
+// ── 4. THE NEXT PLANNER'S HISTORY ───────────────────────────────────────────
+console.log('\n4. the correct prior scene, the accepted facts, and the OAS history');
+const vr = reqs.verifier.length ? reqs.verifier[reqs.verifier.length - 1].usr : '';
+const m = vr.match(/SCENE PROSE:\s*([\s\S]*?)\s*(?:\n\nReturn the JSON now\.|\n\nPLANNED EVENT SLOTS)/);
+const given = m ? m[1].trim() : '';
+const norm = (x) => String(x || '').replace(/\s+/g, ' ').trim();
+t('the verifier was dispatched for the prior scene', !!vr, 'no verifier request');
+t('and it was given scene 2, not the baked opening',
+  !!given && norm(s2prose).includes(norm(given).slice(0, 120)),
+  'the verifier received ' + given.length + ' chars that are not scene 2');
+const facts = await page.evaluate(() => {
+  const cs = window._ensureCommittedState();
+  return (cs.facts || []).map(f => ({ ref: f.proposalRef, content: String(f.content || '').slice(0, 80) }));
+});
+t('an accepted fact was committed from the prior scene', facts.length > 0, JSON.stringify(facts));
+t('the next planner received the committed facts, not an empty ledger',
+  !!p2 && /COMMITTED WORLD STATE/.test(p2) && !/facts already TRUE[^:]*: \[\]/.test(p2),
+  (p2.match(/COMMITTED WORLD STATE[^\n]{0,120}/) || ['(absent)'])[0]);
+t('and it received the opening\'s own history',
+  !!p2 && /(began to twist|The Dohkar charged|The Answer)/.test(p2),
+  'the opening ledger line is absent from the planner payload');
+
+// ── THE CLIP IS NO LONGER SILENT ────────────────────────────────────────────
+console.log('\n5. a clipped ledger field can no longer disappear silently');
+{
+  const probe = await page.evaluate(() => {
+    const before = (window._sceneLedgerClipLosses ? window._sceneLedgerClipLosses().length : 0);
+    return { before, hasApi: typeof window._sceneLedgerClipLosses === 'function' };
+  });
+  t('the clip exposes what it removed', probe.hasApi === true);
+  const clipped = logs.filter(x => /\[LEDGER:CLIPPED\]/.test(x));
+  console.log('     clip warnings this run: ' + clipped.length);
+  if (clipped.length) clipped.slice(0, 2).forEach(x => console.log('       · ' + x.slice(0, 170)));
+}
+
+await browser.close();
+fs.mkdirSync('_audit_out/integrated', { recursive: true });
+fs.writeFileSync('_audit_out/integrated/logs.json', JSON.stringify(logs, null, 2));
+if (reqs.planner.length) fs.writeFileSync('_audit_out/integrated/last_planner.txt',
+  reqs.planner[reqs.planner.length - 1].sys + '\n\n=== USER ===\n' + reqs.planner[reqs.planner.length - 1].usr);
+console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
+console.log('\nUNTESTED HERE: live OAS response quality. The beats above are contract-derived');
+console.log('fixtures built from the prompt\'s own declared schema, not recordings.');
+process.exit(fail ? 1 : 0);

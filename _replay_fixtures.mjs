@@ -140,6 +140,41 @@ export const stageOf = (sys) => {
   return 'other';
 };
 
+// ── OAS FIXTURES: CONTRACT-DERIVED, AND LABELLED AS SUCH ────────────────────────────────────
+// NOT A RECORDING. These are built from the OAS prompt's OWN declared output schema (app.js
+// ~191079: li_dialogue, li_action, li_next_prompt, li_face_state, scene_state, scene_tone,
+// user_signal, temperature_shift). A contract-derived fixture can exercise PARSING, the
+// interaction turns, COMPLETION, history persistence and the handoff to the next planner. It
+// cannot say anything about whether a real OAS reply is any good.
+//
+// LIVE OAS QUALITY IS UNTESTED and must be reported that way wherever these are used. Requiring a
+// paid recording before testing the plumbing is what kept a REQUIRED segment of the opening
+// unexercised through an entire ten-scene issue.
+export const OAS_FACE_STATES = ['closed_smile', 'smirk', 'big_smirk', 'knowing_smirk',
+  'lip_bite', 'lip_bite_held', 'hard_exhale', 'ahh'];
+
+export const oasBeat = (opts) => {
+  const o = opts || {};
+  return JSON.stringify({
+    li_dialogue: o.dialogue || 'You called to me, and everyone saw you do it.',
+    li_action: o.action || 'he does not step closer',
+    li_next_prompt: '',
+    li_face_state: o.face || 'knowing_smirk',
+    scene_state: o.sceneState || 'continue',
+    scene_tone: o.tone || 'charged',
+    user_signal: o.signal || 'neutral',
+    temperature_shift: typeof o.shift === 'number' ? o.shift : 0,
+    _fixture: 'contract-derived, not a recording'
+  });
+};
+
+// A closing beat, so completion and handoff can be exercised without a live encounter.
+export const oasClosingBeat = () => oasBeat({
+  dialogue: 'Then say it where they can hear you, or do not say it at all.',
+  action: 'he waits, and the clearing waits with him',
+  sceneState: 'resolve', tone: 'charged', face: 'hard_exhale'
+});
+
 // The refs the verifier was asked about, parsed from its own user prompt.
 export const refsFromVerifierRequest = (usr) =>
   (String(usr || '').match(/ref (prop:\d+:\d+)/g) || []).map(m => m.replace('ref ', ''));

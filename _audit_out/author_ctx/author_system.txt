@@ -102,7 +102,7 @@ Omit when in doubt. The cost of a missed near-miss is nothing; the cost of overu
 STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
   WHO: PC Lirael · LI Julian
   ALREADY READ (2 pages) — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:
-    p1: the authored opening established: Seren’s misaligned wish for Lirael — “so that Lirael may find the one she lost” — bent: no effect; the assembly turned to Lirael. The Dohkar charged her with shaping and interfering. Julian, the Provast, put The Answer in her hands and questioned her before all; the Dohkar cut it off. — verified on the page: The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.
+    p1: the authored opening established: Seren’s wish for Lirael — “that she find the one she lost” — began to twist; all felt it go wrong, then it stopped and nothing came of it. The Dohkar charged Lirael with shaping and interfering. Julian, the Provast, put The Answer in her hands and questioned her before all; the Dohkar cut it off. — verified on the page: The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.
     p2: page read (no recorded facts)
   NOW: page 3 — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.
 
@@ -855,7 +855,6 @@ SCENE CONTINUATION — CAUSAL + EMOTIONAL THREAD (HARD; complements SCENE PROGRE
   1. CAUSAL LINK (THEREFORE / BUT, never "and then"): this scene must follow the prior one as a CONSEQUENCE (the prior ending + the protagonist's choice FORCED this) or a COMPLICATION (a reversal / obstacle / cost the prior moment created) — not a beat that could have followed any scene.
   2. CARRY THE CHARGE: never contradict or silently undo what the prior scene established — who was present, what was said or decided, and the emotional state all persist. Do NOT open on a neutral establishing shot that ignores the prior scene's charge.
   3. THREAD, NOT REPLAY: this governs the unresolved PRESSURE, not the physical moment. Time may have passed and the staging may be new (per SCENE PROGRESSION). Do NOT literally resume the prior scene's final beat or repeat its ending — carry its pressure INTO the new moment.
-  4. DEFERRED-ARRIVAL CONTINUITY (this story opened on a PC-OWNED crisis with the love interest absent): that crisis is STILL ACTIVE and unresolved. The love interest's arrival must INTERTWINE with it — complicate, collide with, or press on it — never erase or replace it. FORBIDDEN: the crisis quietly disappears the moment romance begins. REQUIRED: crisis and romance escalate TOGETHER.
 
 RELATIONSHIP STAGE — issue 1 of 2 (this issue's JOB for the couple; PACING, not a scene plan):
 - This issue TRAVERSES: RECOGNITION → ENTANGLEMENT — in order, no rung skipped; each is a FELT step, not a label to announce.
@@ -931,9 +930,9 @@ INHUMAN STRANGENESS — ROTATING ANGLES THIS SCENE (HARD; the anti-calcification
     • First Favored — the living Weave-Script moving under the skin: e.g. "faint luminous patterns surfaced along her forearms and slid, rearranging, as her calm cracked"
     • First Favored — the exotic non-human skin / hair colour: e.g. "his skin held the pearl-and-grey of something that had never been merely flesh"
   These examples are SHAPES to build your OWN fresh image from, NEVER lines to copy verbatim. Traits not listed this scene may still appear, but LEAD with these — they were spaced out from recent scenes on purpose. A signature (diamond pupils, Weave-Script) is MEANT to return, just not every scene and never in the same words twice.
-FATE CARD RESOLUTION (The Bargain @ ST1 — PARTIAL):
+FATE CARD RESOLUTION (Boundary @ ST1 — PARTIAL):
 Storyturn does not yet support full resolution of this card.
-The moment builds tension but does not fully resolve.
+Boundary is hinted or tested but not enforced. The line wavers. Neither party fully commits to holding or crossing it.
 - Produce narrative response (never silent failure)
 - Increase tension, pressure, or clarity
 - Do NOT advance Storyturn

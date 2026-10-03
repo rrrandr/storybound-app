@@ -1,0 +1,26 @@
+THE FIVE CARDS DEALT THIS SCENE (identity, action, fate mode):
+  [0] Boundary  id=boundary  variant=-  ordinaryWish=false
+        action: Here, in this room, the choice is inescapable. Decide.
+  [1] Reversal  id=reversal  variant=-  ordinaryWish=false
+        action: You step between Dohkar and Julian, making your position clear.
+  [2] Confession  id=confession  variant=-  ordinaryWish=false
+        action: Silence is a form of lying. Choose honesty.
+  [3] Temptation  id=temptation  variant=-  ordinaryWish=false
+        action: Julian is right there in the room. Your restraint wavers.
+  [4] Silence  id=silence  variant=-  ordinaryWish=false
+        action: Let the silence carry what your words won't. Julian can feel the absence.
+
+AUTHOR REQUEST: system 169531 chars, user 98307 chars
+
+DID UNSELECTED CARDS REACH THE AUTHOR?
+  [0] SELECTED   "Boundary"  titleInPayload=true  actionInPayload=false
+  [1] unselected "Reversal"  titleInPayload=false  actionInPayload=false
+  [2] unselected "Confession"  titleInPayload=false  actionInPayload=false
+  [3] unselected "Temptation"  titleInPayload=false  actionInPayload=false
+  [4] unselected "Silence"  titleInPayload=false  actionInPayload=false
+  payload mentions "Petition": true
+  payload mentions "Tempt Fate": true
+  payload mentions "sacrifice": true
+  payload mentions "memory": true
+
+artefacts: _audit_out/author_ctx/

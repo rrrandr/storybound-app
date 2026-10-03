@@ -2033,6 +2033,27 @@ function stopContinuousSparkles() {
     // REFUSAL-to-risk is built only when a physical peril makes "carry her to the
     // healer" sensible. Each carries a _wishScore used by the ranked competition
     // in buildFateDeck (a candidate only appears if it OUT-RANKS an archetype).
+    // ── A BOOK THAT AUTHORS ITS OWN CARDS DOES NOT GET TEMPLATED WISH CARDS ──────────────────
+    // MEASURED (Roman 2026-10-02). A ten-scene First Sacrifice issue was dealt "The Bargain"
+    // ("Fate, heal his wound. I offer seven years of my life") and "The Refusal" ("Run for the
+    // healer") in a scene with no wound and nobody injured. The cause is lexical: the desire cue
+    // /wound|bleed|blood|.../ matched Scene 1's line "blurring the WOUND instead of naming it" —
+    // a metaphor. A keyword over prose picked the card, exactly as a keyword over prose once
+    // picked a lane.
+    //
+    // The fix is declarative, not a smarter regex: a baked Book ships its own authored card slots,
+    // so the templated wish candidates are not appended for it at all. Every other story is
+    // unaffected. The reader of an authored Book now sees that Book's cards.
+    function _bookAuthorsItsOwnCards(state) {
+        try {
+            if (!state) return false;
+            if (!state._starterId) return false;
+            var pkg = (typeof window._bakedScene1For === 'function')
+                ? window._bakedScene1For(state._starterId) : null;
+            return !!(pkg && !pkg.placeholder);
+        } catch (_) { return false; }
+    }
+
     function _fateWishBuildCandidates(sc, state, storyText, salience) {
         var out = [];
         try {
@@ -2157,7 +2178,8 @@ function stopContinuousSparkles() {
                 // ONLY the bargain variant → the single wish card (cap ≤1).
                 let _wishCard = null;
                 try {
-                    const _cands = _fateWishBuildCandidates(null, state, storyText, 0.9);
+                    const _cands = _bookAuthorsItsOwnCards(state) ? []
+                        : _fateWishBuildCandidates(null, state, storyText, 0.9);
                     if (Array.isArray(_cands)) {
                         _wishCard = _cands.filter(function (c) { return c && c._ordinaryWish === true; })[0] || null;
                     }
@@ -2262,7 +2284,12 @@ function stopContinuousSparkles() {
         try {
             if (!isIntimateContextActive() && _fateWishIsFatelands(state)) {
                 const _sal = _fateWishScoreSalience(storyText, sceneContext, state);
-                const _cands = _fateWishBuildCandidates(sceneContext, state, storyText, _sal.score);
+                const _cands = _bookAuthorsItsOwnCards(state) ? []
+                    : _fateWishBuildCandidates(sceneContext, state, storyText, _sal.score);
+                try {
+                    if (_bookAuthorsItsOwnCards(state)) console.log('[FATE] templated wish'
+                        + ' candidates suppressed — this Book authors its own card slots');
+                } catch (_) {}
                 if (_cands && _cands.length) {
                     const _conf = (sceneContext && typeof sceneContext.confidence === 'number') ? sceneContext.confidence : 0;
                     // Archetype "ordinary suggestion strength": a confident scene makes

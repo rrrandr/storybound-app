@@ -133379,7 +133379,35 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // The spine block renders from this ledger plus the other authoritative ledgers and is EMPTY when
   // there is nothing authoritative to say (fail-closed): no invented names, no re-told prose.
   var _SPINE_RECENT = 6, _SPINE_MAX_CHARS = 2200;
-  function _slClip(v, n) { if (v == null) return null; var t = String(v).replace(/\s+/g, ' ').trim(); return t ? t.slice(0, n) : null; }
+  // CLIPPING IS SILENT BY DEFAULT, AND SILENT TRUNCATION OF HISTORY IS HOW A LATER SCENE COMES TO
+  // CONTRADICT AN EARLIER ONE (Roman 2026-10-02). An authored ledger line was rewritten to 365
+  // characters against this 300-character limit; the overflow would have removed the Dohkar's
+  // charge and Julian's questioning from the committed record the next scene READS, and nothing
+  // anywhere would have said so. The clip still clips — a ledger entry has a real size budget — but
+  // it now ANNOUNCES what it removed, and records the loss on the value itself so a control can
+  // assert on it. Fitting one line to 297 characters fixed that line; this is what makes the next
+  // edit safe.
+  var _SL_CLIP_LOSSES = [];
+  function _slClip(v, n, label) {
+    if (v == null) return null;
+    var t = String(v).replace(/\s+/g, ' ').trim();
+    if (!t) return null;
+    if (t.length > n) {
+      var lost = t.slice(n);
+      var rec = { label: label || 'ledger field', limit: n, length: t.length,
+        overflow: t.length - n, lost: lost.slice(0, 160), at: Date.now() };
+      _SL_CLIP_LOSSES.push(rec);
+      try {
+        console.warn('[LEDGER:CLIPPED] ' + rec.label + ' is ' + t.length + ' chars against a limit of '
+          + n + ' — ' + rec.overflow + ' characters were REMOVED from the committed record, and the'
+          + ' next scene will never see them: "' + rec.lost + '"');
+      } catch (_) {}
+      try { (window.state || {})._sceneLedgerClipLosses = _SL_CLIP_LOSSES.slice(-20); } catch (_) {}
+      return t.slice(0, n);
+    }
+    return t.slice(0, n);
+  }
+  window._sceneLedgerClipLosses = function () { return _SL_CLIP_LOSSES.slice(); };
   function _sceneLedgerGet(s, create) {
     try {
       s = s || window.state; if (!s) return null;
@@ -133400,10 +133428,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       try { asg = (s._sceneAssignment && Number(s._sceneAssignment.sceneNumber) === n) ? s._sceneAssignment : _selectSceneAssignment(s, n); } catch (_) { asg = null; }
       var key = {
         storyId: String(s.storyId || ''), sceneNumber: n,
-        act: _slClip(extras.act, 240), dia: _slClip(extras.dia, 240),
+        act: _slClip(extras.act, 240, 'act'), dia: _slClip(extras.dia, 240, 'dia'),
         card: s.tempt_fate_invoked_this_turn ? 'tempt' : ((s.fate && s.fate.pendingPetition) ? 'petition' : 'ordinary'),
-        plannedEvent: asg && asg.event ? _slClip(asg.event, 300) : null, plannedSource: (asg && asg.source) || null,
-        setting: asg && asg.setting ? _slClip(asg.setting, 120) : null,
+        plannedEvent: asg && asg.event ? _slClip(asg.event, 300, 'plannedEvent') : null, plannedSource: (asg && asg.source) || null,
+        setting: asg && asg.setting ? _slClip(asg.setting, 120, 'setting') : null,
         participants: (asg && Array.isArray(asg.participants)) ? asg.participants.slice(0, 8).map(String) : null,
         durableBefore: Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences.length : 0,
         stampedAt: Date.now()
@@ -133427,7 +133455,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
       var ev = null, src = null, setting = null, participants = null;
       if (useKey) { ev = key.plannedEvent; src = key.plannedSource; setting = key.setting; participants = key.participants; }
-      else if (opts.event !== undefined) { ev = _slClip(opts.event, 300); src = opts.eventSource || null; }
+      else if (opts.event !== undefined) { ev = _slClip(opts.event, 300, 'event'); src = opts.eventSource || null; }
       else { try { var a = _selectSceneAssignment(s, n); if (a && a.event) { ev = _slClip(a.event, 300); src = a.source || null; setting = a.setting ? _slClip(a.setting, 120) : null; participants = Array.isArray(a.participants) ? a.participants.slice(0, 8).map(String) : null; } } catch (_) {} }
       var dur = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : [];
       var durBefore = useKey ? key.durableBefore : (opts.durableBefore != null ? Number(opts.durableBefore) : dur.length);
