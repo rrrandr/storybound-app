@@ -12,7 +12,8 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { stageOf, isProviderEndpoint, fsPlannerCaptured, AUTHOR as REPLAY_AUTHOR, MEMORY,
-  verifierVerdict, refsFromVerifierRequest, oasBeat, oasClosingBeat } from './_replay_fixtures.mjs';
+  verifierVerdict, refsFromVerifierRequest, oasTurn, oasClosingBeat, OAS_TURNS,
+  oasBeatPacingIssues } from './_replay_fixtures.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate,
   chooseBranch } from './_fs_story_setup.mjs';
 
@@ -44,8 +45,10 @@ await page.route('**/api/**', async (route) => {
   const give = (c) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ content: c }) });
   if (st === 'oas') {
-    oasBeats++; reqs.oas.push({ sys, usr });
-    return give(oasBeats >= 3 ? oasClosingBeat() : oasBeat({}));
+    reqs.oas.push({ sys, usr });
+    const body = oasBeats >= OAS_TURNS.length ? oasClosingBeat() : oasTurn(oasBeats);
+    oasBeats++;
+    return give(body);
   }
   if (st === 'planner') { reqs.planner.push({ sys, usr }); try { return give(fsPlannerCaptured()); } catch (_) {} }
   if (st === 'author') { reqs.author.push({ sys, usr }); return give(REPLAY_AUTHOR); }
@@ -93,6 +96,37 @@ t('the OAS produced beats through the real consume path', oasBeats > 1, 'oas bea
 t('a scene ledger exists with the opening recorded', oasState.ledgerEntries > 0,
   'ledger entries=' + oasState.ledgerEntries);
 
+// ── 1b. THE REGISTER: COMIC-PANEL PACING, GROUNDED, SEAL INTACT ─────────────
+console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene of narration');
+{
+  const rendered = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue || {};
+    const beats = Array.isArray(d.beats) ? d.beats : [];
+    return beats.map(b => ({ dialogue: String((b && (b.li_dialogue || b.dialogue)) || ''),
+      action: String((b && (b.li_action || b.action)) || '') }));
+  });
+  console.log('     rendered beats: ' + rendered.length);
+  rendered.slice(0, 3).forEach(b => console.log('       "' + b.dialogue.slice(0, 70)
+    + '"  |  ' + b.action.slice(0, 80)));
+  t('the dialogue rendered beats through the production path', rendered.length > 0,
+    'no beats on state.intimacyDialogue');
+  // PACING, as a predicate rather than an impression.
+  const paceIssues = rendered.flatMap(b => oasBeatPacingIssues(b.action)
+    .map(x => '"' + b.action.slice(0, 40) + '…" ' + x));
+  t('every beat is a panel beat — one short sentence, occasionally two',
+    paceIssues.length === 0, JSON.stringify(paceIssues));
+  t('no beat runs to paragraph-length interiority',
+    rendered.every(b => b.action.length <= 190), JSON.stringify(rendered.map(b => b.action.length)));
+  // GROUNDED IN THE QUESTIONING.
+  const all = rendered.map(b => b.dialogue + ' ' + b.action).join(' ');
+  t('the exchange stays grounded in the rite, the allegation or The Answer',
+    /The Answer|rite|clearing|assembly|called to me|wish/i.test(all), all.slice(0, 120));
+  // THE SEAL, IN BOTH CHANNELS.
+  const seal = /counter-?wish|his own wish|Julian wished|he spent his wish|countered it/i;
+  t('Julian\'s secret is in NEITHER the dialogue NOR the beat beneath it',
+    !seal.test(all), 'the seal leaked into the OAS');
+}
+
 // ── 2. THE RECORDED CHOICE TAKES EFFECT ─────────────────────────────────────
 console.log('\n2. the reader\'s recorded choice takes effect');
 const gated = await advanceExpectingGate(page, '', '');
@@ -128,6 +162,27 @@ t('the planner was told the frame was DISPLACED by the reader\'s action',
   p1 ? 'the displaced directive is absent from the planner payload' : 'no planner request captured');
 t('and it was NOT told the frame is hard',
   !/it does NOT change WHICH event happens/.test(p1));
+
+// ── 2b. THE TRANSITION INTO THE AUTHORED DOHKAR INTERRUPTION ────────────────
+console.log('\n2b. the handoff into the authored interruption');
+{
+  const intr = await page.evaluate(() => {
+    const r = window.state._intimateInterruption || null;
+    const pkg = (typeof window._bakedScene1For === 'function')
+      ? window._bakedScene1For(window.state._starterId) : null;
+    const authored = (pkg && pkg.oasHandoff) || {};
+    return { record: !!r, submitted: !!(r && r.submitted),
+      authoredInterruption: String(authored.interruption || '').slice(0, 120),
+      exchangeLines: (authored.interruptionExchange || []).length };
+  });
+  console.log('     interruption: ' + JSON.stringify(intr));
+  t('the Book authors a Dohkar interruption with a fixed exchange',
+    !!intr.authoredInterruption && intr.exchangeLines >= 2, JSON.stringify(intr));
+  t('and the OAS reached the point where it becomes eligible',
+    logs.some(x => /TWO-PATH.*interruption now eligible/i.test(x))
+    || intr.record === true,
+    'the dialogue never reached the interruption');
+}
 
 // ── 3. THE CARD'S ACTION AND FATE MODE REACH PLANNING ───────────────────────
 console.log('\n3. the selected card\'s action and Fate mode reach planning');

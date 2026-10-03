@@ -125,6 +125,12 @@ export const stageOf = (sys) => {
     .reduce((n, rx) => n + (rx.test(sys) ? 1 : 0), 0);
   if (/RUNTIME COMMIT verifier/.test(sys)) return 'verifier';
   if (/CHARACTER MEMORY EXTRACTOR/.test(sys)) return 'memory';
+  // THE OAS TURN RIDES THE FULL-SCENE AUTHOR PATH (roleTag 'oas-turn', _authorFullScenePolicy),
+  // so it carries the author's markers and must be tested BEFORE them. Matched on its own
+  // system message (app.js ~203819). Three earlier attempts failed because I inferred the
+  // prompt instead of reading it — including matching li_face_state, which lives in the USER
+  // message while stageOf only receives the SYSTEM one.
+  if (/You are the LI \(love interest\)|intimate mouth-closeup dialogue|You play .{1,40}? opening an intimate dialogue/i.test(sys)) return 'oas';
   if (AMARK >= 2) return 'author';
   // THE OAS ONE-ON-ONE, tested AFTER the author and on its OWN opening sentence.
   //
@@ -138,7 +144,6 @@ export const stageOf = (sys) => {
   // author prompt never does. My first pattern was the opener's own sentence, so TURN calls fell to
   // 'other' and were aborted: the integrated replay served exactly one beat, the dialogue never
   // resolved, and every downstream assertion failed for a reason that had nothing to do with them.
-  if (/li_face_state|li_dialogue|You play .{1,40}? opening an intimate dialogue/i.test(sys)) return 'oas';
   if (/SCENE-SPINE planner|SCENE planner/.test(sys)) return 'planner';
   if (/BODY BIBLE/.test(sys)) return 'bible';
   return 'other';
@@ -157,11 +162,48 @@ export const stageOf = (sys) => {
 export const OAS_FACE_STATES = ['closed_smile', 'smirk', 'big_smirk', 'knowing_smirk',
   'lip_bite', 'lip_bite_held', 'hard_exhale', 'ahh'];
 
+// THE REGISTER (Roman 2026-10-03). The OAS is INTERACTIVE DIALOGUE with room beneath each reply
+// for a SHORT LITERARY BEAT — comic-panel pacing, not a scene's worth of narration:
+//
+//   Julian's line, then usually ONE brief sentence, occasionally two, carrying a gesture, a
+//   physical detail, atmosphere, or Lirael's immediate reaction. No paragraph-long interiority.
+//   The space left under it is where the reader answers.
+//
+// Roman's own example, which these fixtures are modelled on:
+//   "Keep looking at me like that and The Answer might surprise you."
+//   Julian's game was as dangerous as it was exciting; I couldn't help noticing his tunic
+//   getting tighter.
+//
+// GROUNDED IN THE QUESTIONING. The innuendo is heavy and it never floats free of what is actually
+// happening: the failed rite, the allegation, The Answer in her hands, and what the reader just
+// said. And the seal holds in BOTH channels — Julian's counter-wish appears in neither the dialogue
+// nor the beat beneath it.
+//
+// Having the full author context available is not a licence to write long. These fixtures are
+// deliberately short so the harness fails if the pacing drifts.
+export const OAS_TURNS = [
+  { dialogue: 'You called to me across a clearing full of your own people.',
+    action: 'He has not moved; the assembly has gone quiet enough to hear him.',
+    face: 'knowing_smirk', tone: 'charged' },
+  { dialogue: 'The Answer is in your hands, not mine. Mind what it does with that.',
+    action: 'My palms are damp around it, and he watches me notice.',
+    face: 'smirk', tone: 'charged' },
+  { dialogue: 'Keep looking at me like that and The Answer might surprise you.',
+    action: "Julian's game was as dangerous as it was exciting; I couldn't help noticing his "
+      + 'tunic getting tighter.',
+    face: 'lip_bite', tone: 'charged' }
+];
+
+// NOT A RECORDING. Built from the OAS prompt's OWN declared output schema (app.js ~191079:
+// li_dialogue, li_action, li_next_prompt, li_face_state, scene_state, scene_tone, user_signal,
+// temperature_shift). A contract-derived fixture exercises PARSING, the interaction turns,
+// COMPLETION, history persistence and the handoff. It says NOTHING about whether a live reply is
+// any good, and every consumer reports LIVE OAS QUALITY AS UNTESTED.
 export const oasBeat = (opts) => {
   const o = opts || {};
   return JSON.stringify({
-    li_dialogue: o.dialogue || 'You called to me, and everyone saw you do it.',
-    li_action: o.action || 'he does not step closer',
+    li_dialogue: o.dialogue || OAS_TURNS[0].dialogue,
+    li_action: o.action !== undefined ? o.action : OAS_TURNS[0].action,
     li_next_prompt: '',
     li_face_state: o.face || 'knowing_smirk',
     scene_state: o.sceneState || 'continue',
@@ -172,12 +214,28 @@ export const oasBeat = (opts) => {
   });
 };
 
-// A closing beat, so completion and handoff can be exercised without a live encounter.
+// The nth turn, so a replay can walk the exchange in order.
+export const oasTurn = (n) => oasBeat(OAS_TURNS[Math.min(n, OAS_TURNS.length - 1)]);
+
+// A closing beat, so completion and the handoff into the authored Dohkar interruption can be
+// exercised without a live encounter.
 export const oasClosingBeat = () => oasBeat({
   dialogue: 'Then say it where they can hear you, or do not say it at all.',
-  action: 'he waits, and the clearing waits with him',
+  action: 'He waits, and the clearing waits with him.',
   sceneState: 'resolve', tone: 'charged', face: 'hard_exhale'
 });
+
+// THE PACING RULE, as a checkable predicate rather than a comment. A beat is one short sentence,
+// occasionally two; anything longer is the drift this fixture set exists to catch.
+export const oasBeatPacingIssues = (actionText) => {
+  const t = String(actionText || '').trim();
+  const issues = [];
+  if (!t) return issues;                       // an empty beat is allowed: dialogue may stand alone
+  const sentences = t.split(/(?<=[.!?\u2019"])\s+/).filter(x => x.trim().length > 1);
+  if (sentences.length > 2) issues.push('more than two sentences (' + sentences.length + ')');
+  if (t.length > 190) issues.push('longer than a panel beat (' + t.length + ' chars)');
+  return issues;
+};
 
 // The refs the verifier was asked about, parsed from its own user prompt.
 export const refsFromVerifierRequest = (usr) =>
