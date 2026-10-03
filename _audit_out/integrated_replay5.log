@@ -2,3 +2,24 @@
   OAS beats are CONTRACT-DERIVED fixtures. Live OAS quality is UNTESTED.
 
 1. the OAS runs through the production affordance and persists its history
+  ok   the OAS affordance existed and was taken
+  ok   the intimate dialogue is ACTIVE
+  ok   the OAS asked for at least one beat
+  ok   its request carries the authored opening frame, not a generic one
+     after the OAS: {"beats":0,"ledgerEntries":1,"interruptionRecord":false,"interruptionSubmitted":false,"scenes":1}
+  ok   the OAS produced beats through the real consume path
+  ok   a scene ledger exists with the opening recorded
+
+1b. the OAS register — dialogue plus a short beat, not a scene of narration
+     rendered beats: 0
+  FAIL the dialogue rendered beats through the production path  — no beats on state.intimacyDialogue
+  ok   every beat is a panel beat — one short sentence, occasionally two
+  ok   no beat runs to paragraph-length interiority
+  FAIL the exchange stays grounded in the rite, the allegation or The Answer
+  ok   Julian's secret is in NEITHER the dialogue NOR the beat beneath it
+
+2. the reader's recorded choice takes effect
+  FAIL the advance refused until the choice was recorded  — {"promptMounted":false,"buttons":[false,false],"resumed":false}
+  FAIL the choice was recorded by the prompt's own handler  — {"decision1":null,"stillNeeded":true,"promptGone":true}
+  FAIL and "run" DISPLACES the scheduled frame  — {"displaces":false,"why":"no recorded choice"}
+  FAIL on the seed's declaration, not a keyword match  — no recorded choice

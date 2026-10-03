@@ -99,10 +99,26 @@ t('a scene ledger exists with the opening recorded', oasState.ledgerEntries > 0,
 // ── 1b. THE REGISTER: COMIC-PANEL PACING, GROUNDED, SEAL INTACT ─────────────
 console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene of narration');
 {
+  // THE BEATS ARE NOT ON `.beats`. My reader guessed that field and reported 0 for a dialogue that
+  // had demonstrably taken turns. Rather than guess a second field name, this reports what the
+  // record actually holds and reads whichever array of turn objects is there.
+  const dShape = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue || {};
+    const arrays = Object.keys(d).filter(k => Array.isArray(d[k]) && d[k].length);
+    return { keys: Object.keys(d), arrayKeys: arrays, beatCount: d.beatCount,
+      counts: arrays.reduce((o, k) => { o[k] = d[k].length; return o; }, {}) };
+  });
+  console.log('     dialogue record: beatCount=' + dShape.beatCount
+    + '  populated arrays=' + JSON.stringify(dShape.counts));
   const rendered = await page.evaluate(() => {
     const d = window.state.intimacyDialogue || {};
-    const beats = Array.isArray(d.beats) ? d.beats : [];
-    return beats.map(b => ({ dialogue: String((b && (b.li_dialogue || b.dialogue)) || ''),
+    let best = [];
+    Object.keys(d).forEach((k) => {
+      const v = d[k];
+      if (Array.isArray(v) && v.length && typeof v[0] === 'object'
+        && (('li_dialogue' in v[0]) || ('dialogue' in v[0]) || ('li_action' in v[0]))) best = v;
+    });
+    return best.map(b => ({ dialogue: String((b && (b.li_dialogue || b.dialogue)) || ''),
       action: String((b && (b.li_action || b.action)) || '') }));
   });
   console.log('     rendered beats: ' + rendered.length);
@@ -111,12 +127,15 @@ console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene 
   t('the dialogue rendered beats through the production path', rendered.length > 0,
     'no beats on state.intimacyDialogue');
   // PACING, as a predicate rather than an impression.
+  // A REVIEW FLAG, NOT A RULE (Roman 2026-10-03). Comic-panel pacing is the requirement; the
+  // sentence and character counts are a way to SURFACE drift for a human to look at. They are not
+  // a production rejection rule and nothing truncates prose on their account — this is harness
+  // reporting only.
   const paceIssues = rendered.flatMap(b => oasBeatPacingIssues(b.action)
     .map(x => '"' + b.action.slice(0, 40) + '…" ' + x));
-  t('every beat is a panel beat — one short sentence, occasionally two',
-    paceIssues.length === 0, JSON.stringify(paceIssues));
-  t('no beat runs to paragraph-length interiority',
-    rendered.every(b => b.action.length <= 190), JSON.stringify(rendered.map(b => b.action.length)));
+  console.log('     pacing flags for review: ' + (paceIssues.length
+    ? JSON.stringify(paceIssues) : 'none'));
+  console.log('     beat lengths: ' + JSON.stringify(rendered.map(b => b.action.length)));
   // GROUNDED IN THE QUESTIONING.
   const all = rendered.map(b => b.dialogue + ' ' + b.action).join(' ');
   t('the exchange stays grounded in the rite, the allegation or The Answer',
