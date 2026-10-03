@@ -13,7 +13,7 @@ import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { stageOf, isProviderEndpoint, fsPlannerCaptured, AUTHOR as REPLAY_AUTHOR, MEMORY,
   verifierVerdict, refsFromVerifierRequest, oasTurn, oasClosingBeat, OAS_TURNS,
-  oasBeatPacingIssues } from './_replay_fixtures.mjs';
+  OAS_RESOLVE_MIN_BEAT, oasBeatPacingIssues } from './_replay_fixtures.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate,
   chooseBranch } from './_fs_story_setup.mjs';
 
@@ -74,16 +74,48 @@ t('its request carries the authored opening frame, not a generic one',
   reqs.oas.length > 0 && /Julian|Provast|The Answer|assembly/i.test(reqs.oas[0].usr + reqs.oas[0].sys),
   'the OAS prompt does not mention this Book\'s cast');
 // Drive reader turns through the production consume path, then let it resolve.
-for (let i = 0; i < 3; i++) {
+// DRIVE PAST THE FIRST EXIT RAMP. app.js:205016 ignores a 'resolve' before beat 6 by design, so a
+// three-turn exchange could never complete however the closing beat was shaped. Turns go through
+// the production consume path, the CLOSING TURN IS CONSUMED before anything tries to advance, and
+// resolution is waited for on observed state — the dialogue is never forced inactive and the
+// authored interruption is never bypassed.
+const turnLog = [];
+for (let i = 0; i < OAS_RESOLVE_MIN_BEAT + 3; i++) {
+  const st = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue;
+    return d ? { active: !!d.active, resolving: !!d._resolving, beat: d.beatCount } : null;
+  });
+  if (!st || !st.active || st.resolving) { turnLog.push({ i, stoppedAt: st }); break; }
   const consumed = await page.evaluate(() => {
     if (typeof window._intimacyDialogueConsumeInput !== 'function') return 'absent';
     try { return window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); }
     catch (e) { return 'threw: ' + e.message; }
   });
-  if (consumed === 'absent') break;
-  await page.waitForTimeout(3000);
+  turnLog.push({ i, beat: st.beat, consumed });
+  if (consumed === 'absent' || consumed === false) break;
+  await page.waitForTimeout(3500);
 }
-await page.waitForTimeout(4000);
+console.log('     turn loop: ' + JSON.stringify(turnLog));
+// Resolution is deferred ~1800ms and tears down over ~2.2s. Waited for, never forced.
+const resolveDeadline = Date.now() + 45000;
+while (Date.now() < resolveDeadline) {
+  const done = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue;
+    return !d || d.active === false;
+  });
+  if (done) break;
+  await page.waitForTimeout(1000);
+}
+const resolved = await page.evaluate(() => {
+  const d = window.state.intimacyDialogue;
+  return { stillActive: !!(d && d.active), beatCount: d ? d.beatCount : null,
+    resolving: !!(d && d._resolving) };
+});
+console.log('     after driving turns: ' + JSON.stringify(resolved));
+t('the dialogue reached the first exit ramp (beat >= ' + OAS_RESOLVE_MIN_BEAT + ')',
+  (resolved.beatCount || 0) >= OAS_RESOLVE_MIN_BEAT, 'beatCount=' + resolved.beatCount);
+t('the OAS RESOLVED on its own, not forced inactive', resolved.stillActive === false,
+  'still active at beat ' + resolved.beatCount);
 const oasState = await page.evaluate(() => ({
   beats: ((window.state._intimacyDialogue || {}).beats || []).length,
   ledgerEntries: ((window.state._sceneLedger || {}).entries || []).length,
@@ -112,14 +144,13 @@ console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene 
     + '  populated arrays=' + JSON.stringify(dShape.counts));
   const rendered = await page.evaluate(() => {
     const d = window.state.intimacyDialogue || {};
-    let best = [];
-    Object.keys(d).forEach((k) => {
-      const v = d[k];
-      if (Array.isArray(v) && v.length && typeof v[0] === 'object'
-        && (('li_dialogue' in v[0]) || ('dialogue' in v[0]) || ('li_action' in v[0]))) best = v;
-    });
-    return best.map(b => ({ dialogue: String((b && (b.li_dialogue || b.dialogue)) || ''),
-      action: String((b && (b.li_action || b.action)) || '') }));
+    // MEASURED: the turns live on liTurnHistory, not `.beats`. The previous reader guessed
+    // `.beats` and reported 0 for a dialogue that had plainly taken turns.
+    const src = Array.isArray(d.liTurnHistory) ? d.liTurnHistory : [];
+    return src.map(b => (typeof b === 'string'
+      ? { dialogue: b, action: '' }
+      : { dialogue: String((b && (b.li_dialogue || b.dialogue || b.text)) || ''),
+          action: String((b && (b.li_action || b.action)) || '') }));
   });
   console.log('     rendered beats: ' + rendered.length);
   rendered.slice(0, 3).forEach(b => console.log('       "' + b.dialogue.slice(0, 70)

@@ -206,50 +206,6 @@ export const OAS_TURNS = [
     face: 'hard_exhale', tone: 'charged' }
 ];
 
-// NOT A RECORDING. These are built from the OAS prompt's OWN declared output schema (app.js
-// ~191079: li_dialogue, li_action, li_next_prompt, li_face_state, scene_state, scene_tone,
-// user_signal, temperature_shift). A contract-derived fixture can exercise PARSING, the
-// interaction turns, COMPLETION, history persistence and the handoff to the next planner. It
-// cannot say anything about whether a real OAS reply is any good.
-//
-// LIVE OAS QUALITY IS UNTESTED and must be reported that way wherever these are used. Requiring a
-// paid recording before testing the plumbing is what kept a REQUIRED segment of the opening
-// unexercised through an entire ten-scene issue.
-export const OAS_FACE_STATES = ['closed_smile', 'smirk', 'big_smirk', 'knowing_smirk',
-  'lip_bite', 'lip_bite_held', 'hard_exhale', 'ahh'];
-
-// THE REGISTER (Roman 2026-10-03). The OAS is INTERACTIVE DIALOGUE with room beneath each reply
-// for a SHORT LITERARY BEAT — comic-panel pacing, not a scene's worth of narration:
-//
-//   Julian's line, then usually ONE brief sentence, occasionally two, carrying a gesture, a
-//   physical detail, atmosphere, or Lirael's immediate reaction. No paragraph-long interiority.
-//   The space left under it is where the reader answers.
-//
-// Roman's own example, which these fixtures are modelled on:
-//   "Keep looking at me like that and The Answer might surprise you."
-//   Julian's game was as dangerous as it was exciting; I couldn't help noticing his tunic
-//   getting tighter.
-//
-// GROUNDED IN THE QUESTIONING. The innuendo is heavy and it never floats free of what is actually
-// happening: the failed rite, the allegation, The Answer in her hands, and what the reader just
-// said. And the seal holds in BOTH channels — Julian's counter-wish appears in neither the dialogue
-// nor the beat beneath it.
-//
-// Having the full author context available is not a licence to write long. These fixtures are
-// deliberately short so the harness fails if the pacing drifts.
-export const OAS_TURNS = [
-  { dialogue: 'You called to me across a clearing full of your own people.',
-    action: 'He has not moved; the assembly has gone quiet enough to hear him.',
-    face: 'knowing_smirk', tone: 'charged' },
-  { dialogue: 'The Answer is in your hands, not mine. Mind what it does with that.',
-    action: 'My palms are damp around it, and he watches me notice.',
-    face: 'smirk', tone: 'charged' },
-  { dialogue: 'Keep looking at me like that and The Answer might surprise you.',
-    action: "Julian's game was as dangerous as it was exciting; I couldn't help noticing his "
-      + 'tunic getting tighter.',
-    face: 'lip_bite', tone: 'charged' }
-];
-
 // NOT A RECORDING. Built from the OAS prompt's OWN declared output schema (app.js ~191079:
 // li_dialogue, li_action, li_next_prompt, li_face_state, scene_state, scene_tone, user_signal,
 // temperature_shift). A contract-derived fixture exercises PARSING, the interaction turns,

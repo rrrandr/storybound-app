@@ -1,0 +1,61 @@
+=== INTEGRATED OPENING REPLAY (provider-free, $0) ===
+  OAS beats are CONTRACT-DERIVED fixtures. Live OAS quality is UNTESTED.
+
+1. the OAS runs through the production affordance and persists its history
+  ok   the OAS affordance existed and was taken
+  ok   the intimate dialogue is ACTIVE
+  ok   the OAS asked for at least one beat
+  ok   its request carries the authored opening frame, not a generic one
+     after the OAS: {"beats":0,"ledgerEntries":1,"interruptionRecord":false,"interruptionSubmitted":false,"scenes":1}
+  ok   the OAS produced beats through the real consume path
+  ok   a scene ledger exists with the opening recorded
+
+1b. the OAS register — dialogue plus a short beat, not a scene of narration
+     dialogue record: beatCount=3  populated arrays={"liTurnHistory":3,"userInputLengths":3,"_oasCleanupHistory":3,"_oasArchiveBuilder":3}
+     rendered beats: 0
+  FAIL the dialogue rendered beats through the production path  — no beats on state.intimacyDialogue
+     pacing flags for review: none
+     beat lengths: []
+  FAIL the exchange stays grounded in the rite, the allegation or The Answer
+  ok   Julian's secret is in NEITHER the dialogue NOR the beat beneath it
+
+2. the reader's recorded choice takes effect
+  FAIL the advance refused until the choice was recorded  — {"promptMounted":false,"buttons":[false,false],"resumed":false}
+  FAIL the choice was recorded by the prompt's own handler  — {"decision1":null,"stillNeeded":true,"promptGone":true}
+  FAIL and "run" DISPLACES the scheduled frame  — {"displaces":false,"why":"no recorded choice"}
+  FAIL on the seed's declaration, not a keyword match  — no recorded choice
+  FAIL scene 2 generated
+  FAIL and its prose is not the baked opening  — len=7605
+  FAIL the planner was told the frame was DISPLACED by the reader's action  — no planner request captured
+  ok   and it was NOT told the frame is hard
+
+2b. the handoff into the authored interruption
+     interruption: {"record":false,"submitted":false,"authoredInterruption":"The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her","exchangeLines":3}
+  ok   the Book authors a Dohkar interruption with a fixed exchange
+  ok   and the OAS reached the point where it becomes eligible
+
+3. the selected card's action and Fate mode reach planning
+     deck: Temptation | Silence | Reversal | Boundary | Confession
+  ok   the deck is the Book's own five slots
+  ok   no templated wish card is dealt to this Book
+  ok   no card action mentions a wound or a healer that is not in this story
+  FAIL a planner request followed the card play
+  FAIL the card's TITLE reached planning  — Temptation
+  FAIL the card's ACTION reached planning — not the title alone  — action: A pull toward something forbidden tugs at you. Act on it, or
+  FAIL the card's FATE MODE reached planning (ordinary-wish status is stated)
+
+4. the correct prior scene, the accepted facts, and the OAS history
+  FAIL the verifier was dispatched for the prior scene  — no verifier request
+  FAIL and it was given scene 2, not the baked opening  — the verifier received 0 chars that are not scene 2
+  FAIL an accepted fact was committed from the prior scene  — []
+  FAIL the next planner received the committed facts, not an empty ledger  — (absent)
+  FAIL and it received the opening's own history  — the opening ledger line is absent from the planner payload
+
+5. a clipped ledger field can no longer disappear silently
+  ok   the clip exposes what it removed
+     clip warnings this run: 0
+
+14/32 checks passed
+
+UNTESTED HERE: live OAS response quality. The beats above are contract-derived
+fixtures built from the prompt's own declared schema, not recordings.
