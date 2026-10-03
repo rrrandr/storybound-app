@@ -80,6 +80,7 @@ t('its request carries the authored opening frame, not a generic one',
 // resolution is waited for on observed state — the dialogue is never forced inactive and the
 // authored interruption is never bypassed.
 const turnLog = [];
+let liveBeats = [];
 for (let i = 0; i < OAS_RESOLVE_MIN_BEAT + 3; i++) {
   const st = await page.evaluate(() => {
     const d = window.state.intimacyDialogue;
@@ -94,6 +95,17 @@ for (let i = 0; i < OAS_RESOLVE_MIN_BEAT + 3; i++) {
   turnLog.push({ i, beat: st.beat, consumed });
   if (consumed === 'absent' || consumed === false) break;
   await page.waitForTimeout(3500);
+  // SNAPSHOT WHILE IT IS ALIVE. _resolveIntimacyScene tears the record down, so liTurnHistory is
+  // EMPTY afterwards — measured: len 0 once the dialogue is gone. A post-hoc read of the register
+  // can only ever report nothing, which is exactly what my earlier runs reported.
+  const live = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue || {};
+    const h = Array.isArray(d.liTurnHistory) ? d.liTurnHistory : [];
+    return h.map(x => (typeof x === 'string' ? { dialogue: x, action: '' }
+      : { dialogue: String((x && (x.li_dialogue || x.dialogue || x.text)) || ''),
+          action: String((x && (x.li_action || x.action)) || '') }));
+  });
+  if (live.length) liveBeats = live;
 }
 console.log('     turn loop: ' + JSON.stringify(turnLog));
 // Resolution is deferred ~1800ms and tears down over ~2.2s. Waited for, never forced.
@@ -142,7 +154,7 @@ console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene 
   });
   console.log('     dialogue record: beatCount=' + dShape.beatCount
     + '  populated arrays=' + JSON.stringify(dShape.counts));
-  const rendered = await page.evaluate(() => {
+  const rendered = liveBeats.length ? liveBeats : await page.evaluate(() => {
     const d = window.state.intimacyDialogue || {};
     // MEASURED: the turns live on liTurnHistory, not `.beats`. The previous reader guessed
     // `.beats` and reported 0 for a dialogue that had plainly taken turns.
@@ -175,6 +187,42 @@ console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene 
   const seal = /counter-?wish|his own wish|Julian wished|he spent his wish|countered it/i;
   t('Julian\'s secret is in NEITHER the dialogue NOR the beat beneath it',
     !seal.test(all), 'the seal leaked into the OAS');
+}
+
+// ── 1c. THE READER SUBMITS AT THE AUTHORED DOHKAR INTERRUPTION ──────────────
+// MEASURED (probe, 2026-10-03): once the OAS resolves, the authored interruption mounts
+// ("[INTIMATE-INTERRUPT] mounted host=cg image=d3 lines=3") and _advanceStagedScene REFUSES every
+// continuation until the reader submits there — "continuation requested before the reader
+// submitted — re-mounting the interruption, requesting nothing". That is the canon's own order:
+// the Dohkar cuts the interrogation off, and only then does run-or-remain arise.
+console.log('\n1c. the reader submits at the authored Dohkar interruption');
+{
+  const pending = await page.evaluate(() => ({
+    pending: typeof window._intimateInterruptionPending === 'function'
+      ? !!window._intimateInterruptionPending() : 'absent',
+    lines: ((window.state._intimateInterruption || {}).frame || {}).interruptionExchange
+      ? ((window.state._intimateInterruption || {}).frame.interruptionExchange || []).length : null
+  }));
+  t('the authored interruption is pending after the OAS', pending.pending === true,
+    JSON.stringify(pending));
+  const committed = await page.evaluate(() => {
+    if (typeof window._commitIntimateInterruption !== 'function') return 'absent';
+    try { return window._commitIntimateInterruption('I turn away from the clearing and walk.',
+      'Nothing. I have nothing to say to any of you.'); }
+    catch (e) { return 'threw: ' + e.message; }
+  });
+  await page.waitForTimeout(2500);
+  const after = await page.evaluate(() => ({
+    pending: typeof window._intimateInterruptionPending === 'function'
+      ? !!window._intimateInterruptionPending() : 'absent',
+    decision1: (window.state._sceneDecisions || {})['1'] || null,
+    decisionNeeded: typeof window._sceneDecisionNeeded === 'function'
+      ? !!window._sceneDecisionNeeded() : 'absent'
+  }));
+  t('the submission was accepted by the production handler', committed === true,
+    JSON.stringify(committed));
+  t('and the interruption is no longer pending', after.pending === false, JSON.stringify(after));
+  console.log('     after the interruption submit: ' + JSON.stringify(after));
 }
 
 // ── 2. THE RECORDED CHOICE TAKES EFFECT ─────────────────────────────────────

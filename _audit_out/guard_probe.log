@@ -1,0 +1,30 @@
+AFTER RESOLUTION SETTLED:
+{
+ "dialogue": "gone",
+ "interruptionPending": true,
+ "interruptionRecord": {
+  "submitted": false,
+  "storyId": true,
+  "sceneNum": 1,
+  "hasFrame": true,
+  "selectedSlot": null
+ },
+ "sceneDecisionNeeded": true,
+ "decision1": null,
+ "stagedSubmitting": false,
+ "stagedActive": false
+}
+
+liTurnHistory SHAPE: {
+ "len": 0,
+ "types": [],
+ "firstRaw": null,
+ "keys": null
+}
+
+GUARD LOGS FROM THE ADVANCE (3):
+  · [INTIMATE-INTERRUPT] continuation requested before the reader submitted — re-mounting the interruption, requesting nothing
+  · [OAS:TWO-PATH] no postInterruptionBeat declared — existing behavior preserved (straight to cards)
+  · [INTIMATE-INTERRUPT] mounted host=cg image=d3 lines=3 (resume)
+
+planner requests after the advance: 0
