@@ -133453,9 +133453,25 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       for (var i = L.entries.length - 1; i >= 0; i--) {           // a page is committed once
         var e0 = L.entries[i]; if (e0.sceneNumber === n && e0.kind === kind && e0.issue === issue) return e0;
       }
-      var ev = null, src = null, setting = null, participants = null;
+      var ev = null, src = null, setting = null, participants = null, eventFull = null;
       if (useKey) { ev = key.plannedEvent; src = key.plannedSource; setting = key.setting; participants = key.participants; }
-      else if (opts.event !== undefined) { ev = _slClip(opts.event, 300, 'event'); src = opts.eventSource || null; }
+      // ── THE RECORD KEEPS THE WHOLE EVENT; ONLY PROMPT CONTEXT IS BOUNDED (Roman 2026-10-03) ──
+      // MEASURED: the authored Dohkar interruption committed a 688-character event against this
+      // 300-character field, and 388 characters were dropped — including the clause where he states
+      // the rite and the ruling are his and that a FORMAL INQUIRY is the venue. That is authored
+      // canon disappearing from the record the next scene reads.
+      //
+      // Raising 300 to another arbitrary number would move the cliff, not remove it, and storing
+      // the long text somewhere else would create a second source of truth. So the AUTHORITATIVE
+      // record keeps the event WHOLE in `eventFull`, `event` remains the bounded field every
+      // existing consumer already reads, and anything that needs the complete text reads it from
+      // the same entry. One record, one truth, a bounded view of it.
+      else if (opts.event !== undefined) {
+        var _evFull = String(opts.event == null ? '' : opts.event).replace(/\s+/g, ' ').trim();
+        ev = _slClip(opts.event, 300, 'event');
+        if (_evFull && ev && _evFull.length > ev.length) eventFull = _evFull;
+        src = opts.eventSource || null;
+      }
       else { try { var a = _selectSceneAssignment(s, n); if (a && a.event) { ev = _slClip(a.event, 300); src = a.source || null; setting = a.setting ? _slClip(a.setting, 120) : null; participants = Array.isArray(a.participants) ? a.participants.slice(0, 8).map(String) : null; } } catch (_) {} }
       var dur = Array.isArray(s._durableFateConsequences) ? s._durableFateConsequences : [];
       var durBefore = useKey ? key.durableBefore : (opts.durableBefore != null ? Number(opts.durableBefore) : dur.length);
@@ -133463,6 +133479,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var entry = {
         n: L.entries.length + 1, sceneNumber: n, issue: issue, kind: kind, pageUid: opts.pageUid || null,
         plannedEvent: ev, plannedSource: src, setting: setting, participants: participants ? Object.freeze(participants.slice()) : null,
+        // THE WHOLE EVENT, on the SAME record. Present only when the bounded `plannedEvent`
+        // above actually dropped something, so it never duplicates a short event and never
+        // becomes a competing source of truth — one entry, one history, a bounded view of it.
+        plannedEventFull: eventFull,
         act: useKey ? key.act : _slClip(opts.act, 240), dia: useKey ? key.dia : _slClip(opts.dia, 240),
         card: useKey ? key.card : (opts.card || null), posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
       };
@@ -133547,6 +133567,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         var sd = [(b.pcSayRaw || b.pcSay), (b.pcDoRaw || b.pcDo)].filter(Boolean).join(' / ');
         if (sd) lines.push('  PLAYER: ' + sd);
         if (b.liDialogue) lines.push('  ' + (latestSnap.liName || 'LI') + ': ' + String(b.liDialogue));
+        // ── THE DESCRIPTION BENEATH THE LINE (Roman 2026-10-03) ────────────────────────────────
+        // The OAS is dialogue WITH a short literary beat under each reply, and things actually
+        // HAPPEN in those beats — a hand moving, an object set down, who steps closer. The archive
+        // stores liAction faithfully; this extractor forwarded only the dialogue, so any event that
+        // occurred in a description vanished from the context the next scene is planned against.
+        // Tested by Roman with an archived beat in which Julian places The Answer on the table: the
+        // action disappeared. Archiving a thing is not the same as forwarding it.
+        if (b.liAction) lines.push('    (' + String(b.liAction) + ')');
       });
       return lines;
     } catch (_) { return []; }

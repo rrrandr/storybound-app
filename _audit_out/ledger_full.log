@@ -1,0 +1,19 @@
+=== LEDGER KEEPS THE WHOLE EVENT (provider-free, $0) ===
+
+1. a long event is bounded for consumers AND kept whole on the record
+     source 448 chars → bounded 300, full 448
+  ok   the bounded field is still capped at 300
+  ok   the WHOLE event survives on the same entry
+  ok   and the clause the clip was dropping is present in it
+  ok   the final clause survives too
+  ok   the loss is still announced, so truncation stays diagnosable
+  ok   the bounded field is a PREFIX of the whole — one text, not two
+
+2. a short event gains no duplicate — no second source of truth
+  ok   the bounded field holds it intact
+  ok   and plannedEventFull is NOT set
+
+3. existing consumers are unaffected
+  ok   plannedEvent remains the bounded field they already read
+
+9/9 checks passed

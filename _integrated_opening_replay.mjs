@@ -50,7 +50,16 @@ await page.route('**/api/**', async (route) => {
     oasBeats++;
     return give(body);
   }
-  if (st === 'planner') { reqs.planner.push({ sys, usr }); try { return give(fsPlannerCaptured()); } catch (_) {} }
+  if (st === 'planner') {
+    // IDENTIFY BY ROLE AND SCENE, NOT BY SIZE. I previously dismissed a captured payload as "the
+    // wrong planner" because it was 14k rather than ~33k; Roman's point stands — the file
+    // identifies itself as the SCENE-SPINE planner, and a shorter prompt may simply be the
+    // ordinary-row path omitting what the open-row path adds. Each request is tagged with the
+    // role line it declares and the turnCount at dispatch.
+    const roleLine = (sys.match(/[A-Z][A-Z \-]{6,60}planner/i) || [''])[0].trim();
+    reqs.planner.push({ sys, usr, role: roleLine || '(unlabelled)', chars: sys.length + usr.length });
+    try { return give(fsPlannerCaptured()); } catch (_) {}
+  }
   if (st === 'author') { reqs.author.push({ sys, usr }); return give(REPLAY_AUTHOR); }
   if (st === 'memory') return give(MEMORY);
   if (st === 'verifier') { reqs.verifier.push({ sys, usr }); return give(verifierVerdict(refsFromVerifierRequest(usr))); }
@@ -357,8 +366,28 @@ t('no card action mentions a wound or a healer that is not in this story',
   deck.every(c => !/wound|healer/i.test(c.action)), JSON.stringify(deck.map(c => c.action.slice(0, 50))));
 const beforeP = reqs.planner.length;
 const chosen = deck[0];
-await page.evaluate(() => { const el = document.querySelector('[data-card-index="0"]'); if (el) el.click();
-  try { window._advanceStagedScene('', ''); } catch (_) {} });
+// SUBMIT THE WAY A READER DOES. The previous version clicked the card and then called
+// _advanceStagedScene('', '') directly, which BYPASSES the submission path that carries the filled
+// Say/Do inputs — so the planner request contained empty player action and dialogue, and the
+// card-action assertion was failing on the harness's own shortcut rather than on anything in
+// production. Roman caught that; it is corrected here.
+const submitted = await page.evaluate(() => {
+  const card = document.querySelector('[data-card-index="0"]');
+  if (card) card.click();
+  const a = document.getElementById('gnActionInput');
+  const d = document.getElementById('gnDialogueInput');
+  const filled = { action: a ? String(a.value || '') : null, dialogue: d ? String(d.value || '') : null };
+  const btn = document.getElementById('gnSubmitBtn');
+  if (!btn) return { ok: false, why: 'no #gnSubmitBtn', filled };
+  btn.click();
+  return { ok: true, filled };
+});
+console.log('     say/do the reader control carried: ' + JSON.stringify(submitted.filled));
+t('the card filled the reader\'s Say/Do inputs',
+  !!(submitted.filled && (submitted.filled.action || submitted.filled.dialogue)),
+  JSON.stringify(submitted));
+t('and submission went through the real reader control (#gnSubmitBtn)',
+  submitted.ok === true, JSON.stringify(submitted));
 dl = Date.now() + 180000;
 while (Date.now() < dl && reqs.planner.length <= beforeP) await new Promise(r => setTimeout(r, 1000));
 const p2 = reqs.planner.length > beforeP
@@ -368,8 +397,19 @@ t('the card\'s TITLE reached planning', !!p2 && p2.includes(chosen.title), chose
 t('the card\'s ACTION reached planning — not the title alone',
   !!p2 && !!chosen.action && p2.includes(chosen.action.slice(0, 40)),
   'action: ' + chosen.action.slice(0, 60));
-t('the card\'s FATE MODE reached planning (ordinary-wish status is stated)',
-  !!p2 && /ordinary|wish|Fate/i.test(p2));
+// A SUBSTRING OF 'wish' PROVES NOTHING. The previous check passed if the prompt contained
+// 'ordinary', 'wish' or 'Fate' ANYWHERE — true of almost any Fatelands prompt. This asserts the
+// SELECTED card's own mode: a non-wish slot card must not be presented to the planner as an
+// ordinary wish invocation.
+t('the planner was told this card\'s actual Fate mode, not merely the word "wish"',
+  !!p2 && (chosen.ordinaryWish
+    ? /ordinary wish|wish invocation|_ordinaryWish/i.test(p2)
+    : !/this card is an ordinary wish|ordinary wish invocation/i.test(p2)),
+  'selected card ordinaryWish=' + chosen.ordinaryWish);
+t('the player\'s submitted action reached planning verbatim',
+  !!p2 && !!submitted.filled && !!submitted.filled.action
+  && p2.includes(String(submitted.filled.action).slice(0, 40)),
+  'submitted action: ' + String((submitted.filled || {}).action || '').slice(0, 60));
 
 // ── 4. THE NEXT PLANNER'S HISTORY ───────────────────────────────────────────
 console.log('\n4. the correct prior scene, the accepted facts, and the OAS history');
@@ -389,9 +429,21 @@ t('an accepted fact was committed from the prior scene', facts.length > 0, JSON.
 t('the next planner received the committed facts, not an empty ledger',
   !!p2 && /COMMITTED WORLD STATE/.test(p2) && !/facts already TRUE[^:]*: \[\]/.test(p2),
   (p2.match(/COMMITTED WORLD STATE[^\n]{0,120}/) || ['(absent)'])[0]);
-t('and it received the opening\'s own history',
-  !!p2 && /(began to twist|The Dohkar charged|The Answer)/.test(p2),
-  'the opening ledger line is absent from the planner payload');
+// NAMING THREE PHRASES AND ACCEPTING ANY ONE OF THEM IS NOT A HISTORY CHECK. "The Answer" alone
+// could come from anywhere. These are the REQUIRED FACTS of the opening, asserted individually so
+// a partial handoff cannot read as a complete one.
+const openingFacts = [
+  ['the wish twisted and nothing came of it', /began to twist|went wrong, then it stopped|nothing came of it/i],
+  ['the Dohkar charged Lirael', /charged (Lirael|her) with shaping|shaping and interfering/i],
+  ['The Answer was put in her hands', /The Answer/],
+  ['a formal inquiry is the venue', /formal inquiry/i]
+];
+openingFacts.forEach(([name, rx]) => {
+  t('the planner received: ' + name, !!p2 && rx.test(p2), 'absent from the planner payload');
+});
+t('and the OAS exchange reached it (dialogue or its description)',
+  !!p2 && /(Mind what it does with that|I am still here|the assembly has gone quiet)/i.test(p2),
+  'no OAS exchange content in the planner payload');
 
 // ── THE CLIP IS NO LONGER SILENT ────────────────────────────────────────────
 console.log('\n5. a clipped ledger field can no longer disappear silently');
@@ -409,8 +461,16 @@ console.log('\n5. a clipped ledger field can no longer disappear silently');
 await browser.close();
 fs.mkdirSync('_audit_out/integrated', { recursive: true });
 fs.writeFileSync('_audit_out/integrated/logs.json', JSON.stringify(logs, null, 2));
-if (reqs.planner.length) fs.writeFileSync('_audit_out/integrated/last_planner.txt',
-  reqs.planner[reqs.planner.length - 1].sys + '\n\n=== USER ===\n' + reqs.planner[reqs.planner.length - 1].usr);
+// EVERY planner request, each tagged with the role it declares and its size, so the next reader of
+// these artefacts can tell the call sites apart without guessing from byte counts.
+reqs.planner.forEach((r, i) => {
+  fs.writeFileSync('_audit_out/integrated/planner_' + (i + 1) + '.txt',
+    'ROLE: ' + r.role + '\nCHARS: ' + r.chars + '\n\n=== SYSTEM ===\n' + r.sys
+    + '\n\n=== USER ===\n' + r.usr);
+});
+console.log('\nPLANNER REQUESTS CAPTURED (' + reqs.planner.length + '):');
+reqs.planner.forEach((r, i) => console.log('  ' + (i + 1) + '. role="' + r.role + '"  '
+  + r.chars + ' chars'));
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 console.log('\nUNTESTED HERE: live OAS response quality. The beats above are contract-derived');
 console.log('fixtures built from the prompt\'s own declared schema, not recordings.');
