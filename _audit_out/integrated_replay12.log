@@ -1,0 +1,81 @@
+=== INTEGRATED OPENING REPLAY (provider-free, $0) ===
+  OAS beats are CONTRACT-DERIVED fixtures. Live OAS quality is UNTESTED.
+
+1. the OAS runs through the production affordance and persists its history
+  ok   the OAS affordance existed and was taken
+  ok   the intimate dialogue is ACTIVE
+  ok   the OAS asked for at least one beat
+  ok   its request carries the authored opening frame, not a generic one
+     turn loop: [{"i":0,"beat":0,"consumed":true},{"i":1,"beat":1,"consumed":true},{"i":2,"beat":2,"consumed":true},{"i":3,"beat":3,"consumed":true},{"i":4,"beat":4,"consumed":true},{"i":5,"beat":5,"consumed":true},{"i":6,"beat":6,"consumed":true},{"i":7,"stoppedAt":{"active":false,"resolving":true,"beat":7}}]
+     after driving turns: {"stillActive":false,"beatCount":7,"resolving":true}
+  ok   the dialogue reached the first exit ramp (beat >= 6)
+  ok   the OAS RESOLVED on its own, not forced inactive
+     after the OAS: {"beats":0,"ledgerEntries":1,"interruptionRecord":false,"interruptionSubmitted":false,"scenes":2}
+  ok   the OAS produced beats through the real consume path
+  ok   a scene ledger exists with the opening recorded
+
+1b. the OAS register — dialogue plus a short beat, not a scene of narration
+     dialogue record: beatCount=7  populated arrays={"liTurnHistory":7,"userInputLengths":7,"_oasCleanupHistory":7,"_oasArchiveBuilder":7}
+     rendered beats: 7
+       "The Answer is in your hands, not mine. Mind what it does with that."  |  My palms are damp around it, and he watches me notice.
+       "You moved toward her before the words finished. Everyone saw which way"  |  The accusation sits under the compliment like a stone under cloth.
+       "I am not asking whether you shaped it. I am asking why you wanted to."  |  He is close enough now that answering feels like agreeing to something else.
+  ok   the dialogue rendered beats through the production path
+     pacing flags for review: none
+     beat lengths: [54,66,76,102,78,50,42]
+  ok   the exchange stays grounded in the rite, the allegation or The Answer
+  ok   Julian's secret is in NEITHER the dialogue NOR the beat beneath it
+
+1c. the reader submits at the authored Dohkar interruption
+  ok   the authored interruption is pending after the OAS
+  ok   the submission was accepted by the production handler
+  ok   and the interruption is no longer pending
+     after the interruption submit: {"pending":false,"decision1":{"axis":"run in shame vs remain and see where Julian was taking it","choice":"posture","label":"I turn away from the clearing and walk.","source":"interruption_submit","at":1791006816093,"storyId":"140cfc95-87f4-4632-8b59-073f2dab907f"},"decisionNeeded":true}
+
+1d. the OAS exchange is persisted beyond teardown
+     oasArchive: {"found":1,"uid":"oas:fa30e214-790f-4152-8ee8-d365715cd21e","textIsEmpty":true,"beatCount":7,"beats":7,"sample":{"pcSay":"I am still here.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that."}}
+  ok   the exchange was archived into state.scenes as an oasArchive record
+  ok   the archive record carries no prose text, so it cannot be mistaken for a scene
+  ok   and it holds the per-beat exchange (pcSay / liDialogue)
+
+2. the reader's recorded choice takes effect
+  ok   the advance refused until the choice was recorded
+  ok   the choice was recorded by the prompt's own handler
+  ok   and "run" DISPLACES the scheduled frame
+  ok   on the seed's declaration, not a keyword match
+  ok   scene 2 generated
+  ok   and its prose is not the baked opening
+  ok   the planner was told the frame was DISPLACED by the reader's action
+  ok   and it was NOT told the frame is hard
+
+2b. the handoff into the authored interruption
+     interruption: {"record":true,"submitted":true,"authoredInterruption":"The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her","exchangeLines":3}
+  ok   the Book authors a Dohkar interruption with a fixed exchange
+  ok   and the OAS reached the point where it becomes eligible
+
+3. the selected card's action and Fate mode reach planning
+     deck: Reversal | Confession | Silence | Boundary | Temptation
+  ok   the deck is the Book's own five slots
+  ok   no templated wish card is dealt to this Book
+  ok   no card action mentions a wound or a healer that is not in this story
+  ok   a planner request followed the card play
+  FAIL the card's TITLE reached planning  — Reversal
+  FAIL the card's ACTION reached planning — not the title alone  — action: You step between Dohkar and Julian, making your position cle
+  ok   the card's FATE MODE reached planning (ordinary-wish status is stated)
+
+4. the correct prior scene, the accepted facts, and the OAS history
+  ok   the verifier was dispatched for the prior scene
+  ok   and it was given scene 2, not the baked opening
+  ok   an accepted fact was committed from the prior scene
+  ok   the next planner received the committed facts, not an empty ledger
+  FAIL and it received the opening's own history  — the opening ledger line is absent from the planner payload
+
+5. a clipped ledger field can no longer disappear silently
+  ok   the clip exposes what it removed
+     clip warnings this run: 1
+       · [LEDGER:CLIPPED] event is 688 chars against a limit of 300 — 388 characters were REMOVED from the committed record, and the next scene will never see them: "it is mine to
+
+37/40 checks passed
+
+UNTESTED HERE: live OAS response quality. The beats above are contract-derived
+fixtures built from the prompt's own declared schema, not recordings.
