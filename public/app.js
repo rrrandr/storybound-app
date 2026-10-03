@@ -32033,6 +32033,16 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
             if (src._derivedFromStateChange && !(typeof window !== 'undefined' && window._committedStateV0 === false)) {
               return; // transitions are owned by Commit-Scene; no obligation debt for them here
             }
+            // HISTORY-NOTE OBLIGATIONS SETTLE HERE, through the SAME adjudication that already
+            // decides whether a committed beat was delivered (Roman/Codex 2026-10-03). This is
+            // the authorized writer: the VERIFIER, a separate pass from the author, reporting on
+            // the rendered scene. An author can PROPOSE an obligation and can CLAIM it resolved,
+            // and neither settles anything — only this verdict does. Previously nothing in
+            // production set `resolved`, so my test setting the flag by hand proved only that the
+            // flag was read, which Codex correctly refused to accept as a settlement path.
+            if (bf.status === 'fulfilled' && typeof _settleHistoryObligation === 'function') {
+              try { _settleHistoryObligation(bf.id, String(bf.evidence || '').slice(0, 200)); } catch (_) {}
+            }
             if (bf.status === 'fulfilled') return;
             if (src.dropAllowed === true && bf.status === 'partial') return;   // partial + droppable → let go
             if (typeof _recordObligationDebt === 'function') _recordObligationDebt({
@@ -73205,6 +73215,24 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
     if (ctx.tierContextBlock) turn = String(ctx.tierContextBlock) + '\n' + turn;
     turn += '\nWithin the first 1–2 paragraphs, reference or paraphrase the player\'s input. '
           + 'Begin this scene with a different structure, subject, and image than the previous scene.';
+    // THE LITERARY HISTORY NOTE, asked for at the END of the response so the prose is written
+    // first and finished before any bookkeeping begins — the note describes a scene that already
+    // exists. It is stripped in _sbPrepareBodyText before anything renders, so the reader never
+    // sees it, and a response without one behaves exactly as before.
+    turn += '\n\nAFTER the scene is complete, on a new line, append a HISTORY NOTE for the story '
+          + 'engine. The reader NEVER sees it. Format EXACTLY:\n'
+          + '<<<HISTORY_NOTE {"events":[{"text":"<what ACTUALLY happened in the scene you just '
+          + 'wrote>","quote":"<a SHORT phrase copied EXACTLY from your own prose above>"}],'
+          + '"decisions":[],"consequences":[],"transfers":[{"text":"<any object that changed hands '
+          + 'or change of place>","quote":"<exact phrase>"}],"disclosures":[{"text":"<what was '
+          + 'revealed, promised or admitted ON THE PAGE>","quote":"<exact phrase>"}],'
+          + '"obligations":[{"id":"<short-stable-id>","text":"<what is now owed or unanswered>",'
+          + '"owedBy":"<who>"}],"resolves":[]} HISTORY_NOTE>>>\n'
+          + 'Summarize THE SCENE YOU JUST WROTE, never the scene you were asked to write: if you '
+          + 'planned an acceptance but only wrote a clerk beginning to read, the note says the '
+          + 'clerk began reading. A claim without an exact quote is kept as your unverified '
+          + 'account and will NOT be treated as fact. Omit anything your prose does not show. '
+          + 'Write nothing after the closing marker.';
     // v2: HOT_CRISIS opening state — if active, the scene opens mid-detonation.
     try {
       if (state._openingTemperature === 'HOT_CRISIS') {
@@ -103727,7 +103755,7 @@ function _buildAuthorFloorDirective(s) {
             // which read as though literary were wired when it never was (Codex, 2026-10-03).
             // The field is accepted so a caller that genuinely has one can pass it; nothing in
             // the literary path currently does.
-            historyNote: historyNote || null })
+            historyNote: historyNote || (_sbPrep && _sbPrep.historyNote) || null })
         : null;
       // NO FALLBACK PUSH. If the API is unavailable something is badly wrong, and quietly creating an
       // un-projected record is the drift the route rule exists to prevent — it would be a scene with no
@@ -133961,6 +133989,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // that names the sealed thing in the story's own vocabulary; it is not, and cannot be, a
   // guarantee that a secret stays secret. The real protection is upstream — an author that is
   // never told the secret cannot summarize it — and that remains the load-bearing control.
+  //
+  // AND THE TIERS ARE NOT A CONFIDENTIALITY BOUNDARY. Labelling something "unverified summary"
+  // says it is not established as TRUE; it does not keep it out of the next model's context, and
+  // a secret sitting in that context can steer the next scene without ever being committed as a
+  // fact. Demoting a sealed claim is therefore NOT a protection — only DROPPING it is, which is
+  // why anything the seal screen recognises is removed outright rather than demoted.
+  //
+  // THREE DIFFERENT THINGS, WHICH THIS FILE KEEPS APART:
+  //   INTERNAL TRUTH      — what is actually so in the world. Never settled here; it belongs to
+  //                         the existing adjudication path, and a note can only ever propose.
+  //   WHAT THE READER SAW — the rendered prose. A quotation is evidence of this and nothing else.
+  //   WHAT A CHARACTER KNOWS — a claim about a mind. Never established here under any
+  //                         circumstances, because no amount of quoted text can show that a
+  //                         particular character heard, saw or understood it.
   function _hnSealsInForce(s) {
     var out = [];
     try {
@@ -134107,6 +134149,32 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return open;
   }
   window._openObligations = _openObligations;
+
+  // THE ONLY THING ENTITLED TO CLOSE AN OBLIGATION. Called from the verifier's beatFulfillment
+  // adjudication (the post-scene pass that already decides delivery), never from an author note.
+  // It records WHO settled it and on what evidence, so a settlement can be audited rather than
+  // taken on trust.
+  function _settleHistoryObligation(id, evidence) {
+    var s = window.state; if (!s || !id) return false;
+    var key = String(id), hit = false;
+    try {
+      (s.scenes || []).forEach(function (rec) {
+        var hn = rec && rec.historyNote; if (!hn) return;
+        (hn.obligations || []).forEach(function (o) {
+          if (!o || String(o.id) !== key || o.resolved) return;
+          o.resolved = true;
+          o.settledBy = 'verifier:beatFulfillment';
+          o.settledEvidence = evidence || '';
+          o.settledAt = Date.now();
+          hit = true;
+        });
+      });
+      if (hit) console.log('[HISTORY-NOTE] obligation ' + key
+        + ' SETTLED by the verifier — ' + String(evidence || '').slice(0, 120));
+    } catch (_) {}
+    return hit;
+  }
+  window._settleHistoryObligation = _settleHistoryObligation;
 
   // ── THE ONE CONTRACT BOTH LAYERS CALL ───────────────────────────────────────────────────────
   // Three sections, and the difference between them is the whole point. Only quotations are
@@ -325957,12 +326025,52 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   // rebuild non-deterministic: a state machine that had already advanced could yield different text and
   // so a spurious new revision. So the transform is an explicit ACCEPTANCE-PHASE step whose result is
   // snapshotted once, and the projection is a pure function of that snapshot.
-  function _sbPrepareBodyText(raw) {
+  // ── THE LITERARY NOTE RIDES IN BAND, AND THAT IS A DELIBERATE TRADEOFF ──────────────────────
+  // THE CHOICE, stated exactly (Codex asked for the choice, not the excuse):
+  //   (a) make the literary author return JSON, like CG. Rejected: it rewrites the response
+  //       contract of the one path that returns PROSE, every existing caller and saved story
+  //       parses text, and models demonstrably write worse prose inside a JSON string field.
+  //   (b) a second call that summarizes the scene. Rejected: that is the extra cost and the race
+  //       this whole design exists to remove — the note must arrive WITH the prose it describes.
+  //   (c) a trailing sentinel block appended after the prose, stripped before anything renders.
+  //       CHOSEN. Backward compatible (a response without one behaves exactly as today), reader-
+  //       hidden (stripped here, upstream of every consumer), same response, no second call.
+  // THE COST OF (c), which is real: it is metadata in a prose stream. A model can malform it or
+  // emit it mid-scene. So the strip is deliberately WIDER than the parse — ANY sentinel block is
+  // removed from the prose whether or not it parses, because the worst outcome is the reader
+  // seeing machine metadata. A malformed block yields no note and clean prose, never both.
+  var _HN_OPEN = '<<<HISTORY_NOTE';
+  var _HN_CLOSE = 'HISTORY_NOTE>>>';
+  function _sbExtractLiteraryNote(raw) {
     var input = String(raw == null ? '' : raw);
-    if (typeof _sbSceneTextTransform !== 'function') return { text: input, refused: false, refusalReason: null };
+    var out = { body: input, note: null };
+    try {
+      var i = input.indexOf(_HN_OPEN);
+      if (i < 0) return out;                      // no sentinel: today's behaviour, untouched
+      var j = input.indexOf(_HN_CLOSE, i);
+      // STRIP FIRST, PARSE SECOND. An unterminated block still never reaches the reader.
+      out.body = (j < 0) ? input.slice(0, i) : (input.slice(0, i) + input.slice(j + _HN_CLOSE.length));
+      out.body = out.body.replace(/\n{3,}/g, '\n\n').trim();
+      if (j < 0) { try { console.warn('[HISTORY-NOTE] literary sentinel was not closed — prose cleaned, no note'); } catch (_) {} return out; }
+      var inner = input.slice(i + _HN_OPEN.length, j);
+      var a = inner.indexOf('{'), b = inner.lastIndexOf('}');
+      if (a < 0 || b <= a) return out;
+      try { out.note = JSON.parse(inner.slice(a, b + 1)); }
+      catch (e) { try { console.warn('[HISTORY-NOTE] literary note did not parse — prose cleaned, no note: ' + (e && e.message)); } catch (_) {} }
+    } catch (_) {}
+    return out;
+  }
+  window._sbExtractLiteraryNote = _sbExtractLiteraryNote;
+
+  function _sbPrepareBodyText(raw) {
+    // The sentinel is removed BEFORE any transform or projection sees the text, so no downstream
+    // consumer — renderer, verifier, attribution sidecar — can ever encounter it.
+    var _ex = _sbExtractLiteraryNote(raw);
+    var input = String(_ex.body == null ? '' : _ex.body);
+    if (typeof _sbSceneTextTransform !== 'function') return { text: input, refused: false, refusalReason: null, historyNote: _ex.note };
     var tx = _sbSceneTextTransform(input);
-    if (tx && tx.refused) return { text: '', refused: true, refusalReason: tx.refusalReason || null };
-    return { text: String((tx && tx.text) == null ? '' : tx.text), refused: false, refusalReason: null };
+    if (tx && tx.refused) return { text: '', refused: true, refusalReason: tx.refusalReason || null, historyNote: null };
+    return { text: String((tx && tx.text) == null ? '' : tx.text), refused: false, refusalReason: null, historyNote: _ex.note };
   }
   window._sbPrepareBodyText = _sbPrepareBodyText;
 

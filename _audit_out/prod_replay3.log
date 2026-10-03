@@ -1,0 +1,28 @@
+=== PRODUCTION-PATH REPLAY (provider-free, $0) ===
+
+A. LITERARY — the in-band sentinel, through the real prepare/persist path
+  ok   the APPLICATION extracted the note (the harness did not parse it)
+  ok   THE READER-VISIBLE SCENE CARRIES NO METADATA
+  ok   the prose itself survived intact
+  ok   the note is stored on THAT scene record
+  ok   its quote-backed claim is quote-backed
+  ok   and the literary obligation is carried
+
+B. CG — the author response parsed by the application, not the harness
+     handler returned: {"ok":true,"beats":0,"noteOnPlan":false}
+     author responses served: 0   cg scenes: 0
+  FAIL THE APPLICATION DISPATCHED ITS OWN AUTHOR CALL  — no author request was made — nothing below exercises the real handler
+
+C. A GENUINE SETTLEMENT, through the verifier that already adjudicates delivery
+  ok   the obligation was open
+  ok   AN AUTHOR CLAIMING RESOLUTION CHANGES NOTHING
+  ok   THE VERIFIER SETTLES IT
+  ok   and the settlement records who settled it and on what evidence
+
+D. THE NEXT PLANNER RECEIVES IT
+  ok   a planner request was assembled
+  ok   it carries the quoted text from the surviving note
+  ok   it carries the still-open obligation with its id
+  ok   A SETTLED OBLIGATION IS NOT CARRIED FORWARD
+
+14/15 checks passed

@@ -1,0 +1,41 @@
+=== PRODUCTION-PATH REPLAY (provider-free, $0) ===
+
+A. LITERARY — the in-band sentinel, through the real prepare/persist path
+  ok   the APPLICATION extracted the note (the harness did not parse it)
+  ok   THE READER-VISIBLE SCENE CARRIES NO METADATA
+  ok   the prose itself survived intact
+  ok   the note is stored on THAT scene record
+  ok   its quote-backed claim is quote-backed
+  ok   and the literary obligation is carried
+
+B. CG — the author response parsed by the application, not the harness
+     handler returned: {"ok":true,"beats":0,"noteOnPlan":false}
+     --- app log during the call:
+       %c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+       [CG:HELPERS] ready=true
+       [HISTORY-NOTE] lit:prod — 1 quote-backed, 0 summary-only, 1 proposed obligation(s)
+       [SCENE-PROJECTION] created lit:prod kind=body revision=0 hash=hedcda9a8-84 chars=84 sidecarEntries=1
+       [BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+       [TIER0] CG_SCAFFOLD deferred — baked opening, no paid call until the reader submits their Scene 1 choice
+       [CG:SAYDO-SLOT] {"slot":null,"confidence":"none","evidence":[],"reason":"no slot represented: the move is not an admission, an authority challenge, an
+       [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+       [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+       [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+       [CG:SCAFFOLD] all provider tiers failed: [TIERED:scaffold] all tiers exhausted — last error: Failed to fetch
+       [CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: scaffold generation failed — all tiers exhausted ([TIERED:scaffold] all tiers exhau
+     author responses served: 0   cg scenes: 0
+  FAIL THE APPLICATION DISPATCHED ITS OWN AUTHOR CALL  — no author request was made — nothing below exercises the real handler
+
+C. A GENUINE SETTLEMENT, through the verifier that already adjudicates delivery
+  ok   the obligation was open
+  ok   AN AUTHOR CLAIMING RESOLUTION CHANGES NOTHING
+  ok   THE VERIFIER SETTLES IT
+  ok   and the settlement records who settled it and on what evidence
+
+D. THE NEXT PLANNER RECEIVES IT
+  ok   a planner request was assembled
+  ok   it carries the quoted text from the surviving note
+  ok   it carries the still-open obligation with its id
+  ok   A SETTLED OBLIGATION IS NOT CARRIED FORWARD
+
+14/15 checks passed
