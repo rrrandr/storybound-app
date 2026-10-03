@@ -188,6 +188,62 @@ export const OAS_TURNS = [
   { dialogue: 'The Answer is in your hands, not mine. Mind what it does with that.',
     action: 'My palms are damp around it, and he watches me notice.',
     face: 'smirk', tone: 'charged' },
+  { dialogue: 'You moved toward her before the words finished. Everyone saw which way you went.',
+    action: 'The accusation sits under the compliment like a stone under cloth.',
+    face: 'smirk', tone: 'charged' },
+  { dialogue: 'I am not asking whether you shaped it. I am asking why you wanted to.',
+    action: 'He is close enough now that answering feels like agreeing to something else.',
+    face: 'big_smirk', tone: 'charged' },
+  { dialogue: 'Keep looking at me like that and The Answer might surprise you.',
+    action: "Julian's game was as dangerous as it was exciting; I couldn't help noticing his "
+      + 'tunic getting tighter.',
+    face: 'lip_bite', tone: 'charged' },
+  { dialogue: 'Say it plainly and I will stop. You do not want me to stop.',
+    action: 'Somewhere behind us a guest shifts, and I remember we are still being watched.',
+    face: 'lip_bite_held', tone: 'charged' },
+  { dialogue: 'Then we understand each other, and everyone here understands us.',
+    action: 'The clearing has not made a sound in a long while.',
+    face: 'hard_exhale', tone: 'charged' }
+];
+
+// NOT A RECORDING. These are built from the OAS prompt's OWN declared output schema (app.js
+// ~191079: li_dialogue, li_action, li_next_prompt, li_face_state, scene_state, scene_tone,
+// user_signal, temperature_shift). A contract-derived fixture can exercise PARSING, the
+// interaction turns, COMPLETION, history persistence and the handoff to the next planner. It
+// cannot say anything about whether a real OAS reply is any good.
+//
+// LIVE OAS QUALITY IS UNTESTED and must be reported that way wherever these are used. Requiring a
+// paid recording before testing the plumbing is what kept a REQUIRED segment of the opening
+// unexercised through an entire ten-scene issue.
+export const OAS_FACE_STATES = ['closed_smile', 'smirk', 'big_smirk', 'knowing_smirk',
+  'lip_bite', 'lip_bite_held', 'hard_exhale', 'ahh'];
+
+// THE REGISTER (Roman 2026-10-03). The OAS is INTERACTIVE DIALOGUE with room beneath each reply
+// for a SHORT LITERARY BEAT — comic-panel pacing, not a scene's worth of narration:
+//
+//   Julian's line, then usually ONE brief sentence, occasionally two, carrying a gesture, a
+//   physical detail, atmosphere, or Lirael's immediate reaction. No paragraph-long interiority.
+//   The space left under it is where the reader answers.
+//
+// Roman's own example, which these fixtures are modelled on:
+//   "Keep looking at me like that and The Answer might surprise you."
+//   Julian's game was as dangerous as it was exciting; I couldn't help noticing his tunic
+//   getting tighter.
+//
+// GROUNDED IN THE QUESTIONING. The innuendo is heavy and it never floats free of what is actually
+// happening: the failed rite, the allegation, The Answer in her hands, and what the reader just
+// said. And the seal holds in BOTH channels — Julian's counter-wish appears in neither the dialogue
+// nor the beat beneath it.
+//
+// Having the full author context available is not a licence to write long. These fixtures are
+// deliberately short so the harness fails if the pacing drifts.
+export const OAS_TURNS = [
+  { dialogue: 'You called to me across a clearing full of your own people.',
+    action: 'He has not moved; the assembly has gone quiet enough to hear him.',
+    face: 'knowing_smirk', tone: 'charged' },
+  { dialogue: 'The Answer is in your hands, not mine. Mind what it does with that.',
+    action: 'My palms are damp around it, and he watches me notice.',
+    face: 'smirk', tone: 'charged' },
   { dialogue: 'Keep looking at me like that and The Answer might surprise you.',
     action: "Julian's game was as dangerous as it was exciting; I couldn't help noticing his "
       + 'tunic getting tighter.',
@@ -216,6 +272,14 @@ export const oasBeat = (opts) => {
 
 // The nth turn, so a replay can walk the exchange in order.
 export const oasTurn = (n) => oasBeat(OAS_TURNS[Math.min(n, OAS_TURNS.length - 1)]);
+
+// THE SUPPORTED COMPLETION CONTRACT, read from the code rather than assumed. app.js:205016:
+//     var llmSaysResolve = (parsed.scene_state === 'resolve' && d.beatCount >= 6);
+// A 'resolve' BEFORE beat 6 is deliberately ignored ("pre-first-ramp") because the first exit ramp
+// is at beat 6. My earlier replay drove three turns and served a closing beat, which the app
+// correctly discarded — the dialogue never resolved, and seventeen downstream assertions failed
+// behind that one gate. A fixture must therefore reach beat 6 before closing.
+export const OAS_RESOLVE_MIN_BEAT = 6;
 
 // A closing beat, so completion and the handoff into the authored Dohkar interruption can be
 // exercised without a live encounter.
