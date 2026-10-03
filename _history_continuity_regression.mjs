@@ -109,39 +109,44 @@ console.log('\n3. DOES ANY OF IT REACH THE PLANNER?');
     'no _buildHistoryContinuityBlock — story memory is assembled only for the literary author');
 }
 
-console.log('\n4. THE NOTE IS A PROPOSED SUMMARY, AND THE PROSE IS THE AUTHORITY');
+console.log('\n4. A QUOTATION IS EVIDENCE; A PARAPHRASE IS NOT');
 {
   const PROSE = 'The chamber was quiet. Julian took the sealed writ from his sleeve and put it '
     + 'into Lirael\'s hands. She closed her fingers around it. The Dohkar did not look up.';
   const r = await page.evaluate(({ prose }) => {
-    window.state.scenes = [{ uid: 'lit:hn-test', text: prose, title: '', synopsis: '' }];
-    const note = {
+    window.state.scenes = [{ uid: 'lit:hn-test', text: prose }];
+    window._attachHistoryNote('lit:hn-test', {
+      // QUOTE-BACKED: the author supplied the scene's own words alongside its summary.
+      transfers: [{ text: 'The sealed writ passed from Julian to Lirael.',
+        quote: 'put it into Lirael\'s hands' }],
+      // SUMMARY-ONLY: no quotation, so it is carried as the author's account, not as fact.
       events: [{ text: 'Julian handed Lirael the sealed writ in the chamber.' }],
-      transfers: [{ text: 'The sealed writ passed from Julian to Lirael.' }],
-      // A CLAIM THE PROSE NEVER SHOWS — the negative case.
-      disclosures: [{ text: 'Julian confessed that he spent his own wish to stop the twist.' }],
-      obligations: [{ text: 'Lirael must answer for her conduct at the inquiry.', owedBy: 'Lirael' }],
-      knowledge: { 'the assembly': 'saw the writ change hands; does not know what it says' }
-    };
-    const stored = window._attachHistoryNote('lit:hn-test', note, prose);
-    const block = window._buildHistoryContinuityBlock(window.state, {});
-    return { stored, block };
+      // A QUOTATION THAT IS NOT IN THE PROSE must not buy a claim its way in.
+      consequences: [{ text: 'The Dohkar rose and left.', quote: 'the Dohkar rose and left' }],
+      obligations: [{ id: 'ob-inq', text: 'Lirael must answer for her conduct at the inquiry.' }]
+    }, prose);
+    const block = window._buildHistoryContinuityBlock(window.state, {}) || '';
+    return { note: window.state.scenes[0].historyNote, block,
+      established: window._hnEstablishedPortion
+        ? window._hnEstablishedPortion(block)
+        : block.split(/THE AUTHOR'S SUMMARY|PROPOSED OBLIGATIONS/)[0] };
   }, { prose: PROSE });
-  const v = r.stored && r.stored.verified, u = r.stored && r.stored.unverified;
-  t('a supported event is ESTABLISHED', (v.events || []).length === 1, JSON.stringify(v.events));
-  t('a supported object transfer is ESTABLISHED', (v.transfers || []).length === 1);
-  t('AN UNSUPPORTED CLAIM IS NOT ESTABLISHED — the negative case',
-    (v.disclosures || []).length === 0 && (u.disclosures || []).length === 1,
-    'verified=' + JSON.stringify(v.disclosures) + ' unverified=' + JSON.stringify(u.disclosures));
-  t('and it does NOT appear in the history block the models receive',
-    !/spent his own wish/.test(r.block), 'the unsupported claim leaked into established history');
-  t('the supported transfer DOES appear in that block',
-    /sealed writ passed from Julian/.test(r.block));
-  t('who-knows-what is carried', /KNOWS — the assembly/.test(r.block));
-  t('an obligation is carried as still unresolved',
-    /STILL UNRESOLVED/.test(r.block) && /answer for her conduct/.test(r.block));
+  t('a quote-backed claim is recorded as quote-backed', (r.note.quoted || []).length === 1,
+    JSON.stringify(r.note.quoted));
+  t('and the VERBATIM TEXT is what appears in the established section',
+    /put it into Lirael's hands/.test(r.established));
+  t('a paraphrase with no quotation is carried as SUMMARY, not as fact',
+    (r.note.summary || []).some(x => /handed Lirael the sealed writ/.test(x.text))
+    && !/handed Lirael the sealed writ/.test(r.established));
+  t('A QUOTATION THAT IS NOT IN THE PROSE does not establish anything',
+    !/Dohkar rose and left/.test(r.established),
+    'a fabricated quotation was accepted as the scene\'s own words');
+  t('the summary section is explicitly labelled unverified and not canon',
+    /UNVERIFIED, NOT CANON/.test(r.block));
+  t('the obligation is labelled a proposal, not an established fact',
+    /PROPOSED OBLIGATIONS/.test(r.block) && !/answer for her conduct/.test(r.established));
   t('the note did not touch the entity register or any durable fact',
-    !/activated|proposalRef/.test(JSON.stringify(r.stored)));
+    !/activated|proposalRef/.test(JSON.stringify(r.note)));
 }
 
 console.log('\n5. OBLIGATIONS OUTLIVE THE RECENT WINDOW');
@@ -150,9 +155,9 @@ console.log('\n5. OBLIGATIONS OUTLIVE THE RECENT WINDOW');
     window.state.scenes = [];
     for (let i = 1; i <= 6; i++) {
       window.state.scenes.push({ uid: 'lit:s' + i, text: 'Scene ' + i + ' happened and was read.',
-        historyNote: { v: 1, verified: { events: [{ text: 'scene ' + i + ' event' }],
-          obligations: i === 1 ? [{ text: 'The writ must be answered before the inquiry.' }] : [] },
-          unverified: {}, knowledge: null } });
+        historyNote: { v: 2, quoted: [], summary: [{ kind: 'events', text: 'scene ' + i + ' event' }],
+          obligations: i === 1 ? [{ id: 'ob-old', text: 'The writ must be answered before the inquiry.' }] : [],
+          knowledge: [], resolves: [] } });
     }
     const block = window._buildHistoryContinuityBlock(window.state, {});
     return { block, open: window._openObligations(window.state).length };

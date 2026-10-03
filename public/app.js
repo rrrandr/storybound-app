@@ -133900,29 +133900,65 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // asserting it in a summary. Durable canon still belongs to the existing delivery/commit path —
   // a note cannot activate an entity or seal a fact, and nothing here writes to the register.
   var _HN_MAX_RECENT = 3;          // compact recent notes
-  var _HN_CLAIM_MIN = 12;          // ignore trivially short fragments when checking support
+  var _HN_MIN_QUOTE = 24;          // a quotation shorter than this proves nothing
+
+  // ── WHAT I GOT WRONG, KEPT HERE SO IT IS NOT REPEATED ───────────────────────────────────────
+  // The first version of this checked each claim for 60% WORD OVERLAP with the prose and called
+  // the survivors "verified". Codex broke it in three lines, and every one of them is now a
+  // permanent regression case in _history_semantic_control.mjs:
+  //     prose "Julian did NOT hand the writ to Lirael"  accepted "Julian handed the writ to Lirael"
+  //     prose "Julian handed the writ to Lirael"        accepted "LIRAEL handed the writ to JULIAN"
+  //     prose "the clerk BEGAN READING the demand"      accepted "the commission ACCEPTED the demand"
+  // Word overlap cannot see negation, direction or escalation, and no amount of tuning the
+  // threshold would give it those. So lexical matching no longer establishes ANYTHING here.
+  //
+  // THE HONEST RULE THIS NOW FOLLOWS: an exact quotation can establish THAT A PIECE OF TEXT
+  // EXISTS in the scene. Nothing else the author writes about its own scene is treated as fact.
+  // A paraphrase is carried as the AUTHOR'S SUMMARY, plainly marked as unverified, because it is
+  // genuinely useful for continuity while being no evidence at all about what is true.
+  // REMAINING LIMITATION, STATED RATHER THAN PAPERED OVER: this still performs NO semantic
+  // validation. A quotation proves the words are there; it does not prove the summary built
+  // around them means what it says. Durable canon continues to belong to the existing
+  // adjudication path, which is the only thing here entitled to establish a fact.
 
   function _hnNorm(x) {
-    return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ')
-      .replace(/\s+/g, ' ').trim();
-  }
-  // A claim is SUPPORTED when its distinctive words actually occur in the prose. Deliberately
-  // word-overlap rather than a verbatim quote: a summary legitimately rewords, but it cannot
-  // invent an object, a person or an act that never appears.
-  function _hnClaimSupported(claim, prose) {
-    var c = _hnNorm(claim), p = _hnNorm(prose);
-    if (!c || c.length < _HN_CLAIM_MIN) return false;
-    if (!p) return false;
-    var stop = { the:1, a:1, an:1, and:1, of:1, to:1, in:1, on:1, at:1, it:1, is:1, was:1, her:1,
-      his:1, she:1, he:1, they:1, that:1, this:1, with:1, for:1, from:1, into:1, had:1, has:1 };
-    var words = c.split(' ').filter(function (w) { return w.length > 3 && !stop[w]; });
-    if (!words.length) return false;
-    var hit = words.filter(function (w) { return p.indexOf(w) >= 0; }).length;
-    return (hit / words.length) >= 0.6;
+    return String(x == null ? '' : x).toLowerCase().replace(/\s+/g, ' ').trim();
   }
 
-  // Store a note ON the scene record it describes. Compatible with saved stories: a scene without
-  // a note simply has none, and nothing reads a missing field as an error.
+  // The ONLY check that carries evidentiary weight: does this exact run of words occur in the
+  // scene? Whitespace-insensitive and case-insensitive, nothing more clever than that.
+  function _hnQuoteInProse(quote, prose) {
+    var q = _hnNorm(quote), p = _hnNorm(prose);
+    if (!q || q.length < _HN_MIN_QUOTE || !p) return false;
+    return p.indexOf(q) >= 0;
+  }
+
+  // SEALED CONTENT MUST NEVER RIDE IN ON A NOTE. A note is author-written text that reaches the
+  // planner, which makes it exactly the channel a secret could escape through — Julian's counter
+  // wish is sealed until scene 16, and a single "the assembly knows Julian countered the wish"
+  // would burn it. Any note text touching a sealed term is dropped outright, in every section.
+  function _hnSealedTerms(s) {
+    var terms = [];
+    try {
+      var wishes = (s && s._sealedWishes) || (s && s.sealedWishes) || [];
+      (Array.isArray(wishes) ? wishes : []).forEach(function (w) {
+        if (!w) return;
+        if (w.sealed === false) return;
+        ['id', 'text', 'wishText', 'label'].forEach(function (k) {
+          if (w[k]) terms.push(_hnNorm(w[k]));
+        });
+      });
+    } catch (_) {}
+    // Structural fallback: the counter-wish vocabulary itself, so the guard holds even when the
+    // seal is represented somewhere this does not reach.
+    terms.push('secretly countered', 'counter wish', 'counter-wish', 'spent his own wish');
+    return terms.filter(function (x) { return x && x.length > 3; });
+  }
+  function _hnTouchesSealed(text, s) {
+    var t = _hnNorm(text); if (!t) return false;
+    return _hnSealedTerms(s).some(function (term) { return t.indexOf(term) >= 0; });
+  }
+
   function _attachHistoryNote(sceneUid, note, prose) {
     try {
       var s = window.state; if (!s || !note) return null;
@@ -133930,100 +133966,140 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var rec = found && found.record;
       if (!rec) return null;
       var text = String(prose || rec.text || '');
-      var fields = ['events', 'decisions', 'consequences', 'transfers', 'disclosures', 'obligations'];
-      var verified = {}, unverified = {};
+      var fields = ['events', 'decisions', 'consequences', 'transfers', 'disclosures'];
+      var quoted = [], summary = [], sealedDrops = 0;
       fields.forEach(function (f) {
         var list = Array.isArray(note[f]) ? note[f] : [];
-        verified[f] = []; unverified[f] = [];
         list.forEach(function (item) {
-          var claim = (item && typeof item === 'object') ? (item.text || item.claim || '') : item;
-          var entry = (item && typeof item === 'object') ? item : { text: String(claim) };
-          // AN OBLIGATION IS A FORWARD COMMITMENT, not a claim about what the prose shows, so it is
-          // not required to be supported BY the prose — but it is still carried as the author's
-          // own, never as an established fact.
-          if (f === 'obligations' || _hnClaimSupported(claim, text)) verified[f].push(entry);
-          else unverified[f].push(entry);
+          var entry = (item && typeof item === 'object') ? item : { text: String(item) };
+          var claim = String(entry.text || entry.claim || '');
+          if (!claim) return;
+          if (_hnTouchesSealed(claim, s)) { sealedDrops++; return; }
+          // A claim counts as QUOTE-BACKED only if the author supplied an exact quotation AND
+          // that quotation really is in the prose. The claim itself is still only a summary of it.
+          var q = entry.quote ? String(entry.quote) : '';
+          if (q && _hnQuoteInProse(q, text)) quoted.push({ kind: f, text: claim, quote: q });
+          else summary.push({ kind: f, text: claim });
         });
       });
+      // OBLIGATIONS are forward commitments. The prose cannot evidence them, so they are never
+      // "verified" — they are PROPOSED, and they carry an id so a later scene can resolve them.
+      var obligations = [];
+      (Array.isArray(note.obligations) ? note.obligations : []).forEach(function (o, i) {
+        var entry = (o && typeof o === 'object') ? o : { text: String(o) };
+        var txt = String(entry.text || '');
+        if (!txt || _hnTouchesSealed(txt, s)) { if (txt) sealedDrops++; return; }
+        obligations.push({ id: entry.id || (sceneUid + ':ob' + i), text: txt,
+          owedBy: entry.owedBy || null, proposed: true });
+      });
+      // KNOWLEDGE claims are the sharpest edge: they assert who learned what, which is how a
+      // secret escapes. They are kept ONLY when a quotation shows the disclosure, and dropped
+      // entirely otherwise rather than demoted to a summary.
+      var knowledge = [];
+      try {
+        var kn = note.knowledge;
+        if (kn && typeof kn === 'object') {
+          Object.keys(kn).forEach(function (who) {
+            var v = kn[who], claim = (v && typeof v === 'object') ? String(v.text || '') : String(v || '');
+            var q = (v && typeof v === 'object' && v.quote) ? String(v.quote) : '';
+            if (!claim) return;
+            if (_hnTouchesSealed(who + ' ' + claim, s)) { sealedDrops++; return; }
+            if (q && _hnQuoteInProse(q, text)) knowledge.push({ who: who, text: claim, quote: q });
+            else sealedDrops += 0;   // no quotation: the claim is simply not carried
+          });
+        }
+      } catch (_) {}
+
       rec.historyNote = {
-        v: 1, sceneUid: sceneUid, writtenAt: Date.now(),
-        // WHAT THE SCENE SHOWED, checked against the scene.
-        verified: verified,
-        // WHAT THE AUTHOR ASSERTED THAT THE PROSE DOES NOT SHOW. Kept for diagnosis, and NEVER
-        // emitted into established history.
-        unverified: unverified,
-        knowledge: (note.knowledge && typeof note.knowledge === 'object') ? note.knowledge : null
+        v: 2, sceneUid: sceneUid, writtenAt: Date.now(),
+        quoted: quoted,            // backed by an exact quotation from THIS scene
+        summary: summary,          // the author's paraphrase. NOT evidence of anything.
+        obligations: obligations,  // proposed forward commitments
+        knowledge: knowledge,      // only where a quotation shows the disclosure
+        resolves: Array.isArray(note.resolves) ? note.resolves.map(String) : []
       };
       try {
-        var dropped = fields.reduce(function (n, f) { return n + unverified[f].length; }, 0);
-        if (dropped) console.warn('[HISTORY-NOTE] ' + dropped + ' claim(s) are NOT supported by the '
-          + 'rendered prose and were kept OUT of established history: '
-          + JSON.stringify(fields.reduce(function (a, f) { return a.concat(unverified[f].map(function (x) { return x.text; })); }, [])).slice(0, 220));
+        if (sealedDrops) console.warn('[HISTORY-NOTE] dropped ' + sealedDrops
+          + ' claim(s) touching sealed or unquotable content');
+        console.log('[HISTORY-NOTE] ' + sceneUid + ' — ' + quoted.length + ' quote-backed, '
+          + summary.length + ' summary-only, ' + obligations.length + ' proposed obligation(s)');
       } catch (_) {}
       return rec.historyNote;
     } catch (e) { try { console.warn('[HISTORY-NOTE] attach failed: ' + (e && e.message)); } catch (_) {} return null; }
   }
   window._attachHistoryNote = _attachHistoryNote;
 
-  // UNRESOLVED OBLIGATIONS SURVIVE THE RECENT WINDOW. They persist until something resolves or
-  // supersedes them, which is the difference between a summary and a memory.
+  // OPEN OBLIGATIONS. An obligation stays open until a LATER note resolves or supersedes it by id
+  // — appending a new note must never silently leave the old one open forever, which was the
+  // defect Codex found: the old code only skipped items already flagged resolved, and nothing
+  // could ever set that flag.
   function _openObligations(s) {
     s = s || window.state || {};
-    var out = [];
+    var open = [], resolved = {};
     try {
+      (s.scenes || []).forEach(function (rec) {
+        var hn = rec && rec.historyNote; if (!hn) return;
+        (hn.resolves || []).forEach(function (id) { resolved[String(id)] = true; });
+      });
       (s.scenes || []).forEach(function (rec, idx) {
-        var hn = rec && rec.historyNote;
-        if (!hn || !hn.verified) return;
-        (hn.verified.obligations || []).forEach(function (o) {
-          if (o && o.resolved) return;
-          out.push({ sceneIndex: idx, text: String(o.text || o), owedBy: o.owedBy || null });
+        var hn = rec && rec.historyNote; if (!hn) return;
+        (hn.obligations || []).forEach(function (o) {
+          if (!o || o.resolved || resolved[String(o.id)]) return;
+          open.push({ sceneIndex: idx, id: o.id, text: o.text, owedBy: o.owedBy || null });
         });
       });
     } catch (_) {}
-    return out;
+    return open;
   }
   window._openObligations = _openObligations;
 
   // ── THE ONE CONTRACT BOTH LAYERS CALL ───────────────────────────────────────────────────────
-  // Planner and author, CG and literary, speculative included. Established history and unverified
-  // assertions are rendered in SEPARATE sections, and only the established section is presented as
-  // what happened.
+  // Three sections, and the difference between them is the whole point. Only quotations are
+  // presented as something the scene actually contains; everything else is labelled as the
+  // author's own unverified account, which a planner may use for continuity but must not treat
+  // as settled.
   function _buildHistoryContinuityBlock(s, opts) {
     s = s || window.state || {};
     var o = opts || {};
-    // A REAL KILL SWITCH, following the existing window._plotContractKill convention. It exists so
-    // the control that proves this forwarding works can also prove it FAILS when switched off —
-    // overriding the window alias does not do that, because callers hold the closure reference.
     try { if (window._historyContinuityKill) return ''; } catch (_) {}
     try {
       var recs = (s.scenes || []).filter(function (r) { return r && r.historyNote; });
       var open = _openObligations(s);
       if (!recs.length && !open.length) return '';
-      var lines = ['[HISTORY — WHAT HAS ACTUALLY HAPPENED]'];
-      lines.push('Established below is what the PROSE ITSELF showed. Build from it; do not re-stage it.');
       var recent = recs.slice(-(o.recent || _HN_MAX_RECENT));
+      var estLines = [], sumLines = [];
       recent.forEach(function (rec, i) {
-        var hn = rec.historyNote, v = hn.verified || {};
-        var bits = [];
-        ['events', 'decisions', 'consequences', 'transfers', 'disclosures'].forEach(function (f) {
-          (v[f] || []).forEach(function (x) { bits.push('    ' + f.slice(0, -1).toUpperCase() + ': ' + (x.text || x)); });
+        var hn = rec.historyNote;
+        var n = recs.length - recent.length + i + 1;
+        (hn.quoted || []).forEach(function (x) {
+          estLines.push('  scene ' + n + ' — the scene\'s own words: "' + x.quote + '"');
         });
-        if (bits.length) {
-          lines.push('  scene ' + (recs.length - recent.length + i + 1) + ':');
-          lines = lines.concat(bits);
-        }
-        if (hn.knowledge) {
-          try {
-            Object.keys(hn.knowledge).forEach(function (who) {
-              lines.push('    KNOWS — ' + who + ': ' + String(hn.knowledge[who]));
-            });
-          } catch (_) {}
-        }
+        (hn.knowledge || []).forEach(function (k) {
+          estLines.push('  scene ' + n + ' — ' + k.who + ' learned this on the page: "' + k.quote + '"');
+        });
+        (hn.summary || []).forEach(function (x) {
+          sumLines.push('  scene ' + n + ' [' + x.kind + ']: ' + x.text);
+        });
       });
+      var lines = [];
+      if (estLines.length) {
+        lines.push('[WHAT THE SCENES THEMSELVES SAY — quoted verbatim]');
+        lines = lines.concat(estLines);
+      }
+      if (sumLines.length) {
+        lines.push((lines.length ? '\n' : '') + '[THE AUTHOR\'S SUMMARY OF PRIOR SCENES — UNVERIFIED,'
+          + ' NOT CANON. These are the previous author\'s own words about its own scene. They have'
+          + ' NOT been checked for truth: treat them as a reading aid for continuity, never as'
+          + ' settled fact, and never contradict the quoted text above on their authority.]');
+        lines = lines.concat(sumLines);
+      }
       if (open.length) {
-        lines.push('  STILL UNRESOLVED (carried forward until resolved or superseded — these do NOT'
-          + ' expire with the recent-scene window):');
-        open.forEach(function (ob) { lines.push('    - ' + ob.text + (ob.owedBy ? ' [' + ob.owedBy + ']' : '')); });
+        lines.push((lines.length ? '\n' : '') + '[PROPOSED OBLIGATIONS STILL OPEN — commitments a'
+          + ' prior scene set up and nothing has resolved yet. They do NOT expire with the recent-'
+          + 'scene window. They are proposals, not established facts.]');
+        open.forEach(function (ob) {
+          lines.push('  - ' + ob.text + (ob.owedBy ? ' [' + ob.owedBy + ']' : ''));
+        });
       }
       return lines.join('\n');
     } catch (_) { return ''; }

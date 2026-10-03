@@ -32,12 +32,12 @@ async function arm(label, { disableForwarding }) {
     window._sbPersistSceneProjection({
       kind: 'body', input: prose, uid: 'lit:req-control',
       historyNote: {
-        events: [{ text: 'Julian handed Lirael the sealed writ in the chamber.' }],
-        transfers: [{ text: 'The sealed writ passed from Julian to Lirael.' }],
-        disclosures: [{ text: 'Julian admitted he spent his own wish to stop the twist.' }], // UNSUPPORTED
-        obligations: [{ text: 'Lirael must answer for her conduct at the inquiry.' }],
-        decisions: [], consequences: [],
-        knowledge: { 'the Dohkar': 'did not see the writ change hands' }
+        transfers: [{ text: 'The sealed writ passed from Julian to Lirael.',
+          quote: 'put it into Lirael\'s hands' }],                       // QUOTE-BACKED
+        events: [{ text: 'Julian handed Lirael the sealed writ in the chamber.' }], // summary only
+        disclosures: [{ text: 'Julian admitted he spent his own wish to stop the twist.' }], // SEALED
+        obligations: [{ id: 'ob-req', text: 'Lirael must answer for her conduct at the inquiry.' }],
+        decisions: [], consequences: []
       }
     });
     // THE NEGATIVE ARM: silence the forwarding and nothing else.
@@ -69,15 +69,17 @@ console.log('     provider requests captured: ' + on.requests + '  (' + on.body.
 t('A REQUEST WAS ACTUALLY ASSEMBLED (otherwise every check below is vacuous)',
   on.requests > 0, 'no provider request was captured — the checks below prove nothing');
 if (on.requests > 0) {
-  t('the history heading reached the request', /HISTORY — WHAT HAS ACTUALLY HAPPENED/.test(on.body));
-  t('A CONCRETE EVENT reached it, not just the heading',
-    /handed Lirael the sealed writ/.test(on.body));
-  t('the object transfer reached it', /sealed writ passed from Julian/.test(on.body));
-  t('the still-open obligation reached it', /answer for her conduct at the inquiry/.test(on.body));
-  t('who-knows-what reached it', /did not see the writ change hands/.test(on.body));
-  t('THE UNSUPPORTED CLAIM DID NOT REACH IT — the negative case',
+  t('the quoted-text heading reached the request',
+    /WHAT THE SCENES THEMSELVES SAY/.test(on.body));
+  t('THE SCENE\'S VERBATIM WORDS reached it, not just the heading',
+    /put it into Lirael's hands/.test(on.body));
+  t('the author\'s summary reached it, under its own unverified heading',
+    /UNVERIFIED, NOT CANON/.test(on.body) && /handed Lirael the sealed writ/.test(on.body));
+  t('the still-open obligation reached it, labelled as proposed',
+    /PROPOSED OBLIGATIONS/.test(on.body) && /answer for her conduct at the inquiry/.test(on.body));
+  t('A SEALED CLAIM NEVER REACHED IT — Julian\'s secret cannot ride in on a note',
     !/spent his own wish/.test(on.body),
-    'an author assertion the prose never showed entered the planning context');
+    'a sealed secret entered the planning context through the history channel');
 }
 
 console.log('\nNEGATIVE ARM — forwarding disabled, the same assertions MUST go red');
@@ -85,10 +87,10 @@ const off = await arm('off', { disableForwarding: true });
 console.log('     provider requests captured: ' + off.requests + '  (' + off.body.length + ' chars)');
 t('a request was still assembled with forwarding off', off.requests > 0);
 t('THE CHECK BITES: the history heading is GONE when forwarding is disabled',
-  off.requests > 0 && !/HISTORY — WHAT HAS ACTUALLY HAPPENED/.test(off.body),
+  off.requests > 0 && !/WHAT THE SCENES THEMSELVES SAY/.test(off.body),
   'the assertion cannot fail, so it proves nothing');
-t('and the concrete event is gone with it',
-  off.requests > 0 && !/handed Lirael the sealed writ/.test(off.body));
+t('and the quoted text is gone with it',
+  off.requests > 0 && !/put it into Lirael's hands/.test(off.body));
 
 fs.mkdirSync('_audit_out/history_req', { recursive: true });
 fs.writeFileSync('_audit_out/history_req/on.txt', on.body);
