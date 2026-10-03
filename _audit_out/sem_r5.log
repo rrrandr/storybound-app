@@ -1,0 +1,42 @@
+=== SEMANTIC CONTROL — a summary is not a fact (provider-free, $0) ===
+
+1. A CONTRADICTED CLAIM MUST NOT BE PRESENTED AS SOMETHING THAT HAPPENED
+  ok   NEGATION REVERSAL is not stated as established history
+  ok   REVERSED TRANSFER DIRECTION is not stated as established history
+  ok   ESCALATED OUTCOME is not stated as established history
+
+2. A KNOWLEDGE CLAIM CANNOT INVENT A DISCLOSURE
+  ok   an invented disclosure is NOT in established history
+  FAIL and it does not leak into the block at all, in any section  — a sealed secret must not ride into planning context on an unverified channel
+
+3. AN OBLIGATION IS A PROPOSAL, NOT AN ESTABLISHED FACT
+  ok   an invented obligation is not stated as something that happened
+
+4. HOW AN OBLIGATION LEGITIMATELY CLOSES
+  ok   the obligation was open after the first scene
+  ok   A NOTE CLAIMING RESOLUTION DOES NOT CLOSE IT
+  ok   but the claim IS surfaced to the next planner
+  ok   AND IT CLOSES when machinery entitled to settle it says so
+  ok   once settled it stops being carried
+
+5. CODEX ROUND 2 — the seal system, not a phrase list
+     seals in force: ["julian_counter_wish","julian_obscuring_wishes"]
+  ok   the screen reads the STORY'S OWN sealed events, not hardcoded phrases
+  ok   a paraphrased secret is never ESTABLISHED (the limit is that it is still carried)
+     LIMITATION, as designed and reported: the paraphrase is STILL CARRIED as unverified summary — substring screening gives no semantic secrecy.
+
+6. THE REVEAL BOUNDARY IS RESPECTED
+     scene number the production helper reports: 22
+  ok   sealed before its boundary
+  ok   AND NO LONGER SEALED after the reveal scene
+
+7. KNOWLEDGE IS NEVER ESTABLISHED BY AN UNRELATED QUOTE
+  ok   NO "learned this on the page" claim is established from an unrelated quote
+  ok   the knowledge claim is carried, explicitly as unverified
+
+8. AN UNSUPPORTED RESOLUTION CANNOT DELETE AN OBLIGATION
+  ok   THE OBLIGATION SURVIVES an unsupported resolution claim
+  ok   and the context says the claim is unverified
+  ok   OBLIGATION IDS ARE IN THE CONTEXT, so resolving by id is possible
+
+19/20 checks passed

@@ -1,0 +1,44 @@
+=== FULL SEQUENCE (provider-free, $0) ===
+
+1. THE AUTHOR IS ACTUALLY ASKED FOR THE NOTE
+     CG author system prompt: 138877 chars
+  ok   the schema requests history_note
+  ok   and requires a verbatim quote per claim
+  ok   and says summarize the FINISHED scene, not the planned one
+
+2. THROUGH THE REAL PARSER — a JSON STRING, as a provider would return it
+  ok   the response was parsed FROM A STRING, fences and all
+  ok   the scene rendered from the parsed beats
+  ok   a note was stored on that exact scene record
+  ok   THE NOTE IS NOT IN THE READER-VISIBLE PROSE
+     quote-backed: Julian gave Lirael the sealed writ. | Julian did not give her anything.
+     summary-only: The commission accepted the demand. | Lirael handed the writ to Julian. | Julian admitted he secretly countered the wish.
+  ok   the true quote-backed claim is quote-backed
+  ok   CODEX 3 (escalation) is summary-only, not quote-backed
+  ok   CODEX 2 (reversed direction) is summary-only
+  ok   the sealed claim is at least never ESTABLISHED
+     LIMITATION: the sealed paraphrase IS carried as unverified summary. The seal declares only an id and a label; declaring markers[] on starter_first_sacrifice would close it, and that is a canon decision.
+  ok   the knowledge claim reached the handler
+  ok   and it is NOT established, despite carrying a real quotation
+  ok   both obligations are stored as PROPOSED, none as fact
+
+3. CODEX 1 — a REAL quotation must not launder a contradicted claim
+  ok   the quotation IS presented as the scene's own words
+  ok   but the CONTRADICTED CLAIM attached to it is NOT established
+  ok   and that claim is still carried, under the unverified heading
+
+4. AN OBLIGATION GENUINELY RESOLVED IN A LATER SCENE
+  ok   two obligations were open before
+  ok   BOTH obligations are still carried after a mere claim of resolution
+  ok   and the claim is surfaced rather than acted on
+
+5. IT REACHES THE NEXT PLANNER'S ACTUAL REQUEST
+  ok   a request was assembled
+  ok   the VERBATIM quotation reached it
+  ok   the summary reached it under its unverified heading
+  ok   the sealed claim reaches the planner only as UNVERIFIED summary, never as fact
+  ok   the unverified resolution claim is VISIBLE to the planner, not silently applied
+  ok   and obligation IDS reach the planner so it can resolve by id
+  ok   the open obligation IS carried, labelled proposed
+
+27/27 checks passed

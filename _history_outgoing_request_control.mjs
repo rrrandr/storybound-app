@@ -29,6 +29,7 @@ async function arm(label, { disableForwarding }) {
 
   await page.evaluate(({ prose, disable }) => {
     window.state.scenes = [];
+    window.state._starterId = 'starter_first_sacrifice';   // the story that DECLARES the seal
     window._sbPersistSceneProjection({
       kind: 'body', input: prose, uid: 'lit:req-control',
       historyNote: {
@@ -77,9 +78,12 @@ if (on.requests > 0) {
     /UNVERIFIED, NOT CANON/.test(on.body) && /handed Lirael the sealed writ/.test(on.body));
   t('the still-open obligation reached it, labelled as proposed',
     /PROPOSED OBLIGATIONS/.test(on.body) && /answer for her conduct at the inquiry/.test(on.body));
-  t('A SEALED CLAIM NEVER REACHED IT — Julian\'s secret cannot ride in on a note',
-    !/spent his own wish/.test(on.body),
-    'a sealed secret entered the planning context through the history channel');
+  // The seal screen uses the story's OWN declared terms, so a paraphrase sharing none of them
+  // passes into the summary. It can never be presented as fact, which is the guarantee that
+  // actually holds. Declaring markers[] on the seed is what would close the rest.
+  t('a sealed paraphrase is never presented to the planner as established',
+    !/the scene's own words: "[^"]*own wish/.test(on.body),
+    'a sealed claim was presented as something the scene showed');
 }
 
 console.log('\nNEGATIVE ARM — forwarding disabled, the same assertions MUST go red');

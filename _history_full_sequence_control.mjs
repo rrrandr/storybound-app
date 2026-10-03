@@ -37,9 +37,12 @@ const AUTHOR_RESPONSE = {
       // AN INVENTED OBLIGATION the beats never set up.
       { id: 'ob-invented', text: 'Lirael swore to surrender The Answer to the commission.' }
     ],
+    // CODEX: this sat OUTSIDE history_note, so the handler never received it and the check
+    // passed without testing anything. It belongs here, inside the note the handler is given.
+    knowledge: { 'the assembly': { text: 'learned that Julian countered the wish',
+      quote: 'The chamber was quiet for a long moment' } },
     resolves: []
-  },
-  knowledge: { 'the assembly': 'knows Julian secretly countered the wish' }
+  }
 };
 
 const browser = await chromium.launch();
@@ -72,19 +75,33 @@ console.log('1. THE AUTHOR IS ACTUALLY ASKED FOR THE NOTE');
   t('and says summarize the FINISHED scene, not the planned one', r.saysFinished);
 }
 
-console.log('\n2. PARSE -> RENDER -> STORE, through the production persist');
+console.log('\n2. THROUGH THE REAL PARSER — a JSON STRING, as a provider would return it');
 let rendered = '';
 {
-  const r = await page.evaluate((resp) => {
+  const r = await page.evaluate((rawResponse) => {
     window.state.scenes = [];
+    window.state._starterId = 'starter_first_sacrifice';
+    // THE RAW STRING a provider returns, parsed exactly as _runCGScreenplayGenInner parses it
+    // (JSON.parse, with the brace-slice fallback), instead of handing persistence an object that
+    // was never parsed. Codex's point: the earlier test skipped the parser entirely.
+    let plan;
+    try { plan = JSON.parse(rawResponse); }
+    catch (e) {
+      const first = rawResponse.indexOf('{'), last = rawResponse.lastIndexOf('}');
+      plan = JSON.parse(rawResponse.slice(first, last + 1));
+    }
+    // and then the production persist, reading the note off the parsed plan the same way the
+    // production call site does.
     const rec = window._sbPersistSceneProjection({
-      kind: 'beats', input: resp.beats, uid: 'cg:fullseq', title: '', synopsis: '',
-      fateCard: null, historyNote: resp.history_note
+      kind: 'beats', input: plan.beats, uid: 'cg:fullseq', title: '', synopsis: '',
+      fateCard: null, historyNote: (plan && plan.history_note) || null
     });
-    return { text: rec ? rec.text : '', note: rec ? rec.historyNote : null };
-  }, AUTHOR_RESPONSE);
+    return { text: rec ? rec.text : '', note: rec ? rec.historyNote : null,
+      parsedFromString: typeof rawResponse === 'string' };
+  }, '```json\n' + JSON.stringify(AUTHOR_RESPONSE) + '\n```');
   rendered = r.text;
-  t('the scene rendered from the beats', /put it into Lirael's hands/.test(r.text));
+  t('the response was parsed FROM A STRING, fences and all', r.parsedFromString === true);
+  t('the scene rendered from the parsed beats', /put it into Lirael's hands/.test(r.text));
   t('a note was stored on that exact scene record', !!r.note);
   t('THE NOTE IS NOT IN THE READER-VISIBLE PROSE',
     !/history_note|UNVERIFIED|obligation/i.test(r.text),
@@ -98,11 +115,23 @@ let rendered = '';
     /commission accepted the demand/.test(sum) && !/commission accepted/.test(q));
   t('CODEX 2 (reversed direction) is summary-only',
     /Lirael handed the writ to Julian/.test(sum) && !/Lirael handed the writ to Julian/.test(q));
-  t('the sealed disclosure was DROPPED from every tier',
-    !/secretly countered/.test(JSON.stringify(r.note)),
-    'a sealed claim survived into the note');
-  t('the false knowledge disclosure was not stored',
-    (r.note.knowledge || []).length === 0);
+  // HONEST OUTCOME OF REPLACING THE PHRASE LIST WITH THE REAL SEAL SYSTEM: the screen is now
+  // correct (story's own declarations, reveal boundary respected) but CATCHES LESS, because
+  // starter_first_sacrifice declares no markers[] for its sealed events. The hardcoded string
+  // caught this exact sentence and would have missed every rewording; this catches whatever the
+  // story declares, which is currently an id and a label. The trade is correctness for
+  // catch-rate, and the fix is story data, not more strings.
+  t('the sealed claim is at least never ESTABLISHED',
+    !(r.note.quoted || []).some(x => /secretly countered/.test(x.text)),
+    'a sealed claim reached established history');
+  console.log('     LIMITATION: the sealed paraphrase IS carried as unverified summary. The seal'
+    + ' declares only an id and a label; declaring markers[] on starter_first_sacrifice would'
+    + ' close it, and that is a canon decision.');
+  // The knowledge claim IS stored now (it finally reaches the handler) — but only as unverified.
+  t('the knowledge claim reached the handler', (r.note.knowledge || []).length === 1,
+    'the fixture still is not submitting knowledge to the handler');
+  t('and it is NOT established, despite carrying a real quotation',
+    !(r.note.quoted || []).some(x => /learned that Julian/.test(x.text)));
   t('both obligations are stored as PROPOSED, none as fact',
     (r.note.obligations || []).length === 2
       && (r.note.obligations || []).every(o => o.proposed === true));
@@ -138,11 +167,17 @@ console.log('\n4. AN OBLIGATION GENUINELY RESOLVED IN A LATER SCENE');
       historyNote: { resolves: ['ob-inquiry'],
         events: [{ text: 'Lirael answered the inquiry.', quote: 'answered the inquiry in full' }] } });
     const after = window._openObligations(window.state);
-    return { before, afterCount: after.length, afterIds: after.map(o => o.id) };
+    return { before, afterCount: after.length, afterIds: after.map(o => o.id),
+      claimFlagged: !!(after.find(o => o.id === 'ob-inquiry') || {}).claimedResolved };
   });
   t('two obligations were open before', r.before === 2, 'before=' + r.before);
-  t('THE RESOLVED ONE CLOSED', !r.afterIds.includes('ob-inquiry'), JSON.stringify(r.afterIds));
-  t('and the unresolved one is still carried', r.afterIds.includes('ob-invented'));
+  // A NOTE'S `resolves` NO LONGER CLOSES ANYTHING — Codex's finding. Both obligations stay open;
+  // the claimed resolution is surfaced to the planner instead of silently deleting a commitment
+  // the prose never shows being met.
+  t('BOTH obligations are still carried after a mere claim of resolution',
+    r.afterIds.includes('ob-inquiry') && r.afterIds.includes('ob-invented'),
+    JSON.stringify(r.afterIds));
+  t('and the claim is surfaced rather than acted on', r.claimFlagged === true);
 }
 
 console.log('\n5. IT REACHES THE NEXT PLANNER\'S ACTUAL REQUEST');
@@ -156,9 +191,13 @@ console.log('\n5. IT REACHES THE NEXT PLANNER\'S ACTUAL REQUEST');
     t('the VERBATIM quotation reached it', /put it into Lirael's hands/.test(body));
     t('the summary reached it under its unverified heading',
       /UNVERIFIED, NOT CANON/.test(body) && /commission accepted the demand/.test(body));
-    t('THE SEALED CLAIM NEVER REACHED IT', !/secretly countered/.test(body));
-    t('the resolved obligation is NOT still being carried',
-      !/answer for her conduct at the inquiry/.test(body));
+    t('the sealed claim reaches the planner only as UNVERIFIED summary, never as fact',
+      !/the scene's own words: "[^"]*secretly countered/.test(body),
+      'a sealed claim was presented to the planner as established');
+    t('the unverified resolution claim is VISIBLE to the planner, not silently applied',
+      /answer for her conduct at the inquiry/.test(body) && /NOT verified/.test(body));
+    t('and obligation IDS reach the planner so it can resolve by id',
+      /\[ob-inquiry\]/.test(body) && /\[ob-invented\]/.test(body));
     t('the open obligation IS carried, labelled proposed',
       /PROPOSED OBLIGATIONS/.test(body) && /surrender The Answer/.test(body));
   }

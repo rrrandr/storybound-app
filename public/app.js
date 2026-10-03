@@ -103703,7 +103703,7 @@ function _buildAuthorFloorDirective(s) {
   }
 
   // Shared: mount generated scene + wire interstitial continue button
-  function _mountAndTransition(title, synopsis, body, interstitial, continueBtn, statusEl, label) {
+  function _mountAndTransition(title, synopsis, body, interstitial, continueBtn, statusEl, label, historyNote) {
       StoryPagination.init();
       StoryPagination.clear();
       body = sanitizeFatelandsUnits(body);
@@ -103718,8 +103718,16 @@ function _buildAuthorFloorDirective(s) {
       var _sbLitRec = (typeof _sbPersistSceneProjection === 'function')
         ? _sbPersistSceneProjection({ uid: _sbUidLit, kind: 'body', input: _sbPrep.text, title: title, synopsis: synopsis,
             fateCard: null, projectionOpts: { refused: _sbPrep.refused, refusalReason: _sbPrep.refusalReason },
-            // Same contract on the literary path — one response carries the scene and its note.
-            historyNote: (typeof _sbHistoryNote !== 'undefined' && _sbHistoryNote) || null })
+            // LITERARY HAS NO NOTE PRODUCER YET, and this says so rather than pretending.
+            // _mountAndTransition receives (title, synopsis, body) — TEXT, not a JSON envelope —
+            // because the literary author returns prose. There is nowhere for a structured note
+            // to ride in on this path without either changing that response format or adding a
+            // second call, which would reintroduce exactly the race and the extra cost this
+            // design avoids. An earlier version referenced an undefined `_sbHistoryNote` here,
+            // which read as though literary were wired when it never was (Codex, 2026-10-03).
+            // The field is accepted so a caller that genuinely has one can pass it; nothing in
+            // the literary path currently does.
+            historyNote: historyNote || null })
         : null;
       // NO FALLBACK PUSH. If the API is unavailable something is badly wrong, and quietly creating an
       // un-projected record is the drift the route rule exists to prevent — it would be a scene with no
@@ -133937,27 +133945,56 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // planner, which makes it exactly the channel a secret could escape through — Julian's counter
   // wish is sealed until scene 16, and a single "the assembly knows Julian countered the wish"
   // would burn it. Any note text touching a sealed term is dropped outright, in every section.
-  function _hnSealedTerms(s) {
-    var terms = [];
+  // ── SEALED CONTENT, VIA THE STORY'S OWN SEAL SYSTEM ─────────────────────────────────────────
+  // The first version of this hardcoded phrases like "secretly countered" and ignored the reveal
+  // boundary entirely. Codex walked straight past it with "Julian used his wish to thwart Seren
+  // in secret", and it would have kept censoring the reveal after scene 16 when it is no longer
+  // a secret at all. Both were my inventions standing in for machinery that already exists.
+  //
+  // This now reads STARTER_PLANS[...].sealedEvents — the story's OWN declarations, with their own
+  // ids, labels and markers — and respects unsealsAtScene against the current scene, the same
+  // boundary _reservedReleaseFor uses. Another story's seals are irrelevant here because only
+  // this story's plan is consulted.
+  //
+  // WHAT THIS CANNOT DO, STATED PLAINLY: substring matching gives NO semantic secrecy. A
+  // paraphrase that shares no declared term with the seal WILL pass. This screen catches a note
+  // that names the sealed thing in the story's own vocabulary; it is not, and cannot be, a
+  // guarantee that a secret stays secret. The real protection is upstream — an author that is
+  // never told the secret cannot summarize it — and that remains the load-bearing control.
+  function _hnSealsInForce(s) {
+    var out = [];
     try {
-      var wishes = (s && s._sealedWishes) || (s && s.sealedWishes) || [];
-      (Array.isArray(wishes) ? wishes : []).forEach(function (w) {
-        if (!w) return;
-        if (w.sealed === false) return;
-        ['id', 'text', 'wishText', 'label'].forEach(function (k) {
-          if (w[k]) terms.push(_hnNorm(w[k]));
-        });
+      s = s || window.state || {};
+      var plan = (typeof STARTER_PLANS !== 'undefined' && s._starterId) ? STARTER_PLANS[s._starterId] : null;
+      if (!plan || !Array.isArray(plan.sealedEvents)) return out;
+      var now = (typeof _currentSceneNumber === 'function') ? Number(_currentSceneNumber(s)) : 0;
+      plan.sealedEvents.forEach(function (ev) {
+        if (!ev || !ev.id) return;
+        var due = Number(ev.unsealsAtScene || Infinity);
+        // PAST ITS BOUNDARY IT IS NOT SEALED. A revealed event is ordinary history and must be
+        // allowed to travel like any other, which the phrase list got wrong.
+        if (now >= due) return;
+        var terms = [];
+        [ev.id, ev.label].forEach(function (x) { if (x) terms.push(_hnNorm(String(x))); });
+        (Array.isArray(ev.markers) ? ev.markers : []).forEach(function (m) { if (m) terms.push(_hnNorm(String(m))); });
+        // The id is the most reliable handle; split it so 'julian_counter_wish' also screens
+        // 'counter wish'. Single words are too blunt and are dropped.
+        if (ev.id) {
+          var spaced = _hnNorm(String(ev.id).replace(/[_-]+/g, ' '));
+          if (spaced.split(' ').length > 1) terms.push(spaced);
+        }
+        out.push({ id: ev.id, due: due, terms: terms.filter(function (x) { return x && x.length > 6; }) });
       });
     } catch (_) {}
-    // Structural fallback: the counter-wish vocabulary itself, so the guard holds even when the
-    // seal is represented somewhere this does not reach.
-    terms.push('secretly countered', 'counter wish', 'counter-wish', 'spent his own wish');
-    return terms.filter(function (x) { return x && x.length > 3; });
+    return out;
   }
   function _hnTouchesSealed(text, s) {
     var t = _hnNorm(text); if (!t) return false;
-    return _hnSealedTerms(s).some(function (term) { return t.indexOf(term) >= 0; });
+    return _hnSealsInForce(s).some(function (seal) {
+      return seal.terms.some(function (term) { return t.indexOf(term) >= 0; });
+    });
   }
+  window._hnSealsInForce = _hnSealsInForce;
 
   function _attachHistoryNote(sceneUid, note, prose) {
     try {
@@ -133992,20 +134029,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         obligations.push({ id: entry.id || (sceneUid + ':ob' + i), text: txt,
           owedBy: entry.owedBy || null, proposed: true });
       });
-      // KNOWLEDGE claims are the sharpest edge: they assert who learned what, which is how a
-      // secret escapes. They are kept ONLY when a quotation shows the disclosure, and dropped
-      // entirely otherwise rather than demoted to a summary.
+      // KNOWLEDGE IS NEVER ESTABLISHED HERE. Codex's probe is the reason: an unrelated quote
+      // ("The chamber was quiet for a long moment") produced "assembly learned this on the page".
+      // A quotation shows that some TEXT exists. It cannot show that a particular character
+      // HEARD, SAW or UNDERSTOOD it — that is an inference about a mind, and nothing in this file
+      // is entitled to make it. So every knowledge claim is carried as the author's unverified
+      // account, exactly like any other paraphrase, and the established section never carries one.
+      // If knowledge attribution is ever to be established, it must come from the existing
+      // adjudication machinery, not from this note.
       var knowledge = [];
       try {
         var kn = note.knowledge;
         if (kn && typeof kn === 'object') {
           Object.keys(kn).forEach(function (who) {
-            var v = kn[who], claim = (v && typeof v === 'object') ? String(v.text || '') : String(v || '');
-            var q = (v && typeof v === 'object' && v.quote) ? String(v.quote) : '';
+            var v = kn[who];
+            var claim = (v && typeof v === 'object') ? String(v.text || '') : String(v || '');
             if (!claim) return;
             if (_hnTouchesSealed(who + ' ' + claim, s)) { sealedDrops++; return; }
-            if (q && _hnQuoteInProse(q, text)) knowledge.push({ who: who, text: claim, quote: q });
-            else sealedDrops += 0;   // no quotation: the claim is simply not carried
+            knowledge.push({ who: who, text: claim });   // unverified, always
           });
         }
       } catch (_) {}
@@ -134035,17 +134076,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // could ever set that flag.
   function _openObligations(s) {
     s = s || window.state || {};
-    var open = [], resolved = {};
+    var open = [], claimedResolved = {};
     try {
-      (s.scenes || []).forEach(function (rec) {
+      // A LATER NOTE CLAIMING RESOLUTION IS A PROPOSAL, NOT A DELETION. Codex supplied prose
+      // saying "No one returned the writ" together with resolves:["return-writ"], and the
+      // obligation vanished — an author could erase any outstanding commitment by asserting it
+      // was met. Now the obligation STAYS OPEN and is annotated with the claim, so the next
+      // planner sees both the commitment and the assertion that it was settled, and nothing is
+      // silently lost. Only an explicit `resolved` flag set by machinery entitled to settle it
+      // removes an obligation outright.
+      (s.scenes || []).forEach(function (rec, idx) {
         var hn = rec && rec.historyNote; if (!hn) return;
-        (hn.resolves || []).forEach(function (id) { resolved[String(id)] = true; });
+        (hn.resolves || []).forEach(function (id) {
+          var k = String(id);
+          // CHRONOLOGY: a resolution only counts for an obligation raised in an EARLIER scene.
+          if (!claimedResolved[k]) claimedResolved[k] = { atIndex: idx };
+        });
       });
       (s.scenes || []).forEach(function (rec, idx) {
         var hn = rec && rec.historyNote; if (!hn) return;
         (hn.obligations || []).forEach(function (o) {
-          if (!o || o.resolved || resolved[String(o.id)]) return;
-          open.push({ sceneIndex: idx, id: o.id, text: o.text, owedBy: o.owedBy || null });
+          if (!o || o.resolved) return;                 // settled by machinery, not by a note
+          var claim = claimedResolved[String(o.id)];
+          var claimedLater = !!(claim && claim.atIndex > idx);
+          open.push({ sceneIndex: idx, id: o.id, text: o.text, owedBy: o.owedBy || null,
+            claimedResolved: claimedLater });
         });
       });
     } catch (_) {}
@@ -134083,7 +134138,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           sumLines.push('  scene ' + n + ' [' + x.kind + ', author\'s gloss on the above]: ' + x.text);
         });
         (hn.knowledge || []).forEach(function (k) {
-          estLines.push('  scene ' + n + ' — ' + k.who + ' learned this on the page: "' + k.quote + '"');
+          sumLines.push('  scene ' + n + ' [knowledge, UNVERIFIED — who knew what is the author\'s'
+            + ' claim, not something the text establishes]: ' + k.who + ' — ' + k.text);
         });
         (hn.summary || []).forEach(function (x) {
           sumLines.push('  scene ' + n + ' [' + x.kind + ']: ' + x.text);
@@ -134105,8 +134161,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         lines.push((lines.length ? '\n' : '') + '[PROPOSED OBLIGATIONS STILL OPEN — commitments a'
           + ' prior scene set up and nothing has resolved yet. They do NOT expire with the recent-'
           + 'scene window. They are proposals, not established facts.]');
+        // THE ID IS PART OF THE CONTEXT. The author is asked to resolve obligations BY ID, so
+        // withholding the ids made that instruction impossible to follow — Codex's point.
         open.forEach(function (ob) {
-          lines.push('  - ' + ob.text + (ob.owedBy ? ' [' + ob.owedBy + ']' : ''));
+          lines.push('  - [' + ob.id + '] ' + ob.text + (ob.owedBy ? ' (owed by ' + ob.owedBy + ')' : '')
+            + (ob.claimedResolved
+              ? '  <- a later scene CLAIMS this was settled; that claim is NOT verified, so the'
+                + ' obligation is still carried. Treat it as settled only if the scenes themselves show it.'
+              : ''));
         });
       }
       return lines.join('\n');
