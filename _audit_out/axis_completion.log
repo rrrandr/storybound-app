@@ -1,0 +1,28 @@
+=== AXIS DECISION COMPLETION (provider-free, $0) ===
+
+     axis: {"axis":"run in shame vs remain and see where Julian was taking it","a":"run","b":"remain"}
+  ok   the Book declares a two-branch axis
+
+1. nothing recorded — the decision is open
+  ok   no record means the decision is needed
+
+2. a GENERIC record does not answer the axis
+  ok   "posture" (source=interruption_submit) leaves the decision OPEN
+  ok   "submitted" (source=oas_exit) leaves the decision OPEN
+  ok   "yes" (source=resume) leaves the decision OPEN
+  ok   "(empty)" (source=test) leaves the decision OPEN
+
+3. an AXIS BRANCH answers it
+  ok   "run" closes the decision
+  ok   "RUN" closes it too — case is not the discriminator
+  ok   "remain" closes the decision
+  ok   "REMAIN" closes it too — case is not the discriminator
+
+4. the interruption's own record is the measured case
+  ok   the exact interruption_submit record no longer suppresses the prompt
+  ok   and the reader's words are still preserved on the record
+
+5. a Book with no axis is unaffected
+  ok   no declared axis means no decision is required
+
+13/13 checks passed

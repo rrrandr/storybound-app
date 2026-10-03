@@ -1,0 +1,76 @@
+=== INTEGRATED OPENING REPLAY (provider-free, $0) ===
+  OAS beats are CONTRACT-DERIVED fixtures. Live OAS quality is UNTESTED.
+
+1. the OAS runs through the production affordance and persists its history
+  ok   the OAS affordance existed and was taken
+  ok   the intimate dialogue is ACTIVE
+  ok   the OAS asked for at least one beat
+  ok   its request carries the authored opening frame, not a generic one
+     turn loop: [{"i":0,"beat":0,"consumed":true},{"i":1,"beat":1,"consumed":true},{"i":2,"beat":2,"consumed":true},{"i":3,"beat":3,"consumed":true},{"i":4,"beat":4,"consumed":true},{"i":5,"beat":5,"consumed":true},{"i":6,"beat":6,"consumed":true},{"i":7,"stoppedAt":{"active":false,"resolving":true,"beat":7}}]
+     after driving turns: {"stillActive":false,"beatCount":7,"resolving":true}
+  ok   the dialogue reached the first exit ramp (beat >= 6)
+  ok   the OAS RESOLVED on its own, not forced inactive
+     after the OAS: {"beats":0,"ledgerEntries":1,"interruptionRecord":false,"interruptionSubmitted":false,"scenes":2}
+  ok   the OAS produced beats through the real consume path
+  ok   a scene ledger exists with the opening recorded
+
+1b. the OAS register — dialogue plus a short beat, not a scene of narration
+     dialogue record: beatCount=7  populated arrays={"liTurnHistory":7,"userInputLengths":7,"_oasCleanupHistory":7,"_oasArchiveBuilder":7}
+     rendered beats: 7
+       ""  |  
+       ""  |  
+       ""  |  
+  ok   the dialogue rendered beats through the production path
+     pacing flags for review: none
+     beat lengths: [0,0,0,0,0,0,0]
+  FAIL the exchange stays grounded in the rite, the allegation or The Answer  —              
+  ok   Julian's secret is in NEITHER the dialogue NOR the beat beneath it
+
+1c. the reader submits at the authored Dohkar interruption
+  ok   the authored interruption is pending after the OAS
+  ok   the submission was accepted by the production handler
+  ok   and the interruption is no longer pending
+     after the interruption submit: {"pending":false,"decision1":{"axis":"run in shame vs remain and see where Julian was taking it","choice":"posture","label":"I turn away from the clearing and walk.","source":"interruption_submit","at":1791006580583,"storyId":"0e9fce54-9a36-4a97-955b-e9424b7fbd92"},"decisionNeeded":false}
+
+2. the reader's recorded choice takes effect
+  FAIL the advance refused until the choice was recorded  — {"promptMounted":false,"buttons":[false,false],"resumed":false}
+  FAIL the choice was recorded by the prompt's own handler  — {"decision1":{"axis":"run in shame vs remain and see where Julian was taking it","choice":"posture","label":"I turn away from the clearing and walk.","source":"interruption_submit","at":1791006580583,"storyId":"0e9fce54-9a36-4a97-955b-e9424b7fbd92"},"stillNeeded":false,"promptGone":true}
+  FAIL and "run" DISPLACES the scheduled frame  — {"displaces":false,"choice":"posture","label":"I turn away from the clearing and walk.","why":"this choice is not declared as situation-changing"}
+  FAIL on the seed's declaration, not a keyword match  — this choice is not declared as situation-changing
+  ok   scene 2 generated
+  ok   and its prose is not the baked opening
+  FAIL the planner was told the frame was DISPLACED by the reader's action  — the displaced directive is absent from the planner payload
+  FAIL and it was NOT told the frame is hard
+
+2b. the handoff into the authored interruption
+     interruption: {"record":true,"submitted":true,"authoredInterruption":"The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her","exchangeLines":3}
+  ok   the Book authors a Dohkar interruption with a fixed exchange
+  ok   and the OAS reached the point where it becomes eligible
+
+3. the selected card's action and Fate mode reach planning
+     deck: Confession | Temptation | Boundary | Reversal | Silence
+  ok   the deck is the Book's own five slots
+  ok   no templated wish card is dealt to this Book
+  ok   no card action mentions a wound or a healer that is not in this story
+  ok   a planner request followed the card play
+  FAIL the card's TITLE reached planning  — Confession
+  FAIL the card's ACTION reached planning — not the title alone  — action: Silence is a form of lying. Choose honesty.
+  ok   the card's FATE MODE reached planning (ordinary-wish status is stated)
+
+4. the correct prior scene, the accepted facts, and the OAS history
+  ok   the verifier was dispatched for the prior scene
+  ok   and it was given scene 2, not the baked opening
+  ok   an accepted fact was committed from the prior scene
+  ok   the next planner received the committed facts, not an empty ledger
+  FAIL and it received the opening's own history  — the opening ledger line is absent from the planner payload
+
+5. a clipped ledger field can no longer disappear silently
+  ok   the clip exposes what it removed
+     clip warnings this run: 2
+       · [LEDGER:CLIPPED] event is 688 chars against a limit of 300 — 388 characters were REMOVED from the committed record, and the next scene will never see them: "it is mine to
+       · [LEDGER:CLIPPED] ledger field is 615 chars against a limit of 300 — 315 characters were REMOVED from the committed record, and the next scene will never see them: "warp. 
+
+27/37 checks passed
+
+UNTESTED HERE: live OAS response quality. The beats above are contract-derived
+fixtures built from the prompt's own declared schema, not recordings.

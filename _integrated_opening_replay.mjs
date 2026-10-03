@@ -81,6 +81,7 @@ t('its request carries the authored opening frame, not a generic one',
 // authored interruption is never bypassed.
 const turnLog = [];
 let liveBeats = [];
+let liveRaw = null;
 for (let i = 0; i < OAS_RESOLVE_MIN_BEAT + 3; i++) {
   const st = await page.evaluate(() => {
     const d = window.state.intimacyDialogue;
@@ -101,11 +102,16 @@ for (let i = 0; i < OAS_RESOLVE_MIN_BEAT + 3; i++) {
   const live = await page.evaluate(() => {
     const d = window.state.intimacyDialogue || {};
     const h = Array.isArray(d.liTurnHistory) ? d.liTurnHistory : [];
-    return h.map(x => (typeof x === 'string' ? { dialogue: x, action: '' }
-      : { dialogue: String((x && (x.li_dialogue || x.dialogue || x.text)) || ''),
-          action: String((x && (x.li_action || x.action)) || '') }));
+    return { raw: h.length ? JSON.stringify(h[h.length - 1]).slice(0, 400) : null,
+      // THE FIELD IS liDialogue. Read from the archive builder at app.js ~207096
+      // ("liDialogue: h.liDialogue || ''"), not guessed: li_dialogue, dialogue, text and line all
+      // returned empty, which is why every register check reported nothing.
+      entries: h.map(x => (typeof x === 'string' ? { dialogue: x, action: '' }
+        : { dialogue: String((x && (x.liDialogue || x.li_dialogue || x.dialogue)) || ''),
+            action: String((x && (x.liAction || x.li_action || x.action)) || ''),
+            userInput: String((x && x.userInput) || '') })) };
   });
-  if (live.length) liveBeats = live;
+  if (live.entries.length) { liveBeats = live.entries; liveRaw = live.raw; }
 }
 console.log('     turn loop: ' + JSON.stringify(turnLog));
 // Resolution is deferred ~1800ms and tears down over ~2.2s. Waited for, never forced.
@@ -197,6 +203,16 @@ console.log('\n1b. the OAS register — dialogue plus a short beat, not a scene 
 // the Dohkar cuts the interrogation off, and only then does run-or-remain arise.
 console.log('\n1c. the reader submits at the authored Dohkar interruption');
 {
+  // THE INTERRUPTION RECORD IS CREATED AFTER THE DIALOGUE TEARDOWN. Waiting on "dialogue gone" was
+  // too early: the previous run read pending=false, was refused, and found pending=true moments
+  // later. Waited for on real state, never fabricated.
+  const intrDeadline = Date.now() + 45000;
+  while (Date.now() < intrDeadline) {
+    const up = await page.evaluate(() => typeof window._intimateInterruptionPending === 'function'
+      && !!window._intimateInterruptionPending());
+    if (up) break;
+    await page.waitForTimeout(1000);
+  }
   const pending = await page.evaluate(() => ({
     pending: typeof window._intimateInterruptionPending === 'function'
       ? !!window._intimateInterruptionPending() : 'absent',
@@ -223,6 +239,33 @@ console.log('\n1c. the reader submits at the authored Dohkar interruption');
     JSON.stringify(committed));
   t('and the interruption is no longer pending', after.pending === false, JSON.stringify(after));
   console.log('     after the interruption submit: ' + JSON.stringify(after));
+}
+
+// ── 1d. THE EXCHANGE SURVIVES TEARDOWN ──────────────────────────────────────
+// liTurnHistory is live scratch and is empty once the dialogue is gone. The DURABLE copy is written
+// at resolution into state.scenes[] as an `oasArchive` record (app.js ~207138): text '' by
+// construction, uid minted 'oas', per-beat pcSay / pcDo / liDialogue. Capturing it for the test
+// proves what rendered; whether the NEXT PLANNER receives it is asserted separately in section 4.
+console.log('\n1d. the OAS exchange is persisted beyond teardown');
+{
+  const arch = await page.evaluate(() => {
+    const recs = (window.state.scenes || []).filter(r => r && r.oasArchive);
+    if (!recs.length) return { found: 0 };
+    const a = recs[recs.length - 1].oasArchive || {};
+    const beats = a.beats || a.archiveBeats || [];
+    return { found: recs.length, uid: recs[recs.length - 1].uid || null,
+      textIsEmpty: recs[recs.length - 1].text === '',
+      beatCount: a.beatCount || beats.length, beats: beats.length,
+      sample: beats.length ? { pcSay: String(beats[0].pcSay || '').slice(0, 60),
+        liDialogue: String(beats[0].liDialogue || '').slice(0, 80) } : null };
+  });
+  console.log('     oasArchive: ' + JSON.stringify(arch));
+  t('the exchange was archived into state.scenes as an oasArchive record', arch.found > 0,
+    JSON.stringify(arch));
+  t('the archive record carries no prose text, so it cannot be mistaken for a scene',
+    arch.textIsEmpty === true, 'text is not empty');
+  t('and it holds the per-beat exchange (pcSay / liDialogue)',
+    arch.beats > 0 && !!(arch.sample && arch.sample.liDialogue), JSON.stringify(arch.sample));
 }
 
 // ── 2. THE RECORDED CHOICE TAKES EFFECT ─────────────────────────────────────

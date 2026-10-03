@@ -207564,7 +207564,31 @@ No text, no watermark, no UI elements, share-ready.`;
   function _sceneDecisionNeeded() {
     var ax = _sceneDecisionAxis(); if (!ax) return false;
     var d = state._sceneDecisions && state._sceneDecisions['1'];
-    return !(d && d.choice && d.storyId === state.storyId);
+    if (!(d && d.choice && d.storyId === state.storyId)) return true;
+    // ── THE RECORD MUST ANSWER THE AXIS (Roman 2026-10-03) ──────────────────────────────────────
+    // MEASURED. Submitting at the authored Dohkar interruption calls _recordSceneDecision(1,
+    // 'posture', <the reader's own words>, 'interruption_submit'). Any truthy choice used to
+    // satisfy this check, so a generic 'posture' record SUPPRESSED the run-or-remain prompt
+    // entirely: the reader was never asked the authored question, and the recorded "choice" was a
+    // placeholder rather than an answer. Downstream, nothing could displace the scheduled frame
+    // either, because 'posture' is not one of the seed's declared displacing choices.
+    //
+    // The interruption collects say/do, not run-or-remain. So its submission is not an answer to
+    // this axis, and the decision stays OPEN until the reader picks one of the axis's own
+    // branches. No handler changed and no second prompt was added — the existing prompt simply is
+    // not skipped any more.
+    var c = String(d.choice).toLowerCase();
+    var a = String((ax.a && ax.a.key) || '').toLowerCase();
+    var b = String((ax.b && ax.b.key) || '').toLowerCase();
+    if (c && (c === a || c === b)) return false;
+    try {
+      if (!state._sceneDecisionPlaceholderLogged) {
+        state._sceneDecisionPlaceholderLogged = true;
+        console.log('[SCENE-DECISION] a recorded "' + d.choice + '" (source=' + (d.source || '?')
+          + ') does NOT answer the axis [' + a + ' | ' + b + '] — the decision stays open');
+      }
+    } catch (_) {}
+    return true;
   }
   function _sceneDecision(n) { try { var d = state._sceneDecisions && state._sceneDecisions[String(n || 1)]; return (d && d.choice && d.storyId === state.storyId) ? d : null; } catch (_) { return null; } }
   function _recordSceneDecision(n, choice, label, source) {
