@@ -1,0 +1,17 @@
+=== HISTORY CONTINUITY REGRESSION (provider-free, $0) ===
+
+1. THE MID-SCENE HANDOVER
+   scene is 6030 chars; the handover sits at 3120–3270
+     head(420) contains it: false   tail(1500) contains it: false
+  FAIL THE HANDOVER SURVIVES in at least one existing channel  — in a 6030-char scene it is in neither the 420-char head nor the 1500-char tail
+
+2. AN OLDER UNRESOLVED DECISION
+     scene window retains 2 scene(s); contains scene 1: false
+  FAIL a decision from six scenes back is still reachable in the window  — the window holds only the last two scenes
+  FAIL an unresolved-obligations channel exists and is populated  — narrativeState.unresolved_promises is null
+
+3. DOES ANY OF IT REACH THE PLANNER?
+     {"builderExists":false,"continuityExists":true,"historyContract":false}
+  FAIL a shared history contract exists that both planner and author can call  — no _buildHistoryContinuityBlock — story memory is assembled only for the literary author
+
+0/4 checks passed

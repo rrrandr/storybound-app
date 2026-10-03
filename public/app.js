@@ -102127,6 +102127,22 @@ function _buildAuthorFloorDirective(s) {
                   return _tfoDurableLine + _tfoActiveLine;
                 } catch (_) { return ''; }
               })());
+          // ═══ HISTORY REACHES THE PLANNER (Roman 2026-10-03) ═══
+          // The planner decides what the next scene IS, and until now it received no story memory
+          // at all on either path — measured: no [STORY MEMORY] anywhere in a 37,467-char request.
+          // This is the SAME contract the author gets, so the two cannot drift, and it carries only
+          // claims the prose supported plus obligations still open.
+          try {
+            if (typeof _buildHistoryContinuityBlock === 'function') {
+              var _histBlock = _buildHistoryContinuityBlock(s, {});
+              if (_histBlock) {
+                _scSys += '\n\n' + _histBlock;
+                try { console.log('[HISTORY-CTX] planner received ' + _histBlock.length
+                  + ' chars of established history'); } catch (_) {}
+              }
+            }
+          } catch (_) {}
+
           // ═══ THE LIVE OAS EXCHANGE REACHES THIS PLANNER ON EVERY ROW (Roman 2026-10-03) ═══
           // It used to arrive ONLY inside the open-row branch below, so an ordinary row planned the
           // scene after a one-on-one without ever being told what was said in it. The need for that
@@ -103701,7 +103717,9 @@ function _buildAuthorFloorDirective(s) {
       state.scenes = state.scenes || [];
       var _sbLitRec = (typeof _sbPersistSceneProjection === 'function')
         ? _sbPersistSceneProjection({ uid: _sbUidLit, kind: 'body', input: _sbPrep.text, title: title, synopsis: synopsis,
-            fateCard: null, projectionOpts: { refused: _sbPrep.refused, refusalReason: _sbPrep.refusalReason } })
+            fateCard: null, projectionOpts: { refused: _sbPrep.refused, refusalReason: _sbPrep.refusalReason },
+            // Same contract on the literary path — one response carries the scene and its note.
+            historyNote: (typeof _sbHistoryNote !== 'undefined' && _sbHistoryNote) || null })
         : null;
       // NO FALLBACK PUSH. If the API is unavailable something is badly wrong, and quietly creating an
       // un-projected record is the drift the route rule exists to prevent — it would be a scene with no
@@ -133758,7 +133776,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // authoritative to say (no ledger entries yet, no durable consequence, no stage) still
       // reaches the author instead of being silently dropped by that guard.
       var handoffBlock = ''; try { handoffBlock = _buildLiveHandoffDirective(s) || ''; } catch (_) { handoffBlock = ''; }
-      if (!entries.length && !durable && !temptDurable && !stageBlock && !handoffBlock) return '';
+      // HISTORY FOR THE AUTHOR, through the one builder every author path already calls (CG,
+      // literary continuation, and the speculative preload that mirrors it). Same contract as the
+      // planner's, so the layer that writes the scene and the layer that plans it cannot disagree
+      // about what has happened.
+      var historyBlock = '';
+      try { historyBlock = (typeof _buildHistoryContinuityBlock === 'function')
+        ? (_buildHistoryContinuityBlock(s, {}) || '') : ''; } catch (_) { historyBlock = ''; }
+      if (!entries.length && !durable && !temptDurable && !stageBlock && !handoffBlock && !historyBlock) return '';
       // Verified facts: written ONLY by the runtime verifier when a declared state change was DELIVERED
       // on the page (slot-checked against the prose). Keyed by the scene it was committed at.
       var verifiedBy = {};
@@ -133840,6 +133865,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // history's own budget. It DOES still count toward opts.includeStage:false's "everything else"
       // measurement (correct: a stage proposal's real remaining room must account for it too).
       out += handoffBlock;
+      // ESTABLISHED HISTORY, after the live handoff. Same contract the planner receives.
+      if (historyBlock) out += '\n\n' + historyBlock;
       return out;
     } catch (_) { return ''; }
   }
@@ -133847,6 +133874,162 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     window._sceneLedgerGet = _sceneLedgerGet; window._sceneLedgerStamp = _sceneLedgerStamp;
     window._sceneLedgerCommit = _sceneLedgerCommit; window._sceneLedgerRestamp = _sceneLedgerRestamp;
     window._buildContinuitySpineBlock = _buildContinuitySpineBlock;
+
+  // ════════════════════════════════════════════════════════════════════════════════════════════
+  // HISTORY NOTES — WHAT ACTUALLY HAPPENED, WRITTEN WITH THE SCENE (Roman 2026-10-03)
+  // ════════════════════════════════════════════════════════════════════════════════════════════
+  // WHY. Storybound already had memory machinery and it was wired to a quarter of the surface that
+  // needs it: _extractStoryMemory has ONE call site, is fire-and-forget, and sees only the LAST
+  // 1,500 chars; the scene window keeps the FIRST 420 of the last two scenes; and
+  // buildStoryMemoryDirective is consumed ONLY by the literary author and its speculative preload.
+  // Measured: the 37,467-char SCENE-SPINE planner request contains no [STORY MEMORY] at all, and
+  // neither does the CG author's. So the planner — which decides what the next scene IS — was
+  // planning against clipped text, and in a 6,030-char scene an object handed over at mid-scene
+  // falls into the hole between head(420) and tail(1500) and is simply gone.
+  //
+  // THE FIX IS NOT A SECOND MEMORY SYSTEM. The author writes a structured note ALONGSIDE the scene
+  // in the same response, the note is stored ON that scene's own record, and ONE contract assembles
+  // it for BOTH planner and author, CG and literary. No parallel database, no extra call, no race:
+  // the note arrives with the prose it describes.
+  //
+  // ── THE GOVERNANCE RULE, which is the whole point ──
+  // A note is a PROPOSED summary. Labelling it "proposed" is not enforcement, so it is not merely
+  // labelled: every claim is CHECKED AGAINST THE RENDERED PROSE, and a claim the prose does not
+  // support NEVER enters the established-history section. Unsupported claims are kept separately,
+  // visibly marked as unverified author assertions, so a model cannot establish an event by
+  // asserting it in a summary. Durable canon still belongs to the existing delivery/commit path —
+  // a note cannot activate an entity or seal a fact, and nothing here writes to the register.
+  var _HN_MAX_RECENT = 3;          // compact recent notes
+  var _HN_CLAIM_MIN = 12;          // ignore trivially short fragments when checking support
+
+  function _hnNorm(x) {
+    return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  // A claim is SUPPORTED when its distinctive words actually occur in the prose. Deliberately
+  // word-overlap rather than a verbatim quote: a summary legitimately rewords, but it cannot
+  // invent an object, a person or an act that never appears.
+  function _hnClaimSupported(claim, prose) {
+    var c = _hnNorm(claim), p = _hnNorm(prose);
+    if (!c || c.length < _HN_CLAIM_MIN) return false;
+    if (!p) return false;
+    var stop = { the:1, a:1, an:1, and:1, of:1, to:1, in:1, on:1, at:1, it:1, is:1, was:1, her:1,
+      his:1, she:1, he:1, they:1, that:1, this:1, with:1, for:1, from:1, into:1, had:1, has:1 };
+    var words = c.split(' ').filter(function (w) { return w.length > 3 && !stop[w]; });
+    if (!words.length) return false;
+    var hit = words.filter(function (w) { return p.indexOf(w) >= 0; }).length;
+    return (hit / words.length) >= 0.6;
+  }
+
+  // Store a note ON the scene record it describes. Compatible with saved stories: a scene without
+  // a note simply has none, and nothing reads a missing field as an error.
+  function _attachHistoryNote(sceneUid, note, prose) {
+    try {
+      var s = window.state; if (!s || !note) return null;
+      var found = (typeof _sbSceneByUid === 'function') ? _sbSceneByUid(sceneUid, s) : null;
+      var rec = found && found.record;
+      if (!rec) return null;
+      var text = String(prose || rec.text || '');
+      var fields = ['events', 'decisions', 'consequences', 'transfers', 'disclosures', 'obligations'];
+      var verified = {}, unverified = {};
+      fields.forEach(function (f) {
+        var list = Array.isArray(note[f]) ? note[f] : [];
+        verified[f] = []; unverified[f] = [];
+        list.forEach(function (item) {
+          var claim = (item && typeof item === 'object') ? (item.text || item.claim || '') : item;
+          var entry = (item && typeof item === 'object') ? item : { text: String(claim) };
+          // AN OBLIGATION IS A FORWARD COMMITMENT, not a claim about what the prose shows, so it is
+          // not required to be supported BY the prose — but it is still carried as the author's
+          // own, never as an established fact.
+          if (f === 'obligations' || _hnClaimSupported(claim, text)) verified[f].push(entry);
+          else unverified[f].push(entry);
+        });
+      });
+      rec.historyNote = {
+        v: 1, sceneUid: sceneUid, writtenAt: Date.now(),
+        // WHAT THE SCENE SHOWED, checked against the scene.
+        verified: verified,
+        // WHAT THE AUTHOR ASSERTED THAT THE PROSE DOES NOT SHOW. Kept for diagnosis, and NEVER
+        // emitted into established history.
+        unverified: unverified,
+        knowledge: (note.knowledge && typeof note.knowledge === 'object') ? note.knowledge : null
+      };
+      try {
+        var dropped = fields.reduce(function (n, f) { return n + unverified[f].length; }, 0);
+        if (dropped) console.warn('[HISTORY-NOTE] ' + dropped + ' claim(s) are NOT supported by the '
+          + 'rendered prose and were kept OUT of established history: '
+          + JSON.stringify(fields.reduce(function (a, f) { return a.concat(unverified[f].map(function (x) { return x.text; })); }, [])).slice(0, 220));
+      } catch (_) {}
+      return rec.historyNote;
+    } catch (e) { try { console.warn('[HISTORY-NOTE] attach failed: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  window._attachHistoryNote = _attachHistoryNote;
+
+  // UNRESOLVED OBLIGATIONS SURVIVE THE RECENT WINDOW. They persist until something resolves or
+  // supersedes them, which is the difference between a summary and a memory.
+  function _openObligations(s) {
+    s = s || window.state || {};
+    var out = [];
+    try {
+      (s.scenes || []).forEach(function (rec, idx) {
+        var hn = rec && rec.historyNote;
+        if (!hn || !hn.verified) return;
+        (hn.verified.obligations || []).forEach(function (o) {
+          if (o && o.resolved) return;
+          out.push({ sceneIndex: idx, text: String(o.text || o), owedBy: o.owedBy || null });
+        });
+      });
+    } catch (_) {}
+    return out;
+  }
+  window._openObligations = _openObligations;
+
+  // ── THE ONE CONTRACT BOTH LAYERS CALL ───────────────────────────────────────────────────────
+  // Planner and author, CG and literary, speculative included. Established history and unverified
+  // assertions are rendered in SEPARATE sections, and only the established section is presented as
+  // what happened.
+  function _buildHistoryContinuityBlock(s, opts) {
+    s = s || window.state || {};
+    var o = opts || {};
+    // A REAL KILL SWITCH, following the existing window._plotContractKill convention. It exists so
+    // the control that proves this forwarding works can also prove it FAILS when switched off —
+    // overriding the window alias does not do that, because callers hold the closure reference.
+    try { if (window._historyContinuityKill) return ''; } catch (_) {}
+    try {
+      var recs = (s.scenes || []).filter(function (r) { return r && r.historyNote; });
+      var open = _openObligations(s);
+      if (!recs.length && !open.length) return '';
+      var lines = ['[HISTORY — WHAT HAS ACTUALLY HAPPENED]'];
+      lines.push('Established below is what the PROSE ITSELF showed. Build from it; do not re-stage it.');
+      var recent = recs.slice(-(o.recent || _HN_MAX_RECENT));
+      recent.forEach(function (rec, i) {
+        var hn = rec.historyNote, v = hn.verified || {};
+        var bits = [];
+        ['events', 'decisions', 'consequences', 'transfers', 'disclosures'].forEach(function (f) {
+          (v[f] || []).forEach(function (x) { bits.push('    ' + f.slice(0, -1).toUpperCase() + ': ' + (x.text || x)); });
+        });
+        if (bits.length) {
+          lines.push('  scene ' + (recs.length - recent.length + i + 1) + ':');
+          lines = lines.concat(bits);
+        }
+        if (hn.knowledge) {
+          try {
+            Object.keys(hn.knowledge).forEach(function (who) {
+              lines.push('    KNOWS — ' + who + ': ' + String(hn.knowledge[who]));
+            });
+          } catch (_) {}
+        }
+      });
+      if (open.length) {
+        lines.push('  STILL UNRESOLVED (carried forward until resolved or superseded — these do NOT'
+          + ' expire with the recent-scene window):');
+        open.forEach(function (ob) { lines.push('    - ' + ob.text + (ob.owedBy ? ' [' + ob.owedBy + ']' : '')); });
+      }
+      return lines.join('\n');
+    } catch (_) { return ''; }
+  }
+  window._buildHistoryContinuityBlock = _buildHistoryContinuityBlock;
+
   } } catch (_) {}
   // ═══ CANONICAL SCENE NUMBER (Roman 2026-08-16) ═══════════════════════════════════════════════════
   // MEASURED (ordering trace 2026-08-16), do not "simplify": turnCount increments only AFTER a scene
@@ -239773,7 +239956,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // otherwise) instead of this closure's private chain.
         state.scenes = state.scenes || [];
         var _sbRec = (typeof _sbPersistSceneProjection === 'function')
-          ? _sbPersistSceneProjection({ uid: _sbSceneUid, kind: 'beats', input: plan.beats, title: '', synopsis: '', fateCard: null })
+          ? _sbPersistSceneProjection({ uid: _sbSceneUid, kind: 'beats', input: plan.beats, title: '', synopsis: '', fateCard: null,
+              // THE AUTHOR'S OWN NOTE, carried on the same response that produced the beats, so
+              // there is no second call and no window in which the note describes a different
+              // scene than the one persisted. Verification happens inside the persist.
+              historyNote: (plan && plan.history_note) || null })
           : null;
         var proseAssembled = _sbRec ? _sbRec.text : plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
         if (plan) plan.__sceneUid = (_sbRec && _sbRec.uid) || _sbSceneUid || plan.__sceneUid || null;
@@ -325738,6 +325925,12 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     if (!Array.isArray(s.scenes)) s.scenes = [];
     var existing = _sbSceneByUid(uid, s);
     if (existing) return existing.record;      // idempotent: one record per uid
+    // THE HISTORY NOTE IS BORN WITH THE SCENE (Roman 2026-10-03). This is the ONE place every
+    // scene record is created — CG beats and literary prose alike — so attaching here is what
+    // makes the note belong to THAT rendered scene and no other, and what makes it impossible for
+    // a note to describe a scene the reader never saw. It is checked against proj.text, the prose
+    // that was actually projected, NOT against the plan.
+    var _pendingNote = spec.historyNote || null;
     var rec = {
       uid: uid,
       title: (spec.title != null) ? spec.title : '',
@@ -325750,9 +325943,16 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         refused: !!proj.refused, refusalReason: proj.refusalReason || null
       },
       attributionSidecar: proj.attributionSidecar,
-      attributionAvailable: true
+      attributionAvailable: true,
+      historyNote: null              // filled below, after the record exists to hold it
     };
     s.scenes.push(rec);
+    // Attach the author's note NOW, against the prose this record actually holds. Verification
+    // happens inside _attachHistoryNote: unsupported claims are quarantined there and can never
+    // reach the established-history block.
+    if (_pendingNote) {
+      try { _attachHistoryNote(uid, _pendingNote, proj.text); } catch (_) {}
+    }
     try {
       console.log('[SCENE-PROJECTION] created ' + uid + ' kind=' + proj.kind + ' revision=0 hash=' + proj.hash
         + ' chars=' + proj.text.length + ' sidecarEntries=' + proj.attributionSidecar.entries.length);

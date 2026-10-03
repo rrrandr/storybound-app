@@ -1,0 +1,31 @@
+=== HISTORY CONTINUITY REGRESSION (provider-free, $0) ===
+
+1. THE MID-SCENE HANDOVER
+   scene is 6030 chars; the handover sits at 3120–3270
+     head(420) contains it: false   tail(1500) contains it: false
+  FAIL THE HANDOVER SURVIVES in at least one existing channel  — in a 6030-char scene it is in neither the 420-char head nor the 1500-char tail
+
+2. AN OLDER UNRESOLVED DECISION
+     scene window retains 2 scene(s); contains scene 1: false
+  FAIL a decision from six scenes back is still reachable in the window  — the window holds only the last two scenes
+  FAIL an unresolved-obligations channel exists and is populated  — narrativeState.unresolved_promises is null
+
+3. DOES ANY OF IT REACH THE PLANNER?
+     {"builderExists":false,"continuityExists":true,"historyContract":true}
+  ok   a shared history contract exists that both planner and author can call
+
+4. THE NOTE IS A PROPOSED SUMMARY, AND THE PROSE IS THE AUTHORITY
+  ok   a supported event is ESTABLISHED
+  ok   a supported object transfer is ESTABLISHED
+  ok   AN UNSUPPORTED CLAIM IS NOT ESTABLISHED — the negative case
+  ok   and it does NOT appear in the history block the models receive
+  ok   the supported transfer DOES appear in that block
+  ok   who-knows-what is carried
+  ok   an obligation is carried as still unresolved
+  ok   the note did not touch the entity register or any durable fact
+
+5. OBLIGATIONS OUTLIVE THE RECENT WINDOW
+  ok   an obligation from six scenes back is still open
+  ok   and it survives into the block even though its scene left the recent window
+
+11/14 checks passed
