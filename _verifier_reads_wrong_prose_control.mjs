@@ -34,6 +34,7 @@ console.log('=== DOES THE VERIFIER READ THE RIGHT SCENE? (provider-free, $0) ===
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const verifierRequests = [];
+const proseByScene = {};
 let sceneNo = 1;
 
 await page.route('**/api/**', async (route) => {
@@ -53,7 +54,10 @@ await page.route('**/api/**', async (route) => {
   if (stage === 'verifier') {
     // CAPTURE THE REQUEST. This is the whole point: what prose was the verifier actually given?
     const m = usr.match(/SCENE PROSE:\s*([\s\S]*?)\s*(?:\n\nReturn the JSON now\.|\n\nPLANNED EVENT SLOTS)/);
-    verifierRequests.push({ scene: sceneNo, prose: m ? m[1].trim() : null, userLen: usr.length });
+    // The verifier adjudicates the PREVIOUS scene, so a request seen while advancing into scene N
+    // is judging scene N-1.
+    verifierRequests.push({ scene: sceneNo, judged: sceneNo - 1,
+      prose: m ? m[1].trim() : null, userLen: usr.length });
     return give(verifierVerdict(refsFromVerifierRequest(usr)));
   }
   try { await route.abort(); } catch (_) {}
@@ -107,6 +111,7 @@ await readToGate();
 const scene2Prose = await page.evaluate(() => {
   try { return String(window._sbLatestProseText(window.state) || ''); } catch (_) { return ''; }
 });
+proseByScene[2] = scene2Prose;
 t('scene 2 rendered its own prose through the projection', scene2Prose.length >= 200,
   'len=' + scene2Prose.length);
 t('and it is NOT the baked opening', scene2Prose !== bakedProse);
@@ -121,7 +126,28 @@ await page.evaluate(() => {
 const dl2 = Date.now() + 180000;
 while (Date.now() < dl2 && !verifierRequests.length) await new Promise(r => setTimeout(r, 1000));
 await new Promise(r => setTimeout(r, 4000));
-await browser.close();
+// Scene 4 as well, so consecutive adjudications are covered rather than one lucky one.
+const scene3Prose = await page.evaluate(() => {
+  try { return String(window._sbLatestProseText(window.state) || ''); } catch (_) { return ''; }
+});
+proseByScene[3] = scene3Prose;
+await readToGate();
+sceneNo = 4;
+await page.evaluate(() => {
+  const el = document.querySelector('[data-card-index="0"]'); if (el) el.click();
+  try { window._advanceStagedScene('', ''); } catch (_) {}
+});
+const dl3 = Date.now() + 180000;
+while (Date.now() < dl3 && verifierRequests.length < 2) await new Promise(r => setTimeout(r, 1000));
+await new Promise(r => setTimeout(r, 3000));
+const pagination = await page.evaluate(() => {
+  try {
+    return (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+      ? String(StoryPagination.getAllContent()).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+  } catch (_) { return ''; }
+});
+await page.close();
+const browser2 = browser;
 
 console.log('\nWHAT THE VERIFIER WAS GIVEN');
 t('the verifier was dispatched at all', verifierRequests.length > 0,
@@ -155,6 +181,102 @@ t('THE VERIFIER WAS GIVEN THE SCENE IT IS JUDGING, not the baked opening',
 t('and scene 2\'s own opening line is present in what it was given',
   nGiven.length >= 200 && nGiven.indexOf(nScene2.slice(0, 80)) >= 0,
   'scene 2\'s opening line is absent from the prose the verifier received');
+
+// ── CASE 2: A POPULATED, STALE PAGINATION BUFFER ────────────────────────────
+// This is the live condition, not a hypothetical: the baked opening really is in pagination, and
+// it really is thousands of characters long. The assertion is that its presence no longer decides
+// what the verifier reads.
+console.log('\nCASE 2 — pagination holds the baked opening; it must not be what is judged');
+// WHY A PLAIN SUBSTRING TEST FAILED HERE. Pagination is a DIFFERENT RENDERING of the same prose:
+// it prefixes speaker tags ("[Lirael] ") and spaces punctuation ("Veilwood ,"), so it is 7,677
+// chars against the projection's 7,605 and no exact span matches. Comparing on letters and digits
+// alone identifies the content without pretending the two renderings are byte-identical.
+const alnum = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+// TOKEN OVERLAP, NOT A SPAN. Pagination interleaves speaker tags INSIDE the prose, so any fixed
+// window that crosses a tag differs no matter how it is normalised — which is why two attempts at
+// a windowed probe failed on content that is plainly the same text. Overlap of distinctive words
+// identifies the content without requiring the two renderings to agree character by character.
+const toks = (x) => new Set(alnum(x).split(' ').filter(w => w.length >= 5));
+const tPag = toks(pagination), tBaked = toks(bakedProse);
+let shared = 0;
+tBaked.forEach(w => { if (tPag.has(w)) shared++; });
+const overlap = tBaked.size ? shared / tBaked.size : 0;
+t('pagination was in fact populated with the baked opening (a different rendering of it)',
+  pagination.length >= 1000 && overlap >= 0.9,
+  'paginationLen=' + pagination.length + ' bakedLen=' + bakedProse.length
+  + ' tokenOverlap=' + (overlap * 100).toFixed(1) + '%');
+t('and the verifier was given the projection anyway, not pagination',
+  inScene2 === true, 'the stale buffer still won');
+
+// ── CASE 3: CONSECUTIVE SCENES ──────────────────────────────────────────────
+// One correct adjudication could be luck. Each scene must be judged against ITS OWN prose.
+console.log('\nCASE 3 — consecutive scenes each judged against their own prose');
+console.log('   captured ' + verifierRequests.length + ' verifier request(s)');
+verifierRequests.forEach((v, i) => {
+  const g = norm(v.prose || '');
+  const own = norm(proseByScene[v.judged] || '');
+  const isBaked = nBaked.includes(g.slice(0, 120));
+  console.log('     request ' + (i + 1) + ' (judging scene ' + v.judged + '): '
+    + (own && own.includes(g.slice(0, 120)) ? 'its own prose'
+      : (isBaked ? 'THE BAKED OPENING' : 'unmatched')));
+});
+t('every captured request was judged against its own scene, never the opening',
+  verifierRequests.length > 0 && verifierRequests.every((v) => {
+    const g = norm(v.prose || '');
+    const own = norm(proseByScene[v.judged] || '');
+    return g.length > 0 && own.length > 0 && own.includes(g.slice(0, 120));
+  }),
+  JSON.stringify(verifierRequests.map(v => ({ judged: v.judged, len: (v.prose || '').length }))));
+
+// ── CASE 4: A MISSING PROJECTION MUST STOP ADJUDICATION ─────────────────────
+// The old code fell back to an older scene. The repair must refuse instead, and say so.
+console.log('\nCASE 4 — with no projection for the scene, adjudication must STOP, not fall back');
+{
+  const page2 = await browser2.newPage();
+  const aborts = [];
+  page2.on('console', (m) => {
+    const x = m.text();
+    if (/\[COMMIT-SCENE:(ABORT|SKIP|PROSE)\]/.test(x)) aborts.push(x);
+  });
+  await page2.route('**/api/**', r => r.abort());
+  await page2.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page2.waitForFunction(() => typeof window._launchStarterStory === 'function', { timeout: 30000 });
+  const d2 = await findFSDef(page2);
+  await launchFS(page2, d2);
+  const u2 = await unlockFS(page2, 'missing-projection-case');
+  await finalizePreview(page2);
+  // The baked opening is committed and is the ONLY projection. A pending transition is set so the
+  // commit path runs, then the advance is attempted: the newest projection IS the opening, which is
+  // exactly the state the guard must refuse.
+  // THE DECISION GATE COMES FIRST. _advanceStagedScene refuses and mounts the prompt until the
+  // reader's choice is recorded, returning BEFORE the commit block — so without this the run logs
+  // nothing and the empty diagnostic array looks like a missing guard.
+  await advanceExpectingGate(page2, '', '');
+  await chooseBranch(page2, 'A');
+  await new Promise(r => setTimeout(r, 2000));
+  const res = await page2.evaluate(async () => {
+    window.state._priorSceneStateChange = { event: 'the presiding Dohkar calls for a preliminary review',
+      sceneProposed: 2, slots: { precondition: 'x', actor: 'the presiding Dohkar',
+        action: 'calls for a preliminary review', target: 'Lirael', exitState: 'her conduct is in question' } };
+    const before = (window.state.scenes || []).length;
+    try { await window._advanceStagedScene('', ''); } catch (_) {}
+    return { scenes: before, onlyProjectionIsBaked: before === 1 };
+  });
+  await new Promise(r => setTimeout(r, 4000));
+  t('the only projection present was the baked opening', res.onlyProjectionIsBaked === true,
+    'scenes=' + res.scenes);
+  const abortLine = aborts.filter(x => /ABORT/.test(x))[0] || null;
+  t('adjudication was REFUSED with a diagnostic naming the baked opening',
+    !!abortLine && /BAKED OPENING/.test(abortLine),
+    JSON.stringify(aborts.slice(0, 3)));
+  if (abortLine) console.log('     ' + abortLine.slice(0, 180));
+  t('and it did NOT silently judge an older scene',
+    !aborts.some(x => /\[COMMIT-SCENE:PROSE\]/.test(x)),
+    JSON.stringify(aborts.filter(x => /PROSE/.test(x))));
+  await page2.close();
+}
+await browser2.close();
 
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 console.log('\nSMALLEST REPAIR (app.js ~101764): on the staged/CG path prefer the per-scene');

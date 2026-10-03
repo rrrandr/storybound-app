@@ -101761,11 +101761,59 @@ function _buildAuthorFloorDirective(s) {
         if (typeof _commitScene === 'function' && _csEnabled && s._priorSceneStateChange) {
           var _prevProp = s._priorSceneStateChange;
           // prior scene text from the RENDER layer (both paths — state.scenes is not the headless capture array).
-          var _prevText = '';
-          try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent) _prevText = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
-          // A4: prior-scene tail comes from the latest PROSE scene's current projection, by uid.
-          if ((!_prevText || _prevText.length < 40) && typeof _sbLatestProseText === 'function') _prevText = String(_sbLatestProseText(s) || '');
           var _prevNum = (typeof _prevProp.sceneProposed === 'number') ? _prevProp.sceneProposed : ((s.turnCount || 1) - 1);
+          var _prevText = '', _prevSrc = null, _prevUid = null;
+          // ── WHICH PROSE DOES THE VERIFIER JUDGE? (Roman 2026-10-02) ───────────────────────────
+          // MEASURED FAILURE. A full ten-scene CG issue sealed a proposal in every scene and
+          // committed NOTHING: facts 0 across the issue. Tracing every evidence quote the verifier
+          // produced showed all of them came from ONE place — the BAKED OPENING. For nine
+          // consecutive scenes the verifier was asked "did the prose deliver this transition?"
+          // while reading scene 1.
+          //
+          // THE CAUSE WAS THIS SELECTION. It preferred StoryPagination and fell back to the
+          // projection only when pagination was EMPTY OR SHORT. On the CG staged path generated
+          // scenes never enter StoryPagination (it skips addPage by design), but the baked scene 1
+          // IS committed through the normal path at unlock — so pagination holds thousands of
+          // characters of the opening forever, the length test passes, the fallback never runs, and
+          // `.slice(-5000)` hands over the tail of scene 1 every single time.
+          //
+          // SO THE TEST IS IDENTITY, NOT LENGTH. On the staged path the adjudicated scene's OWN
+          // projection is used, found by uid; if the newest projection IS the baked opening then
+          // the scene being adjudicated never produced one, and adjudication STOPS with a
+          // diagnostic. Falling back to an older scene is what produced the empty ledger, so it is
+          // no longer reachable here. The literary path keeps pagination exactly as before.
+          var _stagedAdj = false;
+          try { _stagedAdj = (typeof _isStagedMode === 'function') && !!_isStagedMode(); } catch (_) {}
+          if (_stagedAdj) {
+            var _lp = (typeof _sbLatestProseScene === 'function') ? _sbLatestProseScene(s) : null;
+            var _bakedUid = null;
+            try {
+              if (s._bakedScene1MountedAt && Array.isArray(s.scenes) && s.scenes[0]) _bakedUid = s.scenes[0].uid || null;
+            } catch (_) {}
+            if (!_lp || !_lp.record) {
+              console.error('[COMMIT-SCENE:ABORT] scene=' + _prevNum + ' no prose projection exists; '
+                + 'refusing to adjudicate against pagination or an older scene');
+            } else if (_bakedUid && (_lp.record.uid || null) === _bakedUid) {
+              console.error('[COMMIT-SCENE:ABORT] scene=' + _prevNum + ' the newest projection IS the '
+                + 'BAKED OPENING (uid=' + _bakedUid + ') — the scene being adjudicated produced no '
+                + 'projection, and judging it against scene 1 is the defect this guard exists to stop');
+            } else {
+              _prevUid = _lp.record.uid || null;
+              _prevText = String(_sbLatestProseText(s) || '');
+              _prevSrc = 'projection:' + (_prevUid || 'nouid');
+              console.log('[COMMIT-SCENE:PROSE] scene=' + _prevNum + ' source=' + _prevSrc
+                + ' chars=' + _prevText.length);
+            }
+          } else {
+            try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent) _prevText = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
+            if (_prevText && _prevText.length >= 40) _prevSrc = 'pagination';
+            // A4: prior-scene tail comes from the latest PROSE scene's current projection, by uid.
+            if ((!_prevText || _prevText.length < 40) && typeof _sbLatestProseText === 'function') {
+              _prevText = String(_sbLatestProseText(s) || '');
+              if (_prevText) _prevSrc = 'projection:latest';
+            }
+          }
+          try { s._lastCommitScenePrvSource = { scene: _prevNum, source: _prevSrc, uid: _prevUid, chars: _prevText.length }; } catch (_) {}
           if (_prevText && _prevText.length >= 40) {
             await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum); // last ~scene worth for the delivery verifier
             var _csI = _ensureCommittedState();

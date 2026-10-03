@@ -1,0 +1,37 @@
+=== DOES THE VERIFIER READ THE RIGHT SCENE? (provider-free, $0) ===
+
+  ok   the baked opening is committed and non-trivial
+  ok   scene 2 rendered its own prose through the projection
+  ok   and it is NOT the baked opening
+
+WHAT THE VERIFIER WAS GIVEN
+  ok   the verifier was dispatched at all
+   SCENE PROSE block: 1566 chars
+   first 110: The clerk's fingers crack the seal on the parchment I sent. Wax flakes to the stone table like dried blood. 
+  ok   the SCENE PROSE block was extracted from the request
+   the given text appears in the baked opening : false
+   the given text appears in scene 2 prose      : true
+  ok   THE VERIFIER WAS GIVEN THE SCENE IT IS JUDGING, not the baked opening
+  ok   and scene 2's own opening line is present in what it was given
+
+CASE 2 — pagination holds the baked opening; it must not be what is judged
+  ok   pagination was in fact populated with the baked opening (a different rendering of it)
+  ok   and the verifier was given the projection anyway, not pagination
+
+CASE 3 — consecutive scenes each judged against their own prose
+   captured 1 verifier request(s)
+     request 1 (judging scene 2): its own prose
+  ok   every captured request was judged against its own scene, never the opening
+
+CASE 4 — with no projection for the scene, adjudication must STOP, not fall back
+  ok   the only projection present was the baked opening
+  ok   adjudication was REFUSED with a diagnostic naming the baked opening
+     [COMMIT-SCENE:ABORT] scene=2 the newest projection IS the BAKED OPENING (uid=lit:5fb12d5e-6caf-4305-a8ed-857b97947e95) — the scene being adjudicated produced no projection, and jud
+  ok   and it did NOT silently judge an older scene
+
+13/13 checks passed
+
+SMALLEST REPAIR (app.js ~101764): on the staged/CG path prefer the per-scene
+projection over StoryPagination, instead of treating pagination as authoritative
+whenever it is merely non-empty. Pagination is correct for the literary path; on the
+CG path it holds only the baked opening, forever.

@@ -367,8 +367,13 @@ const snapshot = () => page.evaluate(() => {
     activatedLabels: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')
       .map(k => reg[k].label || k),
     registerSize: Object.keys(reg).length,
-    verdicts: Object.keys(verdicts).map(k => ({ ref: k, delivery: verdicts[k].delivery || null,
-      reason: verdicts[k].reason || null }))
+    // `status` is the verifier's own verdict; there is no `.delivery` on an adjudication record.
+    // Reading `.delivery` made a whole issue report "delivery: null" as though the app had lost the
+    // answer. Status, downgrade and commit are kept separate.
+    verdicts: Object.keys(verdicts).map(k => ({ ref: k,
+      status: verdicts[k].status || null, reason: verdicts[k].reason || null,
+      downgraded: !!verdicts[k].downgraded, committed: !!verdicts[k].commit,
+      why: Array.isArray(verdicts[k].why) ? verdicts[k].why : [] }))
   };
 });
 

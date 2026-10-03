@@ -1,0 +1,41 @@
+=== SPEND LEDGER CONTROL (provider-free, $0) ===
+
+1. the per-stage reservation is one definition, and it is pessimistic
+  ok   every stage reserves a positive amount
+  ok   a live scene is exactly planner + author + verifier
+  ok   the author dominates the scene reservation (it is the stage to tighten)
+  ok   the app's runtime-commit-verifier cap is readable
+  ok   the verifier reservation tracks that cap (900 tokens)
+  ok   the reservation lines name all three stages and the scene total
+
+2. a receipted dispatch is MEASURED from the receipt, not from the estimate
+  ok   the call is reported receipted
+  ok   measured comes from the receipt, NOT the $99 estimate
+  ok   nothing is recorded as unmeasured
+  ok   exposure equals the receipt
+
+3. a RECEIPTLESS dispatch is UNMEASURED and ESTIMATED — never $0
+  ok   the call is reported receiptless
+  ok   measured stays $0 — there was no receipt to measure
+  ok   but it is RECORDED, with its model and estimate
+  ok   TOTAL EXPOSURE IS NOT $0 — this is the run-15/16 defect
+  ok   the report states measured $0 AND unmeasured $0.0078 separately
+  ok   the printed report says the figure is an ESTIMATE, not a receipt
+  ok   the printed line for the call says NOT $0 in words
+  ok   the report never prints TOTAL EXPOSURE as $0.000000
+
+4. mixed receipts: exposure is measured + unmeasured, both reported
+  ok   measured sums only the two receipts
+  ok   unmeasured holds only the receiptless one
+  ok   exposure is the sum of both
+  ok   exposure is never less than measured
+
+5. a receiptless call still names its model when the response carries one
+  ok   the model is recovered from the response
+  ok   an unparseable response is still recorded as unmeasured, model "unknown"
+
+6. the reservation has exactly one definition in the repo
+  ok   only _live_spend_ledger.mjs computes the author reservation
+  ok   the live eval IMPORTS the reservation rather than redefining it
+
+26/26 checks passed

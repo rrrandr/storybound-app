@@ -20,8 +20,20 @@ const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
 console.log('=== STRUCTURAL LANE ROUTE (provider-free, $0) ===\n');
 
 // The four real replies.
-const dirs = fs.existsSync('_fs_lane_sample_out')
-  ? fs.readdirSync('_fs_lane_sample_out').filter(d => /^run_/.test(d)).sort() : [];
+// PINNED, NOT "WHATEVER IS NEWEST". This control needs the MIXED set: two replies whose prose
+// says "formal review" (signal fails, structural must rescue) and two that say "preliminary review"
+// (signal passes). The first screen produced exactly that. Globbing for the newest run silently
+// retargeted it at the SECOND screen, where all four say "preliminary review" and pass by signal —
+// so the control reported 9 failures about a repair that had not touched it. A control whose
+// subject changes under it is not a control.
+const PINNED = '_fs_lane_sample_out/run_2026-10-02T16-52-31-431Z';
+const dirs = fs.existsSync(PINNED) ? [PINNED.split('/')[1]] : [];
+if (!dirs.length) {
+  console.error('REFUSED: the pinned mixed-route sample is missing: ' + PINNED);
+  console.error('  This control asserts both routes, which needs replies that fail the signal AND');
+  console.error('  replies that pass it. Any other sample cannot establish that.');
+  process.exit(4);
+}
 let replies = null;
 for (let i = dirs.length - 1; i >= 0 && !replies; i--) {
   const base = '_fs_lane_sample_out/' + dirs[i];

@@ -366,8 +366,19 @@ const snapshot = () => page.evaluate(() => {
     ctOutcome: (window.state._lastContinuationResult || {}).outcome || null,
     activatedLabels: Object.keys(reg).filter(k => reg[k].provenance === 'continuation_activated')
       .map(k => reg[k].label || k),
-    verdicts: Object.keys(verdicts).map(k => ({ ref: k, delivery: verdicts[k].delivery || null,
-      reason: verdicts[k].reason || null })) };
+    // THE MODEL'S OWN VERDICT IS `status`; there is no `.delivery` on an adjudication record.
+    // Reading `.delivery` is why a whole issue reported "delivery: null" and looked like the app
+    // had lost the verifier's answer. It had not — my snapshot was reading a field that does not
+    // exist. `status` is what the verifier said, `downgraded` is whether a guard then refused it,
+    // `commit` is what actually happened, and `why` is the guard's own words. All four are kept
+    // separate so a downgrade can never again be mistaken for the model's answer.
+    verdicts: Object.keys(verdicts).map(k => ({ ref: k,
+      status: verdicts[k].status || null,
+      reason: verdicts[k].reason || null,
+      downgraded: !!verdicts[k].downgraded,
+      committed: !!verdicts[k].commit,
+      preconditionSource: verdicts[k].preconditionSource || null,
+      why: Array.isArray(verdicts[k].why) ? verdicts[k].why : (verdicts[k].why ? [String(verdicts[k].why)] : []) })) };
 });
 
 // ── THE ISSUE ───────────────────────────────────────────────────────────────
