@@ -1,0 +1,10 @@
+=== DOES THE VERIFIER READ THE RIGHT SCENE? (provider-free, $0) ===
+
+  ok   the baked opening is committed and non-trivial
+  ok   scene 2 rendered its own prose through the projection
+  FAIL and it is NOT the baked opening
+
+WHAT THE VERIFIER WAS GIVEN
+  FAIL the verifier was dispatched at all  — no verifier request captured
+
+2/4 checks passed

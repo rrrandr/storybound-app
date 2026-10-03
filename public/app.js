@@ -102239,7 +102239,17 @@ function _buildAuthorFloorDirective(s) {
             // scheduled next event can still coherently happen at all.
             var _tfoRuptureOutranksFrame = !!(_tcInvoked && _tcWish);
             if (_resolvedFrame) {
-              _ob.push(_buildEventFramePrecedence(_resolvedFrame, null, _tfoRuptureOutranksFrame).directive);
+              var _displacement = (typeof _recordedChoiceDisplacesFrame === 'function')
+                ? _recordedChoiceDisplacesFrame(s, _resolvedFrame) : null;
+              try {
+                if (_displacement && _displacement.displaces) {
+                  console.log('[EVENT-FRAME:DISPLACED] the reader\'s recorded choice "'
+                    + _displacement.choice + '" displaces the scheduled frame (lane "'
+                    + _resolvedFrame.laneId + '") — ' + _displacement.why);
+                }
+              } catch (_) {}
+              _ob.push(_buildEventFramePrecedence(_resolvedFrame, null, _tfoRuptureOutranksFrame,
+                _displacement).directive);
               // ACTOR / PRESSURE-SOURCE SEPARATION (Roman 2026-09-21) — real finding: retry 14 put
               // a COLLECTIVE ("Seren's family", then "the assembly") into local_objective_actor
               // twice on this exact frame, and the pre-existing _validateLocalObjective (UNCHANGED)
@@ -102351,7 +102361,9 @@ function _buildAuthorFloorDirective(s) {
               if (_resolvedFrame) {
                 // Same single definition as the directive above, so the JSON contract can never
                 // re-impose the constraint the directive just released.
-                _scSys += _buildEventFramePrecedence(_resolvedFrame, _laneIds, _tfoRuptureOutranksFrame).jsonRequirement;
+                _scSys += _buildEventFramePrecedence(_resolvedFrame, _laneIds, _tfoRuptureOutranksFrame,
+                  (typeof _recordedChoiceDisplacesFrame === 'function')
+                    ? _recordedChoiceDisplacesFrame(s, _resolvedFrame) : null).jsonRequirement;
               } else {
                 _scSys += ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" (EXACTLY one of these ids, spelled exactly as given — nothing else: [' + _laneIds.join(', ') + '] — the lane you selected from the REQUIRED AFTERMATH LANE MENU; state_change/tactical_move/forces_choice must actually instantiate THIS lane\'s content, not merely name it), "lane_posture_modulation" (one sentence: HOW the reader\'s recorded posture changes the way the chosen lane plays out — who pushes, what tone, what she risks — never a description of a different lane, and never a return to the ritual/interrogation moment).';
               }
@@ -195240,7 +195252,7 @@ No text, no watermark, no UI elements, share-ready.`;
   //   ruptureActive=true  → the frame is SUPERSEDED: the rupture is the event, the lane becomes
   //                         optional/nullable, and narrowing the wish to preserve the frame is
   //                         explicitly named as the failure to avoid.
-  function _buildEventFramePrecedence(resolvedFrame, laneIds, ruptureActive) {
+  function _buildEventFramePrecedence(resolvedFrame, laneIds, ruptureActive, displacement) {
     if (!resolvedFrame) return { directive: '', jsonRequirement: '', mode: 'none' };
     var lane = resolvedFrame.laneId;
     if (ruptureActive) {
@@ -195257,6 +195269,51 @@ No text, no watermark, no UI elements, share-ready.`;
         jsonRequirement: ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" — because a Tempt Fate rupture is ACTIVE this scene, this is NOT forced to "' + lane + '". Set it to "' + lane + '" ONLY if the rupture genuinely leaves that frame able to proceed; set it to null if the rupture suspended, erased, redirected, or rendered it incoherent. Do not preserve the frame by weakening the wish. "lane_posture_modulation" (one sentence): if the lane survived, HOW the reader\'s posture changes the way it plays out; if it did not, WHAT the rupture did to it — suspended, impossible, unexplained, or redirected — and what now stands in its place.'
       };
     }
+    // ── DISPLACED BY THE READER'S OWN ACTION (Roman 2026-10-02) ──────────────────────────────
+    // MEASURED FAILURE. The reader chose "run in shame". The planner read it correctly and then
+    // wrote "Lirael's impulse to run... makes the Dohkar's announcement land as a direct barrier to
+    // flight" — she never moved. That was not the planner disobeying: the 'required' directive below
+    // says in terms that the posture "changes HOW this frame plays out — who pushes back, what tone,
+    // what she risks — it does NOT change WHICH event happens." A chosen ACTION was contractually
+    // demoted to a mood, and then the mood was used to prevent the action.
+    //
+    // The precedence machinery already knew how to yield: an active Tempt Fate rupture makes the
+    // scheduled frame SUBORDINATE (above). This is the same rule with a second trigger — the reader
+    // did something the scheduled event cannot absorb — rather than a second planning system.
+    //
+    // COMPATIBILITY IS DECLARED, NOT GUESSED. `displaces` is supplied by the caller from the seed's
+    // own structured declaration of which recorded choices change the situation. No keyword
+    // heuristic decides this: a frame that never declares its incompatible choices is never
+    // displaced, and behaves exactly as before.
+    if (displacement && displacement.displaces) {
+      var _dChoice = String(displacement.choice || 'the reader\'s choice');
+      var _dLabel = String(displacement.label || _dChoice);
+      return {
+        mode: 'displaced',
+        directive: 'SCHEDULED EVENT FRAME — DISPLACED THIS SCENE BY THE READER\'S OWN RECORDED ACTION '
+          + '(precedence rule): before the reader acted, this scene was scheduled to be — '
+          + resolvedFrame.eventFrame + ' (lane "' + lane + '"). The reader then chose: "' + _dLabel
+          + '". That action is INCOMPATIBLE with the scheduled frame as written, and the ACTION WINS. '
+          + 'Plan what the reader actually did as the CENTRAL EVENT of this scene, and plan its '
+          + 'concrete consequences. The chosen action must be ATTEMPTED and must visibly occur or be '
+          + 'physically prevented ON THE PAGE by something already present in the scene — it may not '
+          + 'be reinterpreted as a feeling, an impulse, a temptation, or a posture she then fails to '
+          + 'act on. "She wanted to and did not" is the specific failure this rule exists to prevent. '
+          + 'The scheduled frame may now be DEFERRED to a later scene, ACCOMMODATED around the action '
+          + '(it still happens, but after and changed by what she did), or REPLACED outright if the '
+          + 'action makes it incoherent. Say which, and plan the consequences of THAT. An authority '
+          + 'may pursue her, summon her back, or proceed in her absence — those are consequences of '
+          + 'the action, and they are legitimate; silently keeping her in place so the schedule can '
+          + 'run is not.',
+        jsonRequirement: ' ALSO REQUIRED, same JSON: "chosen_aftermath_lane" — because the reader\'s '
+          + 'recorded action DISPLACED the scheduled frame this scene, this is NOT forced to "' + lane
+          + '". Set it to "' + lane + '" ONLY if the frame genuinely survives alongside what she did; '
+          + 'set it to null if her action deferred or replaced it. "lane_posture_modulation" (one '
+          + 'sentence): what her action did to the scheduled frame — deferred, accommodated, or '
+          + 'replaced — and what now stands in its place. Your state_change MUST be what the reader '
+          + 'did and what it caused, not the scheduled event with her mood attached.'
+      };
+    }
     return {
       mode: 'required',
       directive: 'REQUIRED EVENT FRAME (HARD, DETERMINISTICALLY RESOLVED — this is NOT a choice among options; the reader\'s own card selection already determined it before you were ever asked): the central event of this scene MUST be — ' + resolvedFrame.eventFrame + ' You MUST set "chosen_aftermath_lane" to EXACTLY "' + lane + '" — you may NOT select a different lane, and satisfying this by staying inside the same ritual/interrogation moment under borrowed institutional/procedural VOCABULARY is NOT a valid instantiation; the event itself must actually move into this frame. The reader\'s posture below changes HOW this frame plays out — who pushes back, what tone, what she risks — it does NOT change WHICH event happens.',
@@ -195264,6 +195321,46 @@ No text, no watermark, no UI elements, share-ready.`;
     };
   }
   window._buildEventFramePrecedence = _buildEventFramePrecedence;
+
+  // WHICH RECORDED CHOICES DISPLACE A SCHEDULED FRAME — DECLARED BY THE SEED, NEVER INFERRED.
+  //
+  // Roman's constraint: an undeclared keyword heuristic must not be the sole authority for
+  // compatibility. So this reads a STRUCTURED declaration and nothing else. A Book that declares
+  // none is never displaced and behaves exactly as it does today.
+  //
+  // The declaration lives on the baked package's own axis block:
+  //     emitted.axes.displacingChoices: ['run']        // choice keys that change the situation
+  // A choice key appearing there means: when the reader records THAT choice, a scheduled frame is
+  // displaced unless the frame itself declares it can absorb it (frame.absorbs: ['run']).
+  function _recordedChoiceDisplacesFrame(s, resolvedFrame) {
+    try {
+      s = s || window.state || {};
+      var dec = (typeof _sceneDecision === 'function') ? _sceneDecision(1) : null;
+      if (!dec || !dec.choice) return { displaces: false, why: 'no recorded choice' };
+      var em = s._bakedEmitted || {};
+      var declared = (em.axes && Array.isArray(em.axes.displacingChoices))
+        ? em.axes.displacingChoices.map(function (x) { return String(x).toLowerCase(); }) : null;
+      if (!declared || !declared.length) {
+        return { displaces: false, choice: dec.choice, why: 'the seed declares no displacing choices' };
+      }
+      var choice = String(dec.choice).toLowerCase();
+      if (declared.indexOf(choice) === -1) {
+        return { displaces: false, choice: dec.choice, label: dec.label || dec.choice,
+          why: 'this choice is not declared as situation-changing' };
+      }
+      // A FRAME MAY DECLARE THAT IT ABSORBS A CHOICE. Authored escape hatch: a scene written to
+      // handle someone walking out does not need displacing.
+      var absorbs = (resolvedFrame && Array.isArray(resolvedFrame.absorbs))
+        ? resolvedFrame.absorbs.map(function (x) { return String(x).toLowerCase(); }) : [];
+      if (absorbs.indexOf(choice) >= 0) {
+        return { displaces: false, choice: dec.choice, label: dec.label || dec.choice,
+          why: 'the resolved frame declares it absorbs this choice' };
+      }
+      return { displaces: true, choice: dec.choice, label: dec.label || dec.choice,
+        why: 'declared situation-changing by the seed and not absorbed by the frame' };
+    } catch (e) { return { displaces: false, why: 'threw: ' + (e && e.message) }; }
+  }
+  window._recordedChoiceDisplacesFrame = _recordedChoiceDisplacesFrame;
 
   function _temptFateOwnedInvocation() {
     try {

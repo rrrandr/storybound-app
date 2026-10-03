@@ -123,12 +123,18 @@ export const stageOf = (sys) => {
   const AMARK = [/FORBIDDEN INVENTIONS/i, /SCENE DIRECTIVES/i, /DIRECTIVE/, /write the scene/i,
     /screenplay-native|cinematic-romance writer|prose author/i]
     .reduce((n, rx) => n + (rx.test(sys) ? 1 : 0), 0);
-  // THE OAS ONE-ON-ONE. Its calls were classified 'other' and therefore aborted and invisible,
-  // which is part of how a REQUIRED segment of the opening went missing without anything saying so.
-  if (/intimate dialogue|You play .* opening an intimate|OAS/i.test(sys)) return 'oas';
   if (/RUNTIME COMMIT verifier/.test(sys)) return 'verifier';
   if (/CHARACTER MEMORY EXTRACTOR/.test(sys)) return 'memory';
   if (AMARK >= 2) return 'author';
+  // THE OAS ONE-ON-ONE, tested AFTER the author and on its OWN opening sentence.
+  //
+  // Its calls used to classify as 'other' and were aborted invisibly — part of how a REQUIRED
+  // segment of the opening went missing with nothing saying so. My first fix matched /OAS/i, which
+  // is broad enough to swallow the AUTHOR prompt: a replay then showed
+  // stages ["planner","oas","oas:blocked_duplicate"] and no scene generated at all. The pattern is
+  // now the observed opener sentence, and it is tested after the author markers so a prompt that
+  // merely mentions the OAS can never be mistaken for one.
+  if (/You play .{1,40}? opening an intimate dialogue/i.test(sys)) return 'oas';
   if (/SCENE-SPINE planner|SCENE planner/.test(sys)) return 'planner';
   if (/BODY BIBLE/.test(sys)) return 'bible';
   return 'other';
