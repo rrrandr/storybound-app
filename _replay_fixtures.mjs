@@ -134,7 +134,11 @@ export const stageOf = (sys) => {
   // stages ["planner","oas","oas:blocked_duplicate"] and no scene generated at all. The pattern is
   // now the observed opener sentence, and it is tested after the author markers so a prompt that
   // merely mentions the OAS can never be mistaken for one.
-  if (/You play .{1,40}? opening an intimate dialogue/i.test(sys)) return 'oas';
+  // Matched on the OAS RESPONSE SCHEMA, which both the opener and the turn prompts carry and the
+  // author prompt never does. My first pattern was the opener's own sentence, so TURN calls fell to
+  // 'other' and were aborted: the integrated replay served exactly one beat, the dialogue never
+  // resolved, and every downstream assertion failed for a reason that had nothing to do with them.
+  if (/li_face_state|li_dialogue|You play .{1,40}? opening an intimate dialogue/i.test(sys)) return 'oas';
   if (/SCENE-SPINE planner|SCENE planner/.test(sys)) return 'planner';
   if (/BODY BIBLE/.test(sys)) return 'bible';
   return 'other';
