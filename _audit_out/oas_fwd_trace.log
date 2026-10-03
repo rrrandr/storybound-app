@@ -1,0 +1,22 @@
+LIVE liTurnHistory entry:
+  {"userInput":"I am still here. / I hold his gaze.","userInputRaw":"I am still here. / I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","liResponse":"The Answer is in your hands, not mine. Mind what it does with that. My palms are damp around it, and he watches me notice.","faceSt
+
+SNAPSHOT keys: ["0"]  isDev=false  beats=7
+  first snapshot beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"what","mouthUrl":"/assets/test-mouths/MM-mouth-what.png","fateCardTag":null,"fateChangeApplied":null,"t
+
+ARCHIVE records: 1  beats=7
+  first archive beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"what","mouthUrl":"/assets/test-mouths/MM-mouth-what.png","fateCardTag":null,"fateChangeApplied":null,"t
+
+EXTRACTOR OUTPUT (12 lines):
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Keep looking at me like that and The Answer might surprise you.
+      (Julian's game was as dangerous as it was exciting; I couldn't help noticing his tunic getting tighter.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Say it plainly and I will stop. You do not want me to stop.
+      (Somewhere behind us a guest shifts, and I remember we are still being watched.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then we understand each other, and everyone here understands us.
+      (The clearing has not made a sound in a long while.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then say it where they can hear you, or do not say it at all.
+      (He waits, and the clearing waits with him.)

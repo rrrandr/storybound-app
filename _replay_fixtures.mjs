@@ -203,6 +203,13 @@ export const OAS_TURNS = [
     face: 'lip_bite_held', tone: 'charged' },
   { dialogue: 'Then we understand each other, and everyone here understands us.',
     action: 'The clearing has not made a sound in a long while.',
+    face: 'hard_exhale', tone: 'charged' },
+  // A CONCRETE ACTION IN THE DESCRIPTION, deliberately. Roman's test: things HAPPEN in these
+  // beats — an object set down, a hand moving — and a handoff that forwards only dialogue loses
+  // the event. This beat changes the physical situation, so a verification can assert that the
+  // EVENT survived rather than that a heading appeared.
+  { dialogue: 'Hold it or set it down. Either tells them something.',
+    action: 'He sets The Answer down on the stone between us and steps back.',
     face: 'hard_exhale', tone: 'charged' }
 ];
 
