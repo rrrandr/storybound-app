@@ -102127,6 +102127,30 @@ function _buildAuthorFloorDirective(s) {
                   return _tfoDurableLine + _tfoActiveLine;
                 } catch (_) { return ''; }
               })());
+          // ═══ THE LIVE OAS EXCHANGE REACHES THIS PLANNER ON EVERY ROW (Roman 2026-10-03) ═══
+          // It used to arrive ONLY inside the open-row branch below, so an ordinary row planned the
+          // scene after a one-on-one without ever being told what was said in it. The need for that
+          // history has nothing to do with whether the row is open: a reader who just spent seven
+          // turns with Julian has changed the situation either way.
+          //
+          // Both halves are forwarded — his dialogue AND the short description beneath it, which is
+          // where things actually happen in this format (a hand moving, The Answer set down). The
+          // shared extractor supplies both; see _extractRecentOASExchangeLines.
+          try {
+            if (typeof _extractRecentOASExchangeLines === 'function') {
+              var _oasShared = _extractRecentOASExchangeLines(window.state, { limit: 4 });
+              if (_oasShared && _oasShared.length) {
+                _scSys += '\n\nRECENT ONE-ON-ONE EXCHANGE (already happened, archived before this '
+                  + 'handoff — what was ACTUALLY said and done just before the reader\'s submission. '
+                  + 'Plan FROM its consequences; do not re-stage or re-tell it):\n'
+                  + _oasShared.join('\n');
+                try { console.log('[PLANNER-CTX] forwarded ' + _oasShared.length
+                  + ' OAS exchange line(s) on a ' + ((_curMs && _curMs._open) ? 'open' : 'ordinary')
+                  + ' row'); } catch (_) {}
+              }
+            }
+          } catch (_) {}
+
           // ═══ OPEN ROW — READER POSTURE → BOUNDED LOCAL OBJECTIVE (Roman 2026-09-11) ═══
           // The seed owns the aftermath and the long arc; the reader owns the posture; the planner derives ONE local objective.
           if (_curMs && _curMs._open && _curMs._eff) {
@@ -133772,8 +133796,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           var candidate = ['  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:'];
           recent.forEach(function (e) {
             var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
-            if (e.kind === 'baked' && e.plannedEvent) bits.push('the authored opening established: ' + e.plannedEvent);   // 2026-09-10: a fixed seed opening records what it established
-            if (e.kind === 'oas_interrupt' && e.plannedEvent) bits.push('the opening ended: ' + e.plannedEvent);            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
+            // ── READ THE WHOLE EVENT WHERE THE RECORD HAS ONE (Roman 2026-10-03) ──────────────
+            // Keeping the full text in `plannedEventFull` preserved it in STORAGE and changed
+            // nothing about planning, because every consumer still read the truncated
+            // `plannedEvent`. That is the same mistake as archiving the OAS and not forwarding it.
+            // The builder below already fits its output to a budget by dropping whole PAGES, so a
+            // longer line here is bounded by that existing mechanism rather than by a blind cut
+            // mid-sentence. Older records without the field fall back unchanged.
+            var _evText = function (ent) { return (ent && (ent.plannedEventFull || ent.plannedEvent)) || ''; };
+            if (e.kind === 'baked' && _evText(e)) bits.push('the authored opening established: ' + _evText(e));   // 2026-09-10: a fixed seed opening records what it established
+            if (e.kind === 'oas_interrupt' && _evText(e)) bits.push('the opening ended: ' + _evText(e));            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
             if (e.act) bits.push('reader did: ' + e.act);
             if (e.dia) bits.push('reader said: "' + e.dia + '"');
             if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
