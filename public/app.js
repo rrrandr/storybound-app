@@ -134071,8 +134071,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       recent.forEach(function (rec, i) {
         var hn = rec.historyNote;
         var n = recs.length - recent.length + i + 1;
+        // A QUOTE-BACKED ITEM CONTRIBUTES TO BOTH SECTIONS, and the split is the safeguard.
+        // Only the QUOTATION is presented as something the scene contains; the author's sentence
+        // about it goes under the summary heading like any other paraphrase. This is what keeps a
+        // real-but-irrelevant quotation from laundering a false claim: an author can attach
+        // "The chamber was quiet for a long moment" to the claim "Julian did not give her
+        // anything", and the planner then sees the quiet chamber as text and the claim as the
+        // author's unverified account — never the claim as fact.
         (hn.quoted || []).forEach(function (x) {
           estLines.push('  scene ' + n + ' — the scene\'s own words: "' + x.quote + '"');
+          sumLines.push('  scene ' + n + ' [' + x.kind + ', author\'s gloss on the above]: ' + x.text);
         });
         (hn.knowledge || []).forEach(function (k) {
           estLines.push('  scene ' + n + ' — ' + k.who + ' learned this on the page: "' + k.quote + '"');
@@ -230454,6 +230462,9 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       } catch (_) {}
       lines.push('- KINK CLASSIFICATION (output requirement): in your JSON output, set "kink_introduced" to the kink name ' + liName + ' introduced THIS scene (or null), and "pc_kink_response" to liked/rejected/none based on how ' + pcName + ' reacted to any PENDING kink. These update memory across scenes.');
+      // WHAT THE NOTE IS FOR, told to the author in the terms that matter: it summarizes the
+      // FINISHED scene, and a quotation is what makes a claim count downstream.
+      lines.push('- HISTORY NOTE (output requirement): fill "history_note" describing THE SCENE YOU JUST WROTE, never the scene you were asked to write. If the plan said a demand would be accepted and your beats only show a clerk beginning to read it, the note says the clerk began reading. Give each claim a "quote" copied EXACTLY from your own beats — a claim without one is kept as your unverified account and will NOT be treated as fact by later scenes. Omit anything your beats do not show. The reader never sees this.');
       // Primary engine block (only meaningful when is_consummate_scene=true).
       try {
         if (typeof window._buildEngineSelectionDirective === 'function') {
@@ -230508,6 +230519,20 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "other_postures": { "<CharName>": "<≤10 words — that character\'s body cue: the friend leaning in, the antagonist blocking the door>" },\n' +
       '    "proximity": "intimate | personal | social | public — physical distance between the figures; pick for the DRAMA (a confrontation is personal/intimate, NOT social-distance across a wide table)"\n' +
       '  } ],\n' +
+      // THE SCENE'S OWN HISTORY NOTE (Roman 2026-10-03), written WITH the scene so the next
+      // planner and author inherit what actually happened instead of a positional clip of the
+      // text. It is never rendered to the reader. Every claim asks for the scene's OWN WORDS
+      // alongside it, because a quotation is the only thing downstream treats as evidence — a
+      // claim without one is still carried, but plainly as the author's unverified account.
+      '  "history_note": {\n' +
+      '    "events": [ { "text": "<one sentence: what ACTUALLY happened in the scene you just wrote — not what was planned>", "quote": "<a SHORT EXACT phrase copied verbatim from your own beats above that shows it>" } ],\n' +
+      '    "decisions": [ { "text": "<the reader\'s choice and what it actually changed>", "quote": "<verbatim phrase>" } ],\n' +
+      '    "consequences": [ { "text": "<what changed as a result — standing, position, relationship>", "quote": "<verbatim phrase>" } ],\n' +
+      '    "transfers": [ { "text": "<any object that changed hands, or any change of location>", "quote": "<verbatim phrase>" } ],\n' +
+      '    "disclosures": [ { "text": "<what was revealed, accused, promised or admitted ON THE PAGE>", "quote": "<verbatim phrase>" } ],\n' +
+      '    "obligations": [ { "id": "<short-stable-id>", "text": "<something now owed, demanded or still unanswered>", "owedBy": "<who owes it>" } ],\n' +
+      '    "resolves": [ "<id of an earlier obligation this scene settled, if any>" ]\n' +
+      '  },\n' +
       '  "panels": [ {\n' +
       '    "panelIdx": 0,\n' +
       '    "dramaticQuestion": "<the ONE question this image asks the reader — \\"Can the PC reach Soren before the raider kills him?\\" / \\"Will the wish work?\\". Every compositional choice reinforces it.>",\n' +

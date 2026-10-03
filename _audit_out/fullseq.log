@@ -1,0 +1,38 @@
+=== FULL SEQUENCE (provider-free, $0) ===
+
+1. THE AUTHOR IS ACTUALLY ASKED FOR THE NOTE
+     CG author system prompt: 135072 chars
+  ok   the schema requests history_note
+  ok   and requires a verbatim quote per claim
+  ok   and says summarize the FINISHED scene, not the planned one
+
+2. PARSE -> RENDER -> STORE, through the production persist
+  ok   the scene rendered from the beats
+  ok   a note was stored on that exact scene record
+  ok   THE NOTE IS NOT IN THE READER-VISIBLE PROSE
+     quote-backed: Julian gave Lirael the sealed writ. | Julian did not give her anything.
+     summary-only: The commission accepted the demand. | Lirael handed the writ to Julian.
+  ok   the true quote-backed claim is quote-backed
+  ok   CODEX 3 (escalation) is summary-only, not quote-backed
+  ok   CODEX 2 (reversed direction) is summary-only
+  ok   the sealed disclosure was DROPPED from every tier
+  ok   the false knowledge disclosure was not stored
+  ok   both obligations are stored as PROPOSED, none as fact
+
+3. CODEX 1 — a REAL quotation must not launder a contradicted claim
+  ok   the block presents THE QUOTATION, not the author's sentence about it
+
+4. AN OBLIGATION GENUINELY RESOLVED IN A LATER SCENE
+  ok   two obligations were open before
+  ok   THE RESOLVED ONE CLOSED
+  ok   and the unresolved one is still carried
+
+5. IT REACHES THE NEXT PLANNER'S ACTUAL REQUEST
+  ok   a request was assembled
+  ok   the VERBATIM quotation reached it
+  ok   the summary reached it under its unverified heading
+  ok   THE SEALED CLAIM NEVER REACHED IT
+  ok   the resolved obligation is NOT still being carried
+  ok   the open obligation IS carried, labelled proposed
+
+22/22 checks passed

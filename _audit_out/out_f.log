@@ -1,0 +1,18 @@
+=== ESTABLISHED HISTORY IN THE OUTGOING REQUEST (provider-free, $0) ===
+
+POSITIVE ARM — forwarding enabled
+     provider requests captured: 3  (27446 chars)
+  ok   A REQUEST WAS ACTUALLY ASSEMBLED (otherwise every check below is vacuous)
+  ok   the quoted-text heading reached the request
+  ok   THE SCENE'S VERBATIM WORDS reached it, not just the heading
+  ok   the author's summary reached it, under its own unverified heading
+  ok   the still-open obligation reached it, labelled as proposed
+  ok   A SEALED CLAIM NEVER REACHED IT — Julian's secret cannot ride in on a note
+
+NEGATIVE ARM — forwarding disabled, the same assertions MUST go red
+     provider requests captured: 3  (24920 chars)
+  ok   a request was still assembled with forwarding off
+  ok   THE CHECK BITES: the history heading is GONE when forwarding is disabled
+  ok   and the quoted text is gone with it
+
+9/9 checks passed
