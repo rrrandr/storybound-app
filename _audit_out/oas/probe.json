@@ -1,0 +1,79 @@
+{
+  "hasBtn": true,
+  "r": {
+    "ok": true,
+    "dialogueActive": true,
+    "consumeFn": true,
+    "interruptionRecord": false,
+    "oasPlanPending": false,
+    "sceneDecisionNeeded": true,
+    "route": "in-page el.click() — host not rendered in this harness"
+  },
+  "calls": [
+    {
+      "url": "/api/mistral-proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    },
+    {
+      "url": "/api/proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    },
+    {
+      "url": "/api/proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    },
+    {
+      "url": "/api/deepseek-proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "stage": "other",
+      "sysHead": "You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t"
+    }
+  ],
+  "logs": [
+    "[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house",
+    "%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold",
+    "[CG:HELPERS] ready=true",
+    "[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial",
+    "[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions",
+    "[BAKED:IDENTITY] ledger entities for the seed cast: +3",
+    "[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–",
+    "[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate",
+    "[BAKED-IMG] mounted 0 occurrence(s): ",
+    "[BAKED:SETUP] running deferred story initialization…",
+    "[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)",
+    "[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)",
+    "[BAKED:GATE] Genesis unlocked (oas-probe) — starter=starter_first_sacrifice",
+    "[BAKED:OAS] handoff tapped — entering the one-on-one",
+    "[INTIMACY-INIT:PLAN-SHAPE] {\"hasBeats\":true,\"beatCount\":0,\"hasVisualState\":false,\"hasInterruption\":true,\"is_consummate_scene\":true,\"engine\":\"literary\",\"renderMode\":\"staged_story_mode\",\"storyturn\":\"ST1\"}",
+    "[INTIMACY-INIT:AUTHORED-FRAME] frame=1153ch cue=118ch oasOpening=no postInterruptionBeat=no",
+    "[INTIMACY-DIALOGUE:WOUND] not eligible (encounter #1, cooldown_clear=true)",
+    "[INTIMACY-DIALOGUE:TELEMETRY] started {type: started, timestamp: 1790994336686, storyId: 45657069-80cd-4474-99f2-199e17e01af6, sceneIdx: 0, storyturn: ST1}",
+    "[OAS-AUDIO] started @ curious — breath silent until mouth opens",
+    "[INTIMACY-DIALOGUE] Mouth DB miss — checking cross-user Supabase bank + starting background prebatch. UI proceeds with placeholders.",
+    "[INTIMACY-DIALOGUE:TELEMETRY] mouth_db_miss_nonblocking {type: mouth_db_miss_nonblocking, timestamp: 1790994336688, storyId: 45657069-80cd-4474-99f2-199e17e01af6, sceneIdx: 0, storyturn: ST1}",
+    "[INTIMACY-MOUNT] staged Book → gnReader (single reader screen)",
+    "[INTIMACY-MOUNT] gnPanelDisplay exists: true visible: true",
+    "[OAS-LLM] Mode: FAST (speed chain)",
+    "[OAS-LLM] Mistral threw: Failed to fetch",
+    "[OAS-LLM] Grok (grok-4.20-0309-non-reasoning) threw: Failed to fetch",
+    "[OAS-LLM] Grok (grok-4-1-fast-non-reasoning) threw: Failed to fetch",
+    "[OAS-LLM] DeepSeek (deepseek-v4-flash) threw: Failed to fetch",
+    "[OAS-LLM] Mistral threw: Failed to fetch",
+    "[OAS-LLM] gpt-4o-mini threw: Failed to fetch",
+    "[INTIMACY-OPENER] Empty response — opener skipped (scene stays silent until first user turn).",
+    "[INTIMACY-DIALOGUE] Rehydrating OAS UI (beat 0, temp curious)",
+    "[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)"
+  ]
+}

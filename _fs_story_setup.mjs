@@ -53,6 +53,36 @@ export const unlockFS = async (page, how) => {
   return { returned: r, state: st };
 };
 
+// THE OAS IS A REQUIRED PART OF THE OPENING, and the corpus run skipped it.
+//
+// _renderBakedScene1 mounts #bakedOASEnterBtn for a CG package that declares
+// endsAt:'oas_interrupt'. Tapping it runs _bakedGenesisGate, whose onUnlocked callback is what
+// calls _initIntimacyDialogue. My sequence called _unlockBakedGenesis DIRECTLY, so the gate never
+// fired its callback and the one-on-one never opened: the issue began from a truncated opening,
+// and Scene 2 never saw the OAS history. With Genesis already unlocked the gate returns false and
+// the handler falls through to _initIntimacyDialogue, which is the production path post-unlock.
+export const enterOAS = async (page, opts) => {
+  const o = opts || {};
+  const present = await page.evaluate(() => !!document.getElementById('bakedOASEnterBtn'));
+  if (!present) return { ok: false, why: 'no #bakedOASEnterBtn mounted' };
+  let route = 'playwright';
+  await page.click('#bakedOASEnterBtn', { timeout: 8000 }).catch(async () => {
+    route = 'in-page el.click() — host not rendered in this harness';
+    await page.evaluate(() => { const b = document.getElementById('bakedOASEnterBtn'); if (b) b.click(); });
+  });
+  await page.waitForTimeout(o.settleMs || 6000);
+  return page.evaluate(() => ({
+    ok: true,
+    dialogueActive: !!(window.state._intimacyDialogue || window.state._intimacyActive
+      || window.state.intimacyDialogue),
+    consumeFn: typeof window._intimacyDialogueConsumeInput === 'function',
+    interruptionRecord: !!window.state._intimateInterruption,
+    oasPlanPending: !!window.state._bakedPendingOASPlan,
+    sceneDecisionNeeded: typeof window._sceneDecisionNeeded === 'function'
+      ? !!window._sceneDecisionNeeded() : null
+  })).then(r => Object.assign(r, { route }));
+};
+
 export const finalizePreview = async (page) => {
   const before = await page.evaluate(() => ({
     previewActive: !!window.state.previewActive, storyLength: window.state.storyLength || null }));

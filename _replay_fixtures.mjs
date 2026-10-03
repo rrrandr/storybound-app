@@ -123,6 +123,9 @@ export const stageOf = (sys) => {
   const AMARK = [/FORBIDDEN INVENTIONS/i, /SCENE DIRECTIVES/i, /DIRECTIVE/, /write the scene/i,
     /screenplay-native|cinematic-romance writer|prose author/i]
     .reduce((n, rx) => n + (rx.test(sys) ? 1 : 0), 0);
+  // THE OAS ONE-ON-ONE. Its calls were classified 'other' and therefore aborted and invisible,
+  // which is part of how a REQUIRED segment of the opening went missing without anything saying so.
+  if (/intimate dialogue|You play .* opening an intimate|OAS/i.test(sys)) return 'oas';
   if (/RUNTIME COMMIT verifier/.test(sys)) return 'verifier';
   if (/CHARACTER MEMORY EXTRACTOR/.test(sys)) return 'memory';
   if (AMARK >= 2) return 'author';

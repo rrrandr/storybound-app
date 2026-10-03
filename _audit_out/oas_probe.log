@@ -1,0 +1,36 @@
+OAS affordance mounted at launch: true
+enterOAS -> {"ok":true,"dialogueActive":true,"consumeFn":true,"interruptionRecord":false,"oasPlanPending":false,"sceneDecisionNeeded":true,"route":"in-page el.click() — host not rendered in this harness"}
+
+PROVIDER CALLS THE OAS ATTEMPTED (6):
+  other  /api/mistral-proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+  other  /api/proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+  other  /api/proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+  other  /api/deepseek-proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+  other  /api/mistral-proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+  other  /api/chatgpt-proxy
+      You play Julian opening an intimate dialogue. Output ONE JSON object that matches the schema below — no surrounding prose. This is the OPENING beat; t
+
+LOG LINES:
+  · [INTIMACY-INIT:AUTHORED-FRAME] frame=1153ch cue=118ch oasOpening=no postInterruptionBeat=no
+  · [INTIMACY-DIALOGUE:WOUND] not eligible (encounter #1, cooldown_clear=true)
+  · [INTIMACY-DIALOGUE:TELEMETRY] started {type: started, timestamp: 1790994336686, storyId: 45657069-80cd-4474-99f2-199e17e01af6, sceneIdx: 0, storyturn: ST1}
+  · [OAS-AUDIO] started @ curious — breath silent until mouth opens
+  · [INTIMACY-DIALOGUE] Mouth DB miss — checking cross-user Supabase bank + starting background prebatch. UI proceeds with placeholders.
+  · [INTIMACY-DIALOGUE:TELEMETRY] mouth_db_miss_nonblocking {type: mouth_db_miss_nonblocking, timestamp: 1790994336688, storyId: 45657069-80cd-4474-99f2-199e17e01af6, sceneIdx: 0, storyturn: ST1
+  · [INTIMACY-MOUNT] staged Book → gnReader (single reader screen)
+  · [INTIMACY-MOUNT] gnPanelDisplay exists: true visible: true
+  · [OAS-LLM] Mode: FAST (speed chain)
+  · [OAS-LLM] Mistral threw: Failed to fetch
+  · [OAS-LLM] Grok (grok-4.20-0309-non-reasoning) threw: Failed to fetch
+  · [OAS-LLM] Grok (grok-4-1-fast-non-reasoning) threw: Failed to fetch
+  · [OAS-LLM] DeepSeek (deepseek-v4-flash) threw: Failed to fetch
+  · [OAS-LLM] Mistral threw: Failed to fetch
+  · [OAS-LLM] gpt-4o-mini threw: Failed to fetch
+  · [INTIMACY-OPENER] Empty response — opener skipped (scene stays silent until first user turn).
+  · [INTIMACY-DIALOGUE] Rehydrating OAS UI (beat 0, temp curious)
+  · [OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
