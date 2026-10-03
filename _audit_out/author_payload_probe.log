@@ -1,0 +1,26 @@
+THE FIVE CARDS DEALT THIS SCENE (identity, action, fate mode):
+  [0] The Bargain  id=choose  variant=bargain  ordinaryWish=true
+        action: Fate, heal his wound. I offer seven years of my life — take it, if that is your price.
+  [1] The Refusal  id=guided  variant=refusal  ordinaryWish=false
+        action: Turn from the old temptation and gather him up. Run for the healer — your own two hands will have to be enough.
+  [2] Confession  id=confession  variant=-  ordinaryWish=false
+        action: The moment demands truth. Tell Julian what you've been holding back.
+  [3] Reversal  id=reversal  variant=-  ordinaryWish=false
+        action: You step between Dohkar and Julian, making your position clear.
+  [4] Silence  id=silence  variant=-  ordinaryWish=false
+        action: Let the silence carry what your words won't. Julian can feel the absence.
+
+AUTHOR REQUEST: system 169846 chars, user 98007 chars
+
+DID UNSELECTED CARDS REACH THE AUTHOR?
+  [0] SELECTED   "The Bargain"  titleInPayload=true  actionInPayload=false
+  [1] unselected "The Refusal"  titleInPayload=false  actionInPayload=false
+  [2] unselected "Confession"  titleInPayload=false  actionInPayload=false
+  [3] unselected "Reversal"  titleInPayload=false  actionInPayload=false
+  [4] unselected "Silence"  titleInPayload=false  actionInPayload=false
+  payload mentions "Petition": true
+  payload mentions "Tempt Fate": true
+  payload mentions "sacrifice": true
+  payload mentions "memory": true
+
+artefacts: _audit_out/author_ctx/
