@@ -1,0 +1,97 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   PROVIDER REQUESTS SEEN (34):
+     [other] 455c  Write a "Previously…" recap as EXACTLY four bullet points, each 13 wor
+     [bible] 8648c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char
+     [bible] 18924c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+     [other] 3705c  You are the architect of WHY THIS PAIR. Read the two Bibles and the ro
+     [other] 6724c  You are designing an R-PLOT — a tiny narrative planning object that tr
+     [other] 55021c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 55493c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 1876c  You are compressing the procedural A-plot of a romance novel into SIX 
+     [bible] 8928c  You are generating an ANTAGONIST BODY BIBLE for a romance novel — a pe
+     [other] 4239c  You are a scene-structure planner for the OPENING scene of an interact
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 11683c  ROLE: You are the Strategy Engine for an interactive romance story gen
+     [planner] 7735c  You are the SCENE-SPINE planner for an interactive romance engine. The
+     [author] 496627c   AFTER the scene is complete, on a new line, append a HISTORY NOTE fo
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 704c  Fix ONLY mechanical defects in this scene: broken or incomplete senten
+     [other] 1102c  You are the same narrator continuing THIS exact scene. Write ONE or TW
+     [other] 1107c  You are the same narrator continuing THIS exact scene. Write ONE or TW
+     [other] 3238c  You are an editorial auditor. Read the SCENE PROSE and return TWO orth
+     [other] 5645c  You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance 
+     [other] 1414c  You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in 
+     [other] 507c  You are a precise line-editor, not a writer. You will be given a FINIS
+     [other] 507c  You are a precise line-editor, not a writer. You will be given a FINIS
+     [other] 103c  You extract structured narrative memory from fiction scenes. Respond O
+     [other] 3916c  You are a copy editor. Re-paragraph the SCENE the user sends for stand
+     [other] 3916c  You are a copy editor. Re-paragraph the SCENE the user sends for stand
+     [other] 12338c  You classify the ambient soundscape of a romance/fiction scene. Return
+     [other] 3565c  You are a story-structure auditor applying ONE test: the WOUND→LI SWAP
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [other] 3151c  You are the SUBPLOT GENERATOR for Storybound. Your job: generate 2 SUB
+
+   ISSUED LENS OPERATIONS FROM THE LIVE PROMPT:
+     cipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" } ("behavior" is the FLOOR: an observable action, a sensory selection (what they look at / away from), how they handle speech (answer, delay, cut in, go quiet), posture, timing, or a material interaction with something in this scene. TEST: could a camera record it, or could you write it as one sentence of action? If not, rewrite it. ✗ "a woman clinging to the illusion of worthiness" ✗ "an authority whose judgment will decide her fate" ✗ "a name that carries more weight than it should" — these are conclusions ABOUT people; no camera can see them.) (YOU DO NOT WRITE THE PSYCHOLOGY. The canonical truth you cite is delivered 
+   setup fixtures served: {"recap":1,"pc_bible":1,"li_bible":1,"why_pair":1,"r_plot":1,"a_plot":2,"aplot_compress":1,"antagonist_bible":1,"opening_planner":1,"normalization":2,"strategy":1,"swap_test":1,"subplots":1}
+   STILL UNFIXTURED (14):
+     You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+     You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments abo
+     You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+     You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An 
+     You are a precise line-editor, not a writer. You will be given a FINISHED scene and a spec
+     You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON,
+     You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue f
+     You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro
+     You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read t
+   history-note state: {"pending":null,"notes":1,"scenes":1,"pageUid":"pg:16afc125-aba1-4477-a1d9-93426a8c4e9b","ledger":2}
+   HISTORY-NOTE log lines: ["[HISTORY-NOTE] continuation — 1 block(s) stripped before post-processing, note=parsed","[HISTORY-NOTE] pg:16afc125-aba1-4477-a1d9-93426a8c4e9b — 1 quote-backed, 0 summary-only, 1 proposed obligation(s)"]
+   author requests: 1   notes stored: 1
+   notes: [{"ref":"pg:16afc125-aba1-4477-a1d9-93426a8c4e9b","quoted":["began reading the demand aloud"],"summary":[],"obligations":["ob-lit-1"]}]
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE through the reader control
+   author payload markers: TURN:=true PLAYER ACTION:=false HISTORY_NOTE=true chars=496697
+  ok   1b. and it ASKS FOR THE NOTE
+  ok   3. THE READER SEES NO METADATA
+  ok   4. the note is keyed to the accepted page
+
+2. A SECOND SCENE — does scene 1 history reach its planner AND author?
+     submit: {"ok":true}  btnReady=true
+   notes: 1 -> 1
+   refs: ["pg:16afc125-aba1-4477-a1d9-93426a8c4e9b"]
+   NOT MEASURED: no second accepted scene, so 5a/5b have nothing to act on.
+
+3. A RESPONSE WITH NO NOTE — nothing inherited
+     submit: {"ok":true}  btnReady=true
+   notes: 1 -> 1   page: pg:16afc125-aba1-4477-a1d9-93426a8c4e9b
+  FAIL 6a. a response with NO note adds none, and the new page inherits nothing  — a page with no note of its own was given an earlier note
+
+4. A FAILED TURN, THEN A SUCCESSFUL ONE
+     submit: {"ok":true}  btnReady=true
+  ok   6b. a FAILED turn adds no note
+  ok   6c. and leaves no pending note behind
+     submit: {"ok":true}  btnReady=true
+   notes after recovery: 1   page: pg:16afc125-aba1-4477-a1d9-93426a8c4e9b
+   NOT MEASURED: no scene was accepted after the failure.
+
+5. A REAL LINE-EDITOR REWRITE REMOVES A CITED PASSAGE
+     submit: {"ok":true}  btnReady=true
+   line-editor calls: 2 -> 2   rewrite landed in the prose: false
+   NOT MEASURED: the line-editor pass did not alter the cited span in this run,
+   so there was no rewrite to invalidate the quotation. 7c stays UNPROVEN.
+
+6/7 checks passed

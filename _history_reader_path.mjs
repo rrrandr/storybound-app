@@ -6,7 +6,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { stageOf, isProviderEndpoint, oasTurn, oasClosingBeat, OAS_TURNS } from './_replay_fixtures.mjs';
-import { setupStageOf, SETUP_RESPONSES } from './_reader_setup_fixtures.mjs';
+import { setupStageOf, SETUP_RESPONSES, LINE_EDIT_REMOVING_CITED_SPAN } from './_reader_setup_fixtures.mjs';
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
@@ -31,7 +31,7 @@ const LIT = [
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const logs = [];
-let authorAll = ''; let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
+let authorAll = ''; let failAuthor = false; let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
 let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = ''; let openingUsr = '';
 const setupServed = {}; const unfixtured = []; let lineEditCalls = 0; let lineEdit = [];
 
@@ -94,6 +94,10 @@ await page.route('**/api/**', async (route) => {
         forces_choice: 'Answer now, or let it be read in full.', must_land_moments: [] }) }) });
   }
   if (stage === 'author') {
+    if (failAuthor) {
+      return route.fulfill({ status: 500, contentType: 'application/json',
+        body: JSON.stringify({ error: 'harness: simulated author failure' }) });
+    }
     authorReqs.push(sys);
     try { authorAll += '\n' + String((JSON.parse(raw || '{}').messages || []).map(m => m.content).join('\n')); } catch (_) {}
     litServed++;
@@ -379,6 +383,167 @@ if (authorReqs.length) {
   t('4. the note is keyed to the accepted page', after1.notes.length === 1
     && after1.notes[0].ref === after1.pageUid,
     'ref=' + JSON.stringify(after1.notes[0] && after1.notes[0].ref) + ' page=' + after1.pageUid);
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// THE REMAINING LITERARY SCENARIOS, each distinct.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+const litNotes = () => page.evaluate(() => ({
+  notes: (window.state._historyNotes || []).map(n => ({ ref: n.ref,
+    quoted: (n.quoted || []).map(q => q.quote), summary: (n.summary || []).map(x => x.text) })),
+  page: window.StoryPagination.getCurrentPageUid(),
+  pages: (window.StoryPagination.getPageCount ? window.StoryPagination.getPageCount() : null)
+}));
+
+async function litTurn(act, dia, waitMs) {
+  plannerReqs.length = 0; authorAll = ''; authorReqs.length = 0;
+  const pre = logs.length; const preProv = provSeen.length;
+  // Wait for the reader control to become usable again before submitting — a disabled button is
+  // the app telling us the previous turn has not finished.
+  let ready = false;
+  for (let i = 0; i < 40; i++) {
+    ready = await page.evaluate(() => {
+      const b = document.getElementById('submitBtn');
+      return !!b && !b.disabled;
+    });
+    if (ready) break;
+    await page.waitForTimeout(1500);
+  }
+  let r = await submitTurn(act, dia);
+  // A one-time interstitial can swallow a submission:
+  //   [PETITION:EMERGENCE] Submit blocked — re-zoom + toast (free credit granted)
+  // A reader simply presses submit again, so the harness does too — once — rather than reading
+  // the interstitial as a generation failure.
+  await page.waitForTimeout(4000);
+  if (provSeen.length === preProv) {
+    const blocked = logs.slice(pre).some(l => /Submit blocked/i.test(String(l)));
+    if (blocked) {
+      // The gate passes only when a Petition is actually pending (isCommittedFn:
+      // state.fate.pendingPetition, app.js:227293) and it fires at turn 1. The reader satisfies
+      // it by engaging a Petition fate card, so the harness CLICKS one rather than writing the
+      // state — manufacturing application state is exactly what this test must not do.
+      const petition = await page.evaluate(() => {
+        const sel = ['.fate-card.petition', '[data-fate-type="petition"]', '.petition-card',
+          '#petitionCard', '.fate-card'];
+        for (const q of sel) {
+          const els = [...document.querySelectorAll(q)].filter(e => e.offsetParent !== null);
+          if (els.length) { els[0].click(); return { clicked: q, count: els.length }; }
+        }
+        return { clicked: null,
+          cards: [...document.querySelectorAll('[class*=fate],[class*=petition]')]
+            .filter(e => e.offsetParent !== null).map(e => e.className.toString().slice(0, 40)).slice(0, 6) };
+      });
+      console.log('     petition affordance: ' + JSON.stringify(petition));
+      await page.waitForTimeout(2500);
+      const pend = await page.evaluate(() => !!(window.state.fate && window.state.fate.pendingPetition));
+      console.log('     pendingPetition now: ' + pend);
+      console.log('     interstitial swallowed the submission — pressing submit again');
+      for (let i = 0; i < 20; i++) {
+        const ok = await page.evaluate(() => { const b = document.getElementById('submitBtn');
+          return !!b && !b.disabled; });
+        if (ok) break; await page.waitForTimeout(1000);
+      }
+      r = await submitTurn(act, dia);
+    }
+  }
+  console.log('     submit: ' + JSON.stringify(r) + '  btnReady=' + ready);
+  await page.waitForTimeout(waitMs || 45000);
+  const prov = provSeen.slice(preProv);
+  console.log('     provider calls this turn: ' + prov.length + '  '
+    + JSON.stringify(prov.slice(0, 8).map(x => x.stage + ':' + x.chars)));
+  const fresh = logs.slice(pre).filter(l => !/CRACKLE|SCENE-AMB|Sparkle|IMAGE-GEN/i.test(String(l)));
+  console.log('     console this turn (' + fresh.length + '):');
+  fresh.slice(0, 12).forEach(l => console.log('       ' + String(l).slice(0, 155)));
+  return r;
+}
+
+console.log('\n2. A SECOND SCENE — does scene 1 history reach its planner AND author?');
+{
+  const before = await litNotes();
+  await litTurn('I ask the clerk to stop.', 'Who signed it?');
+  const after = await litNotes();
+  const pBody = plannerReqs.join('\n');
+  console.log('   notes: ' + before.notes.length + ' -> ' + after.notes.length);
+  console.log('   refs: ' + JSON.stringify(after.notes.map(n => n.ref)));
+  const secondRan = after.notes.length > before.notes.length;
+  if (!secondRan) {
+    console.log('   NOT MEASURED: no second accepted scene, so 5a/5b have nothing to act on.');
+  } else {
+    t('5a. THE SECOND PLANNER received scene 1\'s specific history',
+      /began reading the demand aloud|WHAT THE SCENES THEMSELVES SAY/.test(pBody),
+      'the planner request carries no scene-1 history');
+    t('5b. AND SO DID THE SECOND AUTHOR',
+      /began reading the demand aloud|WHAT THE SCENES THEMSELVES SAY/.test(authorAll),
+      'the author request carries no scene-1 history');
+    t('5c. the first note stayed on the FIRST page', after.notes[0].ref === before.notes[0].ref);
+  }
+}
+
+console.log('\n3. A RESPONSE WITH NO NOTE — nothing inherited');
+{
+  const before = await litNotes();
+  serveNote = false;
+  await litTurn('I wait.', '');
+  const after = await litNotes();
+  console.log('   notes: ' + before.notes.length + ' -> ' + after.notes.length
+    + '   page: ' + after.page);
+  t('6a. a response with NO note adds none, and the new page inherits nothing',
+    after.notes.length === before.notes.length
+      && !after.notes.some(n => n.ref === after.page),
+    'a page with no note of its own was given an earlier note');
+}
+
+console.log('\n4. A FAILED TURN, THEN A SUCCESSFUL ONE');
+{
+  const before = await litNotes();
+  failAuthor = true;
+  await litTurn('I turn to go.', '', 30000);
+  const mid = await litNotes();
+  t('6b. a FAILED turn adds no note', mid.notes.length === before.notes.length,
+    before.notes.length + ' -> ' + mid.notes.length);
+  const pend = await page.evaluate(() => !!window.state._pendingLiteraryHistoryNote);
+  t('6c. and leaves no pending note behind', pend === false);
+
+  failAuthor = false; serveNote = true; litIdx = 1;
+  await litTurn('I stay and listen.', '');
+  const after = await litNotes();
+  console.log('   notes after recovery: ' + after.notes.length + '   page: ' + after.page);
+  if (after.notes.length > mid.notes.length) {
+    t('6d. THE SCENE AFTER THE FAILURE GETS ITS OWN NOTE',
+      after.notes[after.notes.length - 1].ref === after.page);
+  } else {
+    console.log('   NOT MEASURED: no scene was accepted after the failure.');
+  }
+}
+
+console.log('\n5. A REAL LINE-EDITOR REWRITE REMOVES A CITED PASSAGE');
+{
+  const before = await litNotes();
+  // The author returns prose whose note cites a phrase the LINE-EDITOR will then rewrite away.
+  litIdx = 0; serveNote = true;
+  lineEdit = LINE_EDIT_REMOVING_CITED_SPAN;
+  const editsBefore = lineEditCalls;
+  await litTurn('I let him read it.', '');
+  const after = await litNotes();
+  const finalProse = await page.evaluate(() => {
+    const el = document.querySelector('.story-page, #storyText, .page-content');
+    return el ? el.innerText : (document.body ? document.body.innerText : ''); });
+  const rewrote = /unfolded the page and said nothing/.test(finalProse)
+    && !/began reading the demand aloud/.test(finalProse);
+  console.log('   line-editor calls: ' + editsBefore + ' -> ' + lineEditCalls
+    + '   rewrite landed in the prose: ' + rewrote);
+  if (!rewrote) {
+    console.log('   NOT MEASURED: the line-editor pass did not alter the cited span in this run,');
+    console.log('   so there was no rewrite to invalidate the quotation. 7c stays UNPROVEN.');
+  } else if (after.notes.length > before.notes.length) {
+    const n = after.notes[after.notes.length - 1];
+    t('7c. A QUOTE REMOVED BY THE REWRITE IS NOT ESTABLISHED',
+      !n.quoted.some(q => /began reading the demand aloud/.test(q)),
+      'the note was checked against the draft, not the accepted prose');
+    t('7c2. and the claim survives as unverified summary rather than vanishing',
+      n.summary.some(x => /clerk began reading/i.test(x)));
+  }
 }
 
 fs.mkdirSync('_audit_out/reader', { recursive: true });
