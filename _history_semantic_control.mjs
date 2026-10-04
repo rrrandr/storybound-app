@@ -43,6 +43,7 @@ console.log('=== SEMANTIC CONTROL — a summary is not a fact (provider-free, $0
 console.log('1. A CONTRADICTED CLAIM MUST NOT BE PRESENTED AS SOMETHING THAT HAPPENED');
 for (const c of CASES) {
   const r = await page.evaluate(({ prose, claim }) => {
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:sem', text: prose }];
     window._attachHistoryNote('lit:sem', { events: [{ text: claim }] }, prose);
     const block = window._buildHistoryContinuityBlock(window.state, {}) || '';
@@ -58,6 +59,7 @@ console.log('\n2. A KNOWLEDGE CLAIM CANNOT INVENT A DISCLOSURE');
   const r = await page.evaluate(() => {
     const prose = 'Julian said nothing about the wish. The assembly watched the Dohkar instead.';
     window.state._starterId = 'starter_first_sacrifice';   // the story that DECLARES this seal
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:know', text: prose }];
     window._attachHistoryNote('lit:know', {
       knowledge: { 'the assembly': 'knows Julian secretly countered the wish' } }, prose);
@@ -87,6 +89,7 @@ console.log('\n3. AN OBLIGATION IS A PROPOSAL, NOT AN ESTABLISHED FACT');
 {
   const r = await page.evaluate(() => {
     const prose = 'The room emptied without anyone saying what came next.';
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:ob', text: prose }];
     window._attachHistoryNote('lit:ob', {
       obligations: [{ text: 'Lirael swore before the commission to surrender The Answer.' }] }, prose);
@@ -101,6 +104,7 @@ console.log('\n3. AN OBLIGATION IS A PROPOSAL, NOT AN ESTABLISHED FACT');
 console.log('\n4. HOW AN OBLIGATION LEGITIMATELY CLOSES');
 {
   const r = await page.evaluate(() => {
+    window.state._historyNotes = [];
     window.state.scenes = [];
     const p1 = 'Lirael was told to answer for her conduct at the inquiry.';
     window.state.scenes.push({ uid: 'lit:o1', text: p1 });
@@ -138,6 +142,7 @@ console.log('\n5. CODEX ROUND 2 — the seal system, not a phrase list');
     window.state._starterId = 'starter_first_sacrifice';
     const seals = window._hnSealsInForce(window.state);
     const prose = 'Julian said nothing. The chamber stayed quiet.';
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:seal', text: prose }];
     window._attachHistoryNote('lit:seal', {
       disclosures: [{ text: 'Julian used his wish to thwart Seren in secret.' }] }, prose);
@@ -186,6 +191,7 @@ console.log('\n7. KNOWLEDGE IS NEVER ESTABLISHED BY AN UNRELATED QUOTE');
 {
   const r = await page.evaluate(() => {
     const prose = 'The chamber was quiet for a long moment. Julian said nothing.';
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:k2', text: prose }];
     window._attachHistoryNote('lit:k2', {
       knowledge: { 'the assembly': { text: 'learned that the writ was forged',
@@ -203,6 +209,7 @@ console.log('\n7. KNOWLEDGE IS NEVER ESTABLISHED BY AN UNRELATED QUOTE');
 console.log('\n8. AN UNSUPPORTED RESOLUTION CANNOT DELETE AN OBLIGATION');
 {
   const r = await page.evaluate(() => {
+    window.state._historyNotes = [];
     window.state.scenes = [];
     const p1 = 'The writ was taken and not given back.';
     window.state.scenes.push({ uid: 'lit:r1', text: p1 });

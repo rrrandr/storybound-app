@@ -52,6 +52,7 @@ console.log('   scene is ' + MID_SCENE.length + ' chars; the handover sits at ' 
   // change their arithmetic. What must be true is that the handover REACHES THE MODELS, which is
   // what the note carries.
   const d = await page.evaluate(({ text }) => {
+    window.state._historyNotes = [];
     window.state.scenes = [];
     const rec = window._sbPersistSceneProjection
       ? window._sbPersistSceneProjection({ kind: 'body', input: text, uid: 'lit:midscene',
@@ -114,6 +115,7 @@ console.log('\n4. A QUOTATION IS EVIDENCE; A PARAPHRASE IS NOT');
   const PROSE = 'The chamber was quiet. Julian took the sealed writ from his sleeve and put it '
     + 'into Lirael\'s hands. She closed her fingers around it. The Dohkar did not look up.';
   const r = await page.evaluate(({ prose }) => {
+    window.state._historyNotes = [];
     window.state.scenes = [{ uid: 'lit:hn-test', text: prose }];
     window._attachHistoryNote('lit:hn-test', {
       // QUOTE-BACKED: the author supplied the scene's own words alongside its summary.
@@ -152,12 +154,15 @@ console.log('\n4. A QUOTATION IS EVIDENCE; A PARAPHRASE IS NOT');
 console.log('\n5. OBLIGATIONS OUTLIVE THE RECENT WINDOW');
 {
   const r = await page.evaluate(() => {
+    window.state._historyNotes = [];
     window.state.scenes = [];
     for (let i = 1; i <= 6; i++) {
       window.state.scenes.push({ uid: 'lit:s' + i, text: 'Scene ' + i + ' happened and was read.',
-        historyNote: { v: 2, quoted: [], summary: [{ kind: 'events', text: 'scene ' + i + ' event' }],
-          obligations: i === 1 ? [{ id: 'ob-old', text: 'The writ must be answered before the inquiry.' }] : [],
-          knowledge: [], resolves: [] } });
+        historyNote: null });
+      window.state._historyNotes.push({ v: 3, ref: 'lit:s' + i, quoted: [],
+        summary: [{ kind: 'events', text: 'scene ' + i + ' event' }],
+        obligations: i === 1 ? [{ id: 'ob-old', text: 'The writ must be answered before the inquiry.' }] : [],
+        knowledge: [], resolves: [] });
     }
     const block = window._buildHistoryContinuityBlock(window.state, {});
     return { block, open: window._openObligations(window.state).length };

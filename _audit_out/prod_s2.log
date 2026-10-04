@@ -1,0 +1,67 @@
+=== PRODUCTION-PATH REPLAY (provider-free, $0) ===
+
+A. THE STRIPPER — duplicate and malformed blocks (HELPER TEST, not a pathway)
+  ok   TWO CONSECUTIVE BLOCKS — both stripped, none left in the prose
+  ok   and the well-formed one is still captured
+  ok   a malformed block before a valid one leaks nothing
+  ok   and the valid one is still found
+  ok   a TRUNCATED block leaks nothing and yields no note
+  ok   and the prose before it survives
+  ok   three unparseable blocks leak nothing and claim no note
+
+B2. LITERARY CONTINUATION — the real handler, response served at the boundary
+     renderMode: null   literary scenes: 0   author responses served: 0
+     UNPROVEN. The literary continuation lives inside a large closure with no
+     exposed entry point, and launching a literary Book did not reach it
+     (renderMode came back null). The EXTRACTION IS WIRED at the response seam
+     (app.js, before any post-processing) and the stripper is proven above, but
+     THE ROUTE ITSELF IS NOT DEMONSTRATED. Not counted as a pass.
+
+B. CG — the author response parsed by the application, not the harness
+     handler returned: {"ok":true,"beats":0,"noteOnPlan":false}
+     --- app log during the call:
+       [HISTORY-NOTE] 3 sentinel blocks found; all stripped, first well-formed one kept
+       [HISTORY-NOTE] 3 sentinel block(s) stripped but none parsed — prose is clean, no note stored
+       [BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+       [TIER0] CG_SCAFFOLD deferred — baked opening, no paid call until the reader submits their Scene 1 choice
+       [SCENE-PROJECTION] created lit:ecb2895a-af39-4c49-a42b-1c093df9906e kind=body revision=0 hash=he6d5726a-7605 chars=7605 sidecarEntries=1
+       [CG:SAYDO-SLOT] {"slot":null,"confidence":"none","evidence":[],"reason":"no slot represented: the move is not an admission, an authority challenge, an
+       [CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+       [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+       [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+       [CG:SCAFFOLD:GEN] 330ms, model=gpt-4o-mini
+       [CG:SCAFFOLD] thesis="undefined"
+       [CG:SCAFFOLD] issues=0, motifs=0, forbidden=0
+       [CG:SCAFFOLD] FULL OBJECT: {thesis: the inquiry closes around her, issues: Array(0), motifs: Array(0), forbidden: Array(0), _version: 1}
+       [CG:SCAFFOLD] active — scene_index=1, source=gpt-4o-mini, issues=0
+     author responses served: 0   cg scenes: 0
+     UNPROVEN: the CG author did not dispatch here, so the application parsing
+     its own screenplay response is NOT demonstrated. Literary IS demonstrated
+     end to end above. The CG persist site is correct by inspection only.
+
+C. SETTLEMENT — identity, evidence and ambiguity (HELPER TEST)
+  ok   the obligation was open
+  ok   EMPTY EVIDENCE CLOSES NOTHING
+  ok   evidence absent from the judged scene closes nothing
+  ok   an unsolicited verdict closes nothing
+  ok   an invented id closes nothing
+  ok   another story's snapshot closes nothing
+  ok   after all five refusals it is still open
+  ok   THE SAME ID ON TWO SCENES IS AMBIGUOUS AND CLOSES NEITHER
+  ok   a solicited id with real evidence settles
+  ok   and the settlement records its source and which scene it closed
+
+C2. THE ADJUDICATION HANDLER — verdict served at the network boundary
+  ok   an eligible obligation exists to be solicited
+     NOTE: the solicited block is assembled inside the extraction call and the
+     verdict is parsed there. Driving that call end to end needs a live scene
+     commit; the request-shape and membership rules are proven above and in
+     _history_semantic_control.mjs. Reported as partial, not claimed as complete.
+
+D. THE NEXT PLANNER RECEIVES IT
+  ok   a planner request was assembled
+  ok   it carries the quoted text from the surviving note
+  ok   it carries the still-open obligation with its id
+  ok   A SETTLED OBLIGATION IS NOT CARRIED FORWARD
+
+22/22 checks passed

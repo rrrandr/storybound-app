@@ -32000,7 +32000,14 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
           _hoEligible = _openObligations(window.state).filter(function (o) { return o && o.id; });
         }
       } catch (_) {}
-      try { window.state._historyObligationsSolicited = _hoEligible.map(function (o) { return String(o.id); }); } catch (_) {}
+      // THE TICKET: a snapshot of exactly what THIS request asked about, bound to the story and
+      // carrying the scene text the verdict will be checked against.
+      var _hoTicket = null;
+      try {
+        _hoTicket = { ids: _hoEligible.map(function (o) { return String(o.id); }),
+          storyId: window.state.storyId || null, sceneText: String(sceneText || ''), at: Date.now() };
+        window.state._historyObligationsTicket = _hoTicket;
+      } catch (_) {}
       if (_hoEligible.length) {
         sys += '\n\nSEPARATELY, judge HISTORY OBLIGATIONS. These are commitments earlier scenes left '
           + 'open, and they are judged ONLY against what THIS scene text actually shows: '
@@ -32054,7 +32061,7 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
               && typeof _settleHistoryObligation === 'function') {
             parsed.history_obligations_fulfilled.forEach(function (hv) {
               if (!hv || !hv.id) return;
-              _settleHistoryObligation(String(hv.id), String(hv.evidence || '').slice(0, 200));
+              _settleHistoryObligation(String(hv.id), String(hv.evidence || '').slice(0, 200), _hoTicket);
             });
           }
         } catch (_) {}
@@ -134076,13 +134083,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._hnSealsInForce = _hnSealsInForce;
 
+  // THE ONE LIST EVERY READER USES. Prefers the keyed store; falls back to scene records so a
+  // story saved before this change still reads correctly.
+  function _historyNoteList(s) {
+    s = s || window.state || {};
+    if (Array.isArray(s._historyNotes) && s._historyNotes.length) return s._historyNotes;
+    return (s.scenes || []).filter(function (r) { return r && r.historyNote; })
+      .map(function (r) { return r.historyNote; });
+  }
+  window._historyNoteList = _historyNoteList;
+
   function _attachHistoryNote(sceneUid, note, prose) {
     try {
       var s = window.state; if (!s || !note) return null;
       var found = (typeof _sbSceneByUid === 'function') ? _sbSceneByUid(sceneUid, s) : null;
       var rec = found && found.record;
-      if (!rec) return null;
-      var text = String(prose || rec.text || '');
+      // A REF, NOT NECESSARILY A SCENE RECORD. Ordinary literary continuation paginates and
+      // creates NO scene projection record (Codex 2026-10-03), so requiring one meant a
+      // continuation's note was computed and then had nowhere to go. The ref is whatever
+      // identifies the accepted unit: a scene uid where one exists, a page uid otherwise.
+      var text = String(prose || (rec && rec.text) || '');
+      if (!rec && !text) return null;
       var fields = ['events', 'decisions', 'consequences', 'transfers', 'disclosures'];
       var quoted = [], summary = [], sealedDrops = 0;
       fields.forEach(function (f) {
@@ -134131,21 +134152,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         }
       } catch (_) {}
 
-      rec.historyNote = {
-        v: 2, sceneUid: sceneUid, writtenAt: Date.now(),
+      var _hn = {
+        v: 3, sceneUid: sceneUid, ref: String(sceneUid), writtenAt: Date.now(),
         quoted: quoted,            // backed by an exact quotation from THIS scene
         summary: summary,          // the author's paraphrase. NOT evidence of anything.
         obligations: obligations,  // proposed forward commitments
         knowledge: knowledge,      // only where a quotation shows the disclosure
         resolves: Array.isArray(note.resolves) ? note.resolves.map(String) : []
       };
+      // ONE STORE, so every route has the same destination and nothing reads two sources.
+      if (!Array.isArray(s._historyNotes)) s._historyNotes = [];
+      var _prev = -1;
+      for (var _i = 0; _i < s._historyNotes.length; _i++) {
+        if (s._historyNotes[_i] && String(s._historyNotes[_i].ref) === String(sceneUid)) { _prev = _i; break; }
+      }
+      if (_prev >= 0) s._historyNotes[_prev] = _hn; else s._historyNotes.push(_hn);
+      if (rec) rec.historyNote = _hn;          // mirrored where a scene record exists
       try {
         if (sealedDrops) console.warn('[HISTORY-NOTE] dropped ' + sealedDrops
           + ' claim(s) touching sealed or unquotable content');
         console.log('[HISTORY-NOTE] ' + sceneUid + ' — ' + quoted.length + ' quote-backed, '
           + summary.length + ' summary-only, ' + obligations.length + ' proposed obligation(s)');
       } catch (_) {}
-      return rec.historyNote;
+      return _hn;
     } catch (e) { try { console.warn('[HISTORY-NOTE] attach failed: ' + (e && e.message)); } catch (_) {} return null; }
   }
   window._attachHistoryNote = _attachHistoryNote;
@@ -134165,22 +134194,22 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // planner sees both the commitment and the assertion that it was settled, and nothing is
       // silently lost. Only an explicit `resolved` flag set by machinery entitled to settle it
       // removes an obligation outright.
-      (s.scenes || []).forEach(function (rec, idx) {
-        var hn = rec && rec.historyNote; if (!hn) return;
+      _historyNoteList(s).forEach(function (hn, idx) {
+        if (!hn) return;
         (hn.resolves || []).forEach(function (id) {
           var k = String(id);
           // CHRONOLOGY: a resolution only counts for an obligation raised in an EARLIER scene.
           if (!claimedResolved[k]) claimedResolved[k] = { atIndex: idx };
         });
       });
-      (s.scenes || []).forEach(function (rec, idx) {
-        var hn = rec && rec.historyNote; if (!hn) return;
+      _historyNoteList(s).forEach(function (hn, idx) {
+        if (!hn) return;
         (hn.obligations || []).forEach(function (o) {
           if (!o || o.resolved) return;                 // settled by machinery, not by a note
           var claim = claimedResolved[String(o.id)];
           var claimedLater = !!(claim && claim.atIndex > idx);
-          open.push({ sceneIndex: idx, id: o.id, text: o.text, owedBy: o.owedBy || null,
-            claimedResolved: claimedLater });
+          open.push({ sceneIndex: idx, id: o.id, ref: hn.ref, text: o.text,
+            owedBy: o.owedBy || null, claimedResolved: claimedLater });
         });
       });
     } catch (_) {}
@@ -134192,37 +134221,89 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // adjudication (the post-scene pass that already decides delivery), never from an author note.
   // It records WHO settled it and on what evidence, so a settlement can be audited rather than
   // taken on trust.
-  function _settleHistoryObligation(id, evidence) {
+  function _settleHistoryObligation(id, evidence, ticket) {
     var s = window.state; if (!s || !id) return false;
-    var key = String(id), hit = false;
-    // ONLY AN OBLIGATION THAT WAS ACTUALLY PUT TO THE ADJUDICATOR CAN BE CLOSED BY IT. The
-    // solicited set is recorded when the request is built; an id outside it — invented, unrelated,
-    // or left over from an earlier scene's question — settles nothing and is logged loudly.
+    var key = String(id);
+    var ev = String(evidence == null ? '' : evidence).trim();
+
+    // ── 1. A REQUEST SNAPSHOT, NOT A MUTABLE GLOBAL ─────────────────────────────────────────
+    // The caller passes the ticket minted when ITS request was built. A bare global could be
+    // overwritten by a later request and then authorize a settlement nobody asked for.
+    var snap = ticket || null;
+    if (!snap) {
+      try { snap = s._historyObligationsTicket || null; } catch (_) { snap = null; }
+    }
+    if (!snap || !Array.isArray(snap.ids)) {
+      console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — no request snapshot to authorize it');
+      return false;
+    }
+    // The snapshot is bound to the story and the scene it was asked about; a verdict cannot be
+    // replayed into a different story or a later scene.
     try {
-      var solicited = s._historyObligationsSolicited;
-      if (!Array.isArray(solicited) || solicited.indexOf(key) < 0) {
-        console.warn('[HISTORY-NOTE] REFUSED settlement of "' + key + '" — it was not among the '
-          + 'obligations put to the adjudicator ('
-          + (Array.isArray(solicited) ? solicited.join(', ') || 'none' : 'nothing solicited') + ')');
+      if (snap.storyId && s.storyId && String(snap.storyId) !== String(s.storyId)) {
+        console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — snapshot belongs to another story');
         return false;
       }
-    } catch (_) { return false; }
+    } catch (_) {}
+    if (snap.ids.indexOf(key) < 0) {
+      console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — not among the obligations put to the '
+        + 'adjudicator (' + (snap.ids.join(', ') || 'none') + ')');
+      return false;
+    }
+
+    // ── 2. EVIDENCE IS REQUIRED, AND MUST BE FROM THE SCENE THAT WAS JUDGED ─────────────────
+    // Codex closed an obligation with EMPTY evidence. A settlement with nothing behind it is
+    // indistinguishable from an assertion, which is the thing this whole design refuses.
+    if (ev.length < 12) {
+      console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — evidence missing or too short to mean '
+        + 'anything ("' + ev + '")');
+      return false;
+    }
+    if (snap.sceneText) {
+      var hay = String(snap.sceneText).toLowerCase().replace(/\s+/g, ' ');
+      var needle = ev.toLowerCase().replace(/\s+/g, ' ');
+      if (hay.indexOf(needle) < 0) {
+        console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — the evidence is not in the scene that '
+          + 'was judged: "' + ev.slice(0, 80) + '"');
+        return false;
+      }
+    }
+
+    // ── 3. AN AMBIGUOUS TARGET CLOSES NOTHING ───────────────────────────────────────────────
+    // Codex gave two different scenes the same obligation id and BOTH closed. One verdict can
+    // only ever settle one commitment, so a reused id is refused outright rather than guessed at.
+    var matches = [];
     try {
-      (s.scenes || []).forEach(function (rec) {
-        var hn = rec && rec.historyNote; if (!hn) return;
+      _historyNoteList(s).forEach(function (hn) {
+        if (!hn) return;
         (hn.obligations || []).forEach(function (o) {
-          if (!o || String(o.id) !== key || o.resolved) return;
-          o.resolved = true;
-          o.settledBy = 'verifier:beatFulfillment';
-          o.settledEvidence = evidence || '';
-          o.settledAt = Date.now();
-          hit = true;
+          if (o && String(o.id) === key && !o.resolved) matches.push({ hn: hn, o: o });
         });
       });
-      if (hit) console.log('[HISTORY-NOTE] obligation ' + key
-        + ' SETTLED by the verifier — ' + String(evidence || '').slice(0, 120));
-    } catch (_) {}
-    return hit;
+    } catch (_) { return false; }
+    if (!matches.length) return false;
+    if (matches.length > 1) {
+      console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — AMBIGUOUS: ' + matches.length
+        + ' open obligations share that id (' + matches.map(function (m) { return m.hn.ref; }).join(', ')
+        + '). One verdict cannot settle more than one commitment.');
+      return false;
+    }
+    // A scene-qualified reference is accepted too, and is unambiguous by construction.
+    if (snap.ref && matches[0].hn && String(matches[0].hn.ref) !== String(snap.ref)) {
+      console.warn('[HISTORY-NOTE] REFUSED "' + key + '" — it belongs to ' + matches[0].hn.ref
+        + ', not the scene this verdict names (' + snap.ref + ')');
+      return false;
+    }
+
+    var o = matches[0].o;
+    o.resolved = true;
+    o.settledBy = 'verifier:history_obligations_fulfilled';
+    o.settledEvidence = ev;
+    o.settledRef = matches[0].hn.ref;
+    o.settledAt = Date.now();
+    try { console.log('[HISTORY-NOTE] obligation ' + key + ' SETTLED on ' + matches[0].hn.ref
+      + ' — "' + ev.slice(0, 100) + '"'); } catch (_) {}
+    return true;
   }
   window._settleHistoryObligation = _settleHistoryObligation;
 
@@ -134236,13 +134317,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var o = opts || {};
     try { if (window._historyContinuityKill) return ''; } catch (_) {}
     try {
-      var recs = (s.scenes || []).filter(function (r) { return r && r.historyNote; });
+      var recs = _historyNoteList(s);
       var open = _openObligations(s);
       if (!recs.length && !open.length) return '';
       var recent = recs.slice(-(o.recent || _HN_MAX_RECENT));
       var estLines = [], sumLines = [];
-      recent.forEach(function (rec, i) {
-        var hn = rec.historyNote;
+      recent.forEach(function (hn, i) {
         var n = recs.length - recent.length + i + 1;
         // A QUOTE-BACKED ITEM CONTRIBUTES TO BOTH SECTIONS, and the split is the safeguard.
         // Only the QUOTATION is presented as something the scene contains; the author's sentence
@@ -319207,7 +319287,12 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               var _hnEx = _sbExtractLiteraryNote(raw);
               if (_hnEx && _hnEx.blocks) {
                 raw = _hnEx.body;
-                state._pendingLiteraryHistoryNote = _hnEx.note || null;
+                // REQUEST-LOCAL, NOT AN UNKEYED GLOBAL. Stamped with the turn it belongs to so
+                // a note from a turn that never reached acceptance cannot attach to a later
+                // scene (Codex 2026-10-03). Cleared unconditionally when consumed or superseded.
+                state._pendingLiteraryHistoryNote = _hnEx.note
+                  ? { note: _hnEx.note, turn: Number(state.turnCount || 0), at: Date.now() }
+                  : null;
                 try { console.log('[HISTORY-NOTE] continuation — ' + _hnEx.blocks
                   + ' block(s) stripped before post-processing, note='
                   + (_hnEx.note ? 'parsed' : 'none')); } catch (_) {}
@@ -321171,6 +321256,34 @@ ABSOLUTE RULES:
             StoryPagination.addPage(pageContent, true, undefined,
               { cpAttemptId: (typeof _pageAttemptC !== 'undefined' ? _pageAttemptC : null) });
             try { _sceneLedgerCommit(state, { kind: 'scene', pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}
+            // ═══ THE CONTINUATION'S NOTE LANDS HERE (Roman/Codex 2026-10-03) ═══════════════
+            // This is the ordinary continuation's ACTUAL acceptance point. It paginates and
+            // creates no scene projection record, so the note was previously computed, parked in
+            // state, and consumed only by _mountAndTransition — which serves Book 2 and New
+            // Story, NOT this path. The note was therefore stripped from the response and never
+            // attached to the scene it described.
+            //
+            // IT IS ATTACHED AGAINST `raw` AS ACCEPTED, not as received. Extraction happens early
+            // so no editor ever sees the metadata, but the prose is rewritten afterwards by the
+            // repair and calibration chain — so a quote that was verbatim in the draft may not be
+            // verbatim in what the reader got. _attachHistoryNote re-checks every quotation
+            // against THIS text, which means a claim whose quote did not survive editing is
+            // demoted to unverified summary instead of being presented as the scene's own words.
+            try {
+              var _pendHN = state._pendingLiteraryHistoryNote || null;
+              if (_pendHN) {
+                try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
+                if (Number(_pendHN.turn) === Number(state.turnCount || 0)) {
+                  var _pgUid = StoryPagination.getCurrentPageUid();
+                  if (_pgUid && typeof _attachHistoryNote === 'function') {
+                    _attachHistoryNote(String(_pgUid), _pendHN.note, String(raw || ''));
+                  }
+                } else {
+                  console.warn('[HISTORY-NOTE] discarded a note stamped for turn ' + _pendHN.turn
+                    + ' at turn ' + state.turnCount + ' — it did not belong to this scene');
+                }
+              }
+            } catch (_hnAtErr) {}
           }
 
           // ──────────────────────────────────────────────────────────────

@@ -1,0 +1,31 @@
+=== HISTORY CONTINUITY REGRESSION (provider-free, $0) ===
+
+1. THE MID-SCENE HANDOVER
+   scene is 6030 chars; the handover sits at 3120–3270
+     head(420) contains it: false   tail(1500) contains it: false   <- THE OLD CHANNELS, measured as baseline, not asserted
+  ok   the note was attached AT THE SCENE RECORD'S BIRTH, not bolted on later
+  ok   THE MID-SCENE HANDOVER REACHES THE MODELS through the note
+
+2. AN OLDER UNRESOLVED DECISION
+     scene window retains 2 scene(s); contains scene 1: false
+     <- again the OLD window, baseline only; section 5 is the repaired assertion
+  ok   the old scene window still holds only two scenes (unchanged by design)
+
+3. DOES ANY OF IT REACH THE PLANNER?
+     {"builderExists":false,"continuityExists":true,"historyContract":true}
+  ok   a shared history contract exists that both planner and author can call
+
+4. A QUOTATION IS EVIDENCE; A PARAPHRASE IS NOT
+  ok   a quote-backed claim is recorded as quote-backed
+  ok   and the VERBATIM TEXT is what appears in the established section
+  ok   a paraphrase with no quotation is carried as SUMMARY, not as fact
+  ok   A QUOTATION THAT IS NOT IN THE PROSE does not establish anything
+  ok   the summary section is explicitly labelled unverified and not canon
+  ok   the obligation is labelled a proposal, not an established fact
+  ok   the note did not touch the entity register or any durable fact
+
+5. OBLIGATIONS OUTLIVE THE RECENT WINDOW
+  ok   an obligation from six scenes back is still open
+  FAIL and it survives into the block even though its scene left the recent window  — recent events are compacted but the obligation must persist
+
+12/13 checks passed

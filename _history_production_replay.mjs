@@ -252,50 +252,70 @@ console.log('\nB. CG — the author response parsed by the application, not the 
   }
 }
 
-console.log('\nC. SETTLEMENT — solicited, adjudicated, and membership-validated');
+console.log('\nC. SETTLEMENT — identity, evidence and ambiguity (HELPER TEST)');
 {
   const r = await page.evaluate(() => {
-    window.state.scenes = [{ uid: 'lit:settle', text: 'The demand was read out.',
-      historyNote: { v: 2, quoted: [], summary: [], knowledge: [], resolves: [],
-        obligations: [{ id: 'ob-verif', text: 'Lirael must answer the demand.', proposed: true }] } }];
+    const SCENE = 'Lirael rose and answered the demand in full, and the clerk wrote it down.';
+    const mk = (ref, id, text) => ({ v: 3, ref, quoted: [], summary: [], knowledge: [], resolves: [],
+      obligations: [{ id, text, proposed: true }] });
+    window.state.storyId = 'story-A';
+    window.state._historyNotes = [mk('p1', 'ob-verif', 'Lirael must answer the demand.')];
+    const ticket = { ids: ['ob-verif'], storyId: 'story-A', sceneText: SCENE };
     const before = window._openObligations(window.state).length;
-    // 1. AN AUTHOR CLAIMING RESOLUTION: must change nothing.
-    window.state.scenes.push({ uid: 'lit:settle2', text: 'Nobody answered.',
-      historyNote: { v: 2, quoted: [], summary: [], knowledge: [], obligations: [], resolves: ['ob-verif'] } });
-    const afterClaim = window._openObligations(window.state).length;
-    // 2. AN UNSOLICITED ID: nothing has been put to the adjudicator yet, so it must be refused.
-    window.state._historyObligationsSolicited = null;
-    const unsolicited = window._settleHistoryObligation('ob-verif', 'claimed out of nowhere');
-    // 3. AN INVENTED ID, even with a live solicitation, must close nothing.
-    window.state._historyObligationsSolicited = ['ob-verif'];
-    const invented = window._settleHistoryObligation('ob-never-asked', 'fabricated');
-    const afterInvented = window._openObligations(window.state).length;
-    // 4. THE SOLICITED ID: settles.
-    const legit = window._settleHistoryObligation('ob-verif', 'she answered the demand in full');
-    const ob = window.state.scenes[0].historyNote.obligations[0];
-    return { before, afterClaim, unsolicited, invented, afterInvented, legit,
-      afterCount: window._openObligations(window.state).length,
-      settledBy: ob.settledBy, evidence: ob.settledEvidence };
+
+    // CODEX: EMPTY EVIDENCE closed an obligation.
+    const emptyEv = window._settleHistoryObligation('ob-verif', '', ticket);
+    // Evidence that is not in the judged scene.
+    const wrongEv = window._settleHistoryObligation('ob-verif', 'she fled the chamber entirely', ticket);
+    // Unsolicited / invented.
+    const unsolicited = window._settleHistoryObligation('ob-verif', 'answered the demand in full', null);
+    const invented = window._settleHistoryObligation('ob-nope', 'answered the demand in full', ticket);
+    // Another story's verdict.
+    const otherStory = window._settleHistoryObligation('ob-verif', 'answered the demand in full',
+      { ids: ['ob-verif'], storyId: 'story-B', sceneText: SCENE });
+    const stillOpen = window._openObligations(window.state).length;
+
+    // CODEX: THE SAME ID ON TWO SCENES closed BOTH.
+    window.state._historyNotes = [mk('p1', 'ob-dup', 'The writ must be returned.'),
+                                  mk('p2', 'ob-dup', 'The seal must be examined.')];
+    const dupTicket = { ids: ['ob-dup'], storyId: 'story-A', sceneText: SCENE };
+    const ambiguous = window._settleHistoryObligation('ob-dup', 'answered the demand in full', dupTicket);
+    const dupStillOpen = window._openObligations(window.state).length;
+
+    // THE LEGITIMATE SETTLEMENT.
+    window.state._historyNotes = [mk('p1', 'ob-verif', 'Lirael must answer the demand.')];
+    const legit = window._settleHistoryObligation('ob-verif', 'answered the demand in full', ticket);
+    const ob = window.state._historyNotes[0].obligations[0];
+    return { before, emptyEv, wrongEv, unsolicited, invented, otherStory, stillOpen,
+      ambiguous, dupStillOpen, legit, after: window._openObligations(window.state).length,
+      settledBy: ob.settledBy, settledRef: ob.settledRef };
   });
   t('the obligation was open', r.before === 1);
-  t('AN AUTHOR CLAIMING RESOLUTION CHANGES NOTHING', r.afterClaim === 1);
-  t('AN UNSOLICITED SETTLEMENT IS REFUSED', r.unsolicited === false,
-    'an id closed an obligation that was never put to the adjudicator');
-  t('AN INVENTED ID CLOSES NOTHING', r.invented === false && r.afterInvented === 1);
-  t('the solicited id settles', r.legit === true && r.afterCount === 0);
-  t('and the settlement records who settled it and on what evidence',
-    r.settledBy === 'verifier:beatFulfillment' && /answered the demand/.test(r.evidence || ''));
+  t('EMPTY EVIDENCE CLOSES NOTHING', r.emptyEv === false,
+    'an obligation closed with no evidence behind it');
+  t('evidence absent from the judged scene closes nothing', r.wrongEv === false);
+  t('an unsolicited verdict closes nothing', r.unsolicited === false);
+  t('an invented id closes nothing', r.invented === false);
+  t('another story\'s snapshot closes nothing', r.otherStory === false);
+  t('after all five refusals it is still open', r.stillOpen === 1);
+  t('THE SAME ID ON TWO SCENES IS AMBIGUOUS AND CLOSES NEITHER',
+    r.ambiguous === false && r.dupStillOpen === 2,
+    'one verdict settled two different commitments');
+  t('a solicited id with real evidence settles', r.legit === true && r.after === 0);
+  t('and the settlement records its source and which scene it closed',
+    /history_obligations_fulfilled/.test(r.settledBy || '') && r.settledRef === 'p1');
 }
 
 console.log('\nC2. THE ADJUDICATION HANDLER — verdict served at the network boundary');
 {
   const r = await page.evaluate(() => {
     // The REQUEST side: does the verifier prompt name the exact eligible obligations?
-    window.state.scenes = [{ uid: 'lit:sol', text: 'The demand was read out.',
-      historyNote: { v: 2, quoted: [], summary: [], knowledge: [], resolves: [],
-        // Deliberately distinct wording from the SETTLED obligation above, so section D can tell
-        // "still open" from "settled and correctly dropped" instead of matching both.
-        obligations: [{ id: 'ob-sol', text: 'The seal on the writ must be examined.', proposed: true }] } }];
+    // Written to the KEYED STORE, which is now the single source every reader uses.
+    window.state._historyNotes = [{ v: 3, ref: 'lit:sol', quoted: [], summary: [], knowledge: [],
+      resolves: [],
+      // Deliberately distinct wording from the SETTLED obligation above, so section D can tell
+      // "still open" from "settled and correctly dropped" instead of matching both.
+      obligations: [{ id: 'ob-sol', text: 'The seal on the writ must be examined.', proposed: true }] }];
     const open = window._openObligations(window.state);
     return { openIds: open.map(o => o.id) };
   });
@@ -312,11 +332,11 @@ console.log('\nD. THE NEXT PLANNER RECEIVES IT');
   // Section C deliberately emptied the notes by settling them, so re-seed one real note here:
   // an empty history block is correct behaviour, not evidence of forwarding.
   await page.evaluate(() => {
-    window.state.scenes.push({ uid: 'lit:carry', text: 'The clerk read the demand aloud.',
-      historyNote: { v: 2, quoted: [{ kind: 'events', text: 'The clerk read the demand.',
-        quote: 'read the demand aloud' }], summary: [], knowledge: [],
-        obligations: [{ id: 'ob-open', text: 'The demand is still unanswered.', proposed: true }],
-        resolves: [] } });
+    window.state._historyNotes.push({ v: 3, ref: 'lit:carry',
+      quoted: [{ kind: 'events', text: 'The clerk read the demand.', quote: 'read the demand aloud' }],
+      summary: [], knowledge: [],
+      obligations: [{ id: 'ob-open', text: 'The demand is still unanswered.', proposed: true }],
+      resolves: [] });
   });
   try { await page.evaluate(() => window._generateLiteraryPlotContract('I wait.', '')); } catch (_) {}
   await page.waitForTimeout(2500);

@@ -79,6 +79,7 @@ console.log('\n2. THROUGH THE REAL PARSER — a JSON STRING, as a provider would
 let rendered = '';
 {
   const r = await page.evaluate((rawResponse) => {
+    window.state._historyNotes = [];
     window.state.scenes = [];
     window.state._starterId = 'starter_first_sacrifice';
     // THE RAW STRING a provider returns, parsed exactly as _runCGScreenplayGenInner parses it
