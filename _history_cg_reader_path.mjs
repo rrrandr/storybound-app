@@ -24,12 +24,19 @@ const SCENES = [
   // BEAT LENGTHS THE NEW CONTRACT PERMITS — a compact paragraph, a deliberate one-liner, and a
   // dialogue beat carrying JUST its line. Navigation is exercised on these, not on uniform stubs.
   { beats: [
+      // FOUR sentences — the TOP of the permitted range. The earlier check only exercised two,
+      // so navigation was never tested at the length the contract actually allows.
       { idx: 0, kind: 'narration', text: 'The chamber was quiet for a long moment, the kind of '
         + 'quiet that happens when a room has already decided something and is waiting to be told. '
-        + 'Julian took the sealed writ from his sleeve and put it into Lirael\'s hands.' },
-      { idx: 1, kind: 'narration', text: 'The clerk began reading the demand aloud.' },
+        + 'Julian took the sealed writ from his sleeve and put it into Lirael\'s hands. She closed '
+        + 'her fingers around it before she had decided to. The Dohkar did not look up from the '
+        + 'table, and that was its own kind of answer.' },
+      // THE SPEAKER'S ACTION IN ITS OWN ADJACENT NARRATION BEAT, per Roman's decision — not
+      // folded into the dialogue beat, which would record it as spoken words.
+      { idx: 1, kind: 'narration', text: 'The clerk rose, and the room rose with him.' },
       { idx: 2, kind: 'dialogue', speaker: 'The Presiding Dohkar',
-        text: '"The ruling on the Sacrificiant\'s conduct is mine."' } ],
+        text: '"The ruling on the Sacrificiant\'s conduct is mine."' },
+      { idx: 3, kind: 'narration', text: 'Nobody sat down again.' } ],
     history_note: {
       events: [{ text: 'Julian gave Lirael the sealed writ.', quote: 'put it into Lirael\'s hands' },
                { text: 'The commission accepted the demand.' }],
