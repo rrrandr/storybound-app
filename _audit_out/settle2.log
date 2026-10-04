@@ -1,0 +1,9 @@
+=== SETTLEMENT THROUGH THE REAL ADJUDICATION HANDLER (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+1. THE OBLIGATION, CREATED THROUGH THE ACCEPTED-SCENE PATH
+   notes: [{"ref":"pg:25a1f2d2-191c-4692-9257-c4a146bd0a56","obligations":[{"id":"ob-answer-the-demand","resolved":false}]}]
+   open: ["ob-answer-the-demand"]
+  ok   an obligation exists, created by the normal path
+
+1/1 checks passed

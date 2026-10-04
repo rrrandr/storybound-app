@@ -1,0 +1,33 @@
+=== SETTLEMENT THROUGH THE REAL ADJUDICATION HANDLER (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+1. THE OBLIGATION, CREATED THROUGH THE ACCEPTED-SCENE PATH
+   notes: [{"ref":"pg:5c09b674-3672-4420-a9ee-3e8c1a31a5dd","obligations":[{"id":"ob-answer-the-demand","resolved":false}]}]
+   open: ["ob-answer-the-demand"]
+  ok   an obligation exists, created by the normal path
+
+2. THE ADJUDICATION REQUEST THE APPLICATION ACTUALLY SENT
+   adjudication requests captured: 1
+  ok   an adjudication request was sent at all
+  ok   it NAMES THAT EXACT OBLIGATION, id and text
+  ok   and it names the SCENE BEING JUDGED, not some other text
+  ok   it asks for the verdict in its own field
+   > SEPARATELY, judge HISTORY OBLIGATIONS. These are commitments earlier scenes left open, and they are judged ONLY against what THIS scene text actually shows: [ob-answer-the-demand] Lirael must answer the demand.
+
+3. VERDICTS THAT MUST CLOSE NOTHING
+     adjudication requests this arm: 1
+  ok   MISSING EVIDENCE closes nothing
+     adjudication requests this arm: 2
+  ok   NON-MATCHING EVIDENCE closes nothing
+     adjudication requests this arm: 2
+  ok   AN UNSOLICITED ID closes nothing
+
+4. THE VALID VERDICT
+     adjudication requests this arm: 1
+   settled: {"resolved":true,"by":"verifier:history_obligations_fulfilled","evidence":"did not move, and the room took that for an answer"}
+  ok   THE PRODUCTION HANDLER SETTLED IT — the helper was never called here
+  ok   and it recorded the adjudicator and the evidence
+  ok   it is gone from the open set
+  FAIL AND IT NO LONGER REACHES SUBSEQUENT PLANNING CONTEXT  — a settled obligation is still being carried to the planner
+
+11/12 checks passed
