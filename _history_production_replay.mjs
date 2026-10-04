@@ -34,7 +34,7 @@ const CG_RESPONSE = {
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const planner = [];
-let authorServed = 0, oasN = 0;
+let authorServed = 0, oasN = 0, litServed = 0, litServe = '';
 
 await page.route('**/api/**', async (route) => {
   const req = route.request();
@@ -82,6 +82,12 @@ await page.route('**/api/**', async (route) => {
       body: JSON.stringify({ content: JSON.stringify({ thesis: 'the inquiry closes around her',
         issues: [], motifs: [], forbidden: [] }) }) });
   }
+  // THE LITERARY AUTHOR: prose, with the sentinel appended, exactly as a provider would return it.
+  if (litServe && /write the scene|PROSE:|TURN:/i.test(sys)) {
+    litServed++;
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ content: litServe }) });
+  }
   // EVERY OTHER PROVIDER CALL IS SERVED, NOT KILLED. Aborting the scaffold made it exhaust its
   // tiers and the generator returned an empty plan without ever reaching the author — the failure
   // under diagnosis was my own harness starving an upstream step, not the code under test.
@@ -97,35 +103,102 @@ await page.waitForFunction(() => typeof window._advanceStagedScene === 'function
 
 console.log('=== PRODUCTION-PATH REPLAY (provider-free, $0) ===\n');
 
-console.log('A. LITERARY — the in-band sentinel, through the real prepare/persist path');
+console.log('A. THE STRIPPER — duplicate and malformed blocks (HELPER TEST, not a pathway)');
 {
   const r = await page.evaluate(() => {
-    // The RAW response a literary author returns: prose with the note appended. Nothing in the
-    // harness parses or strips it — _sbPrepareBodyText does, inside the persist.
-    const RAW = 'The clerk began reading the demand aloud to the seated members. '
-      + 'Lirael did not move.\n\n'
-      + '<<<HISTORY_NOTE {"events":[{"text":"The clerk began reading the demand.",'
-      + '"quote":"began reading the demand aloud"}],'
-      + '"obligations":[{"id":"ob-lit-answer","text":"Lirael must respond to the demand."}],'
-      + '"resolves":[]} HISTORY_NOTE>>>';
-    window.state.scenes = [];
-    window.state._starterId = 'starter_first_sacrifice';
-    const prep = window._sbPrepareBodyText(RAW);
-    const rec = window._sbPersistSceneProjection({
-      kind: 'body', input: prep.text, uid: 'lit:prod', title: '', synopsis: '',
-      projectionOpts: { refused: prep.refused, refusalReason: prep.refusalReason },
-      historyNote: prep.historyNote
-    });
-    return { text: rec ? rec.text : '', note: rec ? rec.historyNote : null,
-      extractedByApp: !!(prep && prep.historyNote) };
+    const f = window._sbExtractLiteraryNote;
+    const N = (o) => '<<<HISTORY_NOTE ' + JSON.stringify(o) + ' HISTORY_NOTE>>>';
+    const good = { events: [{ text: 'The clerk read it.', quote: 'clerk read it' }] };
+    return {
+      // CODEX: two consecutive blocks — the second survived in the returned body.
+      dup: f('The clerk read it.\n\n' + N(good) + '\n' + N({ events: [] })),
+      // A malformed block BEFORE a valid one.
+      mixed: f('The clerk read it.\n\n<<<HISTORY_NOTE {broken HISTORY_NOTE>>>\n' + N(good)),
+      // Truncated mid-JSON, no closing marker.
+      trunc: f('The clerk read it.\n\n<<<HISTORY_NOTE {"events":[{"text":"half'),
+      // Three blocks, none parseable.
+      junk: f('The clerk read it.' + '<<<HISTORY_NOTE x HISTORY_NOTE>>>'.repeat(3))
+    };
   });
-  t('the APPLICATION extracted the note (the harness did not parse it)', r.extractedByApp);
-  t('THE READER-VISIBLE SCENE CARRIES NO METADATA',
-    !/HISTORY_NOTE|<<<|>>>|obligations/.test(r.text), JSON.stringify(r.text).slice(0, 140));
-  t('the prose itself survived intact', /began reading the demand aloud/.test(r.text));
-  t('the note is stored on THAT scene record', !!r.note && r.note.sceneUid === 'lit:prod');
-  t('its quote-backed claim is quote-backed', (r.note.quoted || []).length === 1);
-  t('and the literary obligation is carried', (r.note.obligations || []).length === 1);
+  const clean = (x) => !/HISTORY_NOTE|<<<|>>>/.test(x.body);
+  t('TWO CONSECUTIVE BLOCKS — both stripped, none left in the prose', clean(r.dup),
+    JSON.stringify(r.dup.body));
+  t('and the well-formed one is still captured', !!r.dup.note && r.dup.blocks === 2);
+  t('a malformed block before a valid one leaks nothing', clean(r.mixed));
+  t('and the valid one is still found', !!r.mixed.note);
+  t('a TRUNCATED block leaks nothing and yields no note',
+    clean(r.trunc) && r.trunc.note === null);
+  t('and the prose before it survives', /The clerk read it/.test(r.trunc.body));
+  t('three unparseable blocks leak nothing and claim no note',
+    clean(r.junk) && r.junk.note === null && r.junk.blocks === 3);
+}
+
+console.log('\nB2. LITERARY CONTINUATION — the real handler, response served at the boundary');
+{
+  // The ACTUAL route readers use: raw -> post-processing -> formatStory -> pagination. The
+  // harness serves the author response and asserts outcomes; it calls no extraction itself.
+  litServe = 'The clerk began reading the demand aloud to the seated members. Lirael did not move.'
+    + '\n\n<<<HISTORY_NOTE {"events":[{"text":"The clerk began reading the demand.",'
+    + '"quote":"began reading the demand aloud"}],'
+    + '"obligations":[{"id":"ob-lit-answer","text":"Lirael must respond to the demand."}],'
+    + '"resolves":[]} HISTORY_NOTE>>>';
+  // A LITERARY BOOK AS THE ROUTE VEHICLE. starter_the_first_taste is PARKED as a product and
+  // nothing here touches its content — it is used only because it is a literary-format story, so
+  // the continuation under test is the literary one. Provider-free throughout.
+  const litDef = await page.evaluate(() => {
+    const all = window.STARTER_STORIES || {};
+    const keys = Object.keys(all);
+    const id = keys.find(k => ((window.PREVIEW_CATALOG || {})[k] || {}).format === 'literary');
+    return id ? (all[id].def || all[id]) : null;
+  });
+  let ran = null;
+  if (litDef) {
+    await page.evaluate(async (d) => { try { await window._launchStarterStory(d); } catch (_) {} }, litDef);
+    await page.waitForTimeout(6000);
+    await unlockFS(page, 'lit-route').catch(() => {});
+    await page.waitForTimeout(3000);
+    ran = await page.evaluate(async () => {
+      const mode = window.state.renderMode || null;
+      try {
+        if (typeof window._advanceStagedScene === 'function') await window._advanceStagedScene('I wait.', 'I say nothing.');
+      } catch (_) {}
+      return mode;
+    });
+  }
+  await page.waitForTimeout(8000);
+  const r = await page.evaluate(() => {
+    const pages = [];
+    try {
+      const uids = window.StoryPagination && window.StoryPagination.getAllPages
+        ? window.StoryPagination.getAllPages() : null;
+      if (Array.isArray(uids)) uids.forEach(p => pages.push(String(p && (p.content || p.text) || '')));
+    } catch (_) {}
+    const dom = document.body ? document.body.innerText : '';
+    const lit = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('lit:'));
+    const last = lit[lit.length - 1] || null;
+    return { entry: null, pages: pages.join('\n'), domHasSentinel: /HISTORY_NOTE|<<</.test(dom),
+      sceneCount: lit.length, text: last ? last.text : '', note: last ? last.historyNote : null,
+      pending: window.state._pendingLiteraryHistoryNote || null };
+  });
+  console.log('     renderMode: ' + ran + '   literary scenes: ' + r.sceneCount
+    + '   author responses served: ' + litServed);
+  if (litServed > 0) {
+    t('THE RENDERED DOM CONTAINS NO METADATA', !r.domHasSentinel,
+      'the sentinel reached the reader');
+    t('no paginated page contains metadata', !/HISTORY_NOTE|<<</.test(r.pages));
+    if (r.sceneCount) {
+      t('the scene record has no metadata in its prose', !/HISTORY_NOTE|<<</.test(r.text));
+      t('and the note survived onto that scene', !!r.note);
+    } else {
+      console.log('     UNPROVEN: no literary scene record was produced by this entry point.');
+    }
+  } else {
+    console.log('     UNPROVEN. The literary continuation lives inside a large closure with no');
+    console.log('     exposed entry point, and launching a literary Book did not reach it');
+    console.log('     (renderMode came back null). The EXTRACTION IS WIRED at the response seam');
+    console.log('     (app.js, before any post-processing) and the stripper is proven above, but');
+    console.log('     THE ROUTE ITSELF IS NOT DEMONSTRATED. Not counted as a pass.');
+  }
 }
 
 console.log('\nB. CG — the author response parsed by the application, not the harness');
@@ -179,29 +252,58 @@ console.log('\nB. CG — the author response parsed by the application, not the 
   }
 }
 
-console.log('\nC. A GENUINE SETTLEMENT, through the verifier that already adjudicates delivery');
+console.log('\nC. SETTLEMENT — solicited, adjudicated, and membership-validated');
 {
   const r = await page.evaluate(() => {
     window.state.scenes = [{ uid: 'lit:settle', text: 'The demand was read out.',
       historyNote: { v: 2, quoted: [], summary: [], knowledge: [], resolves: [],
         obligations: [{ id: 'ob-verif', text: 'Lirael must answer the demand.', proposed: true }] } }];
     const before = window._openObligations(window.state).length;
-    // The AUTHOR claiming resolution: must change nothing.
+    // 1. AN AUTHOR CLAIMING RESOLUTION: must change nothing.
     window.state.scenes.push({ uid: 'lit:settle2', text: 'Nobody answered.',
       historyNote: { v: 2, quoted: [], summary: [], knowledge: [], obligations: [], resolves: ['ob-verif'] } });
     const afterClaim = window._openObligations(window.state).length;
-    // The VERIFIER's adjudication: the authorized writer, same entry point production uses.
-    const settled = window._settleHistoryObligation('ob-verif', 'she answered the demand in full');
-    const after = window._openObligations(window.state);
+    // 2. AN UNSOLICITED ID: nothing has been put to the adjudicator yet, so it must be refused.
+    window.state._historyObligationsSolicited = null;
+    const unsolicited = window._settleHistoryObligation('ob-verif', 'claimed out of nowhere');
+    // 3. AN INVENTED ID, even with a live solicitation, must close nothing.
+    window.state._historyObligationsSolicited = ['ob-verif'];
+    const invented = window._settleHistoryObligation('ob-never-asked', 'fabricated');
+    const afterInvented = window._openObligations(window.state).length;
+    // 4. THE SOLICITED ID: settles.
+    const legit = window._settleHistoryObligation('ob-verif', 'she answered the demand in full');
     const ob = window.state.scenes[0].historyNote.obligations[0];
-    return { before, afterClaim, settled, afterCount: after.length,
+    return { before, afterClaim, unsolicited, invented, afterInvented, legit,
+      afterCount: window._openObligations(window.state).length,
       settledBy: ob.settledBy, evidence: ob.settledEvidence };
   });
   t('the obligation was open', r.before === 1);
   t('AN AUTHOR CLAIMING RESOLUTION CHANGES NOTHING', r.afterClaim === 1);
-  t('THE VERIFIER SETTLES IT', r.settled === true && r.afterCount === 0);
+  t('AN UNSOLICITED SETTLEMENT IS REFUSED', r.unsolicited === false,
+    'an id closed an obligation that was never put to the adjudicator');
+  t('AN INVENTED ID CLOSES NOTHING', r.invented === false && r.afterInvented === 1);
+  t('the solicited id settles', r.legit === true && r.afterCount === 0);
   t('and the settlement records who settled it and on what evidence',
     r.settledBy === 'verifier:beatFulfillment' && /answered the demand/.test(r.evidence || ''));
+}
+
+console.log('\nC2. THE ADJUDICATION HANDLER — verdict served at the network boundary');
+{
+  const r = await page.evaluate(() => {
+    // The REQUEST side: does the verifier prompt name the exact eligible obligations?
+    window.state.scenes = [{ uid: 'lit:sol', text: 'The demand was read out.',
+      historyNote: { v: 2, quoted: [], summary: [], knowledge: [], resolves: [],
+        // Deliberately distinct wording from the SETTLED obligation above, so section D can tell
+        // "still open" from "settled and correctly dropped" instead of matching both.
+        obligations: [{ id: 'ob-sol', text: 'The seal on the writ must be examined.', proposed: true }] } }];
+    const open = window._openObligations(window.state);
+    return { openIds: open.map(o => o.id) };
+  });
+  t('an eligible obligation exists to be solicited', r.openIds.includes('ob-sol'));
+  console.log('     NOTE: the solicited block is assembled inside the extraction call and the');
+  console.log('     verdict is parsed there. Driving that call end to end needs a live scene');
+  console.log('     commit; the request-shape and membership rules are proven above and in');
+  console.log('     _history_semantic_control.mjs. Reported as partial, not claimed as complete.');
 }
 
 console.log('\nD. THE NEXT PLANNER RECEIVES IT');

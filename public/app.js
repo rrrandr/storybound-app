@@ -31984,6 +31984,34 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
           + '. For EACH, decide from the scene text: "fulfilled" (it clearly happened), "partial" (begun but not completed), "missed" (did not happen), or "contradicted" (the scene did the opposite). Add to the returned JSON a "beatFulfillment" array: [ { "id":"", "status":"fulfilled|partial|missed|contradicted", "evidence":"short quote or paraphrase", "recommendedAction":"none|carry_next|adapt_next|repair_current|regenerate_current" } ].';
       }
 
+      // ═══ HISTORY OBLIGATIONS ARE JUDGED ON THEIR OWN, EXPLICITLY SOLICITED ═══════════════
+      // (Roman/Codex 2026-10-03.) An earlier version settled a history obligation whenever the
+      // PLOT-CONTRACT scorer above returned any id with status "fulfilled". Codex was right to
+      // reject that on two counts: that scorer is self-described ANALYTICS, not the runtime
+      // commit gate, and its ids are PLOT HARD-BEAT ids with no demonstrated mapping to history
+      // obligations — so an unrelated beat id could close an obligation it never referred to.
+      //
+      // This asks a SEPARATE question with its own field, and names the EXACT obligations being
+      // judged. The solicited set is recorded here, at request time, and nothing outside it can
+      // settle anything — an invented, unrelated or ambiguous id closes NOTHING.
+      var _hoEligible = [];
+      try {
+        if (typeof _openObligations === 'function') {
+          _hoEligible = _openObligations(window.state).filter(function (o) { return o && o.id; });
+        }
+      } catch (_) {}
+      try { window.state._historyObligationsSolicited = _hoEligible.map(function (o) { return String(o.id); }); } catch (_) {}
+      if (_hoEligible.length) {
+        sys += '\n\nSEPARATELY, judge HISTORY OBLIGATIONS. These are commitments earlier scenes left '
+          + 'open, and they are judged ONLY against what THIS scene text actually shows: '
+          + _hoEligible.map(function (o) { return '[' + o.id + '] ' + o.text; }).join(' | ')
+          + '. Return "history_obligations_fulfilled": an array of objects {"id": "<EXACTLY one of '
+          + 'the ids listed above, nothing else>", "evidence": "<a short phrase from THIS scene '
+          + 'showing it was discharged>"}. Include an id ONLY if this scene plainly discharges it. '
+          + 'Omit anything uncertain, and NEVER invent an id. An empty array is the correct answer '
+          + 'when nothing was discharged.';
+      }
+
       // TIERED PROVIDER POLICY (2026-09-14): this was a DIRECT, untiered /api/chatgpt-proxy call —
       // found and disclosed during the checkpoint regression, now closed. It is a genuine
       // generative/comprehension task (new-information judgment against a known ledger, prose-
@@ -32020,6 +32048,16 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // contradicted hard beats become carryover debts. repair_current/regenerate_current are
       // LOGGED but NOT auto-executed in Phase 1 (carry/adapt only; heavy actions deferred).
       try {
+        // THE SOLICITED HISTORY VERDICT, validated against what was actually asked.
+        try {
+          if (parsed && Array.isArray(parsed.history_obligations_fulfilled)
+              && typeof _settleHistoryObligation === 'function') {
+            parsed.history_obligations_fulfilled.forEach(function (hv) {
+              if (!hv || !hv.id) return;
+              _settleHistoryObligation(String(hv.id), String(hv.evidence || '').slice(0, 200));
+            });
+          }
+        } catch (_) {}
         if (_pcBeats.length && parsed && Array.isArray(parsed.beatFulfillment)) {
           parsed.beatFulfillment.forEach(function (bf) {
             if (!bf || !bf.id) return;
@@ -32033,16 +32071,9 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
             if (src._derivedFromStateChange && !(typeof window !== 'undefined' && window._committedStateV0 === false)) {
               return; // transitions are owned by Commit-Scene; no obligation debt for them here
             }
-            // HISTORY-NOTE OBLIGATIONS SETTLE HERE, through the SAME adjudication that already
-            // decides whether a committed beat was delivered (Roman/Codex 2026-10-03). This is
-            // the authorized writer: the VERIFIER, a separate pass from the author, reporting on
-            // the rendered scene. An author can PROPOSE an obligation and can CLAIM it resolved,
-            // and neither settles anything — only this verdict does. Previously nothing in
-            // production set `resolved`, so my test setting the flag by hand proved only that the
-            // flag was read, which Codex correctly refused to accept as a settlement path.
-            if (bf.status === 'fulfilled' && typeof _settleHistoryObligation === 'function') {
-              try { _settleHistoryObligation(bf.id, String(bf.evidence || '').slice(0, 200)); } catch (_) {}
-            }
+            // NO HISTORY SETTLEMENT HERE. These are PLOT HARD-BEAT ids judged by a pass that
+            // calls itself analytics; they are not history-obligation ids and carry no authority
+            // to close one. History obligations are solicited and adjudicated separately above.
             if (bf.status === 'fulfilled') return;
             if (src.dropAllowed === true && bf.status === 'partial') return;   // partial + droppable → let go
             if (typeof _recordObligationDebt === 'function') _recordObligationDebt({
@@ -103755,7 +103786,14 @@ function _buildAuthorFloorDirective(s) {
             // which read as though literary were wired when it never was (Codex, 2026-10-03).
             // The field is accepted so a caller that genuinely has one can pass it; nothing in
             // the literary path currently does.
-            historyNote: historyNote || (_sbPrep && _sbPrep.historyNote) || null })
+            // Three sources, in precedence order: an explicit argument, the note this very
+            // response carried (extracted at the seam before post-processing), and the note
+            // _sbPrepareBodyText found if the sentinel survived to here. Consumed once.
+            historyNote: historyNote || (function () {
+              var pend = state._pendingLiteraryHistoryNote || null;
+              if (pend) { try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; } }
+              return pend;
+            })() || (_sbPrep && _sbPrep.historyNote) || null })
         : null;
       // NO FALLBACK PUSH. If the API is unavailable something is badly wrong, and quietly creating an
       // un-projected record is the drift the route rule exists to prevent — it would be a scene with no
@@ -134157,6 +134195,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   function _settleHistoryObligation(id, evidence) {
     var s = window.state; if (!s || !id) return false;
     var key = String(id), hit = false;
+    // ONLY AN OBLIGATION THAT WAS ACTUALLY PUT TO THE ADJUDICATOR CAN BE CLOSED BY IT. The
+    // solicited set is recorded when the request is built; an id outside it — invented, unrelated,
+    // or left over from an earlier scene's question — settles nothing and is logged loudly.
+    try {
+      var solicited = s._historyObligationsSolicited;
+      if (!Array.isArray(solicited) || solicited.indexOf(key) < 0) {
+        console.warn('[HISTORY-NOTE] REFUSED settlement of "' + key + '" — it was not among the '
+          + 'obligations put to the adjudicator ('
+          + (Array.isArray(solicited) ? solicited.join(', ') || 'none' : 'nothing solicited') + ')');
+        return false;
+      }
+    } catch (_) { return false; }
     try {
       (s.scenes || []).forEach(function (rec) {
         var hn = rec && rec.historyNote; if (!hn) return;
@@ -270944,7 +270994,11 @@ Generate the synopsis now.` }
                 var _sbS1Rec = (typeof _sbPersistSceneProjection === 'function')
                   ? _sbPersistSceneProjection({ uid: _sbScene1Uid, kind: 'body', input: _sbScene1Prep.text,
                       title: title, synopsis: synopsis, fateCard: null,
-                      projectionOpts: { refused: _sbScene1Prep.refused, refusalReason: _sbScene1Prep.refusalReason } })
+                      projectionOpts: { refused: _sbScene1Prep.refused, refusalReason: _sbScene1Prep.refusalReason },
+                      // The background opening ran the extraction and then THREW THE NOTE AWAY
+                      // (Codex 2026-10-03): _sbPrepareBodyText returns historyNote and this call
+                      // did not forward it, so an opening's own note was silently lost.
+                      historyNote: _sbScene1Prep.historyNote || null })
                   : null;
                 if (!_sbS1Rec) { try { console.error('[SCENE-PROJECTION] Scene 1 could not persist through the API — no scene record written'); } catch (_) {} }
                 try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(_sbScene1Prep.text); } catch (_) {}
@@ -319142,6 +319196,25 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               throw new Error('Invalid response: empty or malformed story text');
           }
 
+          // ═══ THE HISTORY NOTE COMES OFF THE RESPONSE FIRST (Roman/Codex 2026-10-03) ═══
+          // The literary CONTINUATION sends raw -> formatStory -> pagination and never touched
+          // _sbPrepareBodyText, so the sentinel would have reached the reader on the one path
+          // readers actually use. Extraction happens HERE, before a single post-processing step
+          // sees the text: every repair, calibration and line-edit below would otherwise be
+          // handed machine metadata to "improve", and the paginator would print it.
+          try {
+            if (typeof _sbExtractLiteraryNote === 'function') {
+              var _hnEx = _sbExtractLiteraryNote(raw);
+              if (_hnEx && _hnEx.blocks) {
+                raw = _hnEx.body;
+                state._pendingLiteraryHistoryNote = _hnEx.note || null;
+                try { console.log('[HISTORY-NOTE] continuation — ' + _hnEx.blocks
+                  + ' block(s) stripped before post-processing, note='
+                  + (_hnEx.note ? 'parsed' : 'none')); } catch (_) {}
+              }
+            }
+          } catch (_hnErr) {}
+
           // LI SOCIAL-PROOF REPAIR (Roman 2026-06-10) — runs FIRST in the turn
           // chain (higher-leverage than picturability). Self-gates via
           // _detectLISocialProofGap: once primary proof has locked in Scene 1
@@ -326043,20 +326116,36 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   var _HN_CLOSE = 'HISTORY_NOTE>>>';
   function _sbExtractLiteraryNote(raw) {
     var input = String(raw == null ? '' : raw);
-    var out = { body: input, note: null };
+    var out = { body: input, note: null, blocks: 0 };
     try {
-      var i = input.indexOf(_HN_OPEN);
-      if (i < 0) return out;                      // no sentinel: today's behaviour, untouched
-      var j = input.indexOf(_HN_CLOSE, i);
-      // STRIP FIRST, PARSE SECOND. An unterminated block still never reaches the reader.
-      out.body = (j < 0) ? input.slice(0, i) : (input.slice(0, i) + input.slice(j + _HN_CLOSE.length));
-      out.body = out.body.replace(/\n{3,}/g, '\n\n').trim();
-      if (j < 0) { try { console.warn('[HISTORY-NOTE] literary sentinel was not closed — prose cleaned, no note'); } catch (_) {} return out; }
-      var inner = input.slice(i + _HN_OPEN.length, j);
-      var a = inner.indexOf('{'), b = inner.lastIndexOf('}');
-      if (a < 0 || b <= a) return out;
-      try { out.note = JSON.parse(inner.slice(a, b + 1)); }
-      catch (e) { try { console.warn('[HISTORY-NOTE] literary note did not parse — prose cleaned, no note: ' + (e && e.message)); } catch (_) {} }
+      if (input.indexOf(_HN_OPEN) < 0) return out;    // no sentinel: today's behaviour, untouched
+      // EVERY BLOCK, NOT JUST THE FIRST. Codex emitted two consecutive HISTORY_NOTE blocks and
+      // the second stayed in the returned prose — a single indexOf/slice pass removes one block
+      // and leaves any others for the reader. A model repeating itself is ordinary, so the strip
+      // loops until no opener remains, and the FIRST well-formed block wins as the note.
+      var body = input, note = null, blocks = 0, guard = 0;
+      while (body.indexOf(_HN_OPEN) >= 0 && guard++ < 50) {
+        var i = body.indexOf(_HN_OPEN);
+        var j = body.indexOf(_HN_CLOSE, i);
+        var inner = (j < 0) ? body.slice(i + _HN_OPEN.length) : body.slice(i + _HN_OPEN.length, j);
+        // STRIP FIRST, PARSE SECOND, every time. An unterminated block truncates the rest, since
+        // whatever follows an unclosed marker is not prose the reader should see either.
+        body = (j < 0) ? body.slice(0, i) : (body.slice(0, i) + body.slice(j + _HN_CLOSE.length));
+        blocks++;
+        if (note) continue;                            // already have one; this one is only stripped
+        var a = inner.indexOf('{'), b = inner.lastIndexOf('}');
+        if (a < 0 || b <= a) continue;
+        try { note = JSON.parse(inner.slice(a, b + 1)); } catch (_e) { /* malformed: strip, no note */ }
+      }
+      out.body = body.replace(/\n{3,}/g, '\n\n').trim();
+      out.note = note;
+      out.blocks = blocks;
+      try {
+        if (blocks > 1) console.warn('[HISTORY-NOTE] ' + blocks + ' sentinel blocks found; all '
+          + 'stripped, first well-formed one kept');
+        if (!note && blocks) console.warn('[HISTORY-NOTE] ' + blocks + ' sentinel block(s) stripped '
+          + 'but none parsed — prose is clean, no note stored');
+      } catch (_) {}
     } catch (_) {}
     return out;
   }
