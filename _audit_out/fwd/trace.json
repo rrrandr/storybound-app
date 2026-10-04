@@ -4,10 +4,10 @@
   ],
   "snapshotIsDev": false,
   "snapshotBeatCount": 8,
-  "snapshotFirstBeat": "{\"pcSay\":\"I am still here.\",\"pcDo\":\"I hold his gaze.\",\"pcSayRaw\":\"I am still here.\",\"pcDoRaw\":\"I hold his gaze.\",\"liDialogue\":\"The Answer is in your hands, not mine. Mind what it does with that.\",\"liAction\":\"My palms are damp around it, and he watches me notice.\",\"faceState\":\"you\",\"mouthUrl\":\"/assets/test-mouths/MM-mouth-you.png\",\"fateCardTag\":null,\"fateChangeApplied\":null,\"tem",
+  "snapshotFirstBeat": "{\"pcSay\":\"I am still here.\",\"pcDo\":\"I hold his gaze.\",\"pcSayRaw\":\"I am still here.\",\"pcDoRaw\":\"I hold his gaze.\",\"liDialogue\":\"The Answer is in your hands, not mine. Mind what it does with that.\",\"liAction\":\"My palms are damp around it, and he watches me notice.\",\"faceState\":\"parted\",\"mouthUrl\":\"/assets/test-mouths/MM-mouth-ohno.png\",\"fateCardTag\":null,\"fateChangeApplied\":null,",
   "archiveRecords": 1,
   "archiveBeatCount": 8,
-  "archiveFirstBeat": "{\"pcSay\":\"I am still here.\",\"pcDo\":\"I hold his gaze.\",\"pcSayRaw\":\"I am still here.\",\"pcDoRaw\":\"I hold his gaze.\",\"liDialogue\":\"The Answer is in your hands, not mine. Mind what it does with that.\",\"liAction\":\"My palms are damp around it, and he watches me notice.\",\"faceState\":\"you\",\"mouthUrl\":\"/assets/test-mouths/MM-mouth-you.png\",\"fateCardTag\":null,\"fateChangeApplied\":null,\"tem",
+  "archiveFirstBeat": "{\"pcSay\":\"I am still here.\",\"pcDo\":\"I hold his gaze.\",\"pcSayRaw\":\"I am still here.\",\"pcDoRaw\":\"I hold his gaze.\",\"liDialogue\":\"The Answer is in your hands, not mine. Mind what it does with that.\",\"liAction\":\"My palms are damp around it, and he watches me notice.\",\"faceState\":\"parted\",\"mouthUrl\":\"/assets/test-mouths/MM-mouth-ohno.png\",\"fateCardTag\":null,\"fateChangeApplied\":null,",
   "extractorOutput": [
     "  PLAYER: I am still here. / I hold his gaze.",
     "  Julian: Say it plainly and I will stop. You do not want me to stop.",

@@ -281,7 +281,7 @@ Recent story prose: hout hurry, and the assembly made room for him the way rooms
 Relationship dynamic: Enemies
 Characters recently in play: Seren
 World flavor: arcane_binding
-Fantasy region: pulse_point
+Fantasy region: the_thornwild
 
 AUTHORED OPENING FRAME (fixed Scene 1 handoff — authoritative; the one-on-one opens HERE and stays in this situation):
   • last authored beat: Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.
@@ -751,7 +751,7 @@ ROMANCE DOMINANCE ≠ ROMANCE SATURATION (HARD — Roman 2026-06-16, the governi
     Do NOT default to the calcified tics (nail-tapping / throat-clearing / glasses-pushing / pen-clicking). The habit must EXPRESS the core — that is what makes a character a person instead of a tic.
   SOCIAL ECOSYSTEM — THE RECURRING CAST AROUND THE PROTAGONIST (Roman 2026-06-16). Real stories have a SOCIAL CIRCLE, not one best friend. This story's recurring supporting cast — the people who keep showing up and PRESSURE the romance. Each = a WORLD-NATIVE social ROLE (who they are to her) × a UNIVERSAL narrative FUNCTION (what they DO to the relationship). The function is ORTHOGONAL to each character's psychological core above (core = WHO they are; function = WHAT pressure they apply). Map your ACTUAL named cast onto these; not every scene needs all of them:
     • A CLAN-KIN as TEMPTER (the CLOSEST — most present) — pushes the PC toward the riskier choice — louder want, fewer brakes. Shows it by: dares the PC to do the reckless thing she is already circling; makes the safe option sound like cowardice.
-    • A BOND-SISTER / BONDMATE as MATCHMAKER — engineers the encounters — manufactures the proximity the romance needs. Shows it by: arranges the "coincidence" that puts them in the same room; talks the PC into the event she knows he will attend.
+    • A BOND-SISTER / BONDMATE as ACCELERATOR — pushes the two of them together — closes the distance the PC keeps hesitating across. Shows it by: names out loud the thing the PC is pretending not to feel; engineers a reason the PC cannot refuse to see him again.
     HARD INVARIANT: EVERY member is fundamentally ON THE PC'S SIDE — even a Brake / Skeptic / Rival-Voice / Truth-Teller acts FROM loyalty, NEVER as a second antagonist (the someone-in-your-corner fantasy is the constant). Keep each member's function CONSISTENT across appearances (it can ESCALATE, never silently swap). Functions are DISTINCT across the cast — do not let two members collapse into the same pressure. Every member is a SEPARATE person from the LOVE INTEREST — never merge a cast role into the LI even when their professions overlap (the "colleague" in her circle is NOT the colleague she falls for).
     WHY: a varied circle is what makes loyalty, disagreement, and (later) betrayal land — the reader should wonder WHICH of these people matters most, not watch one "friend slot."
   THE LIVING WORLD — INCIDENTAL CHARACTER AGENCY (Roman 2026-06-16). Walk-ons (servers, drivers, shopkeepers, strangers, fans) are NOT just mood-lighting that admires the couple. OCCASIONALLY one may briefly ACT on them. This story's available beats (use ONLY when the setting actually supports the gate):
@@ -851,7 +851,13 @@ CONSTRAINTS (HARD):
      – Beautiful Ruin: testing-in-the-middle. Degradation must pass through a "is this real or is this just the moment" filter. When she yields to dominance, half her mind is still asking whether the partner will respect her after — the play is GENUINE but the test runs underneath. Reassurance lands DURING, not just after.
      – Eternal Flame: ritual-slow + time-soaked. Degradation feels like ceremony — the title spoken with the weight of all the times she's wanted to hear it. Pain play is patient, drawn out, savored. Where Dark Vice rushes into the heat, Eternal Flame holds it suspended, makes it last.
    When degradation has NOT been earned (still in attempt-1/2/3+ refusal mode), these textures still inform HOW the LI refuses — Heart Warden refuses with protectiveness; Dark Vice refuses with playful predation ("oh, you sweet thing"); Open Vein refuses with raw honesty ("I can't — that's too much, not yet"). The archetype is ALWAYS present; the register depends on whether the degradation has been earned.
-
+- WOUND APPEARANCE (THIS SCENE — at most ONE beat, total): Julian's archetypal wound may surface as a single vulnerable aside, in ONE beat and ONE BEAT ONLY this entire scene. WOUND REGISTER for Julian (Spellbinder): manipulation-suspicion leak. Register: "Tell me this isn't just the moment." / "Don't lie to me right now. Anything else, but not now." — the spell-caster suddenly afraid the spell worked too well. TIMING — TWO valid surfaces, each with its own rule:
+   (1) DIP / SETTLE (preferred — lower stakes): on a temperature dip (curious / warming) OR a post-peak settle / afterglow. The line lands SAID, half-aware, slips out, returns to the scene. No big aftermath required.
+   (2) PEAK MISFIRE (higher stakes — valid IF you commit): on peak / climax / urgent escalation. It IS human to say the wrong thing during sex — but the wound at peak MUST carry consequence. Pick ONE of:
+      ✓ Brush-off + continue — Julian realizes mid-air it was the wrong moment, deflects it themselves, snaps the heat back ("...fuck it. Where were we." / "Forget I said that. Don't stop." / a kiss that silences their own line). The scene continues.
+      ✓ Shame retreat — Julian is gutted by what just came out of their mouth, stops the act, gets up / pulls away / leaves the bed. The OAS scene ENDS HERE — set scene_state = "resolve" and let the moment break.
+   What you may NOT do at peak: drop the wound line and then continue as if nothing happened. The wound MUST have weight — never decoration. Pick a path and commit to it.
+   The aside should feel SAID, not performed — half-aware, slips out before being caught. Use this opportunity ONCE this whole scene, on the RIGHT beat (or not at all if no right beat lands — it's OK to skip).
 - KINK / DESIRE EXPRESSION (AT LEAST ONE beat this scene — normal sex texture, not gated by temperature): Julian is not a generic sex partner. Pick a SIGNATURE kink register and let it surface at least once. Signature kink for Julian: naming game + choreographed control — demands "Sir" / "say it back" / "ask permission" / orchestrated positioning ("on your knees" / "hands behind your back") / a slow voice that runs the scene. This is not a one-time fire — it should color HOW Julian has sex, not just a single line. The LI can introduce a kink the PC hasn't asked for ("call me Sir" / "I want to tie your hands" / "keep your eyes on me — don't close them" / "look at us — look — ") and gauge response. If the PC pushes back or shows discomfort, Julian adjusts (good kink etiquette); if the PC accepts or escalates, Julian deepens it.
    VARIETY MANDATE (across scenes): do not run the same kink expression every scene. Across the arc, Julian should show RANGE — praise one scene, restraint another, body-part fixation a third, mirror or ritual on a fourth. The LI should TEACH the PC something about themselves they didn't know — a kink they haven't named, a register they haven't entered, a position they haven't tried. Normal sex stuff every time is the failure mode.
 - KINK MEMORY for Julian (use this across scenes — kinks have continuity):
@@ -893,8 +899,6 @@ ENGINE MODULATION (how each subordinate system bends per engine — terse):
    • VULNERABILITY → native home. Wound IS the engine's beat; shame retreat more likely than brush-off.
 
 The engine makes the subsystems QUIETER, not louder. Each subsystem still fires when its conditions hold — but bent toward your chosen engine, not as an independent checklist item.
-
-
 ═══════════════════════════════════════════════════════
 ANTI-ECHO RULE (HARD — applies every turn):
 ═══════════════════════════════════════════════════════
@@ -1106,7 +1110,7 @@ When to set scene_state = "resolve":
 When to set scene_state = "nearing_resolution":
 - Beat count >= soft cap AND temperature is peaking.
 - One more turn before resolve.
-
+PLAYER STYLE PROFILE: insufficient data yet (0 prior inputs). Default conservatively — under-shoot rather than over-shoot.
 CURRENT STATE:
 - Beat 2 of soft-cap 17 (hard cap 20).
 - Temperature: curious (curious → warming → urgent → peaking → resolution).
@@ -1122,4 +1126,3 @@ NEW USER INPUT:
 SAY: "I am still here."
 DO:  "I hold his gaze."
 Detected explicit physical escalation in input: NO
-PLAYER STYLE PROFILE: insufficient data yet (0 prior inputs). Default conservatively — under-shoot rather than over-shoot.

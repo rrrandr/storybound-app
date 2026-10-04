@@ -201068,11 +201068,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // physical circumstances, reveal boundaries and the OAS response contract are all still in the
   // request — verified by _oas_prompt_compaction_control.mjs rather than asserted here.
   var _OAS_DEDUPE_MIN = 1000;        // only spans large enough to be structural, never a phrase
-  var _OAS_VOLATILE = ['CURRENT STATE:', 'RECENT TURNS:', 'NEW USER INPUT:'];
-  // SINGLE LINES that carry a per-turn value while sitting inside otherwise stable prose. Found
-  // by diffing consecutive real requests line by line rather than guessed: of FOUR changed
-  // regions between turns, three were already in the volatile sections above and this one was
-  // stranded at character 170,717, truncating the cacheable prefix by ~25,500 chars on its own.
+  // Declared at the builder and consumed here. Control characters so no authored text can
+  // collide with them.
+  var _OAS_MARK_VOLATILE_START = '\u0000OAS_VOLATILE_START\u0000';
+  var _OAS_MARK_VOLATILE_END   = '\u0000OAS_VOLATILE_END\u0000';
+  // SINGLE LINES carrying a per-turn value while sitting inside otherwise stable prose. Found by
+  // diffing consecutive REAL requests line by line: of four changed regions between turns, three
+  // were already inside the declared volatile section and this one was stranded in the prefix.
+  // (Lost in an earlier edit of this block, which made the compactor throw and silently fall
+  // back to sending the prompt unchanged — caught by its own regression, not by inspection.)
   var _OAS_VOLATILE_LINES = [/^PLAYER STYLE PROFILE:/];
 
   function _oasCompactTurnPrompt(prompt) {
@@ -201080,96 +201084,70 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!text) return text;
     var before = text.length;
     try {
-      // ── 1. DROP EXACT REPEATS ──────────────────────────────────────────────────────────────
-      // Paragraph-granular so a removal can never cut a block in half. The FIRST occurrence is
-      // kept in place, so ordering of what remains is untouched.
-      var paras = text.split('\n\n');
-      var seen = Object.create(null), kept = [], dropped = 0;
-      for (var i = 0; i < paras.length; i++) {
-        var seg = paras[i];
-        var key = seg.trim();
-        if (key.length >= _OAS_DEDUPE_MIN) {
-          if (seen[key]) { dropped += seg.length + 2; continue; }
-          seen[key] = true;
-        }
-        kept.push(seg);
+      // ── SPLIT ON DECLARED BOUNDARIES, NEVER ON GUESSED ONES ────────────────────────────────
+      var a = text.indexOf(_OAS_MARK_VOLATILE_START);
+      var b = text.indexOf(_OAS_MARK_VOLATILE_END);
+      if (a < 0 || b < 0 || b < a) {
+        // No markers: do nothing at all. A compactor that falls back to parsing prose is the
+        // defect this replaced.
+        try { console.warn('[OAS:COMPACT] boundaries absent — prompt sent unchanged'); } catch (_) {}
+        return text;
       }
-      text = kept.join('\n\n');
+      var head = text.slice(0, a);
+      var volatilePart = text.slice(a + _OAS_MARK_VOLATILE_START.length, b);
+      var tail = text.slice(b + _OAS_MARK_VOLATILE_END.length);
 
-      // ── 2. HOIST THE VOLATILE BLOCKS TO THE END ────────────────────────────────────────────
-      // Everything stable keeps its order and sits in the prefix; what changes each turn moves
-      // behind it, so consecutive requests share the longest possible identical prefix.
-      var idx = [];
-      _OAS_VOLATILE.forEach(function (h) {
-        var at = text.indexOf('\n' + h);
-        if (at >= 0) idx.push({ h: h, at: at });
-      });
-      if (idx.length) {
-        idx.sort(function (a, b) { return a.at - b.at; });
-        var cut = idx[0].at;                 // everything from the FIRST volatile header on
-        var head = text.slice(0, cut);
-        var tail = text.slice(cut);
-        // The tail is already volatile-first; keep it verbatim and simply place it last.
-        text = head + tail;                  // no-op when volatile blocks are already trailing
-        // If stable material follows a volatile block, move that stable material ahead of it.
-        var reordered = _oasHoistVolatile(text, idx.map(function (x) { return x.h; }));
-        if (reordered) text = reordered;
-      }
-      // Hoist stranded volatile LINES after the sections, so nothing per-turn remains in the
-      // prefix. Order among them is preserved; only their position moves.
-      if (_OAS_VOLATILE_LINES.length) {
-        var ls = text.split('\n'), movedLines = [], keptLines = [];
-        for (var k = 0; k < ls.length; k++) {
-          var isVol = _OAS_VOLATILE_LINES.some(function (re) { return re.test(ls[k]); });
-          if (isVol) movedLines.push(ls[k]); else keptLines.push(ls[k]);
+      // ── DEDUPE THE STATIC INSTRUCTIONS ONLY ────────────────────────────────────────────────
+      // head and tail are instruction text. The volatile part — state, history, the reader's
+      // own words — is NEVER deduplicated: a reader may legitimately repeat themselves, and
+      // conversation history repeating a line is meaningful, not waste.
+      var dropped = 0;
+      var dedupe = function (chunk, seen) {
+        var paras = chunk.split('\n\n'), kept = [];
+        for (var i = 0; i < paras.length; i++) {
+          var key = paras[i].trim();
+          if (key.length >= _OAS_DEDUPE_MIN) {
+            if (seen[key]) { dropped += paras[i].length + 2; continue; }
+            seen[key] = true;
+          }
+          kept.push(paras[i]);
         }
-        if (movedLines.length) text = keptLines.join('\n') + '\n' + movedLines.join('\n');
+        return kept.join('\n\n');
+      };
+      var seen = Object.create(null);
+      head = dedupe(head, seen);
+      tail = dedupe(tail, seen);
+
+      // ── STABLE FIRST, VOLATILE LAST ───────────────────────────────────────────────────────
+      // The volatile region moves as ONE OPAQUE UNIT: not split, not reordered internally, not
+      // deduplicated. Static rules that were printed after the reader's input stay in the
+      // prefix, where they are cacheable.
+      var stable = head.replace(/\s+$/, '') + '\n' + tail.replace(/^\s+/, '');
+      // Stranded per-turn LINES inside the stable region, found by diffing real consecutive
+      // requests — currently only PLAYER STYLE PROFILE, which carries a prior-input count.
+      var movedLines = [];
+      if (_OAS_VOLATILE_LINES.length) {
+        var ls = stable.split('\n'), keptLines = [];
+        for (var k = 0; k < ls.length; k++) {
+          if (_OAS_VOLATILE_LINES.some(function (re) { return re.test(ls[k]); })) movedLines.push(ls[k]);
+          else keptLines.push(ls[k]);
+        }
+        stable = keptLines.join('\n');
       }
+      text = stable.replace(/\s+$/, '')
+        + (movedLines.length ? '\n' + movedLines.join('\n') : '')
+        + '\n' + volatilePart.replace(/^\n+/, '');
 
       try {
         console.log('[OAS:COMPACT] ' + before + ' -> ' + text.length + ' chars ('
-          + (dropped ? dropped + ' duplicated, ' : '') + 'volatile hoisted)');
+          + dropped + ' duplicated instruction chars dropped; volatile region moved intact, '
+          + volatilePart.length + ' chars)');
       } catch (_) {}
     } catch (e) {
       try { console.warn('[OAS:COMPACT] failed, sending the prompt unchanged: ' + (e && e.message)); } catch (_) {}
       return String(prompt == null ? '' : prompt);
     }
     return text;
-  }
-
-  // Pull each volatile section out and re-append it after all stable material, so consecutive
-  // turns share the longest possible identical prefix.
-  //
-  // NEW USER INPUT IS SPLIT, NOT MOVED WHOLE. Measured: that section is 28,801 characters, of
-  // which the reader's actual SAY/DO is about 130 — the remaining ~28,670 are STATIC rules
-  // (ANTI-ECHO and the rest) that happen to be printed under that heading. Moving the whole
-  // section would strand all of it behind the volatile part and defeat the point; moving only
-  // the input leaves the rules in the cacheable prefix where they belong.
-  function _oasHoistVolatile(text, headers) {
-    try {
-      var rest = text, volatileParts = [], stableTails = [];
-      headers.forEach(function (h) {
-        var at = rest.indexOf('\n' + h);
-        if (at < 0) return;
-        var after = rest.slice(at + 1);
-        var m = after.slice(h.length).search(/\n[A-Z][A-Z0-9 ,/&'\-()+:]{8,}:\n/);
-        var end = (m < 0) ? rest.length : at + 1 + h.length + m;
-        var section = rest.slice(at, end);
-        // Where does the volatile part of this section actually stop? A run of blank lines or a
-        // rule banner is the boundary between the live value and the static rules beneath it.
-        var body = section.slice(('\n' + h).length);
-        var bound = body.search(/\n\n\n|\n═══/);
-        if (bound > 0) {
-          volatileParts.push('\n' + h + body.slice(0, bound));
-          stableTails.push(body.slice(bound));          // stays in the prefix
-        } else {
-          volatileParts.push(section);
-        }
-        rest = rest.slice(0, at) + rest.slice(end);
-      });
-      if (!volatileParts.length) return null;
-      return rest.replace(/\s+$/, '') + stableTails.join('') + '\n' + volatileParts.join('');
-    } catch (_) { return null; }
   }
   window._oasCompactTurnPrompt = _oasCompactTurnPrompt;
 
@@ -202134,6 +202112,14 @@ No text, no watermark, no UI elements, share-ready.`;
         } catch (_) { return ''; }
       })(),
       '',
+      // ── EXPLICIT SECTION BOUNDARY (Roman/Codex 2026-10-04) ────────────────────────────
+      // Everything between these two markers is PER-TURN: state, conversation history and the
+      // reader's own words. The compactor moves this region as ONE OPAQUE UNIT and never looks
+      // inside it. The boundaries are DECLARED HERE, where the sections are built, because
+      // recovering them from the finished prose was wrong: a reader input containing blank
+      // lines was split, and part of their quoted text and DO action were carried off into the
+      // static instructions. Preserving every word is not preserving whose words they are.
+      _OAS_MARK_VOLATILE_START,
       'CURRENT STATE:',
       '- Beat ' + (d.beatCount + 1) + ' of soft-cap ' + d.softCap + ' (hard cap ' + d.hardCap + ').',
       '- Temperature: ' + d.temperature + ' (curious → warming → urgent → peaking → resolution).',
@@ -202158,6 +202144,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'SAY: "' + (userSay || '') + '"',
       'DO:  "' + (userDo || '') + '"',
       'Detected explicit physical escalation in input: ' + (userIsExplicit ? 'YES' : 'NO'),
+      _OAS_MARK_VOLATILE_END,
       // Off-topic-noise deflection directive — fires only when the
       // deterministic detector classifies the input as slop / OOC meta
       // / gibberish. The LI brushes it off in-character and keeps the
