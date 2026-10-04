@@ -2,82 +2,91 @@
   {
     "turn": 0,
     "msgs": 2,
-    "chars": 4971,
+    "chars": 4970,
     "sys": 397,
-    "rest": 4574,
+    "rest": 4573,
     "max_tokens": 180,
-    "model": "mistral-small-latest"
+    "model": "mistral-small-latest",
+    "convId": null
   },
   {
     "turn": 1,
     "msgs": 2,
-    "chars": 201172,
+    "chars": 201146,
     "sys": 2804,
-    "rest": 198368,
+    "rest": 198342,
     "max_tokens": 400,
-    "model": "grok-4-1-fast-reasoning"
+    "model": "grok-4-1-fast-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 2,
     "msgs": 2,
-    "chars": 201345,
+    "chars": 201319,
     "sys": 2804,
-    "rest": 198541,
+    "rest": 198515,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 3,
     "msgs": 2,
-    "chars": 201556,
+    "chars": 201530,
     "sys": 2804,
-    "rest": 198752,
+    "rest": 198726,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 4,
     "msgs": 2,
-    "chars": 201789,
+    "chars": 201763,
     "sys": 2804,
-    "rest": 198985,
+    "rest": 198959,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 5,
     "msgs": 2,
-    "chars": 202810,
+    "chars": 202784,
     "sys": 2804,
-    "rest": 200006,
+    "rest": 199980,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 6,
     "msgs": 2,
-    "chars": 202454,
+    "chars": 202428,
     "sys": 2804,
-    "rest": 199650,
+    "rest": 199624,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 7,
     "msgs": 2,
-    "chars": 202433,
+    "chars": 202407,
     "sys": 2804,
-    "rest": 199629,
+    "rest": 199603,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   },
   {
     "turn": 8,
     "msgs": 2,
-    "chars": 202401,
+    "chars": 202375,
     "sys": 2804,
-    "rest": 199597,
+    "rest": 199571,
     "max_tokens": 400,
-    "model": "grok-4.20-0309-non-reasoning"
+    "model": "grok-4.20-0309-non-reasoning",
+    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
   }
 ]

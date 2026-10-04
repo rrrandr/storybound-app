@@ -281,7 +281,7 @@ Recent story prose: hout hurry, and the assembly made room for him the way rooms
 Relationship dynamic: Enemies
 Characters recently in play: Seren
 World flavor: arcane_binding
-Fantasy region: the_thornwild
+Fantasy region: the_veilwood
 
 AUTHORED OPENING FRAME (fixed Scene 1 handoff — authoritative; the one-on-one opens HERE and stays in this situation):
   • last authored beat: Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.
@@ -750,8 +750,8 @@ ROMANCE DOMINANCE ≠ ROMANCE SATURATION (HARD — Roman 2026-06-16, the governi
     WORLD IDIOM: WORLD IDIOM (Fatelands): leakage carries the body's wildness and the world's weight — an animal stillness, the Becoming stirring a half-shade under the skin, moons-attuned senses snapping to her; in a First-Favored or court figure, the leak is the crack in Favor-perfect composure.
     Do NOT default to the calcified tics (nail-tapping / throat-clearing / glasses-pushing / pen-clicking). The habit must EXPRESS the core — that is what makes a character a person instead of a tic.
   SOCIAL ECOSYSTEM — THE RECURRING CAST AROUND THE PROTAGONIST (Roman 2026-06-16). Real stories have a SOCIAL CIRCLE, not one best friend. This story's recurring supporting cast — the people who keep showing up and PRESSURE the romance. Each = a WORLD-NATIVE social ROLE (who they are to her) × a UNIVERSAL narrative FUNCTION (what they DO to the relationship). The function is ORTHOGONAL to each character's psychological core above (core = WHO they are; function = WHAT pressure they apply). Map your ACTUAL named cast onto these; not every scene needs all of them:
-    • A CLAN-KIN as TEMPTER (the CLOSEST — most present) — pushes the PC toward the riskier choice — louder want, fewer brakes. Shows it by: dares the PC to do the reckless thing she is already circling; makes the safe option sound like cowardice.
-    • A BOND-SISTER / BONDMATE as ACCELERATOR — pushes the two of them together — closes the distance the PC keeps hesitating across. Shows it by: names out loud the thing the PC is pretending not to feel; engineers a reason the PC cannot refuse to see him again.
+    • A CLAN-KIN as PROTECTOR (the CLOSEST — most present) — shields the PC from the harm the romance could do to her. Shows it by: puts herself between the PC and the thing that could wound her; vets him without being asked and reports back.
+    • A BOND-SISTER / BONDMATE as CHAOS AGENT — creates complications — makes everything messier, usually by accident-on-purpose. Shows it by: lets slip the thing that was supposed to stay buried; escalates a small situation into a full scene.
     HARD INVARIANT: EVERY member is fundamentally ON THE PC'S SIDE — even a Brake / Skeptic / Rival-Voice / Truth-Teller acts FROM loyalty, NEVER as a second antagonist (the someone-in-your-corner fantasy is the constant). Keep each member's function CONSISTENT across appearances (it can ESCALATE, never silently swap). Functions are DISTINCT across the cast — do not let two members collapse into the same pressure. Every member is a SEPARATE person from the LOVE INTEREST — never merge a cast role into the LI even when their professions overlap (the "colleague" in her circle is NOT the colleague she falls for).
     WHY: a varied circle is what makes loyalty, disagreement, and (later) betrayal land — the reader should wonder WHICH of these people matters most, not watch one "friend slot."
   THE LIVING WORLD — INCIDENTAL CHARACTER AGENCY (Roman 2026-06-16). Walk-ons (servers, drivers, shopkeepers, strangers, fans) are NOT just mood-lighting that admires the couple. OCCASIONALLY one may briefly ACT on them. This story's available beats (use ONLY when the setting actually supports the gate):

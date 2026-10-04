@@ -9,7 +9,7 @@ Recent story prose: hout hurry, and the assembly made room for him the way rooms
 Relationship dynamic: Enemies
 Characters recently in play: Seren
 World flavor: arcane_binding
-Fantasy region: the_thornwild
+Fantasy region: the_veilwood
 
 AUTHORED OPENING FRAME (fixed Scene 1 handoff — authoritative; the one-on-one opens HERE and stays in this situation):
   • last authored beat: Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.

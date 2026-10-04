@@ -5210,6 +5210,13 @@ ${_pcInteriorLock}`;
     var temperature = (typeof opts.temperature === 'number') ? opts.temperature : 0.85;
     var roleTag = opts.roleTag || 'full-scene-author';
     var grokModel = opts.grokModel || 'grok-4-1-fast-reasoning';
+    // XAI PROMPT CACHING NEEDS A STABLE CONVERSATION ID (Roman/Codex 2026-10-04). The proxy has
+    // always forwarded one as x-grok-conv-id (api/proxy.js:424) and the literary path supplies
+    // it, but THIS SHARED POLICY never read such an option and never put it in the request body
+    // — so adding it at a caller alone would have been inert, which is what Codex found.
+    // Story-scoped by construction: _grokConvId() is 'sb-grok-' + state.storyId, stable within a
+    // story and different across stories.
+    var convId = opts.convId || ((typeof _grokConvId === 'function') ? _grokConvId() : null);
     var cacheEligible = _fullSceneCacheEligible(messages);
     var attempts = [];
 
@@ -5219,7 +5226,7 @@ ${_pcInteriorLock}`;
       var gT0 = Date.now();
       var gResp = await fetch('/api/proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: grokModel, messages: messages, max_tokens: maxTokens, temperature: temperature })
+        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: grokModel, messages: messages, max_tokens: maxTokens, temperature: temperature, convId: convId })
       });
       attempts.push({ tier: 1, provider: 'grok', model: grokModel, ok: gResp.ok, status: gResp.status, ms: Date.now() - gT0 });
       if (gResp.ok) {
@@ -201085,12 +201092,18 @@ No text, no watermark, no UI elements, share-ready.`;
     var before = text.length;
     try {
       // ── SPLIT ON DECLARED BOUNDARIES, NEVER ON GUESSED ONES ────────────────────────────────
+      // VALIDATE THE BOUNDARIES. A control character is UNLIKELY in authored text, not
+      // impossible — a reader can paste anything, and "the delimiter is exotic" is not a
+      // guarantee (Codex 2026-10-04). So the count and order are checked, and anything other
+      // than exactly one properly ordered pair means the prompt is returned UNTOUCHED. The
+      // compactor never tries to recover from an ambiguous structure.
+      var nStart = text.split(_OAS_MARK_VOLATILE_START).length - 1;
+      var nEnd = text.split(_OAS_MARK_VOLATILE_END).length - 1;
       var a = text.indexOf(_OAS_MARK_VOLATILE_START);
       var b = text.indexOf(_OAS_MARK_VOLATILE_END);
-      if (a < 0 || b < 0 || b < a) {
-        // No markers: do nothing at all. A compactor that falls back to parsing prose is the
-        // defect this replaced.
-        try { console.warn('[OAS:COMPACT] boundaries absent — prompt sent unchanged'); } catch (_) {}
+      if (nStart !== 1 || nEnd !== 1 || a < 0 || b < 0 || b < a) {
+        try { console.warn('[OAS:COMPACT] boundaries absent or ambiguous (start=' + nStart
+          + ', end=' + nEnd + ') — prompt sent UNCHANGED'); } catch (_) {}
         return text;
       }
       var head = text.slice(0, a);
@@ -201137,6 +201150,8 @@ No text, no watermark, no UI elements, share-ready.`;
       text = stable.replace(/\s+$/, '')
         + (movedLines.length ? '\n' + movedLines.join('\n') : '')
         + '\n' + volatilePart.replace(/^\n+/, '');
+      // Belt and braces: no marker character reaches the model even if one survived upstream.
+      text = text.split(_OAS_MARK_VOLATILE_START).join('').split(_OAS_MARK_VOLATILE_END).join('');
 
       try {
         console.log('[OAS:COMPACT] ' + before + ' -> ' + text.length + ' chars ('
@@ -204643,7 +204658,8 @@ No text, no watermark, no UI elements, share-ready.`;
         var _oasTurnPolicy = await window._authorFullScenePolicy([
           { role: 'system', content: _oasSystemMsg },
           { role: 'user',   content: prompt }
-        ], { maxTokens: 400, temperature: 0.75, roleTag: 'oas-turn', grokModel: _grokModelForTurn });
+        ], { maxTokens: 400, temperature: 0.75, roleTag: 'oas-turn', grokModel: _grokModelForTurn,
+             convId: (typeof _grokConvId === 'function') ? _grokConvId() : null });
         responseRaw = _oasTurnPolicy.text;
         state._lastOASTurnAuthor = _oasTurnPolicy.provider;
         state._lastOASTurnAuthorModel = _oasTurnPolicy.model;

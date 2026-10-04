@@ -104,7 +104,22 @@ console.log('\n4. ORDER AND MARKERS');
     out.indexOf('I fold it') > out.indexOf('PLAYER STYLE PROFILE:'));
 }
 
-console.log('\n5. FAIL-SAFE — no markers means NO rewriting');
+console.log('\n5. BOUNDARY VALIDATION — markers are not assumed collision-proof');
+{
+  const cases = [
+    ['a reader pasting the START marker', ['HEAD', S, 'CURRENT STATE:', 'SAY: "' + S + '"', E, 'TAIL'].join('\n\n')],
+    ['a reader pasting the END marker',   ['HEAD', S, 'CURRENT STATE:', 'SAY: "' + E + '"', E, 'TAIL'].join('\n\n')],
+    ['markers out of order',              ['HEAD', E, 'CURRENT STATE:', S, 'TAIL'].join('\n\n')],
+    ['a missing end marker',              ['HEAD', S, 'CURRENT STATE:', 'TAIL'].join('\n\n')]
+  ];
+  for (const [label, p] of cases) {
+    const o = await page.evaluate(x => window._oasCompactTurnPrompt(x), p);
+    t(label + ' leaves the prompt UNTOUCHED', o === p,
+      'the compactor acted on an ambiguous structure');
+  }
+}
+
+console.log('\n6. FAIL-SAFE — no markers means NO rewriting');
 {
   const plain = 'INSTRUCTIONS\n\nNEW USER INPUT:\nSAY: "hello"\n\nmore text';
   const same = await page.evaluate((p) => window._oasCompactTurnPrompt(p), plain);
