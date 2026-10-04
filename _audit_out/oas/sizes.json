@@ -1,0 +1,83 @@
+[
+  {
+    "turn": 0,
+    "msgs": 2,
+    "chars": 4970,
+    "sys": 397,
+    "rest": 4573,
+    "max_tokens": 180,
+    "model": "mistral-small-latest"
+  },
+  {
+    "turn": 1,
+    "msgs": 2,
+    "chars": 243966,
+    "sys": 2804,
+    "rest": 241162,
+    "max_tokens": 400,
+    "model": "grok-4-1-fast-reasoning"
+  },
+  {
+    "turn": 2,
+    "msgs": 2,
+    "chars": 244139,
+    "sys": 2804,
+    "rest": 241335,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 3,
+    "msgs": 2,
+    "chars": 244350,
+    "sys": 2804,
+    "rest": 241546,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 4,
+    "msgs": 2,
+    "chars": 244583,
+    "sys": 2804,
+    "rest": 241779,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 5,
+    "msgs": 2,
+    "chars": 245604,
+    "sys": 2804,
+    "rest": 242800,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 6,
+    "msgs": 2,
+    "chars": 245248,
+    "sys": 2804,
+    "rest": 242444,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 7,
+    "msgs": 2,
+    "chars": 245227,
+    "sys": 2804,
+    "rest": 242423,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  },
+  {
+    "turn": 8,
+    "msgs": 2,
+    "chars": 245195,
+    "sys": 2804,
+    "rest": 242391,
+    "max_tokens": 400,
+    "model": "grok-4.20-0309-non-reasoning"
+  }
+]

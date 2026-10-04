@@ -5,13 +5,25 @@ import { stageOf, isProviderEndpoint, oasTurn, oasClosingBeat, OAS_TURNS, OAS_RE
   from './_replay_fixtures.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS } from './_fs_story_setup.mjs';
 const b = await chromium.launch(); const page = await b.newPage();
-let n = 0;
+let n = 0; const oasSizes = [];
 await page.route('**/api/**', async (route) => {
   const req = route.request();
   if (!isProviderEndpoint(req.url())) { try { await route.abort(); } catch(_){} return; }
   let raw=null; try { raw=req.postData(); } catch(_){}
   let sys=''; try { sys=String((JSON.parse(raw||'{}').messages||[])[0]?.content||''); } catch(_){}
-  if (stageOf(sys) === 'oas') { const body = n >= OAS_TURNS.length ? oasClosingBeat() : oasTurn(n); n++;
+  if (stageOf(sys) === 'oas') {
+    // MEASURE THE REAL ASSEMBLED REQUEST — every message, as it would go on the wire.
+    try {
+      const b = JSON.parse(raw || '{}');
+      const msgs = b.messages || [];
+      oasSizes.push({ turn: n, msgs: msgs.length,
+        chars: msgs.reduce((t, m) => t + String(m.content || '').length, 0),
+        sys: String((msgs[0] || {}).content || '').length,
+        rest: msgs.slice(1).reduce((t, m) => t + String(m.content || '').length, 0),
+        max_tokens: b.max_tokens || b.maxTokens || null,
+        model: b.preferredModel || b.grokModel || b.model || null });
+    } catch (_) {}
+    const body = n >= OAS_TURNS.length ? oasClosingBeat() : oasTurn(n); n++;
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:body})}); }
   try { await route.abort(); } catch(_){}
 });
@@ -56,6 +68,13 @@ const out = await page.evaluate(() => {
       ? window._extractRecentOASExchangeLines(s, { limit: 4 }) : 'absent'
   };
 });
+console.log('=== REAL ASSEMBLED OAS REQUESTS ===');
+oasSizes.forEach(x => console.log('  turn ' + x.turn + '  msgs=' + x.msgs
+  + '  total=' + x.chars + 'c  (sys ' + x.sys + ' + rest ' + x.rest + ')'
+  + '  max_tokens=' + x.max_tokens + '  model=' + x.model));
+fs.mkdirSync('_audit_out/oas', { recursive: true });
+fs.writeFileSync('_audit_out/oas/sizes.json', JSON.stringify(oasSizes, null, 2));
+console.log('');
 console.log('SNAPSHOT keys: ' + JSON.stringify(out.snapshotKeys) + '  isDev=' + out.snapshotIsDev
   + '  beats=' + out.snapshotBeatCount);
 console.log('  first snapshot beat: ' + out.snapshotFirstBeat);
