@@ -1,0 +1,33 @@
+LIVE liTurnHistory entry:
+  {"userInput":"I am still here. / I hold his gaze.","userInputRaw":"I am still here. / I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","liResponse":"The Answer is in your hands, not mine. Mind what it does with that. My palms are damp around it, and he watches me notice.","faceSt
+
+=== REAL ASSEMBLED OAS REQUESTS ===
+  turn 0  msgs=2  total=4971c  (sys 397 + rest 4574)  max_tokens=180  model=mistral-small-latest
+  turn 1  msgs=2  total=199437c  (sys 2804 + rest 196633)  max_tokens=400  model=grok-4-1-fast-reasoning
+  turn 2  msgs=2  total=199610c  (sys 2804 + rest 196806)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 3  msgs=2  total=199821c  (sys 2804 + rest 197017)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 4  msgs=2  total=200054c  (sys 2804 + rest 197250)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 5  msgs=2  total=201075c  (sys 2804 + rest 198271)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 6  msgs=2  total=200719c  (sys 2804 + rest 197915)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 7  msgs=2  total=200698c  (sys 2804 + rest 197894)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 8  msgs=2  total=200666c  (sys 2804 + rest 197862)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+
+SNAPSHOT keys: ["0"]  isDev=false  beats=8
+  first snapshot beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"what","mouthUrl":"/assets/test-mouths/MM-mouth-what.png","fateCardTag":null,"fateChangeApplied":null,"t
+
+ARCHIVE records: 1  beats=8
+  first archive beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"what","mouthUrl":"/assets/test-mouths/MM-mouth-what.png","fateCardTag":null,"fateChangeApplied":null,"t
+
+EXTRACTOR OUTPUT (12 lines):
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Say it plainly and I will stop. You do not want me to stop.
+      (Somewhere behind us a guest shifts, and I remember we are still being watched.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then we understand each other, and everyone here understands us.
+      (The clearing has not made a sound in a long while.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Hold it or set it down. Either tells them something.
+      (He sets The Answer down on the stone between us and steps back.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then say it where they can hear you, or do not say it at all.
+      (He waits, and the clearing waits with him.)

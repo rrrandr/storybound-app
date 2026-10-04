@@ -201048,6 +201048,131 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._detectDarkRegisterInInput = _detectDarkRegisterInInput;
 
+  // ══ OAS TURN PROMPT COMPACTION (Roman/Codex 2026-10-04) ═════════════════════════════════════
+  // MEASURED on the real assembled request, not assumed: an OAS turn ships ~243,000 characters
+  // for a 400-token reply, and two things are wrong with it that have nothing to do with how much
+  // story the model is given.
+  //
+  //   1. A 49,653-CHARACTER SPAN IS SENT TWICE — 20% of the request. Two different directives
+  //      each emit the shared Character+ body (_buildCharacterPlusShared) with different flags,
+  //      and the shared part lands verbatim in both. Diffed directly from the captured request:
+  //      copy 1 at 50,548-100,201, copy 2 at 120,197-169,850.
+  //
+  //   2. THE VOLATILE BLOCK SITS IN THE MIDDLE. Comparing consecutive turns character by
+  //      character: 213,836 identical chars, then ~3,700 that change (CURRENT STATE — beat
+  //      count, temperature, register), then 25,524 identical again. xAI caches a matching
+  //      PREFIX, so a changing block in the middle strands everything after it.
+  //
+  // THIS REMOVES NOTHING THE MODEL IS TOLD. Deduplication drops only an EXACT repeat, and the
+  // hoist only reorders. Julian's characterisation, the rite, the allegations, The Answer, the
+  // physical circumstances, reveal boundaries and the OAS response contract are all still in the
+  // request — verified by _oas_prompt_compaction_control.mjs rather than asserted here.
+  var _OAS_DEDUPE_MIN = 1000;        // only spans large enough to be structural, never a phrase
+  var _OAS_VOLATILE = ['CURRENT STATE:', 'RECENT TURNS:', 'NEW USER INPUT:'];
+  // SINGLE LINES that carry a per-turn value while sitting inside otherwise stable prose. Found
+  // by diffing consecutive real requests line by line rather than guessed: of FOUR changed
+  // regions between turns, three were already in the volatile sections above and this one was
+  // stranded at character 170,717, truncating the cacheable prefix by ~25,500 chars on its own.
+  var _OAS_VOLATILE_LINES = [/^PLAYER STYLE PROFILE:/];
+
+  function _oasCompactTurnPrompt(prompt) {
+    var text = String(prompt == null ? '' : prompt);
+    if (!text) return text;
+    var before = text.length;
+    try {
+      // ── 1. DROP EXACT REPEATS ──────────────────────────────────────────────────────────────
+      // Paragraph-granular so a removal can never cut a block in half. The FIRST occurrence is
+      // kept in place, so ordering of what remains is untouched.
+      var paras = text.split('\n\n');
+      var seen = Object.create(null), kept = [], dropped = 0;
+      for (var i = 0; i < paras.length; i++) {
+        var seg = paras[i];
+        var key = seg.trim();
+        if (key.length >= _OAS_DEDUPE_MIN) {
+          if (seen[key]) { dropped += seg.length + 2; continue; }
+          seen[key] = true;
+        }
+        kept.push(seg);
+      }
+      text = kept.join('\n\n');
+
+      // ── 2. HOIST THE VOLATILE BLOCKS TO THE END ────────────────────────────────────────────
+      // Everything stable keeps its order and sits in the prefix; what changes each turn moves
+      // behind it, so consecutive requests share the longest possible identical prefix.
+      var idx = [];
+      _OAS_VOLATILE.forEach(function (h) {
+        var at = text.indexOf('\n' + h);
+        if (at >= 0) idx.push({ h: h, at: at });
+      });
+      if (idx.length) {
+        idx.sort(function (a, b) { return a.at - b.at; });
+        var cut = idx[0].at;                 // everything from the FIRST volatile header on
+        var head = text.slice(0, cut);
+        var tail = text.slice(cut);
+        // The tail is already volatile-first; keep it verbatim and simply place it last.
+        text = head + tail;                  // no-op when volatile blocks are already trailing
+        // If stable material follows a volatile block, move that stable material ahead of it.
+        var reordered = _oasHoistVolatile(text, idx.map(function (x) { return x.h; }));
+        if (reordered) text = reordered;
+      }
+      // Hoist stranded volatile LINES after the sections, so nothing per-turn remains in the
+      // prefix. Order among them is preserved; only their position moves.
+      if (_OAS_VOLATILE_LINES.length) {
+        var ls = text.split('\n'), movedLines = [], keptLines = [];
+        for (var k = 0; k < ls.length; k++) {
+          var isVol = _OAS_VOLATILE_LINES.some(function (re) { return re.test(ls[k]); });
+          if (isVol) movedLines.push(ls[k]); else keptLines.push(ls[k]);
+        }
+        if (movedLines.length) text = keptLines.join('\n') + '\n' + movedLines.join('\n');
+      }
+
+      try {
+        console.log('[OAS:COMPACT] ' + before + ' -> ' + text.length + ' chars ('
+          + (dropped ? dropped + ' duplicated, ' : '') + 'volatile hoisted)');
+      } catch (_) {}
+    } catch (e) {
+      try { console.warn('[OAS:COMPACT] failed, sending the prompt unchanged: ' + (e && e.message)); } catch (_) {}
+      return String(prompt == null ? '' : prompt);
+    }
+    return text;
+  }
+
+  // Pull each volatile section out and re-append it after all stable material, so consecutive
+  // turns share the longest possible identical prefix.
+  //
+  // NEW USER INPUT IS SPLIT, NOT MOVED WHOLE. Measured: that section is 28,801 characters, of
+  // which the reader's actual SAY/DO is about 130 — the remaining ~28,670 are STATIC rules
+  // (ANTI-ECHO and the rest) that happen to be printed under that heading. Moving the whole
+  // section would strand all of it behind the volatile part and defeat the point; moving only
+  // the input leaves the rules in the cacheable prefix where they belong.
+  function _oasHoistVolatile(text, headers) {
+    try {
+      var rest = text, volatileParts = [], stableTails = [];
+      headers.forEach(function (h) {
+        var at = rest.indexOf('\n' + h);
+        if (at < 0) return;
+        var after = rest.slice(at + 1);
+        var m = after.slice(h.length).search(/\n[A-Z][A-Z0-9 ,/&'\-()+:]{8,}:\n/);
+        var end = (m < 0) ? rest.length : at + 1 + h.length + m;
+        var section = rest.slice(at, end);
+        // Where does the volatile part of this section actually stop? A run of blank lines or a
+        // rule banner is the boundary between the live value and the static rules beneath it.
+        var body = section.slice(('\n' + h).length);
+        var bound = body.search(/\n\n\n|\n═══/);
+        if (bound > 0) {
+          volatileParts.push('\n' + h + body.slice(0, bound));
+          stableTails.push(body.slice(bound));          // stays in the prefix
+        } else {
+          volatileParts.push(section);
+        }
+        rest = rest.slice(0, at) + rest.slice(end);
+      });
+      if (!volatileParts.length) return null;
+      return rest.replace(/\s+$/, '') + stableTails.join('') + '\n' + volatileParts.join('');
+    } catch (_) { return null; }
+  }
+  window._oasCompactTurnPrompt = _oasCompactTurnPrompt;
+
   function _buildIntimacyTurnPrompt(d, userSay, userDo, userIsExplicit, userIsNoise, userPlotDeflect) {
     var s = window.state || {};
     var picks = s.picks || {};
@@ -204321,6 +204446,7 @@ No text, no watermark, no UI elements, share-ready.`;
     }
 
     var prompt = _buildIntimacyTurnPrompt(d, userSay, userDo, userIsExplicit, _userIsNoise, _userIsPlotDeflect);
+    prompt = _oasCompactTurnPrompt(prompt);
     // ── CG PREVIEW — CHORUS INTRUSION (dormant unless a CG preview is active) ──
     // Appends the authored Glass House preview beat structure (LI/ex in the Chorus,
     // two uninvited joiners, "before satisfaction" cut). Handles string OR {system}.

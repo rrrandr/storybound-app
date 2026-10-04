@@ -2,81 +2,81 @@
   {
     "turn": 0,
     "msgs": 2,
-    "chars": 4970,
+    "chars": 4969,
     "sys": 397,
-    "rest": 4573,
+    "rest": 4572,
     "max_tokens": 180,
     "model": "mistral-small-latest"
   },
   {
     "turn": 1,
     "msgs": 2,
-    "chars": 243966,
+    "chars": 199422,
     "sys": 2804,
-    "rest": 241162,
+    "rest": 196618,
     "max_tokens": 400,
     "model": "grok-4-1-fast-reasoning"
   },
   {
     "turn": 2,
     "msgs": 2,
-    "chars": 244139,
+    "chars": 199595,
     "sys": 2804,
-    "rest": 241335,
+    "rest": 196791,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 3,
     "msgs": 2,
-    "chars": 244350,
+    "chars": 199806,
     "sys": 2804,
-    "rest": 241546,
+    "rest": 197002,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 4,
     "msgs": 2,
-    "chars": 244583,
+    "chars": 200039,
     "sys": 2804,
-    "rest": 241779,
+    "rest": 197235,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 5,
     "msgs": 2,
-    "chars": 245604,
+    "chars": 201060,
     "sys": 2804,
-    "rest": 242800,
+    "rest": 198256,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 6,
     "msgs": 2,
-    "chars": 245248,
+    "chars": 200704,
     "sys": 2804,
-    "rest": 242444,
+    "rest": 197900,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 7,
     "msgs": 2,
-    "chars": 245227,
+    "chars": 200683,
     "sys": 2804,
-    "rest": 242423,
+    "rest": 197879,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   },
   {
     "turn": 8,
     "msgs": 2,
-    "chars": 245195,
+    "chars": 200651,
     "sys": 2804,
-    "rest": 242391,
+    "rest": 197847,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning"
   }

@@ -22,6 +22,15 @@ await page.route('**/api/**', async (route) => {
         rest: msgs.slice(1).reduce((t, m) => t + String(m.content || '').length, 0),
         max_tokens: b.max_tokens || b.maxTokens || null,
         model: b.preferredModel || b.grokModel || b.model || null });
+      // SAVE EVERY TURN'S MESSAGES so consecutive requests can be diffed DIRECTLY, rather than
+      // inferred from their lengths. "200 chars longer" does not prove the other 241,000 are
+      // identical, which is exactly the assumption that has to be tested.
+      try {
+        fs.mkdirSync('_audit_out/oas/turns', { recursive: true });
+        const tag = String(n).padStart(2, '0');
+        fs.writeFileSync('_audit_out/oas/turns/user_' + tag + '.txt', String((msgs[1] || {}).content || ''));
+        fs.writeFileSync('_audit_out/oas/turns/sys_' + tag + '.txt', String((msgs[0] || {}).content || ''));
+      } catch (_) {}
     } catch (_) {}
     const body = n >= OAS_TURNS.length ? oasClosingBeat() : oasTurn(n); n++;
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:body})}); }

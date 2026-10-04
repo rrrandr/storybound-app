@@ -1,0 +1,36 @@
+LIVE liTurnHistory entry:
+  {"userInput":"I am still here. / I hold his gaze.","userInputRaw":"I am still here. / I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","liResponse":"The Answer is in your hands, not mine. Mind what it does with that. My palms are damp around it, and he watches me notice.","faceSt
+
+USER MESSAGE = 243066 chars. Marker counts: [{"m":"CHARACTER","n":38},{"m":"WORLD","n":29},{"m":"ARC","n":18},{"m":"BEAT","n":9},{"m":"SCENE","n":8},{"m":"CANON","n":5},{"m":"HISTORY","n":5},{"m":"DIRECTIVE","n":3},{"m":"CONTEXT","n":3},{"m":"RULES","n":2}]
+HEAD: You play Julian, the romantic LI in an intimate dialogue with Lirael. LI GENDER (HARD — authoritative over name + archetype + any default "alpha figure" cue): Male (he/him). Render Julian as male — masculine voice, masculine embodiment, masculine physicality (his chest, his cock, his hands, his jaw — not female anatomy). Pronouns: he/him exclusively. PC GENDER (HARD — for accurate body references
+TAIL: ss, closure: "yes", "perfect", "I love you"). - User indicates disengagement (twice or more; or explicit "stop", "wait", "I want to stop"). - Beat count reaches hard cap (20). - Natural narrative resolution (the LI completes the moment — "Stay with me", "That was…"). When to set scene_state = "nearing_resolution": - Beat count >= soft cap AND temperature is peaking. - One more turn before resolve.
+=== REAL ASSEMBLED OAS REQUESTS ===
+  turn 0  msgs=2  total=4970c  (sys 397 + rest 4573)  max_tokens=180  model=mistral-small-latest
+  turn 1  msgs=2  total=245697c  (sys 2804 + rest 242893)  max_tokens=400  model=grok-4-1-fast-reasoning
+  turn 2  msgs=2  total=245870c  (sys 2804 + rest 243066)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 3  msgs=2  total=246081c  (sys 2804 + rest 243277)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 4  msgs=2  total=246314c  (sys 2804 + rest 243510)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 5  msgs=2  total=247335c  (sys 2804 + rest 244531)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 6  msgs=2  total=246979c  (sys 2804 + rest 244175)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 7  msgs=2  total=246958c  (sys 2804 + rest 244154)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+  turn 8  msgs=2  total=246926c  (sys 2804 + rest 244122)  max_tokens=400  model=grok-4.20-0309-non-reasoning
+
+SNAPSHOT keys: ["0"]  isDev=false  beats=8
+  first snapshot beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"lip_bite","mouthUrl":"/assets/test-mouths/MM-mouth-lip-bite.png","fateCardTag":null,"fateChangeApplied"
+
+ARCHIVE records: 1  beats=8
+  first archive beat: {"pcSay":"I am still here.","pcDo":"I hold his gaze.","pcSayRaw":"I am still here.","pcDoRaw":"I hold his gaze.","liDialogue":"The Answer is in your hands, not mine. Mind what it does with that.","liAction":"My palms are damp around it, and he watches me notice.","faceState":"lip_bite","mouthUrl":"/assets/test-mouths/MM-mouth-lip-bite.png","fateCardTag":null,"fateChangeApplied"
+
+EXTRACTOR OUTPUT (12 lines):
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Say it plainly and I will stop. You do not want me to stop.
+      (Somewhere behind us a guest shifts, and I remember we are still being watched.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then we understand each other, and everyone here understands us.
+      (The clearing has not made a sound in a long while.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Hold it or set it down. Either tells them something.
+      (He sets The Answer down on the stone between us and steps back.)
+    PLAYER: I am still here. / I hold his gaze.
+    Julian: Then say it where they can hear you, or do not say it at all.
+      (He waits, and the clearing waits with him.)
