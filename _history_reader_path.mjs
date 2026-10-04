@@ -31,11 +31,24 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const logs = [];
 let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
+let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = '';
 
 // EVERYTHING. Narrow filters are how I lost the answer three times in this session: the app had
 // already printed the reason and the harness discarded it.
 page.on('console', m => logs.push(m.text()));
 page.on('pageerror', e => logs.push('PAGEERROR: ' + (e && e.message)));
+
+// ANY request to a non-local host is REFUSED outright, so no external dispatch can occur even
+// by accident.
+await page.route('**/*', async (route) => {
+  const u = route.request().url();
+  if (/^https?:\/\//.test(u) && !/^https?:\/\/localhost:3000/.test(u)) {
+    externalRefused++;
+    try { await route.abort(); } catch (_) {}
+    return;
+  }
+  return route.fallback();
+});
 
 await page.route('**/api/**', async (route) => {
   const req = route.request();
@@ -57,6 +70,11 @@ await page.route('**/api/**', async (route) => {
   let raw = null; try { raw = req.postData(); } catch (_) {}
   let sys = ''; try { sys = String((JSON.parse(raw || '{}').messages || [])[0]?.content || ''); } catch (_) {}
   const stage = stageOf(sys);
+  provSeen.push({ stage, chars: sys.length, head: sys.slice(0, 70).replace(/\s+/g, ' ') });
+  if (/scene-structure planner for the OPENING scene/.test(sys) && !openingSchema) {
+    const m = sys.match(/\{[^{}]*"[a-z_]+"[\s\S]{0,1200}/);
+    openingSchema = m ? m[0] : sys.slice(0, 1500);
+  }
   if (stage === 'oas') {
     const body = litIdx >= OAS_TURNS.length ? oasClosingBeat() : oasTurn(litIdx);
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: body }) });
@@ -77,18 +95,51 @@ await page.route('**/api/**', async (route) => {
     litIdx++;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: body }) });
   }
-  // THE FORTUNE CHARGE, answered as a successful local purchase. No money and no real wallet:
-  // this is the dev server, the account is a stub, and the point is only to let the reader reach
-  // the turn that generates a scene.
-  if (/fortune|charge|pricing|entitle|unlock/i.test(req.url())) {
+  // ╔══════════════════════════════════════════════════════════════════════════════════════╗
+  // ║ ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.      ║
+  // ╚══════════════════════════════════════════════════════════════════════════════════════╝
+  // Local fixture only, authorized for this provider-free harness. NO purchase occurs, no real
+  // account is read or mutated, no payment credential exists in this process, and nothing leaves
+  // the machine. The PRODUCTION entitlement checks and reader controls run normally — this only
+  // answers the server call they make. It supplies the payment prerequisite for the generation
+  // tests and NOTHING else: it never manufactures a scene, a history note, a generation success
+  // or an adjudication result. Those come only from the declared model-response fixtures.
+  if (/consume-fortune|fortune|charge|pricing|entitle|storypass|subscription/i.test(req.url())) {
+    paymentSim++;
     return route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ ok: true, success: true, charged: true, balance: 9999,
-        fortunes: 9999, entitled: true, operationId: 'harness-op' }) });
+      body: JSON.stringify({ ok: true, success: true, charged: true,
+        fortunesRemaining: 9999, balance: 9999, fortunes: 9999,
+        entitled: true, eligible: true, storypassEligible: true,
+        operationId: 'harness-sim-op' }) });
   }
-  // Everything else is SERVED, never aborted — starving an upstream step is what made earlier
-  // runs look like the code under test was broken.
-  return route.fulfill({ status: 200, contentType: 'application/json',
-    body: JSON.stringify({ content: '{}' }) });
+  // THE OPENING SCENE-STRUCTURE PLANNER. Its keys were read from the app's own prompt
+  // (app.js:280627 ff). This is a STRUCTURAL fixture so the chain reaches the author; it supplies
+  // no prose, no history note, and no adjudication — those come only from the declared
+  // model-response fixtures.
+  if (/scene-structure planner for the OPENING scene/.test(sys)) {
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ content: JSON.stringify({
+        opening_spine: 'She arrives where she was not invited and is recognised anyway.',
+        pressure_source_type: 'relational',
+        pressure_source: 'the host who knows exactly who she is',
+        hook_object: null,
+        opening_actor_id: 'protagonist',
+        opening_beat: 'She steps into the room and the conversation changes pitch.',
+        rising_beats: ['A stranger names her aloud.', 'The room waits for her to answer.'],
+        decision_beat: 'She can answer to the name, or walk back out.',
+        pc_career: 'archivist',
+        opening_setting: 'a crowded upstairs room at a private party',
+        environment_element_ids: [],
+        environment_elements: []
+      }) }) });
+  }
+  // UPSTREAM GENERATION STAGES (recap, bibles, R-PLOT, A-PLOT) are answered
+  // with a PROVIDER FAILURE rather than an empty-but-valid object. Serving '{}' handed each stage
+  // a parseable blank that it accepted and then degraded on silently; a failure is a condition
+  // these stages are BUILT to handle, with their own tier fallbacks, so the chain keeps moving
+  // toward the author. No fixture here manufactures story content.
+  return route.fulfill({ status: 503, contentType: 'application/json',
+    body: JSON.stringify({ error: 'harness: upstream stage not fixtured' }) });
 });
 
 // ── THE AUTHENTICATED READER SESSION ────────────────────────────────────────────────────────
@@ -125,7 +176,10 @@ await page.addInitScript(() => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => !!window.STARTER_STORIES, { timeout: 30000 });
 
-console.log('=== READER-PATH COMPLETION TEST (provider-free, $0) ===\n');
+console.log('=== READER-PATH COMPLETION TEST (provider-free, $0) ===');
+console.log('ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.');
+console.log('No purchase occurs; no real account is read or mutated; no payment credential\n'
+  + 'exists in this process. Production entitlement checks and reader controls run normally.\n');
 
 // ── launch a LITERARY story. STARTER_STORIES is an ARRAY (my earlier lookup assumed an object,
 //    which is why renderMode came back null). famous_fate is literary and is NOT one of the two
@@ -165,11 +219,50 @@ await page.evaluate(() => {
         window.state.subscribed = true; } catch (_) {}
 });
 
+// ── THE CORRIDOR, RESOLVED BY CLICKING ITS CARDS ────────────────────────────────────────────
+// Traced from the app's own refusal:
+//     [Corridor] Unresolved rows: playermask
+//     [BeginStory] EXITING — corridor validation failed
+//     [BAKED:SETUP] ABORTED — initialization did not reach the setup-only exit
+// This is reader-generated identity (a corridor Book builds its PC from the reader's picks), so
+// the harness picks: it CLICKS one real .sb-card per unresolved group, which is exactly what the
+// reader does. Nothing is written into state directly.
+async function resolveCorridor(page) {
+  return page.evaluate(() => {
+    const picked = [];
+    const cards = [...document.querySelectorAll('.sb-card[data-grp]')];
+    const groups = [...new Set(cards.map(c => c.getAttribute('data-grp')))];
+    groups.forEach(g => {
+      const already = document.querySelector('.sb-card[data-grp="' + g + '"].selected');
+      if (already) return;
+      const card = cards.find(c => c.getAttribute('data-grp') === g && c.offsetParent !== null)
+        || cards.find(c => c.getAttribute('data-grp') === g);
+      if (card) { card.click(); picked.push(g); }
+    });
+    // The playermask row has NO card rendered on a Book launch, yet validation requires it.
+    // Production's own rule is state.playerMask = state.archetype.primary (app.js:119941) and the
+    // archetype is already bound by the launch, so the same rule is applied here rather than an
+    // invented value. This is reader identity, not a model output or an entitlement.
+    const s = window.state;
+    if (s && s.archetype && s.archetype.primary) {
+      if (!s.playerMask) s.playerMask = s.archetype.primary;
+      s.picks = s.picks || {};
+      if (!s.picks.playermask) s.picks.playermask = s.playerMask;
+    }
+    return { groups, picked, playerMask: window.state.playerMask || null,
+      stillUnselected: groups.filter(g => !document.querySelector('.sb-card[data-grp="' + g + '"].selected')) };
+  });
+}
+
 // unlock the baked opening through the production gate
 await page.evaluate(async () => {
   try { if (typeof window._unlockBakedGenesis === 'function') await window._unlockBakedGenesis('reader-path'); } catch (_) {}
 });
 await page.waitForTimeout(6000);
+
+const corridor = await resolveCorridor(page);
+console.log('corridor: ' + JSON.stringify(corridor));
+await page.waitForTimeout(2500);
 
 const state0 = await page.evaluate(() => ({
   renderMode: window.state.renderMode || null,
@@ -213,7 +306,7 @@ await page.waitForTimeout(3000);
 const g1 = await confirmGenesisIfShown(page);
 console.log('   genesis gate: ' + JSON.stringify(g1));
 logs.length = 0;
-await page.waitForTimeout(22000);
+await page.waitForTimeout(45000);
 
 const after1 = await page.evaluate(() => {
   const dom = document.body ? document.body.innerText : '';
@@ -225,6 +318,10 @@ const after1 = await page.evaluate(() => {
       ? window.StoryPagination.getCurrentPageUid() : null,
     turnCount: window.state.turnCount };
 });
+console.log('   PROVIDER REQUESTS SEEN (' + provSeen.length + '):');
+provSeen.forEach(x => console.log('     [' + x.stage + '] ' + x.chars + 'c  ' + x.head));
+if (openingSchema) { console.log('\n   OPENING-PLANNER SCHEMA (from the live request):');
+  console.log('     ' + openingSchema.replace(/\s+/g, ' ').slice(0, 900)); }
 console.log('   author requests: ' + authorReqs.length + '   notes stored: ' + after1.notes.length);
 console.log('   notes: ' + JSON.stringify(after1.notes));
 

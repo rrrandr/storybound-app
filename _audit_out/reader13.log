@@ -1,0 +1,63 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   author requests: 0   notes stored: 0
+   notes: []
+
+   VISIBLE UI AT THE BLOCK:
+     modals: []
+     btn {"id":"btn-auth-submit","cls":"sb-btn-png md","txt":""}
+     btn {"id":"conciergeCloseBtn","cls":"concierge-dialogue-close","txt":"×"}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":"intimacyDevBatchBtn","cls":"","txt":"All × 4"}
+     btn {"id":"intimacyDevReviewBtn","cls":"","txt":"Review"}
+     btn {"id":"intimacyDevLauncher","cls":"","txt":""}
+     btn {"id":null,"cls":"missing-selections-fate-btn","txt":"Let Fate Choose for Me"}
+     btn {"id":null,"cls":"missing-selections-close-btn","txt":"Close"}
+
+   FIRST UNMET PREREQUISITE — captured console:
+     [PRICING] baked_unlock_issue: charged 60F (op=99866978-c6b3-4f13-8cf3-dbc12a185b44) → 9999F left
+     [PREVIEW] continuation finalized → tier "fling", Issue One marked paid. (save deferred — the scene is not committed yet)
+     [BAKED:GATE] literary Issue One finalized before planning — tier=fling, previewActive=false
+     [BAKED:SETUP] running deferred story initialization…
+     [BeginStory] handleBeginStory() called
+     [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+     [BeginStory] DEBUG state.picks: {"world":"Modern","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Billionaire","dynamic":"Enemies","era":n
+     [BeginStory] DEBUG state.archetype: {"primary":"BEAUTIFUL_RUIN","modifier":null,"canonicalLIId":"fb_li_a8a6fa06-2efe-4d36-bc36-6b44ba43605f","bound":true,"boundAtSce
+     [BeginStory] DEBUG state.mode: solo state.storyLength: fling
+     [BeginStory] Past _beginStoryInProgress guard, entering main flow
+     [ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiu
+     [FORTUNE STATE] before_fortune_gate {drip: 0, storypass: 0, subscription: 0, purchased: 0, global: 9999}
+     [BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}
+     [EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=small_town)
+     [Modifier] No secondary assigned (75% path)
+     [FF-CANON-AUTH] false reason=nonff
+     [BeginStory] All validation passed — proceeding to story generation
+     [BeginStory] Story mode: participatory
+     [VISUAL_CANON] Story visual style seeded: {paletteFamily: warm earth tones with golden-hour highlights, lightingLanguage: golden-hour warmth through interior glass, 
+     [READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
+     [FATE] initFateCards called
+     [FATE] Bind flags reset — ready for rebind
+     [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+     [FATE] Rebinding existing cards
+     [FATE] Existing cards rebound: 5
+     [FATE] initFateCards bound
+     [COVER:BEGIN] Showing CSS 3D white book placeholder
+     [BeginStory] Phase 2 complete — starting loader and API calls
+     [Sparkle] Stopped emitter: guidedFateSparkles
+     [Sparkle] Stopped emitter: cardSparkles_worldSubtype_small_town
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE through the reader control  — no author request — see the console capture above
+
+0/1 checks passed
