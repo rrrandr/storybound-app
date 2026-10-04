@@ -141,8 +141,12 @@ await page.route('**/api/**', async (route) => {
         event_slots: {
           actor: 'the presiding Dohkar', action: 'calls for a preliminary review',
           target: 'Lirael',
-          exit_state: 'Lirael is formally under review and cannot leave the chamber unremarked.'
+          exit_state: 'Lirael is formally under review and cannot leave the chamber unremarked.',
+          // Every event must declare how it is possible: "ordinary" means no wish-capability is
+          // being claimed (app.js:102997 ff). Nothing in this scene is wish-worked.
+          mechanism_grounding: 'ordinary'
         },
+        mechanism_grounding: 'ordinary',
         must_land_moments: [] }) }) });
   }
   const st = setupStageOf(sys);
@@ -221,8 +225,65 @@ if (authorServed > 0) {
     JSON.stringify(r1.notes.map(n => n.ref)) + ' vs ' + r1.lastUid);
 }
 
+// ── PAGE THROUGH THE SCENE'S BEATS, WHICH IS WHAT OPENS THE GATE ────────────────────────────
+// "[STAGED:SUBMIT] Blocked — gate not yet open": the gate latches only once the reader has paged
+// PAST THE LAST BEAT (app.js:226596, nextIdx > lastIdx). The harness therefore clicks the real
+// next-page control until the gate shows, exactly as a reader does, instead of submitting into a
+// closed gate and calling the result a failure.
+async function pageToGate(page, maxClicks = 14) {
+  for (let i = 0; i < maxClicks; i++) {
+    const st = await page.evaluate(() => {
+      const a = window.state._stagedActive || null;
+      return { gateShown: !!(a && a.gateShown), beat: a ? a.currentBeatIdx : null,
+        beats: a && a.plan && a.plan.beats ? a.plan.beats.length : null };
+    });
+    if (st.gateShown) return { ...st, clicks: i };
+    const clicked = await page.evaluate(() => {
+      const b = document.getElementById('gnNextPageBtn');
+      if (b && !b.disabled) { b.click(); return 'button'; }
+      if (typeof window._advanceStagedBeat === 'function') { window._advanceStagedBeat(); return 'handler'; }
+      return null;
+    });
+    if (!clicked) return { ...st, clicks: i, stuck: true };
+    await page.waitForTimeout(1200);
+  }
+  return await page.evaluate(() => {
+    const a = window.state._stagedActive || null;
+    return { gateShown: !!(a && a.gateShown), exhausted: true };
+  });
+}
+
+// The staged session is created at mount and TORN DOWN between scenes, so a single probe can
+// easily land on either side of it. Poll instead, and report what was actually seen.
+let sawStaged = null;
+for (let i = 0; i < 25; i++) {
+  const snap = await page.evaluate(() => {
+    const a = window.state._stagedActive;
+    return a ? { beatIdx: a.currentBeatIdx, beats: a.plan && a.plan.beats ? a.plan.beats.length : null,
+      gateShown: !!a.gateShown } : null;
+  });
+  if (snap) { sawStaged = snap; break; }
+  await page.waitForTimeout(1500);
+}
+console.log('   staged session seen: ' + JSON.stringify(sawStaged));
+
+const stagedProbe = await page.evaluate(() => {
+  const a = window.state._stagedActive;
+  const btn = document.getElementById('gnNextPageBtn');
+  return { hasActive: !!a,
+    activeKeys: a ? Object.keys(a).slice(0, 14) : null,
+    beatIdx: a ? a.currentBeatIdx : null,
+    beats: a && a.plan && a.plan.beats ? a.plan.beats.length : null,
+    gateShown: a ? !!a.gateShown : null,
+    nextBtn: btn ? { present: true, disabled: btn.disabled, visible: btn.offsetParent !== null } : null };
+});
+console.log('   staged session: ' + JSON.stringify(stagedProbe));
+const gate1 = await pageToGate(page);
+console.log('   paged to gate: ' + JSON.stringify(gate1));
+
 console.log('\nSCENE 2 — a second consecutive scene through the same control');
 plannerReqs.length = 0; authorSys.length = 0;
+serveNote = true;
 const g2 = await advanceExpectingGate(page, 'I ask who signed it.', 'Who signed this?');
 if (g2.promptMounted) { await chooseBranch(page, 'A'); }
 await page.waitForTimeout(25000);
@@ -266,7 +327,13 @@ t('7. A QUOTE THAT IS NOT IN THE ACCEPTED PROSE IS NOT ESTABLISHED',
 t('7b. and it never reaches the reader', !r2.domHasMeta);
 }
 
-console.log('\nSCENE 3 — a response with NO note, and then a FAILED turn');
+console.log('\nSCENE 3 — a response with NO NOTE (distinct scenario: inheritance)');
+// Page to the gate again — each scene latches its own.
+for (let i = 0; i < 25; i++) {
+  const seen = await page.evaluate(() => !!window.state._stagedActive);
+  if (seen) break; await page.waitForTimeout(1500);
+}
+console.log('   paged to gate: ' + JSON.stringify(await pageToGate(page)));
 const notesBefore = await page.evaluate(() => (window.state._historyNotes || []).length);
 serveNote = false;
 const g3 = await advanceExpectingGate(page, 'I stay where I am.', '');
@@ -287,6 +354,12 @@ if (r3.cgCount > r2.cgCount) {
   console.log('   NOT MEASURED: the no-note turn produced no scene, so nothing could inherit.');
 }
 
+console.log('\nSCENE 4 — a FAILED attempt, then a SUCCESSFUL scene after it');
+for (let i = 0; i < 25; i++) {
+  const seen = await page.evaluate(() => !!window.state._stagedActive);
+  if (seen) break; await page.waitForTimeout(1500);
+}
+console.log('   paged to gate: ' + JSON.stringify(await pageToGate(page)));
 forceFail = true;
 const notesBeforeFail = await page.evaluate(() => (window.state._historyNotes || []).length);
 const g4 = await advanceExpectingGate(page, 'I turn to go.', '');
@@ -301,8 +374,72 @@ t('6b. A FAILED TURN ADDS NO NOTE', r4.noteCount === notesBeforeFail,
   'notes ' + notesBeforeFail + ' -> ' + r4.noteCount);
 t('6c. and leaves no pending note behind to attach later', r4.pending === false);
 
+
+console.log('\nSCENE 5 — a SUCCESSFUL scene immediately after the failed attempt');
+for (let i = 0; i < 25; i++) {
+  const seen = await page.evaluate(() => !!window.state._stagedActive);
+  if (seen) break; await page.waitForTimeout(1500);
+}
+await pageToGate(page);
+forceFail = false; serveNote = true;
+// A DOWNSTREAM REWRITE THAT REMOVES A CITED EVENT. The note quotes a measurement, and the
+// Fatelands unit sanitiser rewrites measurements in the accepted prose — so the quotation is
+// valid against the DRAFT and invalid against what the reader got. If the stored note is checked
+// against the final accepted prose, this claim must be demoted to unverified summary.
+SCENES.push({
+  beats: [{ text: 'She walked five miles along the inner wall before she stopped.' },
+          { text: 'The clerk had not followed her.' }],
+  history_note: {
+    events: [{ text: 'She walked a long way along the wall.', quote: 'walked five miles along the inner wall' },
+             { text: 'The clerk did not follow.', quote: 'The clerk had not followed her' }],
+    obligations: [], resolves: [] }
+});
+sceneIdx = SCENES.length - 1;
+const notesBeforeS5 = await page.evaluate(() => (window.state._historyNotes || []).length);
+const g5 = await advanceExpectingGate(page, 'I walk the wall.', '');
+if (g5.promptMounted) { await chooseBranch(page, 'A'); }
+await page.waitForTimeout(25000);
+const r5 = await page.evaluate(() => {
+  const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+  const notes = (window.state._historyNotes || []);
+  const last = notes[notes.length - 1] || null;
+  const lastScene = cg[cg.length - 1] || null;
+  return { scenes: cg.length, noteCount: notes.length,
+    lastRef: last ? last.ref : null, lastUid: lastScene ? lastScene.uid : null,
+    lastText: lastScene ? lastScene.text : '',
+    quoted: last ? (last.quoted || []).map(q => q.quote) : [],
+    summary: last ? (last.summary || []).map(x => x.text) : [] };
+});
+console.log('   scenes: ' + r5.scenes + '   notes: ' + r5.noteCount + ' (was ' + notesBeforeS5 + ')');
+console.log('   accepted prose: ' + JSON.stringify(String(r5.lastText).slice(0, 150)));
+console.log('   quoted: ' + JSON.stringify(r5.quoted));
+console.log('   summary: ' + JSON.stringify(r5.summary));
+
+if (r5.scenes > r3.cgCount) {
+  t('6d. THE SCENE AFTER A FAILURE GETS ITS OWN NOTE, not the failed attempt\'s',
+    r5.noteCount === notesBeforeS5 + 1 && r5.lastRef === r5.lastUid,
+    'ref=' + r5.lastRef + ' uid=' + r5.lastUid);
+  // The rewrite check only means something if a rewrite ACTUALLY happened.
+  const rewritten = !/five miles/.test(String(r5.lastText));
+  console.log('   did a downstream rewrite remove the cited text? ' + rewritten);
+  if (rewritten) {
+    t('7c. A QUOTE REMOVED BY A DOWNSTREAM REWRITE IS NOT ESTABLISHED',
+      !r5.quoted.some(q => /five miles/.test(q))
+        && r5.summary.some(x => /walked a long way/.test(x)),
+      'the note was checked against the draft, not the accepted prose');
+  } else {
+    console.log('   NOT MEASURED: no downstream pass altered the cited text in this run, so there');
+    console.log('   was no rewrite to invalidate the quotation. Criterion 7c stays UNPROVEN —');
+    console.log('   the surviving quote below is correct behaviour, not evidence either way.');
+  }
+  t('7d. a quote that DID survive is still established',
+    r5.quoted.some(q => /clerk had not followed/.test(q)));
+} else {
+  console.log('   NOT MEASURED: no scene generated after the failure.');
+}
+
 fs.mkdirSync('_audit_out/cgpath', { recursive: true });
-fs.writeFileSync('_audit_out/cgpath/run1.json', JSON.stringify({ r1, r2, r3, r4, logs: logs.slice(-90) }, null, 2));
+fs.writeFileSync('_audit_out/cgpath/run1.json', JSON.stringify({ r1, r2, r3, r4, r5, logs: logs.slice(-110) }, null, 2));
 if (plannerReqs.length) fs.writeFileSync('_audit_out/cgpath/planner2.txt', plannerReqs.join('\n---\n'));
 if (authorSys.length) fs.writeFileSync('_audit_out/cgpath/author1.txt', authorSys[0]);
 await browser.close();

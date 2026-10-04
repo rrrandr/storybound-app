@@ -1,0 +1,38 @@
+=== CG READER PATH — SEVEN CRITERIA (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+SCENE 1 — the reader advances through the staged control
+   gate: {"promptMounted":true,"buttons":[true,true],"resumed":true}
+   branch: {"route":"in-page el.click() — host not rendered in this harness","diag":{"present":true,"rects":0,"hostDisplay":"block"
+   author requests: 1   cg scenes: 1   notes: 1
+   planner ids parsed from the prompt: {"aftermath":["chosen_aftermath_lane","dohkar_preliminary_review","lane_posture_modulation","state_change","local_objective_actor","pressure_source","institutional_actor","li_pressure_actor","stage_location","stage_issued_objects","stage_affordances","canon_change","scene_purpose","forward_pressure","pressure_scope","scene_local","twist_manifested","interrogation_interrupted","the_answer_in_her_hands","the_answer_institutional","inquiry_authority_claimed","dohkar_charge","inquiry_convened","words_honoured","price_unnamed"],"reserved":["price_identified","julian_counter_wish","julian_obscuring_wishes","state_change"]}
+   UNFIXTURED: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE
+  ok   1b. and it ASKS FOR THE NOTE
+  ok   2. the response travelled through production parsing and acceptance
+  ok   3. THE READER SEES PROSE WITHOUT METADATA
+  ok   4. the note is keyed to that exact accepted scene
+   staged session seen: {"beatIdx":0,"beats":3,"gateShown":false}
+   staged session: {"hasActive":true,"activeKeys":["plan","sceneIndex","heroImageUrl","phaseImageUrls","beatMutationUrls","beatCloseupUrls","currentPhaseIdx","currentBeatIdx","currentBeatLayerKey","microShown","microOpen","microResolved","gateShown","keyHandler"],"beatIdx":0,"beats":3,"gateShown":false,"nextBtn":{"present":true,"disabled":true,"visible":false}}
+   paged to gate: {"gateShown":true,"beat":2,"beats":3,"clicks":3}
+
+SCENE 2 — a second consecutive scene through the same control
+   cg scenes now: 2   notes: 2
+   notes: [{"ref":"cg:5413bb33-9f65-44a2-98d9-19e47e707425","quoted":["put it into Lirael's hands"],"summary":["The commission accepted the demand."]},{"ref":"cg:958b0538-11c0-4e0b-b330-ffa0b67ee143","quoted":[],"summary":["Lirael interrupted and asked who signed the demand.","The chandelier fell into the well."]}]
+  ok   5a. THE NEXT PLANNER RECEIVED THE PRIOR SCENE'S HISTORY
+  ok   5b. AND SO DID THE NEXT AUTHOR
+  ok   5c. the first note belongs to the FIRST scene, not the second
+  ok   7. A QUOTE THAT IS NOT IN THE ACCEPTED PROSE IS NOT ESTABLISHED
+  ok   7b. and it never reaches the reader
+
+SCENE 3 — a response with NO NOTE (distinct scenario: inheritance)
+   paged to gate: {"gateShown":true,"beat":1,"beats":2,"clicks":2}
+   scenes: 3   notes: 2 (was 2)
+  ok   6a. A RESPONSE WITH NO NOTE INHERITS NOTHING
+
+SCENE 4 — a FAILED attempt, then a SUCCESSFUL scene after it
+   paged to gate: {"gateShown":true,"beat":1,"beats":2,"clicks":2}
+  ok   6b. A FAILED TURN ADDS NO NOTE
+  ok   6c. and leaves no pending note behind to attach later
+
+13/13 checks passed
