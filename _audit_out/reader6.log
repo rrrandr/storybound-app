@@ -1,0 +1,19 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   author requests: 0   notes stored: 0
+   notes: []
+
+   FIRST UNMET PREREQUISITE — captured console:
+     Config load failed (using defaults) TypeError: Failed to fetch
+    at http://localhost:3000/app.js?v=20261003j-history-dest:96:25
+    at http://localhost:3000/a
+     [SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:ede847e1-295e-4b26-bc0b-aa4fa0b1b6a7 planned="PLACEHOLDER. The PC arrives alone at a masked gala she was i"
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE through the reader control  — no author request — see the console capture above
+
+0/1 checks passed

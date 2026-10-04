@@ -1,0 +1,41 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   author requests: 0   notes stored: 0
+   notes: []
+
+   VISIBLE UI AT THE BLOCK:
+     modals: ["payModalClose"]
+     btn {"id":"btn-auth-submit","cls":"sb-btn-png md","txt":""}
+     btn {"id":"conciergeCloseBtn","cls":"concierge-dialogue-close","txt":"×"}
+     btn {"id":"payModalClose","cls":"pay-modal-close","txt":"×"}
+     btn {"id":null,"cls":"pay-card-btn pay-card-btn-fort","txt":"20 — $3"}
+     btn {"id":null,"cls":"pay-card-btn pay-card-btn-fort","txt":"60 — $5"}
+     btn {"id":null,"cls":"pay-card-btn pay-card-btn-fort","txt":"120 — $9"}
+     btn {"id":null,"cls":"pay-card-btn pay-card-btn-fort","txt":"240 — $16"}
+     btn {"id":"paySubStoried","cls":"pay-card-btn","txt":"SUBSCRIBE"}
+     btn {"id":"paySubFavored","cls":"pay-card-btn","txt":"SUBSCRIBE"}
+     btn {"id":"paySubChosen","cls":"pay-card-btn","txt":"SUBSCRIBE"}
+     btn {"id":"paywallCancelDefault","cls":"sb-btn-png sm","txt":"Cancel"}
+     btn {"id":"coverPageBtn","cls":"page-nav-btn","txt":"←\nCover"}
+     btn {"id":"prevPageBtn","cls":"page-nav-btn","txt":"←\nPrevious"}
+     btn {"id":"nextPageBtn","cls":"page-nav-btn","txt":"Next\n→"}
+     btn {"id":"lastPageBtn","cls":"page-nav-btn","txt":"Last\n⇥"}
+     btn {"id":"saveBtn","cls":"small-btn","txt":"Save"}
+     btn {"id":"submitBtn","cls":"","txt":"Submit Turn"}
+     btn {"id":"storyBookmarksBtn","cls":"small-btn","txt":"Bookmarks"}
+
+   FIRST UNMET PREREQUISITE — captured console:
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [SCENE-AMB] → neutral_quiet
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [SCENE-AMB-L2] → urban_room @ 0.025
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE through the reader control  — no author request — see the console capture above
+
+0/1 checks passed
