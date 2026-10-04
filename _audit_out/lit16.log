@@ -1,0 +1,174 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   PROVIDER REQUESTS SEEN (34):
+     [other] 455c  Write a "Previously…" recap as EXACTLY four bullet points, each 13 wor
+     [bible] 8755c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char
+     [bible] 18892c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+     [other] 3705c  You are the architect of WHY THIS PAIR. Read the two Bibles and the ro
+     [other] 6724c  You are designing an R-PLOT — a tiny narrative planning object that tr
+     [other] 55360c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 55832c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 1876c  You are compressing the procedural A-plot of a romance novel into SIX 
+     [bible] 8928c  You are generating an ANTAGONIST BODY BIBLE for a romance novel — a pe
+     [other] 4239c  You are a scene-structure planner for the OPENING scene of an interact
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 11683c  ROLE: You are the Strategy Engine for an interactive romance story gen
+     [planner] 7735c  You are the SCENE-SPINE planner for an interactive romance engine. The
+     [author] 496557c   AFTER the scene is complete, on a new line, append a HISTORY NOTE fo
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 704c  Fix ONLY mechanical defects in this scene: broken or incomplete senten
+     [other] 1102c  You are the same narrator continuing THIS exact scene. Write ONE or TW
+     [other] 1107c  You are the same narrator continuing THIS exact scene. Write ONE or TW
+     [other] 3238c  You are an editorial auditor. Read the SCENE PROSE and return TWO orth
+     [other] 5645c  You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance 
+     [other] 1414c  You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in 
+     [other] 507c  You are a precise line-editor, not a writer. You will be given a FINIS
+     [other] 507c  You are a precise line-editor, not a writer. You will be given a FINIS
+     [other] 103c  You extract structured narrative memory from fiction scenes. Respond O
+     [other] 3916c  You are a copy editor. Re-paragraph the SCENE the user sends for stand
+     [other] 3916c  You are a copy editor. Re-paragraph the SCENE the user sends for stand
+     [other] 12338c  You classify the ambient soundscape of a romance/fiction scene. Return
+     [other] 3565c  You are a story-structure auditor applying ONE test: the WOUND→LI SWAP
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [memory] 6339c  You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor
+     [other] 3151c  You are the SUBPLOT GENERATOR for Storybound. Your job: generate 2 SUB
+
+   ISSUED LENS OPERATIONS FROM THE LIVE PROMPT:
+     cipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" } ("behavior" is the FLOOR: an observable action, a sensory selection (what they look at / away from), how they handle speech (answer, delay, cut in, go quiet), posture, timing, or a material interaction with something in this scene. TEST: could a camera record it, or could you write it as one sentence of action? If not, rewrite it. ✗ "a woman clinging to the illusion of worthiness" ✗ "an authority whose judgment will decide her fate" ✗ "a name that carries more weight than it should" — these are conclusions ABOUT people; no camera can see them.) (YOU DO NOT WRITE THE PSYCHOLOGY. The canonical truth you cite is delivered 
+   setup fixtures served: {"recap":1,"pc_bible":1,"li_bible":1,"why_pair":1,"r_plot":1,"a_plot":2,"aplot_compress":1,"antagonist_bible":1,"opening_planner":1,"normalization":2,"strategy":1,"swap_test":1,"subplots":1}
+   STILL UNFIXTURED (14):
+     You are the same narrator continuing THIS exact scene. Write ONE or TWO short sentences (~
+     You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments abo
+     You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE quest
+     You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An 
+     You are a precise line-editor, not a writer. You will be given a FINISHED scene and a spec
+     You extract structured narrative memory from fiction scenes. Respond ONLY with valid JSON,
+     You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue f
+     You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag fro
+     You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read t
+   history-note state: {"pending":null,"notes":1,"scenes":1,"pageUid":"pg:ac3bc07e-27d8-4bd4-85cb-ceb6690728f6","ledger":2}
+   HISTORY-NOTE log lines: ["[HISTORY-NOTE] continuation — 1 block(s) stripped before post-processing, note=parsed","[HISTORY-NOTE] pg:ac3bc07e-27d8-4bd4-85cb-ceb6690728f6 — 1 quote-backed, 0 summary-only, 1 proposed obligation(s)"]
+   author requests: 1   notes stored: 1
+   notes: [{"ref":"pg:ac3bc07e-27d8-4bd4-85cb-ceb6690728f6","quoted":["began reading the demand aloud"],"summary":[],"obligations":["ob-lit-1"]}]
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE through the reader control
+   author payload markers: TURN:=true PLAYER ACTION:=false HISTORY_NOTE=true chars=496627
+  ok   1b. and it ASKS FOR THE NOTE
+  ok   3. THE READER SEES NO METADATA
+  ok   4. the note is keyed to the accepted page
+
+2. A SECOND SCENE — does scene 1 history reach its planner AND author?
+     petition interaction: {"steps":["opened:.fate-card","inputVisible:false","typed","sealBtn:enabled"],"ok":true}
+     pendingPetition created by the UI: {"text":"Let the clerk falter before he reaches the part that names m","classification":"general"}
+     interstitial swallowed the submission — pressing submit again
+     submit: {"ok":true}  btnReady=true
+     provider calls this turn: 24  ["other:6332","other:6332","other:1106","other:11683","other:455","verifier:2939","verifier:2939","verifier:2939"]
+     console this turn (204):
+       [PETITION:SUGGESTIONS] variant=default
+       [PETITION:EMERGENCE] Submit blocked — re-zoom + toast (free credit granted)
+       [TAROT_ONBOARD] Onboarding complete at scene 1 — deck loss blocked for 13 scenes
+       [FATE:ENGAGEMENT] submit#2 mode=literary | reliance=0.00 (0clicks/2submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+       [OWNERSHIP] scene 1 — lead=+1.5 (obj=2 rel=0.5) | unset → mixed
+       [AGENCY] engaged (act: 24 ch, dia: 14 ch)
+       [WOUND] Style: pursue | Affinity: {"avoidant":0.25,"selfDestructive":0,"control":0,"burdened":0} | confidence: 0.25 | signal: avoidant
+       [PLAYER-IMPACT] turn 1 — score=0 mustReact=false
+       Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+       [FF-CONTRACT] orig-divergence-classify HTTP 503
+       [PETITION] Guaranteed first petition → forced accepted=true (amplitude stays Petition-bounded).
+       [FATE-TOLL] no toll — petition @ scene 2 (featherweight/exempt) | wish "Let the clerk falter before he reaches the part that names me."
+   notes: 1 -> 2
+   refs: ["pg:ac3bc07e-27d8-4bd4-85cb-ceb6690728f6","pg:44b13204-fe8e-4b67-a907-617b158d752c"]
+  ok   5a. THE SECOND PLANNER received scene 1's specific history
+  ok   5b. AND SO DID THE SECOND AUTHOR
+  ok   5c. the first note stayed on the FIRST page
+
+3. A RESPONSE WITH NO NOTE — nothing inherited
+     submit: {"ok":true}  btnReady=true
+     provider calls this turn: 23  ["other:6332","other:1106","other:11683","other:455","verifier:2939","verifier:2939","verifier:2939","planner:8200"]
+     console this turn (195):
+       [FATE:ENGAGEMENT] submit#3 mode=literary | reliance=0.00 (0clicks/3submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+       [OWNERSHIP] scene 2 — lead=+1.5 (obj=2 rel=0.5) | unset → mixed
+       [AGENCY] low (act: 7 ch, dia: 0 ch)
+       [WOUND] Style: hold | Affinity: {"avoidant":0.25,"selfDestructive":0.25,"control":0,"burdened":0} | confidence: 0.00 | signal: selfDestructive
+       [PLAYER-IMPACT] turn 2 — score=0 mustReact=false
+       Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+       [FF-CONTRACT] orig-divergence-classify HTTP 503
+       [ROMANCE:BOREDOM] Passive play detected, count: 1
+       [ST-CONSTRAINT] scene: 3 storyLength: fling allowed: ST1-ST1 llm: early final: ST1
+       [STRATEGY_PASS] Missing top-level keys: world_artifact_to_surface, petition
+       [PETITION] Scenario-weave window closed — returning to main thread
+       [PASS_ROUTING] Tier 3, ST: ST1, complexity: 1, reason: ST1/ST6
+   notes: 2 -> 2   page: pg:133783a7-c9d8-41e8-b056-36a43bd4016f
+  ok   6a. a response with NO note adds none, and the new page inherits nothing
+
+4. A FAILED TURN, THEN A SUCCESSFUL ONE
+     submit: {"ok":true}  btnReady=true
+     provider calls this turn: 13  ["other:6332","other:1106","other:11683","other:455","verifier:2939","verifier:2939","verifier:2939","planner:8200"]
+     console this turn (132):
+       [FATE:ENGAGEMENT] submit#4 mode=literary | reliance=0.00 (0clicks/4submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+       [OWNERSHIP] scene 3 — lead=+1.5 (obj=2 rel=0.5) | unset → mixed
+       [AGENCY] engaged (act: 13 ch, dia: 0 ch)
+       [VISION:TRIGGER] {type: dream, reason: lowIntent, turn: 3, streak: 0}
+       [VISION] {source: dream, intensity: low, omenKey: broken_clock, word: RETURN, turn: 3}
+       [IMAGE:SANITIZE] length: 4371 → 4358
+       [LIT-SETTING] Photoreal symbolic path — suppressing 4o comic rewrite + artist refs + golden-master enforcement + comic style suffix
+       [VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+       [4O] Skipped for literary setting image — keeping the photoreal symbolic prompt (no comic rewrite)
+       [ENDER-BOND:SCENE-TYPE] romance
+       [ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors
+       [MOMENT_CACHE] MISS — caching for scene 3 (v1.0)
+  ok   6b. a FAILED turn adds no note
+  ok   6c. and leaves no pending note behind
+     submit: {"ok":true}  btnReady=true
+     provider calls this turn: 23  ["other:6332","other:1106","other:11683","other:455","verifier:2939","verifier:2939","verifier:2939","planner:8200"]
+     console this turn (203):
+       [FATE:ENGAGEMENT] submit#5 mode=literary | reliance=0.00 (0clicks/5submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+       [OWNERSHIP] scene 3 — lead=+1.5 (obj=2 rel=0.5) | unset → mixed
+       [AGENCY] engaged (act: 18 ch, dia: 0 ch)
+       [WOUND] Style: hold | Affinity: {"avoidant":0.25,"selfDestructive":0.5,"control":0,"burdened":0} | confidence: 0.25 | signal: selfDestructive
+       [PLAYER-IMPACT] turn 3 — score=0 mustReact=false
+       Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+       [FF-CONTRACT] orig-divergence-classify HTTP 503
+       [ST-CONSTRAINT] scene: 4 storyLength: fling allowed: ST1-ST2 llm: early final: ST1
+       [STRATEGY_PASS] Missing top-level keys: world_artifact_to_surface, petition
+       [PASS_ROUTING] Tier 1, ST: ST2, complexity: 1, reason: low complexity
+       [SALIENCE] scene 3 — 1/1 placed, cutoff=3.40
+  1. ✓  motif  score=3.40  "rose"
+       [VERIFIER-INPUT] scene=3 prose_len=1829 head="The invitation had no name on it, which should have been the first thi" tail=" rose before the second page wa
+   notes after recovery: 3   page: pg:0760418c-9561-487f-983e-ebad8739919b
+  ok   6d. THE SCENE AFTER THE FAILURE GETS ITS OWN NOTE
+
+5. A REAL LINE-EDITOR REWRITE REMOVES A CITED PASSAGE
+     submit: {"ok":true}  btnReady=true
+     provider calls this turn: 16  ["other:6332","other:1106","other:11683","planner:8328","bible:15869","other:84","author:461404","other:1931"]
+     console this turn (208):
+       [FATE:ENGAGEMENT] submit#6 mode=literary | reliance=0.00 (0clicks/6submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+       [OWNERSHIP] scene 4 — lead=+1.5 (obj=2 rel=0.5) | unset → mixed
+       [AGENCY] engaged (act: 18 ch, dia: 0 ch)
+       [PLAYER-IMPACT] turn 4 — score=0 mustReact=false
+       Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+       [FF-CONTRACT] orig-divergence-classify HTTP 503
+       [ST-CONSTRAINT] scene: 5 storyLength: fling allowed: ST1-ST2 llm: early final: ST1
+       [STRATEGY_PASS] Missing top-level keys: world_artifact_to_surface, petition
+       [PASS_ROUTING] Tier 1, ST: ST2, complexity: 1, reason: low complexity
+       [SALIENCE] scene 4 — 1/1 placed, cutoff=4.80
+  1. ✓  motif  score=4.80  "rose"
+       [VERIFIER-INPUT] scene=3 prose_len=1903 head="The invitation had no name on it, which should have been the first thi" tail=" rose before the second page wa
+       [SCENE-ASSIGNMENT] scene=6 source=scene-mission setting="room already knows it"(inferred) event="Establish that she is here under a name that is not hers, 
+   line-editor calls: 14 -> 16   rewrite landed in the prose: true
+  ok   7c. A QUOTE REMOVED BY THE REWRITE IS NOT ESTABLISHED
+  ok   7c2. and the claim survives as unverified summary rather than vanishing
+
+13/13 checks passed

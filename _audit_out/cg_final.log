@@ -1,0 +1,50 @@
+=== CG READER PATH — SEVEN CRITERIA (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+SCENE 1 — the reader advances through the staged control
+   gate: {"promptMounted":true,"buttons":[true,true],"resumed":true}
+   branch: {"route":"in-page el.click() — host not rendered in this harness","diag":{"present":true,"rects":0,"hostDisplay":"block"
+   author requests: 1   cg scenes: 1   notes: 1
+   planner ids parsed from the prompt: {"aftermath":["chosen_aftermath_lane","dohkar_preliminary_review","lane_posture_modulation","state_change","local_objective_actor","pressure_source","institutional_actor","li_pressure_actor","stage_location","stage_issued_objects","stage_affordances","canon_change","scene_purpose","forward_pressure","pressure_scope","scene_local","twist_manifested","interrogation_interrupted","the_answer_in_her_hands","the_answer_institutional","inquiry_authority_claimed","dohkar_charge","inquiry_convened","words_honoured","price_unnamed"],"reserved":["price_identified","julian_counter_wish","julian_obscuring_wishes","state_change"]}
+   UNFIXTURED: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE
+  ok   1b. and it ASKS FOR THE NOTE
+  ok   2. the response travelled through production parsing and acceptance
+  ok   3. THE READER SEES PROSE WITHOUT METADATA
+  ok   4. the note is keyed to that exact accepted scene
+   staged session seen: {"beatIdx":0,"beats":3,"gateShown":false}
+   staged session: {"hasActive":true,"activeKeys":["plan","sceneIndex","heroImageUrl","phaseImageUrls","beatMutationUrls","beatCloseupUrls","currentPhaseIdx","currentBeatIdx","currentBeatLayerKey","microShown","microOpen","microResolved","gateShown","keyHandler"],"beatIdx":0,"beats":3,"gateShown":false,"nextBtn":{"present":true,"disabled":true,"visible":false}}
+   paged to gate: {"gateShown":true,"beat":2,"beats":3,"clicks":3}
+
+SCENE 2 — a second consecutive scene through the same control
+   cg scenes now: 2   notes: 2
+   notes: [{"ref":"cg:a7993a5a-9cb0-41b5-9133-e3275821c918","quoted":["put it into Lirael's hands"],"summary":["The commission accepted the demand."]},{"ref":"cg:f89353ef-59b9-4c4e-a96e-6ae50dfd0a4c","quoted":[],"summary":["Lirael interrupted and asked who signed the demand.","The chandelier fell into the well."]}]
+  ok   5a. THE NEXT PLANNER RECEIVED THE PRIOR SCENE'S HISTORY
+  ok   5b. AND SO DID THE NEXT AUTHOR
+  ok   5c. the first note belongs to the FIRST scene, not the second
+  ok   7. A QUOTE THAT IS NOT IN THE ACCEPTED PROSE IS NOT ESTABLISHED
+  ok   7b. and it never reaches the reader
+
+SCENE 3 — a response with NO NOTE (distinct scenario: inheritance)
+   paged to gate: {"gateShown":true,"beat":1,"beats":2,"clicks":2}
+   scenes: 3   notes: 2 (was 2)
+  ok   6a. A RESPONSE WITH NO NOTE INHERITS NOTHING
+
+SCENE 4 — a FAILED attempt, then a SUCCESSFUL scene after it
+   paged to gate: {"gateShown":true,"beat":1,"beats":2,"clicks":2}
+  ok   6b. A FAILED TURN ADDS NO NOTE
+  ok   6c. and leaves no pending note behind to attach later
+
+SCENE 5 — a SUCCESSFUL scene immediately after the failed attempt
+   scenes: 4   notes: 3 (was 2)
+   accepted prose: "She walked five miles along the inner wall before she stopped.\n\nThe clerk had not followed her."
+   quoted: ["walked five miles along the inner wall","The clerk had not followed her"]
+   summary: []
+  ok   6d. THE SCENE AFTER A FAILURE GETS ITS OWN NOTE, not the failed attempt's
+   did a downstream rewrite remove the cited text? false
+   NOT MEASURED: no downstream pass altered the cited text in this run, so there
+   was no rewrite to invalidate the quotation. Criterion 7c stays UNPROVEN —
+   the surviving quote below is correct behaviour, not evidence either way.
+  ok   7d. a quote that DID survive is still established
+
+15/15 checks passed

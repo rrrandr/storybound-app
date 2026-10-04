@@ -31,7 +31,7 @@ const LIT = [
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const logs = [];
-let authorAll = ''; let failAuthor = false; let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
+let authorAll = ''; let failAuthor = false; let petitionCommitted = false; let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
 let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = ''; let openingUsr = '';
 const setupServed = {}; const unfixtured = []; let lineEditCalls = 0; let lineEdit = [];
 
@@ -419,25 +419,49 @@ async function litTurn(act, dia, waitMs) {
   if (provSeen.length === preProv) {
     const blocked = logs.slice(pre).some(l => /Submit blocked/i.test(String(l)));
     if (blocked) {
-      // The gate passes only when a Petition is actually pending (isCommittedFn:
-      // state.fate.pendingPetition, app.js:227293) and it fires at turn 1. The reader satisfies
-      // it by engaging a Petition fate card, so the harness CLICKS one rather than writing the
-      // state — manufacturing application state is exactly what this test must not do.
-      const petition = await page.evaluate(() => {
-        const sel = ['.fate-card.petition', '[data-fate-type="petition"]', '.petition-card',
-          '#petitionCard', '.fate-card'];
-        for (const q of sel) {
-          const els = [...document.querySelectorAll(q)].filter(e => e.offsetParent !== null);
-          if (els.length) { els[0].click(); return { clicked: q, count: els.length }; }
+      // ── THE REAL PETITION INTERACTION ──────────────────────────────────────────────────
+      // The gate passes only when a Petition is genuinely pending (isCommittedFn:
+      // state.fate.pendingPetition, app.js:227293). The reader gets there by opening the
+      // Petition card, typing a petition into #petitionInput and pressing #btnSealPetition —
+      // and normalizePetitionInput is LOCAL, so no provider call is involved. Every step below
+      // is a real UI action; pendingPetition is never written by the harness.
+      const petition = await page.evaluate(async () => {
+        const steps = [];
+        const vis = (el) => el && el.offsetParent !== null;
+        // 1. OPEN the petition surface if it is not already showing.
+        let input = document.getElementById('petitionInput');
+        if (!vis(input)) {
+          const openers = ['[data-fate-type="petition"]', '.fate-card.petition', '#petitionCard',
+            '.petition-card', '.fate-card'];
+          for (const q of openers) {
+            const el = [...document.querySelectorAll(q)].filter(vis)[0];
+            if (el) { el.click(); steps.push('opened:' + q); break; }
+          }
+          await new Promise(r => setTimeout(r, 1200));
+          input = document.getElementById('petitionInput');
         }
-        return { clicked: null,
-          cards: [...document.querySelectorAll('[class*=fate],[class*=petition]')]
-            .filter(e => e.offsetParent !== null).map(e => e.className.toString().slice(0, 40)).slice(0, 6) };
+        steps.push('inputVisible:' + vis(input));
+        if (!input) return { steps, ok: false, why: 'no #petitionInput in the DOM' };
+        // 2. TYPE a petition long enough to pass the local length check.
+        input.value = 'Let the clerk falter before he reaches the part that names me.';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        steps.push('typed');
+        // 3. SEAL it through the production button.
+        const seal = document.getElementById('btnSealPetition');
+        steps.push('sealBtn:' + (seal ? (seal.disabled ? 'disabled' : 'enabled') : 'absent'));
+        if (!seal) return { steps, ok: false, why: 'no #btnSealPetition' };
+        seal.click();
+        return { steps, ok: true };
       });
-      console.log('     petition affordance: ' + JSON.stringify(petition));
-      await page.waitForTimeout(2500);
-      const pend = await page.evaluate(() => !!(window.state.fate && window.state.fate.pendingPetition));
-      console.log('     pendingPetition now: ' + pend);
+      await page.waitForTimeout(3500);
+      const pend = await page.evaluate(() => {
+        const p = window.state.fate && window.state.fate.pendingPetition;
+        return p ? { text: String(p.text || '').slice(0, 60), classification: p.classification } : null;
+      });
+      console.log('     petition interaction: ' + JSON.stringify(petition));
+      console.log('     pendingPetition created by the UI: ' + JSON.stringify(pend));
+      petitionCommitted = !!pend;
       console.log('     interstitial swallowed the submission — pressing submit again');
       for (let i = 0; i < 20; i++) {
         const ok = await page.evaluate(() => { const b = document.getElementById('submitBtn');

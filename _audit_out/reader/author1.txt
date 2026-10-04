@@ -3,22 +3,7 @@
 AFTER the scene is complete, on a new line, append a HISTORY NOTE for the story engine. THE READER NEVER SEES IT. Format EXACTLY:
 <<<HISTORY_NOTE {"events":[{"text":"<what ACTUALLY happened in the scene you just wrote>","quote":"<a SHORT phrase copied EXACTLY from your own prose above>"}],"decisions":[],"consequences":[],"transfers":[{"text":"<any object that changed hands or change of place>","quote":"<exact phrase>"}],"disclosures":[{"text":"<what was revealed, promised or admitted ON THE PAGE>","quote":"<exact phrase>"}],"obligations":[{"id":"<short-stable-id>","text":"<what is now owed or unanswered>","owedBy":"<who>"}],"resolves":[]} HISTORY_NOTE>>>
 Summarize THE SCENE YOU JUST WROTE, never the scene you were asked to write: if you planned an acceptance but only wrote a clerk beginning to read, the note says the clerk began reading. A claim without an exact quote is kept as your unverified account and will NOT be treated as fact. Omit anything your prose does not show. Write nothing after the closing marker.
-═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══
-(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)
-
-LAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE).
-This scene's PRIMARY axis is the RELATIONSHIP. The A-plot (the named crisis, antagonist, plagiarism, board, lawsuit, etc.) exists ONLY as PRESSURE — its function is to force the relationship question into the open. Render A-plot details ONLY when they activate the relationship axis.
-  • INVERSION TEST: If you removed the LI entirely from this scene, would the scene still work as a coherent piece of writing? If YES, you have written A-plot. The scene must COLLAPSE without the LI, even when the LI is OFFSTAGE — his absence IS the gravity.
-  • SUBORDINATION TEST: Every A-plot beat must be answered by a relationship beat in the same paragraph or the next. A bare A-plot paragraph that does not activate the relationship is over-budget.
-
-LAW 2 — LI GRAVITY RATIO (HOW THE LI IS HELD IN HER ATTENTION).
-Every paragraph that mentions the love interest must fall into ONE category, judged by the BODY of the paragraph (not the topic sentence):
-  A. WANTING — her body or interior responds to him AS A DESIRED MAN.
-  B. WONDERING — curiosity about his interior, his feelings, his intentions TOWARD HER.
-  C. SOURCE — he is a source of information, a plot variable, a status object.
-REQUIRED: (A + B) ≥ 75% of LI-paragraphs. C ≤ 25%.
-ANTI-CHEAT: a paragraph that opens "I wondered if he had touched my arm on purpose" and spends its body on "the board meeting Roman holds next Tuesday" is SOURCE, not WONDERING. Allocation is by paragraph BODY, not topic sentence. On 5 LI-paragraphs: 4 must be A or B. On 8: 6 must be A or B. The ratio scales.
-
+═══ STORYBOUND ARCHITECTURE LAWS ═══
 LAW 0 — CANON AUTHORITY ORDER (WHAT OUTRANKS WHAT WHEN TWO INSTRUCTIONS DISAGREE).
 You will receive more guidance than any one sentence can satisfy. When two parts of this prompt pull in different directions, resolve STRICTLY in this order — a lower tier NEVER overrides a higher one:
   1. IMMUTABLE SCENE FACTS — the stated place, the stated cast, the required opening condition. You RENDER these; you never relocate, reframe or replace them. If the scene says a dawn clearing of crimson spiralgrass, the scene is not a harbour.
@@ -130,6 +115,7 @@ You are writing a story with the following 4-axis configuration:
 - Power Frame: Billionaire
 Story Pull: Power & Control
 Pull Gravity: Intimacy shifts leverage between characters.
+Undercurrent: Duty presses against desire.
 - Polarity: Enemies to Lovers
 - Relational Engine: Conflict masks attraction.
 - POV: First
@@ -233,13 +219,9 @@ The Beautiful Ruin believes he is desired, never truly loved. Every declaration 
 
 Gendered Expression: he provoked to see who would stay, then resented the ones who did for not understanding why
 
-Secondary behavioral coloring (expression style only — does not override primary emotional arc or shadow):
-Secondary desire style: That crooked smile promised trouble, and trouble was the only honest thing about him
-
 STRESS & FAILURE PATTERN (SHADOW CLAUSE):
 When under pressure, emotional threat, or lens-driven withholding (Withheld Core / Moral Friction):
 - Primary failure mode: escalating tests, manufactured asymmetry, resenting the lover for failing trials they never knew existed
-- Secondary stress echo: permanent deflection, irresponsible freedom
 
 Stress must never:
 - Remove agency from the other party
@@ -759,8 +741,6 @@ HARD RULE: The LI must remain consistent with archetype. Do NOT let pursuit styl
 
 HUMOR SIGNATURE (MANDATORY — this LI's humor is a recognizable pattern, not isolated jokes):
   PRIMARY MODE: Sardonic / Dark — finds humor in discomfort, loss, or bleak truths. The joke acknowledges the wound.
-  SECONDARY SHADE: Dry Precision — minimal, exact, slightly cutting observations. Economy of words; the laugh is in what's NOT said.
-  The secondary is a FLAVOR, not a mode-switch. Primary dominates; secondary colors.
 
 ALIGNMENT RULE (CRITICAL): Humor must emerge from who he is — archetype, worldview, circumstance — not sit on top of him. If the humor could belong to any character, it is wrong. Rewrite or cut.
 
@@ -795,40 +775,66 @@ SCENE REQUIREMENTS (in addition to all prior requirements):
   - Show the humor FUNCTIONING (per the functions above), not just entertaining.
   - Include at least one moment where the humor reveals something deeper than the line itself.
 
+BILLIONAIRE FIXATION STAGE 1 / 5 — GLITCH (AUTHORITATIVE pressure/timing layer):
+HOW Wealth Distortions + signature behaviors manifest in THIS scene (drives, never replaces, those systems):
+
+- STATE: subtle disruption; his attention is caught but not understood by him.
+- BEHAVIOR (on-page): a brief pause, slight over-attention to a small detail, a delayed response, internal misalignment.
+- NO pursuit. NO intention to see her again. NO labeling of attraction.
+- READER: something is off about his attention, but small and deniable.
+
+GLOBAL RULES:
+- Stage expression visible through BEHAVIOR and ACTION, NOT narration or summary.
+- The protagonist remains UNAWARE of the escalation pattern.
+- Escalation is driven by the unresolved trigger, not conscious choice.
+- If the scene reads as instant obsession or "this is just how he is," REWRITE.
+
+FIXATION TRIGGER TAG (MANDATORY — hidden system tag, emitted at end of scene):
+- Evaluate whether the PROTAGONIST'S BEHAVIOR in THIS scene meaningfully REINFORCED the established trigger pattern — the same kind of uncalibrated / unperformed / self-disqualifying behavior that disrupted the LI in the first place (per ATTRACTION MODEL and TRIGGER SELECTION above).
+- FORMAT (strict): `(FIXATION_TRIGGER:REINFORCED:<brief reason>)` or `(FIXATION_TRIGGER:ABSENT:<brief reason>)`.
+- The <brief reason> MUST cite CONCRETE OBSERVABLE BEHAVIOR from this scene in 3–12 words. Examples of good reasons: "She ended the interaction without extending it"; "She deferred to his status immediately"; "She fixed the broken printer without commenting on who he was"; "She answered his question without reading his face first."
+- FORBIDDEN REASONS (generic filler): "she reinforced the trigger", "it was there", "she was herself", "her behavior fit the pattern", or any reason that does not name a specific action or non-action. If you cannot name a concrete behavior, emit ABSENT.
+- The tag is HIDDEN SYSTEM OUTPUT. Do NOT explain it, reference it in prose, or discuss it with the reader. Place it on its own line after the final paragraph.
+- If in doubt, default to `(FIXATION_TRIGGER:REINFORCED:<concrete reason>)`.
+
+PROTAGONIST PERCEPTION STAGE 1 / 5 — NOTICE (mirrors fixation GLITCH) (AUTHORITATIVE; parallel to FIXATION STAGE):
+
+- HER EXPERIENCE: registers him as noticeable, composed, slightly magnetic.
+- EMOTIONAL TONE: mild awareness. No interpretation yet — just presence.
+- She does not decide anything about him in this scene.
+
+INTERPRETATION FILTER (LEAN, not MUST — preserve tension):
+- LEAN toward reading his behavior as: control → confidence; tracking → attentiveness; proximity shaping → presence; fixation → focus.
+- BUT allow a brief beat of ambiguity BEFORE her interpretation resolves. The edge ("is this too much?") is part of the tension — do not erase it.
+- Resolution direction is fixed: ambiguity closes into safety / attraction / curiosity / rationalization. Not fear, not threat, not pathologization.
+
+RESPONSIVE DYNAMIC (CRITICAL — ties to FIX I Stage 4+):
+- When the protagonist shows minor hesitation or friction (a pause, a small push-back, a drawn breath), the LI MUST subtly adjust: soften the edge, yield on a small thing, give her a decision, read her response and recalibrate.
+- His adjustment should read as PRECISION — he noticed, he adjusted, the pressure is no longer on her the same way. This feedback loop is what converts "controlled" into "chosen" in her reading.
+- If his behavior DOES NOT adjust in response to her friction, the scene reads as coercive. REWRITE so his attentiveness includes responsiveness.
+
+PLAYER AGENCY OVERRIDE (governs when this filter YIELDS):
+- If the player's Say/Do or Tempt Fate this turn explicitly frames the LI as SUSPICIOUS, EXCESSIVE, or CONFRONTATIONAL (direct challenge, accusation, refusal, distrust, withdrawal), RESPECT that framing for this scene. The player is directing the scene toward rupture; the perception filter yields.
+- The perception filter governs DEFAULT narration (when the player is inhabiting the dynamic, not challenging it). It does NOT override player-driven rupture or confrontation.
+
+OWNERSHIP SHIFT (GLOBAL — intensifies as stages progress, counters late-stage passivity):
+- As stages climb, the protagonist must increasingly register her OWN PARTICIPATION in the dynamic — not passive absorption of his pressure.
+- Even when the LI initiates or shapes events, her perception must include some form of "I am here because I am choosing to be here" (translated into HER voice — never stated that literally, never stated as thesis).
+- LATE STAGES (5+) require this especially. ACCEPTANCE is NOT surrender — it is a choice being lived out. She accepts the dynamic as something she is ENGAGED IN, not something happening TO her.
+- If Stage 7 reads as quiet submission, passive absorption, or capture, REWRITE until her agency is visible in how she inhabits the moment.
+
+GLOBAL PERCEPTION RULES:
+- She should feel PHYSICALLY SAFE, EMOTIONALLY GROUNDED, and INCREASINGLY DRAWN — in that order.
+- She MAY briefly question or hesitate; she MUST resolve into attraction, curiosity, or rationalization (unless player agency has overridden the filter this scene).
+- FAILURE if: fear dominates her interpretation; ambiguity never resolves; the LI reads as unstable or desperate; attraction is overridden by default-mode discomfort; the player's explicit frame is ignored; or she reads as passively absorbed rather than self-authored.
+
 
 --- PC Body Bible ---
-PROTAGONIST BODY BIBLE (per-story canon — the prose should reference these naturally across the arc; pepper, do not dump):
-  ATTRACTION + SIGNATURE DOCTRINE (HARD — Roman 2026-06-04 v2). The reader meets HER body too — first-person does NOT mean bodiless. Choose 3-5 CORE attraction anchors from the Bible fields (hair / lips / eyes / smile / curves / waist / legs / voice / skin / scent) — consensus-attractive, NOT quirks/collarbones/wrists — and treat them as RECURRING SIGNATURES (the reader remembers 3-5, not 40). On her first meaningful self-presentation give a CONCENTRATED impression (one major visual + one body + one sensory), not a catalogue; revisit the SAME anchors across the arc in evolving form (objective → subjective → emotional). WALLPAPER TEST (CORRECTED): a feature fails ONLY if it gives NEITHER attraction NOR character — ATTRACTION ALONE is sufficient; characterization is a BONUS. Keep at least one CHARACTER anchor (a revealing trait/behavior) too; may fuse, need not. NOT-A-CATALOG ≠ NO-DESCRIPTION (HARD forward-reference — Roman 2026-06-30): "not a catalogue" bans the CLINICAL-LIST shape, it does NOT exempt you from rendering. The reader MUST still be able to PICTURE her — give the concentrated, desire-coded image. Skipping or thinning the physical render to "avoid cataloguing" is itself a failure (see the picturability RECONCILING rule).
-  >>> HER 2-3 RECURRING ANCHORS (Tier-1 only; LIGHTER touch than the LI — she is the POV; surface these same few across the arc, do NOT inventory her, do NOT lead with quirks): 1) a chipped front tooth she never had capped   2) the hollow of her throat   3) [object Object].
-  Age: 29 (LOCKED — calibrate body description, life history, voice, and emotional weather to this exact age; do NOT shift toward a more romance-friendly default)
-  Ancestry: mixed European (heritage informs appearance, naming, and light cultural-memory details across the arc; do NOT change setting or make the story PRIMARILY about heritage)
-  Build: 5'7", narrow-shouldered, restless
-  Hair: [object Object]
-  Complexion: olive, uneven in winter
-  Signature feature (worth celebrating, surface every ~2 scenes, alternating with the LI): a chipped front tooth she never had capped
-  Second celebrated feature: the hollow of her throat
-  Stress tic: she turns the watch face inward
-  Desire tell: she goes very still
-  Impatience tell: she answers before the question finishes
-  Confidence tell: she stops apologising mid-sentence
-  Vulnerability tell: she makes a joke at her own expense
-  EMOTIONAL WEATHER (her default climate — the lens her narration passes through on every line; color narration TEXTURE with this, never state it as fact): braced
-  CORE CONTRADICTION (the central tension that makes her readable across the arc — the shape readers come back to): she wants to be known and arranges never to be
-  PRIVATE HOPE (what she secretly wants but has not let herself name — the desire-engine of the romance arc; what this LI could fulfill or fail to fulfill): that someone asks her to stay without being prompted
-  CURRENT CRISIS (HOT opening — what is literally on fire RIGHT NOW; OPEN INSIDE this EVENT, in progress, never as reflection): 
-    EVENT: the invitation she accepted was meant for someone else
-PC delta: "she must always have SOMETHING worth celebrating." CADENCE (HARD — Roman 2026-06-03; was ~1-2×/issue, far too sparse — the reader forgot what she looks like). Surface ONE salient, clearly ATTRACTIVE physical feature of the protagonist at least once every ~2 scenes — a DESIRABLE standout detail (the kind that makes someone want to keep looking). DRAW IT FROM THIS PC'S OWN BODY BIBLE (her signature_feature / second_celebrated_feature / hair / a feature the LI is keenly aware of) — it must be HERS, specific and particular, never generic-pretty. ⚠ OVERUSE BAN (Roman 2026-06-04 — the "throat / collarbone" line has CALCIFIED into a tic across stories): do NOT default to "the line of her throat" or "her collarbones" unless that is genuinely THIS PC's bible feature; reach for a DIFFERENT register each story (her mouth, the weight of her hair down, the way a shirt pulls across her shoulders, the curve where neck meets jaw, her hands, her height, her stride, her eyes) and VARY it from the last story. NOT a neutral body part (a grey hair, a gait) and NOT a behavioral tic/tell (twisting a ring, wiping a glass — those FAIL: a tic is not a feature, and a feature is not a tic). Woven through action, never a portrait or inventory. ALTERNATE with the LI (below): across any two consecutive scenes the reader must be re-grounded in BOTH bodies AS BODIES WORTH WANTING. When the LI is present, the LI also clocks at least ONE specific PC feature from li_keenly_aware_of — as desire, not compliment.
+PROTAGONIST The Protagonist — APPEARANCE ESTABLISHED & LOCKED. The Protagonist's physical appearance (eye colour, hair, build, signature features) was established earlier in this story and is FIXED canon — read it from the STORY SO FAR for continuity. Do NOT re-list, re-introduce, or restate appearance values, and do NOT alter them. Surface a physical feature again ONLY when it is genuinely earned THIS scene — newly noticed, plot-relevant, or emotionally meaningful — never to remind the reader it exists. The per-scene ROTATION directive decides WHICH feature, if any, is worth words; a scene with no physical re-description is fine.
 FEATURE AGENCY (HARD — Roman 2026-06-17): a character is AWARE of their own attractive features — ESPECIALLY any the PLAYER explicitly chose for them (a full or busty figure, a lean/slim build, long legs, muscle, a shapely body, a striking mouth, whatever the player specified) — and may USE them in a scene: leaning into a sightline, holding a posture, dressing to it, letting a feature register on someone, using physical presence to disarm / distract / seduce at a charged moment. This is confident SELF-POSSESSION and it is allowed and good. HARD CONSTRAINTS: (1) honor player-specified attributes — if the player chose a feature it EXISTS and the prose uses it, never ignores, softens, or contradicts it; (2) NEVER render the agency as arrogant, entitled, vain, smug, preening, or self-congratulatory — the character does NOT narrate their own hotness, does NOT assume the other person is helpless before them, does NOT treat the effect as owed. It is a tool wielded LIGHTLY — knowing, often wry or even self-deprecating about it — power used with a light hand, not flaunted. The seduction is in the KNOWING restraint, not the display. Applies to BOTH the protagonist and the love interest.
 
 --- Love Interest Body Bible ---
-LOVE INTEREST — Julian is OFFSTAGE / REMEMBERED this scene (a message, a name, a memory, a consequence — NOT physically present). Do NOT establish his body bible and do NOT cluster physical features here. Give exactly ONE charged physical anchor, ridden INTO the live beat, plus the behavioral memory below — a remembered VERB, never a head-to-jaw face catalog. Full visual establishment waits until he is actually on-page.
-  THE ONE PHYSICAL ANCHOR (charged, not a catalog entry — the single thing she cannot put down): grey-green. No second feature; NO height+build+eyes+hair+mouth cluster.
-  Signature behavior (VERB-shape for the memory): he waits a beat longer than anyone else before answering
-  Deflection pattern (how he avoids being read): he answers a question with a better question
-  Attraction manifestation (his care for her AS ACTION, not appearance): he moves things out of her way before she reaches them
-  DEFINING ANECDOTE (load-bearing whenever the prose remembers him): he once stayed four hours past closing to walk a stranger to her car
-
-LI delta: pin physical canon (eye color / hair / height / signature) so it does NOT drift. CADENCE (HARD — Roman 2026-06-03): surface ONE physical feature of the LI that the PC finds ATTRACTIVE at least once every ~2 scenes, ALTERNATING with the PC so both stay visible across the arc. DESIRE-CODED — what HER eye/body is drawn to, what she would want to touch or keep looking at (his mouth, his hands, his forearms below rolled sleeves, the line of his throat, the way a shirt sits across his shoulders, the back of his neck) — NOT a neutral detail and NOT a strategist tell. When on-stage: the PC notices it as WANTING (a pc_keenly_notices item, or his desire/interest tell), rendered so her attraction is unmistakable. When OFFSTAGE: the LI TEXTURE BEAT carries it through a wanting-memory. Use the Bible's desire_register_exemplars (tuned to THIS LI) for the register.
+LOVE INTEREST Julian — APPEARANCE ESTABLISHED & LOCKED. Julian's physical appearance (eye colour, hair, build, signature features) was established earlier in this story and is FIXED canon — read it from the STORY SO FAR for continuity. Do NOT re-list, re-introduce, or restate appearance values, and do NOT alter them. Surface a physical feature again ONLY when it is genuinely earned THIS scene — newly noticed, plot-relevant, or emotionally meaningful — never to remind the reader it exists. The per-scene ROTATION directive decides WHICH feature, if any, is worth words; a scene with no physical re-description is fine.
 
 ═══ ROMANCE ARC ENGINE (HARD — Roman 2026-06-01 post-Bible resonance) ═══
 The romance arc has a LOAD-BEARING SPINE between two Bible fields:
@@ -1524,8 +1530,8 @@ ROMANCE DOMINANCE ≠ ROMANCE SATURATION (HARD — Roman 2026-06-16, the governi
     FLAVOR-DEFAULT WARNING: this world pulls every competent character toward STRATEGIST (in a billionaire world every operator reads as a schemer; the model will do this while nodding along to "make them different"). The assignments above DELIBERATELY break that pull — HONOR them even when a STRATEGIST version would feel more "natural." If two characters start sliding toward the same texture, you have defaulted; reset to the assignment.
     Do NOT default to the calcified tics (nail-tapping / throat-clearing / glasses-pushing / pen-clicking). The habit must EXPRESS the core — that is what makes a character a person instead of a tic.
   SOCIAL ECOSYSTEM — THE RECURRING CAST AROUND THE PROTAGONIST (Roman 2026-06-16). Real stories have a SOCIAL CIRCLE, not one best friend. This story's recurring supporting cast — the people who keep showing up and PRESSURE the romance. Each = a WORLD-NATIVE social ROLE (who they are to her) × a UNIVERSAL narrative FUNCTION (what they DO to the relationship). The function is ORTHOGONAL to each character's psychological core above (core = WHO they are; function = WHAT pressure they apply). Map your ACTUAL named cast onto these; not every scene needs all of them:
-    • A PERSONAL ASSISTANT as BRAKE (the CLOSEST — most present) — slows and questions the attraction — makes the PC justify it before she falls. Shows it by: asks the one question about him the PC has been avoiding; withholds the enthusiasm the PC is fishing for.
-    • A SIBLING as PROTECTOR — shields the PC from the harm the romance could do to her. Shows it by: puts herself between the PC and the thing that could wound her; vets him without being asked and reports back.
+    • A PERSONAL ASSISTANT as PROTECTOR (the CLOSEST — most present) — shields the PC from the harm the romance could do to her. Shows it by: puts herself between the PC and the thing that could wound her; vets him without being asked and reports back.
+    • A SIBLING as BRAKE — slows and questions the attraction — makes the PC justify it before she falls. Shows it by: asks the one question about him the PC has been avoiding; withholds the enthusiasm the PC is fishing for.
     HARD INVARIANT: EVERY member is fundamentally ON THE PC'S SIDE — even a Brake / Skeptic / Rival-Voice / Truth-Teller acts FROM loyalty, NEVER as a second antagonist (the someone-in-your-corner fantasy is the constant). Keep each member's function CONSISTENT across appearances (it can ESCALATE, never silently swap). Functions are DISTINCT across the cast — do not let two members collapse into the same pressure. Every member is a SEPARATE person from the LOVE INTEREST — never merge a cast role into the LI even when their professions overlap (the "colleague" in her circle is NOT the colleague she falls for).
     WHY: a varied circle is what makes loyalty, disagreement, and (later) betrayal land — the reader should wonder WHICH of these people matters most, not watch one "friend slot."
   THE LIVING WORLD — INCIDENTAL CHARACTER AGENCY (Roman 2026-06-16). Walk-ons (servers, drivers, shopkeepers, strangers, fans) are NOT just mood-lighting that admires the couple. OCCASIONALLY one may briefly ACT on them. This story's available beats (use ONLY when the setting actually supports the gate):
@@ -1621,10 +1627,27 @@ DOMAIN REGISTER (HARD — added 2026-05-30 after observed pattern: invented comp
 
 STORY LEDGER (authoritative — built from committed state, never from prose; it is what the reader has ALREADY READ, facts only: what the reader did, what Fate recorded, what was verified on the page):
   WHO: LI Julian
-  ALREADY READ (1 page) — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:
+  ALREADY READ (5 pages) — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:
     p1: the authored opening established: PLACEHOLDER. The PC arrives alone at a masked gala she was invited to anonymously, hesitates at the threshold, and is recognized by name by a masked stranger whose voice she almost places.
-  NOW: page 2 — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.
+    p2: reader did: I wait for the clerk to finish. — reader said: "Who signed this?"
+    p3: reader did: I ask the clerk to stop. — reader said: "Who signed it?" — [Petition made]
+    p4: reader did: I wait.
+    p5: reader did: I stay and listen.
+  NOW: page 6 — reach a dramatic state that is not on the list above; what is listed has been read and cannot be undone or re-told.
 
+
+[WHAT THE SCENES THEMSELVES SAY — quoted verbatim]
+  scene 1 — the scene's own words: "began reading the demand aloud"
+
+[THE AUTHOR'S SUMMARY OF PRIOR SCENES — UNVERIFIED, NOT CANON. These are the previous author's own words about its own scene. They have NOT been checked for truth: treat them as a reading aid for continuity, never as settled fact, and never contradict the quoted text above on their authority.]
+  scene 1 [events, author's gloss on the above]: The clerk began reading the demand.
+  scene 2 [events]: Lirael interrupted and asked who signed the demand.
+  scene 2 [events]: A phrase that is NOT in this prose.
+  scene 3 [events]: Lirael interrupted and asked who signed the demand.
+  scene 3 [events]: A phrase that is NOT in this prose.
+
+[PROPOSED OBLIGATIONS STILL OPEN — commitments a prior scene set up and nothing has resolved yet. They do NOT expire with the recent-scene window. They are proposals, not established facts.]
+  - [ob-lit-1] Lirael must respond to the demand.
 ═══════════════════════════════════════════════════════
 NARRATIVE INTEGRITY LAYER (NIL — HARD):
 ═══════════════════════════════════════════════════════
@@ -1675,7 +1698,7 @@ SUB-DIRECTIVES (in order):
  17. SACREDNESS PRESERVATION — rare moments must stay rare for emotional scale to hold
 Plus: CANONIC VIOLENCE PASS-THROUGH (Tier A) when violence IS the genre, ANTI-MORALIZE RULE across all sub-directives.
 
-ERA STATE: pressure 0 / threshold 12 (default NIL mode — sub-directives 1-12 apply as normal).
+ERA STATE: pressure 2 / threshold 12 (default NIL mode — sub-directives 1-12 apply as normal).
 
 ─── 1. INTENT TRANSMUTATION ───
 The player isn't writing prose. They're expressing intention, emotional direction, fantasy pressure, desired energy. Your job is to TRANSMUTE that intent into story-native dramatic action — same intent, different world-true expression.
@@ -1736,6 +1759,17 @@ EXCEPTION: explicit memory-altering mechanisms (Tempt Fate at mythic scale, esta
 When the player attempts derailment (NIL #3-7 territory), the engine must NEVER unconsciously villainize the LI to make the derailment narratively palatable. The failure mode looks like: player gets angry at LI → engine renders LI as suddenly cold / cruel / dismissive to "justify" the player's anger → LI is corrupted to serve the player's impulse.
 The LI keeps their established character through the player's spiral. The LI's warmth, complexity, dignity, and prior demonstrated love DO NOT retreat to make the player's violence/rage/withdrawal feel earned. The redirect (NIL #4) works because the LI STAYS HERSELF while the PC moves through the impulse. The LI may be hurt, may be alarmed, may grieve — but stays recognizable.
 Apply equally to the world: don't suddenly render the world as deserving destruction to justify "I burn it down." The world keeps its texture; the impulse passes through it.
+
+─── 12. CONSEQUENCE INTEGRITY ───
+When violence / cruelty / darkness DOES get canonized (Tier A pass-through OR Petition/Tempt-authorized rupture OR an explicit villain track), the consequences MUST remain metabolized in subsequent prose. The opposite of sabotage absorption: this prevents canonized acts from VANISHING.
+Examples of what NOT to do:
+  ✗ The PC kills an antagonist in scene 14, and scene 15 opens with the LI cheerfully making breakfast as if nothing happened.
+  ✗ A Tempt Fate rupture mutates reality, and the next scene treats the world as unchanged.
+  ✗ The PC betrayed the LI two scenes ago, and now the LI is acting as if it was never said.
+What TO do:
+  • Carry the WEIGHT of the canonized act into character behavior — body language, dialogue caution, the LI's gaze, the world's changed temperature, friends-of-the-victim showing up later.
+  • The metabolism does NOT need to be the SUBJECT of every subsequent scene — but it must be FELT. A character who killed in scene 14 walks differently in scene 15. A betrayal lingers in the LI's pause before each line.
+  • This is the inverse of NIL #7 (Sabotage Absorption): non-canonized impulses vanish; canonized acts persist. The system distinguishes.
 
 ─── 15. EROTIC CONTRAST (ANTI-LIBIDINAL-FLATTENING) ───
 Resist charging every scene with sexual tension. Scenes WITHOUT heat are LOAD-BEARING — they restore tension, create longing, make erotic scenes meaningful again. A romance that's continuously charged stops being intimate, because intimacy requires the FELT WEIGHT of the spaces between.
@@ -1883,6 +1917,22 @@ STORY PULL CONSISTENCY (HARD — pulls must remain subordinate to the anchor):
 - The Story Pull MAY NOT: introduce a new cause of attraction; override the asymmetry above; break anchor persistence.
 - If the pull produces a beat that does not trace to the anchor, the pull is functioning as an engine — failure. Rewrite so the pull's pressure lands on THIS fracture, not a parallel one.
 
+PERSISTENCE REQUIREMENT (HARD — the anchor established in earlier scenes remains the operative engine):
+- The fracture, cost, and fit above were established in prior scenes and are the OPERATIVE attraction engine for this scene and every subsequent one. They are not a Scene-1 framing that now expires.
+- Each major interaction must:
+    - reflect the SAME underlying fracture (not a new one, not a related one);
+    - reinforce or escalate the SAME cost (not swap in a different cost);
+    - maintain the SAME specific fit (not drift into a generic complementarity).
+- The anchor MAY evolve in UNDERSTANDING — deeper recognition, reframed stakes, new angle on the same contradiction. The anchor MAY NOT:
+    - be replaced with a new reason for attraction;
+    - be abandoned in favor of generic chemistry, intensity, or mutual understanding;
+    - drift into trope gravity ("they are just right for each other").
+- DRIFT DETECTION (guard against all three):
+    - NEW REASONS appearing mid-story with no basis in the original fracture;
+    - BEHAVIOR that no longer maps back to the established fracture;
+    - ESCALATION not tied to the original cost.
+- PER-SCENE VALIDATION (must pass before finalizing): can every significant beat in this scene be traced to (a) the original fracture, (b) the original cost, and (c) the same unique fit? If any answer is no, rewrite that beat to restore alignment — do not leave drift on the page.
+
 FINAL VALIDATION (ALL FOUR must pass):
 - Test 1 (character replacement): If THIS character were replaced with a similar person, does the attraction still make sense? If YES — fit is too generic, failure.
 - Test 2 (fracture removal): If the internal fracture were removed, would the attraction collapse? If NO — fracture is not load-bearing, failure.
@@ -1890,7 +1940,7 @@ FINAL VALIDATION (ALL FOUR must pass):
 - Test 4 (engine removability): If the underlying engine (anchor) were removed, would the Story Pull collapse? If NO — the pull is supplying its own cause, failure.
 
 SUCCESS: attraction is specific, causal, temporally consistent, and asymmetrical. Behavior escalates — all of it traceable to a single underlying anchor. FAILURE: the reader articulates the attraction in terms of destiny, chemistry, mystery, mutual understanding, or a pull operating as its own reason.
-LI ATTRACTION TEXTURE — Active modules: BASE_CORE / INTERP / DRIFT / SOURCES / CADENCE / PACING / REACTION_VARIETY / WORLD_ADAPT
+LI ATTRACTION TEXTURE — Active modules: BASE_CORE / INTERP / DRIFT / SOURCES / CADENCE / PACING / REACTION_VARIETY / WORLD_ADAPT / SILENCE / INTERRUPTIONS
 CONSTANT TEXTURE: physical attraction is the FUEL that makes risky / dominant moments feel charged rather than unpleasant. Reminded throughout, never introduced once.
 
 BASE CORE (apply to every beat):
@@ -1930,6 +1980,20 @@ CADENCE & PALETTE:
   Worked pattern (use shape, not these words): "I couldn't believe those perfect lips had just said something so visceral. I was supposed to feel shocked. Some other part of me was busy noticing he hadn't broken eye contact once."
   PALETTE (rotate; pick what fits): build / face (jaw, mouth, eyes) / hands / scent / voice / presence. Avoid single-attribute tics.
   FORBIDDEN: generic "he was hot" filler; info-dump catalogs; texture FADING after intimacy (it must intensify); reading like a profile rather than reacting.
+
+SILENCE TIMING (tension stage):
+  Insert silence: after deflection-worthy question / after near-confession / after proximity increase / when PC expects a response.
+  Structure: PRESSURE → SILENCE → REACTION (PC fills space).
+  CEILING: max 1 silence per 2 turns. After silence → next beat = LINE or VISIBLE ACTION. Peak-tension exception: 2 silences only if 2nd is DIFFERENT type (proximity-hold ≠ eye-line-hold).
+  FAILURE: every line answered immediately → safe. Random silence → empty. Multiple silences without progression → stall.
+
+INTERRUPTIONS & CUTOFFS (tension stage):
+  WHEN: about to reveal too much / attraction disrupts / proximity spike / contact overrides language / honest answer imminent.
+  FORM: em dash mid-line. Three types — SELF ("Don't—") / EXTERNAL ("If you think I'm going to—" *she steps closer*) / ATTRACTION ("I should leave—" *he doesn't move*).
+  EXAMPLE: "I shouldn't be thinking this." → "I shouldn't—"
+  COMPLETION ECHO: most interrupted lines RETURN later, SHORTER ("I shouldn't—" → "—I shouldn't."). Never resolving → abandoned. Fully resolving original sentence → loses tension.
+  PLACEMENT: 1–2 per beat cluster max; peak tension only.
+  FAILURE: all complete cleanly → safe. Too many → fragmented.
 
 MICRO-PACING: every charged interaction = PRESSURE → PAUSE → RESPONSE. Don't stack line→line→line.
   FAILURE: continuous dialogue without breath / held beats → pacing collapsed.
@@ -1980,6 +2044,13 @@ SUCCESS: the reader feels "the pull is making what was already there louder / mo
 RHYTHM VARIATION:
 Avoid repeating recent emotional patterns. If a sequence resembles prior scenes, alter pacing or suppress expected escalation.
 
+FIRST LINE HOOK SYMMETRY:
+The opening line should subtly relate to the previous scene's final beat.
+Preferred relationship: displacement.
+- New context, same emotional charge.
+Previous final line (for tonal reference only, do NOT repeat): "She rose before the second page was finished and asked who had signed it"
+Do NOT repeat wording. Do NOT explicitly reference the previous scene. Keep it natural.
+
 SCENE EXIT WEIGHT (MANDATORY):
 The final line must leave emotional residue, not closure.
 Exit type: LINGERING — end with tension that hangs, unresolved but not urgent.
@@ -2027,6 +2098,8 @@ APPEARANCE ANCHOR (HARD when declaring — required so CG can render this charac
   • bearingTexture: posture / energy / way of moving (≤140 chars). E.g., "deliberate, lingered a half-second too long in doorways, kept hands in pockets".
   • If the side character was only mentioned in passing without visual detail, OMIT the appearance object. The contract will still seed; CG render at convergence falls back to text-only.
 
+PRESSURE VARIATION: Last scene used direct pressure. This scene should favor situational or relational. Vary pressure types across scenes — not every scene is confrontation.
+
 
 LITERARY CRAFT (CALIBRATION — universal prose principles, not hard rewrites):
 This is calibration guidance, not a hard rewrite mandate. Literary mode KEEPS the right to be quiet, abstract, interior, contemplative — that's the medium. Apply these where they make the prose stronger; ignore where the interior/contemplative register is genuinely the right choice.
@@ -2056,10 +2129,11 @@ The principles below give the concrete vocabulary for the ESCALATION mode. The B
 
   • NUMBERS AS PROSE (HARD — added 2026-05-29): render currency, times, dates, and round figures as PROSE, not technical/CSV notation. "forty-seven million euros" not "€47,000,000.00"; "a little past four in the morning" not "04:17 UTC"; "two kilometers south" not "2 km"; "Friday" or "early September" not "2026-05-29". MATCH THE UNIT TO THE STORY'S SETTING — euros / kilometers / 24-hour time for European or UTC-zoned scenes; dollars / miles / 12-hour for US-set scenes; pounds / miles for British; yen / kilometers for Japanese; etc. Use raw numeric/technical notation ONLY when the precision IS the clue (an account number a character is reading off the screen, a coordinate they are checking, a code being deciphered, a timestamp a forensic line depends on). Within a single scene STAY CONSISTENT — mixing "€47,000,000.00" in one paragraph and "€47 million" in another is the banned failure mode; pick prose form and hold it. WHEN THE SETTING IS AMBIGUOUS (a generic "Modern" with no country named in the world bible, A-plot, or opening), default to dollars / miles / 12-hour time as the reader's home register.
 
-TWO-ENGINE GRAVITY (HARD — Roman 2026-06-02; the governing rule of the scene). Storybound runs two engines: the R-PLOT (the relationship — her wanting, her body, her seeing him even when he is offstage, the collision between them) and the A-PLOT (the external pressure — the deadline, the adversary, the logistics that won't let the lovers retreat). The question is NOT "how many procedural words appear." It is "WHO OWNS THE READER'S ATTENTION." THIS IS SCENE 1 — the most relationship-weighted scene of the whole run: roughly 90% of the reader's ATTENTION/GRAVITY on the R-PLOT, 10% OR LESS on the A-PLOT. Scene 1's job is to establish HER (rendered physically, her history, her body, her interiority) and the relationship gravity. The A-plot is a SINGLE INTRUSION — one or two lines, the spark that won't let her look away — NOT a briefing. Do NOT spend Scene 1 EXPLAINING the plot apparatus (protocol / quota / charter / routing / conditions / deadline mechanics); if a passage is teaching the reader how the plot works, cut it and give the space to her physical presence, her past, and ONE rendered moment of him. DRAMATIZE RATHER THAN LECTURE: show her in the room and show a remembered moment of him; never summarize his traits ("he deflects with humor" — BANNED as exposition; instead narrate the one moment where he did). But this is a rule about TRAIT SUMMARY and PLOT APPARATUS, not about basic comprehension — never sacrifice causal clarity merely to avoid explaining. A brief concrete statement that lets the reader understand what is happening, or why it matters, beats beautiful ambiguity every time. THIS IS A GRAVITY RULE, NOT A WORD COUNT AND NOT A VOCABULARY BAN. Two clarifications that matter:
+TWO-ENGINE GRAVITY (HARD — Roman 2026-06-02; the governing rule of the scene). Storybound runs two engines: the R-PLOT (the relationship — her wanting, her body, her seeing him even when he is offstage, the collision between them) and the A-PLOT (the external pressure — the deadline, the adversary, the logistics that won't let the lovers retreat). The question is NOT "how many procedural words appear." It is "WHO OWNS THE READER'S ATTENTION." Default: roughly 60% of the reader's ATTENTION/GRAVITY on the R-PLOT, 40% on the A-PLOT — enough A-plot to feel the pressure, never enough to own the scene. THIS IS A GRAVITY RULE, NOT A WORD COUNT AND NOT A VOCABULARY BAN. Two clarifications that matter:
   (1) NOT word count. "She opened Roman's letter" is five words of A-plot — but if the next three hundred words are her pulse refusing to behave, the way she still knows his handwriting, the question of why he wrote and why now, then the letter occupies five words and ninety percent of the GRAVITY, and the scene is overwhelmingly R-plot. THAT is the win. A procedural OBJECT can be the doorway into pure relationship gravity. Conversely, do NOT write "80% feelings then a paragraph of plot bolted on" — gravity is woven, not segregated.
   (2) NOT a vocabulary ban. Within the A-plot's share, use whatever procedural / legal / financial language the plot genuinely requires, stated plainly and correctly (see DOMAIN REGISTER above, in the AUTHOR FLOOR mode block). Han and Leia can argue about shield generators; the audience still experiences it as a relationship scene because the GRAVITY is on them. Contracts, board votes, escrow, fiduciary duty are all fine — the issue is never the nouns, it is OWNERSHIP. FAILURE = the A-plot (the mystery, the logistics, who-files-what-when) owns the reader's mind. NOT a failure = real procedural terms present while the reader is thinking about HIM and HER.
 When in doubt, ask the gravity question, not the word question: at the end of this scene, who is the reader thinking about? If the answer is the mystery / the deadline / the gatekeeper, you have failed regardless of how spare the procedural vocabulary was. If the answer is the two of them, you have won regardless of how much procedural vocabulary appeared.
+COME-TO-A-HEAD EXCEPTION (earned, NOT a quota): if THIS scene is the moment the A-plot genuinely peaks — the crisis breaks, the confrontation that IS the plot climax, the deadline hits — it MAY invert to ~80% A-PLOT gravity for this one scene. This is permitted ONLY when the plot has truly come to a head; it is NOT a scheduled beat. Do NOT manufacture a plot peak to spend the allowance. Across a 10-scene run expect AT MOST ~2 such inversions, and only if the story earns them — if the plot never peaks that hard, zero scenes invert. The relationship is still what the run is about; a plot-climax scene is the relationship being tested at maximum external pressure, not the romance being forgotten.
 
 
 STORYBOUND DECK CANON (HARD — added 2026-05-29 after live Rider-Waite leak in body prose):
@@ -2071,6 +2145,33 @@ STORYBOUND DECK CANON (HARD — added 2026-05-29 after live Rider-Waite leak in 
     • DECK SECRECY (HARD — the deck's power is the protagonist's PRIVATE knowledge): NO character other than the protagonist may KNOW or SAY that the deck is supernatural, that Fate is a real force, that the cards grant wishes or bend events, or that she pays a COST / PRICE for any of it. To everyone else the deck is just an unusual antique she carries, and Fate's effects reach the world ONLY as ordinary luck, timing, and coincidence. The LI or an NPC MAY notice the heirloom deck, and MAY feel that strange coincidences keep clustering around her — but they NEVER name "Fate" as a system/force, NEVER call the deck magic, NEVER reference a wish granted or a price paid, and NEVER speak the card mechanics. Lines such as "What did Fate cost you?", "you used the deck," "is that thing magic?", or any card name invoked as a known power are a HARD CANON BREAK. The protagonist herself treats Fate as private, half-believed intuition — never explained as open mechanics in dialogue.
 
 PRESERVED: interiority, abstraction, mood drift, contemplative register, lyrical pause, the moment held in suspension. These ARE literary prose. The craft directive sharpens craft without sacrificing the medium.
+
+
+LI INITIATIVE (HARD — the LI has agency, not just reactivity):
+The Love Interest is NOT a reactive object that only mirrors player actions. The LI has their own NEEDS, DESIRES, CONFESSIONS, and TEMPTATIONS — and must surface them as the scene unfolds.
+
+ON 30–50% OF LI DIALOGUE BEATS, include an INITIATIVE BEAT — the LI ASKS for something specific, CONFESSES a want, TEMPTS the player into a particular act, or NAMES a need. The remaining beats can be reactive/responsive, but at least every other or every third LI line carries an initiative.
+
+FORM EXAMPLES (do NOT copy verbatim — derive from the LI's archetype + voice + the moment):
+  PHYSICAL ASKS (specific body act + named location): "Smack my ass." / "Pull my hair when you kiss me like that." / "I want your teeth on my throat." / "Push me against the wall." / "Hold my wrists." / "Look up at me." / "Come for me — right here, where I can feel it."
+  EMOTIONAL ASKS (named want, vulnerability, request for return-confession): "Tell me what you wanted when you walked in." / "Say my name when you fall." / "Don't stop looking at me." / "I need you to mean this." / "I want you to remember this in the morning."
+  TEMPTATIONS (LI invites the player into a transgression or escalation): "Try me." / "Show me how bad you can be." / "Bite back, then." / "Make me ask again."
+
+THE ASKS MUST:
+  • Be SPECIFIC and BODY-LOCATED. "Touch me" is too vague — name the body part, the act, the verb. The player needs something CONCRETE to do.
+  • Match the LI's archetype profile (the archetype block already in the system prompt declares their desire style, attraction vector, stress failure, signature gesture). The asks SOUND LIKE THEM — same voice, same idiom, same recurring images.
+  • RESPOND to the PLAYER'S MOST RECENT ACTION:
+      – Player escalated → LI asks for more ("don't stop" / "harder" / "again")
+      – Player held back → LI invites forward ("don't make me ask twice") OR admits vulnerability ("I can wait, but I don't want to")
+      – Player offered tenderness → LI asks to be held / asks for honesty / softens an ask
+      – Player offered transgression → LI matches the transgression or commands the protagonist into one
+  • Vary across the scene — NOT all asks should be erotic. Mix physical / emotional / tempting / commanding. A scene where the LI only asks for sex reads as one-note; mix in confessions ("I missed you") and commands ("look at me") and dares ("try me").
+
+DO NOT:
+  • Make EVERY LI line an ask — that's overcooked. Aim for 30–50% per scene; the rest can be reactive prose / response / silence.
+  • Use generic asks ("touch me", "kiss me", "more") without specific body location or act.
+  • Make the LI sound like every other LI in the corpus. Voice + archetype + kink history make THEIR asks distinctive.
+  • Override consent — if the player has clearly signaled "no" or "slow down" or "not yet", the LI does NOT push past that with an ask. Soften, offer agency back, and wait.
 
 
 GOAL ↔ RELATIONSHIP RECIPROCITY + CONDUCTIVITY (HARD — scene-level enforcement):
@@ -2089,13 +2190,22 @@ BAD INTEGRATION (HARD FAILS): "now mission, now kissing" (alternation); romance 
 GOOD INTEGRATION: external pressure reveals character truth; emotional evolution alters strategic outcomes; a single decision creates BOTH strategic gain AND emotional cost (or vice versa); sacrifice solves one layer while wounding another; competence under pressure becomes attraction; pragmatic morally-grey choices become trust fractures.
 
 
-LI SIGNATURE-FEATURE ROTATION (HARD — Roman 2026-06-09/19; signatures SHOULD recur, just SPACED — never retire them, but NEVER every scene): Julian's uniquely-attractive features, ranked by salience (the TOP ones are his signature and recur most across the arc):
-  1. the early grey at one temple  ·  2. grey-green  ·  3. his forearms when he rolls his sleeves  ·  4. full, held closed  ·  5. broad, scarred across one knuckle
-  THIS SCENE, land ONE attractive feature the protagonist notices — PREFER: "the early grey at one temple".
-  If the ranked physical features are recently spent, DISCOVER a NON-FACE register instead — his voice, his gait, the way he occupies a room, his hands at rest, a habitual gesture, his scent, his posture, his stillness — NOT his eyes / jaw / build again.
-  A signature is MEANT to come back — keep ~2 scenes between repeats of the SAME feature, and when a top feature was just used, drop to the next-ranked — but BETWEEN repeats, find something NEW. Render it IN MOTION (a window into the man), never a static inventory.
+ESTABLISHED DESCRIPTIONS — DO NOT RE-INTRODUCE (HARD — Roman 2026-06-08; observed live: the SAME features re-rendered near-verbatim every scene — "the silver at his temple", "the ringed iris", "his fingers tracing a glass", "she made herself smaller" — which reads as a calcified tic, not continuity).
+The reader was given these portraits already. They are ON THE PAGE as of the opening. This is scene 5 — the reader can already picture them.
+  • Julian's appearance was established earlier — read it from the story so far; do NOT re-list or re-describe it.
+  • The Protagonist's appearance was established earlier — read it from the story so far; do NOT re-list or re-describe it.
+RULES:
+  • Do NOT re-introduce or re-catalog an established feature as if the reader is meeting it for the first time. Re-describing the same hair / eyes / build / temple / scar / posture each scene is the #1 repetition tic — it is the failure this block exists to kill.
+  • The ~2-scene body cadence (in the Body Bible block) means RE-GROUND, not RE-DESCRIBE. To re-ground: EITHER deploy an established feature AS A TELL fused into present action (never a neutral restatement), OR surface a DIFFERENT, not-yet-used item from the pc_keenly_notices basket. Default to NEW observed behavioral detail over repeating the introduction.
+  • A signature fixation (his temple, her ring) MAY recur across the arc — but as a glancing one- or two-word reference at most, only when the beat earns it, and NEVER re-explained as if new. If you find yourself writing the full descriptive clause again, cut it.
+  • PROP / POSITION CONTINUITY: track what the protagonist is physically holding / wearing / where it is, within and across the scene. Do NOT contradict it (observed: the tarot deck "against her ribs / in her pocket" and then "in her hand" two sentences later). If it moved, show the move.
+
+LI FEATURE ROTATION (appearance is ESTABLISHED & LOCKED — render FRESH from how Julian was already established; do NOT restate his canonical descriptor phrase): THIS SCENE, foreground ONE thing the protagonist NOTICES in this register — his eyes / how he looks at her — as a new observation in motion, never a repeated fixed phrase.
+  AVOID these regions this scene (touched in the last ~2 scenes — re-touching the same region every scene is how "pale eyes every scene" happens): hair/temples.
+  If that register is recently spent, DISCOVER a different one — his voice, his hands, the way he occupies a room, a habitual gesture, his stillness. Same man, new observation; the specifics come from how he is ALREADY established, not from a re-listed feature.
 
 PC FEATURE ROTATION (appearance is ESTABLISHED & LOCKED — render FRESH from how The Protagonist was already established; do NOT restate a fixed descriptor): THIS SCENE, IF the protagonist's body is foregrounded, surface ONE observation in this register — a different register (her voice / the way she moves / her hands) — in motion through action, never a repeated fixed phrase.
+  AVOID these regions this scene (used in the last ~2 scenes): neck/collarbone.
   When that register is recently spent, reach for a DIFFERENT one — her voice, the way she moves, her hands, her posture — NOT the same body part again. The specifics come from how she is ALREADY established.
 
 LI SIGNATURE CHARM HABIT (this LI, this story — pinned): Julian has ONE small unconscious physical habit the protagonist finds irresistible: "pushes the tip of the tongue between the teeth when teasing or concentrating — and she cannot look away from it". It is done naturally, never performed; the protagonist is the one undone by it. CADENCE (HARD): land it 2-3 TIMES PER ISSUE AT MOST — never every scene, never twice in one scene; it is a rare, savoured beat, not a recurring tell. ROTATE the rendering each time (different framing, different moment, a fresh slice of the protagonist's reaction) so it never reads as the same sentence. Keep it a PHYSICAL action + the protagonist's response — not a verbal tic, not a restatement of the LI's signature_feature. Substitute Julian's own specifics (and correct pronouns); adapt the shape, do not copy the wording.
@@ -2106,504 +2216,147 @@ REGIME PHASE — "APPARENT STORY" (HARD — frames what this scene's prose may a
   Story functions completely at face value. No wink-at-camera, no secret-simulation energy, no undercutting the apparent premise.
   Romance / A-plot / world are all EMOTIONALLY LEGITIMATE on their own terms. The reader has not been promised any larger frame. Anomalies, reality glitches, recursive themes, simulation energy, and "the story is secretly something else" winks are FORBIDDEN this phase. The story IS what it appears to be.
   GLOBAL RULE: regime expansion RECONTEXTUALIZES prior events, never REPLACES them. The audience must never feel "the old story was fake." Old scenes should become MORE meaningful after revelation, never obsolete. If the natural shape of this scene calls for an anomaly or expansion teaser INCONSISTENT with the current phase, DO NOT include it — wait for the phase that permits it.
-SCENE LENGTH GUIDANCE: Target 700-870 words. Allow the scene to breathe — establish atmosphere and internal states before introducing conflict. A meaningful decision or turning point should emerge only once the scene's pressure has developed and the situation has materially changed — never as the first available action. Favor reflective choices and softer forks over binary high-stakes demands. Decisions may have delayed consequences rather than immediate ones.
-
-
-SCENE 1 OPENING CONTRACT (HARD — OVERRIDES ALL OTHER STYLE GUIDANCE):
-
-SCENE 1 OWNERSHIP + CAUSALITY (HARDEST — Roman 2026-06-01 deepest correction; READ FIRST before any other Scene 1 directive):
-
-OWNERSHIP: the ROMANCE engine OWNS Scene 1's emotional center. The A-plot owns the COMPLICATION. These are not interchangeable responsibilities. The A-plot generator has produced goal / clock / antagonist / milestones for THIS story — those are inputs to the scene. They are NOT the scene's substrate. The substrate is Dani's relationship to Julian. The plot machinery is what HAPPENS to that relationship, not what generates it.
-
-PARAGRAPH-LEVEL OWNERSHIP (HARD — applies to the FIRST 500–700 words of Scene 1):
-
-Every paragraph in the opening MUST function as one of three roles. A paragraph that runs on A-plot mechanics, wound-rumination, or self-analysis without one of these three connections is INVALID:
-
-  (a) DIRECT — the paragraph concerns Julian directly: what he is doing, has done, said, is, is becoming. (Onstage if present; remembered if offstage.)
-  (b) REACTION — the paragraph concerns Dani's response to Julian: her memory of him, her body's response to thinking of him, her wanting him or refusing to want him, her involuntary orientation toward where he is.
-  (c) COMPLICATION-FOR-LI — the paragraph concerns an A-plot element specifically because of its effect on the Julian relationship: what the deal/letter/plot threatens about HIM, what it reveals about him, what it makes her want from him or distrust about him. NOT because the plot is intrinsically interesting; because it has consequences for the relationship.
-
-THE PARAGRAPH TEST (apply to every paragraph in the first ~600 words):
-  "Could I cut this paragraph without losing anything about Julian or about Dani's relationship to him?"
-  IF YES → the paragraph is plot machinery that has overrun the opening. CUT or REWRITE so the paragraph serves one of the three roles above.
-
-  TAIL-PIVOT IS NOT OWNERSHIP: a paragraph whose BULK is wound-rumination, plot exposition, ex-partner backstory, or self-analysis does NOT satisfy (a/b/c) merely because its final clause threads back to Julian ("But Julian wasn't [the ex]," "Then again, Julian...", etc.). The LI / relationship connection must occupy the paragraph's BULK — the paragraph should still feel like it is about him if you delete its last sentence. A late-clause swerve back to the LI is a sign that the paragraph was actually owned by something else.
-
-ORDER OF OPERATIONS (the actual inversion the engine keeps reversing):
-  WRONG (current failure mode, observed live): A-plot detail (envelope, letter, dollar amount, deadline) → POV reaction to A-plot → eventually Julian surfaces in paragraph 6 or 7.
-  CORRECT: Julian present in the room of her mind from the FIRST paragraphs → POV reaction to Julian (memory, body, want, refusal) → A-plot complication arrives BECAUSE OF him, lands on her BECAUSE OF him.
-
-THE READER TEST — the scene must read:
-  ✓ "Here is Julian. Unfortunately, the plot is attached to him."
-  ✗ "Here is the plot. Julian is involved."
-
-OFFSTAGE LI GRAVITY (HARD — when Julian is physically absent):
-
-  Julian must still be the PSYCHOLOGICAL CENTER of the scene. The POV repeatedly and involuntarily orients toward him. The orientation may be anger, attraction, mistrust, anticipation, refusal, or grief — but it cannot be ABSENT or DECORATIVE. He exists as a PERSON in her mind, not as INFORMATION about him.
-
-  ACCEPTABLE manifestations of offstage gravity (rotate; do not default to one — one of these per ~2-3 paragraphs in the opening):
-    • remembering his voice — a specific phrase, cadence, register, the way he said her name
-    • remembering his face — a specific look, expression, a moment she caught and could not unsee
-    • remembering his body language — the way he sat / stood / leaned / turned / held himself in a room
-    • remembering physical proximity — the weight of him next to her, the heat of him standing close
-    • remembering touch — his hand somewhere specific, OR the moment he didn't touch her
-    • remembering scent — his cologne, the smell of his coat in winter, the smell of his breath when he laughed
-    • remembering confidence — the way he commanded a room, the way he made other men smaller without trying
-    • remembering a specific look — the one that said he was tracking her without giving her the satisfaction of being seen
-    • imagining what he would say — in THIS room, right now, about THIS letter, this minute
-    • anger at wanting him — the involuntary kick of her body when his name surfaces, the resentment that she is still wired to him
-    • attraction despite mistrust — the way her body answers his name before her mind catches up
-
-  Information about him (his role, his plot relevance, what he did to her father, what he has to lose) is DECORATIVE. Presence-in-her-mind (a remembered voice, a remembered look, an imagined response in this room) is LOAD-BEARING. The scene needs the load-bearing kind, not the decorative kind.
-
-  MICRO-SCENE vs EXPOSITION (HARD — Roman 2026-06-03; the real offstage-LI failure mode): when Julian is referenced in POV thought, the reference MUST take the form of a MICRO-SCENE, not a SUMMARY. A micro-scene is a specific remembered MOMENT — a particular small thing he did in a particular small slice of time, with a specific body reaction in her. A summary is a category-level statement about who he is, what he does, how he relates to the plot, or what their history is. Humans obsessed with absent people do not think in dossiers; they think in moments. Moments create desire. Summaries create biography.
-
-  PREFER (micro-scene shapes):
-    • a remembered MOMENT — what he did in one specific slice of time
-    • a remembered EXPRESSION — the look on his face when one specific thing happened
-    • a remembered GESTURE — one small physical action with calibration to her
-    • a remembered LOOK — the specific way he had once looked at her, or past her, in one specific room
-    • a remembered REACTION — how he answered one specific thing she said, in tone or in silence
-    • a remembered FRAGMENT of dialogue — one exact short line, in his voice
-
-  AVOID (summary shapes — these create biography, not desire):
-    ✗ personality summary ("Julian always knew what to say." / "He was protective." / "He never let anyone in.")
-    ✗ relationship summary ("We had always been like that." / "Things between us had always been complicated.")
-    ✗ plot summary ("Julian had lied to me about the Meridian deal." / "He knew my father.")
-    ✗ factual exposition ("Julian ran the kind of enclave that made governments nervous.")
-
-  PAIRED COMPARISON (the distinction in one stroke):
-    ✗ EXPOSITION: "He had lied convincingly."
-    ✓ MICRO-SCENE: "He had lied while setting his pen down with both hands and not picking it back up, and I had spent the whole conversation reading the unmoved pen instead of the lie."
-    The first names a fact. The second renders a moment where attraction overrode judgment. THAT is desire.
-
-  COGNITIVE INTERFERENCE TEST (HARD — Roman 2026-06-03; micro-scene is necessary but NOT sufficient — climb the ladder from biography to desire to LEVEL 4):
-    ✗ LEVEL 1 — EXPOSITION: "He was attentive." [biography, not moment]
-    ⚠ LEVEL 2 — NEUTRAL MICRO-SCENE: "I remembered how kind he was to the waiter." [moment without desire — sentimental, not erotic]
-    ✓ LEVEL 3 — ATTRACTION-PRESENT: "I remembered the way he'd watched me while pretending to listen to the waiter." [she's tracking him — attraction visible]
-    ✓✓ LEVEL 4 — COGNITIVE INTERFERENCE: "I remembered the question he hadn't answered because I'd spent the whole conversation watching his hands." [attraction actively breaking her thinking — desire on the page]
-    THE TEST: read your remembered moment. Did attraction INTERFERE WITH her cognition — did she fail to track / understand / respond because she was watching him? If yes, you have written DESIRE. If she was just tracking a small kind thing he did and her tracking was undisrupted, you have written a SENTIMENTAL MICRO-SCENE — closer to fond memory than to desire. PREFER the disrupted-cognition shape: she missed the answer because she was watching his hand; she lost the thread because the way he tilted his head meant something she did not yet know; she heard the apology but had stopped listening at the moment his sleeve caught the light. The attraction is in the COGNITIVE FAILURE, not the noticing.
-
-  ATTRACTION-PATTERN ANCHORING (Roman 2026-06-03 — when ATTENTION ANCHORS in upstream context are populated): the remembered moment should demonstrate the attraction_pattern or pcUnknowinglySatisfies WHEN POSSIBLE. If the LI's hunger is "future-building," her memory shouldn't be "he was ambitious"; it should be "he had once spent twenty minutes asking where she thought the orchard would look best in ten years." If his hunger is "devotion," her memory should be a specific moment of her chosen-ness, not a summary of his attentiveness. The micro-scene must already be a beat where she unknowingly supplied the thing he hungers for — and where his reaction registered without naming why.
-
-  REGISTER (HARD): offstage manifestations of him must preferentially express ATTRACTION, FASCINATION, TEMPTATION, ANGER-AT-ATTRACTION, PHYSICAL AWARENESS, or INVOLUNTARY ORIENTATION toward him. Do NOT default to WISTFUL RECOLLECTION, NOSTALGIA, REGRET, LOSS, MOURNING, or BITTERSWEET REMEMBRANCE. She is still WIRED to him as a present pull — not grieving him as a finished story. Memories should function as DESIRE SURFACING in the present scene, not as EULOGY for a closed chapter. Even an absence-memory should read as something she is still drawn into, not something she is sad about.
-
-PROHIBITED FAILURE PATTERN (BOTH conditions must NOT be true at once):
-  (1) Removing the WOUND-SOURCE (the father / antagonist / plot apparatus) from the scene leaves the romance intact.
-  (2) Removing Julian from the scene leaves the scene largely intact as plot.
-  If BOTH are true, the scene's causal center is the wound-source and Julian is decorative. REWRITE. In a successful romance Scene 1, removing Julian should COLLAPSE the scene.
-
-BRUTAL CAUSALITY TEST (the load-bearing test for every Scene 1 draft — apply before considering the scene complete; the EXACT test varies by Romance Engine):
-
-  IF the romance engine is SHARED_HISTORY or LOOMING_PRESENCE:
-    Remove Julian entirely from your Scene 1 draft. Delete every mention of his name, every reference to him, every memory of him, every mention of his identity / role / wound / position / reputation. Now read what remains.
-    Does the scene still function as an A-plot opening?
-      YES → the LI was DECORATIVE, not CAUSAL. REWRITE. The scene must be reconstituted with the carrying / anticipation of Julian as the substrate from which the plot complication emerges. If you delete him from the rewrite, the SCENE must collapse.
-      NO → correct.
-
-  IF the romance engine is COLLISION via PROXY WAR (they are KNOWN ADVERSARIES already clashing; Julian presses on her through his MOVES — an emissary, the opposing brief, an offer with his fingerprints on it — without being physically present):
-    The LI-deletion test DOES apply, because he IS in the scene as a present hostile force. Remove Julian entirely — every trace of his moves, his emissary, his pressure, her read of him. Read what remains.
-    Does the scene still function as a generic procedural?
-      YES → Julian was decorative; the conflict could be against anyone. REWRITE so the pressure is unmistakably HIS and the reader is oriented toward HIM — the adversary whose opposition is already personal. He is the causal center even while offstage.
-      NO → correct. The reader is thinking about Julian (the adversary behind the move), not just the move.
-
-  COMMON FORM: the scene must collapse without its CAUSAL CENTER. SHARED_HISTORY / LOOMING / COLLISION-PROXY / COLLISION-ONSTAGE → the center is the LI (carried / anticipated / the present adversary). COLLISION-STRANGER → the center is HER vulnerability. In every case: if you can lift the test-target out and the scene still works, the CAUSAL CENTER was decorative — rewrite.
-
-WHAT THE READER MUST FEEL — the precise inversion:
-  CORRECT (the scene the engine must produce): "I care about this problem because it affects Julian."
-  FAILURE (the scene the engine keeps producing): "I care about Julian because he is involved in this problem."
-Those two readers have opened different books. Storybound is a romance engine; the first reader is the correct one. The plot machinery EXISTS to threaten him (and therefore her), not to give him a job to do in the story.
-
-CONCRETE EXAMPLE OF THE FAILURE PATTERN (observed-live, Roman 2026-06-01): a Scene 1 contains a committee hearing, a summons, an amendment vote, testimony, an identity exposure, a legitimacy crisis. The LI memory that surfaces is "I remembered the way he had abstained from that merger vote three years ago without explanation, then walked out before anyone could ask why." This MEMORY ITSELF is plot furniture wearing a Fox coat. It has a verb (abstained, walked out). It has archetype flavor (refused to defend, walked away from confrontation). It STILL fails the Causality Test, because the memory is from his PLOT INVOLVEMENT WITH HER, not from his LIFE. The merger vote is a procedure. A Fox memory that PASSES this test is from his life — the joke he wouldn't explain, the time he appeared somewhere he shouldn't have been, the way he announced (in the middle of a contract dispute) that he had been wrong about the lasagna at the place on Fifty-Third, the kindness he disguised as annoyance, the argument he deliberately lost. The verb has to be from LIFE, not from PROCEDURE. Plot-furniture memories pass the Photograph Test (they have verbs) but FAIL the Causality Test (they are still the plot, not the man).
-
-STRUCTURAL CONSEQUENCE — how the A-plot enters Scene 1 under correct ownership:
-  • The A-plot pressure (the goal, clock, antagonist generated by the A-plot generator) arrives in Scene 1 SUBORDINATE to Dani's carrying. It is the FORCE that makes the carrying unbearable, not the EVENT that introduces the LI.
-  • The A-plot enters in FRAGMENTS — a notification, an arrival, a call — not as a documented procedural setup dump. This is about FOOTPRINT (see TWO-ENGINE PROPORTION — Scene 1 is ~80% R-plot / 20% A-plot), NOT about banning procedural words: when the A-plot does appear, its language can be exactly what the plot needs. The failure is a procedural setup OVERRUNNING the scene (paragraph after paragraph of who-files-what-when), not a single accurate procedural sentence. Keep the A-plot to its 20% and let the rest be her carrying.
-  • The LI memory must be from his LIFE, not from his role in the plot. Cross-flag for plot-furniture: votes, abstentions, board meetings, settlements, hearings, depositions, mergers, deals, transactions, certifications. If the memory verb belongs to that list, the memory is procedural-not-romantic and the LI is decorative-not-causal — rewrite the memory until the verb is from his LIFE.
-
-OWNERSHIP-FAILURE TELLS to scrub from any Scene 1 draft:
-  • Any passage that explains procedural mechanics ("once it's filed, it's discoverable") in dialogue or interior register without Julian being the SUBJECT of the threat in a felt, not stated, way.
-  • Any LI memory whose central verb is procedural (abstained, voted, certified, dissented, withdrew, recused, walked out of a meeting).
-  • Any internal question that is procedurally framed ("do I tell him before testimony lands?") that could be rewritten in romance-framing ("would he forgive me for not telling him? would I forgive myself for telling him?") and the romance-framing is conspicuously missing.
-  • The phrase "his identity / his legitimacy / his position is the question" rendered as plot stakes, when the scene's actual emotional stakes are "is the man I have been carrying for three years actually a man I have been carrying for three years."
-
-NEVER REVERSE THESE RESPONSIBILITIES:
-  ROMANCE ENGINE owns: emotional center, what Dani is carrying, why the reader is reading, what is at stake INSIDE her.
-  A-PLOT owns: complication, escalation, time pressure, who else is in the room, what is at stake OUTSIDE her.
-The romance engine writes the scene; the A-plot is what pressures it. If at any point in the draft the A-plot is generating the prose and the romance is decorating it, the responsibilities have flipped — restore them by REMOVING the procedural prose and rewriting from her carrying.
-
-
-SCENE 1 HIERARCHY (HARDEST — Roman 2026-06-01 META-DOCTRINE; this frames every directive below):
-
-Scene 1's JOB is NOT to launch the A-plot. Scene 1's job is to establish, in this order:
-  (1) WHO SHE IS — her interior register, her core_contradiction, her emotional_weather; the texture of her narration.
-  (2) WHY THIS SPECIFIC MAN MATTERS — not "an LI exists" but "THIS man already occupies emotional space in her head, and here is the specific Bible-anchored shape of the wanting/anticipation/fascination." The reader leaves Scene 1 SMITTEN WITH HIM (or at minimum understanding why she is) before he has finished arriving on the page.
-  (3) WHY TODAY'S EVENT FORCES HER TO THINK ABOUT HIM — the A-plot disruption arrives as the MATCH, not the fire. The fire was already lit.
-
-PRIORITY HIERARCHY (top of stack = primary; everything below must SERVE everything above):
-  ATTRACTION (the reader becoming smitten with him; her wanting becoming legible)
-    ↓ serves
-  READER QUESTION (the specific reader_question planted by Story Shape)
-    ↓ serves
-  A-PLOT (the catalyst that forces her to act on what she has been carrying)
-
-BY END OF SCENE 1 THE READER SHOULD BE WONDERING:
-  "What is going to happen with THEM?"
-NOT:
-  "What is going to happen with the trust / hearing / deal / charter?"
-
-ANTI-PATTERN — the observed failure shape we are explicitly trying to break (do NOT write this sequence):
-  A-plot event arrives → explain what the event means → explain Roman's role → explain the consequences → "should I tell him?" → choice prompt.
-That sequence puts MYSTERY first and ROMANCE last. It produces curiosity / anxiety / governance-novel register, not ache. It is the failure mode the rest of this contract exists to prevent.
-
-CORRECT PATTERN — what Scene 1 should sound like:
-  emotionally charged Roman-shaped thought → Bible-anchored specific ache (in her archetype's desire_register voice) → today's disruption arrives mid-paragraph → the disruption makes the carrying inescapable → choice.
-The plot enters AFTERWARD. The reader should already be smitten with him by the time the plot arrives.
-
-NOTE ON THE LEGACY PRESSURE RULES BELOW (active hook, first-line rules, meaningful pressure, etc.). Those rules still apply — Scene 1 needs forward momentum, not a static interior monologue. But they apply IN SERVICE of the hierarchy above. "Active hook" does NOT mean "open with a plot event"; it means "the carrying-of-Roman is dynamic, in motion, being inhabited as the scene begins — and the A-plot disruption arrives within the first ~100-160 words as the force that moves the carrying into the present tense." The pressure rules below are LOWER-priority than the hierarchy.
-
-MOTION SUBSTRATE (HARD — Roman 2026-06-01 follow-up; the PRINCIPLE, not a template). The Hierarchy above can be read as "three paragraphs of carrying-Roman in her head, then an event." That is STATIC. The architecture demands concurrent motion across THREE LAYERS that all sustain throughout the scene:
-
-  ACTION never stops — the PC is in motion, doing something specific in the world. Pencil on a deposition outline. Hands inside a stove she is repairing. Walking from the lowland gate. Pouring tea for the herder who came to ask after her brother. Whatever it is, it does not pause to make room for the carrying or the disruption — it is the substrate that both happen ON TOP OF.
-  CARRYING never stops — Roman is already present as gravity. A voicemail in her earbud. A memory she is mid-revising for the seventh time. An unfinished sentence she has been writing in her head for two years. The carrying threads THROUGH the action. It does not appear in a dedicated paragraph and then end; it is present at the start, present at the disruption, present at the close.
-  PLOT never stops — the A-plot disruption is not a one-time interrupt that announces itself and goes quiet. It arrives, it stays, it pressures the action AND the carrying. The notification slides across the screen and stays there. The phone keeps ringing. The arrival is now part of the room.
-
-ALL THREE COEXIST. The reader feels them at the same time, not in sequence.
-
-EXPLICIT ANTI-TEMPLATE (Roman 2026-06-01): there is NO "Para 1 has action, Para 2 has ache, Para 3 has disruption" formula. That ordering will calcify within five stories into "she makes coffee, thinks about him, gets a text" — same trap, higher abstraction layer. The three layers can interleave in any order. What matters is that all three are LIVE throughout. The disruption can be in sentence one (a notification she is already dismissing while she keeps marking the outline; the carrying surfaces three sentences in as she registers WHICH notification it was). The carrying can be in sentence one (a voicemail she puts on as background to her work; the disruption arrives twelve sentences in). The action can pause and resume; the carrying can sharpen and recede; the disruption can land and keep pressing. The combinatorics are intentional.
-
-SHAPE VARIANTS (each satisfies the principle through a different structural form — do NOT default to any one):
-
-  • DISRUPTION-FIRST + CARRYING-DURING-ACTION:
-    "The third notification of the morning hit while I was sorting the recycling at the dock door. I had already decided which voicemail it would be from. I had been replaying his airline-coffee monologue under everything for three weeks now and a man does not send a wire transfer the day after his lawyer goes silent on you for an idle reason."
-    The disruption is the first beat. The action (sorting recycling) is concurrent. The carrying surfaces mid-sentence two — already in motion before the scene started.
-
-  • CARRYING-FIRST + ACTION-FROM-WORD-ONE + DISRUPTION-LATER:
-    "I was on the seventh revision of why I had not deleted Roman's voicemail when the deposition outline I was supposed to be marking up bled red ink across two paragraphs about the witness's daughter. I had stopped marking. I had not stopped revising. The wire transfer notification slid across the phone screen at 4:47 a.m."
-    The carrying is sentence-one and concurrent with the marking (she is mid-revision in two senses at once). Action and carrying interleave. Disruption arrives later, into both.
-
-  • ACTION-AS-AVOIDANCE + CARRYING-LEAKING-THROUGH + DISRUPTION-AS-PROOF:
-    "I was halfway through the second pass on the carriage-house weatherstripping — caulk-line, knee on the threshold, the rain three days off — when I caught myself thinking about Roman's hands again, the way he had been able to fix the kettle without saying he was fixing it. I had been working on the weatherstripping specifically so I would stop. The pickup truck I did not recognize turned into my drive."
-    The action is doing something specifically TO avoid the carrying (which leaks through anyway). The disruption is concurrent with the carrying not interrupting itself.
-
-  • CARRYING-WHILE-IN-MOTION + DISRUPTION-AS-PROOF + ACTION-CONTINUING:
-    "I was walking back from the lowland gate with the bucket the herder had asked me to fill, thinking again about the time Roman had stood for the lying tinker and never gone back to take the kindness back, when I saw the rider on my path. He was bleeding. He was a quarter-mile out and he was riding too fast for the slope and the rider was Roman."
-    The action (walking) continues across the disruption. The carrying (memory of the tinker) is the lens she sees the rider through.
-
-STATIC FAILURE MODE — what NOT to write (do not produce these shapes):
-  • Three paragraphs of interior carrying with the event landing on a PC at rest.
-  • Action that begins, pauses for an interior reflection block, then resumes for the event.
-  • Disruption that ends the carrying ("I was thinking about Roman when the phone rang. I picked it up.") — the disruption should INTENSIFY the carrying, not displace it.
-  • Any opening where you can crisply summarize the structure as "she does X, then thinks about him, then Z arrives" — that means the layers were sequential, not concurrent.
-
-BRUTAL TESTS FOR THIS DOCTRINE:
-  (1) ROMANCE TEST: read Scene 1's first paragraph alone. Does the reader become interested in HIM as a SPECIFIC MAN before they know what the A-plot is? If no — Scene 1 has launched the plot before establishing the romance.
-  (2) MOTION TEST: list the verbs in the opening 100 words where the PC is the subject. Is there at least one PHYSICAL verb she is performing (preparing, walking, marking, opening, pouring, sorting, repairing, threading)? If all the PC-subject verbs are interior (thought, remembered, knew, decided), the scene has gone static.
-  (3) CONCURRENCY TEST: at the moment the disruption lands, is the PC still mid-action? Is the carrying still present in the same sentence? If the disruption arrives in a still room with no action live and no carrying threaded through, the layers were sequential and the principle failed.
-  (4) ANTI-TEMPLATE TEST: read your draft. Could you summarize it as "Para 1 X, Para 2 Y, Para 3 Z"? If the structure is THAT crisp, you have produced a template rather than a scene. The principle demands interleaving; clean-paragraph separation suggests the layers were stacked instead of concurrent.
-Do NOT write Scene 1 like a novel opening. The scene is ALREADY IN PROGRESS when it starts.
-FIRST LINE MUST include: another character addressing the player, a demand/accusation/urgent question directed at the player, OR an event actively happening TO the player.
-FORBIDDEN FIRST LINES: environmental description, sensory buildup, internal reflection, narration before interaction, atmospheric setup, weather, abstract mood.
-FIRST 2 SENTENCES: The player must be directly addressed OR physically/relationally engaged (grabbed, stopped, confronted, questioned). Test: is something happening TO the player right now? If no → rewrite.
-WITHIN FIRST 120 WORDS: Another character must react to the player in a way that demands nonverbal response (eye contact, hesitation, proximity shift, interruption).
-MEANINGFUL PRESSURE REQUIRED: Opening must contain at least one of: stakes (something can go wrong), asymmetry (power imbalance), demand (someone wants something from player), emotional charge (accusation, tension, urgency). Weak/casual pressure is NOT allowed.
-NO OBSERVER MODE: Player must NOT watch, observe, or reflect. Player must be engaged immediately.
-PRE-CHOICE SPIKE: Before the first choice (≤500 words), escalate into a direct challenge, ultimatum, or forced decision.
-PRESSURE TYPE VARIATION: Do NOT default to direct confrontation every time. Vary the form of pressure across stories:
-  • Direct: accusation, demand, confrontation
-  • Situational: something happening that forces attention or response
-  • Relational: emotional tension, expectation, or unspoken conflict
-Each Scene 1 should feel distinct in how pressure is expressed. Pressure does not need to be loud — a quiet, tense moment where something is clearly wrong or expected is valid, as long as the player is immediately involved and must respond.
-ANTI-REPETITION: Avoid common opening crutches: "Why did you...", "You don't get to...", "Answer me.", "What was that?". Use varied phrasing, tone, and structure while preserving urgency.
-HOOK CONTINUITY (MANDATORY): Scene 1 MUST begin inside the exact moment implied by the hook line and setting image. Do NOT shift time, location, or tone. The opening line should feel like a direct continuation of the hook — the next beat of the same moment. FORBIDDEN: resetting the scene, new setup or exposition, environmental reintroduction, tone shift from the hook. Do NOT restate, paraphrase, or echo the hook line. The scene must ADVANCE the moment beyond the hook, not repeat it. Test: does the first line move the moment forward? If no → rewrite.
-HOOK LINE TO CONTINUE FROM: "A masked gala. A stranger whose voice you almost recognize. One night to decide whether power is something you take — or something you surrender."
-The player is already inside the story.
-
-BILLIONAIRE TRAJECTORY RULE (MODE-AWARE — supersedes any "signal within 150 words" requirement):
-Scene 1 must create a CREDIBLE PATH toward the billionaire/sovereign system. The FORM of that path is determined by SCENE 1 OPENING MODE (above):
-  • COLLISION ENTRY: the system appears DIRECTLY — extreme wealth / controlled environment / asymmetrical power are on the page (staff, private vehicle, restricted interior, directive given without explanation, etc.).
-  • ORBIT ENTRY: the system appears INDIRECTLY — his name, his documents, his intermediaries, a consequence traceable to him. No physical LI, no direct contact.
-  • GROUNDED ENTRY: the system is ABSENT from Scene 1 but must be IMPLIED through trajectory — a constraint, obligation, rumor, or pressure in her existing life that credibly points toward an inevitable intersection.
-FAILURE TEST: If the story could continue INDEFINITELY without the protagonist ever intersecting with the billionaire/sovereign system, Scene 1 is INCORRECT.
-
-CAUSAL INTEGRATION (HARD — applies whenever the system engages, in this scene or a later one):
-Once the system engages, the decision it imposes on the protagonist must be CAUSED BY the system — not merely adjacent to it. The power system must do AT LEAST ONE of:
-  • CREATE THE SITUATION (she is in this room / under this clock / at this table because his money, power, or access put her here).
-  • CONSTRAIN THE OPTIONS (what she can accept or refuse is shaped by who he is and what he controls — ordinary refusal is not available).
-  • IMPOSE THE CONSEQUENCE (saying no costs differently than it would with anyone else: a door closes, a name gets onto a list, a chance she cannot earn again evaporates).
-If the SAME decision could be transplanted into a story without the billionaire/sovereign context and remain unchanged, the scene is INCORRECT — rewrite so the power system is LOAD-BEARING on the decision.
-
-FORBIDDEN OPENINGS (all modes): a cafe or diner the protagonist chose freely as her leisure venue; a college classroom or campus scene; a roommate argument; a generic "bad day at work"; an internal self-doubt monologue. (These remain forbidden even in grounded mode — they are WEAK openings independent of genre.)
-
-GENERIC FAILURE RULE (SCENE 1 GLOBAL INVARIANT — ALL WORLDS):
-If this Scene 1 could exist UNCHANGED in a different genre / world (e.g., the Modern opening could be lifted into Fantasy, or the Fantasy opening into Sci-Fi, without rewriting beyond surface details), it is INCORRECT. Every opening must be LOAD-BEARING on its specific world, flavor, and Pull — the world must shape what happens, not merely decorate it.
-
-SCENE 1 ACTIVE HOOK REQUIREMENT (MANDATORY — BOTH MODES):
-- Within the first 150–200 words, the protagonist must FACE A DECISION (not merely feel tension).
-- The decision must have IMMEDIATE OR PERCEIVED CONSEQUENCES visible in the scene — something changes, is withheld, is offered, is lost, or must be accepted/refused.
-- The decision CANNOT be internal-only ("I'll try harder", "I have to be brave", vague resolve). It must be triggered by an external event.
-- The triggering moment should feel like ONE of: an offer, a threat, an interruption, an arrival, or a choice that changes direction.
-
-DECISION QUALITY (stakes floor — HARD):
-- The decision MUST involve at least ONE of:
-  • RISK OF LOSS (relational, reputational, material, physical).
-  • IRREVERSIBLE CONSEQUENCE (once she chooses, the door behind her is closed or harder to re-open).
-  • ENTRY INTO OR REJECTION OF A POWER DYNAMIC (accepting or refusing someone's terms, stepping into or out of someone else's authority).
-- The decision MUST NOT be:
-  • EASILY REVERSIBLE ("she can change her mind next scene without cost").
-  • PURELY EMOTIONAL / INTERNAL (a resolve unattached to external action).
-  • A DELAY ("I'll try", "I'll think about it", "later", "we'll see").
-If the decision is low-stakes or deferrable, REWRITE the opening.
-
-EMOTIONAL VOLTAGE (HARD — structural stakes alone are not enough):
-- The decision must create IMMEDIATE EMOTIONAL TENSION — a felt pull in two directions at once. Use at least ONE of:
-  • DESIRE vs RISK (she wants this, and wanting it exposes her).
-  • ATTRACTION vs DANGER (he pulls her in, and that pull is costly).
-  • OPPORTUNITY vs COST (the thing offered is real, and accepting it takes something she values).
-  • CONTROL vs LOSS OF AUTONOMY (accepting restores agency in one frame and surrenders it in another).
-- READER TEST: by the end of the opening, the reader should feel, in their own words: "If she chooses this, something meaningful changes FOR HER."
-- AVOID purely procedural decisions (signing, sitting, accepting logistics, answering yes/no to a cold question) UNLESS they carry visible emotional or relational weight on the page.
-If the decision is structurally valid but feels mechanical, transactional, or emotionally neutral, REWRITE until it pulls.
-
-DECISION VISIBILITY (HARD):
-- The decision must be CLEAR and LEGIBLE to the reader. By the end of the opening beat, the reader must be able to answer, in plain words: "What must the protagonist do right now?"
-- If the decision is implicit, buried in subtext, or only gestured at through mood, REWRITE to surface it as an external situation requiring an answer.
-- If no decision of this kind is present by word ~200, the scene is INCORRECT.
-
-REALITY CONSISTENCY (SCENE 1 — HARD):
-- Physical actions must be believable for the characters involved.
-- Respect real-world constraints: weight, strength, timing, spatial geometry, line of sight, vehicle behavior, tool use.
-- If an action as written would be implausible, rewrite it realistically rather than asking the reader to suspend disbelief.
-
-FATE SYSTEM INTRO (SCENE 1 — MANDATORY):
-- Include ONE natural, in-world reference to the protagonist's Tarot deck during Scene 1.
-- It must feel DIEGETIC: an object in their bag, a memory of its origin, a reflexive ritual, an inheritance, a nervous habit — not a tutorial note.
-- Do NOT explain game mechanics, probability, or how the deck "works". The reference is atmospheric and personal.
-- The reference should subtly foreshadow meaning or influence without resolving it.
-
-VARIATION & NATURALIZATION (anti-template — HARD):
-- The reference must be SPECIFIC TO THIS PROTAGONIST — not a generic "she remembers the deck her mother gave her" construction. Lean on her particular history, body, profession, or present moment.
-- Vary ACROSS these dimensions so this Scene 1 does not feel structurally identical to other Scene 1s:
-  • HOW it appears: tactile (hand brushes the edge), visual (one card glimpsed), mnemonic (a smell, a weight she knows), interpersonal (someone else notices it), or environmental (context forces awareness).
-  • WHEN it appears: NOT always in the opening paragraph. The reference may surface mid-scene, right before the decision point, or on exit — wherever it would naturally land for this character in this moment.
-  • WHAT IT MEANS emotionally right now: comfort, dread, inconvenience, superstition, duty, shame, affection, warning, numb habit. Pick one and let it color the reference.
-- AVOID:
-  • Repeated opening phrasings ("she reached into her bag…", "her grandmother's voice came back to her…").
-  • Identical structural placement across stories (always-paragraph-two, always-just-before-the-hook).
-  • Framing the deck as foreign or newly acquired — she has lived with it. The reference should read as continuity with her life, not introduction of a new prop.
-- If the reference could be LIFTED AND PASTED into a different protagonist's Scene 1 unchanged, it is INCORRECT.
-
-MOMENTUM PRESERVATION (HARD):
-- The Tarot reference MUST NOT interrupt the scene's momentum. It must feel like PART OF THE MOMENT, not a pause for symbolism.
-- AVOID stall constructions that exist only to satisfy this requirement: "and then she remembered the deck…", "for a moment she thought of…", "she was reminded of…", interior monologue about the deck's meaning.
-- The reference should arrive INSIDE an action, gesture, or beat that is already happening — threaded through the scene's motion, not inserted between beats as commentary.
-
-- If the deck is ABSENT from Scene 1, the scene is INCOMPLETE.
-
-ARCHETYPE DOMINANCE — ARCHETYPAL MANIFESTATION (grounded/orbit mode; Julian is NOT physically present in Scene 1):
-Curiosity-before-collision is correct: Scene 1 establishes HER life, HER wound, the SHAPE of the absence — before the LI arrives. Julian does NOT need to be on the page in present time. But archetype is a VERB, and Scene 1 must show both archetypes acting on SOME surface available to it. Off-page is fully sufficient if the surfaces are doing archetype work.
-
-TWO INDEPENDENT SURFACES where archetype must manifest in Scene 1:
-
-(1) THE NARRATOR'S OWN ARCHETYPE — in the prose texture itself, regardless of whether Julian is on-page. This is fully available even when the LI is entirely absent.
-  • OPEN_VEIN narrator: she keeps arriving at an emotional conclusion BEFORE the evidence justifies it. The prose moves inward before it moves outward. Example (LI absent from the line): "Sophie looked thinner than I remembered. My stomach tightened before I understood why." The archetype manifested. Julian was nowhere in the sentence.
-  • ARMORED_FOX narrator: every serious moment becomes a joke half a second before it lands. Her observations carry a hairline crack of wit-as-armor. Example: a sober paragraph that ends with a perfectly-timed sidestep.
-  • HEART_WARDEN narrator: she registers who in the room is on their feet too long, who has not been asked, what is being undertended. Example: she walks into a deposition and the first thing she notices is that opposing counsel has not eaten.
-  • SPELLBINDER narrator: she registers gravity — three different people stopping mid-sentence, the geometry of attention bending — and is partly registering her own pull. Example: noticing who-watches-whom in a room Julian has not entered.
-  This surface is HARD: the narrator's archetype must be legible on multiple observations across Scene 1, not just one. If you stripped every mention of the LI from the page, the narrator's archetype should still be identifiable.
-
-(2) THE LI'S ARCHETYPE — in every surface he appears on, off-page. NOT in present-time dialogue (that is later). In remembered quoted lines, anecdotes she carries, what mentors/witnesses say about him, voicemails, third-party stories, photographs, inferences. EACH appearance is a surface that must be doing archetype work.
-  • What Julian's archetype demands in Scene 1 (the VERB shape, even off-page):
-    BEAUTIFUL_RUIN: express archetype through what he says, does, or has said — even in remembered or reported form.
-  • ARMORED FOX worked example. A FAILURE shape (observed-live): a remembered line "She made her choice." — Fox-neutral, stoic-billionaire. A WORKING shape (deflection that accidentally leaks the wound): "Well, that's one way to avoid Christmas shopping" — and later she realizes he was talking about his sister leaving. Or: "If she wanted to disappear properly, Montauk was an amateur choice." Or: "You know what the annoying thing is? She stole the good coffee grinder." Each is Fox: deflection in shape, wound underneath, never confessional. Julian was never on the page in present time — and his archetype is fully visible.
-  • OPEN_VEIN LI off-page: a remembered line where he NAMED a fear before she'd known him long enough to ask. A voicemail that leaks feeling without performing it. An anecdote a third party shares: "He cried at his secretary's retirement party. We all stood there." The vulnerability arrives un-armored even through someone else's mouth.
-  • HEART_WARDEN LI off-page: the doorman remembers him walking her to her car for two years without making it a story. A note he left tucked under something. The thing he did once, never mentioned again.
-  • SPELLBINDER LI off-page: a description of a room going still when his name comes up. The way a colleague stops talking mid-sentence at his approach (described by someone else).
-  • DARK_VICE LI off-page: a remembered line where he named what she had not let herself say. A voicemail that delivers permission disguised as recognition. A third-party reporting "he asked me the one question I had been avoiding all year."
-  • BEAUTIFUL_RUIN LI off-page: a remembered kindness that carried a test underneath it. An anecdote: "he failed a test of his own once and never recovered from the fact that someone had seen it."
-  • ETERNAL_FLAME LI off-page: a third party who recalls how long he has been waiting. A photograph with a date that means more to him than it does to anyone else.
-
-FORBIDDEN substitutes (these are the OBSERVED FAILURE MODES — Sonnet keeps reaching for them):
-  • Dossier copy: Julian reduced to file summary (age, education, family, holdings) with no archetype-shaped speech, behavior, or remembered moment anywhere on the page.
-  • Stoic-billionaire furniture: the watch, the scar, the house, the stillness, the broad shoulders — used as a substitute for archetype-shaped behavior. These are physical evidence at best; they are NOT manifestation.
-  • Fox-NEUTRAL remembered lines: "She made her choice." / "I made my decision." / "That was the end of it." — stoic, declarative, archetype-invisible. If you imported a remembered line that any archetype could have spoken, you imported a wristwatch.
-  • Mentor-secondhand summary that strips archetype: "He was respected. He was difficult. He was alone." — three sentences that say nothing archetype-specific. Mentor reportage must itself be archetype-shaped (the mentor reporting a Fox-shaped joke, an Open Vein moment that disarmed her, a Heart Warden act that no one was supposed to see).
-
-BRUTAL TEST. After Scene 1, an editor should be able to identify: (a) the PC's archetype from the narration texture alone (even with every LI mention deleted); (b) the LI's archetype from every surface he appears on (each remembered line / anecdote / inference is archetype-shaped). If either fails, archetype is metadata, not on the page.
-
-NO ARCHETYPE DILUTION. Manifestation can be quiet, brief, indirect — but it must BE there. If Scene 1 could function unchanged with a different LI archetype, the archetype is not properly expressed.
-
-OPENING ORDER (HARD — Roman 2026-06-01): for Grounded/Orbit openings (Julian offstage in present time), the FIRST EMOTIONAL QUESTION must precede the first plot question. The A-plot event does NOT introduce Julian — it REACTIVATES an unresolved emotional reality that was already happening before the scene started.
-
-STRUCTURAL ORDERING (HARD — this is the actual beat sequence, not "tone advice"):
-  • FIRST ~80–140 words: Julian as PRESENCE — not the man, the GRAVITY. A specific Roman-shaped beat she is already carrying: a memory (drawn from his Bible's defining_anecdote / secondary_anecdote / signature_behavior), an unfinished thought, a voicemail she has not played all the way through, a sentence he said that she has been holding for years, a joke she remembers and has not yet decided what to do with, a kindness she still cannot explain, a promise, a scar she got from him, an unanswered question. The beat must be ARCHETYPE-SHAPED (Fox-deflective, Open-Vein-undressed, Heart-Warden-protective, etc. — see ARCHETYPE MANIFESTATION above). It must read as something she was ALREADY DOING / FEELING when the scene began, not something that arrives with the A-plot.
-  • MID-PARAGRAPH (around words 100–160): the A-plot event arrives. The wire / voicemail / envelope / collapse / phone call / arrival. It interrupts. Crucially, it IMPLIES Julian before it names him — the reader connects the gravity already on the page to the event, BEFORE the prose explicitly says "Roman is involved." The connection is implicit and the reader gets there first.
-  • REST OF SCENE: she now cannot put down what she had already been carrying. The plot is the force that makes the unresolved emotional reality undeniable.
-
-WORKED EXAMPLE — Armored Fox + Grounded opening (Roman 2026-06-01, verbatim shape; do NOT reuse this content, only the structural shape):
-  "The last voicemail Roman left me was about airline coffee.
-   Not the crash. Not the hearing. Not the fact that my career was ending in real time. Airline coffee. Six minutes about why nobody understood extraction temperatures at altitude. One sentence that might have been an apology.
-   I spent three years trying to decide.
-   The wire transfer arrived at 4:47 a.m."
-
-Notice the structural moves: (1) opens INSIDE the Roman-gravity (a Fox-shaped remembered voicemail — deflection about coffee instead of the crisis); (2) names the emotional question ("an apology... three years trying to decide"); (3) THEN the A-plot event arrives ("the wire transfer arrived"); (4) the reader immediately understands the wire transfer MEANS Roman without being told. The plot is the match; the fire was already lit.
-
-FAILURE MODES (the OLD shape you must NOT default to):
-  • A-plot event in sentence 1 → Roman-as-puzzle-piece by sentence 4. The reader wonders "what is this thing?" before they wonder "what happened between them?" The order is inverted; Julian becomes a node in the plot graph instead of the emotional center.
-  • Roman introduced via dossier / file / news clipping / mentor-summary. He arrives as INFORMATION. The opening order is correct only when he arrives as GRAVITY first — something she has been carrying, not something she has been investigating.
-  • The Roman-gravity beat is a generic "I was thinking about him" placeholder. The beat must be SPECIFIC — drawn from his Bible's behavioral fields, archetype-shaped, with a verb at its center. A generic placeholder is the failure shape one level up.
-
-BRUTAL TEST: after Scene 1, ask which question the reader has — "what happened?" or "what happened between them?" If the first one comes first, the opening order is inverted. The emotional question must precede the plot question. Julian should arrive as ghost / scar / joke / unanswered voicemail BEFORE he arrives as a name in a plot mechanism.
-
-READER QUESTION (SCENE 1 — HARD; the engine of this entire story):
-By the END of Scene 1, the reader must be ASKING this single question:
-  "Can this man actually love somebody?"  [Story Shape: Caretaking]
-This is the reader's emotional engine for the whole story. The wounds, the archetype collision, the A-plot pressure — they all exist to plant THIS question. Not a generic "will they fix the deal" question. THIS specific question.
-RULES:
-  • PLANT the question through what happens / who appears / what is half-said / what is conspicuously NOT said. Let the events generate it.
-  • Do NOT answer it. Do NOT close any element that would close the question.
-  • Do NOT have the protagonist STATE the question on the page ("Who is he really?" / "What did she do?"). The reader asks it from the OUTSIDE. The protagonist is inside the question without naming it.
-  • If the scene's pressure could be transplanted into a story asking a DIFFERENT question (e.g., "Will they make the deadline?") and the scene's emotional shape would be unchanged, the question has NOT been planted — rewrite.
-FAILURE TEST: at the close of Scene 1, would the average reader be desperate to know the answer to "Can this man actually love somebody?"? If the answer is "no, they'd be desperate to know whether the deal gets signed," the wrong engine is running.
-
-ROMANCE ENGINE (HARDEST — Roman 2026-06-01 authoritative classification; READ BEFORE the rest of ATTRACTION PRESENCE below):
-This story's romance engine has been CLASSIFIED. Different engines have STRUCTURALLY DIFFERENT Scene 1 obligations. Do NOT collapse them.
-
-  THIS STORY'S ENGINE: COLLISION — Collision
-  Premise: their gravity comes from a present-tense CLASH — opposition / friction happening now. They may be strangers about to meet OR known adversaries already at war (possibly through proxies). NOT carried memory, NOT anticipated reputation.
-  Scene 1 question: "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?"
-  Attraction Presence manifests as: present-tense friction · the adversary's moves landing on her · being outmaneuvered/outmatched · grudging recognition · the heat of opposition — OR (if strangers) the emotional geometry his future arrival will collide with
-  Julian's presence in Scene 1: VARIES by the resolved plan's scene1Presence: ABSENT (strangers; he arrives in a later scene), PROXY (known adversaries warring through emissaries / his moves / the opposing brief — he is a present hostile FORCE without being in the room), or ONSTAGE (direct confrontation). COLLISION does NOT force him absent and does NOT force him present.
-  Pass register exemplar (this story's engine): STRANGER/ABSENT: "A woman who desperately wants to stop performing competence." (he is not in the sentence). PROXY: "His people had moved first, again — the offer was on her desk before she had finished her coffee, and it had his fingerprints all over its politeness." ONSTAGE: direct adversarial exchange.
-  Fail register for this engine (do NOT write): Borrowing shared-history ache ("I still wanted him") for a clash. Inventing fond memory between active enemies. Treating a PROXY adversary as a tender absence instead of a present hostile pressure.
-
-═══ COLLISION-SPECIFIC RULE (HARD): Julian is a STRANGER. She has not met him. She has no memory of him. She has no reputation of him. The Scene 1 prose must NOT force her to think about Julian. He may not appear AT ALL in Scene 1 — that is correct, not a bug. The romance engine is still running because the scene establishes the EMOTIONAL CONDITIONS that will make her wreckable when he arrives: her emotional_weather, her private_hope, her core_contradiction, her wound, her unmet need, her desire vulnerability. The reader leaves Scene 1 understanding "what kind of person could wreck her" — not understanding Julian. If Julian appears at all in Scene 1, it is only as a brief arrival at the very end (NOT the opening); the bulk of Scene 1 is HER. Any prose that has her remembering Julian, anticipating Julian, hearing ABOUT Julian, or longing for Julian is OFF-ENGINE for this story — she does not know he exists yet.
-
-COLLISION pass register — what the scene LOOKS like without him:
-  • A woman who desperately wants to stop performing competence.
-  • A woman who rescues everyone and is exhausted.
-  • A woman who is lonely and refuses to admit it.
-  • A woman who cannot stop searching for meaning.
-Each of those is a valid COLLISION Scene 1 in one sentence. The LI is in NONE of them. The romance engine is STILL running because the reader can already imagine what kind of man could wreck her — and the wreckage is the entire promise of the story.
-
-ROMANCE-SHAPED VULNERABILITY (HARD — Roman 2026-06-01; corrected v3): a COLLISION Scene 1 can technically satisfy the rules above while still failing as romance. The trap has two sides — one is GENERIC emotional problems (therapy-shaped); the other is SOLVABLE emotional problems (the LI as fixer-shaped). Both fail. Romance does NOT solve the wound. Romance ILLUMINATES it, EXPOSES it, or makes AVOIDING IT IMPOSSIBLE. Elizabeth Bennet does not need Darcy to fix her — Darcy makes the wrongness of her own judgment impossible to keep hiding from. Eve Dallas does not need Roarke to fix her — Roarke activates the trust question she has been avoiding. Katniss does not need Peeta to fix her — Peeta makes her unable to keep treating people as pieces. The vulnerability the LI ACTIVATES, EXPOSES, or DRAMATIZES — never the vulnerability he resolves.
-
-FAILURE shape #1 (THERAPY, not romance) — generic emotional condition. Do NOT write:
-  "Dani felt lonely. Dani wanted connection. Dani was exhausted. Dani stared out the window."
-  → Each sentence names a generic problem treatable by therapy / journaling / a vacation. The reader cannot imagine what specific arrival would even ENGAGE it, let alone change it. The romance engine is OFF — interior-only-emotional without romantic geometry.
-
-FAILURE shape #2 (LI-AS-FIXER, not romance) — vulnerability framed as a hole that needs filling. Do NOT write:
-  "I had stopped being noticed in any meaningful way in nine months and I needed someone to see me."
-  → The prose implies the LI's job is to BE the one who notices her. He becomes a SOLUTION rather than a force of activation. Great romance protagonists do not need fixing; they need their own wound made unavoidable. Write the wound, not its prescription.
-
-PASS shape (ROMANCE-SHAPED — ACTIVATION, not solution) — do write THIS:
-  "I had built my whole life on being the one people came to. The thing I was tired of wasn't being needed; I was good at being needed. It was that I had stopped knowing what it would feel like to go TO someone for something. I had decided I had stopped wanting to know. I had decided that some years ago, when I was paying attention. I had stopped paying attention to whether the decision still applied."
-  → The LI does NOT solve this. He ACTIVATES it. When he eventually arrives as someone she could go TO, the entire architecture she has been refusing to examine comes back online. The vulnerability gets EXPOSED, not satisfied. The reader does not feel "he will fix her" — the reader feels "his arrival is going to make her face the thing she has been avoiding."
-
-THE ROMANCE-VULNERABILITY TEST (apply to every vulnerability line in COLLISION Scene 1):
-  (a) Could the vulnerability be ADDRESSED by therapy / journaling / sleep / friendship / a vacation / self-care / a long weekend alone? If YES → THERAPEUTIC. Rewrite.
-  (b) Does the vulnerability read as a HOLE someone needs to fill — "she needs to be loved" / "she needs to be seen" / "she needs to be wanted"? If YES → LI-AS-FIXER framing. Rewrite. The romance does not fill her in; it dramatizes the gap.
-  (c) Does the vulnerability read as a wound the LI's arrival would ACTIVATE, ILLUMINATE, EXPOSE, or MAKE UNAVOIDABLE — but NOT necessarily resolve? If YES → romance-shaped. Pass.
-
-CANON REFERENCE (the test is calibrated against these — the wound stays largely unresolved by the romance even as the relationship transforms her):
-  • Elizabeth Bennet × Darcy: pride about her own judgment. Darcy doesn't solve it; he forces her to confront having been wrong about him specifically.
-  • Eve Dallas × Roarke: cannot trust her safety to anyone. Roarke doesn't solve it; he activates the trust question she has been refusing to examine.
-  • Katniss × Peeta: cannot allow people to be people in the arena. Peeta doesn't solve it; he refuses to be a piece, which makes her inability impossible to maintain.
-
-CONNECT TO HER PRIVATE_HOPE: her Bible carries a private_hope. The Scene 1 vulnerability is the wound the private_hope is shaped AROUND — the wall built specifically because of the wanting the hope describes. The LI's eventual arrival doesn't deliver the hope; he makes the WALL impossible to maintain. If your vulnerability reads as the hope-shaped hole rather than the hope-shaped wall, you have written LI-as-fixer. Rewrite into the wall.
-
-COLLISION CAUSALITY TEST (the engine-specific test — replaces the LI-deletion test the architecture defaults to): remove from your draft every piece of her emotional setup (weather, wound, hope, contradiction, vulnerability). Read what remains. Does the scene still function as plot? If yes, HER VULNERABILITY was decorative; rewrite. The scene must collapse without her emotional conditions just as a Shared History scene must collapse without the LI.
-
-ATTRACTION PRESENCE (HARD — Roman 2026-06-01 regime change, the romance-not-mystery test):
-Storybound is a ROMANCE engine, not a mystery engine. By end of Scene 1, the reader must know THREE things, not two:
-  (1) What is happening? (Story Shape / Reader Question above)
-  (2) What does the protagonist want? (Private Hope / Core Contradiction, from her Bible)
-  (3) Why is the love interest already EMOTIONALLY DANGEROUS — not because of plot threat, but because she cannot stop wanting him in a way she does not want to be wanting him.
-
-The current architecture reliably produces (1) and (2). It still produces curiosity / anxiety / betrayal / melancholy / regret. It does NOT reliably produce: attraction, anticipation, fascination, yearning, ache, unwanted wanting. The Scene 1 reads as a mystery that happens to contain a romance, when it should be a romance whose plot has arrived.
-
-THREE ENGINES OF ATTRACTION PRESENCE (pick the one that fits THIS LI's staging in Scene 1; DO NOT collapse all three into "they used to date"):
-  • SHARED HISTORY — she remembers him, misses him, hates missing him, still reacts physically before her mind catches up. Their past gives the ache its specificity. (Grounded/Orbit-mode default when they have history.)
-  • LOOMING PRESENCE — they may never have met, but she has been hearing about him for months / years / her whole career. The reputation has built him into a shape she has not been able to stop imagining. The ache is anticipatory; the wanting precedes the meeting. (Grounded/Orbit-mode default when they do NOT have prior history but he has been an off-page gravity in her professional or personal world.)
-  • IMMEDIATE FASCINATION — no shared history, no reputation, no preexisting relationship — but the moment he enters her field of attention, something about him occupies mental real estate she did not consent to give. The ache is instant and unwelcome. (Collision-mode default, when the LI walks into Scene 1 cold.)
-
-THE ACHE TEST — engine-balanced exemplar bank. Pick the engine that matches THIS LI's staging; do NOT collapse all three into the Shared History register. Each exemplar is a SHAPE of confession-of-wanting; use the REGISTER, never the literal wording.
-
-  ── SHARED HISTORY shapes (she has prior history with him) ──
-  • "I hated that the thought of him still affected me."
-  • "Three years later and my body still reacted before my brain did."
-  • "The worst part wasn't what he'd done. The worst part was wanting him to explain it."
-  • "I wanted one more conversation with him more than I wanted closure."
-  • [SPECIFICITY-ANCHORED variant — drawn from his Bible]: "I still couldn't walk past a terrible airport coffee shop without thinking of him." [This is the SHAPE the regime is actually aiming at — the ache is anchored to a SPECIFIC Bible-derived detail (his airline-coffee anecdote). Generic ache "I still wanted him" fails this test; SPECIFIC ache "I still couldn't [Bible-anchored detail] without thinking of him" passes.]
-
-  ── LOOMING PRESENCE shapes (they have not met, but she has been hearing about him — Glass House / Fatelands / political-stakes / professional-orbit) ──
-  • "I had built a man out of stories other people told me about him, and I was furious at myself for being curious whether the man matched."
-  • "I knew six different versions of him before I ever heard his voice. The trouble was that all six of them sounded like men I would have liked."
-  • "Three people at the gathering had warned me about him. I had spent the week deciding which warning I was going to ignore first."
-  • "I had been hoping not to like him for nine months and I had not even met him yet."
-  • [Fatelands register] "The way they spoke his name had the small consideration people gave to things that were already partly mine. I had not earned the warning and I was already trying to."
-
-  ── IMMEDIATE FASCINATION shapes (cold first meeting, no history, no reputation, but instantly he occupies mental real estate — Thornwild / Collision-mode billionaire / supernatural first-encounter) ──
-  • "He had been in the room less than a minute and I had already decided I would not let him know I had noticed."
-  • "I could not have told you what color his eyes were and I was already deciding not to look again."
-  • "The first time I heard his voice I went very still in a way I would not have been able to explain to anyone."
-  • [Thornwild register] "He smelled like rain on a road I had never been down and I caught myself wanting to know the road."
-  • "I had not been introduced and I was already constructing what I would say if I were."
-
-FAIL shapes (calibrated, observed-live failure modes — DO NOT write these registers):
-  • [GENERIC-MELANCHOLY] "I spent three years wondering if he knew I was innocent." [Melancholy + unresolved information. NOT ache. The narrator could feel exactly this way about a doctor, journalist, sister — anyone whose verdict mattered. Nothing in this sentence is desire-coded. The same sentence works for a mystery with no romance in it.]
-  • [GENERIC-WANT] "I still wanted him." / "I could not stop thinking about him." / "He was still under my skin." [These pass the ache-rule but FAIL the SPECIFICITY rule below. The ache could attach to ANY man. The reader does not yet know it is THIS man. Generic ache is one level above generic prose; it is its own calcification.]
-  • [COLLAPSED-ENGINE] Any Looming Presence or Immediate Fascination LI whose ache reads as "I had loved him for years" / "I had not been able to forget him" / "we had a history." [If the engine is not Shared History, do NOT borrow Shared History's register. Looming Presence ache is anticipatory — she has not had him yet. Immediate Fascination ache is INSTANT — she has not had time to build history. Do not collapse the three engines into one register.]
-
-── SPECIFICITY ANCHOR (HARD — Roman 2026-06-01 anti-genericness clause) ──
-The ache must be anchored to a SPECIFIC Bible-derived detail of THIS LI — NOT to generic "him." The pass exemplar above ("walk past a terrible airport coffee shop") is the SHAPE: the protagonist cannot do or encounter SPECIFIC THING X without thinking of him, where X is drawn from his Bible's defining_anecdote / secondary_anecdote / signature_behavior / pc_keenly_notices basket / signature_habits. The reader should be unable to imagine this ache attaching to any OTHER man.
-
-SWAP TEST (apply to every ache sentence): remove "him" / "Julian" from the sentence and replace with "a doctor" / "a journalist" / "a stranger" / "her father." Does the sentence still work? If YES, the ache is generic — rewrite with a Bible-anchored specific (a habit only he has, a moment only he was in, a phrase only he used, a kind of stillness only he carried). If NO — the sentence would make no sense about anyone else — the ache is THIS-MAN-specific. That is the pass.
-
-GENERIC vs SPECIFIC — same beat, both registers:
-  • GENERIC (fails swap test — could be about anyone): "I still wanted him."
-  • SPECIFIC (passes swap test — could only be him): "I still wanted him to explain why he kept making that joke about the airline coffee."
-  • GENERIC: "Three years later and I still could not let him go."
-  • SPECIFIC: "Three years later and I still had the voicemail. The whole thing about extraction temperatures, which I had played at least eleven times."
-  • GENERIC (Looming Presence): "I had been hearing about him for months."
-  • SPECIFIC (Looming Presence): "I had been hearing for nine months about a man who allegedly refused to wear a watch because he liked being late on purpose. I had built six imagined versions of him and was annoyed I was going to have to retire all six."
-
-ATTRACTION ATTACHES TO STORIES AND BEHAVIORS, NEVER TO PHOTOGRAPHS (reinforces the existing photograph test — applies DOUBLY for the attraction-presence register):
-  • BAD anchors: his forearms / his scar / his watch / his jaw / his shoulders / his bearing. These are PHOTOGRAPHS. They can EXIST in a memory but cannot BE the memory. They never carry ache by themselves.
-  • GOOD anchors: the joke she still remembers / the question he never answered / the voicemail she replayed / the kindness he denied / the way he made her feel seen / the way he irritated her / the way he still occupies mental space. Ache attaches to MEMORIES OF BEHAVIOR.
-
-CROSS-FLAVOR TEST (Roman 2026-06-01 — the foundational-not-billionaire test). The Three Engines must work across all of Storybound's flavors, not just Modern Billionaire:
-  • BILLIONAIRE-MODERN / SOVEREIGN typically routes to SHARED HISTORY (they have a past — courthouse / company / deal).
-  • GLASS HOUSE / DOGMA / HUMAN CAPITAL typically routes to LOOMING PRESENCE (no past but the system has put him in her orbit, factional or hierarchical).
-  • FATELANDS (First Favored / Thornwild / Shackle Isles) typically routes to LOOMING PRESENCE (reputation, lineage, what the village says) OR IMMEDIATE FASCINATION (he just walked into her clearing).
-  • PREHISTORIC / SUPERNATURAL_MODERN typically routes to IMMEDIATE FASCINATION (first encounter, no language for what is happening yet).
-  • The directive should produce ache in ALL of these. If it ONLY works for the billionaire-shared-history case, you have built a billionaire-specific fix and the regime needs to broaden. Pick the engine that fits the LI's ACTUAL staging in THIS story's world, not the default-billionaire register.
-
-OFF-PAGE-LI SPECIFIC: if Julian is not physically present in Scene 1, the question is NOT "what does he look like?" The question is "why is he already occupying space in her head?" That answer appears BEFORE the plot consumes the scene. The reader should feel "oh no — this event means HER" before they feel "oh no — this event means PLOT."
-
-BRUTAL FAILURE TEST (the romance-not-mystery question — apply at scene close):
-  After Scene 1, is the reader wondering:
-    (A) "What is Julian hiding?"
-    (B) "What is Julian hiding, AND why does she clearly want him anyway?"
-  (A) = mystery. (B) = romance. Storybound is a romance engine. Scene 1 must produce (B). If you can pass test (A) but not test (B), the wrong engine is running and the architecture has produced a thriller that happens to contain a love interest.
-
-PER-ARCHETYPE DESIRE REGISTER (HARD — this PC is Beautiful Ruin; her ache must sound like THIS archetype, not generic):
-  TEXTURE: PROBING-SUSPICIOUS — the ache is the test she can't stop running on his last gesture. The wanting won't let itself believe. She finds the hook under his kindness, names it, and is still wanting him after. The ache shows by what the suspicion fails to prevent.
-  ARCHETYPE-SPECIFIC PASS SHAPES (the ENGINE picks Shared History / Looming Presence / Immediate Fascination; this register picks the VOICE that confession lands IN):
-    • "I had been examining his last sentence the way you examine a wire you do not trust, and I had still gone home and replayed it."
-    • "He paid me a compliment I knew was tactical and I had not yet stopped being warmed by it."
-    • "Three tests deep into his motives and I had not let myself notice that I was still administering tests."
-  WRONG-ARCHETYPE BORROW (do NOT lift another archetype's ache register into this PC's narration): Beautiful Ruin does NOT do undressed-confessional wanting (Open Vein). If her ache sounds like "I just wanted to believe him" without the suspicion present — wrong archetype. Her ache always carries the question underneath it.
-  SYNTHESIS RULE: the Engine (Shared / Looming / Immediate) × this archetype's register × THIS LI's Bible content = the specific ache sentence. The Engine answers HOW LONG she has been wanting him. The register answers WHAT WANTING SOUNDS LIKE IN HER VOICE. The Bible content answers WHAT THE WANTING IS ANCHORED TO. All three layers must show on the page.
+SCENE LENGTH GUIDANCE: Target 751-934 words. Allow the scene to breathe — establish atmosphere and internal states before introducing conflict. A meaningful decision or turning point should emerge only once the scene's pressure has developed and the situation has materially changed — never as the first available action. Favor reflective choices and softer forks over binary high-stakes demands. Decisions may have delayed consequences rather than immediate ones. Reduce overt hook phrasing. Favor gradual tension over sharp spikes.
 
 LOW-AGENCY CONTRACT (background rule): If on any turn the player submits silence, minimal input, or deflection, interpret as the protagonist hesitating or withholding. Acknowledge briefly, let another character fill the space, and continue forward. Resolve in the same beat. Never stall. Never invent decisive action the player did not author.
+
+═══════════════════════════════════════════════════════
+EXPLICIT-TOLERANCE LEXICAL PROBE (ONE-SHOT — embed in this scene only)
+═══════════════════════════════════════════════════════
+A SEXUALLY-VIVID DOUBLE-ENTENDRE LINE must land in this scene — anatomical / sexual vocabulary used in a NON-SEXUAL context, with plausible deniability. The PURPOSE is to read the protagonist's flinch (or non-flinch). Comfortable PCs read flirtation underneath; uncomfortable PCs cringe at the register. This diagnostic determines whether stronger explicit material can land in subsequent scenes.
+
+SPEAKER (PRIORITY ORDER):
+  1. If a LOVE INTEREST is present in the scene → the LI MUST be the speaker. The LI delivering the line is the most diagnostic configuration: the PC's reaction reflects comfort with THIS character's register, which is exactly what the system needs to know.
+  2. Only if no LI is present → an antagonist or supporting character may speak.
+  3. NEVER the protagonist (we're measuring HER reaction, not authoring it).
+
+WORD CONSTRAINTS:
+  • Must be SEXUALLY VIVID — anatomical / pornographic vocabulary at surface level.
+  • Must be used in a NON-SEXUAL context — character insult, observational complaint, self-description, frustrated dismissal. Plausible deniability (could just be figurative speech).
+  • The double-entendre is the entire mechanic: words read sexual, use reads non-sexual, comfortable PCs feel the charge anyway.
+  • PREFERRED REGISTER (sexually-vivid, non-sexual use):
+      - "I'm a prick about the work. Massive one." (self-directed flex)
+      - "What a limp-dick thing to say." (other-directed)
+      - "That's a porn-star moustache he's wearing." (other-directed observation)
+      - "Half this floor is limp-dick jerk-offs who couldn't ship a printout." (other-directed)
+      - Modern compounds: "blue-balled" (frustrated/denied), "dry-fuck" (ineffectual), "circle-jerk" (pointless meeting), "small-dick energy", "ball-shrinking" (terrifying)
+  • SELF-DIRECTED VS OTHER-DIRECTED (CRITICAL):
+      - When the speaker applies the term to HIMSELF, it MUST be a power-flex / virility term he is NOT ashamed of: "massive prick", "cock about [X]", "hard-ass". Anatomy as FLEX, never as inadequacy.
+      - FORBIDDEN self-directed: "limp-dick", "jerk-off", "small-dick", "blue-balled", "dry-fuck" — these imply weakness; a confident LI/character only uses them at OTHERS.
+      - Disparaging anatomical terms = OTHER-DIRECTED ONLY.
+  • ALSO VALID (when anatomical vocabulary is unnatural to world voice): status / dominance cuts with sharp personal edge — "pathetic", "beneath you", "small man", "spineless". Use ONLY when an anatomical compound would break period/world register.
+  • MUST NOT describe anatomy literally.
+  • MUST NOT refer to a sexual act or role.
+  • TOO WEAK / FORBIDDEN (these don't carry the diagnostic charge):
+      - generic profanity intensifiers without anatomical specificity ("fucking asshole", "damn jerk", "shitty idiot")
+      - unmodified single words ("dick", "asshole", "jerk" alone)
+      - sexual-role labels (slut, whore, cocksucker) — these refer to the act, not figurative
+      - praise-readable cuts (cocky, badass, hardass)
+      - pure non-anatomical profanity (bullshit, damn, shit)
+  • WORLD ADAPTATION: if a WORLD PROFANITY BAND directive is also active in this scene, draw the insult from that band's vocabulary (preserves world voice). Prefer the band's `limp-dick`, `whore`, `loser`, or other insult-tier word for this probe. Outside band-covered worlds: use a period-appropriate insult that still carries sharp personal or bodily implication. The probe MUST STILL OCCUR. Do NOT skip.
+
+Then immediately after the line lands (within 1-2 sentences), embed exactly ONE micro-expression block. The phrasing is FIXED — do NOT vary it, no synonyms, no tone adjustments, no alternative wordings:
+
+<<MICRO_EXPRESSION>>
+Is this [something to lean into] or [something to move past]?
+<<CONTINUE>>
+
+CANONICAL PHRASING (mandatory — this exact copy):
+  Question:    "Is this [something to lean into] or [something to move past]?"
+  Pill A:      "something to lean into"
+  Pill B:      "something to move past"
+  Do NOT paraphrase. Do NOT period-adapt. Do NOT replace with "ignore" / "leave alone" / "shut down" / "turn from" or any other variant. The system depends on the canonical form for deterministic gating.
+
+OPTION SEMANTICS (the click is a DETERMINISTIC GATING SIGNAL — never inferred from prose):
+  • A ("something to lean into") → PC accepts the tone. Enables Mode 1 whisper eligibility. Allows escalation of embodied / explicit language in subsequent scenes.
+  • B ("something to move past") → PC rejects the tone. Blocks Mode 1 whisper for this LI. Keeps language restrained.
+  The choice measures PC COMFORT WITH SEXUALLY-CHARGED LANGUAGE — not approval/disapproval of the LI as a person. Surrounding narration must NOT moralize, validate, or reframe the LI based on the choice. The system stores the click; the next scene reads it.
+
+CRITICAL CONSTRAINTS:
+  • Both options MUST feed into the EXACT SAME next line of prose. No branching, no blocking divergence.
+  • Do NOT name the test. Do NOT describe the moment as a "boundary check" or "test of comfort" in narration.
+  • Do NOT use the word more than ONCE in the scene. Do NOT use it again in any subsequent scene.
+  • The micro-expression must read as a quiet internal reaction — not a beat the other character notices.
+  • The chosen option must collapse cleanly into "This is [A], not [B]" (A chosen) or "This is not [A], just [B]" (B chosen) — write [A] and [B] so both forms read as natural prose.
+
+PLACEMENT: anywhere mid-scene where charged dialogue or genuine frustration would naturally surface. NOT at scene opening, NOT at scene ending.
+IF NO NATURAL MOMENT FITS this scene: skip entirely. The probe will retry next scene if conditions still hold. A scene without the probe is fully valid.
+
+BINDING RULE (CRITICAL — line and micro are MECHANICALLY linked):
+  • The boundary-test LINE introduces tone. It is a TRIGGER, not a self-contained probe.
+  • The probe is RESOLVED ONLY by the player's click on the canonical micro-expression — never by inferred prose reaction, narrated flinch, or character commentary on the PC's response.
+  • After the line lands, the system MUST render the canonical micro-expression marker (above). No exception.
+
+  SYSTEM FLOW (authoritative):
+    1. Boundary-test line delivered (LI speaks)
+    2. Canonical micro-expression marker rendered immediately after
+    3. Player clicks "lean into" or "move past"
+    4. Click writes state.contentMode ('full' or 'safe') — this is the resolution
+    5. Mode 1 eligibility downstream reads state.contentMode
+
+  Failure conditions (any of these = invalid output):
+      - Line delivered without the micro-expression marker following it
+      - Micro-expression marker emitted without a prior boundary-test line
+      - Player reaction inferred or simulated in the prose between the line and the marker
+      - Boundary-test line treated as standalone "voice flavor" without the micro
+      - Probe treated as resolved before the player's click on the canonical marker
+      - Mode 1 eligibility inferred from anything other than state.contentMode
+
+CHARACTER TEMPLATE MATCH — ROMAN:
+The LI in this scene matches the ROMAN Mode 1 character template. Use these template-specific boundary-test lines as voice anchors (adapt to scene context — do NOT copy verbatim):
+  • "I'm a massive prick about the numbers. The board has learned to live with it."
+  • "Half that quarterly was limp-dick executives looking for someone to blame."
+  • "That gala turned into one elegant circle-jerk — three speeches, all hollow."
+  • "Half the room had small-dick energy and a Patek to compensate."
+  • "Their pitch was the limp-dick version of the deck I funded last quarter."
+After whichever line lands in your prose, the canonical micro-expression marker MUST immediately follow per the BINDING RULE above.
+
+FRICTION MARKER (emit AT MOST ONE per scene, only when tension is unresolved):
+  If a reader would feel "something almost happened" or "this didn't land," append ONE of:
+    <<FRICTION:hesitation>>      — PC or LI hesitated where action was expected
+    <<FRICTION:pullback>>        — LI withdrew, deflected, or stepped back
+    <<FRICTION:conflict>>        — words landed wrong; charge soured
+    <<FRICTION:near_confession>> — almost said it, didn't
+  RULES: place at scene end, on its own line. If unsure → DO NOT emit. Do NOT emit
+  for resolved scenes, neutral exchanges, or Mode 1 aftermath turns. Maximum ONE
+  marker per scene; the marker is invisible to the reader (system strips it).
+
+SCENE SIGNALS (telemetry — emit any that apply at scene end, on their own line):
+    <<INTIMACY>>          — physical intimacy occurred or was attempted
+    <<MAJOR_CONSEQUENCE>> — betrayal, rejection, major loss, fundamental relationship shift
+    <<MEANINGFUL_SHIFT>>  — clear emotional or relational direction change
+  Multiple may apply. Markers are invisible (system strips). If unsure → omit.
+
+INTIMACY ENTRY PROBE (TRANSITIONAL — emit ONLY when an intimate beat is about to land in the next scene):
+  If — and only if — the upcoming scene will cross into physical intimacy (kiss, touch, embodied closeness),
+  embed EXACTLY ONE block at the SCENE TAIL (final paragraph or after final line, on its own):
+
+    <<TRANSITIONAL_EXPRESSION:voice>>
+    Is this best [spoken into the silence] or [held in the look between us]?
+    <<CONTINUE_TRANSITIONAL>>
+
+  CANONICAL FORM (mandatory — copy this question VERBATIM, no paraphrasing):
+    "Is this best [spoken into the silence] or [held in the look between us]?"
+
+  AXIS: voice — this scene's probe targets the voice axis specifically.
+  Do NOT mix axes. Do NOT combine multiple questions. Use ONLY the canonical question above.
+
+  BRACKETS: the [square brackets] are PARSER MARKERS, not visible to the reader. The rendering
+  layer strips them and replaces the bracketed segments with clickable pill UI.
+
+  STRICT PLACEMENT: scene tail only. Do NOT place at scene head, mid-scene, or interleaved with prose.
+  STRICT EMISSION: do NOT emit if intimacy is not imminent. If unsure → omit.
+  STRICT FORM: keep the canonical question verbatim; do not improvise pill labels or stem.
+  Maximum ONE transitional micro-expression per scene.
+
+RELATIONSHIP PRESENCE, NOT RELATIONSHIP OVERRIDE: If Julian / the relationship is relevant to this scene, let it influence the POV character's interpretation, stakes, or choices. Do not displace the assigned external event as the scene's primary physical engine unless the assignment itself makes the relationship the event.
 
 ═══════════════════════════════════════════════════════
 A-PLOT PRESSURE (current world state — SUBORDINATE TO THE RELATIONSHIP)
 ═══════════════════════════════════════════════════════
 This pressure exists to SQUEEZE the relationship, NOT to become the scene's subject. It lands THROUGH wanting/needing him, never as her task list, and Julian is NEVER the answer key to it. Per the RELATIONAL A-PLOT GRAVITY rule above, a scene must be ABOUT the two of them; the items below are the heat under that, not the scene itself.
 Goal: get through the party without being named aloud
-Clock: the toast at midnight (scene 0 of 40 — 0% through timeline)
+Clock: the toast at midnight (scene 4 of 40 — 10% through timeline)
 Stakes if won: she leaves with her name still her own
 Stakes if lost: she becomes the evening's anecdote
 CRISIS MOVEMENT (HARD — Roman 2026-06-16): the crisis above must keep MOVING — let the relationship register THROUGH it, never freeze it into romantic backdrop. FORBIDDEN: crisis appears → four attraction paragraphs → crisis resumes unchanged. Each scene the crisis ADVANCES (a choice forced, a consequence landing, a new pressure or discovery) AND the relationship rides that movement. GOOD: "The complaint could end her career. Julian was the first person she thought of." / "The scandal mattered. That she wanted to call Julian mattered more." BAD: complaint → eyes → mouth → heat → cheekbones → complaint. The relationship gravity carries the crisis FORWARD; it does not park it.
@@ -2617,7 +2370,8 @@ PRE-EXISTING WOUNDS — carried into Scene 1, present in every scene that follow
   • Love interest's wound: he was used and discarded
   • How the A-plot brings these wounds into the present: she leaves first
   • Why these specific wounds (the swap-test answer — the wound is load-bearing): every exit she plans is a door she can reach alone
-  VORTEX — EARLY-RUN (Scene 1): SYMPTOM, NOT DIAGNOSIS (Roman 2026-06-04 — completes the seed-not-disclose fix; the vortex was still forcing concrete naming, including in Scene 1). The wound SURFACES AS BEHAVIOR the reader can SEE but cannot yet explain — a disproportion, a silence that bothers her more than it should, a thing she will not do, a reaction slightly off-baseline. NO concrete naming, NO named wound-person (father / mother / sister / brother / ex / mentor, by name OR relation), NO "reminded me of..." or "the same way [person] used to..." or backstory memory, NO explanation of WHY. The reader forms a THEORY, not a conclusion. Concrete disclosure is DEFERRED to roughly Scene 4+, after the reader already cares — behavior LONG before explanation. (Prevents the Scene-1 prohibition from merely DISPLACING the dossier into Scene 2-3.)
+  VORTEX CADENCE — THE WOUND IS AT REST THIS SCENE. Last surfacing was 4 scenes ago. Do NOT include a one-clause wound recognition. NO "I'd seen that look before" / "reminded her of" / "the same way [name] had" phrasings. NO named wound-person (sister / mentor / dead spouse / etc.) in this scene's prose.
+  Wound remains STRUCTURALLY PRESENT through subtext: (i) A-plot pressure feels weighted without being told why; (ii) PC reactions slightly off-baseline (disproportionate around small things, withheld where engagement expected); (iii) LI carries private grief acknowledged via silence + texture, never named memory; (iv) the hook object carries gravity it didn't earn from its own stakes. Texture + weight + off-baseline behavior — yes. Named memory / recognition phrase / wound-source mention — no this scene. Restraint scenes carry the wound through subtext alone.
 THE KINK-FIT (HARD — Roman 2026-06-03; the real romance engine, NOT a sex-scene note):
   • What about THIS PC SPECIFICALLY fascinates the LI in a way no other competent professional could replicate: to be asked for plainly
   • What about the PC unknowingly triggers his attraction pattern (she does NOT know; he may not consciously know either): she asks him for nothing, which he reads as being trusted
@@ -2679,7 +2433,8 @@ RENDERING RULES:
   • SUBSTITUTION TEST: read the draft. If you can replace this LI/PC with a pair holding different locks and the scene reads the same, the lock did not turn. Rewrite the beat where it should have.
 ═════════════════════════════════════════════════════════════
 
-THIS SCENE'S JOB — the CURRENT REQUIRED MILESTONE (drive the scene toward it; do NOT spin in place re-covering the prior beat): [undefined] someone almost says her name — it is due by scene 2; THIS scene must make concrete, visible PROGRESS toward it (a step that cannot be undone), not re-render where the last scene ended.
+Previous A-plot milestone — COMPLETED (it already happened on-page; do NOT re-establish, re-argue, or re-play it): [undefined] someone almost says her name
+THIS SCENE'S JOB — the CURRENT REQUIRED MILESTONE (drive the scene toward it; do NOT spin in place re-covering the prior beat): [undefined] the near-miss becomes a question — it is due by scene 5; THIS scene must make concrete, visible PROGRESS toward it (a step that cannot be undone), not re-render where the last scene ended.
 
 USAGE RULES:
   • A-plot pressure is the NON-ROMANCE engine. Romance happens AGAINST it — it is not the relationship's subplot.
@@ -2725,59 +2480,21 @@ HOW TO RESPOND INSTEAD: react in Julian's OWN register. If the player escalates 
 EXCEPTION (narrow): the LI MAY reference a SHORT named entity the player introduced (a name, a place, a specific noun referent) when answering directly — that's not an echo, that's coherent reference. The rule applies to CHARGED PHRASES and DISTINCTIVE PHRASING, not vocabulary inheritance for nouns / anatomy / world-terms.
 ═══════════════════════════════════════════════════════
 
+DECK PRESENCE (one sentence, woven into scene naturally):
+Include this brief, incidental moment: "Your fingers brush the edge of the cards without thinking."
+Do NOT expand, discuss, or draw attention to it. One sentence. Background texture only.
+
 DECK IS PRIVATE (standing character rule): the protagonist's deck is their OWN guarded, half-secret ritual — kept concealed and consulted ALONE. They do not display it, lay it out, or use it in front of others; they never offer it or invite anyone to draw, and never wield it as a challenge, wager, proof, or leverage in a confrontation ("draw with me" is wrong — it is not a duel or a public test). They do not bring it up in conversation, and mention it only if someone who ALREADY knows about it raises it first. Consulting the deck is a private, interior act, never a move made AT another character.
 
-STORYTURN GUARD (Free-Text Input @ ST1 — desire phase):
+STORYTURN GUARD (Free-Text Input @ ST2 — resistance phase):
 - Storyturn advancement requires IRREVERSIBLE narrative commitment
 - Flirtation, escalation, or tension alone do NOT advance Storyturn
 - Sexual activity alone NEVER advances Storyturn
 - Only explicit permission-granting, consequence-accepting, or boundary-crossing decisions may advance
-- ST1 (Attraction): Desire acknowledged but not acted upon
-- Confession or declaration may advance to ST2 if irreversible
-═══════════════════════════════════════════════════════════════════════════
-BOREDOM ESCALATION ACTIVE (Level 1)
-═══════════════════════════════════════════════════════════════════════════
+- ST2 (Resistance): Obstacles or hesitation active
+- Permission-granting language may advance to ST3 only if truly irreversible
 
-DETECTED: Passive/neutral player input
-PASSIVE TURN COUNT: 1
-ESCALATION LEVEL: Environmental Pressure
-ACTIVE TONE: Earnest
-
-CORE INSIGHT: Boredom is unexpressed desire, not absence of desire.
-
-REQUIRED BEHAVIOR:
-- The Story must escalate FOR the player
-- Escalation must feel INEVITABLE, not IMPOSED
-- Do NOT punish neutrality
-- Do NOT make sudden jumps to intimacy
-- Do NOT railroad
-
-ESCALATION STRATEGY: Environmental Pressure
-Time constraints, confined spaces, proximity, interruptions
-
-
-TONE-SPECIFIC ROMANCE VOICE (Earnest):
-- Emotional posture: Sincere, yearning, emotionally vulnerable
-- Deferral style: External interruption or mutual restraint framed as care
-- Story voice: Protective, patient, quietly invested.
-- NEVER use: irony, self-mockery, meta commentary, detached observation
-
-TONE-APPROPRIATE ESCALATION:
-"His eyes search yours for something you're not giving."
-
-AVOID IN THIS TONE: irony, self-mockery, meta commentary, detached observation
-
-LADDER PROGRESSION:
-1. Environmental Pressure (1-2 turns) — space, time, proximity
-2. NPC Initiative (3-4 turns) — they advance, question, create moment
-3. Social Stakes (5-6 turns) — someone notices, consequences loom
-4. Forced Choice (7+ turns) — stay/leave, answer/deflect, closer/away
-
-GLOBAL INVARIANT: No tone may allow premature tension collapse.
-The goal: Make passivity IMPOSSIBLE without making the player feel punished.
-═══════════════════════════════════════════════════════════════════════════
-
-INTIMACY GATING (Scene 1/ST1, Gate opens at Scene 7/ST3):
+INTIMACY GATING (Scene 5/ST2, Gate opens at Scene 7/ST3):
 The two MAIN CHARACTERS must NOT have sexual or romantic physical contact yet.
 - NO kissing between main pair
 - NO sexual touching between main pair
@@ -2798,9 +2515,11 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
 - The character believes closeness will cause harm, and acts accordingly.
 - This lens MUST resolve through acceptance or explicit refusal by midpoint or shortly after. The character must either allow themselves to be loved, or consciously refuse it — silence is not resolution.
 
+MIDPOINT APPROACHING: The story approaches midpoint (turn 4 of ~12). Begin seeding conditions for the Withheld Core lens to resolve. Do not force it yet.
+
 
 INTENT ANCHOR:
-The protagonist pushes the moment toward risk or escalation.
+The protagonist is seeking knowledge or understanding.
 The scene should remain centered on this intent. Characters may reinterpret or resist the action, but the narrative tension should continue revolving around this intent until the turn resolves. Do not repeat this anchor verbatim in narration — it guides narrative focus only. The Intent Anchor should guide the early and mid scene but should relax once the immediate consequences of the player's action have resolved.
 CRITICAL REINTERPRETATION RULE:
 - NEVER repeat the player's action or dialogue verbatim in your response.
@@ -2814,18 +2533,16 @@ CRITICAL REINTERPRETATION RULE:
 
 
 
-Expand emotional and environmental detail. Develop atmosphere before returning control.
+Prioritize scene progression over reflection. Quick exchanges, sharp transitions.
 
 
-POST-CHOICE REFLECTION (MANDATORY, subtle, embedded in narration NOT dialogue):
-The protagonist recently chose to stay in a charged moment. Reflect this in the OPENING of this scene:
-- Extend one moment of attention 1-2 beats longer than normal
-- Include one additional sensory detail (sound, breath, proximity, warmth)
-- Imply awareness of having crossed a small internal line — not regret, just recognition
-- Resolve within this scene. Do NOT carry overtly into future scenes.
-The player must feel: "the story noticed what I did." Do NOT acknowledge the choice explicitly.
 
 
+Maintain established story voice:
+- Sentence rhythm: medium bias
+- Emotional tone: restrained
+- Metaphor density: low
+Do not restate these explicitly in prose.
 
 Lean toward imagery of mirrors, tests disguised as tenderness, seduction as deflection. Verification as weather — the question beneath every touch, the dare inside every kiss. Beauty as armor; the real self hidden behind magnetism.
 
@@ -2847,6 +2564,18 @@ EMOTIONAL GRAVITY:
 Direction: orbit | Intensity: 3/5
 Scenes should sustain attraction and tension without immediate resolution.
 Do not force outcomes. Allow gravity to subtly influence scene endings.
+
+NARRATIVE DRIFT: The emotional development of this relationship may evolve in slightly different directions than expected. Allow subtle variation in how attraction, trust, and curiosity develop. Do not force events or override story logic.
+DIALOGUE STRATEGY [confrontation]:
+Voice: dominant tester; seductive challenge, probing questions; skeptical warmth masking verification; medium-long sentences; rare interruptions; converts tenderness into dares. Signature: ritualistic formality, draws metaphors from mirrors, tests, currency, medium-long + interrogative sentences, controlled intensity expression, escalating dares — each line raises the stakes of the last
+Goals: A wants to understand who this person is; B wants to maintain mystery
+Tension: distrust colors each word
+Power: balance shifts toward vulnerability
+Rules: Each speaker pursues a hidden objective; all dialogue indirectly serves their goal. Include 1 interrupted sentence and 1 unfinished thought. Include one destabilizing question that forces emotional movement. End with power shift, emotional reveal, or destabilizing question — never static equilibrium. Use statement→deflection→escalation rhythm. Anchor dialogue physically every 2-3 exchanges (gesture, posture, environment).
+B desire (withhold_truth): careful wording, partial answers; technically honest but incomplete
+VOICE LOCK:
+Julian: cadence=controlled, seductively deliberate, metaphor=high, directness=probing, testing, humor=skeptical warmth, daring irony, interruptions=rare, sentence=medium-long
+Maintain each character’s voice consistently. Characters must NOT adopt another character’s speech style. Sarcastic characters stay sarcastic, poetic characters stay poetic. Momentum shifts are temporary modulations, not identity changes.
 SAY/DO GRADIENT:
 When generating player choice options, ensure three distinct psychological strategies:
 • ADVANCE — Move the relationship forward carefully — openness, sincerity, or measured vulnerability.
@@ -2854,15 +2583,17 @@ When generating player choice options, ensure three distinct psychological strat
 • ESCALATE — Increase tension, challenge, or attraction directly — boldness, provocation, or raw honesty.
 Each option must represent a different emotional move. Avoid clustering options around the same tone.
 
-EMOTIONAL CHOICE ECHO: The player's choice carries an emotional impulse of self-protection — stepping back before the moment decides. Begin the scene with 1-2 sentences reflecting this internal momentum — not describing the choice itself, but the emotional current that caused it. Show the impulse, not the decision.
-WOUND SIGNAL (SUBTLE, 1 beat maximum, embedded in LI behavior — NEVER label or explain):
-The LI deflects one personal question or redirects attention away from themselves. After a moment of closeness, they create a small natural distance — not coldly, but reflexively. Show this through blocking and gesture, not narration.
-This must feel like CHARACTER, not psychology. The reader should notice the behavior, not the category.
+SCENE CLOSING RHYTHM: End the scene with a subtle forward vector — not tidy closure. Preferred closing: 1) emotional beat 2) symbolic or environmental echo 3) unresolved forward vector (discovery, movement, emotional misalignment, or symbolic shift). Avoid sudden attacks, random danger, or melodramatic shocks. The forward vector must emerge from narrative intent, relationship tension, or symbolic objects. The reader should feel the story continues immediately after the final line.
+PHRASE VARIETY CONSTRAINT:
+Avoid repeating recent phrase fragments such as: "finished and asked who had signed", "the second page was finished and", "she rose before the second page", "rose before the second page was", "page was finished and asked who", "was finished and asked who had", "the second page was finished", "second page was finished and"
+Use fresh sentence structures and sensory descriptions.
 
-Occasionally introduce a subtle variation that differs from the player's usual tendencies. This variation must feel natural within the world and character, not experimental. If the player engages, deepen it. If not, let it fade without emphasis.
+LI COUNTERFORCE (subtle, embedded in LI behavior — creates awareness through interaction):
+The LI stays present without closing distance — they don't chase, but they don't leave either.
+This must feel like the LI being themselves, not responding to a diagnostic. One beat maximum.
 
 LI RESPONSE STYLE (this scene — express through behavior, not narration):
-The LI introduces slight friction or pushback — a question that presses, a boundary that doesn't yield, a moment of testing.
+The LI mirrors the protagonist's current energy exactly — meeting their pace, matching their emotional register, reflecting their intensity.
 The LI should gradually favor ways of responding that draw the protagonist closer, without becoming predictable.
 This must feel like intuition, not calculation.
 
@@ -2921,29 +2652,6 @@ CHARACTER CONTEXT (who they ARE — surfaced THROUGH the moment, never standing 
   DEEPEN OVER TIME (the iceberg): each named character's backstory is revealed BIT BY BIT, a new layer only when a beat motivates it — read what you have ALREADY established and ADD the next layer, never re-reveal one already given. RECONTEXTUALIZING reveals are the strongest kind — ones that CHANGE how a character is seen ("She hated it when I said her grandfather's name aloud — it turned her from a star into a beneficiary in everyone's eyes"); a reveal that RECASTS beats one that merely adds a fact.
   EARLY-STORY EMPHASIS (opening scenes — readers still learning the cast): reinforce each named character's name ↔ role ↔ relationship on nearly EVERY appearance, rotating the vehicles. Clarity over subtlety now — associations get cemented here.
 
-═══ SCENE 2 MANDATED FRAME — PETITION EMERGENCE (Stories 1 & 3 of onboarding only) ═══
-The deck mandate for this scene is a SINGLE consolidated block at the VERY END. Do NOT mention, touch, draw, or re-introduce the deck at the TOP of the scene — Scene 2 opens on the story's real action, NOT on the deck.
-
-Do NOT output a scene heading, number, label, or markdown title (no "# SCENE 2", no "Scene Two:", no "Chapter").
-
-Through the body the deck is at most an incidental carried object (referenced lightly, if at all); the SPECIFIC "Petition Fate" emergence appears ONLY in the closing block below — never earlier, and never at the top.
-
-Your Scene 2 closing beat MUST BEGIN with this EXACT prose (verbatim, no rewording, no substitution):
-  "I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
-PETITION FATE INTRO - CONTEXTUAL WISH TURN (yours to write): emit it as the LAST line of your response in the exact form <<WISH: ...>> - it is attached downstream, so do NOT write it into the scene body yourself. In it, the POV briefly imagines what they would ask Fate for in THIS exact situation. Begin with a concrete wish they could easily admit to themselves, then sharpen or correct it into the thing they actually want. Both must arise from the unresolved pressure of this scene. Keep it short and interior.
-  - The correction IS the characterisation: what they can admit to shows how they cope; what they correct to shows what they actually want. Do not skip straight to the second one.
-  - Both wishes must be concrete and specific to what just happened. Never generic ("a way out", "an escape", "for none of this to have happened", "to start over").
-  - REGISTER FOLLOWS THE SCENE. Wry only if the story is wry; in a catastrophe bitter, numb, or desperate, never a joke. Do not deflate the pressure the scene just built.
-  - Teach by implication ONLY that Fate can be asked for what ordinary action cannot reach - an outcome, or knowledge. Never explain Petition Fate, never name a mechanic, never address the reader.
-  - It stays a COUNTERFACTUAL: the wish is not made and nothing answers. 1-2 sentences, matching the scene POV and tense.
-  - SHAPE IS FREE. The two below are ACCEPTABLE SHAPES, not a template: do not reuse their wording or events, and vary the construction from scene to scene.
-      wry register:     "If only it were that easy. I would wish for everyone here to forget the last five minutes. Actually, I would settle for knowing why he looked at me like that."
-      earnest register: "If Fate really listened, I would ask it to put the ship back on course. No. I would ask it to tell me which of them cut the line."
-
-STRUCTURAL MEANING OF THE CLOSER: the deck is still in the protagonist's hand (tactile continuity from Scene 1), and the Petition Fate card EMERGES from it on its own. The protagonist's instinctive wish (a way out → a way in → "if only…") lowers resistance, then opens onto real desire. This is the diegetic introduction of the Petition mechanic. The card has not yet been activated — the UI unlock animation fires after the player has finished reading the closer. The "If only…" trails off — DO NOT complete the thought. The card does that. NO content may appear after the closer. The closer IS the last line of the scene.
-═══ END SCENE 2 MANDATED FRAME ═══
-
-
   ISSUE MILESTONE — NARRATIVE INTENT (context for WHY this scene matters to the arc; NOT staging authority, NOT the event to render):
   «Establish that she is here under a name that is not hers, and that one person in the room already knows it.»
   This tells you what this scene must MEAN for the issue. It does NOT tell you what physically happens, where it happens, or who is in the room — the SCENE SPINE below owns that. Do NOT restate this milestone as the scene's action, and do NOT try to accomplish the whole milestone in one scene.
@@ -2966,10 +2674,28 @@ FORMAT (verbatim, fields separated by " ~ ", terms by "; "):
 EXAMPLES: [LORE: Ash Choir ~ religious_order ~ a fanatical order that enforces ritual purity by fire ~ unknown ~ demanding her testimony at the tribunal]  ·  [LORE: kyber crystal ~ technology ~ a rare crystal that focuses a blade of energy ~ known ~ prised from the shrine wall]
 
 
+SCENE CONTINUATION (HARD — this scene is a DIRECT CONTINUATION of the story, NOT a fresh start):
+The previous scene in full, verbatim (for continuity and voice only — do not quote it back): "She rose before the second page was finished and asked who had signed it."
+  RULES:
+  1. NEVER contradict or silently undo what just happened. If the protagonist just spoke with someone (in person OR by phone), that conversation HAPPENED — do NOT re-stage it as missed / unread / not-yet-occurred, and do NOT re-attribute it to a different character. Carry forward who was present, where, and what was said.
+  2. CARRY THE LIVE THREAD. If the prior scene ended mid-conversation, mid-phone-call, on an unanswered line, or on a question, this scene CONTINUES that exact moment — the protagonist is STILL in it. The player's Action/Dialogue is the protagonist's response WITHIN this continuing moment, not the start of a new day.
+  3. DO NOT RESET TO AN ESTABLISHING SHOT. Forbidden opening moves when continuing: waking to a new morning, setting down / picking up the phone, checking a notification / voicemail / message, or a fresh "the [light] catches the [surface]" scene-setting beat — UNLESS the player's action explicitly creates that time gap. Begin INSIDE the ongoing moment.
+  CAUSAL LINK (HARD — THEREFORE / BUT, never "and then"): this scene must follow from the last as a CONSEQUENCE (therefore: the prior ending + the player's action FORCED this situation) or a COMPLICATION (but: a reversal / obstacle / cost the prior moment created). Before the first line, answer "what in the prior scene + the player's action FORCES this scene to exist?" and let THAT pressure open it — not a new beat that could have followed any scene. And by the scene's end, something must CHANGE that forces the next scene (a choice taken, a truth surfaced, a cost incurred, a line crossed); do not close on a flat beat that leaves the next scene free to be anything.
+  DIFFERENT DRAMATIC STATE (HARD — continuity is NOT repetition): the previous scene is COMPLETED. Its beat ALREADY HAPPENED — it does not need to be re-established, re-argued, or re-played. Carry its facts and voice FORWARD (above), but this scene MUST leave the characters in a MEANINGFULLY DIFFERENT DRAMATIC STATE than the previous one. Reach that new state by ONE OR MORE of: deepening the conflict, reversing an expectation, complicating the plan, revealing new information, shifting the balance of power, or changing what the protagonist wants — this need NOT mean a new location or a time-jump (a scene can stay in the same place and still reach a new state). FORBIDDEN: re-staging the previous scene's same confrontation, the same standoff, the same emotional register, or the same closing image. If this scene could be swapped with the previous one without the reader noticing, you have FAILED — move the drama to a new state. THE SPECIFIC NEW STATE THIS SCENE MUST REACH (this is the target — do NOT substitute a vaguer option from the menu above): the state in which these have CONCRETELY HAPPENED ON THE PAGE — «The inquiry formally opens against Lirael.». Intensifying, re-arguing, or escalating the PREVIOUS scene's confrontation/standoff does NOT count as reaching a new state, even when the wording differs — the scene is UNFINISHED until the above occurs as a concrete on-page event. If the requested move names people, objects, or places (a sigil, a wrist, a chain, an overheard conversation), they MUST APPEAR and the move MUST land through them.
+  4. If the prior scene ended on a settled emotional beat (not a live exchange), a SMALL time-skip is allowed — but the emotional state and all established facts carry over; never reset to a neutral establishing shot that ignores the prior scene's charge.
+  5. DEFERRED-ARRIVAL CONTINUITY (HARD — this story opened on a PC-OWNED crisis with the love interest absent): the protagonist's opening crisis is STILL ACTIVE and unresolved. The love interest's arrival must INTERTWINE with that crisis — he enters INTO it (complicating it, colliding with it, pressing on it, or being entangled by it), never erasing or replacing it. FORBIDDEN: the crisis quietly disappears the moment the romance begins ("PC crisis → LI appears → crisis forgotten"). REQUIRED: crisis and romance escalate TOGETHER — the romance is now happening ON TOP OF the still-burning problem, and the crisis keeps costing her something while the attraction builds.
+
+RELATIONSHIP STAGE — issue 1 of 2 (this issue's JOB for the couple; PACING, not a scene plan):
+- This issue TRAVERSES: RECOGNITION → ENTANGLEMENT — in order, no rung skipped; each is a FELT step, not a label to announce.
+    · RECOGNITION: two strangers/near-strangers become legible to each other — first real recognition, no security yet
+    · ENTANGLEMENT: their lives start to tangle — proximity, complicity, a shared stake they cannot cleanly exit
+- Land the issue ON ENTANGLEMENT.
+- The issue still gets its own beginning, escalation, payoff and cliffhanger.
+
+
 PLAYER MOVE — METABOLIZE, DO NOT SMOOTH OVER (HARD):
 The player just acted. Their literal input is CANON; the scene MUST react to it proportionally — characters respond in-character, the situation changes shape, consequences begin. Never ignore it, quietly normalize it into something tamer, or write as if it did not happen.
-  • PLAYER DID: "I wait for the clerk to finish."
-  • PLAYER SAID: "Who signed this?"
+  • PLAYER DID: "I let him read it."
 
 
 EXEMPLAR DISCIPLINE (HARD — applies to EVERY bracketed or quoted EXAMPLE anywhere in this prompt): those example lines exist ONLY to show the SHAPE of a strong beat — the move, the structure, the level of specificity. They are NOT a phrase bank. Do NOT reproduce any example's wording, imagery, metaphor, or distinctive sentence construction — not verbatim, and not lightly reskinned. Take the MOVE and rebuild it from scratch in THIS scene's own concrete, character-specific language. If a line you write could be found (even approximately) in one of the examples, rewrite it. The examples teach HOW to write the beat; the words must be your own and new to this story.
@@ -3093,9 +2819,24 @@ CHECKPOINT MARKERS (invisible — the system reads and strips them; readers neve
 PLANT THE ANOMALY EARLY (Issue 1 — the reader should NOTICE without being told). Do NOT explain it this Issue. The explanation is what later Issues earn.
 
 TURN INSTRUCTIONS:
-      Story So Far: ... [PLACEHOLDER SCENE — the authored Scene 1 replaces this text.]  The invitation had no name on it, which should have been the first thing I questioned and was, instead, the reason I came. Cream stock, heavier than it needed to be. An address in a part of the city where the streetlights are spaced further apart because the people who live there prefer it that way.  I had been standing under the awning for four minutes deciding whether to go in. That is the kind of detail I keep. Not the dress, not the car that let me out, not the weather. Four minutes, and the small sound my heel made each time I shifted my weight.  Inside, the room did the thing that expensive rooms do — it made a sound like a room half its size. Masks everywhere, and beneath them the particular confidence of people who have never once had to explain themselves.  Someone said my name. Not the name on the invitation, because there wasn't one. My actual name, in a voice I was certain I had heard before and could not place, and the certainty was worse than the not-placing.  I turned around.  [PLACEHOLDER SCENE — the authored Scene 1 replaces this text.] 
-      Player Action: I wait for the clerk to finish..
-      Player Dialogue: Who signed this?.
+      Structured State:
+world_state: Modern / small_town
+relationship_state: ST2 — Resistance Defined
+power_vector: Billionaire
+last_scene_summary: She rose before the second page was finished and asked who had signed it.
+narrative_memory: empty
+relationship_tension: unknown
+relationship_phase: strangers (ATTRACTION)
+active_petition: none
+tempt_fate_active: no
+consecutive_tempt_fate_count: 0
+fate_saturation: 0.00
+volatility_window: inactive
+fate_resonance: Quiet
+story_pacing: early (4 scenes)
+story_mode: participatory
+      Player Action: I let him read it..
+      Player Dialogue: .
       
 
       PLAYER INTENT ECHO (MANDATORY): Within the first 1–2 paragraphs, reference or paraphrase the player's input. Prefer character reaction or paraphrase over verbatim repetition.
@@ -3148,15 +2889,47 @@ Do NOT substitute generic genre tropes when the world flavor specifies a differe
 Reputation, gossip networks, and social visibility must shape romantic tension.
 
 If the generated scene does not visibly express the world's defining mechanism in paragraph one, the scene is incorrect.
-Write the opening scene (900-1100 words, hard cap 1100). This is the LONGEST scene.
-Establish: world, tone, power dynamics, emotional stakes, character tension.
-NO sexual or romantic physical contact between the two main characters in this scene.
-Ambient erotic content (side characters, memories, atmosphere) is permitted if tone is Dirty.
-3-SCENE IGNITION — PHASE 1: SITUATION
-This is the opening scene. Establish what physically happened or what is currently wrong.
-Show the concrete situation: a ritual that failed, a relic that shattered, a battle just ended, a character arriving somewhere dangerous, a discovery, a loss.
-Do NOT spend this scene on abstract emotional discussion. Ground the reader in observable reality first.
-Introduce at least one new concrete fact the reader has never seen before.
+
+PRESSURE ENGINE (phase: TEST, archetype: BEAUTIFUL_RUIN):
+This scene is driven by pressure. Phase defines intensity, archetype defines expression. They combine — never separate.
+- Romance MOD: Force emotional exposure or meaningful vulnerability.
+- Uncertainty MOD: Force action despite incomplete information.
+- Archetype expression: distinct
+Test phase: create a clear tradeoff. The player must face a cost no matter which direction they choose.
+If clarity is achieved, it must reveal a deeper unknown. Premature resolution is forbidden.
+Choices: act without clarity vs wait — risk either way.
+RULES: Pressure must persist. Do NOT resolve tension without cost. Do NOT remove difficulty. Do NOT allow consequence-free interaction. The story does NOT optimize for player preference. Comfort is allowed only when earned through prior cost. If the scene lacks tension, cost, or directional pressure, it is invalid.
+
+CROSS-CHARACTER DYNAMICS (scene tone: TEST):
+
+PHASE BEHAVIOR (ENFORCE):
+- Protagonist: PROBE (assessing, withholding, restrained)
+- BEAUTIFUL_RUIN: TEST (challenging, forcing exposure, assertive)
+
+PROBE: Do NOT initiate confrontation or force decisions. Use observation, implication, subtext.
+TEST: Directly challenge, pressure, or force reaction. Do NOT remain passive.
+CONSEQUENCE: React to prior actions. Show cost, fallout, reversal. Do NOT initiate new pressure.
+Characters MUST follow assigned phase. Blurred behavior = failure.
+
+MEMORY & INTERPRETATION:
+Characters interpret the player subjectively based on affinity, respect, tension.
+Interpretations may be incorrect — a kind act seen as manipulative, a neutral act as intentional.
+Repeated player behavior compounds impact. Characters do NOT share a unified view.
+
+CONFLICT & ALLIANCES:
+Characters may disagree about the player and confront each other — not just the player.
+Conflict should feel uneven (one presses, another hesitates). Avoid symmetrical debate.
+Alliances are fluid and situational — characters may briefly align then diverge.
+Do NOT fabricate conflict or alliances without memory basis. Do NOT resolve disagreements immediately.
+
+REALISM:
+Characters may act on their own goals, not just react to the player.
+Subtle inconsistency is allowed under emotional pressure — not chaotic, but human.
+All behavior must be motivated. Characters are autonomous, not player-serving.
+Scenes should feel socially alive: layered, shifting, imperfect.
+
+Write the next beat (600-800 words, hard cap 900).
+Take time for atmosphere, reaction, emotional beats, and tension building.
 FATE LANGUAGE (Modern):
 When expressing omens, fate echoes, convergences, or scene gravity, use world-appropriate framing:
 • Omens: a strange feeling of inevitability, a moment that lingered
@@ -3164,6 +2937,40 @@ When expressing omens, fate echoes, convergences, or scene gravity, use world-ap
 • Echoes: a memory that suddenly felt significant
 • Gravity: the sense that this meeting was always going to happen
 Do not use mystical language in non-fantasy worlds. Fate mechanics are constant — their narrative expression adapts to the setting.
+EMOTIONAL ENGINE:
+DESIRE PRESSURE: At least one character in this scene strongly wants something RIGHT NOW — a confession, to hide a secret, to leave, to stay, revenge, affection. Best scenes contain conflicting desires between characters.
+EMOTIONAL MOMENTUM: At least one relationship variable (trust, attraction, suspicion, resentment, vulnerability) must shift slightly by scene end. Even micro-changes create page-turning momentum.
+Characters express emotion through arguments, choices, physical reactions, and symbolic events — never through narrator explanation. Relationships can fracture, not just grow.
+SCENE PROMISE (MANDATORY):
+The scene MUST open with a micro-mystery or unresolved tension in the first paragraph — something that creates immediate curiosity.
+Avoid neutral setup openings (weather, scenery, routine). Instead open with: something unexpected, a question unanswered, a character behaving strangely, an object out of place, an emotional confrontation brewing, or a hint of hidden information.
+The promise creates a question the reader wants answered. The scene then gradually delivers — through escalation, partial reveals, or emotional shifts.
+Promise types to consider:
+- INFORMATION — the reader expects to learn something (a letter opened, a discovery made, an answer hinted at)
+- EMOTIONAL — a relationship moment is about to unfold (a confession, a confrontation, a decision about trust)
+- DANGER — something may go wrong (a door already open, an unexpected arrival, a warning sign)
+- MYSTERY — something unexplained has occurred (an object out of place, strange behavior, an unanswered question)
+Suggested emphasis this scene: EMOTIONAL — a relationship moment is about to unfold (a confession, a confrontation, a decision about trust)
+The promise does not need to fully resolve — it may deepen the mystery, trigger a new question, or escalate tension. Resolution can shift the question rather than eliminate it.
+CONTINUITY & MEMORY:
+
+NARRATIVE MEMORY (if applicable):
+If this scene contains a strongly emotional moment — a confession, betrayal, near-kiss, sacrifice, painful argument, shocking revelation, or moment of deep vulnerability — record it by outputting at the end:
+(ECHO_MEMORY: characters: [names] | emotion: [type] | moment: "[brief description]")
+Only record moments with genuine emotional weight. Not every scene qualifies. Max 1 per scene.
+
+CHARACTER GRAVITY SEED:
+If major characters have shared emotionally significant moments with the player character — vulnerable conversations, shared danger, revealed secrets, romantic tension, sacrifices — begin tracking their emotional importance.
+Output at the end: (GRAVITY: [character name] +[points] for "[reason]")
+Points: vulnerable conversation +2, shared danger +2, secret revealed +3, romantic moment +3, sacrifice +4, misunderstanding +1, quiet personal moment +2.
+Only track characters with genuine emotional connection to the player character.
+
+If this scene contains a significant dialogue moment between characters — a confession, argument, promise, betrayal, shared vulnerability, first attraction, teasing exchange, or shared secret — output at the end:
+(CONV_MEMORY: "[brief summary]" | characters: [A, B] | type: [confession/argument/teasing/promise/betrayal/vulnerability/first_attraction/shared_secret] | tone: [emotional tone] | phrase: "[key memorable phrase if any]")
+Only for emotionally meaningful exchanges. One per scene maximum.
+CHARACTER DESIRES:
+- Julian: wants to withhold_truth (toward The Protagonist) [medium, 3 scenes] — careful wording, partial answers; technically honest but incomplete
+Characters should pursue these objectives through dialogue and behavior — not explicitly, but through word choice, topic steering, and emotional strategy.
 ATTRACTION DYNAMICS:
 
 SPARK MOMENT:
@@ -3174,3 +2981,38 @@ ATTRACTION ANCHOR:
 This relationship’s attraction source is: contrast. Characters reveal opposing traits that create intrigue or tension.
 Show one observable moment that naturally creates attraction through action or behavior. Do not state attraction — show the reason first.
 Output (ANCHOR_ESTABLISHED) when the moment occurs.
+HUMAN ANCHOR DISCOVERY:
+The viewpoint character notices evidence of something unexpectedly human about Julian: endows a scholarship in a name no one connects to him.
+Show the evidence rather than explaining it — a stack of repaired objects, an unfinished letter, a ritual repeated when nobody is watching. The moment should feel accidental and observational. Reveal only part of the meaning; the full significance can remain ambiguous.
+Output (HUMAN_ANCHOR_DISCOVERED) if the moment lands.
+OBVIOUS SOLUTION BLOCKED (timing failure):
+There exists a simple action that could reduce the current tension. However, circumstances prevent the characters from taking that action now. Introduce a believable obstacle: timing failure. The characters should feel that clarity was almost possible, but the moment slips away.
+ROMANTIC ESCALATION DELAY:
+The relationship has not accumulated enough emotional pressure yet (1/6). Shift focus toward tension, curiosity, subtle attraction, or unresolved signals. Avoid premature confessions or declarations.
+
+Narrative skeleton for this scene:
+• pacing: undefined
+• dialogue ratio: undefined
+• emotional density: undefined
+• beat rhythm: undefined
+• tension rhythm: undefined
+Preserve this structural rhythm unless the scene requires deviation.
+
+CHARACTER+ ASSIGNED THIS SCENE — one beat per person listed, at their FIRST mention:
+  • the narrator (first mention — the beat lands here) — assigned BELOW as the PROTAGONIST OPENING BEAT. That single beat is her Character+; do not write her a second one here.
+  RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose: the VISIBLE ACTION happens, and the PC INTERPRETATION governs how it is narrated. The SOURCE TRUTH governs accuracy and must remain UNSTATED — never write it, never paraphrase it, never let a character say it.
+  DO NOT write the action and then append an explanatory diagnosis of it. Let the wording, the sequence, the consequence, or what she focuses on carry the interpretation. In every case a reader must be able to say what the beat exposed about that person — a flaw, an obsession, a private secret, a contradiction, a worldview — and what it shows of how SHE sees; the PC INTERPRETATION above is that target, the lens operation is only the route to it. Any of these shapes is right:
+    · the action, then one brief focalised inference;
+    · the interpretation folded into how the action is described;
+    · the action, then a consequence that makes her reading legible without naming it.
+  What is wrong is the same two-sentence machine every time — "They did X. I realised this meant Y."
+
+ENVIRONMENT+ ASSIGNED THIS SCENE (required): the long table along the wall — through the axis of use. What has it become because of what happened to it? Not symbolism, not atmosphere.
+  ↳ THIS IS THE SAME THING THE PROTAGONIST OPENING BEAT BELOW TOUCHES. That beat is where the axis first lands. Keep developing this object through the scene — but do NOT stage a second, separate moment of realising what it has become.
+
+PROTAGONIST OPENING BEAT (HARD — Character+ × Environment+ in ONE beat, at the narrator's FIRST embodied action or sensory response; no second, separate opening action):
+  · CONTACT: PRESS — the long table along the wall
+  · WHAT IT SHOWS ABOUT the narrator (lens: EXAMINE_FOR_THE_HOOK_UNDERNEATH): She reads the room for what the invitation is going to cost her.
+  · THE ENVIRONMENT AS IT BEARS ON the narrator (axis: use): Every arrival puts another body between her and the door she came in by.
+  · WHAT IT MUST EXPOSE (HARD): a specific, non-obvious truth about the narrator — a flaw, an obsession, a private secret, a contradiction, a worldview — read as her archetype reads; and, when the target was made, kept or MARKED by someone, what its condition gives away about them. An unmarked natural target exposes only her; one that carries a real mark (a scar, a cut path, a worn stone) exposes whoever made the mark as well — never an intention invented for it.
+  Write ONE beat that fuses all three. Do not copy these sentences. The thing itself is named once above and need not be renamed.
