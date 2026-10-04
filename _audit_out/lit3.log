@@ -1,0 +1,51 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   PROVIDER REQUESTS SEEN (21):
+     [other] 455c  Write a "Previously…" recap as EXACTLY four bullet points, each 13 wor
+     [bible] 8725c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char
+     [bible] 18859c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+     [other] 3705c  You are the architect of WHY THIS PAIR. Read the two Bibles and the ro
+     [other] 6724c  You are designing an R-PLOT — a tiny narrative planning object that tr
+     [other] 54905c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 55377c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 1876c  You are compressing the procedural A-plot of a romance novel into SIX 
+     [bible] 8928c  You are generating an ANTAGONIST BODY BIBLE for a romance novel — a pe
+     [other] 4239c  You are a scene-structure planner for the OPENING scene of an interact
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 11683c  ROLE: You are the Strategy Engine for an interactive romance story gen
+     [planner] 7735c  You are the SCENE-SPINE planner for an interactive romance engine. The
+     [author] 495865c   ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are 
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 1931c  You are a ruthless line-editor for romance prose. Find the up-to-FIVE 
+     [other] 704c  Fix ONLY mechanical defects in this scene: broken or incomplete senten
+     [other] 704c  Fix ONLY mechanical defects in this scene: broken or incomplete senten
+     [other] 3565c  You are a story-structure auditor applying ONE test: the WOUND→LI SWAP
+     [other] 3151c  You are the SUBPLOT GENERATOR for Storybound. Your job: generate 2 SUB
+
+   ISSUED LENS OPERATIONS FROM THE LIVE PROMPT:
+     cipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" } ("behavior" is the FLOOR: an observable action, a sensory selection (what they look at / away from), how they handle speech (answer, delay, cut in, go quiet), posture, timing, or a material interaction with something in this scene. TEST: could a camera record it, or could you write it as one sentence of action? If not, rewrite it. ✗ "a woman clinging to the illusion of worthiness" ✗ "an authority whose judgment will decide her fate" ✗ "a name that carries more weight than it should" — these are conclusions ABOUT people; no camera can see them.) (YOU DO NOT WRITE THE PSYCHOLOGY. The canonical truth you cite is delivered 
+   setup fixtures served: {"recap":1,"pc_bible":1,"li_bible":1,"why_pair":1,"r_plot":1,"a_plot":2,"aplot_compress":1,"antagonist_bible":1,"opening_planner":1,"normalization":2,"swap_test":1}
+   STILL UNFIXTURED (6):
+     ROLE: You are the Strategy Engine for an interactive romance story generator. You make STR
+     You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by prio
+     Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragm
+     You are the SUBPLOT GENERATOR for Storybound. Your job: generate 2 SUBPLOTS for the curren
+   author requests: 1   notes stored: 0
+   notes: []
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE through the reader control
+  FAIL 1b. and it ASKS FOR THE NOTE  — the literary author prompt does not request a history note
+  ok   3. THE READER SEES NO METADATA
+  FAIL 4. the note is keyed to the accepted page  — ref=undefined page=pg:5ecc8fd7-5b10-4ce5-94bd-2ab7f239e0c1
+
+2/4 checks passed

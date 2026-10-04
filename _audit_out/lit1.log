@@ -1,0 +1,81 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   PROVIDER REQUESTS SEEN (12):
+     [other] 455c  Write a "Previously…" recap as EXACTLY four bullet points, each 13 wor
+     [bible] 8736c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char
+     [bible] 18915c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+     [other] 3705c  You are the architect of WHY THIS PAIR. Read the two Bibles and the ro
+     [other] 6724c  You are designing an R-PLOT — a tiny narrative planning object that tr
+     [other] 55027c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 55499c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 1876c  You are compressing the procedural A-plot of a romance novel into SIX 
+     [bible] 8928c  You are generating an ANTAGONIST BODY BIBLE for a romance novel — a pe
+     [other] 6177c  You are a scene-structure planner for the OPENING scene of an interact
+     [other] 6332c  You are a canonicalization and normalization engine for Storybound. Y
+     [other] 3565c  You are a story-structure auditor applying ONE test: the WOUND→LI SWAP
+
+   ISSUED LENS OPERATIONS FROM THE LIVE PROMPT:
+     cipient; [] if none>"], "revelation_bridge": "<PLANNING ONLY — how that act reveals THIS truth under THIS condition. Never reaches the author.>", "pc_lens_operation": "<EXACTLY one operation from the CHARACTER+ READING LENS list below>", "pc_interpretation": "<what she concludes about THAT person — motive, defence, need, value or contradiction. Name them.>" } ("behavior" is the FLOOR: an observable action, a sensory selection (what they look at / away from), how they handle speech (answer, delay, cut in, go quiet), posture, timing, or a material interaction with something in this scene. TEST: could a camera record it, or could you write it as one sentence of action? If not, rewrite it. ✗ "a woman clinging to the illusion of worthiness" ✗ "an authority whose judgment will decide her fate" ✗ "a name that carries more weight than it should" — these are conclusions ABOUT people; no camera can see them.) (YOU DO NOT WRITE THE PSYCHOLOGY. The canonical truth you cite is delivered 
+   setup fixtures served: {"recap":1,"pc_bible":1,"li_bible":1,"why_pair":1,"r_plot":1,"a_plot":2,"aplot_compress":1,"antagonist_bible":1,"opening_planner":1,"swap_test":1}
+   STILL UNFIXTURED (1):
+     You are a canonicalization and normalization engine for Storybound. You do NOT write pros
+   author requests: 0   notes stored: 0
+   notes: []
+
+   VISIBLE UI AT THE BLOCK:
+     modals: []
+     btn {"id":"btn-auth-submit","cls":"sb-btn-png md","txt":""}
+     btn {"id":"conciergeCloseBtn","cls":"concierge-dialogue-close","txt":""}
+     btn {"id":"coverNextBtn","cls":"page-nav-btn","txt":"Next\n→"}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":"intimacyDevBatchBtn","cls":"","txt":"All × 4"}
+     btn {"id":"intimacyDevReviewBtn","cls":"","txt":"Review"}
+     btn {"id":"intimacyDevLauncher","cls":"","txt":""}
+     btn {"id":null,"cls":"missing-selections-fate-btn","txt":"Let Fate Choose for Me"}
+     btn {"id":null,"cls":"missing-selections-close-btn","txt":"Close"}
+
+   FIRST UNMET PREREQUISITE — captured console:
+     [BETA] scene_quality_scan_fail {"sceneIndex":1,"wordCount":206,"choiceCount":0,"repeatedBodyTells":[],"inventedProperNouns":[],"groundingCoverage":null,"deadAxisPros
+     [BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)
+     [BAKED:GATE] Genesis unlocked (issue-60) — starter=starter_the_first_taste
+     [FATE:ENGAGEMENT] submit#1 mode=literary | reliance=0.00 (0clicks/1submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+     [OWNERSHIP] scene 0 — lead=+0.5 (obj=1 rel=0.5) | unset → mixed
+     [AGENCY] engaged (act: 31 ch, dia: 16 ch)
+     [GHOST] Divergence detected (1.00), ghost bias overridden
+     [Supabase] Snapshot saved for story: 0d1acecf-7be5-4785-aedc-3737c4e29b0c
+     Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+     [NORMALIZATION FAILED] HTTP 503: harness: upstream stage not fixtured
+     [SCENE-GEN:FAIL] Caught uncaught rejection during scene gen: [NORMALIZATION FAILED] HTTP 503: harness: upstream stage not fixtured
+     PAGEERROR: [NORMALIZATION FAILED] HTTP 503: harness: upstream stage not fixtured
+     [SCENE-FAIL] Unknown source from server: undefined
+     [WOUND→LI] PASS — wound="she was left somewhere public" × Julian (BEAUTIFUL_RUIN) · link: her abandonment wound is answered specifically by his refusal to need anyth
+     [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1
+     [WOUND→LI:TYPE] no ledger yet — fills one entry per story (when the wound is INTEGRATED/PARTIAL).
+     [SCENE-AMB] → neutral_quiet
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [SCENE-AMB-L2] → urban_room @ 0.025
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [SUBPLOT] spine never appeared after 60s wait — running with A-plot context only (no spine refraction)
+     [GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE through the reader control  — no author request — see the console capture above
+
+0/1 checks passed

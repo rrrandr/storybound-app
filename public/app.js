@@ -318466,7 +318466,26 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           _sysForTurn = _sysForTurn.replace(window._ARCH_LAWS_SCENE1_STRIP, window._ARCH_LAWS_CONT_TITLE);
         }
       } catch (_archStripErr) { _sysForTurn = state.sysPrompt || ''; }
-      let fullSys = !_buildHeavy ? '' : (_sysForTurn + _persistentStableTail + _CACHE_SENTINEL + _buildAuthorFloorDirective(state) + _buildContinuitySpineBlock(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + _seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
+      // ═══ THE HISTORY NOTE IS PART OF THE LITERARY AUTHOR'S CONTRACT ═══════════════════
+      // It was first added to _buildLitLitePrompt (app.js:73252), which the Book continuation
+      // path does NOT use — the author request came back with no note instruction in it. The
+      // instruction belongs with the CONTRACT, so it is appended to the system prompt every
+      // literary author call on this path shares, rather than to one of several turn builders.
+      var _hnLiteraryContract = '\n\nAFTER the scene is complete, on a new line, append a HISTORY '
+        + 'NOTE for the story engine. THE READER NEVER SEES IT. Format EXACTLY:\n'
+        + '<<<HISTORY_NOTE {"events":[{"text":"<what ACTUALLY happened in the scene you just '
+        + 'wrote>","quote":"<a SHORT phrase copied EXACTLY from your own prose above>"}],'
+        + '"decisions":[],"consequences":[],"transfers":[{"text":"<any object that changed hands '
+        + 'or change of place>","quote":"<exact phrase>"}],"disclosures":[{"text":"<what was '
+        + 'revealed, promised or admitted ON THE PAGE>","quote":"<exact phrase>"}],'
+        + '"obligations":[{"id":"<short-stable-id>","text":"<what is now owed or unanswered>",'
+        + '"owedBy":"<who>"}],"resolves":[]} HISTORY_NOTE>>>\n'
+        + 'Summarize THE SCENE YOU JUST WROTE, never the scene you were asked to write: if you '
+        + 'planned an acceptance but only wrote a clerk beginning to read, the note says the '
+        + 'clerk began reading. A claim without an exact quote is kept as your unverified account '
+        + 'and will NOT be treated as fact. Omit anything your prose does not show. Write nothing '
+        + 'after the closing marker.';
+      let fullSys = !_buildHeavy ? '' : (_hnLiteraryContract + _sysForTurn + _persistentStableTail + _CACHE_SENTINEL + _buildAuthorFloorDirective(state) + _buildContinuitySpineBlock(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + _seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -319285,6 +319304,11 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           try {
             if (typeof _sbExtractLiteraryNote === 'function') {
               var _hnEx = _sbExtractLiteraryNote(raw);
+              // CLEARED ON EVERY RESPONSE, set only when a note actually parsed. This is what
+              // stops a note from a turn that never reached acceptance surviving into a LATER
+              // scene: the next response overwrites it, and a response carrying no note wipes it.
+              try { delete s._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
+              try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
               if (_hnEx && _hnEx.blocks) {
                 raw = _hnEx.body;
                 // REQUEST-LOCAL, NOT AN UNKEYED GLOBAL. Stamped with the turn it belongs to so
@@ -321273,14 +321297,20 @@ ABSOLUTE RULES:
               var _pendHN = state._pendingLiteraryHistoryNote || null;
               if (_pendHN) {
                 try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
-                if (Number(_pendHN.turn) === Number(state.turnCount || 0)) {
+                // turnCount INCREMENTS DURING THE TURN — the note is extracted when the
+                // response lands and consumed after the scene is accepted, so an equality check
+                // discarded every valid note ("stamped for turn 0 at turn 1"). The window is the
+                // turn in flight: the current count, or the one it just advanced from.
+                var _nowTurn = Number(state.turnCount || 0);
+                var _stamp = Number(_pendHN.turn);
+                if (_stamp === _nowTurn || _stamp === _nowTurn - 1) {
                   var _pgUid = StoryPagination.getCurrentPageUid();
                   if (_pgUid && typeof _attachHistoryNote === 'function') {
                     _attachHistoryNote(String(_pgUid), _pendHN.note, String(raw || ''));
                   }
                 } else {
-                  console.warn('[HISTORY-NOTE] discarded a note stamped for turn ' + _pendHN.turn
-                    + ' at turn ' + state.turnCount + ' — it did not belong to this scene');
+                  console.warn('[HISTORY-NOTE] discarded a note stamped for turn ' + _stamp
+                    + ' at turn ' + _nowTurn + ' — it did not belong to this scene');
                 }
               }
             } catch (_hnAtErr) {}

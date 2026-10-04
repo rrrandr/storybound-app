@@ -3107,7 +3107,20 @@ FAILURE CONDITIONS (invalid outputs):
     //     Forced ({purple:true}), drift+banned-word guarded inside _applyPurpleLens; keeps the
     //     original on any failure. Grok-authored (premium) prose skips this (the flat finalization
     //     lens handles it). No-op if _applyPurpleLens isn't loaded yet.
-    if (_smallAuthor && typeof window !== 'undefined' && typeof window._applyPurpleLens === 'function') {
+    // BUG FIX (found by the literary reader-path harness, 2026-10-04): this referenced a bare
+    // `_smallAuthor`, which is defined NOWHERE in the codebase. Reaching this line threw
+    // "ReferenceError: _smallAuthor is not defined", which app.js:290972 then rethrew as
+    // "Story generation failed: … Grok cannot be used for story authoring." — so the whole
+    // literary turn died at the purple-lens step and the real cause was hidden behind a
+    // misleading provider message.
+    //
+    // The comment immediately above says Grok-authored (premium) prose SKIPS this pass, so the
+    // guard is "was this authored by Small". _smallAuthorEnabled() is that predicate, and it is
+    // called defensively so a missing helper can never throw here again.
+    var _wasSmallAuthored = false;
+    try { _wasSmallAuthored = (typeof _smallAuthorEnabled === 'function') ? !!_smallAuthorEnabled() : false; }
+    catch (_) { _wasSmallAuthored = false; }
+    if (_wasSmallAuthored && typeof window !== 'undefined' && typeof window._applyPurpleLens === 'function') {
       try {
         const _purpled = await window._applyPurpleLens(prose, { purple: true });
         if (_purpled && _purpled.length > 40) { prose = _purpled; try { console.log('[GROK-LIT] purple-lens applied to Small-authored prose'); } catch (_) {} }

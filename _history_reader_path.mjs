@@ -31,9 +31,9 @@ const LIT = [
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const logs = [];
-let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
+let authorAll = ''; let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
 let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = ''; let openingUsr = '';
-const setupServed = {}; const unfixtured = [];
+const setupServed = {}; const unfixtured = []; let lineEditCalls = 0; let lineEdit = [];
 
 // EVERYTHING. Narrow filters are how I lost the answer three times in this session: the app had
 // already printed the reason and the harness discarded it.
@@ -95,6 +95,7 @@ await page.route('**/api/**', async (route) => {
   }
   if (stage === 'author') {
     authorReqs.push(sys);
+    try { authorAll += '\n' + String((JSON.parse(raw || '{}').messages || []).map(m => m.content).join('\n')); } catch (_) {}
     litServed++;
     let body = LIT[Math.min(litIdx, LIT.length - 1)];
     if (!serveNote) body = body.replace(/<<<HISTORY_NOTE[\s\S]*?HISTORY_NOTE>>>/g, '').trim();
@@ -124,6 +125,17 @@ await page.route('**/api/**', async (route) => {
   // let onboarding finish so the AUTHOR is called. They are not the behaviour under test, and
   // they manufacture no scene, note, acceptance or settlement.
   const setupStage = setupStageOf(sys);
+  if (setupStage === 'mech_fix') {
+    // It returns PROSE, not JSON: echo the input so it is a genuine no-op.
+    let given = ''; try { given = String((JSON.parse(raw || '{}').messages || [])[1]?.content || ''); } catch (_) {}
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ content: given }) });
+  }
+  if (setupStage === 'line_edit') {
+    lineEditCalls++;
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ content: JSON.stringify(lineEdit) }) });
+  }
   if (setupStage && SETUP_RESPONSES[setupStage]) {
     setupServed[setupStage] = (setupServed[setupStage] || 0) + 1;
     return route.fulfill({ status: 200, contentType: 'application/json',
@@ -321,7 +333,18 @@ if (openingUsr) {
 }
 console.log('   setup fixtures served: ' + JSON.stringify(setupServed));
 if (unfixtured.length) { console.log('   STILL UNFIXTURED (' + unfixtured.length + '):');
-  [...new Set(unfixtured)].slice(0, 6).forEach(u => console.log('     ' + u)); }
+  [...new Set(unfixtured)].forEach(u => console.log('     ' + u)); }
+const hnProbe = await page.evaluate(() => ({
+  pending: window.state._pendingLiteraryHistoryNote || null,
+  notes: (window.state._historyNotes || []).length,
+  scenes: (window.state.scenes || []).length,
+  pageUid: (window.StoryPagination && window.StoryPagination.getCurrentPageUid)
+    ? window.StoryPagination.getCurrentPageUid() : null,
+  ledger: ((window.state._sceneLedger || {}).entries || []).length
+}));
+console.log('   history-note state: ' + JSON.stringify(hnProbe));
+const hnLogs = logs.filter(l => /HISTORY-NOTE/.test(String(l)));
+console.log('   HISTORY-NOTE log lines: ' + (hnLogs.length ? JSON.stringify(hnLogs.slice(0, 4)) : 'NONE'));
 console.log('   author requests: ' + authorReqs.length + '   notes stored: ' + after1.notes.length);
 console.log('   notes: ' + JSON.stringify(after1.notes));
 
@@ -344,8 +367,14 @@ if (authorReqs.length === 0) {
 t('1. THE REAL AUTHOR REQUEST WAS MADE through the reader control', authorReqs.length > 0,
   'no author request — see the console capture above');
 if (authorReqs.length) {
-  t('1b. and it ASKS FOR THE NOTE', /HISTORY_NOTE/.test(authorReqs[0]),
-    'the literary author prompt does not request a history note');
+  // The instruction lives in the TURN (user) message, not the system one — my earlier check read
+  // only the system message and reported a false negative.
+  console.log('   author payload markers: TURN:=' + /TURN:/.test(authorAll)
+    + ' PLAYER ACTION:=' + /PLAYER ACTION:/.test(authorAll)
+    + ' HISTORY_NOTE=' + /HISTORY_NOTE/.test(authorAll)
+    + ' chars=' + authorAll.length);
+  t('1b. and it ASKS FOR THE NOTE', /HISTORY_NOTE/.test(authorAll),
+    'the literary author request does not request a history note');
   t('3. THE READER SEES NO METADATA', !after1.domHasSentinel, 'the sentinel reached the page');
   t('4. the note is keyed to the accepted page', after1.notes.length === 1
     && after1.notes[0].ref === after1.pageUid,

@@ -159,6 +159,44 @@ export const SWAP_TEST = {
   fix: null
 };
 
+// The canonicalisation/normalisation engine. Shape read from the prompt's own response block
+// (app.js:18272 ff): it echoes the input unchanged, which is the correct no-op for fixture text
+// that contains no protected IP.
+export const NORMALIZATION = {
+  kind: 'real_ancestry',
+  normalized_text: '',
+  canonical_form: null,
+  rejection_reason: null,
+  confidence_level: 'high'
+};
+
+export const STRATEGY = {
+  intent_category: 'hold_position', type: 'social', present: ['Lirael', 'Julian'],
+  st_phase: 'early', tone_pressure: 'rising', power_vector_shift: 'toward the room',
+  active_entropy_axis: 'exposure', entropy_manifestation_summary: 'she is noticed more each minute',
+  syzygy_triggered: false, world_artifact_to_surface: null, petition: null
+};
+
+export const SUBPLOTS = { subplots: [
+  { id: 'sp1', title: 'The Misdirected Invitation', summary: 'Someone else was meant to be here.',
+    involved_characters: [{ role: 'pc', secondary_role: 'subject' }], initial_status: 'open',
+    first_surface_scene: 2, emotional_weight: 'medium', thematic_alignment: 'exposure',
+    convergence_potential: 'high' },
+  { id: 'sp2', title: 'The Unsigned Demand', summary: 'No one will say who signed it.',
+    involved_characters: [{ role: 'li', secondary_role: 'withholder' }], initial_status: 'open',
+    first_surface_scene: 3, emotional_weight: 'high', thematic_alignment: 'authority',
+    convergence_potential: 'medium' } ] };
+
+// THE LINE-EDITOR IS A REAL DOWNSTREAM REWRITE. It returns {quote, replacement} pairs that the
+// app applies to the ACCEPTED prose (orchestration-client.js:3076). The fixture uses it to
+// REMOVE A SPAN THE HISTORY NOTE CITES, which is the only honest way to test that a stored note
+// is checked against the final prose rather than the draft it was written from.
+export const LINE_EDIT_REMOVING_CITED_SPAN = [
+  { quote: 'began reading the demand aloud',
+    replacement: 'unfolded the page and said nothing for a moment' }
+];
+export const LINE_EDIT_NOOP = [];
+
 // Which stage a system prompt belongs to. Read from the producing prompts, not guessed.
 export function setupStageOf(sys) {
   if (/this character's ONE memorable physical marker/.test(sys)) return 'pc_bible';
@@ -171,13 +209,19 @@ export function setupStageOf(sys) {
   if (/compressing the procedural A-plot/.test(sys)) return 'aplot_compress';
   if (/generating an ANTAGONIST BODY BIBLE/.test(sys)) return 'antagonist_bible';
   if (/WOUND.{0,3}LI SWAP TEST/.test(sys)) return 'swap_test';
+  if (/canonicalization and normalization engine/.test(sys)) return 'normalization';
+  if (/Strategy Engine for an interactive romance/.test(sys)) return 'strategy';
+  if (/SUBPLOT GENERATOR for Storybound/.test(sys)) return 'subplots';
+  if (/ruthless line-editor for romance prose/.test(sys)) return 'line_edit';
+  if (/Fix ONLY mechanical defects/.test(sys)) return 'mech_fix';
   return null;
 }
 
 export const SETUP_RESPONSES = {
   pc_bible: PC_BIBLE, li_bible: LI_BIBLE, r_plot: R_PLOT, a_plot: A_PLOT,
   why_pair: WHY_THIS_PAIR, aplot_compress: APLOT_COMPRESSION,
-  antagonist_bible: ANTAGONIST_BIBLE, swap_test: SWAP_TEST,
+  antagonist_bible: ANTAGONIST_BIBLE, swap_test: SWAP_TEST, normalization: NORMALIZATION,
+  strategy: STRATEGY, subplots: SUBPLOTS, line_edit: LINE_EDIT_NOOP,
   recap: { bullets: ['She accepted an invitation meant for someone else.',
                      'She went anyway, and he noticed her at the door.',
                      'He has not said her name where anyone can hear it.',
@@ -233,17 +277,24 @@ export const SETUP_RESPONSES = {
       // The fusion is what the repair pass targets when it is thin. CONTACT verbs are an
       // enumerated set from the live prompt (GRIP/PRESS/.../HOLD), and "grounds" MUST include
       // env:axis plus at least one id that is not env:*.
+      // ── THE FUSION, ASSEMBLED FROM THE VALIDATOR AND THE CONTRACT TOGETHER ────────────────
+      // Required v3 fields (app.js:282582): pc_lens_operation, character_revelation,
+      // environment_pressure — plus a STRUCTURED contact (verb + object).
+      //   · pc_lens_operation must be one of the four ISSUED for this mask. BEAUTIFUL_RUIN's are
+      //     EXAMINE_FOR_THE_HOOK_UNDERNEATH / TEST_WHO_IS_PAYING_ATTENTION_AND_WHY /
+      //     DISTRUST_THE_UNEARNED / DISCOUNT_HER_OWN_STANDING (_PC_LENS_OPERATIONS, app.js:141674).
+      //   · contact.object must be the EXACT name of an issued stage element, and the verb must
+      //     be permitted by that element's affordance (SURFACE does not take HOLD; PRESS does).
+      //   · environment_pressure is an OBJECT whose grounds cite ISSUED ids, and must include
+      //     env:axis plus at least one id that is not env:*.
       pc_opening_fusion: {
-        pc_lens_operation: 'she measures rooms by how fast she could leave them',
-        pc_interpretation: 'the crowd reads to her as depth between herself and the door',
-        placement: 'just inside the doorway, where the coats are',
-        // SURFACE does not permit HOLD; PRESS is what a flat hand on a table actually is.
+        pc_lens_operation: 'EXAMINE_FOR_THE_HOOK_UNDERNEATH',
+        character_revelation: 'She reads the room for what the invitation is going to cost her.',
         contact: { verb: 'PRESS', object: 'the long table along the wall' },
-        action: 'She sets her hand flat on the worn band of varnish and leaves it there.',
-        character_revelation: 'she needs something solid between herself and the room',
-        environment_pressure: 'every arrival puts another body between her and the door',
-        grounds: ['env:axis', 'stage:element:1'],
-        text: 'She keeps her hand on the table the way other people keep a hand on a railing.'
+        environment_pressure: {
+          text: 'Every arrival puts another body between her and the door she came in by.',
+          grounds: ['env:axis', 'stage:fact:1']
+        }
       },
       character_plus: null
     },
