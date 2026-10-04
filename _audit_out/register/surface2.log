@@ -1,0 +1,41 @@
+=== LONGER BEATS: SURFACE, NAVIGATION, ATTRIBUTION (provider-free, $0) ===
+
+1. THE CONTRACT ITSELF
+  ok   the blanket 1–2 sentence cap is gone
+  ok   length now follows the moment
+  ok   and it is PERMISSION, not a quota or a minimum
+  ok   voice/perception is asked for ACROSS THE SCENE, not in every beat
+  ok   both failure modes are named — shorthand AND over-explaining
+  ok   the final-beat-one-sentence rule survives
+  ok   dialogue beats still carry JUST the spoken line (see attribution below)
+
+2. ATTRIBUTION — spans and typing across mixed beat lengths
+   typing: [{"i":0,"t":"narrator"},{"i":1,"t":"speaker"},{"i":2,"t":"narrator"},{"i":3,"t":"narrator"},{"i":4,"t":"narrator"},{"i":5,"t":"speaker"}]
+  ok   one sidecar entry per beat
+  ok   EVERY span resolves to its own beat text — exactly, or after its speaker label
+  ok   and every speaker label sits INSIDE its own beat span
+  ok   narration and exposition are typed narrator
+  ok   dialogue beats are typed speaker
+  ok   coverage is still complete
+
+3. THE STAGED READER SURFACE at 390x844 (one beat at a time)
+   beat 0  47w  height  125px  clipped=false  (font 15.2px, max-height none)
+   beat 1  13w  height   50px  clipped=false  (font 15.2px, max-height none)
+   beat 2   6w  height   25px  clipped=false  (font 15.2px, max-height none)
+   beat 3  52w  height  125px  clipped=false  (font 15.2px, max-height none)
+   beat 4   7w  height   25px  clipped=false  (font 15.2px, max-height none)
+   beat 5  11w  height   50px  clipped=false  (font 15.2px, max-height none)
+  ok   NO beat is clipped by its own box at phone width
+  ok   the tallest beat still fits a phone viewport with room for chrome
+   tallest: 125px (15% of viewport)
+
+4. PER-BEAT MAPPINGS — one sustained moment still carries one of each
+  ok   expression_target is still per beat
+  ok   cut_to_closeup is still per beat
+  ok   pc_proxy_action is still per beat
+  ok   tension_state is still per beat
+   These are per-beat fields and a beat is still ONE sustained moment, so one
+   expression per beat remains coherent. What is NOT established here is reading
+   TIME per beat, which rises with length — see the report.
+
+19/19 checks passed
