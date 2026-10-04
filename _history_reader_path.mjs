@@ -6,6 +6,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { stageOf, isProviderEndpoint, oasTurn, oasClosingBeat, OAS_TURNS } from './_replay_fixtures.mjs';
+import { setupStageOf, SETUP_RESPONSES } from './_reader_setup_fixtures.mjs';
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
@@ -31,7 +32,8 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const logs = [];
 let litIdx = 0, litServed = 0, plannerReqs = [], authorReqs = [], blocked = 0, serveNote = true;
-let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = '';
+let paymentSim = 0, externalRefused = 0; const provSeen = []; let openingSchema = ''; let openingUsr = '';
+const setupServed = {}; const unfixtured = [];
 
 // EVERYTHING. Narrow filters are how I lost the answer three times in this session: the app had
 // already printed the reason and the harness discarded it.
@@ -71,6 +73,10 @@ await page.route('**/api/**', async (route) => {
   let sys = ''; try { sys = String((JSON.parse(raw || '{}').messages || [])[0]?.content || ''); } catch (_) {}
   const stage = stageOf(sys);
   provSeen.push({ stage, chars: sys.length, head: sys.slice(0, 70).replace(/\s+/g, ' ') });
+  if (/scene-structure planner for the OPENING scene/.test(sys) && !openingUsr) {
+    try { const msgs = JSON.parse(raw || '{}').messages || [];
+      openingUsr = String((msgs[1] || {}).content || ''); } catch (_) {}
+  }
   if (/scene-structure planner for the OPENING scene/.test(sys) && !openingSchema) {
     const m = sys.match(/\{[^{}]*"[a-z_]+"[\s\S]{0,1200}/);
     openingSchema = m ? m[0] : sys.slice(0, 1500);
@@ -112,32 +118,19 @@ await page.route('**/api/**', async (route) => {
         entitled: true, eligible: true, storypassEligible: true,
         operationId: 'harness-sim-op' }) });
   }
-  // THE OPENING SCENE-STRUCTURE PLANNER. Its keys were read from the app's own prompt
-  // (app.js:280627 ff). This is a STRUCTURAL fixture so the chain reaches the author; it supplies
-  // no prose, no history note, and no adjudication — those come only from the declared
-  // model-response fixtures.
-  if (/scene-structure planner for the OPENING scene/.test(sys)) {
+  // ── SETUP STAGES, ALL FIXTURED FROM THEIR OWN CONTRACTS ───────────────────────────────────
+  // PC bible, LI bible, R-PLOT, A-PLOT, the opening planner and the recap. Keys read from each
+  // producing prompt in app.js, so each parser gets the shape it expects. These are SETUP: they
+  // let onboarding finish so the AUTHOR is called. They are not the behaviour under test, and
+  // they manufacture no scene, note, acceptance or settlement.
+  const setupStage = setupStageOf(sys);
+  if (setupStage && SETUP_RESPONSES[setupStage]) {
+    setupServed[setupStage] = (setupServed[setupStage] || 0) + 1;
     return route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ content: JSON.stringify({
-        opening_spine: 'She arrives where she was not invited and is recognised anyway.',
-        pressure_source_type: 'relational',
-        pressure_source: 'the host who knows exactly who she is',
-        hook_object: null,
-        opening_actor_id: 'protagonist',
-        opening_beat: 'She steps into the room and the conversation changes pitch.',
-        rising_beats: ['A stranger names her aloud.', 'The room waits for her to answer.'],
-        decision_beat: 'She can answer to the name, or walk back out.',
-        pc_career: 'archivist',
-        opening_setting: 'a crowded upstairs room at a private party',
-        environment_element_ids: [],
-        environment_elements: []
-      }) }) });
+      body: JSON.stringify({ content: JSON.stringify(SETUP_RESPONSES[setupStage]) }) });
   }
-  // UPSTREAM GENERATION STAGES (recap, bibles, R-PLOT, A-PLOT) are answered
-  // with a PROVIDER FAILURE rather than an empty-but-valid object. Serving '{}' handed each stage
-  // a parseable blank that it accepted and then degraded on silently; a failure is a condition
-  // these stages are BUILT to handle, with their own tier fallbacks, so the chain keeps moving
-  // toward the author. No fixture here manufactures story content.
+  // Anything still unfixtured fails loudly rather than being fed a parseable blank.
+  unfixtured.push(sys.slice(0, 90).replace(/\s+/g, ' '));
   return route.fulfill({ status: 503, contentType: 'application/json',
     body: JSON.stringify({ error: 'harness: upstream stage not fixtured' }) });
 });
@@ -306,7 +299,7 @@ await page.waitForTimeout(3000);
 const g1 = await confirmGenesisIfShown(page);
 console.log('   genesis gate: ' + JSON.stringify(g1));
 logs.length = 0;
-await page.waitForTimeout(45000);
+await page.waitForTimeout(100000);
 
 const after1 = await page.evaluate(() => {
   const dom = document.body ? document.body.innerText : '';
@@ -320,8 +313,15 @@ const after1 = await page.evaluate(() => {
 });
 console.log('   PROVIDER REQUESTS SEEN (' + provSeen.length + '):');
 provSeen.forEach(x => console.log('     [' + x.stage + '] ' + x.chars + 'c  ' + x.head));
-if (openingSchema) { console.log('\n   OPENING-PLANNER SCHEMA (from the live request):');
-  console.log('     ' + openingSchema.replace(/\s+/g, ' ').slice(0, 900)); }
+if (openingUsr) {
+  const i = openingUsr.search(/lens[_ ]operation/i);
+  console.log('\n   ISSUED LENS OPERATIONS FROM THE LIVE PROMPT:');
+  console.log('     ' + (i >= 0 ? openingUsr.slice(Math.max(0, i - 150), i + 850).replace(/\s+/g, ' ')
+    : '(not found)'));
+}
+console.log('   setup fixtures served: ' + JSON.stringify(setupServed));
+if (unfixtured.length) { console.log('   STILL UNFIXTURED (' + unfixtured.length + '):');
+  [...new Set(unfixtured)].slice(0, 6).forEach(u => console.log('     ' + u)); }
 console.log('   author requests: ' + authorReqs.length + '   notes stored: ' + after1.notes.length);
 console.log('   notes: ' + JSON.stringify(after1.notes));
 
@@ -338,7 +338,7 @@ if (authorReqs.length === 0) {
   console.log('     modals: ' + JSON.stringify(ui.modals));
   ui.visible.forEach(b => console.log('     btn ' + JSON.stringify(b)));
   console.log('\n   FIRST UNMET PREREQUISITE — captured console:');
-  logs.slice(0, 30).forEach(l => console.log('     ' + String(l).slice(0, 165)));
+  logs.slice(-28).forEach(l => console.log('     ' + String(l).slice(0, 165)));
 }
 
 t('1. THE REAL AUTHOR REQUEST WAS MADE through the reader control', authorReqs.length > 0,

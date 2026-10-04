@@ -1,0 +1,11 @@
+=== CG READER PATH — SEVEN CRITERIA (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+SCENE 1 — the reader advances through the staged control
+   gate: {"promptMounted":true,"buttons":[true,true],"resumed":true}
+   branch: {"route":"in-page el.click() — host not rendered in this harness","diag":{"present":true,"rects":0,"hostDisplay":"block"
+   author requests: 0   cg scenes: 0   notes: 0
+   planner ids parsed from the prompt: {"aftermath":[],"reserved":["julian_counter_wish","julian_obscuring_wishes"]}
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE
+
+0/1 checks passed

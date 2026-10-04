@@ -1,0 +1,77 @@
+=== READER-PATH COMPLETION TEST (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+No purchase occurs; no real account is read or mutated; no payment credential
+exists in this process. Production entitlement checks and reader controls run normally.
+
+launched: {"ok":true,"id":"starter_the_first_taste"}
+corridor: {"groups":["worldSubtype"],"picked":["worldSubtype"],"playerMask":"BEAUTIFUL_RUIN","stillUnselected":[]}
+after unlock: {"renderMode":"literary","turnCount":0,"scenes":0,"submitVisible":true,"submitDisabled":false}
+
+1. THE READER SUBMITS THE FIRST TURN through #submitBtn
+   submit: {"ok":true}
+   genesis gate: {"shown":true,"label":"Continue — 60"}
+   PROVIDER REQUESTS SEEN (11):
+     [other] 455c  Write a "Previously…" recap as EXACTLY four bullet points, each 13 wor
+     [bible] 8797c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char
+     [bible] 18864c  DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love
+     [other] 3705c  You are the architect of WHY THIS PAIR. Read the two Bibles and the ro
+     [other] 6724c  You are designing an R-PLOT — a tiny narrative planning object that tr
+     [other] 55310c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 55782c  You are the A-PLOT GENERATOR for Storybound, an interactive romance fi
+     [other] 1876c  You are compressing the procedural A-plot of a romance novel into SIX 
+     [bible] 8928c  You are generating an ANTAGONIST BODY BIBLE for a romance novel — a pe
+     [other] 6177c  You are a scene-structure planner for the OPENING scene of an interact
+     [other] 3565c  You are a story-structure auditor applying ONE test: the WOUND→LI SWAP
+
+   ISSUED-REF CONTEXT FROM THE LIVE PROMPT:
+     rst [reader] · pick:pcName = The Protagonist [reader] · pick:liName = Julian [reader] · pick:mask = BEAUTIFUL_RUIN [reader] · pick:archetype = BEAUTIFUL_RUIN [reader] · stage:participant:pc:self = pc:self [issued_ref] · env:target, env:axis = the Environment+ target (= your contact.object on this path) and your environment_plus.axis, once validated [validated E+] · stage:setting, stage:element:<n>, stage:fact:<n> = your own opening_setting / environment_elements / stage_contract.event_facts, once ACCEPTED (n is 1-based) [planner_stage] "grounds" MUST include env:axis and at least one id that is not env:*. CONTACT TYPES (contact.verb must be exactly one of these): GRIP, PRESS, PUSH, PULL, LIFT, DRAG, STRIKE, TEAR, FOLD, WIPE, BRACE_AGAINST, LEAN_INTO, KNEEL_AT, CLIMB, OPEN, CLOSE, TURN, SET_DOWN_ON, PICK_UP, HOLD. AFFORDANCE TABLE (which verbs 
+   setup fixtures served: {"recap":1,"pc_bible":1,"li_bible":1,"why_pair":1,"r_plot":1,"a_plot":2,"aplot_compress":1,"antagonist_bible":1,"opening_planner":1,"swap_test":1}
+   author requests: 0   notes stored: 0
+   notes: []
+
+   VISIBLE UI AT THE BLOCK:
+     modals: []
+     btn {"id":"btn-auth-submit","cls":"sb-btn-png md","txt":""}
+     btn {"id":"conciergeCloseBtn","cls":"concierge-dialogue-close","txt":""}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":null,"cls":"","txt":"M"}
+     btn {"id":null,"cls":"","txt":"F"}
+     btn {"id":"intimacyDevBatchBtn","cls":"","txt":"All × 4"}
+     btn {"id":"intimacyDevReviewBtn","cls":"","txt":"Review"}
+     btn {"id":"intimacyDevLauncher","cls":"","txt":""}
+     btn {"id":null,"cls":"missing-selections-fate-btn","txt":"Let Fate Choose for Me"}
+     btn {"id":null,"cls":"missing-selections-close-btn","txt":"Close"}
+
+   FIRST UNMET PREREQUISITE — captured console:
+     [SCENE1:FUSION:V3] element affordances accepted: the long table along the wall=SURFACE, the door she came in by=PORTAL
+     [SCENE1:STAGE:PLANNER-OWNED] resolved — source=generated:planner_stage · on stage [the narrator] · mission="Establish that she is here under a name that is not hers,
+     [SCENE1:STAGE:RESOLVED] settingSource=planner.opening_setting WHERE="a crowded upstairs room at a private party" onStage=[the narrator]
+     [SCENE1:SOFT] invented_identity_prose · scene_skeleton.environment_plus.text · kept — the plan introduces 1 person(s) who are not in this story: "Every" in scene_ske
+     [SCENE1:CPLUS:CARDINALITY] 0 assigned of 0 offered — pressure, not headcount · regime=no-source sourced=0/0
+     [SCENE1:SOFT] ep_beat_other_target · environment_plus.beat · omitted — environment_plus.beat does not name its own target — it should show what happened to "the long
+     [SCENE1:FUSION:V3] action wording withheld from the author — nothing in it resolves to the contact object (token, exact name, or a head noun unique to it): "She sets
+     [SCENE1:SKELETON:INVALID] 3 fault(s) — contact.verb HOLD is not permitted by the affordance SURFACE of "the long table along the wall" · pc_opening_fusion.pc_lens_op
+     [SCENE1:SCAFFOLD] skipped (scene_skeleton invalid: contact.verb HOLD is not permitted by the affordance SURFACE of "the long table along the wall"; pc_opening_fusion
+     [SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: contact.verb HOLD is not permitted by the affordance SURFACE of
+     [BeginStory] Error: Error: Scene 1 aborted: contact.verb HOLD is not permitted by the affordance SURFACE of "the long table along the wall"; pc_opening_fusion.pc_len
+     [ISSUE-REFUND] no purchase to refund
+     [SCENE-AMB] stopped
+     [BAKED:SETUP] ABORTED — initialization did not reach the setup-only exit. Scene 1 stays uncommitted and Genesis stays locked; nothing was charged twice. starter=star
+     [WOUND→LI] PASS — wound="she was left somewhere public" × Julian (BEAUTIFUL_RUIN) · link: her abandonment wound is answered specifically by his refusal to need anyth
+     [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1
+     [WOUND→LI:TYPE] no ledger yet — fills one entry per story (when the wound is INTEGRATED/PARTIAL).
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [TEMPT:CRACKLE] segmented into 2 discrete crackles
+     [GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+     [SUBPLOT] spine never appeared after 60s wait — running with A-plot context only (no spine refraction)
+     [SUBPLOT] the chain was abandoned before this pass could commit — nothing was spent (no reason given)
+  FAIL 1. THE REAL AUTHOR REQUEST WAS MADE through the reader control  — no author request — see the console capture above
+
+0/1 checks passed

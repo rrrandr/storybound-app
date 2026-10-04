@@ -1,0 +1,31 @@
+=== CG READER PATH — SEVEN CRITERIA (provider-free, $0) ===
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED. PURCHASING AND BILLING ARE NOT TESTED.
+
+SCENE 1 — the reader advances through the staged control
+   gate: {"promptMounted":true,"buttons":[true,true],"resumed":true}
+   branch: {"route":"in-page el.click() — host not rendered in this harness","diag":{"present":true,"rects":0,"hostDisplay":"block"
+   author requests: 1   cg scenes: 1   notes: 1
+   planner ids parsed from the prompt: {"aftermath":["chosen_aftermath_lane","dohkar_preliminary_review","lane_posture_modulation","state_change","local_objective_actor","pressure_source","institutional_actor","li_pressure_actor","stage_location","stage_issued_objects","stage_affordances","canon_change","scene_purpose","forward_pressure","pressure_scope","scene_local","twist_manifested","interrogation_interrupted","the_answer_in_her_hands","the_answer_institutional","inquiry_authority_claimed","dohkar_charge","inquiry_convened","words_honoured","price_unnamed"],"reserved":["price_identified","julian_counter_wish","julian_obscuring_wishes","state_change"]}
+   UNFIXTURED: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The
+  ok   1. THE REAL AUTHOR REQUEST WAS MADE
+  ok   1b. and it ASKS FOR THE NOTE
+  ok   2. the response travelled through production parsing and acceptance
+  ok   3. THE READER SEES PROSE WITHOUT METADATA
+  ok   4. the note is keyed to that exact accepted scene
+
+SCENE 2 — a second consecutive scene through the same control
+   cg scenes now: 1   notes: 1
+   notes: [{"ref":"cg:1663dbe0-e154-4b59-8e08-fc1399082b26","quoted":["put it into Lirael's hands"],"summary":["The commission accepted the demand."]}]
+  FAIL 5a. THE NEXT PLANNER RECEIVED THE PRIOR SCENE'S HISTORY  — the planner request carries no history from scene 1
+  FAIL 5b. AND SO DID THE NEXT AUTHOR  — the author request carries no history from scene 1
+  ok   5c. the first note belongs to the FIRST scene, not the second
+  ok   7. A QUOTE THAT IS NOT IN THE ACCEPTED PROSE IS NOT ESTABLISHED
+  ok   7b. and it never reaches the reader
+
+SCENE 3 — a response with NO note, and then a FAILED turn
+   scenes: 1   notes: 1 (was 1)
+  ok   6a. A RESPONSE WITH NO NOTE INHERITS NOTHING
+  ok   6b. A FAILED TURN ADDS NO NOTE
+  ok   6c. and leaves no pending note behind to attach later
+
+11/13 checks passed
