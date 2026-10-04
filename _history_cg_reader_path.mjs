@@ -21,10 +21,15 @@ const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
 // TWO CONSECUTIVE SCENES. Scene 2's note carries a quote that the post-processing chain cannot
 // have produced, so criterion 7 (a rewrite invalidating a quotation) is testable.
 const SCENES = [
+  // BEAT LENGTHS THE NEW CONTRACT PERMITS — a compact paragraph, a deliberate one-liner, and a
+  // dialogue beat carrying JUST its line. Navigation is exercised on these, not on uniform stubs.
   { beats: [
-      { text: 'The chamber was quiet for a long moment.' },
-      { text: 'Julian took the sealed writ from his sleeve and put it into Lirael\'s hands.' },
-      { text: 'The clerk began reading the demand aloud.' } ],
+      { idx: 0, kind: 'narration', text: 'The chamber was quiet for a long moment, the kind of '
+        + 'quiet that happens when a room has already decided something and is waiting to be told. '
+        + 'Julian took the sealed writ from his sleeve and put it into Lirael\'s hands.' },
+      { idx: 1, kind: 'narration', text: 'The clerk began reading the demand aloud.' },
+      { idx: 2, kind: 'dialogue', speaker: 'The Presiding Dohkar',
+        text: '"The ruling on the Sacrificiant\'s conduct is mine."' } ],
     history_note: {
       events: [{ text: 'Julian gave Lirael the sealed writ.', quote: 'put it into Lirael\'s hands' },
                { text: 'The commission accepted the demand.' }],
