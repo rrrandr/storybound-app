@@ -10,8 +10,12 @@ let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
 
-const BUDGET = '_fs_live_out/BUDGET.json';
-const LOCK = '_fs_live_out/BUDGET.lock';
+// FIXTURE RUNS NOW USE AN ISOLATED LEDGER, so this suite manipulates that one and can never
+// disturb the record of real authorization spend.
+const BUDGET = '_fs_live_out/BUDGET.fixture.json';
+const LOCK = '_fs_live_out/BUDGET.fixture.lock';
+const REAL_BUDGET = '_fs_live_out/BUDGET.json';
+const realBefore = fs.readFileSync(REAL_BUDGET, 'utf8');
 const saveBudget = fs.existsSync(BUDGET) ? fs.readFileSync(BUDGET, 'utf8') : null;
 const restore = () => { if (saveBudget) fs.writeFileSync(BUDGET, saveBudget);
   try { fs.unlinkSync(LOCK); } catch (_) {} };
@@ -51,8 +55,11 @@ console.log('\n2. CONCURRENT RUNNERS CANNOT SHARE THE AUTHORIZATION');
   fs.writeFileSync(LOCK, JSON.stringify({ pid: 999999, at: Date.now() }));
   const locked = run({ SB_FIXTURES: '_runner_fixtures/ok.json' }, 60000);
   try { fs.unlinkSync(LOCK); } catch (_) {}
-  t('a present lock refuses a second runner', locked.code === 3 && /BUDGET.lock exists/.test(locked.out),
-    'exit ' + locked.code);
+  // The refusal wording changed with exclusive ('wx') acquisition; match the behaviour, not a
+  // stale sentence.
+  t('a present lock refuses a second runner',
+    locked.code === 3 && /is held|REFUSING TO RUN/.test(locked.out),
+    'exit ' + locked.code + ': ' + locked.out.split('\n').filter(l => /REFUS|held/.test(l)).join(' | ').slice(0, 120));
 }
 
 console.log('\n3. OUTSTANDING RESERVATIONS SURVIVE INTERRUPTION');
@@ -78,5 +85,9 @@ console.log('\n4. THE CEILING STOPS DISPATCH');
 }
 
 restore();
+// THE REAL LEDGER MUST BE UNTOUCHED BY A FIXTURE SUITE.
+t('the real authorization ledger was not modified by these tests',
+  fs.readFileSync(REAL_BUDGET, 'utf8') === realBefore,
+  'a fixture run wrote to the real budget file');
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 process.exit(fail ? 1 : 0);

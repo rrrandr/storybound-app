@@ -41,8 +41,10 @@ let halted = false, haltReason = '';
 let inFlight = 0;          // reserved for requests currently out
 let settled = 0;           // receipted spend
 let retained = 0;          // reservations kept for calls that returned no receipt
-const BUDGET_FILE = '_fs_live_out/BUDGET.json';
-const LOCK_FILE = '_fs_live_out/BUDGET.lock';
+// FIXTURE RUNS USE THEIR OWN LEDGER. Exercising the runner must never touch the ledger that
+// records real authorization spend (Codex 2026-10-05).
+const BUDGET_FILE = FIXTURES ? '_fs_live_out/BUDGET.fixture.json' : '_fs_live_out/BUDGET.json';
+const LOCK_FILE = FIXTURES ? '_fs_live_out/BUDGET.fixture.lock' : '_fs_live_out/BUDGET.lock';
 
 // ── THE BUDGET FAILS CLOSED ─────────────────────────────────────────────────────────────────
 // A missing or malformed ledger must REFUSE a continuation run, not silently restart exposure
@@ -73,17 +75,21 @@ if (orphaned.length) {
   say('*** ' + orphaned.length + ' reservation(s) from an earlier run never settled — $'
     + o.toFixed(6) + ' carried as unresolved exposure ***');
 }
+// EXCLUSIVE ACQUISITION. existsSync-then-write is check-then-act: two runners can both pass the
+// check before either writes. 'wx' fails if the file exists, atomically, so only one wins.
 try {
-  if (fs.existsSync(LOCK_FILE)) {
-    const age = Date.now() - fs.statSync(LOCK_FILE).mtimeMs;
-    say('*** REFUSING TO RUN: ' + LOCK_FILE + ' exists (' + Math.round(age / 1000)
+  fs.writeFileSync(LOCK_FILE, JSON.stringify({ pid: process.pid, run: RUN, at: Date.now() }),
+    { flag: 'wx' });
+} catch (e) {
+  if (e && e.code === 'EEXIST') {
+    let age = 0; try { age = Date.now() - fs.statSync(LOCK_FILE).mtimeMs; } catch (_) {}
+    say('*** REFUSING TO RUN: ' + LOCK_FILE + ' is held (' + Math.round(age / 1000)
       + 's old). Another runner may be spending the same authorization.');
     say('    Remove it only after confirming no other run is live.');
     process.exit(3);
   }
-  fs.writeFileSync(LOCK_FILE, JSON.stringify({ pid: process.pid, run: RUN, at: Date.now() }));
-} catch (e) {
-  if (e && e.message && /REFUS/.test(e.message)) throw e;
+  say('*** REFUSING TO RUN: could not acquire ' + LOCK_FILE + ': ' + (e && e.message));
+  process.exit(3);
 }
 // BOTH OF THESE WERE REFERENCED AND NEVER DEFINED after the budget block was rewritten — the
 // runner threw "exposure is not defined" the first time it was actually executed. Reading the
@@ -98,6 +104,9 @@ process.on('SIGINT', () => { releaseLock(); process.exit(130); });
 
 // Persisted reservation ledger — written before each dispatch, settled after.
 let outstanding = orphaned.slice();
+// PERSISTENCE IS MANDATORY BEFORE DISPATCH. Swallowing a failed write and continuing is the
+// opposite of failing closed: the reservation would exist only in memory, and a crash would
+// erase it. A write that fails halts the run.
 const persistBudget = () => {
   try {
     fs.writeFileSync(BUDGET_FILE, JSON.stringify({
@@ -107,7 +116,13 @@ const persistBudget = () => {
       runs: (PRIOR.runs || []).concat([{ run: RUN, receipted: settled, unresolved: retained }]),
       note: PRIOR.note || null
     }, null, 2));
-  } catch (_) {}
+  } catch (e) {
+    halted = true;
+    haltReason = 'budget could not be persisted (' + (e && e.message) + ')';
+    say('\n*** HALTING — ' + haltReason + '. A reservation that exists only in memory is not a');
+    say('    reservation; refusing to dispatch further. ***');
+    throw e;
+  }
 };
 
 const REQUEST_TIMEOUT_MS = 180000;   // restored; a bare fetch previously hung author generation
@@ -180,7 +195,12 @@ await page.route('**/api/**', async (route) => {
   }
   inFlight += est;                       // held until this call settles
   const resv = { n: calls.length + 1, estimate: est, model: requested, at: Date.now() };
-  outstanding.push(resv); persistBudget();   // ON DISK BEFORE THE REQUEST LEAVES
+  outstanding.push(resv);
+  try { persistBudget(); }                   // ON DISK BEFORE THE REQUEST LEAVES
+  catch (_) {
+    return route.fulfill({ status: 503, contentType: 'application/json',
+      body: JSON.stringify({ error: 'harness: budget not persisted; dispatch refused' }) });
+  }
 
   const t0 = Date.now();
   let resp = null, text = '', err = null;
@@ -373,33 +393,95 @@ try {
     // selection, not a model judgement.
     let pickSeed = 1013904223;
     const nextPick = (n) => { pickSeed = (1664525 * pickSeed + 1013904223) >>> 0; return pickSeed % n; };
-    const drawCard = () => page.evaluate(() => {
-      const opts = (window.state && window.state.fateOptions) || [];
-      return opts.map(c => ({ id: c && c.id, label: c && (c.label || c.title),
-        dialogue: c && c.dialogue, action: c && c.action, intimate: !!(c && c._intimate) }));
+
+    // ── PLAY A CARD THE WAY A READER PLAYS ONE ─────────────────────────────────────────────
+    // Copying a card's text into the dialogue handler is not playing it: it skips the click that
+    // records the selected slot, skips sanitization, and skips whatever the commit path enables.
+    // This clicks the real .fate-card element and then submits, and records what was actually
+    // sent rather than what was intended.
+    //
+    // PROVENANCE IS READ FROM THE GROK CACHE, NOT FROM _intimate. fatecards.js sets
+    // _intimate: true on the TEMPLATE path too (line 1241), so that flag proves nothing about
+    // authorship. The only authoritative test is whether this card id is in
+    // state._grokIntimateFateCards.cards for THIS turn.
+    const readHand = () => page.evaluate(() => {
+      const st = window.state || {};
+      const opts = st.fateOptions || [];
+      const tc = st.turnCount;
+      const cache = st._grokIntimateFateCards;
+      const cacheFresh = !!(cache && cache.turnCount === tc && cache.cards);
+      const els = [...document.querySelectorAll('.fate-card')];
+      return {
+        count: opts.length,
+        domCards: els.length,
+        loading: !!st._grokIntimateFateCardsInFlight,
+        cards: opts.map((c, i) => ({
+          slot: i, id: c && c.id, label: c && (c.label || c.title),
+          dialogue: c && c.dialogue, action: c && c.action,
+          intimateFlag: !!(c && c._intimate),
+          // AUTHORITATIVE: present in the Grok cache for this turn?
+          grokAuthored: !!(cacheFresh && c && c.id && cache.cards[c.id]),
+          variant: (c && c._variant) || null
+        }))
+      };
     });
-    // Used only if no cards are dealt, and reported loudly if it fires.
-    const FALLBACK = ['I did.', 'I wanted you to stop it.'];
+
+    // Wait for the current options to finish loading before choosing.
+    const waitForHand = async (maxMs = 45000) => {
+      const dl = Date.now() + maxMs;
+      while (Date.now() < dl) {
+        const h = await readHand();
+        if (!h.loading && h.count > 0 && h.domCards > 0) return h;
+        await page.waitForTimeout(1000);
+      }
+      return await readHand();
+    };
 
     let turnsTaken = 0;
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
-      // Draw the hand this turn actually offers, and play one.
-      const hand = await drawCard();
-      const usable = hand.filter(c => c && (c.dialogue || c.action));
-      let say_, do_;
-      if (usable.length) {
-        const c = usable[nextPick(usable.length)];
-        say_ = c.dialogue || ''; do_ = c.action || '';
-        say('  turn ' + (i + 1) + ' plays card "' + (c.label || c.id) + '"'
-          + (c.intimate ? ' [Grok-authored for this moment]' : ' [template — NOT situation-authored]')
-          + ': SAY ' + JSON.stringify(String(say_).slice(0, 70)));
-      } else {
-        say_ = FALLBACK[0]; do_ = FALLBACK[1];
-        say('  turn ' + (i + 1) + ': *** NO FATE CARDS DEALT — falling back to a scripted answer. '
-          + 'This weakens the test and is reported, not hidden. ***');
+      // Draw the hand this turn actually offers, wait for it to settle, and PLAY one.
+      const hand = await waitForHand();
+      const usable = hand.cards.filter(c => c && (c.dialogue || c.action));
+      if (!usable.length) {
+        halted = true;
+        haltReason = 'no usable Fate cards were offered at OAS turn ' + (i + 1)
+          + ' (options=' + hand.count + ', dom=' + hand.domCards + ', loading=' + hand.loading + ')';
+        say('  *** STOPPING — ' + haltReason + '. There is no scripted answer to fall back on: a');
+        say('      harness-written reply is what contaminated the last run. ***');
+        break;
       }
+      const chosen = usable[nextPick(usable.length)];
+      // CLICK THE REAL CARD so the selection is recorded by production.
+      const played = await page.evaluate((slot) => {
+        const els = [...document.querySelectorAll('.fate-card')];
+        const el = els[slot] || els[0];
+        if (!el) return { clicked: false };
+        el.click();
+        return { clicked: true,
+          selectedIndex: (window.state && window.state.fateSelectedIndex),
+          committed: !!(window.state && window.state.fateCommitted) };
+      }, chosen.slot);
+      await page.waitForTimeout(1200);
+      // What production actually put in the inputs after the click.
+      const submitted = await page.evaluate(() => {
+        const a = document.getElementById('actionInput') || document.getElementById('gnActionInput');
+        const d = document.getElementById('dialogueInput') || document.getElementById('gnDialogueInput');
+        return { action: a ? a.value : null, dialogue: d ? d.value : null };
+      });
+      const say_ = (submitted.dialogue && submitted.dialogue.trim()) || chosen.dialogue || '';
+      const do_  = (submitted.action && submitted.action.trim()) || chosen.action || '';
+      cardLog.push({ turn: i + 1, hand: hand.cards, chosenSlot: chosen.slot, chosenId: chosen.id,
+        played, submitted: { say: say_, do: do_ },
+        grokAuthored: chosen.grokAuthored, intimateFlag: chosen.intimateFlag });
+      say('  turn ' + (i + 1) + ' plays slot ' + chosen.slot + ' "' + (chosen.label || chosen.id) + '"'
+        + (chosen.grokAuthored ? ' [GROK-AUTHORED for this turn]'
+                               : ' [TEMPLATE — _intimate=' + chosen.intimateFlag + ', not in the Grok cache]')
+        + '  clicked=' + played.clicked + ' idx=' + played.selectedIndex);
+      say('      SAY ' + JSON.stringify(String(say_).slice(0, 80)));
+      say('      DO  ' + JSON.stringify(String(do_).slice(0, 80)));
+
       // THE HANDLER'S RETURN VALUE IS USED, not discarded — a refused input is a refused input.
       const accepted = await page.evaluate(({ a, b }) => {
         try { const r = window._intimacyDialogueConsumeInput(a, b);
@@ -545,72 +627,89 @@ try {
     say('  exposure $' + exposure().toFixed(6) + '\n');
   }
 
-  for (let scene = 2; scene <= 4 && !halted; scene++) {
+  for (let scene = 2; scene <= 10 && !halted; scene++) {
     say('── SCENE ' + scene + ' (live) ──');
-    const g = await advanceExpectingGate(page,
-      ['I ask who signed it.', 'I stay where I am.', 'I answer the charge.'][scene - 2],
-      ['Who signed this?', '', 'I will answer it now.'][scene - 2]);
+
+    // CAPTURE THE PRE-GENERATION IDENTITY *BEFORE* ANYTHING IS TRIGGERED. Reading the count
+    // after the advance races the thing being measured.
+    const before = await page.evaluate(() => {
+      const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+      return { count: cg.length, lastUid: cg.length ? cg[cg.length - 1].uid : null };
+    });
+
+    // THE SCENE'S OWN FATE CARDS, PLAYED. Not scripted inputs.
+    const sHand = await waitForHand();
+    const sUsable = sHand.cards.filter(c => c && (c.dialogue || c.action));
+    if (!sUsable.length) {
+      halted = true;
+      haltReason = 'no usable Fate cards offered at scene ' + scene;
+      say('  *** STOPPING — ' + haltReason + ' ***');
+      break;
+    }
+    const sc = sUsable[nextPick(sUsable.length)];
+    const sPlayed = await page.evaluate((slot) => {
+      const els = [...document.querySelectorAll('.fate-card')];
+      const el = els[slot] || els[0];
+      if (!el) return { clicked: false };
+      el.click();
+      return { clicked: true, selectedIndex: (window.state && window.state.fateSelectedIndex) };
+    }, sc.slot);
+    await page.waitForTimeout(1200);
+    const sSub = await page.evaluate(() => {
+      const a = document.getElementById('gnActionInput') || document.getElementById('actionInput');
+      const d = document.getElementById('gnDialogueInput') || document.getElementById('dialogueInput');
+      return { action: a ? a.value : null, dialogue: d ? d.value : null };
+    });
+    cardLog.push({ scene, hand: sHand.cards, chosenSlot: sc.slot, chosenId: sc.id,
+      played: sPlayed, submitted: sSub, grokAuthored: sc.grokAuthored });
+    say('  plays slot ' + sc.slot + ' "' + (sc.label || sc.id) + '"'
+      + (sc.grokAuthored ? ' [GROK-AUTHORED]' : ' [TEMPLATE]') + ' clicked=' + sPlayed.clicked);
+
+    const g = await advanceExpectingGate(page, sSub.action || sc.action || '',
+      sSub.dialogue || sc.dialogue || '');
     if (g.promptMounted) await chooseBranch(page, 'A');
 
-    // OBSERVED COMPLETION, NOT A FIXED WAIT. A 40s sleep calls a slow generation a failure and a
-    // fast rejection a success. Completion is: a NEW accepted scene record, with its projection,
-    // mounted on the reader surface. An in-flight request is distinguished from a rejection by
-    // whether a model call for this scene is still outstanding.
-    const sceneBefore = (await snapshot('pre' + scene)).scenes;
-    const sceneDeadline = Date.now() + REQUEST_TIMEOUT_MS + 60000;   // tied to the request timeout
-    let outcome = 'timeout';
+    // OBSERVED COMPLETION. A GAP BETWEEN PROVIDER CALLS IS NOT A REJECTION — the app may be
+    // between stages or parsing a response. Only a sustained quiet period with no new scene,
+    // or the overall deadline, ends the wait.
+    const sceneDeadline = Date.now() + REQUEST_TIMEOUT_MS + 180000;
+    let outcome = 'timeout', quietSince = null;
     while (Date.now() < sceneDeadline) {
       const st = await page.evaluate((prev) => {
         const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
         const last = cg[cg.length - 1] || null;
-        const mounted = !!document.getElementById('stagedBeatText')
-          || !!(window.state._stagedActive && window.state._stagedActive.plan);
-        return { count: cg.length, grew: cg.length > prev,
+        return { count: cg.length, grew: cg.length > prev.count,
+          newUid: last && last.uid !== prev.lastUid,
           hasProjection: !!(last && last.projection && last.text),
-          mounted: mounted };
-      }, sceneBefore);
-      if (st.grew && st.hasProjection && st.mounted) { outcome = 'accepted'; break; }
-      if (st.grew && st.hasProjection) { outcome = 'accepted-unmounted'; break; }
-      // Still waiting on the provider? Then this is IN FLIGHT, not a rejection.
-      if (inFlight <= 0) {
-        const quiet = await page.evaluate(() => {
-          const l = (window.__sbLastRefusal || null);
-          return { refusal: l };
-        });
-        // No call outstanding and no new scene: the generation was refused or failed.
-        outcome = 'rejected';
-        if (quiet.refusal) outcome = 'rejected: ' + quiet.refusal;
-        break;
-      }
+          mounted: !!document.getElementById('stagedBeatText')
+            || !!(window.state._stagedActive && window.state._stagedActive.plan) };
+      }, before);
+      if (st.grew && st.newUid && st.hasProjection && st.mounted) { outcome = 'accepted'; break; }
+      if (inFlight > 0) { quietSince = null; }
+      else if (quietSince == null) { quietSince = Date.now(); }
+      else if (Date.now() - quietSince > 90000) { outcome = 'no-generation'; break; }
       await page.waitForTimeout(2000);
     }
-    say('  outcome: ' + outcome);
-    if (outcome !== 'accepted' && outcome !== 'accepted-unmounted') {
+    const snap = await snapshot('scene' + scene);
+    write('scene' + scene + '.json', { outcome, before, snap,
+      cards: cardLog.filter(c => c.scene === scene) });
+    say('  outcome: ' + outcome + ' · scenes ' + before.count + ' -> ' + snap.scenes
+      + ' · notes ' + snap.notes.length + ' · exposure $' + exposure().toFixed(6));
+    if (outcome !== 'accepted') {
       halted = true;
       haltReason = 'scene ' + scene + ' did not complete (' + outcome + ')';
-      say('  *** STOPPING — ' + haltReason + ' — the next scene is NOT launched ***');
-    }
-    const snap = await snapshot('scene' + scene);
-    write('scene' + scene + '.json', snap);
-    say('  scenes now ' + snap.scenes + ' · notes ' + snap.notes.length
-      + ' · exposure $' + exposure().toFixed(6));
-    // A SCENE MUST ACTUALLY EXIST. Otherwise stop rather than spend the next scene's budget on
-    // whatever the advance was really routed into.
-    if (snap.scenes < scene - 1) {
-      halted = true;
-      haltReason = 'scene ' + scene + ' produced no scene record (have ' + snap.scenes + ')';
-      say('  *** STOPPING — ' + haltReason + ' ***');
+      say('  *** STOPPING — ' + haltReason + '. Not restarting; reporting as found. ***');
       break;
     }
-    if (scene < 4 && !halted) {
-      for (let i = 0; i < 25; i++) {
-        if (await page.evaluate(() => !!window.state._stagedActive)) break;
-        await page.waitForTimeout(1500);
-      }
-      say('  paged to gate: ' + JSON.stringify(await pageToGate()));
+    // Page to the next gate.
+    for (let k = 0; k < 25; k++) {
+      if (await page.evaluate(() => !!window.state._stagedActive)) break;
+      await page.waitForTimeout(1500);
     }
+    say('  paged to gate: ' + JSON.stringify(await pageToGate()));
     say('');
   }
+
   write('final.json', await snapshot('final'));
 } catch (e) {
   say('\n*** RUN ERROR: ' + (e && e.message) + ' ***');
@@ -618,6 +717,7 @@ try {
 }
 
 write('console.log', consoleLog.join('\n'));
+write('cards.json', cardLog);
 write('calls.json', calls);
 say('\n' + '='.repeat(78));
 ledger.spendReport(CEILING);
