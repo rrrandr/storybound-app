@@ -1,0 +1,2 @@
+ReferenceError: exposure is not defined
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:329:3

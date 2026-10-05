@@ -1,0 +1,10 @@
+=== FS SEQUENCE — ceiling $0.01 — FIXTURES, no provider traffic ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+
+*** RUN ERROR: exposure is not defined ***

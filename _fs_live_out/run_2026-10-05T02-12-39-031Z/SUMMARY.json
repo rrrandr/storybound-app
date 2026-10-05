@@ -1,0 +1,10 @@
+{
+  "calls": 0,
+  "receipted": 0,
+  "retainedUnresolved": 0,
+  "priorExposure": 3.1977173499999996,
+  "totalExposure": 3.1977173499999996,
+  "ceiling": 3,
+  "halted": true,
+  "haltReason": "ceiling: exposure $3.197717 + next $0.002675 would exceed $3.00 (prior runs $3.197717)"
+}

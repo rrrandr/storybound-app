@@ -16,7 +16,12 @@ import { makeSpendLedger } from './_live_spend_ledger.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate, chooseBranch }
   from './_fs_story_setup.mjs';
 
-const CEILING = 3.00;
+const CEILING = Number(process.env.SB_CEILING || 3.00);
+// FIXTURE MODE EXERCISES THIS RUNNER, not a copy of its logic. Every gate, deadline, budget
+// rule and sequencing decision below is the same code the paid run uses; only the provider
+// response is served locally, and NO provider traffic leaves the process.
+const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
+const LIVE = !FIXTURES;
 const RUN = '_fs_live_out/run_' + new Date().toISOString().replace(/[:.]/g, '-');
 fs.mkdirSync(RUN, { recursive: true });
 const LOG = fs.createWriteStream(RUN + '/run.log');
@@ -36,20 +41,78 @@ let halted = false, haltReason = '';
 let inFlight = 0;          // reserved for requests currently out
 let settled = 0;           // receipted spend
 let retained = 0;          // reservations kept for calls that returned no receipt
+const BUDGET_FILE = '_fs_live_out/BUDGET.json';
+const LOCK_FILE = '_fs_live_out/BUDGET.lock';
+
+// ── THE BUDGET FAILS CLOSED ─────────────────────────────────────────────────────────────────
+// A missing or malformed ledger must REFUSE a continuation run, not silently restart exposure
+// at zero — that is how an authorization gets spent twice. Reservations are persisted BEFORE
+// dispatch and settled after, so a crash leaves them on disk as unresolved exposure rather than
+// evaporating. A lock stops two runner processes spending the same remaining authorization.
 const PRIOR = (() => {
-  // THE BUDGET CARRIES ACROSS RUNS. Earlier dispatches under the same authorization are part of
-  // the same ceiling, including ones whose billing is unresolved.
+  if (!fs.existsSync(BUDGET_FILE)) {
+    say('*** REFUSING TO RUN: ' + BUDGET_FILE + ' is missing. A continuation run cannot assume');
+    say('    zero prior exposure. Seed it deliberately, or state that this is a fresh');
+    say('    authorization and create it with zeros on purpose.');
+    process.exit(2);
+  }
   try {
-    const f = '_fs_live_out/BUDGET.json';
-    if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8'));
-  } catch (_) {}
-  return { receipted: 0, unresolved: 0, runs: [] };
+    const j = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
+    if (typeof j.receipted !== 'number' || typeof j.unresolved !== 'number') throw new Error('shape');
+    return j;
+  } catch (e) {
+    say('*** REFUSING TO RUN: ' + BUDGET_FILE + ' is malformed (' + (e && e.message) + ').');
+    say('    Exposure is unknown, so no dispatch is safe. Repair the ledger by hand.');
+    process.exit(2);
+  }
 })();
-const priorExposure = (PRIOR.receipted || 0) + (PRIOR.unresolved || 0);
+// Outstanding reservations from a previous crash are STILL EXPOSURE.
+const orphaned = Array.isArray(PRIOR.outstanding) ? PRIOR.outstanding : [];
+if (orphaned.length) {
+  const o = orphaned.reduce((n, x) => n + (x.estimate || 0), 0);
+  say('*** ' + orphaned.length + ' reservation(s) from an earlier run never settled — $'
+    + o.toFixed(6) + ' carried as unresolved exposure ***');
+}
+try {
+  if (fs.existsSync(LOCK_FILE)) {
+    const age = Date.now() - fs.statSync(LOCK_FILE).mtimeMs;
+    say('*** REFUSING TO RUN: ' + LOCK_FILE + ' exists (' + Math.round(age / 1000)
+      + 's old). Another runner may be spending the same authorization.');
+    say('    Remove it only after confirming no other run is live.');
+    process.exit(3);
+  }
+  fs.writeFileSync(LOCK_FILE, JSON.stringify({ pid: process.pid, run: RUN, at: Date.now() }));
+} catch (e) {
+  if (e && e.message && /REFUS/.test(e.message)) throw e;
+}
+// BOTH OF THESE WERE REFERENCED AND NEVER DEFINED after the budget block was rewritten — the
+// runner threw "exposure is not defined" the first time it was actually executed. Reading the
+// file did not reveal it; running it did, which is the point of exercising the real runner.
+const priorExposure = (PRIOR.receipted || 0) + (PRIOR.unresolved || 0)
+  + orphaned.reduce((n, x) => n + (x.estimate || 0), 0);
 const exposure = () => priorExposure + settled + retained + inFlight;
+
+const releaseLock = () => { try { fs.unlinkSync(LOCK_FILE); } catch (_) {} };
+process.on('exit', releaseLock);
+process.on('SIGINT', () => { releaseLock(); process.exit(130); });
+
+// Persisted reservation ledger — written before each dispatch, settled after.
+let outstanding = orphaned.slice();
+const persistBudget = () => {
+  try {
+    fs.writeFileSync(BUDGET_FILE, JSON.stringify({
+      receipted: (PRIOR.receipted || 0) + settled,
+      unresolved: (PRIOR.unresolved || 0) + retained,
+      outstanding,
+      runs: (PRIOR.runs || []).concat([{ run: RUN, receipted: settled, unresolved: retained }]),
+      note: PRIOR.note || null
+    }, null, 2));
+  } catch (_) {}
+};
+
 const REQUEST_TIMEOUT_MS = 180000;   // restored; a bare fetch previously hung author generation
 
-say('=== FS LIVE SEQUENCE — ceiling $' + CEILING.toFixed(2) + ' ===');
+say('=== FS SEQUENCE — ceiling $' + CEILING.toFixed(2) + (LIVE ? ' — LIVE' : ' — FIXTURES, no provider traffic') + ' ===');
 say('Authorized by Roman 2026-10-04 with an explicit go.');
 say('ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.');
 say('Scene 1 is the FIXED hand-authored opening and generates nothing.\n');
@@ -116,9 +179,47 @@ await page.route('**/api/**', async (route) => {
       body: JSON.stringify({ error: 'harness ceiling reached' }) });
   }
   inFlight += est;                       // held until this call settles
+  const resv = { n: calls.length + 1, estimate: est, model: requested, at: Date.now() };
+  outstanding.push(resv); persistBudget();   // ON DISK BEFORE THE REQUEST LEAVES
 
   const t0 = Date.now();
   let resp = null, text = '', err = null;
+  if (FIXTURES) {
+    // Serve from the fixture table, honouring any scripted delay so slow-response behaviour is
+    // exercised rather than described.
+    const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
+      (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
+    const f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+    if (f.delayMs) await new Promise(r => setTimeout(r, f.delayMs));
+    if (f.fail) {
+      calls.push({ n: calls.length + 1, requested, chars, ms: Date.now() - t0, estimate: est,
+        error: 'fixture failure', measured: null });
+      inFlight -= est; retained += est;
+      outstanding = outstanding.filter(x => x !== resv); persistBudget();
+      say('  call ' + calls.length + '  ' + requested + '  FIXTURE FAILURE');
+      return route.fulfill({ status: 500, contentType: 'application/json',
+        body: JSON.stringify({ error: 'fixture failure' }) });
+    }
+    const textF = typeof f.body === 'string' ? f.body : JSON.stringify(f.body);
+    const recF = { n: calls.length + 1, requested, chars, maxTokens: body.max_tokens || null,
+      convId: body.convId || null, role: body.role || null, ms: Date.now() - t0, estimate: est };
+    try { const j = JSON.parse(textF); const u = j.usage || {};
+      recF.served = j.model || null; recF.inTok = u.prompt_tokens ?? null;
+      recF.outTok = u.completion_tokens ?? null;
+      recF.cachedTok = (u.prompt_tokens_details || {}).cached_tokens ?? null;
+      recF.ticks = u.cost_in_usd_ticks ?? null;
+      recF.measured = (typeof recF.ticks === 'number') ? recF.ticks * 1e-10 : null;
+    } catch (_) { recF.measured = null; }
+    inFlight -= est;
+    if (recF.measured != null) settled += recF.measured; else retained += est;
+    outstanding = outstanding.filter(x => x !== resv); persistBudget();
+    recF.exposureAfter = exposure();
+    calls.push(recF);
+    say('  call ' + String(recF.n).padStart(2) + '  [fixture] ' + String(requested).padEnd(28)
+      + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
+      + '  ' + recF.ms + 'ms');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
+  }
   try {
     // EXPLICIT TIMEOUT RESTORED. A bare route.fetch() has no deadline, and an author generation
     // that hangs takes the whole run with it.
@@ -140,6 +241,7 @@ await page.route('**/api/**', async (route) => {
     rec.error = err || 'no response';
     rec.measured = null;
     inFlight -= est; retained += est;    // UNRESOLVED: the reservation is kept, not released
+    outstanding = outstanding.filter(x => x !== resv); persistBudget();
     ledger.recordDispatchedNoResponse
       ? ledger.recordDispatchedNoResponse('call#' + rec.n, est, requested, rec.error)
       : null;
@@ -162,6 +264,7 @@ await page.route('**/api/**', async (route) => {
   // SETTLE: a receipt replaces the reservation; no receipt retains it.
   inFlight -= est;
   if (rec.measured != null) settled += rec.measured; else retained += est;
+  outstanding = outstanding.filter(x => x !== resv); persistBudget();
   rec.exposureAfter = exposure();
   calls.push(rec);
   // FULL request and response preserved — truncated console lines are not evidence.
@@ -280,14 +383,50 @@ try {
         halted = true; haltReason = 'OAS input ' + (i + 1) + ' REFUSED (' + accepted.returned + ')';
         say('  *** STOPPING — ' + haltReason + ' ***'); break;
       }
+      // THE EXIT MODAL IS A REAL OUTCOME, NOT A FAILURE. An input like "Enough." opens
+      // #intimacyExitModal and returns true WITHOUT requesting another reply, so waiting for
+      // dialogue that this interaction deliberately never generates would time out and be
+      // reported as a stall. Detect it and take the exit that ends THIS ENCOUNTER —
+      // #intimacyExitFade — never #intimacyExitMetaphorical, which changes future intimacy
+      // preferences for the whole story and is not ours to set.
+      const modalUp = async () => page.evaluate(() => {
+        const m = document.getElementById('intimacyExitModal');
+        return !!(m && m.offsetParent !== null);
+      });
+      let exited = false;
+      for (let w = 0; w < 8; w++) {
+        if (await modalUp()) {
+          const which = await page.evaluate(() => {
+            const b = document.getElementById('intimacyExitFade');
+            if (b && b.offsetParent !== null) { b.click(); return 'intimacyExitFade'; }
+            return null;
+          });
+          say('  turn ' + (i + 1) + ': EXIT MODAL opened — took "' + which + '" (ends this '
+            + 'encounter; future-preference options left untouched)');
+          exited = !!which;
+          break;
+        }
+        await page.waitForTimeout(500);
+      }
+
       // WAIT FOR A RENDERED REPLY: one more liTurnHistory entry, carrying dialogue, and the
-      // dialogue ready to take another input.
-      let landed = false;
-      const deadline = Date.now() + 180000;
-      while (Date.now() < deadline) {
+      // dialogue ready to take another input. Skipped when the exit path was taken, which
+      // produces no reply by design.
+      let landed = exited;
+      const deadline = Date.now() + REQUEST_TIMEOUT_MS + 20000;   // tied to the request timeout
+      while (!exited && Date.now() < deadline) {
         const now = await oasState();
         if (!now || !now.active) { landed = true; break; }
         if (now.replies > pre.replies && now.lastHasDialogue && !now.resolving) { landed = true; break; }
+        if (await modalUp()) {
+          const which = await page.evaluate(() => {
+            const b = document.getElementById('intimacyExitFade');
+            if (b && b.offsetParent !== null) { b.click(); return 'intimacyExitFade'; }
+            return null;
+          });
+          say('  turn ' + (i + 1) + ': exit modal appeared mid-wait — took "' + which + '"');
+          landed = true; exited = true; break;
+        }
         await page.waitForTimeout(1500);
       }
       const post = await oasState();
@@ -385,7 +524,45 @@ try {
       ['I ask who signed it.', 'I stay where I am.', 'I answer the charge.'][scene - 2],
       ['Who signed this?', '', 'I will answer it now.'][scene - 2]);
     if (g.promptMounted) await chooseBranch(page, 'A');
-    await page.waitForTimeout(40000);
+
+    // OBSERVED COMPLETION, NOT A FIXED WAIT. A 40s sleep calls a slow generation a failure and a
+    // fast rejection a success. Completion is: a NEW accepted scene record, with its projection,
+    // mounted on the reader surface. An in-flight request is distinguished from a rejection by
+    // whether a model call for this scene is still outstanding.
+    const sceneBefore = (await snapshot('pre' + scene)).scenes;
+    const sceneDeadline = Date.now() + REQUEST_TIMEOUT_MS + 60000;   // tied to the request timeout
+    let outcome = 'timeout';
+    while (Date.now() < sceneDeadline) {
+      const st = await page.evaluate((prev) => {
+        const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+        const last = cg[cg.length - 1] || null;
+        const mounted = !!document.getElementById('stagedBeatText')
+          || !!(window.state._stagedActive && window.state._stagedActive.plan);
+        return { count: cg.length, grew: cg.length > prev,
+          hasProjection: !!(last && last.projection && last.text),
+          mounted: mounted };
+      }, sceneBefore);
+      if (st.grew && st.hasProjection && st.mounted) { outcome = 'accepted'; break; }
+      if (st.grew && st.hasProjection) { outcome = 'accepted-unmounted'; break; }
+      // Still waiting on the provider? Then this is IN FLIGHT, not a rejection.
+      if (inFlight <= 0) {
+        const quiet = await page.evaluate(() => {
+          const l = (window.__sbLastRefusal || null);
+          return { refusal: l };
+        });
+        // No call outstanding and no new scene: the generation was refused or failed.
+        outcome = 'rejected';
+        if (quiet.refusal) outcome = 'rejected: ' + quiet.refusal;
+        break;
+      }
+      await page.waitForTimeout(2000);
+    }
+    say('  outcome: ' + outcome);
+    if (outcome !== 'accepted' && outcome !== 'accepted-unmounted') {
+      halted = true;
+      haltReason = 'scene ' + scene + ' did not complete (' + outcome + ')';
+      say('  *** STOPPING — ' + haltReason + ' — the next scene is NOT launched ***');
+    }
     const snap = await snapshot('scene' + scene);
     write('scene' + scene + '.json', snap);
     say('  scenes now ' + snap.scenes + ' · notes ' + snap.notes.length

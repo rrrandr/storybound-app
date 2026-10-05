@@ -1,0 +1,16 @@
+*** 1 reservation(s) from an earlier run never settled — $0.250000 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $3.00 — FIXTURES, no provider traffic ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $3.197717
+
+── OAS (live) ──
+
+*** HALTED BEFORE DISPATCH — ceiling: exposure $3.197717 + next $0.002675 would exceed $3.00 (prior runs $3.197717) ***
+
+*** RUN ERROR: page.waitForTimeout: Target page, context or browser has been closed ***
