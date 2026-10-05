@@ -358,27 +358,54 @@ try {
         lastHasDialogue: !!(last && last.liDialogue),
         acceptingInput: !!d.active && !d._resolving };
     });
-    const INPUTS = [
-      ['I am still here.', 'I hold his gaze.'],
-      ['Who signed the demand?', 'I step closer.'],
-      ['You knew before I did.', 'I do not look away.'],
-      ['Say it where they can hear.', 'I keep my hands still.'],
-      ['I am not leaving.', 'I let the silence sit.'],
-      ['Then tell me what it cost.', 'I touch the torn band.'],
-      ['I believe you.', 'I breathe out.'],
-      ['Enough.', 'I step back.'],
-      ['Later, then.', 'I turn toward the door.']
-    ];
+    // ── THE READER PLAYS A FATE CARD, NOT A LINE I MADE UP ──────────────────────────────────
+    // My scripted inputs were the contamination in the last run: nine deflections fed to a
+    // character briefed to press one question until it is answered. He kept asking because
+    // nobody ever answered — which is correct behaviour, not repetition.
+    //
+    // The five OAS cards are authored by Grok FOR THIS MOMENT (generateIntimateFatePreviewsBatch)
+    // and carry {dialogue, action} — exactly the SAY and DO a reader submits. They know the
+    // situation and are primed for the OAS register, so they are a far better probe than
+    // anything I can invent, and they make the test reproducible instead of reflecting my
+    // guesses about how a reader talks.
+    //
+    // The pick is SEEDED so a rerun plays the same hand; "random" here means reproducible
+    // selection, not a model judgement.
+    let pickSeed = 1013904223;
+    const nextPick = (n) => { pickSeed = (1664525 * pickSeed + 1013904223) >>> 0; return pickSeed % n; };
+    const drawCard = () => page.evaluate(() => {
+      const opts = (window.state && window.state.fateOptions) || [];
+      return opts.map(c => ({ id: c && c.id, label: c && (c.label || c.title),
+        dialogue: c && c.dialogue, action: c && c.action, intimate: !!(c && c._intimate) }));
+    });
+    // Used only if no cards are dealt, and reported loudly if it fires.
+    const FALLBACK = ['I did.', 'I wanted you to stop it.'];
+
     let turnsTaken = 0;
-    for (let i = 0; i < INPUTS.length && !halted; i++) {
+    for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
+      // Draw the hand this turn actually offers, and play one.
+      const hand = await drawCard();
+      const usable = hand.filter(c => c && (c.dialogue || c.action));
+      let say_, do_;
+      if (usable.length) {
+        const c = usable[nextPick(usable.length)];
+        say_ = c.dialogue || ''; do_ = c.action || '';
+        say('  turn ' + (i + 1) + ' plays card "' + (c.label || c.id) + '"'
+          + (c.intimate ? ' [Grok-authored for this moment]' : ' [template — NOT situation-authored]')
+          + ': SAY ' + JSON.stringify(String(say_).slice(0, 70)));
+      } else {
+        say_ = FALLBACK[0]; do_ = FALLBACK[1];
+        say('  turn ' + (i + 1) + ': *** NO FATE CARDS DEALT — falling back to a scripted answer. '
+          + 'This weakens the test and is reported, not hidden. ***');
+      }
       // THE HANDLER'S RETURN VALUE IS USED, not discarded — a refused input is a refused input.
       const accepted = await page.evaluate(({ a, b }) => {
         try { const r = window._intimacyDialogueConsumeInput(a, b);
           return { ok: r !== false, returned: (r === undefined ? 'undefined' : String(r)) }; }
         catch (e) { return { ok: false, returned: 'threw: ' + (e && e.message) }; }
-      }, { a: INPUTS[i][0], b: INPUTS[i][1] });
+      }, { a: say_, b: do_ });
       if (!accepted.ok) {
         halted = true; haltReason = 'OAS input ' + (i + 1) + ' REFUSED (' + accepted.returned + ')';
         say('  *** STOPPING — ' + haltReason + ' ***'); break;
