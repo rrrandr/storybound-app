@@ -2,9 +2,9 @@
   {
     "turn": 0,
     "msgs": 2,
-    "chars": 4970,
+    "chars": 4972,
     "sys": 397,
-    "rest": 4573,
+    "rest": 4575,
     "max_tokens": 180,
     "model": "mistral-small-latest",
     "convId": null
@@ -12,81 +12,81 @@
   {
     "turn": 1,
     "msgs": 2,
-    "chars": 201146,
+    "chars": 199489,
     "sys": 2804,
-    "rest": 198342,
+    "rest": 196685,
     "max_tokens": 400,
     "model": "grok-4-1-fast-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 2,
     "msgs": 2,
-    "chars": 201319,
+    "chars": 199662,
     "sys": 2804,
-    "rest": 198515,
+    "rest": 196858,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 3,
     "msgs": 2,
-    "chars": 201530,
+    "chars": 199873,
     "sys": 2804,
-    "rest": 198726,
+    "rest": 197069,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 4,
     "msgs": 2,
-    "chars": 201763,
+    "chars": 200106,
     "sys": 2804,
-    "rest": 198959,
+    "rest": 197302,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 5,
     "msgs": 2,
-    "chars": 202784,
+    "chars": 201127,
     "sys": 2804,
-    "rest": 199980,
+    "rest": 198323,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 6,
     "msgs": 2,
-    "chars": 202428,
+    "chars": 200771,
     "sys": 2804,
-    "rest": 199624,
+    "rest": 197967,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 7,
     "msgs": 2,
-    "chars": 202407,
+    "chars": 200750,
     "sys": 2804,
-    "rest": 199603,
+    "rest": 197946,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   },
   {
     "turn": 8,
     "msgs": 2,
-    "chars": 202375,
+    "chars": 200718,
     "sys": 2804,
-    "rest": 199571,
+    "rest": 197914,
     "max_tokens": 400,
     "model": "grok-4.20-0309-non-reasoning",
-    "convId": "sb-grok-e079be51-641c-44a5-bc82-3caca3a76535"
+    "convId": "sb-grok-a8abe1b7-d00f-4eb2-8eee-8d1016133380"
   }
 ]

@@ -200532,14 +200532,12 @@ No text, no watermark, no UI elements, share-ready.`;
       ' 16. IMPLIED TRUST PROGRESSION — as trust deepens, procedural negotiation becomes shorthand\n' +
       ' 17. SACREDNESS PRESERVATION — rare moments must stay rare for emotional scale to hold\n' +
       'Plus: CANONIC VIOLENCE PASS-THROUGH (Tier A) when violence IS the genre, ANTI-MORALIZE RULE across all sub-directives.\n\n' +
-      (function() {
-        // Surface ERA pressure state inline so the directive reads it
-        // every prompt build. State is window-scoped; helper is in same IIFE.
-        var _eraP = (window.state && window.state._nilRupturePressure) || 0;
-        var _eraT = (typeof _computeNilRuptureThreshold === 'function') ? _computeNilRuptureThreshold() : 14;
-        var _eraActive = _eraP >= _eraT;
-        return 'ERA STATE: pressure ' + _eraP + ' / threshold ' + _eraT + (_eraActive ? ' ⚠️ THRESHOLD CROSSED — see sub-directive 13 below for behavior change.' : ' (default NIL mode — sub-directives 1-12 apply as normal).') + '\n\n';
-      })() +
+      // ERA STATE IS A PER-TURN VALUE AND NO LONGER SITS HERE (Roman/Codex 2026-10-05).
+      // Emitted inline, it changed every turn (pressure 0 -> 1 -> 2) at about character 23,210
+      // of a ~197,000-character prompt — ahead of nearly all of it — so the identical prefix
+      // ended there and prompt caching could not reuse the rest. The VALUES now go in the
+      // declared per-turn region beside CURRENT STATE; this line is stable and points at them.
+      'ERA STATE: reported under CURRENT STATE, below.\n' +
       '─── 1. INTENT TRANSMUTATION ───\n' +
       'The player isn\'t writing prose. They\'re expressing intention, emotional direction, fantasy pressure, desired energy. Your job is to TRANSMUTE that intent into story-native dramatic action — same intent, different world-true expression.\n\n' +
       'WHAT TO PRESERVE (NEVER reinterpret):\n' +
@@ -200668,7 +200666,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • Carry the WEIGHT of the canonized act into character behavior — body language, dialogue caution, the LI\'s gaze, the world\'s changed temperature, friends-of-the-victim showing up later.\n' +
       '  • The metabolism does NOT need to be the SUBJECT of every subsequent scene — but it must be FELT. A character who killed in scene 14 walks differently in scene 15. A betrayal lingers in the LI\'s pause before each line.\n' +
       '  • This is the inverse of NIL #7 (Sabotage Absorption): non-canonized impulses vanish; canonized acts persist. The system distinguishes.\n\n') : '') +
-      (_eraOn ? ('─── 13. EARNED RUPTURE AUTHORITY (HARD — only active when ERA STATE shows ⚠️ above) ───\n' +
+      (_eraOn ? ('─── 13. EARNED RUPTURE AUTHORITY (HARD — only active when ERA STATE shows ⚠️) ───\n' +
       'The story accumulates narrative pressure across many turns: Petition / Tempt invocations, dark-register beats inside OAS, hostile-tone scenes (enemies / manipulation / power / revenge), identity-tier attempts (whether yielded or refused), grievance contracts converging. Each was a moment the story almost broke but didn\'t. Pressure decays slowly across clean stretches. When accumulated pressure crosses the per-story-length threshold (Taste 8 / Fling 12 / Affair 16 / Soulmates 24), NIL temporarily RELAXES and impulses NIL would normally redirect can LAND as canon.\n' +
       '\n' +
       'BEHAVIOR WHEN ERA IS ACTIVE (threshold crossed):\n' +
@@ -202137,6 +202135,15 @@ No text, no watermark, no UI elements, share-ready.`;
       // static instructions. Preserving every word is not preserving whose words they are.
       _OAS_MARK_VOLATILE_START,
       'CURRENT STATE:',
+      // Moved here from the static directive so everything above stays identical turn to turn.
+      (function () {
+        try {
+          var _p = (window.state && window.state._nilRupturePressure) || 0;
+          var _t = (typeof _computeNilRuptureThreshold === 'function') ? _computeNilRuptureThreshold() : 14;
+          return '- ERA STATE: pressure ' + _p + ' / threshold ' + _t
+            + (_p >= _t ? ' ⚠️ THRESHOLD CROSSED — see the Earned Rupture Authority directive.' : '.');
+        } catch (_) { return '- ERA STATE: unavailable.'; }
+      })(),
       '- Beat ' + (d.beatCount + 1) + ' of soft-cap ' + d.softCap + ' (hard cap ' + d.hardCap + ').',
       '- Temperature: ' + d.temperature + ' (curious → warming → urgent → peaking → resolution).',
       '- User register: ' + d.userRegister + ' (soft → direct → explicit).',

@@ -412,81 +412,95 @@ try {
     // _intimate: true on the TEMPLATE path too (line 1241), so that flag proves nothing about
     // authorship. The only authoritative test is whether this card id is in
     // state._grokIntimateFateCards.cards for THIS turn.
-    const readHand = () => page.evaluate(() => {
+    // ── THE OAS DECK IS NOT THE GENERIC DECK ──────────────────────────────────────────────
+    // The previous version read state.fateOptions and clicked any .fate-card in the document,
+    // via page.evaluate(el.click()). Three things were wrong with that, all of which invalidate
+    // the "nine template cards" finding:
+    //   · the OAS deck lives in #gnCardMount as .intimacy-dev-fate-card[data-fate-card-slot];
+    //   · its handler REJECTS untrusted events outright —
+    //       app.js:210592  if (ev && ev.isTrusted === false) ... return;
+    //     so a page-evaluated click was never accepted at all;
+    //   · an accepted click runs _handleOASFateCardClick, which populates #gnActionInput and
+    //     #gnDialogueInput — the preview I should be reading.
+    // Playwright's own page.click() dispatches through CDP and IS trusted, so it is used here.
+    const readOasDeck = () => page.evaluate(() => {
+      const mount = document.getElementById('gnCardMount');
+      const els = mount ? [...mount.querySelectorAll('.intimacy-dev-fate-card')] : [];
       const st = window.state || {};
-      const opts = st.fateOptions || [];
-      const tc = st.turnCount;
       const cache = st._grokIntimateFateCards;
-      const cacheFresh = !!(cache && cache.turnCount === tc && cache.cards);
-      const els = [...document.querySelectorAll('.fate-card')];
+      const cacheFresh = !!(cache && cache.turnCount === st.turnCount && cache.cards);
       return {
-        count: opts.length,
-        domCards: els.length,
-        loading: !!st._grokIntimateFateCardsInFlight,
-        cards: opts.map((c, i) => ({
-          slot: i, id: c && c.id, label: c && (c.label || c.title),
-          dialogue: c && c.dialogue, action: c && c.action,
-          intimateFlag: !!(c && c._intimate),
-          // AUTHORITATIVE: present in the Grok cache for this turn?
-          grokAuthored: !!(cacheFresh && c && c.id && cache.cards[c.id]),
-          variant: (c && c._variant) || null
-        }))
+        mounted: !!mount,
+        count: els.length,
+        revealed: els.filter(e => e.getAttribute('data-revealed') === '1').length,
+        cacheFresh,
+        cacheIds: cacheFresh ? Object.keys(cache.cards) : [],
+        slots: els.map((e, i) => ({ idx: i, slot: e.getAttribute('data-fate-card-slot'),
+          revealed: e.getAttribute('data-revealed') === '1' }))
       };
     });
 
-    // Wait for the current options to finish loading before choosing.
-    const waitForHand = async (maxMs = 45000) => {
+    // Wait for the deck to mount and flip before choosing — the cards reveal on a timer.
+    const waitForOasDeck = async (maxMs = 45000) => {
       const dl = Date.now() + maxMs;
+      let last = null;
       while (Date.now() < dl) {
-        const h = await readHand();
-        if (!h.loading && h.count > 0 && h.domCards > 0) return h;
+        last = await readOasDeck();
+        if (last.count > 0 && last.revealed >= last.count) return last;
         await page.waitForTimeout(1000);
       }
-      return await readHand();
+      return last;
     };
 
     let turnsTaken = 0;
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
-      // Draw the hand this turn actually offers, wait for it to settle, and PLAY one.
-      const hand = await waitForHand();
-      const usable = hand.cards.filter(c => c && (c.dialogue || c.action));
-      if (!usable.length) {
+      // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
+      const deck = await waitForOasDeck();
+      if (!deck || !deck.count) {
         halted = true;
-        haltReason = 'no usable Fate cards were offered at OAS turn ' + (i + 1)
-          + ' (options=' + hand.count + ', dom=' + hand.domCards + ', loading=' + hand.loading + ')';
-        say('  *** STOPPING — ' + haltReason + '. There is no scripted answer to fall back on: a');
-        say('      harness-written reply is what contaminated the last run. ***');
+        haltReason = 'the OAS deck never mounted at turn ' + (i + 1)
+          + ' (mount=' + (deck && deck.mounted) + ', cards=' + (deck && deck.count) + ')';
+        say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
-      const chosen = usable[nextPick(usable.length)];
-      // CLICK THE REAL CARD so the selection is recorded by production.
-      const played = await page.evaluate((slot) => {
-        const els = [...document.querySelectorAll('.fate-card')];
-        const el = els[slot] || els[0];
-        if (!el) return { clicked: false };
-        el.click();
-        return { clicked: true,
-          selectedIndex: (window.state && window.state.fateSelectedIndex),
-          committed: !!(window.state && window.state.fateCommitted) };
-      }, chosen.slot);
-      await page.waitForTimeout(1200);
-      // What production actually put in the inputs after the click.
-      const submitted = await page.evaluate(() => {
-        const a = document.getElementById('actionInput') || document.getElementById('gnActionInput');
-        const d = document.getElementById('dialogueInput') || document.getElementById('gnDialogueInput');
+      const slotIdx = nextPick(deck.count);
+      const sel = '#gnCardMount .intimacy-dev-fate-card';
+      const rejectedBefore = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
+      // TRUSTED INPUT — Playwright dispatches through CDP, so isTrusted is true.
+      await page.locator(sel).nth(slotIdx).click({ timeout: 15000 }).catch(async (e) => {
+        say('  click failed on slot ' + slotIdx + ': ' + (e && e.message));
+      });
+      await page.waitForTimeout(1500);
+      const rejectedAfter = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
+      // VERIFY THE HANDLER ACCEPTED IT and populated the OAS inputs.
+      const preview = await page.evaluate(() => {
+        const a = document.getElementById('gnActionInput');
+        const d = document.getElementById('gnDialogueInput');
         return { action: a ? a.value : null, dialogue: d ? d.value : null };
       });
-      const say_ = (submitted.dialogue && submitted.dialogue.trim()) || chosen.dialogue || '';
-      const do_  = (submitted.action && submitted.action.trim()) || chosen.action || '';
-      cardLog.push({ turn: i + 1, hand: hand.cards, chosenSlot: chosen.slot, chosenId: chosen.id,
-        played, submitted: { say: say_, do: do_ },
-        grokAuthored: chosen.grokAuthored, intimateFlag: chosen.intimateFlag });
-      say('  turn ' + (i + 1) + ' plays slot ' + chosen.slot + ' "' + (chosen.label || chosen.id) + '"'
-        + (chosen.grokAuthored ? ' [GROK-AUTHORED for this turn]'
-                               : ' [TEMPLATE — _intimate=' + chosen.intimateFlag + ', not in the Grok cache]')
-        + '  clicked=' + played.clicked + ' idx=' + played.selectedIndex);
+      if (rejectedAfter > rejectedBefore) {
+        halted = true;
+        haltReason = 'the OAS handler REJECTED the click at turn ' + (i + 1)
+          + ' — the input was not trusted';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
+      }
+      if (!(preview.action || preview.dialogue)) {
+        halted = true;
+        haltReason = 'the OAS card click populated no preview at turn ' + (i + 1)
+          + ' — nothing to submit, and there is no template text to fall back on';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
+      }
+      const say_ = preview.dialogue || '';
+      const do_ = preview.action || '';
+      const slotName = (deck.slots[slotIdx] || {}).slot;
+      cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName,
+        preview, cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
+      say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" (trusted click accepted)'
+        + '  grokCache=' + (deck.cacheFresh ? deck.cacheIds.length + ' ids' : 'empty'));
       say('      SAY ' + JSON.stringify(String(say_).slice(0, 80)));
       say('      DO  ' + JSON.stringify(String(do_).slice(0, 80)));
 
@@ -500,30 +514,35 @@ try {
         halted = true; haltReason = 'OAS input ' + (i + 1) + ' REFUSED (' + accepted.returned + ')';
         say('  *** STOPPING — ' + haltReason + ' ***'); break;
       }
-      // THE EXIT MODAL IS A REAL OUTCOME, NOT A FAILURE. An input like "Enough." opens
-      // #intimacyExitModal and returns true WITHOUT requesting another reply, so waiting for
-      // dialogue that this interaction deliberately never generates would time out and be
-      // reported as a stall. Detect it and take the exit that ends THIS ENCOUNTER —
-      // #intimacyExitFade — never #intimacyExitMetaphorical, which changes future intimacy
-      // preferences for the whole story and is not ours to set.
-      const modalUp = async () => page.evaluate(() => {
-        const m = document.getElementById('intimacyExitModal');
-        return !!(m && m.offsetParent !== null);
+      // ── THE SUPPORTED READER EXIT ────────────────────────────────────────────────────────
+      // Production offers an EXIT RAMP at beats 6/13/17 — the log says "Exit ramp offered at
+      // beat 6" — rendered as a "Drift to afterglow" control inside #intimacyStatus
+      // (app.js:205906). The previous version watched only #intimacyExitModal, a DIFFERENT
+      // affordance, then waited nine turns for a resolution nobody had asked for. Taking the
+      // offered ramp is the supported way out, so it is taken when offered.
+      const exitAffordances = async () => page.evaluate(() => {
+        const status = document.getElementById('intimacyStatus');
+        const drift = status ? [...status.querySelectorAll('button,a,[role=button]')]
+          .find(b => /drift|afterglow/i.test(b.innerText || '')) : null;
+        const modal = document.getElementById('intimacyExitModal');
+        return { driftOffered: !!(drift && drift.offsetParent !== null),
+          driftText: drift ? (drift.innerText || '').trim().slice(0, 40) : null,
+          modalUp: !!(modal && modal.offsetParent !== null) };
       });
       let exited = false;
-      for (let w = 0; w < 8; w++) {
-        if (await modalUp()) {
-          const which = await page.evaluate(() => {
-            const b = document.getElementById('intimacyExitFade');
-            if (b && b.offsetParent !== null) { b.click(); return 'intimacyExitFade'; }
-            return null;
-          });
-          say('  turn ' + (i + 1) + ': EXIT MODAL opened — took "' + which + '" (ends this '
-            + 'encounter; future-preference options left untouched)');
-          exited = !!which;
-          break;
+      {
+        const aff = await exitAffordances();
+        if (aff.driftOffered) {
+          await page.locator('#intimacyStatus button, #intimacyStatus a, #intimacyStatus [role=button]')
+            .filter({ hasText: /drift|afterglow/i }).first()
+            .click({ timeout: 10000 }).catch(e => say('  drift click failed: ' + (e && e.message)));
+          say('  turn ' + (i + 1) + ': EXIT RAMP offered ("' + aff.driftText + '") — TAKEN');
+          exited = true;
+        } else if (aff.modalUp) {
+          await page.locator('#intimacyExitFade').click({ timeout: 10000 }).catch(() => {});
+          say('  turn ' + (i + 1) + ': exit modal shown — took "Fade to Black"');
+          exited = true;
         }
-        await page.waitForTimeout(500);
       }
 
       // WAIT FOR A RENDERED REPLY: one more liTurnHistory entry, carrying dialogue, and the
@@ -535,14 +554,10 @@ try {
         const now = await oasState();
         if (!now || !now.active) { landed = true; break; }
         if (now.replies > pre.replies && now.lastHasDialogue && !now.resolving) { landed = true; break; }
-        if (await modalUp()) {
-          const which = await page.evaluate(() => {
-            const b = document.getElementById('intimacyExitFade');
-            if (b && b.offsetParent !== null) { b.click(); return 'intimacyExitFade'; }
-            return null;
-          });
-          say('  turn ' + (i + 1) + ': exit modal appeared mid-wait — took "' + which + '"');
-          landed = true; exited = true; break;
+        const midAff = await exitAffordances();
+        if (midAff.driftOffered || midAff.modalUp) {
+          say('  turn ' + (i + 1) + ': an exit affordance appeared mid-wait');
+          landed = true; break;
         }
         await page.waitForTimeout(1500);
       }
@@ -750,11 +765,23 @@ write('SUMMARY.json', { calls: calls.length, receipted: settled, retainedUnresol
 // CARRY THE BUDGET FORWARD. The next run under the same authorization starts from here, with
 // unresolved exposure still counted — it is not forgiven by a new process.
 try {
+  // OUTSTANDING RESERVATIONS SURVIVE FINALIZATION. The previous version dropped them, which
+  // reported $0.555713 when the run's own roll-up said $0.576715 — $0.021002 of exposure
+  // forgiven by the save itself. They are carried as unresolved, not erased, and the file is
+  // the SELECTED one so a fixture run cannot write the real ledger (Codex 2026-10-05).
+  const stillOut = outstanding.reduce((n, x) => n + (x.estimate || 0), 0);
   const next = { receipted: (PRIOR.receipted || 0) + settled,
-    unresolved: (PRIOR.unresolved || 0) + retained,
-    runs: (PRIOR.runs || []).concat([{ run: RUN, receipted: settled, unresolved: retained }]) };
-  fs.writeFileSync('_fs_live_out/BUDGET.json', JSON.stringify(next, null, 2));
-  say('\nBUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json');
+    unresolved: (PRIOR.unresolved || 0) + retained + stillOut,
+    outstanding: [],
+    runs: (PRIOR.runs || []).concat([{ run: RUN, receipted: settled,
+      unresolved: retained, outstandingAtExit: stillOut }]),
+    authorization: PRIOR.authorization || null, note: PRIOR.note || null };
+  if (stillOut > 0) {
+    say('  NOTE: $' + stillOut.toFixed(6) + ' of reservations were still outstanding at exit and');
+    say('        are carried as UNRESOLVED exposure, not forgiven.');
+  }
+  fs.writeFileSync(BUDGET_FILE, JSON.stringify(next, null, 2));
+  say('\nBUDGET CARRIED FORWARD -> ' + BUDGET_FILE);
   say('  receipted to date  $' + next.receipted.toFixed(6));
   say('  unresolved to date $' + next.unresolved.toFixed(6));
   say('  TOTAL vs ceiling   $' + (next.receipted + next.unresolved).toFixed(6)

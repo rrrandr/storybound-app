@@ -77,7 +77,11 @@ console.log('\n3. OUTSTANDING RESERVATIONS SURVIVE INTERRUPTION');
 console.log('\n4. THE CEILING STOPS DISPATCH');
 {
   const good = JSON.parse(fs.readFileSync(BUDGET, 'utf8'));
-  const r = run({ SB_FIXTURES: '_runner_fixtures/ok.json', SB_CEILING: '0.01' }, 180000);
+  // The isolated fixture ledger starts at zero, so a small ceiling is no longer breached by the
+  // first tiny fixture call. Prior exposure is seeded here so the ceiling is genuinely already
+  // exceeded — which is the condition being tested.
+  fs.writeFileSync(BUDGET, JSON.stringify({ ...good, receipted: 0.9, unresolved: 0.2 }, null, 2));
+  const r = run({ SB_FIXTURES: '_runner_fixtures/ok.json', SB_CEILING: '1.00' }, 180000);
   fs.writeFileSync(BUDGET, JSON.stringify(good, null, 2));
   t('a ceiling below prior exposure halts before any dispatch',
     /HALTED BEFORE DISPATCH/.test(r.out), 'no halt was reported');
