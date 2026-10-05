@@ -23,6 +23,10 @@ const CEILING = Number(process.env.SB_CEILING || 0);
 // FIXTURE MODE EXERCISES THIS RUNNER, not a copy of its logic. Every gate, deadline, budget
 // rule and sequencing decision below is the same code the paid run uses; only the provider
 // response is served locally, and NO provider traffic leaves the process.
+let boundaryCheck = null;
+let scene2 = {};
+const sceneLedger = [];
+let openingBranch = { requested: (process.env.SB_OPENING_BRANCH || 'run').toLowerCase(), control: null };
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
 const LIVE = !FIXTURES;
@@ -775,16 +779,31 @@ try {
       promptMounted: decision.promptMounted, recorded: decision.recorded && decision.recorded.choice }));
 
     if (decision.needed && decision.promptMounted) {
-      // The authored branches are whatever the prompt offers; take the one the seed calls "remain"
-      // if it is there, else the first. The CHOICE must match an authored branch — that is checked
-      // immediately below, not assumed.
-      const want = (decision.b && /remain|stay/i.test(decision.b.label || '')) ? 'sceneDecisionB'
-        : 'sceneDecisionA';
+      // THE OPENING BRANCH IS A TEST PARAMETER, NOT A CONVENIENCE. An earlier run took "run";
+      // this runner had started preferring "remain", which is a DIFFERENT test condition and must
+      // never be presented as a directly comparable continuation. SB_OPENING_BRANCH names it
+      // explicitly (default "run", the branch the earlier runs used), it is recorded in the run
+      // artefacts, and a branch is NEVER chosen to suit a fixture.
+      const wantKey = (process.env.SB_OPENING_BRANCH || 'run').toLowerCase();
+      const matches = (b) => b && (String(b.key || '').toLowerCase() === wantKey
+        || new RegExp(wantKey, 'i').test(String(b.label || '')));
+      let want = matches(decision.a) ? 'sceneDecisionA'
+        : matches(decision.b) ? 'sceneDecisionB' : null;
+      if (!want) {
+        halted = true;
+        haltReason = 'the requested opening branch "' + wantKey + '" is not one the prompt offers'
+          + ' (a=' + JSON.stringify(decision.a) + ' b=' + JSON.stringify(decision.b) + ')';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+      }
+      openingBranch = { requested: wantKey, control: want };
       const chosen = (want === 'sceneDecisionB') ? decision.b : decision.a;
-      say('  servicing the decision: "' + (chosen && chosen.label) + '" (key=' + (chosen && chosen.key) + ')');
-      let decErr = null;
-      await page.locator('#' + want).click({ timeout: 15000 })
-        .catch(e => { decErr = (e && e.message) || 'click failed'; });
+      say('  opening branch (SB_OPENING_BRANCH=' + openingBranch.requested + '): "'
+        + (chosen && chosen.label) + '" (key=' + (chosen && chosen.key) + ')');
+      let decErr = want ? null : 'no matching branch control';
+      if (want) {
+        await page.locator('#' + want).click({ timeout: 15000 })
+          .catch(e => { decErr = (e && e.message) || 'click failed'; });
+      }
       if (decErr) {
         halted = true;
         haltReason = 'the run-or-remain prompt could not be serviced: ' + decErr;
@@ -820,6 +839,43 @@ try {
         + decision.recorded.choice + '") and the gate is closed — nothing to service');
     }
 
+    // ── SCENE 2'S ACCEPTED IDENTITY, CAPTURED WHERE IT IS CREATED ─────────────────────────
+    // (Codex 2026-10-05.) Servicing the opening branch is what GENERATES Scene 2 — not the first
+    // pass of the scene loop. The loop's first snapshot therefore jumped "0 -> 2" and every label
+    // after it was off by one: the pass that read Scene 2 and played its ending card created
+    // Scene 3, while reporting "Scene 2 accepted". Scene 2 is recorded HERE, against the step
+    // that actually produced it.
+    if (!halted) {
+      const dl2 = Date.now() + 240000;
+      let quiet2 = 0;
+      while (Date.now() < dl2) {
+        scene2 = await page.evaluate(() => {
+          const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+          const last = cg.length ? cg[cg.length - 1] : null;
+          return { cgScenes: cg.length, uid: last && last.uid,
+            hasProjection: !!(last && last.projection && last.text),
+            chars: last && last.text ? String(last.text).length : 0,
+            notes: Object.keys((window.state._historyNotes || {})).length };
+        });
+        if (scene2.cgScenes >= 1 && scene2.hasProjection) break;
+        if (quiet2 > 45 && inFlight === 0) break;   // ~90s with no dispatch and no scene
+        quiet2 = (inFlight === 0) ? quiet2 + 1 : 0;
+        await page.waitForTimeout(2000);
+      }
+      sceneLedger.push({ sceneNumber: 2, createdBy: 'opening branch "' + openingBranch.requested + '"',
+        uid: scene2.uid, accepted: !!(scene2.cgScenes >= 1 && scene2.hasProjection),
+        chars: scene2.chars, notesAfter: scene2.notes });
+      say('  SCENE 2 created by the opening branch: ' + (scene2.hasProjection ? 'ACCEPTED' : 'NOT ACCEPTED')
+        + ' · uid=' + String(scene2.uid).slice(0, 18) + ' · ' + scene2.chars + ' chars'
+        + ' · cgScenes=' + scene2.cgScenes + ' · notes=' + scene2.notes);
+      if (!scene2.hasProjection) {
+        halted = true;
+        haltReason = 'the opening branch did not produce an accepted Scene 2 ('
+          + JSON.stringify(scene2) + ')';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+      }
+    }
+
     const oasFinal = await page.evaluate(() => ({
       dialogue: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active),
       archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
@@ -845,8 +901,19 @@ try {
     say('  exposure $' + exposure().toFixed(6) + '\n');
   }
 
-  for (let scene = 2; scene <= 10 && !halted; scene++) {
-    say('── SCENE ' + scene + ' (live) ──');
+  // ── EACH PASS LEAVES ONE SCENE AND CREATES THE NEXT ─────────────────────────────────────
+  // (Codex 2026-10-05.) `leaving` is the scene already on screen, whose beats are walked and
+  // whose ending card is played; `creating` is the scene that card produces. The old loop used a
+  // single counter for both, so the pass that read Scene 2 reported "Scene 2 accepted" while it
+  // had actually created Scene 3 — and at the end it waited for a Scene 11 that the issue does
+  // not contain. Scene 2 is already recorded above, by the step that created it, so the first
+  // pass here leaves 2 and creates 3. The last pass leaves 9 and creates 10; there is no pass
+  // that leaves 10, because the issue ends there.
+  const LAST_SCENE = 10;
+  for (let leaving = 2; leaving <= LAST_SCENE - 1 && !halted; leaving++) {
+    const creating = leaving + 1;
+    const scene = leaving;   // the surface being read: deck, beats and card all belong to it
+    say('── LEAVING SCENE ' + leaving + ' -> CREATING SCENE ' + creating + ' (live) ──');
 
     // CAPTURE THE PRE-GENERATION IDENTITY *BEFORE* ANYTHING IS TRIGGERED. Reading the count
     // after the advance races the thing being measured.
@@ -1010,6 +1077,23 @@ try {
       break;
     }
     let sSub = { action: '', dialogue: '' };
+    // PREVIEW READINESS, carried over from the interaction control. A card clicked before the
+    // preview batch returns submits the template placeholder; waiting for a real preview makes
+    // the evaluation measure the product rather than a race. If it never arrives the run goes on
+    // and the fallback is RECORDED, not hidden.
+    {
+      const rDl = Date.now() + 25000;
+      while (Date.now() < rDl) {
+        const r = await page.evaluate(() => {
+          const v = (id) => { const e = document.getElementById(id); return e ? (e.value || '') : ''; };
+          const t = (v('gnActionInput') + ' ' + v('gnDialogueInput')).trim()
+            || (v('actionInput') + ' ' + v('dialogueInput')).trim();
+          return { filled: !!t, template: /…\s*$/.test(t) };
+        });
+        if (r.filled && !r.template) break;
+        await page.waitForTimeout(700);
+      }
+    }
     const sDl = Date.now() + 20000;
     while (Date.now() < sDl) {
       sSub = await page.evaluate(() => {
@@ -1021,8 +1105,25 @@ try {
         const gnA = val('gnActionInput'), gnD = val('gnDialogueInput');
         const litA = val('actionInput'), litD = val('dialogueInput');
         const gnHas = !!(gnA.trim() || gnD.trim());
-        return { action: gnHas ? gnA : litA, dialogue: gnHas ? gnD : litD,
+        const action = gnHas ? gnA : litA, dialogue = gnHas ? gnD : litD;
+        // IS THIS A MODEL PREVIEW OR A FALLBACK? The template placeholder is the card's own title
+        // with an ellipsis ("Reversal…"), served when a card is clicked before the preview batch
+        // returns. Which one the reader actually submitted changes what a prose evaluation means,
+        // so it is recorded per card rather than assumed.
+        const looksTemplate = (t) => /…\s*$/.test(String(t || '').trim());
+        const ids = (window.state.fateOptions || []).map(o => String(o.id || '').toLowerCase());
+        const titleEcho = (t) => { const w = String(t || '').trim().replace(/…\s*$/, '').toLowerCase();
+          return !!w && ids.indexOf(w) !== -1; };
+        const fallback = looksTemplate(action) || looksTemplate(dialogue)
+          || titleEcho(action) || titleEcho(dialogue);
+        const cache = window.state._sceneFateCardPreviews || {};
+        const sel = (window.state.fateOptions || [])[window.state.fateSelectedIndex];
+        const cached = sel ? cache[sel.id] : null;
+        return { action: action, dialogue: dialogue,
           source: gnHas ? 'gn' : ((litA.trim() || litD.trim()) ? 'literary(HIDDEN)' : 'neither'),
+          origin: fallback ? 'TEMPLATE FALLBACK' : 'model preview',
+          previewCached: !!(cached && (String(cached.action || '').trim()
+            || String(cached.dialogue || '').trim())),
           gn: { a: gnA.length, d: gnD.length }, lit: { a: litA.length, d: litD.length } };
       });
       if ((sSub.action && sSub.action.trim()) || (sSub.dialogue && sSub.dialogue.trim())) break;
@@ -1030,7 +1131,7 @@ try {
     }
     cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub });
     say('  scene ' + scene + ' plays card ' + sIdx + ' "' + (sDeck.labels[sIdx] || '?') + '"'
-      + ' from ' + sDeck.mountId + ' (playable=' + sDeck.count
+      + ' from ' + sDeck.mountId + ' [' + sSub.origin + ']' + ' (playable=' + sDeck.count
       + ' locked=' + sDeck.lockedOut + ' committed=' + sDeck.fateCommitted
       + ' sel=' + sDeck.fateSelectedIndex + ' key=' + sDeck.sceneKey + ')'
       + ' via ' + sSub.source
@@ -1073,13 +1174,20 @@ try {
       await page.waitForTimeout(2000);
     }
     const snap = await snapshot('scene' + scene);
-    write('scene' + scene + '.json', { outcome, before, snap,
+    sceneLedger.push({ sceneNumber: creating, createdBy: 'the ending card of scene ' + leaving,
+      cardFrom: leaving, cardIdx: sIdx, cardLabel: (sDeck.labels[sIdx] || null),
+      previewSource: sSub.source, previewOrigin: sSub.origin || null,
+      accepted: outcome === 'accepted', notesAfter: snap.notes.length,
+      cgScenesAfter: snap.scenes });
+    write('scene' + creating + '.json', { outcome, creating, leaving, before, snap,
+      openingBranch,
       cards: cardLog.filter(c => c.scene === scene) });
-    say('  outcome: ' + outcome + ' · scenes ' + before.count + ' -> ' + snap.scenes
+    say('  SCENE ' + creating + ' ' + outcome.toUpperCase() + ' (card played in scene ' + leaving
+      + ') · cg scenes ' + before.count + ' -> ' + snap.scenes
       + ' · notes ' + snap.notes.length + ' · exposure $' + exposure().toFixed(6));
     if (outcome !== 'accepted') {
       halted = true;
-      haltReason = 'scene ' + scene + ' did not complete (' + outcome + ')';
+      haltReason = 'scene ' + creating + ' did not complete (' + outcome + ')';
       say('  *** STOPPING — ' + haltReason + '. Not restarting; reporting as found. ***');
       break;
     }
@@ -1092,6 +1200,77 @@ try {
     say('');
   }
 
+  // ── THE ISSUE ENDS AT SCENE 10 — VERIFY IT, DO NOT ASK FOR AN ELEVENTH ──────────────────
+  // (Codex 2026-10-05.) The old loop played a card in Scene 10 and then waited for a Scene 11
+  // the issue does not contain, reporting "no-generation" for a product that had correctly
+  // reached its boundary. The final error is not suppressed: Scene 10's own projection and the
+  // production issue-ending state are CHECKED, and a failure of either is still a failure.
+  if (!halted) {
+    const endState = await page.evaluate((last) => {
+      const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+      const tenth = cg[cg.length - 1] || null;
+      const st = window.state;
+      return {
+        cgScenes: cg.length,
+        tenthUid: tenth && tenth.uid,
+        tenthAccepted: !!(tenth && tenth.projection && tenth.text),
+        tenthChars: tenth && tenth.text ? String(tenth.text).length : 0,
+        // THE PRODUCTION ISSUE-ENDING STATE, read from the app's OWN helpers. My first attempt
+        // guessed at _issueComplete / _issuePosition, which do not exist and returned
+        // null/false — so I could not have claimed this was verified. The real signals are
+        // _getSceneInIssue() (1..scenesPerIssue, resetting at each boundary) and the issue's
+        // planned length from ISSUE_PRICING: the issue has ENDED when the position has wrapped
+        // back to the start, or equals the planned length with no further scene pending.
+        sceneInIssue: (typeof window._getSceneInIssue === 'function') ? window._getSceneInIssue() : null,
+        scenesPerIssue: (function () {
+          try { return (window.ISSUE_PRICING || {})[window.state._storyMode === 'literary'
+            ? 'literary' : 'cg'].scenesPerIssue; } catch (_) { return null; }
+        })(),
+        turnCount: st.turnCount || null,
+        decisionNeeded: (typeof window._sceneDecisionNeeded === 'function')
+          ? !!window._sceneDecisionNeeded() : null,
+        nextGateOpen: !!(window.state._stagedActive && window.state._stagedActive.plan),
+        notes: Object.keys(window.state._historyNotes || {}).length
+      };
+    }, LAST_SCENE);
+    say('');
+    say('── ISSUE BOUNDARY ──');
+    say('  scene 10 accepted projection: ' + endState.tenthAccepted
+      + ' · ' + endState.tenthChars + ' chars · uid=' + String(endState.tenthUid).slice(0, 18));
+    say('  cg scenes: ' + endState.cgScenes + ' · history notes: ' + endState.notes);
+    say('  production issue state: scene ' + endState.sceneInIssue + ' of '
+      + endState.scenesPerIssue + ' (turnCount ' + endState.turnCount + ')'
+      + ' · decisionNeeded=' + endState.decisionNeeded
+      + ' · nextGateOpen=' + endState.nextGateOpen);
+    boundaryCheck = { sceneNumber: LAST_SCENE, accepted: endState.tenthAccepted,
+      chars: endState.tenthChars, uid: endState.tenthUid,
+      sceneInIssue: endState.sceneInIssue, scenesPerIssue: endState.scenesPerIssue,
+      turnCount: endState.turnCount };
+    write('issue_boundary.json', endState);
+    if (!endState.tenthAccepted) {
+      halted = true;
+      haltReason = 'scene ' + LAST_SCENE + ' has no accepted projection at the issue boundary';
+      say('  *** FAILED — ' + haltReason + ' ***');
+    } else if (endState.cgScenes < 9) {
+      halted = true;
+      haltReason = 'the issue ended with only ' + endState.cgScenes
+        + ' generated scenes; scenes 2-10 should be nine';
+      say('  *** FAILED — ' + haltReason + ' ***');
+    } else {
+      say('  ISSUE COMPLETE — scenes 2-10 generated and scene 10 verified. No scene 11 expected.');
+    }
+  }
+
+  write('scene_ledger.json', { openingBranch, scenes: sceneLedger, boundaryCheck });
+  say('');
+  say('── SCENE LEDGER (each scene against the step that created it) ──');
+  if (boundaryCheck) say('  (boundary check: scene ' + boundaryCheck.sceneNumber + ' projection '
+    + (boundaryCheck.accepted ? 'accepted' : 'MISSING') + ', ' + boundaryCheck.chars + ' chars, '
+    + 'production position ' + boundaryCheck.sceneInIssue + '/' + boundaryCheck.scenesPerIssue + ')');
+  sceneLedger.forEach(r => say('  scene ' + r.sceneNumber + '  '
+    + (r.accepted ? 'accepted' : 'NOT accepted') + '  <- ' + (r.createdBy || 'verified at boundary')
+    + (r.previewSource ? '  [preview: ' + r.previewSource
+        + (r.previewOrigin ? '/' + r.previewOrigin : '') + ']' : '')));
   write('final.json', await snapshot('final'));
 } catch (e) {
   say('\n*** RUN ERROR: ' + (e && e.message) + ' ***');

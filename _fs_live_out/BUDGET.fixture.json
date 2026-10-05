@@ -1,33 +1,15 @@
 {
-  "receipted": 0.0013000000000000002,
-  "unresolved": 0,
+  "receipted": 0.0023,
+  "unresolved": 1.6939425,
   "outstanding": [],
   "runs": [
     {
-      "run": "_fs_live_out/run_2026-10-05T05-53-47-533Z",
-      "receipted": 0.00030000000000000003,
-      "unresolved": 0
-    },
-    {
-      "run": "_fs_live_out/run_2026-10-05T05-54-35-825Z",
-      "receipted": 0.00030000000000000003,
-      "unresolved": 0
-    },
-    {
-      "run": "_fs_live_out/run_2026-10-05T05-55-25-587Z",
-      "receipted": 0.00030000000000000003,
-      "unresolved": 0
-    },
-    {
-      "run": "_fs_live_out/run_2026-10-05T05-56-14-210Z",
-      "receipted": 0.00030000000000000003,
-      "unresolved": 0
-    },
-    {
-      "run": "_fs_live_out/run_2026-10-05T05-57-04-258Z",
-      "receipted": 0.0001,
-      "unresolved": 0
+      "run": "_fs_live_out/run_2026-10-05T22-27-00-067Z",
+      "receipted": 0.0023,
+      "unresolved": 1.6939425,
+      "outstandingAtExit": 0
     }
   ],
-  "note": "ISOLATED fixture ledger. Never records real authorization spend."
+  "authorization": null,
+  "note": null
 }

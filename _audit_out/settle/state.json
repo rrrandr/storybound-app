@@ -2,7 +2,7 @@
   "created": {
     "notes": [
       {
-        "ref": "pg:5da26ce1-497a-4127-9f75-6b1af3dd0702",
+        "ref": "pg:1898f615-71ec-4bd8-809d-0f671115dd81",
         "obligations": [
           {
             "id": "ob-answer-the-demand",
@@ -24,9 +24,9 @@
     "[LORE-LEDGER] scene 11 · candidates=0 glossed=0 ledger=0",
     "[SCENE-ASSIGNMENT] scene=1 source=scene-mission setting=\"room already knows it\"(inferred) event=\"Establish that she is here under a name that is not hers, and that one person in the room \"",
     "[CANON:SEQUENCE] continuation scene 1 — no_canon · status=unresolved · dispatches=0",
-    "[SCENE-LEDGER] +p11 kind=scene issue=1 uid=pg:b6beffb1-002b-42e8-bd7b-205d5a1c1db0 planned=\"Establish that she is here under a name that is not hers, an\"",
-    "[HISTORY-NOTE] pg:b6beffb1-002b-42e8-bd7b-205d5a1c1db0 — 0 quote-backed, 1 summary-only, 0 proposed obligation(s)",
-    "[ENGAGEMENT:SCENE] {dwellMs: 6121, idleMs: 5647, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}",
+    "[SCENE-LEDGER] +p11 kind=scene issue=1 uid=pg:b84f6000-01ae-4297-a83e-5d508a12990f planned=\"Establish that she is here under a name that is not hers, an\"",
+    "[HISTORY-NOTE] pg:b84f6000-01ae-4297-a83e-5d508a12990f — 0 quote-backed, 1 summary-only, 0 proposed obligation(s)",
+    "[ENGAGEMENT:SCENE] {dwellMs: 6134, idleMs: 5681, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}",
     "[ENGAGEMENT KPI] {microExprInteractionRate: 0%, avgTimeToFirstInteraction: 0.0s, dropOffBeforeChoiceRate: 0%, choiceCompletionRate: 0%, totalScenes: 10}",
     "[PRESSURE ENGINE] {romance: 0.71, power: 0.53, conflict: 0.50, uncertainty: 0.86, scene: 10}",
     "[RELSHAPE] raw input — act=participated tension=held desire=hidden reciprocity=na register=grounded | recept=na own=na presence=na vuln=na | prior(pc=female,li=male) (scene 10, v0-heuristic)",
@@ -38,7 +38,7 @@
     "%c\n=== NARRATIVE DIAGNOSTICS ===\n color: #c9a84c; font-weight: bold; font-size: 14px",
     "POV LAYER            N/A      Influence: N/A     Standard 3rd person",
     "WORLD LAYER          FAIL     Influence: NONE    No signals for small_town",
-    "DIRECTIVES           Active: []  Suppressed: [SUBTEXT_CONFLICT]  Influence: NONE",
+    "DIRECTIVES           Active: []  Suppressed: [ROMANTIC_TENSION]  Influence: NONE",
     "SIGNATURE STYLE      NONE     Influence: NONE    None",
     "COINCIDENCE          NONE     Influence: NONE    ",
     "RHYTHM               NONE     Influence: NONE    No rhythm",
@@ -46,7 +46,7 @@
     "MOMENT SIGNIFICANCE  N/A      Location: Too short  Influence: N/A",
     "\nSTRUCTURALLY BROKEN | Primary: World layer missing | Secondary: None",
     "[FATE:STAGE-DIAG] turnCount=10 · scenes.length=1 · _scene1OnStagePhysical=[the narrator] (1) · _scene1OnPhone=[] · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false",
-    "[FATE-CARDS:PLOT-CTX] archetype=BEAUTIFUL_RUIN · ST=ST3 · intimacy=true · aplot=\"get through the party without being name\" · truth=family_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–",
+    "[FATE-CARDS:PLOT-CTX] archetype=BEAUTIFUL_RUIN · ST=ST3 · intimacy=true · aplot=\"get through the party without being name\" · truth=higher_cost_choice · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–",
     "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: Lirael, presentCharacters: Array(6)}",
     "[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Lirael, isStorybeau: false, sceneCharacters: Array(6)}",
     "[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: Lirael, presentCharacters: Array(6)}",
@@ -63,7 +63,7 @@
     "[FATE] Existing cards rebound: 5",
     "[FATE] initFateCards bound",
     "[SCENE_CONTEXT] Updated for scene 10",
-    "[Supabase] Snapshot saved for story: c44b4db5-0cbb-4d50-838a-b487734fe6a7",
+    "[Supabase] Snapshot saved for story: c970524d-2e26-40af-913c-9a78923fff30",
     "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
     "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
     "[SCENE-AMB] Grok call failed: Grok scene-ambient: 503",
