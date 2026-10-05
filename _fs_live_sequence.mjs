@@ -25,7 +25,29 @@ const write = (f, o) => fs.writeFileSync(RUN + '/' + f, typeof o === 'string' ? 
 
 const ledger = makeSpendLedger(say);
 const calls = [];
-let reservedTotal = 0, halted = false, haltReason = '';
+let halted = false, haltReason = '';
+
+// ── ATOMIC IN-FLIGHT RESERVATION (Roman/Codex 2026-10-05) ───────────────────────────────────
+// The previous check read `calls`, which a request only enters AFTER it returns, so two
+// concurrent dispatches could each pass the budget check without seeing the other.
+// `reservedTotal` was incremented but never consulted. Exposure is now RESERVED BEFORE the
+// request leaves and SETTLED when it comes back: a receipt replaces its reservation, and a call
+// with no receipt KEEPS it, because no receipt is not no cost.
+let inFlight = 0;          // reserved for requests currently out
+let settled = 0;           // receipted spend
+let retained = 0;          // reservations kept for calls that returned no receipt
+const PRIOR = (() => {
+  // THE BUDGET CARRIES ACROSS RUNS. Earlier dispatches under the same authorization are part of
+  // the same ceiling, including ones whose billing is unresolved.
+  try {
+    const f = '_fs_live_out/BUDGET.json';
+    if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8'));
+  } catch (_) {}
+  return { receipted: 0, unresolved: 0, runs: [] };
+})();
+const priorExposure = (PRIOR.receipted || 0) + (PRIOR.unresolved || 0);
+const exposure = () => priorExposure + settled + retained + inFlight;
+const REQUEST_TIMEOUT_MS = 180000;   // restored; a bare fetch previously hung author generation
 
 say('=== FS LIVE SEQUENCE — ceiling $' + CEILING.toFixed(2) + ' ===');
 say('Authorized by Roman 2026-10-04 with an explicit go.');
@@ -83,24 +105,28 @@ await page.route('**/api/**', async (route) => {
   const est = estimateUsd({ messages: body.messages || [], max_tokens: body.max_tokens },
     requested).estimate;
 
-  // RESERVE BEFORE DISPATCH. Exposure already incurred plus what this call could cost must sit
-  // under the ceiling, or the call is refused and the run stops.
-  const already = ledger.spendReport ? null : null;
-  const exposureNow = calls.reduce((n, c) => n + (c.measured != null ? c.measured : c.estimate), 0);
-  if (halted || exposureNow + est > CEILING) {
+  // RESERVE ATOMICALLY, BEFORE THE REQUEST LEAVES.
+  if (halted || exposure() + est > CEILING) {
     if (!halted) { halted = true;
-      haltReason = 'ceiling: exposure $' + exposureNow.toFixed(6) + ' + next $' + est.toFixed(6)
-        + ' would exceed $' + CEILING.toFixed(2);
+      haltReason = 'ceiling: exposure $' + exposure().toFixed(6) + ' + next $' + est.toFixed(6)
+        + ' would exceed $' + CEILING.toFixed(2)
+        + ' (prior runs $' + priorExposure.toFixed(6) + ')';
       say('\n*** HALTED BEFORE DISPATCH — ' + haltReason + ' ***'); }
     return route.fulfill({ status: 503, contentType: 'application/json',
       body: JSON.stringify({ error: 'harness ceiling reached' }) });
   }
-  reservedTotal += est;
+  inFlight += est;                       // held until this call settles
 
   const t0 = Date.now();
   let resp = null, text = '', err = null;
   try {
-    resp = await route.fetch();           // THE REAL CALL
+    // EXPLICIT TIMEOUT RESTORED. A bare route.fetch() has no deadline, and an author generation
+    // that hangs takes the whole run with it.
+    resp = await Promise.race([
+      route.fetch(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('harness timeout after '
+        + REQUEST_TIMEOUT_MS + 'ms')), REQUEST_TIMEOUT_MS))
+    ]);
     text = await resp.text();
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
@@ -110,6 +136,7 @@ await page.route('**/api/**', async (route) => {
   if (err || !resp) {
     rec.error = err || 'no response';
     rec.measured = null;
+    inFlight -= est; retained += est;    // UNRESOLVED: the reservation is kept, not released
     ledger.recordDispatchedNoResponse
       ? ledger.recordDispatchedNoResponse('call#' + rec.n, est, requested, rec.error)
       : null;
@@ -129,7 +156,17 @@ await page.route('**/api/**', async (route) => {
     rec.ticks = u.cost_in_usd_ticks ?? null;
     rec.measured = (typeof rec.ticks === 'number') ? rec.ticks * 1e-10 : null;
   } catch (_) { rec.parseError = true; rec.measured = null; }
+  // SETTLE: a receipt replaces the reservation; no receipt retains it.
+  inFlight -= est;
+  if (rec.measured != null) settled += rec.measured; else retained += est;
+  rec.exposureAfter = exposure();
   calls.push(rec);
+  // FULL request and response preserved — truncated console lines are not evidence.
+  try {
+    fs.mkdirSync(RUN + '/wire', { recursive: true });
+    fs.writeFileSync(RUN + '/wire/' + String(rec.n).padStart(3, '0') + '_req.json', raw || '');
+    fs.writeFileSync(RUN + '/wire/' + String(rec.n).padStart(3, '0') + '_res.json', text || '');
+  } catch (_) {}
   say('  call ' + String(rec.n).padStart(2) + '  ' + String(requested).padEnd(30)
     + ' served=' + String(rec.served || '?').padEnd(30)
     + ' in=' + String(rec.inTok ?? '?').padStart(6)
@@ -190,42 +227,91 @@ try {
   await unlockFS(page, 'fs-live');
   await finalizePreview(page);
   await page.waitForTimeout(4000);
-  say('  setup complete · exposure so far $'
-    + calls.reduce((n, c) => n + (c.measured != null ? c.measured : c.estimate), 0).toFixed(6) + '\n');
+  say('  setup complete · exposure $' + exposure().toFixed(6) + '\n');
 
   if (!halted) {
     say('── OAS (live) ──');
     await enterOAS(page, { settleMs: 9000 });
-    for (let i = 0; i < 9 && !halted; i++) {
-      const st = await page.evaluate(() => { const d = window.state.intimacyDialogue;
-        return d ? { active: !!d.active, resolving: !!d._resolving, beats: d.beatCount } : null; });
-      if (!st || !st.active || st.resolving) { say('  OAS ended after ' + i + ' reader turns'); break; }
-      const inputs = [
-        ['I am still here.', 'I hold his gaze.'],
-        ['Who signed the demand?', 'I step closer.'],
-        ['You knew before I did.', 'I do not look away.'],
-        ['Say it where they can hear.', 'I keep my hands still.'],
-        ['I am not leaving.', 'I let the silence sit.'],
-        ['Then tell me what it cost.', 'I touch the torn band.'],
-        ['I believe you.', 'I breathe out.'],
-        ['Enough.', 'I step back.'],
-        ['Later, then.', 'I turn toward the door.']
-      ][i];
+
+    // EACH INPUT IS ACCEPTED AND ITS RESPONSE COMPLETED BEFORE THE NEXT ONE. The previous
+    // version fired inputs nine seconds apart while calls were taking fifteen, never checked
+    // that an input was consumed, and printed "OAS complete" regardless. Beat count is the
+    // production signal that a turn landed.
+    const oasState = () => page.evaluate(() => {
+      const d = window.state.intimacyDialogue;
+      return d ? { active: !!d.active, resolving: !!d._resolving, beats: d.beatCount || 0,
+        sceneState: d.lastSceneState || null } : null;
+    });
+    const INPUTS = [
+      ['I am still here.', 'I hold his gaze.'],
+      ['Who signed the demand?', 'I step closer.'],
+      ['You knew before I did.', 'I do not look away.'],
+      ['Say it where they can hear.', 'I keep my hands still.'],
+      ['I am not leaving.', 'I let the silence sit.'],
+      ['Then tell me what it cost.', 'I touch the torn band.'],
+      ['I believe you.', 'I breathe out.'],
+      ['Enough.', 'I step back.'],
+      ['Later, then.', 'I turn toward the door.']
+    ];
+    let turnsTaken = 0;
+    for (let i = 0; i < INPUTS.length && !halted; i++) {
+      const pre = await oasState();
+      if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
       await page.evaluate(({ a, b }) => {
         try { window._intimacyDialogueConsumeInput(a, b); } catch (_) {}
-      }, { a: inputs[0], b: inputs[1] });
-      await page.waitForTimeout(9000);
+      }, { a: INPUTS[i][0], b: INPUTS[i][1] });
+      // WAIT FOR THE BEAT TO ADVANCE — proof the input was consumed and its reply completed.
+      let landed = false;
+      const deadline = Date.now() + 90000;
+      while (Date.now() < deadline) {
+        const now = await oasState();
+        if (!now || !now.active) { landed = true; break; }
+        if (now.beats > pre.beats && !now.resolving) { landed = true; break; }
+        await page.waitForTimeout(1500);
+      }
+      const post = await oasState();
+      turnsTaken++;
+      say('  turn ' + (i + 1) + ': beats ' + pre.beats + ' -> ' + (post ? post.beats : 'ended')
+        + (landed ? '' : '  *** INPUT NOT CONSUMED WITHIN 90s ***'));
+      if (!landed) {
+        halted = true; haltReason = 'OAS turn ' + (i + 1) + ' never completed';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
+      }
     }
-    const dl = Date.now() + 60000;
+
+    // RESOLUTION IS REQUIRED, NOT ASSUMED.
+    let resolved = false;
+    const dl = Date.now() + 120000;
     while (Date.now() < dl) {
-      const done = await page.evaluate(() => { const d = window.state.intimacyDialogue;
-        return !d || (!d.active && !d._resolving); });
-      if (done) break;
+      const st = await oasState();
+      if (!st || (!st.active && !st.resolving)) { resolved = true; break; }
       await page.waitForTimeout(2000);
     }
-    write('after_oas.json', await snapshot('after_oas'));
-    say('  OAS complete · exposure $'
-      + calls.reduce((n, c) => n + (c.measured != null ? c.measured : c.estimate), 0).toFixed(6) + '\n');
+    const oasFinal = await page.evaluate(() => ({
+      dialogue: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active),
+      archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
+      interruption: !!window.state._intimateInterruptionRecord,
+      submitted: !!window.state._intimateInterruptionSubmitted,
+      decisionNeeded: (typeof window._sceneDecisionNeeded === 'function')
+        ? !!window._sceneDecisionNeeded() : null
+    }));
+    write('after_oas.json', { turnsTaken, resolved, oasFinal, snap: await snapshot('after_oas') });
+    say('  turns taken ' + turnsTaken + ' · resolved=' + resolved
+      + ' · archive=' + oasFinal.archive + ' · interruption=' + oasFinal.interruption
+      + ' · submitted=' + oasFinal.submitted);
+
+    // THE HANDOFF IS A HARD GATE. Without resolution, the authored interruption and its
+    // submission, a scene advance is routed straight back into the dialogue — which is exactly
+    // how the last run produced three "scenes" that were more OAS turns.
+    if (!resolved || !oasFinal.archive) {
+      halted = true;
+      haltReason = 'OAS did not complete its handoff (resolved=' + resolved
+        + ', archive=' + oasFinal.archive + ', interruptionSubmitted=' + oasFinal.submitted + ')';
+      say('\n*** STOPPING BEFORE SCENE GENERATION — ' + haltReason + ' ***');
+      say('    No further call will be labelled "scene 2".');
+    }
+    say('  exposure $' + exposure().toFixed(6) + '\n');
   }
 
   for (let scene = 2; scene <= 4 && !halted; scene++) {
@@ -237,8 +323,16 @@ try {
     await page.waitForTimeout(40000);
     const snap = await snapshot('scene' + scene);
     write('scene' + scene + '.json', snap);
-    say('  scenes now ' + snap.scenes + ' · notes ' + snap.notes.length + ' · exposure $'
-      + calls.reduce((n, c) => n + (c.measured != null ? c.measured : c.estimate), 0).toFixed(6));
+    say('  scenes now ' + snap.scenes + ' · notes ' + snap.notes.length
+      + ' · exposure $' + exposure().toFixed(6));
+    // A SCENE MUST ACTUALLY EXIST. Otherwise stop rather than spend the next scene's budget on
+    // whatever the advance was really routed into.
+    if (snap.scenes < scene - 1) {
+      halted = true;
+      haltReason = 'scene ' + scene + ' produced no scene record (have ' + snap.scenes + ')';
+      say('  *** STOPPING — ' + haltReason + ' ***');
+      break;
+    }
     if (scene < 4 && !halted) {
       for (let i = 0; i < 25; i++) {
         if (await page.evaluate(() => !!window.state._stagedActive)) break;
@@ -265,14 +359,30 @@ say('  model calls dispatched : ' + calls.length);
 say('  MEASURED (receipts)    : $' + measured.toFixed(6));
 say('  no receipt             : ' + noReceipt.length + ' call(s), estimated $'
   + noReceipt.reduce((n, c) => n + c.estimate, 0).toFixed(6) + ' — NOT counted as measured');
-say('  reserved before dispatch: $' + reservedTotal.toFixed(6));
+say('  retained (no receipt)  : $' + retained.toFixed(6) + ' — kept as exposure, NOT forgiven');
+say('  prior runs             : $' + priorExposure.toFixed(6));
+say('  TOTAL EXPOSURE         : $' + exposure().toFixed(6));
 say('  ceiling                : $' + CEILING.toFixed(2) + (halted ? '  [HALTED: ' + haltReason + ']' : ''));
 const cached = calls.filter(c => c.cachedTok != null);
 if (cached.length) {
   const tc = cached.reduce((n, c) => n + c.cachedTok, 0), ti = cached.reduce((n, c) => n + (c.inTok || 0), 0);
   say('  CACHED TOKENS          : ' + tc + ' of ' + ti + ' input (' + (ti ? (tc / ti * 100).toFixed(1) : '0') + '%)');
 }
-write('SUMMARY.json', { calls: calls.length, measured, reservedTotal, ceiling: CEILING, halted, haltReason });
+write('SUMMARY.json', { calls: calls.length, receipted: settled, retainedUnresolved: retained,
+  priorExposure, totalExposure: exposure(), ceiling: CEILING, halted, haltReason });
+// CARRY THE BUDGET FORWARD. The next run under the same authorization starts from here, with
+// unresolved exposure still counted — it is not forgiven by a new process.
+try {
+  const next = { receipted: (PRIOR.receipted || 0) + settled,
+    unresolved: (PRIOR.unresolved || 0) + retained,
+    runs: (PRIOR.runs || []).concat([{ run: RUN, receipted: settled, unresolved: retained }]) };
+  fs.writeFileSync('_fs_live_out/BUDGET.json', JSON.stringify(next, null, 2));
+  say('\nBUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json');
+  say('  receipted to date  $' + next.receipted.toFixed(6));
+  say('  unresolved to date $' + next.unresolved.toFixed(6));
+  say('  TOTAL vs ceiling   $' + (next.receipted + next.unresolved).toFixed(6)
+    + ' of $' + CEILING.toFixed(2));
+} catch (_) {}
 say('\noutput: ' + RUN);
 await browser.close();
 LOG.end();
