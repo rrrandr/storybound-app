@@ -5217,6 +5217,11 @@ ${_pcInteriorLock}`;
     // Story-scoped by construction: _grokConvId() is 'sb-grok-' + state.storyId, stable within a
     // story and different across stories.
     var convId = opts.convId || ((typeof _grokConvId === 'function') ? _grokConvId() : null);
+    // PROSE-OWNER LOCK (Roman 2026-10-05). This policy falls back Grok -> Mistral -> OpenAI,
+    // which is right for structured work and WRONG for anything that writes or rewrites prose:
+    // a Grok outage would silently hand the pen to another model. A caller that owns prose sets
+    // authorOnly, and then a failed Grok call returns null instead of falling through.
+    var authorOnly = !!opts.authorOnly;
     var cacheEligible = _fullSceneCacheEligible(messages);
     var attempts = [];
 
@@ -5243,6 +5248,12 @@ ${_pcInteriorLock}`;
 
     // ── TIER 2: ministral-8b-2512 — ONLY if the static admission check passes for this exact
     // prompt. Never Mistral Small. ──
+    // A PROSE OWNER DOES NOT FALL THROUGH TO ANOTHER MODEL.
+    if (authorOnly) {
+      try { console.warn('[AUTHOR-ONLY] ' + roleTag + ' — Grok did not answer and no fallback is '
+        + 'permitted for a prose-owning call; returning null so the author\'s own words stand'); } catch (_) {}
+      return null;
+    }
     var admission = _ministral8bGovernorAdmits(messages, maxTokens);
     if (admission.admits) {
       try {
@@ -204196,7 +204207,35 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!orch || typeof orch.callChatGPT !== 'function') return null;
       var sys = 'You are a line editor for adult intimate dialogue (explicit register permitted). You receive ONE turn as JSON {line,beat} plus a list of OVERUSED words from earlier in the scene. Rewrite line+beat to avoid the overused words and reach for fresh images, keeping the meaning, heat, and voice. Return ONLY JSON {"line":"...","beat":"..."}.';
       var usr = 'OVERUSED (avoid all): ' + overused.join(', ') + '.\nTURN: ' + JSON.stringify({ line: line, beat: beat }) + '\nRewrite (de-repeat).';
-      var raw = await orch.callChatGPT([{ role: 'system', content: sys }, { role: 'user', content: usr }], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: 220, temperature: 0.7 });
+      // ══ THE OAS LINE EDITOR MUST NOT BE A SECOND PROSE OWNER (Roman 2026-10-05) ══════════
+      // This rewrites the LI's dialogue AND beat and splices the result back into the scene, so
+      // it is prose authorship, not a utility — and it was dispatched to gpt-4o-mini under the
+      // role PRIMARY_AUTHOR, which is the chatgpt-proxy's DEFAULT label and reads as though it
+      // were the sanctioned author. Measured in the paid run of 2026-10-05: two such calls,
+      // 609 and 639 chars, logged '[OAS:CLEANUP] de-repeated' right after, editing prose that
+      // grok-4.3 had just written.
+      //
+      // The editor is now the SAME author the turn came from, via the OAS's own dispatch path.
+      // FAIL-SAFE: if that call does not come back, the edit is SKIPPED and the author's own
+      // words stand. A cross-model rewrite is never the fallback — losing a de-repetition pass
+      // is a smaller harm than a second model quietly owning the prose.
+      var raw = null;
+      try {
+        var _ed = await _authorFullScenePolicy(
+          [{ role: 'system', content: sys }, { role: 'user', content: usr }],
+          { maxTokens: 400, temperature: 0.3, roleTag: 'oas-line-editor',
+            authorOnly: true,              // Grok or nothing — never a cross-model rewrite
+            grokModel: 'grok-4-1-fast-reasoning',
+            convId: (typeof _grokConvId === 'function') ? _grokConvId() : null });
+        raw = _ed && _ed.text ? _ed.text : null;
+        if (_ed && _ed.model) {
+          try { console.log('[OAS:CLEANUP] editor=' + _ed.provider + '/' + _ed.model); } catch (_) {}
+        }
+      } catch (_edErr) {
+        try { console.warn('[OAS:CLEANUP] editor call failed — keeping the author\'s own words: '
+          + (_edErr && _edErr.message)); } catch (_) {}
+        return null;
+      }
       if (raw && typeof raw === 'object') raw = raw.content || null; // moderation-gate shape (won't fire for gpt; defensive)
       if (!raw || typeof raw !== 'string') return null;
       var j = null; try { j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)); } catch (_) { return null; }

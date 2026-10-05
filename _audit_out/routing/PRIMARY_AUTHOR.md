@@ -2,9 +2,24 @@
 
 Provider-free audit. No code changed.
 
-## 1. What $0.372723 bought: no scenes
+## 1. CORRECTED — I conflated two runs
 
-**Not one scene was authored.** All twelve large calls were OAS dialogue turns:
+**The October 2 issue DID produce nine Grok 4.3 scenes, and the receipts prove it.** Verified
+from the saved author responses:
+
+| | |
+|---|---|
+| author (9 files, all `model: grok-4.3`) | $0.7705519 |
+| planner (9 files) | $0.0569856 |
+| verifier (8 files) | $0.0000000 |
+| **total** | **$0.8275375 — $0.0919 per generated scene** |
+
+So the ~9c per scene was real, and it bought Grok-authored prose. My "no scenes were authored"
+was true ONLY of the 2026-10-05 OAS attempt, and I stated it far too broadly.
+
+## 1b. What the latest $0.372723 bought: no scenes
+
+**In that run alone, not one scene was authored.** All twelve large calls were OAS dialogue turns:
 
 | # | requested | served | role | chars |
 |---|---|---|---|---|
@@ -28,10 +43,16 @@ a role inherits it. In `public/app.js` it appears at **51 call sites** across fo
 | gpt-4o | 9 |
 | gemini-2.5-flash | 1 |
 
-The two in the paid run were small utilities, not prose: `_auditPost` (app.js:6115) and
-`_rewriteIdentityForImage` (app.js:49354, `max_tokens: 220`). At 609 and 639 characters they
-could not have authored anything. **gpt-4o-mini is doing exactly the scaffold/utility work you
-expected — it is the LABEL that reads as authorship.**
+**I MISIDENTIFIED THE TWO CALLS.** They were not `_auditPost` or `_rewriteIdentityForImage`.
+They were `_oasGptMiniCleanup` (app.js:204193) — an OAS LINE EDITOR that rewrites the LI's
+dialogue AND beat and splices the result back into the scene. The log confirms it, and the
+timings match exactly: `[OAS:CLEANUP] de-repeated` at 3335ms and 4397ms against calls 13 and 15
+at 3331ms and 4394ms. Small request size does not mean it cannot modify prose — it receives one
+turn, not the story.
+
+So GPT-4o-mini was REWRITING GROK'S PROSE, under the role label PRIMARY_AUTHOR. That is the real
+violation of the Grok-only-prose rule, and it is narrow and fixable — unlike a broad routing
+rewrite based on misleading role names.
 
 ## 3. Two authoritative documents contradict each other
 
