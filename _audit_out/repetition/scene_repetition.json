@@ -1,0 +1,172 @@
+{
+  "01": {
+    "lines": 20,
+    "repeats": 0,
+    "pct": 0,
+    "detail": []
+  },
+  "02": {
+    "lines": 14,
+    "repeats": 0,
+    "pct": 0,
+    "detail": []
+  },
+  "03": {
+    "lines": 17,
+    "repeats": 0,
+    "pct": 0,
+    "detail": []
+  },
+  "04": {
+    "lines": 26,
+    "repeats": 0,
+    "pct": 0,
+    "detail": []
+  },
+  "05": {
+    "lines": 25,
+    "repeats": 0,
+    "pct": 0,
+    "detail": []
+  },
+  "06": {
+    "lines": 23,
+    "repeats": 1,
+    "pct": 4,
+    "detail": [
+      {
+        "line": "Julian waits without looking at me.",
+        "matches": "Julian waits without looking my way.",
+        "ratio": 0.873
+      }
+    ]
+  },
+  "07": {
+    "lines": 25,
+    "repeats": 1,
+    "pct": 4,
+    "detail": [
+      {
+        "line": "Julian waits without looking at me.",
+        "matches": "Julian waits without looking at me.",
+        "ratio": 1.0
+      }
+    ]
+  },
+  "08": {
+    "lines": 25,
+    "repeats": 2,
+    "pct": 8,
+    "detail": [
+      {
+        "line": "His voice cuts through the nearest cluster of murmurs.",
+        "matches": "His voice cuts through the nearest cluster of murmurs.",
+        "ratio": 1.0
+      },
+      {
+        "line": "JULIAN: \"The story moves faster than the rite.\"",
+        "matches": "JULIAN: \"The story moves faster than the rite.\"",
+        "ratio": 1.0
+      }
+    ]
+  },
+  "09": {
+    "lines": 26,
+    "repeats": 14,
+    "pct": 54,
+    "detail": [
+      {
+        "line": "The Dohkar's reach extends through every voice, but this token does not belong to him.",
+        "matches": "The Dohkar's reach extends through every voice, but this token does not belong to him.",
+        "ratio": 1.0
+      },
+      {
+        "line": "Julian waits without touching the token, his gaze steady on the wood.",
+        "matches": "Julian waits without touching the token, his gaze steady on the wood.",
+        "ratio": 1.0
+      },
+      {
+        "line": "Seren watches the room without flinching, her poise unbroken.",
+        "matches": "Seren watches the room without flinching, her poise unbroken.",
+        "ratio": 1.0
+      },
+      {
+        "line": "I feel the weight of every listening ear twisting my name into something I no longer recognize.",
+        "matches": "I feel the weight of every listening ear twisting my name into something I no longer recognize.",
+        "ratio": 1.0
+      },
+      {
+        "line": "JULIAN: \"The story moves faster than the rite.\"",
+        "matches": "JULIAN: \"The story moves faster than the rite.\"",
+        "ratio": 1.0
+      },
+      {
+        "line": "Two patrons fall silent and glance away from the table.",
+        "matches": "Two patrons fall silent and glance away from the table.",
+        "ratio": 1.0
+      },
+      {
+        "line": "I watch the token where it rests, its edges unfamiliar against the tavern wood.",
+        "matches": "I watch the token where it rests, its edges unfamiliar against the tavern wood.",
+        "ratio": 1.0
+      },
+      {
+        "line": "Someone else may have placed it here while the story moved through the room.",
+        "matches": "Someone else may have placed it here while the story moved through the room.",
+        "ratio": 1.0
+      },
+      {
+        "line": "Julian's silence draws the nearest speaker's attention toward the table.",
+        "matches": "Julian's silence draws the nearest speaker's attention toward the table.",
+        "ratio": 1.0
+      },
+      {
+        "line": "I feel the foreign token's presence change the weight of the accusation.",
+        "matches": "The token's presence changes the weight of the accusation.",
+        "ratio": 0.862
+      },
+      {
+        "line": "Investigating its source would require leaving the room and the listening ears.",
+        "matches": "Investigating its source would require leaving the room and the listening ears.",
+        "ratio": 1.0
+      },
+      {
+        "line": "Examining the markings now would draw every eye to the table.",
+        "matches": "Examining the markings now would draw every eye to the table.",
+        "ratio": 1.0
+      },
+      {
+        "line": "The Dohkar's accusation travels without him, carried on voices that were never in the rite.",
+        "matches": "The Dohkar's accusation travels without him, carried on voices that were never in the rite.",
+        "ratio": 1.0
+      },
+      {
+        "line": "The choice between the token's markings and the nearest speaker settles in my chest.",
+        "matches": "The choice between the token's markings and the nearest speaker settles in my chest.",
+        "ratio": 1.0
+      }
+    ]
+  },
+  "10": {
+    "lines": 26,
+    "repeats": 3,
+    "pct": 12,
+    "detail": [
+      {
+        "line": "Julian steps closer without looking at me.",
+        "matches": "Julian steps closer to the table without looking at me.",
+        "ratio": 0.866
+      },
+      {
+        "line": "Seren watches him without flinching.",
+        "matches": "Seren watches the room without flinching.",
+        "ratio": 0.909
+      },
+      {
+        "line": "The Dohkar's announcement still blocks any clean escape.",
+        "matches": "The Dohkar's announcement still blocks any clean escape.",
+        "ratio": 1.0
+      }
+    ]
+  }
+}
