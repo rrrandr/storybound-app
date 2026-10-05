@@ -191340,6 +191340,29 @@ No text, no watermark, no UI elements, share-ready.`;
   // Beats where the LI peaks AND surfaces a "drift to afterglow" exit ramp.
   // Last ramp at 17 leaves 3 turns (18/19/20) for a peak-out before hard cap.
   var _OAS_EXIT_RAMP_BEATS = [6, 13, 17];
+
+  // ── AN OPENING AUTHORED TO BE INTERRUPTED HAS NO AFTERGLOW EXIT ─────────────────────────
+  // (Roman 2026-10-05.) First Sacrifice's opening one-on-one is a public interrogation the story
+  // ENDS by having the presiding Dohkar cut it off: the package declares
+  // oasHandoff.endsAt === 'oas_interrupt' and carries the authored interruption and its fixed
+  // exchange. Drifting to afterglow there would end a charged interrogation as though it had
+  // been sex, and would skip the interruption that the run-or-remain decision depends on.
+  //
+  // SCOPED BY THE PACKAGE'S OWN DECLARATION, so it covers exactly the encounters authored that
+  // way — not all First Sacrifice OAS scenes, and not OAS in general. Ordinary encounters keep
+  // their normal exits, afterglow included.
+  function _oasEndsInAuthoredInterruption() {
+    try {
+      var pkg = (typeof _bakedPkgForActiveStory === 'function') ? _bakedPkgForActiveStory() : null;
+      if (!pkg) return false;
+      var h = pkg.oasHandoff || null;
+      // endsAt sits on the PACKAGE, beside oasHandoff — not inside it. Reading only h.endsAt
+      // meant the predicate could never fire, which the control caught before it shipped.
+      var ends = pkg.endsAt || (h && h.endsAt) || null;
+      return !!(ends === 'oas_interrupt' && h && (h.interruption || h.interruptionExchange));
+    } catch (_) { return false; }
+  }
+  window._oasEndsInAuthoredInterruption = _oasEndsInAuthoredInterruption;
   function _oasStorageKey() {
     var sid = (state && state.storyId) || 'no-story';
     return 'sb_oas_' + sid;
@@ -204332,7 +204355,41 @@ No text, no watermark, no UI elements, share-ready.`;
     var _userIsNoise = _detectOASOffTopicNoise(userSay, userDo);
     var _isOpeningTurn = (d.beatCount === 1);
     var _sniffEscalation = _detectContextualEscalation(userSay, userDo);
-    var _userIsPlotDeflect = _sniffEscalation && !_userIsNoise && !_isOpeningTurn && (Math.random() < 0.5);
+    // ── PLOT DEFLECTION IS NOW GATED ON AN ESTABLISHED PHYSICAL SITUATION ──────────────────
+    // (Roman/Codex 2026-10-05.) The comment above always said "mid-sex", but the condition never
+    // checked any physical state: any escalation sniff could brush off a plot question at 50%,
+    // which is why jealousy, discovery risk and questions about earlier events were being
+    // deflected during what is actually charged conversation.
+    //
+    // ELIGIBILITY IS NOW: the established physical situation shows the characters are IMMINENTLY
+    // ABOUT TO HAVE SEX or ACTIVELY HAVING IT. Being in OAS, flirting, arousal, explicit
+    // vocabulary and a high temperature DO NOT QUALIFY, and afterglow does not qualify.
+    //
+    // THE LIMITATION, REPORTED RATHER THAN PAPERED OVER WITH A PROXY: no authoritative state
+    // distinguishes those situations. state.physicalState is { location, mc_position,
+    // li_position, proximity, objects_notable } — free-text position, never an act state — and
+    // it is NOT REFERENCED ANYWHERE in the OAS code at all. is_consummate_scene is a CG
+    // scene-plan flag, not an OAS turn state. d.temperature is an arousal axis, which Roman
+    // explicitly ruled out as a qualifier.
+    //
+    // So the state is MISSING, and missing or ambiguous state leaves deflection OFF. No proxy is
+    // invented from temperature or explicit vocabulary; the hook below is where a real act-state
+    // source plugs in if one is ever added.
+    var _physicalActState = (function () {
+      try {
+        var ps = (window.state && window.state.physicalState) || null;
+        // An authoritative source would report an act state here. None exists today.
+        return (ps && typeof ps.act_state === 'string' && ps.act_state) ? ps.act_state : null;
+      } catch (_) { return null; }
+    })();
+    var _imminentOrActiveSex = (_physicalActState === 'imminent' || _physicalActState === 'active');
+    var _userIsPlotDeflect = _imminentOrActiveSex
+      && _sniffEscalation && !_userIsNoise && !_isOpeningTurn && (Math.random() < 0.5);
+    if (_sniffEscalation && !_userIsNoise && !_isOpeningTurn && !_imminentOrActiveSex) {
+      try { console.log('[OAS:PLOT-DEFLECT] NOT eligible — act state '
+        + (_physicalActState ? '"' + _physicalActState + '"' : 'UNAVAILABLE')
+        + '; the plot pull gets an in-character answer rather than a coin flip'); } catch (_) {}
+    }
 
     // ── LI AGENCY DETECTOR (added 2026-05-18) ──
     // The LI can take initiative when the PC wanes, distracts, or drones.
@@ -205767,9 +205824,16 @@ No text, no watermark, no UI elements, share-ready.`;
     d._exitRampsOffered = d._exitRampsOffered || {};
     var atExitRamp = _OAS_EXIT_RAMP_BEATS.indexOf(d.beatCount) !== -1;
     var rampAlreadyOffered = !!d._exitRampsOffered[d.beatCount];
-    if (atExitRamp && !rampAlreadyOffered && !hardCapHit && !llmSaysResolve && !disengagedThreshold) {
+    var _authoredInterrupt = (typeof _oasEndsInAuthoredInterruption === 'function')
+      && _oasEndsInAuthoredInterruption();
+    if (atExitRamp && !rampAlreadyOffered && !hardCapHit && !llmSaysResolve && !disengagedThreshold
+        && !_authoredInterrupt) {
       d._exitRampsOffered[d.beatCount] = true;
       setTimeout(function() { _showIntimacyExitRampOffer(); }, 1500);
+    } else if (atExitRamp && !rampAlreadyOffered && _authoredInterrupt) {
+      d._exitRampsOffered[d.beatCount] = true;   // consume the ramp WITHOUT offering afterglow
+      try { console.log('[OAS:EXIT-RAMP] suppressed at beat ' + d.beatCount
+        + ' — this encounter is authored to end in its interruption, not in afterglow'); } catch (_) {}
     }
 
     // ── SHAPE THIS ENCOUNTER — one-time OAS surfacing (~beat 7, first intimacy) ──

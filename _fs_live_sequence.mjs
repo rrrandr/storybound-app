@@ -576,6 +576,15 @@ try {
       // reply wait it merely broke the loop — the next iteration then played another card at a
       // dialogue that was trying to end.
       const takeExit = async (why) => {
+        // NEVER DRIFT TO AFTERGLOW IN AN AUTHORED-INTERRUPTION OPENING. First Sacrifice's opening
+        // is a public interrogation the story ends with the Dohkar cutting it off; afterglow
+        // would end it as though it had been sex and skip the interruption the run-or-remain
+        // decision depends on. Production now suppresses the offer too — this is the harness
+        // following the same rule rather than relying on it.
+        const authored = await page.evaluate(() =>
+          (typeof window._oasEndsInAuthoredInterruption === 'function')
+            ? !!window._oasEndsInAuthoredInterruption() : false);
+        if (authored) return { taken: false, why: 'authored interruption — no afterglow exit' };
         const aff = await exitAffordances();
         if (!aff.driftOffered && !aff.modalUp) return { taken: false, why: 'none offered' };
         let err = null;
@@ -608,7 +617,7 @@ try {
         if (r.taken) {
           say('  turn ' + (i + 1) + ': EXIT TAKEN and CONFIRMED — dialogue left the active state');
           exited = true;
-        } else if (r.why !== 'none offered') {
+        } else if (r.why !== 'none offered' && !/authored interruption/.test(r.why)) {
           halted = true;
           haltReason = 'an exit was offered at turn ' + (i + 1) + ' but could not be completed: ' + r.why;
           say('  *** STOPPING — ' + haltReason + ' ***');
@@ -632,6 +641,7 @@ try {
             say('  turn ' + (i + 1) + ': exit appeared mid-wait, TAKEN and CONFIRMED');
             landed = true; exited = true; break;
           }
+          if (/authored interruption/.test(r2.why)) { landed = true; break; }
           halted = true;
           haltReason = 'an exit appeared mid-wait at turn ' + (i + 1) + ' but could not be '
             + 'completed: ' + r2.why;
