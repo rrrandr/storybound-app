@@ -15,6 +15,7 @@ const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const sent = [];
+let batchServed = false;
 const otherStages = [];
 let n = 0;
 await page.route('**/api/**', async (route) => {
@@ -43,6 +44,7 @@ await page.route('**/api/**', async (route) => {
   // Without this branch the previews fell back to the card title ("Confession…") and the check
   // passed only when the randomly chosen card happened to match my single-line reply.
   if (/amplify\|ruin\|redirect/.test(sys)) {
+    batchServed = true;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
       content: [
         'TEMPTATION ||| amplify ||| I close the gap and let my sleeve touch his ||| Ask me again, slower.',
@@ -149,6 +151,14 @@ await page.evaluate(() => {
   const i = window._getActiveTurnInputs();
   if (i.actInput) i.actInput.value = ''; if (i.diaInput) i.diaInput.value = '';
 });
+// WAIT FOR THE PREVIEW BATCH BEFORE CLICKING. A card clicked first gets the template
+// placeholder ("Reversal…") — real product behaviour, reported as a finding — but it makes this
+// check measure a race rather than the contract.
+{
+  const dl = Date.now() + 30000;
+  while (!batchServed && Date.now() < dl) await page.waitForTimeout(500);
+  console.log('  preview batch served before the click: ' + batchServed);
+}
 const wantId = await page.evaluate((k) => (window.state.fateOptions[k] || {}).id || null, TARGET);
 await page.locator('#gnCardMount .fate-card').nth(TARGET).click({ timeout: 15000 });
 await page.waitForFunction(() => {
@@ -192,12 +202,21 @@ if (req) {
   // the template placeholder ("Reversal…") instead of a model preview — a real product fallback,
   // and the reason this check was intermittent. Either way, whatever is in the inputs must reach
   // the request UNCHANGED, so compare the exact value and only require it to be non-trivial.
-  const needle = (s) => s && s.trim().length >= 5 && req.body.includes(s);
+  // THE SILENCE ARCHETYPE'S DIALOGUE IS A SINGLE SOUND BY CONTRACT — the batch prompt asks for
+  // "<empty, or a single sound such as mm>". A Say of "mm" is CORRECT, so a length floor applied
+  // to every field rejected the product for behaving as specified. Rule: at least one field must
+  // carry something substantive and reach the request, and ANY field of 5+ characters must reach
+  // it unchanged. A deliberately tiny field is exempt from the floor, not from fidelity.
+  const reaches = (s) => !s || !s.trim() || req.body.includes(s);
+  const substantive = (s) => !!(s && s.trim().length >= 5);
+  const needle = (s) => substantive(s) && req.body.includes(s);
   const placeholder = /…$/.test(expectAct) || /…$/.test(expectDia);
   console.log('  request carries Do: ' + needle(expectAct) + '   Say: ' + needle(expectDia)
     + (placeholder ? '   (template placeholder — the batch had not returned before the click)' : ''));
   t('THE EXACT CARD VALUES reached the outgoing request',
-    (expectAct ? needle(expectAct) : true) && (expectDia ? needle(expectDia) : true),
+    (needle(expectAct) || needle(expectDia))        // something real got through
+    && reaches(expectAct) && reaches(expectDia),    // and nothing was altered on the way
+
     'Do=' + JSON.stringify(expectAct.slice(0, 50)) + ' Say=' + JSON.stringify(expectDia.slice(0, 50)));
 }
 
