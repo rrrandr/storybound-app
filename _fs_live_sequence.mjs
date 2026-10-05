@@ -122,10 +122,13 @@ await page.route('**/api/**', async (route) => {
   try {
     // EXPLICIT TIMEOUT RESTORED. A bare route.fetch() has no deadline, and an author generation
     // that hangs takes the whole run with it.
+    // THE TIMEOUT GOES ON route.fetch ITSELF. Racing a bare fetch against a timer leaves
+    // Playwright's own 30s default in place, which is the deadline that actually fires and is
+    // what killed author generation before. The outer race remains only as a backstop.
     resp = await Promise.race([
-      route.fetch(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('harness timeout after '
-        + REQUEST_TIMEOUT_MS + 'ms')), REQUEST_TIMEOUT_MS))
+      route.fetch({ timeout: REQUEST_TIMEOUT_MS }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('harness backstop after '
+        + (REQUEST_TIMEOUT_MS + 15000) + 'ms')), REQUEST_TIMEOUT_MS + 15000))
     ]);
     text = await resp.text();
   } catch (e) { err = String(e && e.message); }
@@ -237,10 +240,20 @@ try {
     // version fired inputs nine seconds apart while calls were taking fifteen, never checked
     // that an input was consumed, and printed "OAS complete" regardless. Beat count is the
     // production signal that a turn landed.
+    // beatCount IS INCREMENTED AT THE START of _handleIntimacyTurn (app.js:204238), BEFORE the
+    // model is called, so waiting on it waits for a REQUEST, not a REPLY. The signal that a
+    // reply actually landed is liTurnHistory gaining an entry whose liDialogue is populated —
+    // that push happens after the response is parsed (app.js:205514).
     const oasState = () => page.evaluate(() => {
       const d = window.state.intimacyDialogue;
-      return d ? { active: !!d.active, resolving: !!d._resolving, beats: d.beatCount || 0,
-        sceneState: d.lastSceneState || null } : null;
+      if (!d) return null;
+      const h = Array.isArray(d.liTurnHistory) ? d.liTurnHistory : [];
+      const last = h[h.length - 1] || null;
+      return { active: !!d.active, resolving: !!d._resolving,
+        beats: d.beatCount || 0,
+        replies: h.length,
+        lastHasDialogue: !!(last && last.liDialogue),
+        acceptingInput: !!d.active && !d._resolving };
     });
     const INPUTS = [
       ['I am still here.', 'I hold his gaze.'],
@@ -257,24 +270,34 @@ try {
     for (let i = 0; i < INPUTS.length && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
-      await page.evaluate(({ a, b }) => {
-        try { window._intimacyDialogueConsumeInput(a, b); } catch (_) {}
+      // THE HANDLER'S RETURN VALUE IS USED, not discarded — a refused input is a refused input.
+      const accepted = await page.evaluate(({ a, b }) => {
+        try { const r = window._intimacyDialogueConsumeInput(a, b);
+          return { ok: r !== false, returned: (r === undefined ? 'undefined' : String(r)) }; }
+        catch (e) { return { ok: false, returned: 'threw: ' + (e && e.message) }; }
       }, { a: INPUTS[i][0], b: INPUTS[i][1] });
-      // WAIT FOR THE BEAT TO ADVANCE — proof the input was consumed and its reply completed.
+      if (!accepted.ok) {
+        halted = true; haltReason = 'OAS input ' + (i + 1) + ' REFUSED (' + accepted.returned + ')';
+        say('  *** STOPPING — ' + haltReason + ' ***'); break;
+      }
+      // WAIT FOR A RENDERED REPLY: one more liTurnHistory entry, carrying dialogue, and the
+      // dialogue ready to take another input.
       let landed = false;
-      const deadline = Date.now() + 90000;
+      const deadline = Date.now() + 180000;
       while (Date.now() < deadline) {
         const now = await oasState();
         if (!now || !now.active) { landed = true; break; }
-        if (now.beats > pre.beats && !now.resolving) { landed = true; break; }
+        if (now.replies > pre.replies && now.lastHasDialogue && !now.resolving) { landed = true; break; }
         await page.waitForTimeout(1500);
       }
       const post = await oasState();
       turnsTaken++;
-      say('  turn ' + (i + 1) + ': beats ' + pre.beats + ' -> ' + (post ? post.beats : 'ended')
-        + (landed ? '' : '  *** INPUT NOT CONSUMED WITHIN 90s ***'));
+      say('  turn ' + (i + 1) + ': replies ' + pre.replies + ' -> '
+        + (post ? post.replies : 'ended') + ' (beats ' + pre.beats + ' -> '
+        + (post ? post.beats : '-') + ')'
+        + (landed ? '' : '  *** NO REPLY LANDED WITHIN 180s ***'));
       if (!landed) {
-        halted = true; haltReason = 'OAS turn ' + (i + 1) + ' never completed';
+        halted = true; haltReason = 'OAS turn ' + (i + 1) + ' produced no rendered reply';
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
@@ -288,26 +311,68 @@ try {
       if (!st || (!st.active && !st.resolving)) { resolved = true; break; }
       await page.waitForTimeout(2000);
     }
+    // ── THE AUTHORED INTERRUPTION IS ACTUALLY SUBMITTED ───────────────────────────────────
+    // Production records submission on state._intimateInterruption.submitted, set by
+    // _commitIntimateInterruption (app.js:208246). The previous gate read a field that does not
+    // exist (_intimateInterruptionSubmitted) and never performed the interaction at all, so it
+    // could never have been satisfied. The reader submits through the staged inputs
+    // (#gnActionInput / #gnDialogueInput) and #gnSubmitBtn — app.js:173790 ff.
+    const interruptionState = () => page.evaluate(() => {
+      const r = window.state._intimateInterruption || null;
+      return { present: !!r, submitted: !!(r && r.submitted),
+        pending: (typeof window._intimateInterruptionPending === 'function')
+          ? !!window._intimateInterruptionPending() : null };
+    });
+    let intr = await interruptionState();
+    say('  interruption: ' + JSON.stringify(intr));
+    if (intr.present && !intr.submitted) {
+      for (let i = 0; i < 20 && !intr.submitted; i++) {
+        const did = await page.evaluate(() => {
+          const a = document.getElementById('gnActionInput');
+          const d = document.getElementById('gnDialogueInput');
+          const b = document.getElementById('gnSubmitBtn');
+          if (!b) return 'no #gnSubmitBtn';
+          if (a && !a.value) { a.value = 'I step back from him.';
+            a.dispatchEvent(new Event('input', { bubbles: true })); }
+          if (d && !d.value) { d.value = 'Ask me in front of them, then.';
+            d.dispatchEvent(new Event('input', { bubbles: true })); }
+          if (b.disabled) return 'submit disabled';
+          b.click();
+          return 'clicked';
+        });
+        await page.waitForTimeout(3000);
+        intr = await interruptionState();
+        if (i === 0 || intr.submitted) say('    submit attempt: ' + did
+          + ' -> submitted=' + intr.submitted);
+        if (did === 'no #gnSubmitBtn') break;
+      }
+    }
+    const decision = await page.evaluate(() => ({
+      needed: (typeof window._sceneDecisionNeeded === 'function') ? !!window._sceneDecisionNeeded() : null,
+      promptMounted: !!document.getElementById('sceneDecisionPrompt'),
+      recorded: ((window.state._sceneDecisions || {})['1'] || null)
+    }));
+    say('  axis decision: ' + JSON.stringify(decision));
+
     const oasFinal = await page.evaluate(() => ({
       dialogue: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active),
       archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
-      interruption: !!window.state._intimateInterruptionRecord,
-      submitted: !!window.state._intimateInterruptionSubmitted,
-      decisionNeeded: (typeof window._sceneDecisionNeeded === 'function')
-        ? !!window._sceneDecisionNeeded() : null
+      interruptionPresent: !!window.state._intimateInterruption,
+      interruptionSubmitted: !!(window.state._intimateInterruption
+        && window.state._intimateInterruption.submitted)
     }));
-    write('after_oas.json', { turnsTaken, resolved, oasFinal, snap: await snapshot('after_oas') });
-    say('  turns taken ' + turnsTaken + ' · resolved=' + resolved
-      + ' · archive=' + oasFinal.archive + ' · interruption=' + oasFinal.interruption
-      + ' · submitted=' + oasFinal.submitted);
+    write('after_oas.json', { turnsTaken, resolved, oasFinal, interruption: intr, decision,
+      snap: await snapshot('after_oas') });
+    say('  turns ' + turnsTaken + ' · resolved=' + resolved + ' · archive=' + oasFinal.archive
+      + ' · interruptionSubmitted=' + oasFinal.interruptionSubmitted);
 
-    // THE HANDOFF IS A HARD GATE. Without resolution, the authored interruption and its
-    // submission, a scene advance is routed straight back into the dialogue — which is exactly
-    // how the last run produced three "scenes" that were more OAS turns.
-    if (!resolved || !oasFinal.archive) {
+    // THE FULL HANDOFF IS THE GATE: resolution, the archive, AND the interruption submitted.
+    if (!resolved || !oasFinal.archive
+        || (oasFinal.interruptionPresent && !oasFinal.interruptionSubmitted)) {
       halted = true;
-      haltReason = 'OAS did not complete its handoff (resolved=' + resolved
-        + ', archive=' + oasFinal.archive + ', interruptionSubmitted=' + oasFinal.submitted + ')';
+      haltReason = 'OAS handoff incomplete (resolved=' + resolved + ', archive=' + oasFinal.archive
+        + ', interruptionPresent=' + oasFinal.interruptionPresent
+        + ', interruptionSubmitted=' + oasFinal.interruptionSubmitted + ')';
       say('\n*** STOPPING BEFORE SCENE GENERATION — ' + haltReason + ' ***');
       say('    No further call will be labelled "scene 2".');
     }
