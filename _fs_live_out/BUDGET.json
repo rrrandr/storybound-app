@@ -1,17 +1,16 @@
 {
-  "receipted": 0.37272285,
-  "unresolved": 2.5749944999999994,
+  "receipted": 0.5095313,
+  "unresolved": 0.046181999999999994,
   "runs": [
     {
-      "run": "_fs_live_out/run_2026-10-05T00-17-10-464Z",
+      "run": "_fs_live_out/run_2026-10-05T06-08-29-470Z",
       "receipted": 0,
-      "unresolved": 2.5698704999999995
+      "unresolved": 0.0026745000000000002
     },
     {
-      "run": "_fs_live_out/run_2026-10-05T00-47-45-230Z",
-      "receipted": 0.37272285,
-      "unresolved": 0.005124000000000001
+      "run": "_fs_live_out/run_2026-10-05T06-12-31-435Z",
+      "receipted": 0.5095313,
+      "unresolved": 0.04350749999999999
     }
-  ],
-  "note": "Seeded 2026-10-05 from the two runs already executed under the $3.00 authorization. Unresolved exposure is retained, not forgiven: run 1 returned NO_RESPONSE_FROM_FUNCTION with no receipts, which is not evidence of zero billing."
+  ]
 }

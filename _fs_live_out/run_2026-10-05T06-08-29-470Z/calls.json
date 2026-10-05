@@ -1,0 +1,20 @@
+[
+  {
+    "n": 1,
+    "requested": "mistral-small-latest",
+    "chars": 4969,
+    "maxTokens": 180,
+    "convId": null,
+    "role": null,
+    "ms": 7997,
+    "estimate": 0.0026745000000000002,
+    "served": null,
+    "inTok": null,
+    "outTok": null,
+    "cachedTok": null,
+    "reasoningTok": null,
+    "ticks": null,
+    "measured": null,
+    "exposureAfter": 0.0026745000000000002
+  }
+]

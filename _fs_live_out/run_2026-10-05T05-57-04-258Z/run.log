@@ -1,0 +1,16 @@
+=== FS SEQUENCE — ceiling $0.01 — FIXTURES, no provider traffic ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.001200
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  0ms
+
+*** HALTED BEFORE DISPATCH — ceiling: exposure $0.001300 + next $0.018014 would exceed $0.01 (prior runs $0.001200) ***
+
+*** RUN ERROR: cardLog is not defined ***

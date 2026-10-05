@@ -1,0 +1,22 @@
+=== FS SEQUENCE — ceiling $3.00 — LIVE ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  call  1  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002675)  7997ms
+
+*** RUN ERROR: cardLog is not defined ***
+file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:720
+write('cards.json', cardLog);
+                    ^
+
+ReferenceError: cardLog is not defined
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:720:21
+
+Node.js v25.3.0

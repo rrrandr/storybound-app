@@ -1,0 +1,17 @@
+*** 1 reservation(s) from an earlier run never settled — $0.250000 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $3.00 — FIXTURES, no provider traffic ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.251300
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  0ms
+  call  2  [fixture] gpt-4o-mini                  $0.000100  0ms
+  call  3  [fixture] gpt-4o-mini                  $0.000100  0ms
+
+*** RUN ERROR: cardLog is not defined ***

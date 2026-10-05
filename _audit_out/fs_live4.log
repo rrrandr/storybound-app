@@ -1,0 +1,102 @@
+*** 2 reservation(s) from an earlier run never settled — $0.021002 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $1.50 — LIVE ===
+Authorized by Roman with an explicit go, ceiling $1.50.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.023676
+
+── OAS (live) ──
+  call  1  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002675)  7946ms
+  turn 1 plays slot 2 "Reversal" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=2
+      SAY "\"Your move.\""
+      DO  "You straighten, letting the room feel the shift in you."
+  call  2  gpt-4o-mini                    served=?                              in=  2853 cached=    0 out=  133  NO RECEIPT (est $0.018012)  9614ms
+  call  3  grok-4.20-0309-non-reasoning   served=grok-4.3                       in=  1379 cached=  128 out=   80  $0.003952  11273ms
+  call  4  grok-4-1-fast-reasoning        served=grok-4.3                       in= 45933 cached=  192 out=  307  $0.059742  14103ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays slot 2 "Reversal" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=2
+      SAY "\"Your move.\""
+      DO  "You straighten, letting the room feel the shift in you."
+  call  5  gpt-4o-mini                    served=?                              in=  1001 cached=    0 out=   81  NO RECEIPT (est $0.003380)  7150ms
+  call  6  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=   501 cached=  128 out=    5  $0.001584  9229ms
+  call  7  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46073 cached=  192 out=  296  $0.060240  13414ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  call  8  ministral-8b-2512              served=ministral-8b-2512              in=  3128 cached=    0 out=  972  NO RECEIPT (est $0.010611)  22275ms
+  turn 3 plays slot 4 "Boundary" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=4
+      SAY "\"Not yet. Not like this.\""
+      DO  "Decide now what you will and won't permit—before the moment decides for you."
+  call  9  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46325 cached= 6272 out=  329  $0.053823  13875ms
+  call 10  gpt-4o-mini                    served=?                              in=   184 cached=    0 out=   55  NO RECEIPT (est $0.001260)  3577ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays slot 2 "Reversal" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=2
+      SAY "\"Your move.\""
+      DO  "You straighten, letting the room feel the shift in you."
+  call 11  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46406 cached= 6272 out=  302  $0.054337  9708ms
+  call 12  gpt-4o-mini                    served=?                              in=   184 cached=    0 out=   54  NO RECEIPT (est $0.001260)  2579ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays slot 2 "Reversal" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=2
+      SAY "\"Your move.\""
+      DO  "You straighten, letting the room feel the shift in you."
+  call 13  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46519 cached= 6272 out=  275  $0.055418  12428ms
+  call 14  gpt-4o-mini                    served=?                              in=   184 cached=    0 out=   63  NO RECEIPT (est $0.001263)  2694ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays slot 4 "Boundary" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=4
+      SAY "\"Not yet. Not like this.\""
+      DO  "Decide now what you will and won't permit—before the moment decides for you."
+  call 15  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46464 cached= 6272 out=  294  $0.054774  10634ms
+  call 16  gpt-4o-mini                    served=?                              in=   184 cached=    0 out=   54  NO RECEIPT (est $0.001260)  2080ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  turn 7 plays slot 3 "Confession" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=3
+      SAY "\"There's something I've never said out loud...\""
+      DO  "A truth you've buried demands air. Speak it now, or swallow it again."
+  call 17  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46460 cached= 6272 out=  297  $0.055612  13230ms
+  call 18  gpt-4o-mini                    served=?                              in=   185 cached=    0 out=   58  NO RECEIPT (est $0.001268)  2241ms
+  turn 7: replies 6 -> 7 (beats 6 -> 7)
+  turn 8 plays slot 3 "Confession" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=3
+      SAY "\"There's something I've never said out loud...\""
+      DO  "A truth you've buried demands air. Speak it now, or swallow it again."
+  call 19  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46858 cached= 6272 out=  306  $0.055139  11402ms
+  call 20  gpt-4o-mini                    served=?                              in=   176 cached=    0 out=   48  NO RECEIPT (est $0.001256)  2131ms
+  turn 8: replies 7 -> 8 (beats 7 -> 8)
+  turn 9 plays slot 4 "Boundary" [TEMPLATE — _intimate=false, not in the Grok cache]  clicked=true idx=4
+      SAY "\"Not yet. Not like this.\""
+      DO  "Decide now what you will and won't permit—before the moment decides for you."
+  call 21  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46474 cached= 6272 out=  301  $0.054909  11778ms
+  call 22  gpt-4o-mini                    served=?                              in=   182 cached=    0 out=   48  NO RECEIPT (est $0.001265)  2668ms
+  turn 9: replies 8 -> 9 (beats 8 -> 9)
+  interruption: {"present":false,"submitted":false,"pending":false}
+  axis decision: {"needed":true,"promptMounted":false,"recorded":null}
+  turns 9 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.576715
+
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $1.50  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 22
+  MEASURED (receipts)    : $0.509531
+  no receipt             : 11 call(s), estimated $0.043507 — NOT counted as measured
+  retained (no receipt)  : $0.043507 — kept as exposure, NOT forgiven
+  prior runs             : $0.023676
+  TOTAL EXPOSURE         : $0.576715
+  ceiling                : $1.50  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+  CACHED TOKENS          : 44544 of 427653 input (10.4%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json
+  receipted to date  $0.509531
+  unresolved to date $0.046182
+  TOTAL vs ceiling   $0.555713 of $1.50
+
+output: _fs_live_out/run_2026-10-05T06-12-31-435Z

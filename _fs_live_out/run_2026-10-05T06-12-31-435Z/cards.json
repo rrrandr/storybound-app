@@ -1,0 +1,614 @@
+[
+  {
+    "turn": 1,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 2,
+    "chosenId": "reversal",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 2,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Your move.\"",
+      "do": "You straighten, letting the room feel the shift in you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 2,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 2,
+    "chosenId": "reversal",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 2,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Your move.\"",
+      "do": "You straighten, letting the room feel the shift in you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 3,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 4,
+    "chosenId": "boundary",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 4,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Not yet. Not like this.\"",
+      "do": "Decide now what you will and won't permit—before the moment decides for you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 4,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 2,
+    "chosenId": "reversal",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 2,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Your move.\"",
+      "do": "You straighten, letting the room feel the shift in you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 5,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 2,
+    "chosenId": "reversal",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 2,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Your move.\"",
+      "do": "You straighten, letting the room feel the shift in you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 6,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 4,
+    "chosenId": "boundary",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 4,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Not yet. Not like this.\"",
+      "do": "Decide now what you will and won't permit—before the moment decides for you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 7,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 3,
+    "chosenId": "confession",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 3,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"There's something I've never said out loud...\"",
+      "do": "A truth you've buried demands air. Speak it now, or swallow it again."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 8,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 3,
+    "chosenId": "confession",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 3,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"There's something I've never said out loud...\"",
+      "do": "A truth you've buried demands air. Speak it now, or swallow it again."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  },
+  {
+    "turn": 9,
+    "hand": [
+      {
+        "slot": 0,
+        "id": "silence",
+        "label": "Silence",
+        "dialogue": "(The quiet holds meaning.)",
+        "action": "Let the silence speak. Your stillness is a statement.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 1,
+        "id": "temptation",
+        "label": "Temptation",
+        "dialogue": "\"This feeling... I should ignore it.\"",
+        "action": "A pull toward something forbidden tugs at you. Act on it, or resist.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 2,
+        "id": "reversal",
+        "label": "Reversal",
+        "dialogue": "\"Your move.\"",
+        "action": "You straighten, letting the room feel the shift in you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 3,
+        "id": "confession",
+        "label": "Confession",
+        "dialogue": "\"There's something I've never said out loud...\"",
+        "action": "A truth you've buried demands air. Speak it now, or swallow it again.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      },
+      {
+        "slot": 4,
+        "id": "boundary",
+        "label": "Boundary",
+        "dialogue": "\"Not yet. Not like this.\"",
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "intimateFlag": false,
+        "grokAuthored": false,
+        "variant": null
+      }
+    ],
+    "chosenSlot": 4,
+    "chosenId": "boundary",
+    "played": {
+      "clicked": true,
+      "selectedIndex": 4,
+      "committed": false
+    },
+    "submitted": {
+      "say": "\"Not yet. Not like this.\"",
+      "do": "Decide now what you will and won't permit—before the moment decides for you."
+    },
+    "grokAuthored": false,
+    "intimateFlag": false
+  }
+]

@@ -16,7 +16,10 @@ import { makeSpendLedger } from './_live_spend_ledger.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate, chooseBranch }
   from './_fs_story_setup.mjs';
 
-const CEILING = Number(process.env.SB_CEILING || 3.00);
+// NO SILENT DEFAULT. The ceiling IS the authorization, and inheriting a stale one is how a run
+// spends against a number nobody approved — which is what happened on the first attempt of
+// 2026-10-05, where $3.00 printed after Roman had approved $1.50.
+const CEILING = Number(process.env.SB_CEILING || 0);
 // FIXTURE MODE EXERCISES THIS RUNNER, not a copy of its logic. Every gate, deadline, budget
 // rule and sequencing decision below is the same code the paid run uses; only the provider
 // response is served locally, and NO provider traffic leaves the process.
@@ -30,6 +33,7 @@ const write = (f, o) => fs.writeFileSync(RUN + '/' + f, typeof o === 'string' ? 
 
 const ledger = makeSpendLedger(say);
 const calls = [];
+const cardLog = [];   // every hand dealt, the slot played, and what was actually submitted
 let halted = false, haltReason = '';
 
 // ── ATOMIC IN-FLIGHT RESERVATION (Roman/Codex 2026-10-05) ───────────────────────────────────
@@ -127,8 +131,12 @@ const persistBudget = () => {
 
 const REQUEST_TIMEOUT_MS = 180000;   // restored; a bare fetch previously hung author generation
 
+if (!(CEILING > 0)) {
+  console.error('*** REFUSING TO RUN: no ceiling set. Pass SB_CEILING with the approved amount. ***');
+  process.exit(4);
+}
 say('=== FS SEQUENCE — ceiling $' + CEILING.toFixed(2) + (LIVE ? ' — LIVE' : ' — FIXTURES, no provider traffic') + ' ===');
-say('Authorized by Roman 2026-10-04 with an explicit go.');
+say('Authorized by Roman with an explicit go, ceiling $' + CEILING.toFixed(2) + '.');
 say('ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.');
 say('Scene 1 is the FIXED hand-authored opening and generates nothing.\n');
 
