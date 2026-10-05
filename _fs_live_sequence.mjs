@@ -219,8 +219,30 @@ await page.route('**/api/**', async (route) => {
     const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
       (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
     const f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+    // SAY WHICH MATCHER SERVED WHICH CALL. Two fixtures were being answered by the wrong matcher
+    // — the scene planner's contract went to "CONTINUITY ARCHITECT", which is the SCAFFOLD call —
+    // and that is invisible unless the mapping is printed.
+    try { const h = String((body.messages || [])[0]?.content || '').slice(0, 56).replace(/\s+/g, ' ');
+      console.log('  [fixture] ' + (key ? ('"' + key.slice(0, 34) + '"') : 'DEFAULT') + '  <-  ' + h);
+    } catch (_) {}
     // NAME WHAT FELL THROUGH. An unmatched prompt silently served '{}', which is how the fate
     // previews ended up as the literal "{}" in the Do field. Log it instead of guessing later.
+    // SAVE THE PLANNER REQUEST VERBATIM. Its system prompt carries the roster, the reserved
+    // events and the aftermath truths the reply must account for — the things a fixture has to
+    // match. Reading them beats guessing at the contract one rejection at a time.
+    try {
+      const sys0 = String((body.messages || [])[0]?.content || '');
+      // THE SCENE PLANNER, not the scaffold architect. "CONTINUITY ARCHITECT" is the SCAFFOLD
+      // call; the scene planner is identified by its own JSON schema, and it is the reply that
+      // owes the continuation envelope, the aftermath lane and the objective fields.
+      if (/"tactical_move"/.test(sys0)) {
+        write('scene_planner_request.txt', sys0 + '\n\n===== USER =====\n'
+          + String((body.messages || [])[1]?.content || ''));
+      }
+      if (/CONTINUITY ARCHITECT/.test(sys0)) {
+        write('scaffold_request.txt', sys0.slice(0, 2000));
+      }
+    } catch (_) {}
     if (!key) { try { const head = String((body.messages || [])[0]?.content || '').slice(0, 110).replace(/\s+/g, ' ');
       if (head && !_unmatched.has(head)) { _unmatched.add(head);
         console.log('  [fixture] NO MATCHER — serving default for: ' + head); } } catch (_) {} }
@@ -731,12 +753,72 @@ try {
         if (did === 'no #gnSubmitBtn') break;
       }
     }
-    const decision = await page.evaluate(() => ({
-      needed: (typeof window._sceneDecisionNeeded === 'function') ? !!window._sceneDecisionNeeded() : null,
-      promptMounted: !!document.getElementById('sceneDecisionPrompt'),
-      recorded: ((window.state._sceneDecisions || {})['1'] || null)
-    }));
-    say('  axis decision: ' + JSON.stringify(decision));
+    // ── SERVICE THE RUN-OR-REMAIN PROMPT IMMEDIATELY ──────────────────────────────────────
+    // (Codex 2026-10-05.) This is what triggers Scene 2. Previously the runner only OBSERVED
+    // the decision and then went looking for a Fate deck — and the deck it found was the
+    // LINGERING INTERRUPTION DECK, whose handler returns at once while rec.submitted is true
+    // (app.js:208194), so the click filled nothing. That empty preview was the symptom; the
+    // unserviced decision was the cause. No card is drawn here.
+    const readDecision = () => page.evaluate(() => {
+      const prompt = document.getElementById('sceneDecisionPrompt');
+      const btn = (id) => { const b = document.getElementById(id); return b ? {
+        label: b.textContent, key: b.getAttribute('data-choice') } : null; };
+      return {
+        needed: (typeof window._sceneDecisionNeeded === 'function') ? !!window._sceneDecisionNeeded() : null,
+        promptMounted: !!prompt,
+        a: btn('sceneDecisionA'), b: btn('sceneDecisionB'),
+        recorded: ((window.state._sceneDecisions || {})['1'] || null)
+      };
+    });
+    let decision = await readDecision();
+    say('  axis decision (before servicing): ' + JSON.stringify({ needed: decision.needed,
+      promptMounted: decision.promptMounted, recorded: decision.recorded && decision.recorded.choice }));
+
+    if (decision.needed && decision.promptMounted) {
+      // The authored branches are whatever the prompt offers; take the one the seed calls "remain"
+      // if it is there, else the first. The CHOICE must match an authored branch — that is checked
+      // immediately below, not assumed.
+      const want = (decision.b && /remain|stay/i.test(decision.b.label || '')) ? 'sceneDecisionB'
+        : 'sceneDecisionA';
+      const chosen = (want === 'sceneDecisionB') ? decision.b : decision.a;
+      say('  servicing the decision: "' + (chosen && chosen.label) + '" (key=' + (chosen && chosen.key) + ')');
+      let decErr = null;
+      await page.locator('#' + want).click({ timeout: 15000 })
+        .catch(e => { decErr = (e && e.message) || 'click failed'; });
+      if (decErr) {
+        halted = true;
+        haltReason = 'the run-or-remain prompt could not be serviced: ' + decErr;
+        say('  *** STOPPING — ' + haltReason + ' ***');
+      } else {
+        const dl = Date.now() + 30000;
+        while (Date.now() < dl) {
+          decision = await readDecision();
+          if (!decision.needed && decision.recorded) break;
+          await page.waitForTimeout(1000);
+        }
+        const authoredKeys = [decision.a && decision.a.key, decision.b && decision.b.key]
+          .filter(Boolean);
+        const rec = decision.recorded || {};
+        say('  recorded choice: ' + JSON.stringify({ choice: rec.choice, label: rec.label,
+          source: rec.source }) + '  decisionNeeded=' + decision.needed);
+        // CONFIRM IT MATCHES AN AUTHORED BRANCH and that the gate actually closed.
+        if (decision.needed !== false) {
+          halted = true;
+          haltReason = 'the decision was recorded but decisionNeeded never became false';
+          say('  *** STOPPING — ' + haltReason + ' ***');
+        } else if (!rec.choice) {
+          halted = true;
+          haltReason = 'no choice was recorded after servicing the prompt';
+          say('  *** STOPPING — ' + haltReason + ' ***');
+        } else {
+          say('  the choice matches an authored branch: '
+            + (authoredKeys.length ? authoredKeys.indexOf(rec.choice) !== -1 : 'prompt gone (keys unavailable)'));
+        }
+      }
+    } else if (decision.recorded && decision.needed === false) {
+      say('  the decision was already recorded at interruption submit ("'
+        + decision.recorded.choice + '") and the gate is closed — nothing to service');
+    }
 
     const oasFinal = await page.evaluate(() => ({
       dialogue: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active),
@@ -826,6 +908,79 @@ try {
       }
       return last;
     };
+    // ── THE SCENE MUST HAVE RENDERED BEFORE ANY CARD IS DRAWN ─────────────────────────────
+    // (Codex 2026-10-05.) Ordinary scene-end card selection begins only after this scene has
+    // rendered and its own decision gate is open. Drawing earlier meant drawing from the
+    // lingering interruption deck, which ignores clicks once rec.submitted is true.
+    const sceneRendered = async (maxMs = 180000) => {
+      const dl = Date.now() + maxMs;
+      let last = null;
+      while (Date.now() < dl) {
+        last = await page.evaluate((n) => {
+          const cg = (window.state.scenes || []).filter(x => x && String(x.uid).startsWith('cg:'));
+          const intr = window.state._intimateInterruption;
+          return { cgScenes: cg.length,
+            // the interruption deck must be GONE or inert before its cards could be mistaken
+            // for a scene deck
+            interruptionLive: !!(intr && !intr.submitted),
+            mounted: !!document.getElementById('stagedBeatText')
+              || !!(window.state._stagedActive && window.state._stagedActive.plan),
+            hasProjection: !!(cg.length && cg[cg.length - 1].projection && cg[cg.length - 1].text) };
+        }, scene);
+        if (last.cgScenes >= (scene - 1) && last.mounted && last.hasProjection) return last;
+        await page.waitForTimeout(2000);
+      }
+      return last;
+    };
+    const rendered = await sceneRendered();
+    say('  scene ' + scene + ' render state: ' + JSON.stringify(rendered));
+    if (!rendered || !rendered.mounted || !rendered.hasProjection) {
+      halted = true;
+      haltReason = 'scene ' + scene + ' never rendered, so no scene-end deck could be offered'
+        + ' (' + JSON.stringify(rendered) + ')';
+      say('  *** STOPPING — ' + haltReason + ' ***');
+      break;
+    }
+    // ── WALK THE SCENE'S BEATS TO ITS END ─────────────────────────────────────────────────
+    // A staged scene is READ beat by beat; the scene-end Fate deck and its decision gate only
+    // open once the reader reaches the last beat. Clicking #stagedNextBtn is what a reader does,
+    // and until it is done there is no scene-end deck to offer — which is what "no scene Fate
+    // cards were offered" meant, with the scene itself rendered and mounted.
+    let beatSteps = 0;
+    // WAIT FOR THE WALK TO BE POSSIBLE. Scene 3 rendered, then the loop broke on its first pass
+    // because #stagedNextBtn had not mounted yet — "walked 0 beat(s)" and no deck. Poll briefly
+    // for either the advance control or the deck before deciding there is nothing to walk.
+    {
+      const dl0 = Date.now() + 30000;
+      while (Date.now() < dl0) {
+        const r0 = await page.evaluate(() => {
+          const btn = document.getElementById('stagedNextBtn');
+          const m = (typeof window._activeCardMount === 'function') ? window._activeCardMount() : null;
+          return { ready: !!(btn && btn.offsetParent !== null && !btn.disabled),
+            cards: m ? [...m.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null).length : 0 };
+        });
+        if (r0.ready || r0.cards > 0) break;
+        await page.waitForTimeout(1000);
+      }
+    }
+    for (let b = 0; b < 40; b++) {
+      const st = await page.evaluate(() => {
+        const btn = document.getElementById('stagedNextBtn');
+        const mount = (typeof window._activeCardMount === 'function') ? window._activeCardMount() : null;
+        return {
+          nextVisible: !!(btn && btn.offsetParent !== null && !btn.disabled),
+          cards: mount ? [...mount.querySelectorAll('.fate-card')]
+            .filter(e => e.offsetParent !== null).length : 0,
+          beatIdx: (window.state._stagedActive && window.state._stagedActive.beatIdx) ?? null
+        };
+      });
+      if (st.cards > 0) break;
+      if (!st.nextVisible) break;
+      await page.locator('#stagedNextBtn').click({ timeout: 10000 }).catch(() => {});
+      beatSteps++;
+      await page.waitForTimeout(900);
+    }
+    say('  walked ' + beatSteps + ' beat(s) to the end of scene ' + scene);
     const sDeck = await waitForSceneDeck();
     if (!sDeck || !sDeck.count) {
       halted = true;
