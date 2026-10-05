@@ -378,12 +378,36 @@ window.startSparkleCycle = startSparkleCycle;
 window.startContinuousSparkles = startContinuousSparkles;
 window.stopContinuousSparkles = stopContinuousSparkles;
 
+// ── THE ACTIVE READER'S CARD MOUNT ─────────────────────────────────────────────────────────
+// (Roman/Codex 2026-10-05.) A staged Book's one-on-one navigates to gnReader and HIDES the game
+// screen, but dealing was hardcoded to #cardMount — the game reader's mount. So the five cards
+// were rendered into a mount the reader could no longer see, while the visible #gnCardMount
+// stayed empty and the only function that filled it lived in the dev launcher.
+//
+// This mirrors window._getActiveTurnInputs(), which ALREADY resolves gnActionInput /
+// gnDialogueInput the same way — so a card dealt here binds its handlers to the same reader whose
+// inputs those handlers write into. The literary reader is unaffected: when gnReader is not the
+// visible screen this returns #cardMount exactly as before, so the literary deck and ordinary CG
+// scene-end cards keep their existing behaviour.
+function _activeCardMount() {
+    try {
+        const gn = document.getElementById('gnReader');
+        const gnActive = gn && !gn.classList.contains('hidden') && gn.offsetParent !== null;
+        if (gnActive) {
+            const m = document.getElementById('gnCardMount');
+            if (m) return m;
+        }
+    } catch (_) {}
+    return document.getElementById('cardMount');
+}
+try { window._activeCardMount = _activeCardMount; } catch (_) {}
+
 function startContinuousSparkles() {
     if (_sparkleEmitterActive) return;
     _sparkleEmitterActive = true;
 
     _continuousSparkleInterval = setInterval(() => {
-        const mount = document.getElementById('cardMount');
+        const mount = _activeCardMount();
         const actInput = document.getElementById('actionInput');
         const diaInput = document.getElementById('dialogueInput');
         if (!mount) return;
@@ -2858,7 +2882,7 @@ function setSelectedState(mount, selectedCardEl){
     }
 
     window.initCards = function() {
-        const mount = document.getElementById('cardMount');
+        const mount = _activeCardMount();
         if(!mount) return;
 
         // Reset if we need a clean slate or it's empty
@@ -2889,8 +2913,16 @@ function setSelectedState(mount, selectedCardEl){
 
     window.dealFateCards = function(opts) {
         opts = opts || {};
-        const mount = document.getElementById('cardMount');
+        const mount = _activeCardMount();
         if(!mount) return;
+
+        // REMOUNT — the SAME hand, rendered where the reader can now see it. The OAS screen
+        // switch needs exactly this: opts.force would RESHUFFLE and hand the reader a different
+        // five cards for the same scene, while a plain call no-ops on the scene key below. The
+        // hand is captured here because the per-hand reset further down nulls state.fateOptions.
+        const _remountHand = (opts.remount && window.state
+            && Array.isArray(window.state.fateOptions) && window.state.fateOptions.length)
+            ? window.state.fateOptions.slice() : null;
 
         // Safety: Ensure state exists before trying to write to it
         if (!window.state) {
@@ -2918,7 +2950,7 @@ function setSelectedState(mount, selectedCardEl){
         var _pageIdx = 0;
         try { _pageIdx = (window.StoryPagination && window.StoryPagination.getPageCount) ? window.StoryPagination.getPageCount() : 0; } catch (_) {}
         const _sceneKey = currentTurn + ':' + _pageIdx;
-        if (!opts.force
+        if (!opts.force && !_remountHand
             && window.state.fateOptions
             && Array.isArray(window.state.fateOptions)
             && window.state.fateOptions.length
@@ -2954,7 +2986,10 @@ function setSelectedState(mount, selectedCardEl){
         const contextualDeck = buildFateDeck();
         const shuffled = [...contextualDeck].sort(() => 0.5 - Math.random());
         // Select top 5 (which is all of them, just randomized order)
-        const selected = shuffled.slice(0, 5);
+        // A remount renders the hand the reader already has; only a real deal reshuffles.
+        const selected = _remountHand || shuffled.slice(0, 5);
+        if (_remountHand) { try { console.log('[FATE] remounted the existing hand into #'
+            + (mount.id || '?') + ' — no reshuffle'); } catch (_) {} }
 
         // Write to Global State
         window.state.fateOptions = selected;
@@ -3220,7 +3255,7 @@ function setSelectedState(mount, selectedCardEl){
     window.initFateCards = function() {
         console.log('[FATE] initFateCards called');
 
-        const mount = document.getElementById('cardMount');
+        const mount = _activeCardMount();
         if (!mount) {
             console.log('[FATE] No cardMount found — skipping');
             return;

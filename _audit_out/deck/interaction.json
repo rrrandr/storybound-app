@@ -1,0 +1,32 @@
+{
+  "where": {
+    "mountId": "gnCardMount",
+    "mountVisible": true,
+    "cards": 5,
+    "actId": "gnActionInput",
+    "diaId": "gnDialogueInput",
+    "gnSubmitVisible": true,
+    "dupCardMounts": 1,
+    "dupGnMounts": 1,
+    "dupGnAct": 1
+  },
+  "after": {
+    "selectedIndex": 2,
+    "selectedInDom": 2,
+    "act": "I set The Answer down between us and do not let go",
+    "dia": "Ask me whose hands shaped it.",
+    "hiddenAct": ""
+  },
+  "next": {
+    "mountId": "gnCardMount",
+    "cards": 5,
+    "clickable": 5,
+    "inputsCleared": true,
+    "beat": 1
+  },
+  "lit": {
+    "mountId": "cardMount",
+    "actId": "actionInput"
+  },
+  "requestCarriedDo": true
+}

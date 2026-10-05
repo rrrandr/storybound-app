@@ -190186,6 +190186,22 @@ No text, no watermark, no UI elements, share-ready.`;
     var d = state.intimacyDialogue;
     if (!d) return;
     _oasEnsureSingleReaderScreen();
+    // THE DECK HAS TO FOLLOW THE READER. _oasEnsureSingleReaderScreen() has just navigated a
+    // staged Book to gnReader and hidden the game screen, so the five cards dealt earlier are
+    // now in #cardMount behind display:none while the visible #gnCardMount is empty. Remount the
+    // SAME hand into whichever mount is now active — no reshuffle, no second deck implementation,
+    // and nothing for the literary reader, whose active mount is still #cardMount.
+    try {
+      if (typeof window.dealFateCards === 'function'
+          && typeof window._activeCardMount === 'function') {
+        var _m = window._activeCardMount();
+        if (_m && !_m.querySelector('.fate-card')) {
+          window.dealFateCards({ remount: true });
+          console.log('[INTIMACY-MOUNT] remounted the fate hand into #' + (_m.id || '?')
+            + ' — cards now: ' + _m.querySelectorAll('.fate-card').length);
+        }
+      }
+    } catch (e) { console.warn('[INTIMACY-MOUNT] deck remount threw:', e && e.message); }
     // Normal path — replace the staged scene's display area with our
     // overlay. Fallback path — when the dev launcher fires from a non-
     // gameplay screen (library, setup, etc.), gnPanelDisplay does not

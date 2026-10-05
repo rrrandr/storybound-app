@@ -71,7 +71,7 @@
     },
     "gnCardMount": {
       "exists": true,
-      "cards": 0,
+      "cards": 5,
       "visible": true,
       "hiddenBy": []
     },
