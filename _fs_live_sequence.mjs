@@ -27,6 +27,63 @@ let boundaryCheck = null;
 let scene2 = {};
 const sceneLedger = [];
 let openingBranch = { requested: (process.env.SB_OPENING_BRANCH || 'run').toLowerCase(), control: null };
+// ── PREVIEW PROVENANCE BY EVIDENCE, NOT BY WORDING ──────────────────────────────────────────
+// (Codex 2026-10-05.) The previous classifier called anything that did not look like a
+// title+ellipsis fallback a "model preview" — including when previewCached was false. A populated
+// input and the absence of an ellipsis prove nothing about authorship. These two record the
+// PREVIEW RESPONSES THEMSELVES, keyed by card id, so a submitted suggestion can be matched
+// against the reply that was actually served. What cannot be matched stays UNKNOWN.
+const previewResponses = new Map();   // cardId -> [{ action, dialogue, at, callN }]
+const norm = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().toLowerCase();
+function recordPreviewReply(sysPrompt, replyText, callN) {
+  try {
+    const sys = String(sysPrompt || '');
+    if (!/Say\/Do previews|amplify\|ruin\|redirect|one per archetype/i.test(sys)) return;
+    let content = replyText;
+    try { const j = JSON.parse(replyText);
+      content = j?.choices?.[0]?.message?.content ?? j?.content ?? replyText; } catch (_) {}
+    String(content).split(/\r?\n/).forEach((line) => {
+      const parts = String(line).split('|||').map(x => x.trim());
+      if (parts.length < 3) return;
+      const id = parts[0].toLowerCase().replace(/[^a-z]/g, '');
+      if (!id) return;
+      // three fields: ARCHETYPE ||| action ||| dialogue
+      // four fields:  ARCHETYPE ||| variant ||| action ||| dialogue
+      const action = parts.length >= 4 ? parts[2] : parts[1];
+      const dialogue = parts.length >= 4 ? parts[3] : parts[2];
+      if (!previewResponses.has(id)) previewResponses.set(id, []);
+      previewResponses.get(id).push({ action, dialogue, at: Date.now(), callN });
+    });
+  } catch (_) {}
+}
+// Classify a submitted suggestion against the recorded replies and the app's own cache.
+//   matched-response : the exact text of a preview reply served for THIS card
+//   matched-cache    : the app's cached preview for this card, written by some earlier reply
+//   template-fallback: the card's own title (with or without an ellipsis)
+//   UNKNOWN          : nothing links it to a model reply — reported as unknown, never as a preview
+function classifyPreview(cardId, action, dialogue, cacheEntry) {
+  const id = String(cardId || '').toLowerCase().replace(/[^a-z]/g, '');
+  const a = norm(action), d = norm(dialogue);
+  if (!a && !d) return { provenance: 'EMPTY', evidence: 'no text was submitted' };
+  const titleish = (t) => !t || t === id || t.replace(/[….]+$/, '') === id;
+  if (titleish(a) && titleish(d)) {
+    return { provenance: 'template-fallback',
+      evidence: 'both fields are the card id "' + id + '" — the deck\'s own placeholder' };
+  }
+  const served = previewResponses.get(id) || [];
+  const hit = served.find(r => (a && norm(r.action) === a) || (d && norm(r.dialogue) === d));
+  if (hit) {
+    return { provenance: 'matched-response',
+      evidence: 'identical to the preview reply served for "' + id + '" on call ' + hit.callN };
+  }
+  if (cacheEntry && ((a && norm(cacheEntry.action) === a) || (d && norm(cacheEntry.dialogue) === d))) {
+    return { provenance: 'matched-cache',
+      evidence: 'identical to the app\'s cached preview for "' + id + '"' };
+  }
+  return { provenance: 'UNKNOWN',
+    evidence: 'no preview reply or cache entry for "' + id + '" matches the submitted text'
+      + ' (' + served.length + ' repl' + (served.length === 1 ? 'y' : 'ies') + ' recorded)' };
+}
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
 const LIVE = !FIXTURES;
@@ -278,6 +335,7 @@ await page.route('**/api/**', async (route) => {
     say('  call ' + String(recF.n).padStart(2) + '  [fixture] ' + String(requested).padEnd(28)
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
+    recordPreviewReply((body.messages || [])[0]?.content, textF, calls.length + 1);
     return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
   }
   try {
@@ -292,6 +350,7 @@ await page.route('**/api/**', async (route) => {
         + (REQUEST_TIMEOUT_MS + 15000) + 'ms')), REQUEST_TIMEOUT_MS + 15000))
     ]);
     text = await resp.text();
+    recordPreviewReply((body.messages || [])[0]?.content, text, calls.length + 1);
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
 
@@ -563,7 +622,18 @@ try {
         preview = await page.evaluate(() => {
           const a = document.getElementById('gnActionInput');
           const d = document.getElementById('gnDialogueInput');
-          return { action: a ? a.value : '', dialogue: d ? d.value : '' };
+          // THE SELECTED CARD AND THE APP'S CACHE FOR IT, so provenance can be established
+          // outside the page against the replies actually served. "An input is populated" was
+          // the OAS loop's only test, and it proves nothing about who wrote the text.
+          const sel = (window.state.fateOptions || [])[window.state.fateSelectedIndex];
+          const cache = window.state._sceneFateCardPreviews || {};
+          const grok = window.state._grokIntimateFateCards;
+          const gc = (grok && grok.cards && sel) ? grok.cards[sel.id] : null;
+          const cc = sel ? cache[sel.id] : null;
+          const entry = gc || cc || null;
+          return { action: a ? a.value : '', dialogue: d ? d.value : '',
+            cardId: sel ? sel.id : null, selectedIndex: window.state.fateSelectedIndex,
+            cacheEntry: entry ? { action: entry.action || '', dialogue: entry.dialogue || '' } : null };
         });
         if ((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim())) break;
         await page.waitForTimeout(400);
@@ -584,11 +654,14 @@ try {
       }
       const say_ = (preview.dialogue || '').trim();
       const do_ = (preview.action || '').trim();
+      const oasProv = classifyPreview(preview.cardId, preview.action, preview.dialogue,
+        preview.cacheEntry);
       cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName, preview,
-        cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
+        provenance: oasProv, cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
       say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" from ' + deck.mountId
         + ' (trusted click ACCEPTED, '
         + 'preview populated)  grokCache=' + (deck.cacheFresh ? deck.cacheIds.length + ' ids' : 'empty'));
+      say('      provenance: ' + oasProv.provenance + ' — ' + oasProv.evidence);
       say('      SAY ' + JSON.stringify(say_.slice(0, 80)));
       say('      DO  ' + JSON.stringify(do_.slice(0, 80)));
 
@@ -1106,36 +1179,33 @@ try {
         const litA = val('actionInput'), litD = val('dialogueInput');
         const gnHas = !!(gnA.trim() || gnD.trim());
         const action = gnHas ? gnA : litA, dialogue = gnHas ? gnD : litD;
-        // IS THIS A MODEL PREVIEW OR A FALLBACK? The template placeholder is the card's own title
-        // with an ellipsis ("Reversal…"), served when a card is clicked before the preview batch
-        // returns. Which one the reader actually submitted changes what a prose evaluation means,
-        // so it is recorded per card rather than assumed.
-        const looksTemplate = (t) => /…\s*$/.test(String(t || '').trim());
-        const ids = (window.state.fateOptions || []).map(o => String(o.id || '').toLowerCase());
-        const titleEcho = (t) => { const w = String(t || '').trim().replace(/…\s*$/, '').toLowerCase();
-          return !!w && ids.indexOf(w) !== -1; };
-        const fallback = looksTemplate(action) || looksTemplate(dialogue)
-          || titleEcho(action) || titleEcho(dialogue);
+        // WHICH CARD, AND WHAT THE APP HAS CACHED FOR IT. Classification happens OUTSIDE the
+        // page, against the preview replies the runner actually served — the page cannot know
+        // what was on the wire, and wording cannot establish authorship.
         const cache = window.state._sceneFateCardPreviews || {};
         const sel = (window.state.fateOptions || [])[window.state.fateSelectedIndex];
         const cached = sel ? cache[sel.id] : null;
         return { action: action, dialogue: dialogue,
           source: gnHas ? 'gn' : ((litA.trim() || litD.trim()) ? 'literary(HIDDEN)' : 'neither'),
-          origin: fallback ? 'TEMPLATE FALLBACK' : 'model preview',
-          previewCached: !!(cached && (String(cached.action || '').trim()
-            || String(cached.dialogue || '').trim())),
+          cardId: sel ? sel.id : null,
+          selectedIndex: window.state.fateSelectedIndex,
+          cacheEntry: cached ? { action: cached.action || '', dialogue: cached.dialogue || '' } : null,
           gn: { a: gnA.length, d: gnD.length }, lit: { a: litA.length, d: litD.length } };
       });
       if ((sSub.action && sSub.action.trim()) || (sSub.dialogue && sSub.dialogue.trim())) break;
       await page.waitForTimeout(400);
     }
-    cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub });
+    const prov = classifyPreview(sSub.cardId, sSub.action, sSub.dialogue, sSub.cacheEntry);
+    sSub.origin = prov.provenance;
+    sSub.evidence = prov.evidence;
+    cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub, provenance: prov });
     say('  scene ' + scene + ' plays card ' + sIdx + ' "' + (sDeck.labels[sIdx] || '?') + '"'
-      + ' from ' + sDeck.mountId + ' [' + sSub.origin + ']' + ' (playable=' + sDeck.count
+      + ' from ' + sDeck.mountId + ' [preview: ' + sSub.origin + ']' + ' (playable=' + sDeck.count
       + ' locked=' + sDeck.lockedOut + ' committed=' + sDeck.fateCommitted
       + ' sel=' + sDeck.fateSelectedIndex + ' key=' + sDeck.sceneKey + ')'
       + ' via ' + sSub.source
       + (((sSub.action || '') + (sSub.dialogue || '')).trim() ? '' : ' [NO PREVIEW POPULATED]'));
+    say('      provenance: ' + sSub.origin + ' — ' + sSub.evidence);
     if (!((sSub.action || '') + (sSub.dialogue || '')).trim()) {
       say('    preview cache: ' + JSON.stringify(sDeck.previewCache));
       say('    option ids   : ' + JSON.stringify(sDeck.labels));
@@ -1247,18 +1317,52 @@ try {
       sceneInIssue: endState.sceneInIssue, scenesPerIssue: endState.scenesPerIssue,
       turnCount: endState.turnCount };
     write('issue_boundary.json', endState);
-    if (!endState.tenthAccepted) {
+    // ── TWO SEPARATE CLAIMS, ASSERTED SEPARATELY ─────────────────────────────────────────
+    // (Codex 2026-10-05.) The previous version printed "ISSUE COMPLETE" after checking only that
+    // a projection existed and that there were at least nine records. It COLLECTED the production
+    // boundary values and never tested them, so a counter disagreement could not fail anything.
+    //
+    // CLAIM A — THE REQUESTED CORPUS: ten story scenes, the FIXED opening plus generated 2-10.
+    //           This is the test scope and is entirely within the runner's knowledge.
+    // CLAIM B — THE PRODUCTION ISSUE BOUNDARY: the app's own counter agrees the issue is done.
+    //           This is the app's claim, and it is asserted, not merely logged.
+    const corpusOk = endState.tenthAccepted && endState.cgScenes === 9;
+    // The fixed opening is story scene 1 and generates nothing, so a complete ten-scene issue
+    // leaves nine generated records. Production's own position must therefore read
+    // scenesPerIssue - 1 if (and only if) its counter excludes the opening the same way.
+    const expectedPos = (endState.scenesPerIssue != null) ? endState.scenesPerIssue - 1 : null;
+    const boundaryOk = (endState.sceneInIssue != null)
+      && (endState.sceneInIssue === endState.scenesPerIssue
+          || endState.sceneInIssue === expectedPos);
+    const boundaryAgrees = (endState.sceneInIssue === endState.scenesPerIssue);
+
+    say('  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): '
+      + (corpusOk ? 'GENERATED' : 'NOT GENERATED')
+      + '  (' + endState.cgScenes + ' generated records, scene ' + LAST_SCENE
+      + ' projection ' + (endState.tenthAccepted ? 'accepted' : 'MISSING') + ')');
+    say('  CLAIM B — production issue boundary reached: '
+      + (boundaryOk ? (boundaryAgrees ? 'YES' : 'YES, off by the fixed opening') : 'NO')
+      + '  (production position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue
+      + '; a ten-scene issue whose first scene is fixed should read ' + expectedPos + ')');
+
+    if (!corpusOk) {
       halted = true;
-      haltReason = 'scene ' + LAST_SCENE + ' has no accepted projection at the issue boundary';
+      haltReason = 'the requested ten-scene corpus was not generated: '
+        + endState.cgScenes + ' generated records (expected 9), scene ' + LAST_SCENE
+        + ' projection ' + (endState.tenthAccepted ? 'accepted' : 'MISSING');
       say('  *** FAILED — ' + haltReason + ' ***');
-    } else if (endState.cgScenes < 9) {
+    } else if (!boundaryOk) {
+      // A COUNTER DISAGREEMENT IS A FAILURE, not a footnote. It is reported as a counter problem
+      // rather than as grounds to generate an extra scene.
       halted = true;
-      haltReason = 'the issue ended with only ' + endState.cgScenes
-        + ' generated scenes; scenes 2-10 should be nine';
+      haltReason = 'the corpus is complete but production does not agree the issue ended: '
+        + 'position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue;
       say('  *** FAILED — ' + haltReason + ' ***');
-    } else {
-      say('  ISSUE COMPLETE — scenes 2-10 generated and scene 10 verified. No scene 11 expected.');
     }
+    boundaryCheck.corpusOk = corpusOk;
+    boundaryCheck.boundaryOk = boundaryOk;
+    boundaryCheck.boundaryAgrees = boundaryAgrees;
+    boundaryCheck.expectedPosition = expectedPos;
   }
 
   write('scene_ledger.json', { openingBranch, scenes: sceneLedger, boundaryCheck });
