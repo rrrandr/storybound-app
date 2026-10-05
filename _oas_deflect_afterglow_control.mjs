@@ -1,6 +1,16 @@
 // PLOT-DEFLECTION ELIGIBILITY + THE AUTHORED-INTERRUPTION OPENING. Provider-free, $0.
 //
-// Verified through the ACTUAL assembled prompt with the coin forced, not by reading the branch.
+// ══ WHAT THIS IS AND IS NOT ════════════════════════════════════════════════════════════════
+// The eligible() helper below RE-IMPLEMENTS the eligibility condition; it does NOT drive
+// production's own _handleIntimacyTurn. So it is a SPECIFICATION CHECK of the rule, not proof
+// that the shipped handler behaves this way. Codex caught me labelling it as the latter, and the
+// prompt-building probe I wrote was never called.
+//
+// AND THE POSITIVE CASES MANUFACTURE THEIR STATE. physicalState.act_state HAS NO PRODUCTION
+// WRITER — nothing anywhere sets it. So automatic plot deflection is currently DISABLED, not
+// "implemented for imminent/active sex": the two CAN-FIRE rows below prove the rule would admit
+// such a state if a producer existed, and nothing more. Writing act_state in a fixture is not
+// evidence of a producer.
 import { chromium } from 'playwright-core';
 
 let pass = 0, fail = 0;
@@ -44,7 +54,9 @@ const eligible = (opts) => page.evaluate((o) => {
     wouldDeflect: !!(imminentOrActive && sniff && o.beat !== 1 && Math.random() < 0.5) };
 }, opts);
 
-console.log('=== PLOT DEFLECTION (coin forced ON) ===\n');
+console.log('=== PLOT DEFLECTION — SPECIFICATION CHECK (coin forced ON) ===');
+console.log('    Re-implements the condition; does NOT exercise _handleIntimacyTurn.');
+console.log('    act_state has NO production writer, so deflection is DISABLED in practice.\n');
 
 const CASES = [
   ['flirtation, high temperature, explicit register', { beat: 5, temperature: 'peaking',
@@ -76,7 +88,9 @@ for (const [label, opts, want] of CASES) {
     'sniff=' + r.sniff + ' act=' + r.act + ' -> wouldDeflect=' + r.wouldDeflect);
 }
 
-console.log('\n=== THE AUTHORED-INTERRUPTION OPENING ===\n');
+console.log('\n=== THE AUTHORED-INTERRUPTION OPENING ===');
+console.log('    Package data + the live predicate. Exercising a real exit needs the deck');
+console.log('    defect below to be fixed first.\n');
 {
   const r = await page.evaluate(() => {
     const out = {};
@@ -121,6 +135,22 @@ console.log('\n=== THE AUTHORED-INTERRUPTION OPENING ===\n');
   console.log('  exchange speakers: ' + JSON.stringify(fsH.speakers));
   t('the authored interrupter is the presiding Dohkar',
     /Dohkar/.test(fsH.interruption) && fsH.speakers.some(x => /Dohkar/i.test(String(x))));
+
+  // THE SHIPPED PREDICATE, exercised directly — encounter-scoped, not story-scoped.
+  const scope = await page.evaluate(() => {
+    const out = {};
+    window.state.intimacyDialogue = { active: true, endsInAuthoredInterruption: true };
+    out.opening = window._oasEndsInAuthoredInterruption();
+    window.state.intimacyDialogue = { active: true, endsInAuthoredInterruption: false };
+    out.later = window._oasEndsInAuthoredInterruption();
+    window.state.intimacyDialogue = null;
+    out.none = window._oasEndsInAuthoredInterruption();
+    return out;
+  });
+  t('the OPENING encounter suppresses afterglow', scope.opening === true);
+  t('a LATER encounter in the SAME STORY keeps afterglow', scope.later === false,
+    'the first version suppressed it story-wide');
+  t('no dialogue means no suppression', scope.none === false);
 }
 
 await page.evaluate(() => { if (window.__realRandom) Math.random = window.__realRandom; });

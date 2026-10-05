@@ -1,0 +1,83 @@
+[
+  {
+    "label": "after launch",
+    "currentScreen": null,
+    "screensVisible": [
+      "game"
+    ],
+    "cardMount": {
+      "exists": true,
+      "cards": 5,
+      "visible": true,
+      "hiddenBy": []
+    },
+    "gnCardMount": {
+      "exists": true,
+      "cards": 0,
+      "visible": false,
+      "hiddenBy": [
+        "gnFateSection {display:none, visibility:visible}",
+        "gnReader {display:none, visibility:visible}"
+      ]
+    },
+    "fateOptions": 5,
+    "dealFn": "function",
+    "refreshFn": "function",
+    "devPopulateFn": "undefined"
+  },
+  {
+    "label": "after unlock + finalize",
+    "currentScreen": null,
+    "screensVisible": [
+      "game"
+    ],
+    "cardMount": {
+      "exists": true,
+      "cards": 5,
+      "visible": false,
+      "hiddenBy": [
+        "storyContent {display:none, visibility:visible}"
+      ]
+    },
+    "gnCardMount": {
+      "exists": true,
+      "cards": 0,
+      "visible": false,
+      "hiddenBy": [
+        "gnFateSection {display:none, visibility:visible}",
+        "gnReader {display:none, visibility:visible}"
+      ]
+    },
+    "fateOptions": 5,
+    "dealFn": "function",
+    "refreshFn": "function",
+    "devPopulateFn": "undefined"
+  },
+  {
+    "label": "INSIDE THE OAS",
+    "currentScreen": null,
+    "screensVisible": [
+      "gnReader"
+    ],
+    "cardMount": {
+      "exists": true,
+      "cards": 5,
+      "visible": false,
+      "hiddenBy": [
+        "storyContent {display:none, visibility:visible}",
+        "game {display:none, visibility:visible}",
+        "app {display:none, visibility:visible}"
+      ]
+    },
+    "gnCardMount": {
+      "exists": true,
+      "cards": 0,
+      "visible": true,
+      "hiddenBy": []
+    },
+    "fateOptions": 5,
+    "dealFn": "function",
+    "refreshFn": "function",
+    "devPopulateFn": "undefined"
+  }
+]

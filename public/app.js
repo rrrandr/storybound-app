@@ -143314,6 +143314,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       beats: [],
       is_consummate_scene: true,
       __bakedOrigin: (pkg && pkg.title) || null,
+      // MARKS THIS ENCOUNTER as the authored opening the story ends by interrupting, so the
+      // predicate identifies the ENCOUNTER rather than the story — later First Sacrifice
+      // encounters keep their normal exits, afterglow included.
+      endsInAuthoredInterruption: !!(pkg && pkg.endsAt === 'oas_interrupt'
+        && (h.interruption || (Array.isArray(h.interruptionExchange) && h.interruptionExchange.length))),
       openingFrame: h.openingFrame || '',
       cue: h.cue || '',
       interruption: h.interruption || '', interruptionImage: h.interruptionImage || '', interruptionExchange: Array.isArray(h.interruptionExchange) ? h.interruptionExchange : [],
@@ -143362,7 +143367,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (asset.kind !== 'sheet') return { ok: false, reason: 'quadrant_treatment_requires_sheet_asset' };
       if (!Number.isInteger(occ.quadrant) || occ.quadrant < 0 || occ.quadrant > 3) return { ok: false, reason: 'invalid_quadrant' };
     } else if (occ.quadrant != null) {
-      return { ok: false, reason: 'quadrant_field_only_valid_with_quadrant_treatment' };
+      // MARKS THIS ENCOUNTER as the authored opening — the one the story ends by
+     // interrupting. Carried on the plan so the predicate can identify the ENCOUNTER rather
+     // than the story, which is what made the first version suppress afterglow for every later
+     // First Sacrifice OAS too (Codex 2026-10-05).
+     return { ok: false, reason: 'quadrant_field_only_valid_with_quadrant_treatment' };
     }
     return { ok: true, asset: asset };
   }
@@ -191353,13 +191362,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // their normal exits, afterglow included.
   function _oasEndsInAuthoredInterruption() {
     try {
-      var pkg = (typeof _bakedPkgForActiveStory === 'function') ? _bakedPkgForActiveStory() : null;
-      if (!pkg) return false;
-      var h = pkg.oasHandoff || null;
-      // endsAt sits on the PACKAGE, beside oasHandoff — not inside it. Reading only h.endsAt
-      // meant the predicate could never fire, which the control caught before it shipped.
-      var ends = pkg.endsAt || (h && h.endsAt) || null;
-      return !!(ends === 'oas_interrupt' && h && (h.interruption || h.interruptionExchange));
+      // THIS ENCOUNTER, not this story. Reading the story's opening package meant every LATER
+      // First Sacrifice OAS also lost its afterglow ramp (Codex 2026-10-05). The flag is set on
+      // the plan when the authored opening encounter is launched, so an ordinary encounter in
+      // the same story is unaffected.
+      var d = window.state && window.state.intimacyDialogue;
+      if (!d) return false;
+      return !!(d.endsInAuthoredInterruption || (d.plan && d.plan.endsInAuthoredInterruption));
     } catch (_) { return false; }
   }
   window._oasEndsInAuthoredInterruption = _oasEndsInAuthoredInterruption;
@@ -191832,6 +191841,9 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     state.intimacyDialogue = _newIntimacyDialogueState();
     var d = state.intimacyDialogue;
+    // CARRY THE ENCOUNTER FLAG onto the live dialogue, so the afterglow predicate reads THIS
+    // encounter rather than the story's opening package.
+    try { d.endsInAuthoredInterruption = !!(plan && plan.endsInAuthoredInterruption); } catch (_) {}
     d.active = true;
     d.startedAt = Date.now();
     // ── AUTHORED HANDOFF FRAME (fixed editorial Scene 1) ──
