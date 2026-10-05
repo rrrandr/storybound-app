@@ -1,0 +1,56 @@
+=== FS LIVE SEQUENCE — ceiling $3.00 ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure so far $0.000000
+
+── OAS (live) ──
+  call  1  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002675)  6821ms
+  call  2  grok-4.20-0309-non-reasoning   served=grok-4.3                       in=  1378 cached=  128 out=   78  $0.004046  12484ms
+  call  3  grok-4-1-fast-reasoning        served=grok-4.3                       in= 45932 cached=  192 out=  295  $0.060111  14979ms
+  call  4  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 45931 cached=32960 out=  298  $0.025416  15908ms
+  call  5  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 45934 cached=45824 out=  396  $0.011345  13554ms
+  call  6  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 45935 cached=45824 out=  307  $0.012639  14593ms
+  call  7  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46012 cached=45824 out=  297  $0.011972  9590ms
+  call  8  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 45935 cached=45824 out=  334  $0.011919  9526ms
+  call  9  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 45930 cached=45824 out=  310  $0.012755  11527ms
+  call 10  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46914 cached=  192 out=  283  $0.060603  8934ms
+  OAS complete · exposure $0.213479
+
+── SCENE 2 (live) ──
+  call 11  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46288 cached= 6272 out=  294  $0.054427  12450ms
+  scenes now 0 · notes 0 · exposure $0.267906
+  paged to gate: {"gateShown":false}
+
+── SCENE 3 (live) ──
+  call 12  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46417 cached= 6272 out=  262  $0.053803  9922ms
+  call 13  gpt-4o-mini                    served=?                              in=   155 cached=    0 out=   38  NO RECEIPT (est $0.001220)  3331ms
+  scenes now 0 · notes 0 · exposure $0.322929
+  paged to gate: {"gateShown":false}
+
+── SCENE 4 (live) ──
+  call 14  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46441 cached= 6272 out=  301  $0.053688  9799ms
+  call 15  gpt-4o-mini                    served=?                              in=   163 cached=    0 out=   49  NO RECEIPT (est $0.001230)  4394ms
+  scenes now 0 · notes 0 · exposure $0.377847
+
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $3.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 15
+  MEASURED (receipts)    : $0.372723
+  no receipt             : 3 call(s), estimated $0.005124 — NOT counted as measured
+  reserved before dispatch: $0.854601
+  ceiling                : $3.00
+  CACHED TOKENS          : 281408 of 509365 input (55.2%)
+
+output: _fs_live_out/run_2026-10-05T00-47-45-230Z

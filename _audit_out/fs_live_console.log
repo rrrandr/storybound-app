@@ -1,0 +1,82 @@
+=== FS LIVE SEQUENCE — ceiling $3.00 ===
+Authorized by Roman 2026-10-04 with an explicit go.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure so far $0.000000
+
+── OAS (live) ──
+  call  1  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002675)  3084ms
+  call  2  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002990)  2045ms
+  call  3  grok-4-1-fast-non-reasoning    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002990)  2015ms
+  call  4  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002675)  2633ms
+  call  5  grok-4-1-fast-reasoning        served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077223)  3689ms
+  call  6  gpt-4o-mini                    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.002990)  2940ms
+  call  7  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077223)  2320ms
+  call  8  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077223)  2630ms
+  call  9  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077243)  4326ms
+  call 10  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077243)  2349ms
+  call 11  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077243)  2652ms
+  call 12  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077246)  2678ms
+  call 13  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077246)  2641ms
+  call 14  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077246)  2626ms
+  call 15  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077275)  3658ms
+  call 16  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077275)  2653ms
+  call 17  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077275)  2633ms
+  call 18  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077440)  2305ms
+  call 19  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077440)  2337ms
+  call 20  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077440)  2651ms
+  call 21  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077316)  3011ms
+  call 22  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077316)  2649ms
+  call 23  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077316)  846ms
+  call 24  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077312)  748ms
+  call 25  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077312)  515ms
+  call 26  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077312)  814ms
+  call 27  gpt-4o-mini                    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.001169)  824ms
+  call 28  grok-4-1-fast-reasoning        served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077307)  521ms
+  call 29  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077307)  520ms
+  call 30  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077307)  805ms
+  OAS complete · exposure $1.870570
+
+── SCENE 2 (live) ──
+  call 31  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077306)  524ms
+  call 32  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077306)  809ms
+  call 33  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077306)  504ms
+  call 34  gpt-4o-mini                    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.001176)  1129ms
+  scenes now 0 · notes 0 · exposure $2.103663
+  paged to gate: {"gateShown":false}
+
+── SCENE 3 (live) ──
+  call 35  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077318)  514ms
+  call 36  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077318)  795ms
+  call 37  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077318)  802ms
+  call 38  gpt-4o-mini                    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.001176)  809ms
+  scenes now 0 · notes 0 · exposure $2.336791
+  paged to gate: {"gateShown":false}
+
+── SCENE 4 (live) ──
+  call 39  grok-4.20-0309-non-reasoning   served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077300)  507ms
+  call 40  ministral-8b-2512              served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077300)  832ms
+  call 41  gpt-4o                         served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077300)  804ms
+  call 42  gpt-4o-mini                    served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.001180)  811ms
+  scenes now 0 · notes 0 · exposure $2.569870
+
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $3.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 42
+  MEASURED (receipts)    : $0.000000
+  no receipt             : 42 call(s), estimated $2.569870 — NOT counted as measured
+  reserved before dispatch: $2.569870
+  ceiling                : $3.00
+
+output: _fs_live_out/run_2026-10-05T00-17-10-464Z
