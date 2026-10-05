@@ -423,14 +423,31 @@ try {
     //   · an accepted click runs _handleOASFateCardClick, which populates #gnActionInput and
     //     #gnDialogueInput — the preview I should be reading.
     // Playwright's own page.click() dispatches through CDP and IS trusted, so it is used here.
+    const MOUNT_NAMES = '#gnCardMount, #cardMount, #intimacyDevCardMount, document';
     const readOasDeck = () => page.evaluate(() => {
       const mount = document.getElementById('gnCardMount');
-      const els = mount ? [...mount.querySelectorAll('.intimacy-dev-fate-card')] : [];
+      // FIND THE DECK WHERE IT ACTUALLY IS, and say which one was used. I guessed this surface
+      // three times and was wrong each time: .intimacy-dev-fate-card is the DEV half only
+      // (_populateDevFateCardsInGNMount runs solely under devMode); #gnCardMount was empty; a DOM
+      // probe found the five cards in #cardMount. Rather than hard-code a fourth guess, the
+      // runner now scans the known mounts, takes the one with VISIBLE cards, and records it.
+      const MOUNTS = ['gnCardMount', 'cardMount', 'intimacyDevCardMount'];
+      let mountId = null, els = [];
+      for (const id of MOUNTS) {
+        const host = document.getElementById(id);
+        if (!host) continue;
+        const found = [...host.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null);
+        if (found.length) { mountId = id; els = found; break; }
+      }
+      if (!els.length) {
+        const loose = [...document.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null);
+        if (loose.length) { mountId = '(document)'; els = loose; }
+      }
       const st = window.state || {};
       const cache = st._grokIntimateFateCards;
       const cacheFresh = !!(cache && cache.turnCount === st.turnCount && cache.cards);
       return {
-        mounted: !!mount,
+        mounted: !!mount, mountId: mountId,
         count: els.length,
         revealed: els.filter(e => e.getAttribute('data-revealed') === '1').length,
         cacheFresh,
@@ -461,59 +478,84 @@ try {
       if (!deck || !deck.count) {
         halted = true;
         haltReason = 'the OAS deck never mounted at turn ' + (i + 1)
-          + ' (mount=' + (deck && deck.mounted) + ', cards=' + (deck && deck.count) + ')';
+          + ' (checked ' + MOUNT_NAMES + '; none had visible cards)';
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
       const slotIdx = nextPick(deck.count);
-      const sel = '#gnCardMount .intimacy-dev-fate-card';
+      const sel = (deck.mountId && deck.mountId !== '(document)')
+        ? ('#' + deck.mountId + ' .fate-card') : '.fate-card';
+      const slotName = (deck.slots[slotIdx] || {}).slot;
       const rejectedBefore = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
-      // TRUSTED INPUT — Playwright dispatches through CDP, so isTrusted is true.
-      await page.locator(sel).nth(slotIdx).click({ timeout: 15000 }).catch(async (e) => {
-        say('  click failed on slot ' + slotIdx + ': ' + (e && e.message));
+      // CLEAR THE PREVIEW FIRST, so a populated input can only have come from THIS click. The
+      // previous version accepted any non-empty value, including last turn's stale text.
+      await page.evaluate(() => {
+        ['gnActionInput', 'gnDialogueInput'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); }
+        });
       });
-      await page.waitForTimeout(1500);
+      // A FAILED CLICK IS A FAILURE. Swallowing the exception and carrying on is how a run
+      // reports a card as played when nothing happened.
+      let clickErr = null;
+      await page.locator(sel).nth(slotIdx).click({ timeout: 15000 })
+        .catch(e => { clickErr = (e && e.message) || 'click failed'; });
+      if (clickErr) {
+        halted = true;
+        haltReason = 'OAS card click FAILED at turn ' + (i + 1) + ' slot ' + slotIdx
+          + ': ' + clickErr;
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
+      }
+      // WAIT FOR THE PREVIEW TO POPULATE rather than sleeping a fixed interval.
+      let preview = { action: '', dialogue: '' };
+      const pvDeadline = Date.now() + 20000;
+      while (Date.now() < pvDeadline) {
+        preview = await page.evaluate(() => {
+          const a = document.getElementById('gnActionInput');
+          const d = document.getElementById('gnDialogueInput');
+          return { action: a ? a.value : '', dialogue: d ? d.value : '' };
+        });
+        if ((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim())) break;
+        await page.waitForTimeout(400);
+      }
       const rejectedAfter = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
-      // VERIFY THE HANDLER ACCEPTED IT and populated the OAS inputs.
-      const preview = await page.evaluate(() => {
-        const a = document.getElementById('gnActionInput');
-        const d = document.getElementById('gnDialogueInput');
-        return { action: a ? a.value : null, dialogue: d ? d.value : null };
-      });
       if (rejectedAfter > rejectedBefore) {
         halted = true;
-        haltReason = 'the OAS handler REJECTED the click at turn ' + (i + 1)
-          + ' — the input was not trusted';
+        haltReason = 'the OAS handler REJECTED the click at turn ' + (i + 1) + ' (untrusted input)';
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
-      if (!(preview.action || preview.dialogue)) {
+      if (!((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim()))) {
         halted = true;
-        haltReason = 'the OAS card click populated no preview at turn ' + (i + 1)
-          + ' — nothing to submit, and there is no template text to fall back on';
+        haltReason = 'OAS slot "' + slotName + '" populated NO preview at turn ' + (i + 1)
+          + ' — the click was accepted but produced nothing to submit';
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
-      const say_ = preview.dialogue || '';
-      const do_ = preview.action || '';
-      const slotName = (deck.slots[slotIdx] || {}).slot;
-      cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName,
-        preview, cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
-      say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" (trusted click accepted)'
-        + '  grokCache=' + (deck.cacheFresh ? deck.cacheIds.length + ' ids' : 'empty'));
-      say('      SAY ' + JSON.stringify(String(say_).slice(0, 80)));
-      say('      DO  ' + JSON.stringify(String(do_).slice(0, 80)));
+      const say_ = (preview.dialogue || '').trim();
+      const do_ = (preview.action || '').trim();
+      cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName, preview,
+        cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
+      say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" from ' + deck.mountId
+        + ' (trusted click ACCEPTED, '
+        + 'preview populated)  grokCache=' + (deck.cacheFresh ? deck.cacheIds.length + ' ids' : 'empty'));
+      say('      SAY ' + JSON.stringify(say_.slice(0, 80)));
+      say('      DO  ' + JSON.stringify(do_.slice(0, 80)));
 
-      // THE HANDLER'S RETURN VALUE IS USED, not discarded — a refused input is a refused input.
-      const accepted = await page.evaluate(({ a, b }) => {
-        try { const r = window._intimacyDialogueConsumeInput(a, b);
-          return { ok: r !== false, returned: (r === undefined ? 'undefined' : String(r)) }; }
-        catch (e) { return { ok: false, returned: 'threw: ' + (e && e.message) }; }
-      }, { a: say_, b: do_ });
-      if (!accepted.ok) {
-        halted = true; haltReason = 'OAS input ' + (i + 1) + ' REFUSED (' + accepted.returned + ')';
-        say('  *** STOPPING — ' + haltReason + ' ***'); break;
+      // SUBMIT THROUGH THE READER'S OWN CONTROL. #gnSubmitBtn is what a reader presses, and
+      // the log confirms it routes here ("[STAGED:SUBMIT] Routed to intimacy dialogue turn
+      // handler"). Calling the internal handler skipped whatever the button does first.
+      let submitErr = null;
+      await page.locator('#gnSubmitBtn').click({ timeout: 15000 })
+        .catch(e => { submitErr = (e && e.message) || 'submit failed'; });
+      if (submitErr) {
+        halted = true;
+        haltReason = 'the reader submit control failed at turn ' + (i + 1) + ': ' + submitErr;
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
       }
+
       // ── THE SUPPORTED READER EXIT ────────────────────────────────────────────────────────
       // Production offers an EXIT RAMP at beats 6/13/17 — the log says "Exit ramp offered at
       // beat 6" — rendered as a "Drift to afterglow" control inside #intimacyStatus
@@ -529,19 +571,48 @@ try {
           driftText: drift ? (drift.innerText || '').trim().slice(0, 40) : null,
           modalUp: !!(modal && modal.offsetParent !== null) };
       });
-      let exited = false;
-      {
+      // TAKING AN EXIT IS AN OBSERVED OUTCOME, NOT AN ATTEMPTED ONE. The previous version
+      // logged "TAKEN" after catching the click's failure, and when an exit appeared DURING the
+      // reply wait it merely broke the loop — the next iteration then played another card at a
+      // dialogue that was trying to end.
+      const takeExit = async (why) => {
         const aff = await exitAffordances();
+        if (!aff.driftOffered && !aff.modalUp) return { taken: false, why: 'none offered' };
+        let err = null;
         if (aff.driftOffered) {
           await page.locator('#intimacyStatus button, #intimacyStatus a, #intimacyStatus [role=button]')
-            .filter({ hasText: /drift|afterglow/i }).first()
-            .click({ timeout: 10000 }).catch(e => say('  drift click failed: ' + (e && e.message)));
-          say('  turn ' + (i + 1) + ': EXIT RAMP offered ("' + aff.driftText + '") — TAKEN');
+            .filter({ hasText: /drift|afterglow/i }).first().click({ timeout: 10000 })
+            .catch(e => { err = (e && e.message) || 'click failed'; });
+        } else {
+          await page.locator('#intimacyExitFade').click({ timeout: 10000 })
+            .catch(e => { err = (e && e.message) || 'click failed'; });
+        }
+        if (err) return { taken: false, why: 'click failed: ' + err };
+        // VERIFY PRODUCTION STATE, not that a click was dispatched.
+        const dl = Date.now() + 45000;
+        while (Date.now() < dl) {
+          const st = await page.evaluate(() => {
+            const d = window.state.intimacyDialogue;
+            return { active: !!(d && d.active), resolving: !!(d && d._resolving),
+              archive: Object.keys(window.state._oasSceneSnapshots || {}).length };
+          });
+          if (!st.active || st.archive > 0) return { taken: true, state: st, via: why };
+          await page.waitForTimeout(1500);
+        }
+        return { taken: false, why: 'clicked but the dialogue never left the active state' };
+      };
+
+      let exited = false;
+      {
+        const r = await takeExit('offered before this turn');
+        if (r.taken) {
+          say('  turn ' + (i + 1) + ': EXIT TAKEN and CONFIRMED — dialogue left the active state');
           exited = true;
-        } else if (aff.modalUp) {
-          await page.locator('#intimacyExitFade').click({ timeout: 10000 }).catch(() => {});
-          say('  turn ' + (i + 1) + ': exit modal shown — took "Fade to Black"');
-          exited = true;
+        } else if (r.why !== 'none offered') {
+          halted = true;
+          haltReason = 'an exit was offered at turn ' + (i + 1) + ' but could not be completed: ' + r.why;
+          say('  *** STOPPING — ' + haltReason + ' ***');
+          break;
         }
       }
 
@@ -556,7 +627,15 @@ try {
         if (now.replies > pre.replies && now.lastHasDialogue && !now.resolving) { landed = true; break; }
         const midAff = await exitAffordances();
         if (midAff.driftOffered || midAff.modalUp) {
-          say('  turn ' + (i + 1) + ': an exit affordance appeared mid-wait');
+          const r2 = await takeExit('appeared during the reply wait');
+          if (r2.taken) {
+            say('  turn ' + (i + 1) + ': exit appeared mid-wait, TAKEN and CONFIRMED');
+            landed = true; exited = true; break;
+          }
+          halted = true;
+          haltReason = 'an exit appeared mid-wait at turn ' + (i + 1) + ' but could not be '
+            + 'completed: ' + r2.why;
+          say('  *** STOPPING — ' + haltReason + ' ***');
           landed = true; break;
         }
         await page.waitForTimeout(1500);
@@ -567,6 +646,7 @@ try {
         + (post ? post.replies : 'ended') + ' (beats ' + pre.beats + ' -> '
         + (post ? post.beats : '-') + ')'
         + (landed ? '' : '  *** NO REPLY LANDED WITHIN 180s ***'));
+      if (exited) { say('  OAS exited at turn ' + (i + 1) + '; no further dialogue turns.'); turnsTaken++; break; }
       if (!landed) {
         halted = true; haltReason = 'OAS turn ' + (i + 1) + ' produced no rendered reply';
         say('  *** STOPPING — ' + haltReason + ' ***');
@@ -660,36 +740,67 @@ try {
       return { count: cg.length, lastUid: cg.length ? cg[cg.length - 1].uid : null };
     });
 
-    // THE SCENE'S OWN FATE CARDS, PLAYED. Not scripted inputs.
-    const sHand = await waitForHand();
-    const sUsable = sHand.cards.filter(c => c && (c.dialogue || c.action));
-    if (!sUsable.length) {
+    // THE SCENE'S OWN FATE CARDS — a SEPARATE surface from the OAS deck, and a separate
+    // helper. The scene loop was still calling waitForHand(), which no longer exists: once the
+    // OAS handoff succeeded, scene 2 would have died on a ReferenceError (Codex 2026-10-05).
+    const readSceneDeck = () => page.evaluate(() => {
+      // Scene cards live on the staged reader surface, outside #gnCardMount's OAS deck.
+      const all = [...document.querySelectorAll('.fate-card')];
+      const oasMount = document.getElementById('gnCardMount');
+      const els = all.filter(e => !(oasMount && oasMount.contains(e)) && e.offsetParent !== null);
+      return { count: els.length,
+        labels: els.map(e => (e.getAttribute('data-fate-card-slot')
+          || (e.innerText || '').trim().split('\n')[0] || '').slice(0, 30)) };
+    });
+    const waitForSceneDeck = async (maxMs = 45000) => {
+      const dl = Date.now() + maxMs;
+      let last = null;
+      while (Date.now() < dl) {
+        last = await readSceneDeck();
+        if (last.count > 0) return last;
+        await page.waitForTimeout(1000);
+      }
+      return last;
+    };
+    const sDeck = await waitForSceneDeck();
+    if (!sDeck || !sDeck.count) {
       halted = true;
-      haltReason = 'no usable Fate cards offered at scene ' + scene;
+      haltReason = 'no scene Fate cards were offered at scene ' + scene;
       say('  *** STOPPING — ' + haltReason + ' ***');
       break;
     }
-    const sc = sUsable[nextPick(sUsable.length)];
-    const sPlayed = await page.evaluate((slot) => {
-      const els = [...document.querySelectorAll('.fate-card')];
-      const el = els[slot] || els[0];
-      if (!el) return { clicked: false };
-      el.click();
-      return { clicked: true, selectedIndex: (window.state && window.state.fateSelectedIndex) };
-    }, sc.slot);
-    await page.waitForTimeout(1200);
-    const sSub = await page.evaluate(() => {
-      const a = document.getElementById('gnActionInput') || document.getElementById('actionInput');
-      const d = document.getElementById('gnDialogueInput') || document.getElementById('dialogueInput');
-      return { action: a ? a.value : null, dialogue: d ? d.value : null };
+    const sIdx = nextPick(sDeck.count);
+    await page.evaluate(() => {
+      ['gnActionInput', 'gnDialogueInput', 'actionInput', 'dialogueInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); }
+      });
     });
-    cardLog.push({ scene, hand: sHand.cards, chosenSlot: sc.slot, chosenId: sc.id,
-      played: sPlayed, submitted: sSub, grokAuthored: sc.grokAuthored });
-    say('  plays slot ' + sc.slot + ' "' + (sc.label || sc.id) + '"'
-      + (sc.grokAuthored ? ' [GROK-AUTHORED]' : ' [TEMPLATE]') + ' clicked=' + sPlayed.clicked);
+    let sClickErr = null;
+    await page.locator('.fate-card').nth(sIdx).click({ timeout: 15000 })
+      .catch(e => { sClickErr = (e && e.message) || 'click failed'; });
+    if (sClickErr) {
+      halted = true;
+      haltReason = 'scene ' + scene + ' card click FAILED: ' + sClickErr;
+      say('  *** STOPPING — ' + haltReason + ' ***');
+      break;
+    }
+    let sSub = { action: '', dialogue: '' };
+    const sDl = Date.now() + 20000;
+    while (Date.now() < sDl) {
+      sSub = await page.evaluate(() => {
+        const a = document.getElementById('gnActionInput') || document.getElementById('actionInput');
+        const d = document.getElementById('gnDialogueInput') || document.getElementById('dialogueInput');
+        return { action: a ? a.value : '', dialogue: d ? d.value : '' };
+      });
+      if ((sSub.action && sSub.action.trim()) || (sSub.dialogue && sSub.dialogue.trim())) break;
+      await page.waitForTimeout(400);
+    }
+    cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub });
+    say('  scene ' + scene + ' plays card ' + sIdx + ' "' + (sDeck.labels[sIdx] || '?') + '"'
+      + (((sSub.action || '') + (sSub.dialogue || '')).trim() ? '' : ' [NO PREVIEW POPULATED]'));
 
-    const g = await advanceExpectingGate(page, sSub.action || sc.action || '',
-      sSub.dialogue || sc.dialogue || '');
+    const g = await advanceExpectingGate(page, sSub.action || '', sSub.dialogue || '');
     if (g.promptMounted) await chooseBranch(page, 'A');
 
     // OBSERVED COMPLETION. A GAP BETWEEN PROVIDER CALLS IS NOT A REJECTION — the app may be

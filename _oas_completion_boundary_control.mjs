@@ -106,7 +106,12 @@ console.log('\n4. THE RUNNER reads the fields production actually writes');
     'a bare route.fetch keeps its 30s default whatever it is raced against');
   t('it drives the real submission controls (#gnSubmitBtn)',
     /gnSubmitBtn/.test(src) && /gnActionInput/.test(src));
-  t('it uses the input handler\'s return value', /r !== false/.test(src));
+  // SUPERSEDED: the runner no longer calls the internal OAS handler at all. Codex required
+  // submission through the reader's own control, so the contract is now "clicks #gnSubmitBtn and
+  // FAILS if that click fails" — a stronger property than inspecting a return value.
+  t('it submits through the reader control, not the internal handler',
+    /#gnSubmitBtn/.test(src) && !/_intimacyDialogueConsumeInput/.test(src));
+  t('and a failed submit halts the run', /submit control failed/.test(src));
 }
 
 await browser.close();

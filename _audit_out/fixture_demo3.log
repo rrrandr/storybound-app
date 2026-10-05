@@ -1,0 +1,45 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.001600
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  0ms
+  *** STOPPING — the OAS deck never mounted at turn 1 (checked #gnCardMount, #cardMount, #intimacyDevCardMount, document; none had visible cards) ***
+  interruption: {"present":false,"submitted":false,"pending":false}
+  axis decision: {"needed":true,"promptMounted":false,"recorded":null}
+  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.001700
+
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.001600
+  TOTAL EXPOSURE         : $0.001700
+  ceiling                : $5.00  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+  CACHED TOKENS          : 0 of 1000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.001700
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.001700 of $5.00
+
+output: _fs_live_out/run_2026-10-05T07-29-26-733Z
