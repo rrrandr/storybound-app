@@ -23,6 +23,7 @@ const CEILING = Number(process.env.SB_CEILING || 0);
 // FIXTURE MODE EXERCISES THIS RUNNER, not a copy of its logic. Every gate, deadline, budget
 // rule and sequencing decision below is the same code the paid run uses; only the provider
 // response is served locally, and NO provider traffic leaves the process.
+const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
 const LIVE = !FIXTURES;
 const RUN = '_fs_live_out/run_' + new Date().toISOString().replace(/[:.]/g, '-');
@@ -218,6 +219,11 @@ await page.route('**/api/**', async (route) => {
     const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
       (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
     const f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+    // NAME WHAT FELL THROUGH. An unmatched prompt silently served '{}', which is how the fate
+    // previews ended up as the literal "{}" in the Do field. Log it instead of guessing later.
+    if (!key) { try { const head = String((body.messages || [])[0]?.content || '').slice(0, 110).replace(/\s+/g, ' ');
+      if (head && !_unmatched.has(head)) { _unmatched.add(head);
+        console.log('  [fixture] NO MATCHER — serving default for: ' + head); } } catch (_) {} }
     if (f.delayMs) await new Promise(r => setTimeout(r, f.delayMs));
     if (f.fail) {
       calls.push({ n: calls.length + 1, requested, chars, ms: Date.now() - t0, estimate: est,
@@ -357,7 +363,23 @@ try {
   await page.evaluate(() => { window.state.profileId = 'harness-reader'; window.state.fortunes = 9999;
     window.state.storypassEligible = true; window.state.subscribed = true; });
   const def = await findFSDef(page);
+  // THE READER HAS OPTED OUT OF PORTRAITS. Three overlays otherwise stand between the opening
+  // and the OAS deck — pcLookModal, its "Skip anyway" confirmation, and liRenderModal — each
+  // intercepting pointer events, and the look modal RE-OPENS after every dismissal. These are
+  // the product's OWN opt-out flags (_pcLookSkipped is commented in app.js as 'user clicked
+  // "skip"'), so this is the state a reader reaches by clicking Skip. Images are blocked anyway.
+  const optOutPortraits = () => page.evaluate(() => {
+    try { window.state._pcLookSkipped = true; window.state._liRenderSkipped = true; } catch (_) {}
+  });
+  await optOutPortraits();
   await launchFS(page, def);
+  await optOutPortraits();
+  // DETERMINISTIC CARD PICKING, shared by the OAS turns AND the scene loop. These were
+  // declared inside the OAS block and used again in the scene loop, so scene 2 died on
+  // "nextPick is not defined" the moment the OAS handoff finally succeeded — the same class
+  // of defect as the deleted waitForHand(). One sequence now covers both phases.
+  let pickSeed = 1013904223;
+  const nextPick = (n) => { pickSeed = (1664525 * pickSeed + 1013904223) >>> 0; return pickSeed % n; };
   await unlockFS(page, 'fs-live');
   await finalizePreview(page);
   await page.waitForTimeout(4000);
@@ -365,6 +387,7 @@ try {
 
   if (!halted) {
     say('── OAS (live) ──');
+    await optOutPortraits();
     await enterOAS(page, { settleMs: 9000 });
 
     // EACH INPUT IS ACCEPTED AND ITS RESPONSE COMPLETED BEFORE THE NEXT ONE. The previous
@@ -399,8 +422,6 @@ try {
     //
     // The pick is SEEDED so a rerun plays the same hand; "random" here means reproducible
     // selection, not a model judgement.
-    let pickSeed = 1013904223;
-    const nextPick = (n) => { pickSeed = (1664525 * pickSeed + 1013904223) >>> 0; return pickSeed % n; };
 
     // ── PLAY A CARD THE WAY A READER PLAYS ONE ─────────────────────────────────────────────
     // Copying a card's text into the dialogue handler is not playing it: it skips the click that
@@ -436,11 +457,13 @@ try {
       for (const id of MOUNTS) {
         const host = document.getElementById(id);
         if (!host) continue;
-        const found = [...host.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null);
+        const found = [...host.querySelectorAll('.fate-card')]
+          .filter(e => e.offsetParent !== null && !e.classList.contains('locked'));
         if (found.length) { mountId = id; els = found; break; }
       }
       if (!els.length) {
-        const loose = [...document.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null);
+        const loose = [...document.querySelectorAll('.fate-card')]
+          .filter(e => e.offsetParent !== null && !e.classList.contains('locked'));
         if (loose.length) { mountId = '(document)'; els = loose; }
       }
       const st = window.state || {};
@@ -484,7 +507,7 @@ try {
       }
       const slotIdx = nextPick(deck.count);
       const sel = (deck.mountId && deck.mountId !== '(document)')
-        ? ('#' + deck.mountId + ' .fate-card') : '.fate-card';
+        ? ('#' + deck.mountId + ' .fate-card:not(.locked)') : '.fate-card:not(.locked)';
       const slotName = (deck.slots[slotIdx] || {}).slot;
       const rejectedBefore = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
       // CLEAR THE PREVIEW FIRST, so a populated input can only have come from THIS click. The
@@ -754,11 +777,42 @@ try {
     // helper. The scene loop was still calling waitForHand(), which no longer exists: once the
     // OAS handoff succeeded, scene 2 would have died on a ReferenceError (Codex 2026-10-05).
     const readSceneDeck = () => page.evaluate(() => {
-      // Scene cards live on the staged reader surface, outside #gnCardMount's OAS deck.
-      const all = [...document.querySelectorAll('.fate-card')];
-      const oasMount = document.getElementById('gnCardMount');
-      const els = all.filter(e => !(oasMount && oasMount.contains(e)) && e.offsetParent !== null);
-      return { count: els.length,
+      // SCENE CARDS ARE ON THE ACTIVE READER, WHICH IS #gnCardMount HERE. I originally excluded
+      // that mount to avoid mistaking OAS cards for scene cards — but on a staged Book the
+      // staged reader IS gnReader, so its scene deck lands in the same mount the OAS used. By
+      // this point the OAS has resolved and archived, so there is no ambiguity left to avoid.
+      const mount = (typeof window._activeCardMount === 'function')
+        ? window._activeCardMount() : document.getElementById('cardMount');
+      // ONLY PLAYABLE CARDS. The deck greys out the cards past the unlock count, and clicking a
+      // locked one does nothing — which is how scene 2 clicked card 3 and populated no preview.
+      // A reader cannot play a locked card, so neither does the runner.
+      const visible = mount
+        ? [...mount.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null)
+        : [];
+      const els = visible.filter(e => !e.classList.contains('locked'));
+      return { count: els.length, lockedOut: visible.length - els.length,
+        mountId: mount && mount.id,
+        inOAS: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active),
+        // REPORT THE COMMIT STATE. A hand left committed from the last OAS turn ignores every
+        // further click and populates nothing, which is exactly how turn 2 failed inside the OAS.
+        fateCommitted: window.state.fateCommitted,
+        fateSelectedIndex: window.state.fateSelectedIndex,
+        sceneKey: window.state._fateOptionsSceneKey,
+        // NO PREVIEW CALL FIRES AT ALL at the scene boundary, which points at a CACHE HIT
+        // serving an empty entry. _cacheFateCardPreview writes (action || ''), and the cache is
+        // keyed by turn — the OAS turns share that key — so an empty entry would be served
+        // forever for this scene. Report the cache rather than infer it.
+        // Were these dealt fresh, or are they the OAS hand still on screen?
+        fromOasHand: visible.filter(e => e.getAttribute('data-oas-hand') === '1').length,
+        previewCache: (function () {
+          try {
+            const c = window.state._sceneFateCardPreviews || {};
+            const out = { _cacheKey: c._cacheKey };
+            Object.keys(c).forEach(k => { if (k === '_cacheKey') return;
+              out[k] = { a: (c[k].action || '').length, d: (c[k].dialogue || '').length }; });
+            return out;
+          } catch (_) { return null; }
+        })(),
         labels: els.map(e => (e.getAttribute('data-fate-card-slot')
           || (e.innerText || '').trim().split('\n')[0] || '').slice(0, 30)) };
     });
@@ -787,7 +841,12 @@ try {
       });
     });
     let sClickErr = null;
-    await page.locator('.fate-card').nth(sIdx).click({ timeout: 15000 })
+    // SCOPE THE CLICK TO THE READER THE CARDS ARE ON. A bare '.fate-card' resolved nth() across
+    // the whole document and picked a card inside the HIDDEN #cardMount, so the click waited
+    // 15s on an invisible element. readSceneDeck() reports which mount it counted; click there.
+    const sSel = (sDeck && sDeck.mountId)
+      ? ('#' + sDeck.mountId + ' .fate-card:not(.locked)') : '.fate-card:not(.locked)';
+    await page.locator(sSel).nth(sIdx).click({ timeout: 15000 })
       .catch(e => { sClickErr = (e && e.message) || 'click failed'; });
     if (sClickErr) {
       halted = true;
@@ -799,16 +858,40 @@ try {
     const sDl = Date.now() + 20000;
     while (Date.now() < sDl) {
       sSub = await page.evaluate(() => {
-        const a = document.getElementById('gnActionInput') || document.getElementById('actionInput');
-        const d = document.getElementById('gnDialogueInput') || document.getElementById('dialogueInput');
-        return { action: a ? a.value : '', dialogue: d ? d.value : '' };
+        // READ BOTH READERS. "gnActionInput || actionInput" picked the gn element merely because
+        // it EXISTS, so an empty gn field masked text that had been written to the literary
+        // inputs — the fallback could never fire. Take whichever actually holds the suggestion,
+        // and say which one it came from.
+        const val = (id) => { const e = document.getElementById(id); return e ? (e.value || '') : ''; };
+        const gnA = val('gnActionInput'), gnD = val('gnDialogueInput');
+        const litA = val('actionInput'), litD = val('dialogueInput');
+        const gnHas = !!(gnA.trim() || gnD.trim());
+        return { action: gnHas ? gnA : litA, dialogue: gnHas ? gnD : litD,
+          source: gnHas ? 'gn' : ((litA.trim() || litD.trim()) ? 'literary(HIDDEN)' : 'neither'),
+          gn: { a: gnA.length, d: gnD.length }, lit: { a: litA.length, d: litD.length } };
       });
       if ((sSub.action && sSub.action.trim()) || (sSub.dialogue && sSub.dialogue.trim())) break;
       await page.waitForTimeout(400);
     }
     cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub });
     say('  scene ' + scene + ' plays card ' + sIdx + ' "' + (sDeck.labels[sIdx] || '?') + '"'
+      + ' from ' + sDeck.mountId + ' (playable=' + sDeck.count
+      + ' locked=' + sDeck.lockedOut + ' committed=' + sDeck.fateCommitted
+      + ' sel=' + sDeck.fateSelectedIndex + ' key=' + sDeck.sceneKey + ')'
+      + ' via ' + sSub.source
       + (((sSub.action || '') + (sSub.dialogue || '')).trim() ? '' : ' [NO PREVIEW POPULATED]'));
+    if (!((sSub.action || '') + (sSub.dialogue || '')).trim()) {
+      say('    preview cache: ' + JSON.stringify(sDeck.previewCache));
+      say('    option ids   : ' + JSON.stringify(sDeck.labels));
+      say('    cards still from the OAS hand: ' + sDeck.fromOasHand + ' of ' + sDeck.count);
+      // THE PAGE'S OWN ACCOUNT of the click. Four hypotheses about this failure were wrong
+      // (locked card, committed hand, stale OAS elements, text written to the hidden reader), so
+      // read what the app actually logged instead of forming a fifth.
+      const tail = consoleLog.slice(-40).filter(l =>
+        /FATE|INTIMACY|fate|card|preview|Error|error|throw/.test(l));
+      say('    page console (last ' + tail.length + ' relevant lines):');
+      tail.slice(-14).forEach(l => say('      | ' + String(l).slice(0, 150)));
+    }
 
     const g = await advanceExpectingGate(page, sSub.action || '', sSub.dialogue || '');
     if (g.promptMounted) await chooseBranch(page, 'A');

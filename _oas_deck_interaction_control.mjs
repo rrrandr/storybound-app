@@ -38,6 +38,20 @@ await page.route('**/api/**', async (route) => {
   // fall back to the placeholder "Reversal…". That was a FIXTURE shape error of mine, not a
   // product defect — see feedback_shape_faithful_mocks: a mock returns ONE real shape.
   otherStages.push(sys.slice(0, 90).replace(/\s+/g, ' '));
+  // THE INTIMATE BATCH takes FOUR fields (ARCHETYPE ||| variant ||| action ||| dialogue) and
+  // shares its system prompt with the prose author, so it is identified by its variant template.
+  // Without this branch the previews fell back to the card title ("Confession…") and the check
+  // passed only when the randomly chosen card happened to match my single-line reply.
+  if (/amplify\|ruin\|redirect/.test(sys)) {
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      content: [
+        'TEMPTATION ||| amplify ||| I close the gap and let my sleeve touch his ||| Ask me again, slower.',
+        'BOUNDARY ||| redirect ||| I set the ledger flat and keep my hand on it ||| Not here. Not in front of them.',
+        'CONFESSION ||| amplify ||| I turn The Answer so its cut edge faces him ||| I felt it choose. I was holding it.',
+        'REVERSAL ||| redirect ||| I put The Answer down between us and do not let go ||| Ask me whose hands shaped it.',
+        'SILENCE ||| ruin ||| I go still and let the clearing finish its noise ||| mm'
+      ].join('\n') }) });
+  }
   if (/5 contextual Say\/Do previews/i.test(sys)) {
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
       content: [
@@ -174,8 +188,14 @@ const req = sent[sent.length - 1];
 t('A REQUEST WAS SENT by the visible Submit', sent.length > before,
   'captured ' + sent.length + ', had ' + before);
 if (req) {
-  const needle = (s) => s && s.length > 12 && req.body.includes(s);
-  console.log('  request carries Do: ' + needle(expectAct) + '   Say: ' + needle(expectDia));
+  // THE CONTRACT IS FIDELITY, NOT LENGTH. A card clicked before the preview batch returns gets
+  // the template placeholder ("Reversal…") instead of a model preview — a real product fallback,
+  // and the reason this check was intermittent. Either way, whatever is in the inputs must reach
+  // the request UNCHANGED, so compare the exact value and only require it to be non-trivial.
+  const needle = (s) => s && s.trim().length >= 5 && req.body.includes(s);
+  const placeholder = /…$/.test(expectAct) || /…$/.test(expectDia);
+  console.log('  request carries Do: ' + needle(expectAct) + '   Say: ' + needle(expectDia)
+    + (placeholder ? '   (template placeholder — the batch had not returned before the click)' : ''));
   t('THE EXACT CARD VALUES reached the outgoing request',
     (expectAct ? needle(expectAct) : true) && (expectDia ? needle(expectDia) : true),
     'Do=' + JSON.stringify(expectAct.slice(0, 50)) + ' Say=' + JSON.stringify(expectDia.slice(0, 50)));
@@ -197,6 +217,51 @@ console.log('  mount=#' + next.mountId + ' cards=' + next.cards + ' clickable=' 
 t('the deck is STILL on the visible reader next turn',
   next.mountId === 'gnCardMount' && next.cards === 5);
 t('and still has clickable cards', next.clickable > 0);
+
+// ── A SECOND CARD-DRIVEN TURN ──────────────────────────────────────────────────────────────
+// The runner gets through turn 1 and then finds turn 2's click accepted but producing no
+// preview. This looks at the DOM and the commit state instead of inferring it.
+console.log('\n=== TURN 2 ===');
+const pre2 = await page.evaluate(() => {
+  const m = window._activeCardMount();
+  const els = [...m.querySelectorAll('.fate-card')];
+  return { cards: els.length,
+    visible: els.filter(e => e.offsetParent !== null).length,
+    locked: els.filter(e => e.classList.contains('locked')).length,
+    selected: els.filter(e => e.classList.contains('selected')).length,
+    disintegrating: els.filter(e => e.className.includes('disintegrat')).length,
+    flipped: els.filter(e => e.classList.contains('flipped')).length,
+    fateCommitted: window.state.fateCommitted,
+    fateSelectedIndex: window.state.fateSelectedIndex,
+    sceneKey: window.state._fateOptionsSceneKey,
+    optionIds: (window.state.fateOptions || []).map(o => o.id) };
+});
+console.log('  ' + JSON.stringify(pre2));
+t('turn 2 still has visible cards', pre2.visible > 0, JSON.stringify(pre2));
+t('the hand is NOT still committed from turn 1', pre2.fateCommitted !== true,
+  'fateCommitted=' + pre2.fateCommitted + ' — a committed hand cannot be re-played');
+t('and no card is left selected from turn 1', pre2.selected === 0,
+  'selected=' + pre2.selected);
+
+if (pre2.visible > 0) {
+  await page.evaluate(() => { const i = window._getActiveTurnInputs();
+    if (i.actInput) i.actInput.value = ''; if (i.diaInput) i.diaInput.value = ''; });
+  const T2 = 0;
+  await page.locator('#gnCardMount .fate-card').nth(T2).click({ timeout: 15000 }).catch(e =>
+    console.log('  click error: ' + e.message.split('\n')[0]));
+  await page.waitForFunction(() => { const i = window._getActiveTurnInputs();
+    return !!(i && ((i.actInput && i.actInput.value.trim()) || (i.diaInput && i.diaInput.value.trim())));
+  }, { timeout: 20000 }).catch(() => {});
+  const got2 = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+    return { act: (i.actInput && i.actInput.value) || '', dia: (i.diaInput && i.diaInput.value) || '',
+      selIdx: window.state.fateSelectedIndex }; });
+  console.log('  after click: selIdx=' + got2.selIdx);
+  console.log('    Do : ' + JSON.stringify(got2.act.slice(0, 80)));
+  console.log('    Say: ' + JSON.stringify(got2.dia.slice(0, 80)));
+  t('TURN 2 populated a preview from the card',
+    got2.act.trim().length > 0 || got2.dia.trim().length > 0,
+    'both inputs empty — this is the runner\'s turn-2 failure');
+}
 
 // ── THE LITERARY READER IS UNTOUCHED ───────────────────────────────────────────────────────
 console.log('\n=== THE LITERARY READER ===');

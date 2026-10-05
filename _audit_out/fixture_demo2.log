@@ -6,18 +6,30 @@ Scene 1 is the FIXED hand-authored opening and generates nothing.
 app loaded
 
 ── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
-  setup complete · exposure $0.001500
+  setup complete · exposure $0.002100
 
 ── OAS (live) ──
-  call  1  [fixture] mistral-small-latest         $0.000100  0ms
-  *** STOPPING — the OAS deck never mounted at turn 1 (mount=true, cards=0) ***
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  call  2  [fixture] gpt-4o-mini                  no receipt  0ms
+  [fixture] NO MATCHER — serving default for: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE question: WHO (or WHAT) i
+  call  3  [fixture] ministral-8b-2512            $0.000100  1ms
+  [fixture] NO MATCHER — serving default for: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report which banned phrases
+  call  4  [fixture] grok-4-1-fast-non-reasoning  $0.000100  0ms
+  [fixture] NO MATCHER — serving default for: You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An archetype is a MOVEM
+  call  5  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  *** STOPPING — OAS slot "null" populated NO preview at turn 2 — the click was accepted but produced nothing to submit ***
   interruption: {"present":false,"submitted":false,"pending":false}
   axis decision: {"needed":true,"promptMounted":false,"recorded":null}
-  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+  turns 1 · resolved=false · archive=0 · interruptionSubmitted=false
 
 *** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
     No further call will be labelled "scene 2".
-  exposure $0.001600
+  exposure $0.020614
 
 
 ==============================================================================
@@ -28,18 +40,18 @@ SPEND
   TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
 
 PER-CALL ROLL-UP
-  model calls dispatched : 1
-  MEASURED (receipts)    : $0.000100
-  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
-  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
-  prior runs             : $0.001500
-  TOTAL EXPOSURE         : $0.001600
+  model calls dispatched : 6
+  MEASURED (receipts)    : $0.000500
+  no receipt             : 1 call(s), estimated $0.018014 — NOT counted as measured
+  retained (no receipt)  : $0.018014 — kept as exposure, NOT forgiven
+  prior runs             : $0.002100
+  TOTAL EXPOSURE         : $0.020614
   ceiling                : $5.00  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
-  CACHED TOKENS          : 0 of 1000 input (0.0%)
+  CACHED TOKENS          : 0 of 5000 input (0.0%)
 
 BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
-  receipted to date  $0.001600
-  unresolved to date $0.000000
-  TOTAL vs ceiling   $0.001600 of $5.00
+  receipted to date  $0.002600
+  unresolved to date $0.018014
+  TOTAL vs ceiling   $0.020614 of $5.00
 
-output: _fs_live_out/run_2026-10-05T07-24-44-398Z
+output: _fs_live_out/run_2026-10-05T16-28-36-755Z

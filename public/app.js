@@ -209375,7 +209375,34 @@ No text, no watermark, no UI elements, share-ready.`;
       // Not in intimacy mode — let normal fate card rendering apply.
       return;
     }
-    // Iterate 5 default fate card DOM slots and replace their suggestion text.
+    // ── AN OAS TURN NEEDS A FRESH HAND, NOT A TEXT SWAP ──────────────────────────────────
+    // (Roman/Codex 2026-10-05.) Two things were wrong here. The slot loop below targets
+    // [data-fate-card-slot], an attribute the DEV deck carries and production .fate-card elements
+    // do NOT — so on a real reader this function did nothing at all. And after a turn is
+    // submitted the hand is left committed (state.fateCommitted true, the chosen card still
+    // .selected), while OAS turns advance BEATS rather than scenes — so dealFateCards' scene key
+    // never changes and no new hand is ever dealt. The reader's second card click then selected
+    // nothing and populated nothing.
+    //
+    // A new OAS beat is a new chance to act, so it gets a genuinely new hand: force: true here,
+    // unlike the screen-switch remount which must preserve the hand the reader already has.
+    try {
+      var _d = state.intimacyDialogue;
+      var _beat = _d && _d.beatCount;
+      if (state.fateCommitted && _beat !== _d._fateHandBeat) {
+        _d._fateHandBeat = _beat;
+        if (typeof window.dealFateCards === 'function') {
+          window.dealFateCards({ force: true });
+          var _m = (typeof window._activeCardMount === 'function') ? window._activeCardMount() : null;
+          console.log('[OAS:DECK] dealt a fresh hand for beat ' + _beat + ' into #'
+            + ((_m && _m.id) || '?') + ' — cards: '
+            + (_m ? _m.querySelectorAll('.fate-card').length : 0));
+        }
+      }
+    } catch (e) { console.warn('[OAS:DECK] per-beat redeal threw:', e && e.message); }
+
+    // Iterate 5 default fate card DOM slots and replace their suggestion text. (Dev deck only —
+    // production cards have no data-fate-card-slot, so this is a no-op there by design.)
     document.querySelectorAll('[data-fate-card-slot]').forEach(function(card) {
       var slot = card.getAttribute('data-fate-card-slot');
       var newSuggestion = _pickIntimacyCardSuggestion(slot);

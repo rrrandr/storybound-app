@@ -6,18 +6,77 @@ Scene 1 is the FIXED hand-authored opening and generates nothing.
 app loaded
 
 ── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
-  setup complete · exposure $0.001600
+  setup complete · exposure $0.020614
 
 ── OAS (live) ──
-  call  1  [fixture] mistral-small-latest         $0.000100  0ms
-  *** STOPPING — the OAS deck never mounted at turn 1 (checked #gnCardMount, #cardMount, #intimacyDevCardMount, document; none had visible cards) ***
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  call  2  [fixture] gpt-4o-mini                  no receipt  0ms
+  [fixture] NO MATCHER — serving default for: You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE question: WHO (or WHAT) i
+  call  3  [fixture] ministral-8b-2512            $0.000100  0ms
+  [fixture] NO MATCHER — serving default for: You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report which banned phrases
+  call  4  [fixture] grok-4-1-fast-non-reasoning  $0.000100  0ms
+  [fixture] NO MATCHER — serving default for: You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An archetype is a MOVEM
+  call  5  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  [fixture] NO MATCHER — serving default for: You are a line editor for adult intimate dialogue (explicit register permitted). You receive ONE turn as JSON 
+  call  9  [fixture] gpt-4o-mini                  $0.000100  1ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 11  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 13  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call 14  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 15  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  turn 7 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call 16  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 17  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 7: replies 6 -> 7 (beats 6 -> 7)
+  turn 8 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 18  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 19  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 8: replies 7 -> 8 (beats 7 -> 8)
+  turn 9 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call 20  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 21  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 9: replies 8 -> 9 (beats 8 -> 9)
   interruption: {"present":false,"submitted":false,"pending":false}
   axis decision: {"needed":true,"promptMounted":false,"recorded":null}
-  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+  turns 9 · resolved=false · archive=0 · interruptionSubmitted=false
 
 *** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
     No further call will be labelled "scene 2".
-  exposure $0.001700
+  exposure $0.040627
 
 
 ==============================================================================
@@ -28,18 +87,18 @@ SPEND
   TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
 
 PER-CALL ROLL-UP
-  model calls dispatched : 1
-  MEASURED (receipts)    : $0.000100
-  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
-  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
-  prior runs             : $0.001600
-  TOTAL EXPOSURE         : $0.001700
+  model calls dispatched : 21
+  MEASURED (receipts)    : $0.002000
+  no receipt             : 1 call(s), estimated $0.018014 — NOT counted as measured
+  retained (no receipt)  : $0.018014 — kept as exposure, NOT forgiven
+  prior runs             : $0.020614
+  TOTAL EXPOSURE         : $0.040627
   ceiling                : $5.00  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
-  CACHED TOKENS          : 0 of 1000 input (0.0%)
+  CACHED TOKENS          : 0 of 20000 input (0.0%)
 
 BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
-  receipted to date  $0.001700
-  unresolved to date $0.000000
-  TOTAL vs ceiling   $0.001700 of $5.00
+  receipted to date  $0.004600
+  unresolved to date $0.036027
+  TOTAL vs ceiling   $0.040627 of $5.00
 
-output: _fs_live_out/run_2026-10-05T07-29-26-733Z
+output: _fs_live_out/run_2026-10-05T16-47-26-093Z
