@@ -56,7 +56,13 @@ function callFunction(sysPrompt) {
 // input and the absence of an ellipsis prove nothing about authorship. These two record the
 // PREVIEW RESPONSES THEMSELVES, keyed by card id, so a submitted suggestion can be matched
 // against the reply that was actually served. What cannot be matched stays UNKNOWN.
-const previewResponses = new Map();   // cardId -> [{ action, dialogue, at, callN }]
+const previewResponses = new Map();   // cardId -> [{ action, dialogue, at, callN, encounter, turn }]
+// THE IDENTITY A PREVIEW REPLY WAS SERVED UNDER. Printing the CURRENT encounter/turn beside an
+// OLD match is not provenance (Codex 2026-10-05): a stale record matched and was reported with the
+// new identity in its evidence. The runner stamps this onto every record at the moment it serves
+// the reply, and matching ENFORCES it.
+let previewContext = { encounter: 'setup', turn: null };
+function setPreviewContext(encounter, turn) { previewContext = { encounter, turn }; }
 const norm = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().toLowerCase();
 function recordPreviewReply(sysPrompt, replyText, callN) {
   try {
@@ -75,7 +81,8 @@ function recordPreviewReply(sysPrompt, replyText, callN) {
       const action = parts.length >= 4 ? parts[2] : parts[1];
       const dialogue = parts.length >= 4 ? parts[3] : parts[2];
       if (!previewResponses.has(id)) previewResponses.set(id, []);
-      previewResponses.get(id).push({ action, dialogue, at: Date.now(), callN });
+      previewResponses.get(id).push({ action, dialogue, at: Date.now(), callN,
+        encounter: previewContext.encounter, turn: previewContext.turn });
     });
   } catch (_) {}
 }
@@ -109,11 +116,23 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
   }
 
   const served = previewResponses.get(id) || [];
-  const hit = served.find(pairMatches);
+  // IDENTITY IS CHECKED, NOT DECORATED. A record only establishes provenance for the encounter and
+  // turn it was actually served under.
+  const sameIdentity = (r) => r.encounter === ctx.encounter && r.turn === ctx.turn;
+  const hit = served.find(r => pairMatches(r) && sameIdentity(r));
   if (hit) {
     return { provenance: 'matched-response',
       evidence: 'the COMPLETE action+dialogue pair is identical to the preview reply served for '
-        + 'this card on call ' + hit.callN + ' — ' + where };
+        + 'this card on call ' + hit.callN + ' in THIS encounter and turn — ' + where };
+  }
+  // A pair that matches a record from ANOTHER encounter or turn is a stale match. It is named, with
+  // the identity it really came from, and it does NOT count as this submission's provenance.
+  const stale = served.find(pairMatches);
+  if (stale) {
+    return { provenance: 'UNKNOWN',
+      evidence: 'the pair matches a preview reply served under a DIFFERENT identity (encounter="'
+        + stale.encounter + '" turn=' + stale.turn + ', call ' + stale.callN + '), not under '
+        + where + ' — a stale record is not provenance for this submission' };
   }
   if (cacheEntry && pairMatches(cacheEntry)) {
     return { provenance: 'matched-cache',
@@ -634,6 +653,7 @@ try {
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
+      setPreviewContext('opening OAS', i + 1);
       // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
       const deck = await waitForOasDeck();
       if (!deck || !deck.count) {
@@ -1039,6 +1059,7 @@ try {
   for (let leaving = 2; leaving <= LAST_SCENE - 1 && !halted; leaving++) {
     const creating = leaving + 1;
     const scene = leaving;   // the surface being read: deck, beats and card all belong to it
+    setPreviewContext('scene ' + leaving + ' end', leaving);
     say('── LEAVING SCENE ' + leaving + ' -> CREATING SCENE ' + creating + ' (live) ──');
 
     // CAPTURE THE PRE-GENERATION IDENTITY *BEFORE* ANYTHING IS TRIGGERED. Reading the count
