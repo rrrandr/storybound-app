@@ -177006,10 +177006,10 @@ No text, no watermark, no UI elements, share-ready.`;
       // dialogue tag. Em-dashes between clauses don't count (they end a clause,
       // not a sentence). Also handles ellipsis-period sequences (`I just...`).
       var SENTENCE_RE = /(?<=[.?!"'”’])\s+(?=["'“‘]?[A-Z])/;
-      // Matches the contract's "commonly two to four sentences" (TEXT RULES). It was 2, which
-      // split precisely the beats that took the permission. This is a RUNAWAY guard for a beat
-      // that swallowed a whole scene, not a register control.
-      var MAX_SENTENCES_PER_BEAT = 4;
+      // Belongs to the STAGED prose-to-beats path only (_parseStagedAnalysis). Its own prompt
+      // asks for "1-2 sentences per beat. ABSOLUTE MAXIMUM: 3", so 2 is consistent with the
+      // contract that governs THIS path. The CG screenplay path never reaches here.
+      var MAX_SENTENCES_PER_BEAT = 2;
       // FINAL-BEAT CAP: the last beat is the cliff/punchline. Force a 1-sentence
       // ceiling on it so it lands as a discrete beat. Prevents the model's
       // habit of stuffing trailing exposition + dialogue + cliffhanger all into
@@ -232130,13 +232130,14 @@ No text, no watermark, no UI elements, share-ready.`;
       '- A narration beat\'s "text" is descriptive action / staging / sensory detail. No quoted dialogue inside narration beats.\n' +
       '- An exposition beat\'s "text" is the PC\'s internal thought / reflection (no quotes — interior monologue, not spoken).\n' +
        '- LENGTH FOLLOWS THE MOMENT. A beat is ONE SUSTAINED MOMENT — a glance, a line, a noticed detail, a breath — and that is what bounds it, not a sentence count. Give a moment ONE sharp sentence when that is all it needs, or let it open into a compact paragraph (commonly two to four sentences) when it earns the development. This is PERMISSION, not a target and not a minimum: never pad a moment to reach a length, never clip one that deserves room, and do not settle into a uniform rhythm of either. A beat is still never a scene.\n' +
-       '  SHOWN, not told — both are correct, and a scene wants both:\n' +
-       '    A MOMENT THAT NEEDS ONE LINE: "Julian does not move to follow me."\n' +
-       '    THE SAME SCENE, A MOMENT THAT EARNS DEVELOPMENT: "I press the Answer into his palm\n' +
-       '    before the Dohkar can speak again. The gold is still warm from my own grip, and his\n' +
-       '    fingers close over it without hesitation \u2014 no question, no glance at the rings of\n' +
-       '    watching faces. He has decided something I have not been told."\n' +
-       '  The second is not better than the first. It is longer because the moment held more.' +
+       '  SHOWN, not told \u2014 both are correct, and a scene wants both. These are ILLUSTRATIONS\n' +
+       '  of pacing only: no names, places or objects from them belong in your scene.\n' +
+       '    A MOMENT THAT NEEDS ONE LINE: "He does not move to follow me."\n' +
+       '    A MOMENT THAT EARNS DEVELOPMENT: "I press it into his palm before anyone can speak\n' +
+       '    again. It is still warm from my own grip, and his fingers close over it without\n' +
+       '    hesitation \u2014 no question, no glance at the watching faces. He has decided something\n' +
+       '    I have not been told."\n' +
+       '  The second is not better than the first. It is longer because the moment held more.\n' +
        '- ACROSS THE SCENE, connect action, perception and character voice so the prose reads as someone living it rather than a camera listing movements. NOT IN EVERY BEAT: plain physical action, sensory observation, dialogue and silence carry their own meaning and must be left to do it. Avoid BOTH failure modes — screenplay shorthand that only reports what moved, and a procession of explanatory observations where every detail is immediately interpreted for the reader.\n' +
       '- GRAMMATICAL CAPTIONS (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. Terse is good; telegram/headline-ese that drops articles and the connecting verb is NOT — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
       '- The FINAL beat of the scene is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +

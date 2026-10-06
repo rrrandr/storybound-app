@@ -15,17 +15,46 @@ Provider-free throughout. No generation. Diagnostics, not quotas.
 The author emits one-sentence narration 98% of the time. No `[STAGED:PARSE]` line appears in the
 live console, so the splitter did not reshape these scenes. **The register is set upstream.**
 
-**But two real contradictions were found, and both are fixed:**
+**CORRECTION — the "processing contradiction" I reported does not exist.** I raised
+`MAX_SENTENCES_PER_BEAT` from 2 to 4 to match the CG contract's "commonly two to four sentences".
+That was wrong, and it is reverted.
 
-- **The processing contradicted the contract.** `MAX_SENTENCES_PER_BEAT` was **2**, while TEXT
-  RULES permits "commonly two to four sentences". The cap would have split precisely the **2 of 92**
-  beats where the author did develop a moment — punishing the behaviour the contract asks for. Now
-  **4**, matching the contract. The final-beat ceiling of **1** is unchanged.
-- **The exemplars were one-sided.** The permission to develop a beat carried **no example**, while
-  the HARD rule immediately below it ("GRAMMATICAL CAPTIONS") carries a GOOD example that is a
-  single tight sentence, next to the words "Terse is good". The only beat the author was ever SHOWN
-  was one sentence. A paired exemplar now shows a deliberate one-line beat AND a developed one,
-  with "The second is not better than the first" so neither reads as the target.
+`_splitOversizedBeats` is called from exactly one place: `_parseStagedAnalysis`, reached only from
+`_runStagedAnalysis`, which prompts **gpt-4o-mini** with `_buildStagedSystemPrompt`. That is the
+**staged prose-to-beats path**. The CG screenplay path emits the renderable plan directly — its own
+prompt says *"No prose-to-beats analysis step downstream"* — and **never passes through the
+splitter at all**. That, not "it didn't need to fire", is why the live scenes logged no
+`[STAGED:PARSE]` line. And the staged prompt that *does* govern that path asks for **"1-2 sentences
+per beat. ABSOLUTE MAXIMUM: 3"**, so a cap of 2 was already consistent with its own contract; 4
+would have permitted beats that prompt forbids.
+
+**What the cap actually does on its own path**, exercised through the shipped function
+(`_splitter_path_control.mjs`, 13/13):
+
+| input | result |
+|---|---|
+| 3-sentence narration beat | split into 2 pieces; **no word lost**; all pieces stay narration; only the first keeps the closeup |
+| 4-sentence narration beat | split into 2 pieces; nothing dropped |
+| deliberate 1-sentence beat | **passes through unchanged** |
+| 3-sentence dialogue beat | split; every spoken piece keeps a speaker |
+
+**Two is a hard maximum on that path**, and splitting raises the beat count, so the reader taps
+more times to cross the same prose. "Commonly two to four" is the CG contract's phrasing and is
+**not itself a hard maximum** — nothing enforces four anywhere; it is guidance to one author on a
+different path.
+
+**So one real finding remains for the CG register: the exemplars were one-sided.** The permission
+to develop a beat carried **no example**, while the HARD rule immediately below it ("GRAMMATICAL
+CAPTIONS") carries a GOOD example that is a single tight sentence, next to the words "Terse is
+good". The only beat the author was ever SHOWN was one sentence. A paired exemplar now shows a
+deliberate one-line beat AND a developed one, closing with "The second is not better than the
+first", so neither reads as the target.
+
+**The shared example is story-neutral.** The first version named Julian, the presiding Dohkar and
+The Answer — First Sacrifice's cast and artifact — inside a prompt **every Book receives**. That was
+a leak of one story's material into another's prose model. The example now uses no names, places or
+objects, and says so in the prompt itself: *"These are ILLUSTRATIONS of pacing only: no names,
+places or objects from them belong in your scene."*
 
 What the contract already said, and still says, unchanged: *"do not settle into a uniform rhythm of
 either"* and *"connect action, perception and character voice so the prose reads as someone living
@@ -51,9 +80,10 @@ without stopping it" appears in both the Scene 2 and Scene 6 history notes as th
 
 ## 3. Two editorial examples
 
-**EDITORIAL EXAMPLES — hand-written to show the intended register. NOT generated output, and not a
-claim about what the model would produce.** Events, choices, knowledge and canon are preserved
-exactly; nothing is added to the plot.
+**EDITORIAL EXAMPLES — hand-written ILLUSTRATIONS of direction only.** They are not generated
+output, not a claim about what the model would produce, and not a claim of exact preservation of
+every original detail. They add no plot, and they keep the events, choices, knowledge and canon of
+the scenes they are drawn from.
 
 ### Example A — Scene 5, the handover
 
@@ -107,5 +137,17 @@ both verified to reach the actual outgoing request (`_register_wiring_control.mj
 through the shipped `_buildCGScreenplaySystemPrompt`).
 
 **Whether the author's rhythm actually changes needs a separately authorized live test.** Nothing
-here demonstrates it. No polishing model, blanket length rule or memory system was added. Scene 1,
-the OAS register and projection paragraphing are untouched.
+here demonstrates it, and the style is NOT fixed — the prompt permitted this register before today
+and the output did not show it.
+
+The wiring control now asserts **only against a request intercepted on its way out of the app**
+(316,988 chars, captured at `/api/proxy`, driven through production's own `_runCGScreenplayGen`).
+It calls no prompt builder directly and reads no source file; **if no request is captured, every
+check is unproven and the control fails.** That stricter control immediately caught a real defect
+the previous one missed: the new exemplar ran straight into the rule below it
+(`"moment held more.- ACROSS THE SCENE"`), with no line break. Fixed, and now asserted.
+
+No polishing model, blanket length rule or memory system was added. No minimum sentence count and
+no per-beat interpretation requirement. Scene 1, the OAS register and projection paragraphing are
+untouched. The canon leak and the competing wish references remain separate open work; the lane's
+prohibition has NOT been turned into a global ban on mentioning names.
