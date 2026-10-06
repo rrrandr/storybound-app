@@ -115,43 +115,46 @@ non-POST, `:280` missing messages) — so it is provider-free by construction:
 /api/chatgpt-proxy -> HTTP 405 handler body    /api/mistral-proxy -> HTTP 405 handler body
 ```
 
-Those are **smoke tests only** — they return before any upstream work. **Withdrawn: "reproducing it
-requires a real upstream call."** It does not: the upstream can be mocked *inside the process
-running the actual proxy*.
+Those are **smoke tests only** — they return before any upstream work.
 
-`_runtime_upstream_mocked_control.mjs` (11/11) does that — the real handler served over real HTTP,
-`global.fetch` replaced so `api.x.ai` returns a representative delayed provider response and
-**every other host throws** (external network denied, not merely unused):
+**And my second attempt was not the Vercel test either.** `_runtime_upstream_mocked_control.mjs`
+creates its own `http.createServer` with a handwritten response adapter, which **removes the very
+runtime under suspicion**. It is now labelled a handler-over-HTTP test, and its "the void run's
+latency band" claim is withdrawn — those historical logs were never attributed to the void run.
+
+### The Vercel response path, finally tested
+
+`_vercel_runtime_mock_control.mjs` (17/17) starts an **isolated `vercel dev`** on its own port with
+`NODE_OPTIONS=--require ./_mock_upstream_preload.cjs`, so the upstream mock is installed **in the
+function worker itself** and Vercel's own request/response handling is preserved end to end. The
+preload answers `api.x.ai` and **throws on every other external host**.
+
+**The mock is proven installed before any valid request is sent:**
 
 ```
-HTTP 200 | application/json | upstream calls made: 1 | escaped to real network: 0
-the reply content survived the round trip · the USAGE RECEIPT survived it
-correlation: client saw x-probe-request-id=probe-kisw61hn | handler completed for probe-kisw61hn
-
-a 12s upstream  ->  HTTP 200 in 12003ms, receipt intact
-[SPECIALIST-PROXY] latency=12002ms model=grok-4.3 status=200  ✓ succeeded
+/api/diag-mock -> {"mockInstalled":true,"upstreamCalls":0,"denied":[],"pid":52756,"delayMs":0}
 ```
 
-So an upstream response **is** received, processed and delivered — including at **the void run's own
-latency band** (median 13.1s), with request, handler completion and client receipt correlated.
+**Then, through the real Vercel path:**
 
-**The incident is therefore still not reproduced and still unexplained.** My earlier "located gap"
-is withdrawn along with the timeout claim, and I am claiming no cause.
+```
+HTTP 200 | application/json | 1103ms | x-vercel-id: dev1::dev1::b979g-1791272443270-...
+body: {"id":"chatcmpl-vercel-mock","model":"grok-4.3",...}
+  the mocked reply content survived · the USAGE RECEIPT survived · marker proves the mock served it
 
-## Cost: what the numbers are and are not
+and with a 12s upstream delay:
+HTTP 200 | 13090ms | x-vercel-id: dev1::dev1::8078c-1791272497188-...
+  delivered, receipt intact, not the runtime error page
+```
 
-**Withdrawn: $1.033023 as any kind of bound.** It is *retained estimated exposure* — requested
-`max_tokens` × 1.5 × 1.2, no cache credit — for calls whose receipts could never be read. It is
-neither a measured bill nor a proven upper bound on billing.
+One finding about the runtime itself: **each request runs in its own worker process** (probe pids
+52756 → 52762), so an in-worker counter cannot be read across requests. My first assertions assumed
+a shared process; the conclusive evidence is the mock's own `chatcmpl-vercel-mock` marker in the
+body, which no provider can produce.
 
-**Withdrawn: the Mistral figure as a receipt.** 11,113 tokens × published rate ≈ $0.0017 is an
-*estimate computed from token counts*, not a dollar receipt from an invoice.
-
-At least ten Grok calls completed upstream at `grok-4.3` rates, so real billing is **not** near
-zero. The ledger stands untouched at **receipted $0.8383757 + unresolved $1.1072741 =
-$1.9456497**. Per instruction, individual calls will be reconciled only against attributable
-usage/billing evidence or proof they never dispatched — and additional authorization would not make
-unknown charges disappear.
+**So a response is received, processed and delivered through the actual Vercel runtime, including at
+12 seconds. The incident is still not reproduced and still unexplained.** My earlier "located gap"
+stays withdrawn, and I am claiming no cause.
 
 ## Positive evidence replaces absence-of-fallback counting
 
@@ -164,8 +167,11 @@ cannot vouch for a turn. No dollar receipt is required.
 Identity is **captured at dispatch** and carried into the recorder — reading the mutable context at
 response time credited a late reply to the current turn. The field-name regex is **gone**:
 malformed content that merely mentions `li_dialogue` is not a parsed reply. And the recorded
-response must be shown to have **supplied the rendered turn**, matched on its typed fields — not
-merely that the history count grew.
+response must be shown to have **supplied the rendered turn**: the **complete dialogue+action
+pair** must equal the rendered turn's pair, with normalization limited to display-layer forms
+(unicode quotes/dashes, collapsed whitespace, case). The first matcher accepted **either field** and
+**substrings** — Codex reproduced both false positives, a generic shared action and `"the Duke"`
+matching `"I never told the Duke."` — and those are now permanent negative cases.
 
 ```
 model reply RECEIVED AND RENDERED for turn 1 — call 7, matched on dialogue — counts toward the six

@@ -54,7 +54,8 @@ noteOasReplyReceived(OAS_SYS, reply(DIA, ACT), 7, ident(1));
   const m = oasReplyRenderedFor('opening OAS', 1, { dialogue: DIA, action: ACT });
   t('the recorded response is matched to the rendered turn', !!m && m.callN === 7,
     JSON.stringify(m));
-  t('and the match names which field matched', !!m && /dialogue|action/.test(m.matchedOn || ''));
+  t('and the match is on the COMPLETE pair', !!m && /complete dialogue\+action pair/.test(m.matchedOn || ''),
+    m && m.matchedOn);
 }
 
 console.log('');
@@ -117,6 +118,49 @@ noteOasReplyReceived(OAS_SYS, reply(DIA, ACT), 21, ident(2));
     oasReplyRenderedFor('opening OAS', 2, null) === null);
   t('an empty rendered entry is never a match',
     oasReplyRenderedFor('opening OAS', 2, { dialogue: '', action: '' }) === null);
+}
+
+console.log('');
+console.log('=== 4b. PERMANENT NEGATIVES: THE EITHER-FIELD AND SUBSTRING HOLES ===');
+// Both reproduced by Codex in the first matcher, kept here forever.
+oasRepliesReceived.clear();
+noteOasReplyReceived(OAS_SYS, reply('I never told the Duke.', 'He does not move.'), 41, ident(3));
+{
+  const diffDialogueSameAction = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'Something else entirely, not his line at all.', action: 'He does not move.' });
+  t('DIFFERENT dialogue with an IDENTICAL generic action is NOT a match',
+    diffDialogueSameAction === null, JSON.stringify(diffDialogueSameAction));
+
+  const sameDialogueDiffAction = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'I never told the Duke.', action: 'He turns away and says nothing more.' });
+  t('MATCHING dialogue with a DIFFERENT action is NOT a match',
+    sameDialogueDiffAction === null, JSON.stringify(sameDialogueDiffAction));
+
+  const substringOnly = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'the Duke', action: 'He does not move.' });
+  t('a SUBSTRING of the dialogue is NOT a match', substringOnly === null,
+    JSON.stringify(substringOnly));
+
+  const supersetOnly = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'I never told the Duke. I never would have.', action: 'He does not move.' });
+  t('a SUPERSET of the dialogue is NOT a match', supersetOnly === null,
+    JSON.stringify(supersetOnly));
+
+  const exact = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'I never told the Duke.', action: 'He does not move.' });
+  t('only the COMPLETE pair matches', !!exact && exact.callN === 41, JSON.stringify(exact));
+
+  // Justified normalization only: display-layer quote/dash/whitespace forms, not edits.
+  const normalized = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: '\u201CI never told the Duke.\u201D'.replace(/[\u201C\u201D]/g, '') + '',
+      action: 'He  does not   move.' });
+  t('collapsed whitespace still matches (display-layer only)', !!normalized,
+    JSON.stringify(normalized));
+
+  const missingAction = oasReplyRenderedFor('opening OAS', 3,
+    { dialogue: 'I never told the Duke.', action: '' });
+  t('a rendered entry MISSING the action is a mismatch, not a free pass',
+    missingAction === null, JSON.stringify(missingAction));
 }
 
 console.log('');

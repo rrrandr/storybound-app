@@ -260,22 +260,39 @@ function noteOasReplyReceived(sysPrompt, replyText, callN, identity) {
   } catch (_) {}
 }
 
-// POSITIVE EVIDENCE THAT *THIS* RESPONSE BECAME *THIS* RENDERED TURN. Not "a reply was received
-// somewhere" and not "the history count grew": the rendered turn's own text must match the
-// recorded response's typed fields, which is what shows production accepted it.
+// POSITIVE EVIDENCE THAT *THIS* RESPONSE BECAME *THIS* RENDERED TURN.
+// (Codex 2026-10-06 reproduced two false positives in the first version, which accepted EITHER
+// field and allowed substrings: completely different dialogue passed because both actions happened
+// to say "He does not move.", and "the Duke" passed as a match for "I never told the Duke.")
+//
+// THE RULE NOW: the COMPLETE dialogue+action pair from ONE recorded response must equal the
+// rendered turn's pair. Normalization is limited to what is justified — unicode quote/dash forms,
+// collapsed whitespace, and case — because those are display-layer differences, not edits. No
+// substrings, no single-field matches. A field that one side has and the other does not is a
+// MISMATCH, not a free pass.
+//
+// If production edits the reply before rendering, this reports the attribution as UNESTABLISHED
+// rather than loosening to accommodate it; the transformation would have to be traced first.
 function oasReplyRenderedFor(encounter, turn, renderedEntry) {
   const recs = oasRepliesReceived.get(encounter + '|' + turn);
   if (!Array.isArray(recs) || !recs.length) return null;
   if (!renderedEntry) return null;
-  const norm2 = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().toLowerCase();
+  const norm2 = (t) => String(t == null ? '' : t)
+    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")      // curly single quotes -> '
+    .replace(/[\u201C\u201D\u201F\u2033]/g, '"')      // curly double quotes -> "
+    .replace(/[\u2013\u2014\u2015]/g, '-')            // en/em dashes -> -
+    .replace(/[\u00A0\u2007\u202F]/g, ' ')            // non-breaking spaces -> space
+    .replace(/\s+/g, ' ')
+    .trim().toLowerCase();
   const rd = norm2(renderedEntry.dialogue || renderedEntry.li_dialogue || renderedEntry.text);
   const ra = norm2(renderedEntry.action || renderedEntry.li_action);
   if (!rd && !ra) return null;
   for (const r of recs) {
     const d = norm2(r.dialogue), a = norm2(r.action);
-    const dialogueMatches = d && rd && (rd === d || rd.indexOf(d) !== -1 || d.indexOf(rd) !== -1);
-    const actionMatches = a && ra && (ra === a || ra.indexOf(a) !== -1 || a.indexOf(ra) !== -1);
-    if (dialogueMatches || actionMatches) return { ...r, matchedOn: dialogueMatches ? 'dialogue' : 'action' };
+    // THE WHOLE PAIR, EXACTLY. Both fields must agree, including both being absent.
+    if (d === rd && a === ra) {
+      return { ...r, matchedOn: 'the complete dialogue+action pair' };
+    }
   }
   return null;
 }

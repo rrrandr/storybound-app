@@ -1,4 +1,12 @@
-// THE FULL RESPONSE PATH, with the upstream MOCKED INSIDE THE FUNCTION PROCESS. Provider-free.
+// A HANDLER-OVER-HTTP TEST with the upstream mocked in-process. Provider-free.
+//
+// RELABELLED (Codex 2026-10-06). This does NOT close the Vercel response-delivery gap: it creates
+// its own http.createServer and supplies a handwritten `vres` adapter, which REMOVES the very
+// runtime implicated in the failure. What it does establish is that the real handler, given a
+// representative delayed upstream response, processes it and writes a complete body — including
+// the usage receipt — over a real socket to a real client.
+//
+// The Vercel-runtime test is _vercel_runtime_mock_control.mjs.
 //
 // Codex 2026-10-06: the 400/405 checks return BEFORE the relevant work — useful smoke tests, not
 // the requested response-path test. And "a real paid upstream call is required" was not
@@ -134,7 +142,7 @@ UPSTREAM_DELAY_MS = 0;
 }
 
 console.log('');
-console.log('=== 2. A SLOW (12s) UPSTREAM IS STILL DELIVERED — the void run\'s latency band ===');
+console.log('=== 2. A SLOW (12s) UPSTREAM IS STILL DELIVERED ===');
 UPSTREAM_DELAY_MS = 12000;
 {
   handlerCompletedAt = null;
@@ -148,8 +156,11 @@ UPSTREAM_DELAY_MS = 12000;
   t('and it took at least the upstream delay', r.ms >= 11500, 'ms=' + r.ms);
   t('the receipt still arrives', !!(parsed && parsed.usage));
   t('nothing escaped the mock', escaped.length === 0);
-  console.log('  -> a response at the void run\'s observed latency band (median 13.1s) IS');
-  console.log('     delivered here. The incident is STILL NOT REPRODUCED.');
+  // NO LATENCY-BAND CLAIM. The historical success logs were never attributed to the void run, so
+  // "the void run's latency band" was not mine to assert. 12s is simply a slow-but-plausible
+  // upstream, chosen to exercise the delay path.
+  console.log('  -> a 12s upstream response is processed and written out by the handler.');
+  console.log('     This says nothing about the void run, which is NOT reproduced here.');
 }
 
 server.close();
