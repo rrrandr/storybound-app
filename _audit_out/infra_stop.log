@@ -1,0 +1,331 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You play Julian opening an intimate dialogue. Output ONE
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call  2  [fixture] gpt-4o-mini                  no receipt  0ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call  3  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] "You audit prose for BANNED-phrase "  <-  You audit prose for BANNED-phrase reuse. The user sends 
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  [fixture] "craft auditor measuring ARCHETYPE "  <-  You are a craft auditor measuring ARCHETYPE MANIFESTATIO
+  call  5  [fixture] gpt-4o-mini                  no receipt  1ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 3, requested under the SAME generation identity (turnCount=0 beat=0) — encounter=opening OAS turn=1 card="silence"
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=2 card="temptation" — a stale record is not provenance for this submission
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=3 card="reversal" — a stale record is not provenance for this submission
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  3ms
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call  9  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=4 card="boundary" — a stale record is not provenance for this submission
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call 11  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=5 card="confession" — a stale record is not provenance for this submission
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call 13  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=6 card="silence" — a stale record is not provenance for this submission
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call 14  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call 15  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  --- SCRIPTED READER EXIT after 6 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":6,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  [fixture] "amplify\|ruin\|redirect"  <-  You are an uninhibited romance fiction author. You write
+  call 16  [fixture] ministral-8b-2512            no receipt  1ms
+  interruption: {"present":true,"submitted":false,"pending":true}
+    submit attempt: inputs filled (trusted click) -> submitted=true
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":"posture"}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"resume"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  [fixture] "CONTINUITY ARCHITECT"  <-  You are a CONTINUITY ARCHITECT for a serialized arcane b
+  call 17  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] scene planner: the reader DISPLACED the frame — lane = null
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 18  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 19  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 20  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 21  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 2 created by the opening branch: ACCEPTED · uid=cg:49002920-3d64-4 · 747 chars · cgScenes=1 · notes=1
+  turns 6 · resolved=true · archive=1 · interruptionSubmitted=true
+  exposure $0.164099
+
+── LEAVING SCENE 2 -> CREATING SCENE 3 (live) ──
+  scene 2 render state: {"cgScenes":1,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  [fixture] NO MATCHER — serving default for: You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus
+  call 22  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 23  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 24  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 2
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 25  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 2 plays card 3 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=1:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 26, requested under the SAME generation identity (turnCount=1) — encounter=scene 2 end turn=2 card="boundary"
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 26  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 27  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 28  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 3 ACCEPTED (card played in scene 2) · cg scenes 1 -> 2 · notes 2 · exposure $0.330757
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 3 -> CREATING SCENE 4 (live) ──
+  scene 3 render state: {"cgScenes":2,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 29  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 30  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 31  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 3
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 32  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 3 plays card 3 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=2:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 33, requested under the SAME generation identity (turnCount=2) — encounter=scene 3 end turn=3 card="confession"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 33  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 34  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 35  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 36  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 4 ACCEPTED (card played in scene 3) · cg scenes 2 -> 3 · notes 3 · exposure $0.493132
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 4 -> CREATING SCENE 5 (live) ──
+  scene 4 render state: {"cgScenes":3,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 37  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 38  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 39  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 4
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 40  [fixture] gpt-4o-mini                  no receipt  1ms
+  scene 4 plays card 4 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=3:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 41, requested under the SAME generation identity (turnCount=3) — encounter=scene 4 end turn=4 card="boundary"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 41  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 42  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 43  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 44  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 5 ACCEPTED (card played in scene 4) · cg scenes 3 -> 4 · notes 4 · exposure $0.653978
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 5 -> CREATING SCENE 6 (live) ──
+  scene 5 render state: {"cgScenes":4,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 45  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 46  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 47  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 5
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 48  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 5 plays card 2 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=4:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 49, requested under the SAME generation identity (turnCount=4) — encounter=scene 5 end turn=5 card="confession"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 49  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 50  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 51  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 52  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 6 ACCEPTED (card played in scene 5) · cg scenes 4 -> 5 · notes 5 · exposure $0.820008
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 6 -> CREATING SCENE 7 (live) ──
+  scene 6 render state: {"cgScenes":5,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 53  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 54  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 55  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 6
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 56  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 6 plays card 4 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=5:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 57, requested under the SAME generation identity (turnCount=5) — encounter=scene 6 end turn=6 card="confession"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 57  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 58  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 59  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 60  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 7 ACCEPTED (card played in scene 6) · cg scenes 5 -> 6 · notes 6 · exposure $0.979681
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 7 -> CREATING SCENE 8 (live) ──
+  scene 7 render state: {"cgScenes":6,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 61  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 62  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 63  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 7
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 64  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 7 plays card 2 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=6:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 65, requested under the SAME generation identity (turnCount=6) — encounter=scene 7 end turn=7 card="temptation"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 65  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 66  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 67  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 68  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 8 ACCEPTED (card played in scene 7) · cg scenes 6 -> 7 · notes 7 · exposure $1.139251
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 8 -> CREATING SCENE 9 (live) ──
+  scene 8 render state: {"cgScenes":7,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 69  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 70  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 71  [fixture] gpt-4o-mini                  no receipt  0ms
+  walked 6 beat(s) to the end of scene 8
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 72  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 8 plays card 0 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=7:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 73, requested under the SAME generation identity (turnCount=7) — encounter=scene 8 end turn=8 card="temptation"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 73  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 74  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 75  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 76  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 9 ACCEPTED (card played in scene 8) · cg scenes 7 -> 8 · notes 8 · exposure $1.298975
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 9 -> CREATING SCENE 10 (live) ──
+  scene 9 render state: {"cgScenes":8,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 77  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 78  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  call 79  [fixture] gpt-4o-mini                  no receipt  1ms
+  walked 6 beat(s) to the end of scene 9
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 80  [fixture] gpt-4o-mini                  no receipt  1ms
+  scene 9 plays card 0 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=8:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 81, requested under the SAME generation identity (turnCount=8) — encounter=scene 9 end turn=9 card="reversal"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 81  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 82  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 83  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 84  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 10 ACCEPTED (card played in scene 9) · cg scenes 8 -> 9 · notes 9 · exposure $1.458773
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+
+── ISSUE BOUNDARY ──
+  scene 10 accepted projection: true · 639 chars · uid=cg:b3e21d19-ba8c-4
+  cg scenes: 9 · history notes: 9
+  production issue state: scene 9 of 10 (turnCount 9) · decisionNeeded=false · nextGateOpen=true
+  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): GENERATED  (9 generated records, scene 10 projection accepted)
+  CLAIM B — production recognizes issue completion: NO  (_isLastSceneOfIssue()=false; position 9 of 10 — production requires exactly 10)
+  *** FAILED — the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE COMPLETION: _isLastSceneOfIssue()=false at position 9 of 10. This is the counter defect, NOT grounds to generate an eleventh scene. ***
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  (boundary check: scene 10 projection accepted, 639 chars, production position 9/10)
+  scene 2  accepted  <- opening branch "run"
+  scene 3  accepted  <- the ending card of scene 2  [preview: gn/matched-response]
+  scene 4  accepted  <- the ending card of scene 3  [preview: gn/matched-response]
+  scene 5  accepted  <- the ending card of scene 4  [preview: gn/matched-response]
+  scene 6  accepted  <- the ending card of scene 5  [preview: gn/matched-response]
+  scene 7  accepted  <- the ending card of scene 6  [preview: gn/matched-response]
+  scene 8  accepted  <- the ending card of scene 7  [preview: gn/matched-response]
+  scene 9  accepted  <- the ending card of scene 8  [preview: gn/matched-response]
+  scene 10  accepted  <- the ending card of scene 9  [preview: gn/matched-response]
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 84
+  MEASURED (receipts)    : $0.000700
+  no receipt             : 77 call(s), estimated $1.458073 — NOT counted as measured
+  retained (no receipt)  : $1.458073 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $1.458773
+  ceiling                : $5.00  [HALTED: the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE COMPLETION: _isLastSceneOfIssue()=false at position 9 of 10. This is the counter defect, NOT grounds to generate an eleventh scene.]
+  CACHED TOKENS          : 0 of 7000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.000700
+  unresolved to date $1.458073
+  TOTAL vs ceiling   $1.458773 of $5.00
+
+output: _fs_live_out/run_2026-10-06T06-33-25-839Z

@@ -28,6 +28,8 @@ let boundaryCheck = null;
 let scene2 = {};
 const sceneLedger = [];
 let laneContradiction = null;
+let modelBackedReplies = 0, fallbackSeen = 0;
+let infraFailure = null;
 let scriptedExit = null;
 let openingBranch = { requested: (process.env.SB_OPENING_BRANCH || 'run').toLowerCase(), control: null };
 // ── WHAT WAS THIS CALL FOR? Read from the prompt's own self-identification ───────────────────
@@ -222,6 +224,49 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
     evidence: 'no preview reply or cache entry for this card matches the submitted pair ('
       + served.length + ' repl' + (served.length === 1 ? 'y' : 'ies') + ' recorded) — ' + where };
 }
+// ── ONE INFRASTRUCTURE DETECTOR, SHARED BY BOTH RESPONSE PATHS ───────────────────────────────
+// (Codex 2026-10-06.) The first version of this check lived only inside the live-fetch branch, so
+// the fixture path walked straight past it and the demonstration dispatched 84 calls. A guard that
+// only one path reaches is not a guard.
+function noteInfraFailure(text, resp, rec, url) {
+  if (infraFailure) return true;
+  const looksInfra = /NO_RESPONSE_FROM_FUNCTION|FUNCTION_INVOCATION_(TIMEOUT|FAILED)|An error occurred with this application/i
+    .test(String(text || ''));
+  if (!looksInfra) return false;
+  let headers = {};
+  try { headers = resp ? resp.headers() : {}; } catch (_) { headers = {}; }
+  const ids = {};
+  Object.keys(headers).forEach(k => {
+    if (/x-vercel|x-request|x-amz|cf-ray|x-matched|server/i.test(k)) ids[k] = headers[k];
+  });
+  infraFailure = {
+    at: new Date().toISOString(), call: rec ? rec.n : null,
+    endpoint: String(url || '').replace(/^https?:\/\/[^/]+/, ''),
+    httpStatus: (function () { try { return resp ? resp.status() : null; } catch (_) { return null; } })(),
+    contentType: headers['content-type'] || null,
+    ms: rec ? rec.ms : null,
+    requested: rec ? rec.requested : null,
+    served: rec ? (rec.served || null) : null,
+    requestIds: ids,
+    bodyHead: String(text || '').replace(/\s+/g, ' ').slice(0, 160),
+    outstandingAtStop: outstanding.length,
+    inFlightUsd: inFlight
+  };
+  halted = true;
+  haltReason = 'INFRASTRUCTURE FAILURE — the local function did not return a usable response on '
+    + 'call ' + infraFailure.call + ' (' + infraFailure.endpoint + ', HTTP '
+    + infraFailure.httpStatus + ', ' + infraFailure.contentType + ', ' + infraFailure.ms + 'ms). '
+    + 'The upstream call MAY ALREADY BE BILLED. Halting every further provider dispatch, '
+    + 'fallbacks included.';
+  try { write('infra_failure.json', infraFailure); } catch (_) {}
+  say('');
+  say('*** STOPPING — ' + haltReason + ' ***');
+  say('    request identifiers: ' + JSON.stringify(infraFailure.requestIds));
+  say('    body: ' + infraFailure.bodyHead.slice(0, 90));
+  say('    ' + outstanding.length + ' reservation(s) still outstanding, $' + inFlight.toFixed(6)
+    + ' in flight — RETAINED, not released.');
+  return true;
+}
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
 const LIVE = !FIXTURES;
@@ -401,6 +446,16 @@ await page.route('**/api/**', async (route) => {
     reasoningEffort: body.reasoningEffort
   }, requested, url);
   const est = quote.estimate;
+
+  // ONCE AN INFRASTRUCTURE FAILURE IS SEEN, NOTHING ELSE IS DISPATCHED — not a retry, not a
+  // fallback tier, not another turn's call. Requests already in flight keep their reservations.
+  if (infraFailure) {
+    say('  call refused after the infrastructure failure: ' + requested
+      + ' (' + String(url || '').replace(/^https?:\/\/[^/]+/, '') + ')');
+    return route.fulfill({ status: 503, contentType: 'application/json',
+      body: JSON.stringify({ error: 'harness halted: infrastructure failure on call '
+        + infraFailure.call }) });
+  }
 
   // REFUSE A DISPATCH WHOSE COST CANNOT BE BOUNDED. (Codex 2026-10-05.) An unlisted model used to
   // fall to WORST_RATE — the Grok rate — so an expensive fallback was under-reserved and sent.
@@ -629,6 +684,12 @@ await page.route('**/api/**', async (route) => {
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
     recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
+    // THE FIXTURE PATH RUNS THE SAME DETECTOR. A fixture can carry the runtime's error page, and
+    // the harness must stop on it exactly as it would live — that is how this guard is tested.
+    if (noteInfraFailure(textF, null, recF, url)) {
+      return route.fulfill({ status: 503, contentType: 'application/json',
+        body: JSON.stringify({ error: 'harness halted: infrastructure failure' }) });
+    }
     return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
   }
   try {
@@ -675,6 +736,20 @@ await page.route('**/api/**', async (route) => {
     rec.ticks = u.cost_in_usd_ticks ?? null;
     rec.measured = (typeof rec.ticks === 'number') ? rec.ticks * 1e-10 : null;
   } catch (_) { rec.parseError = true; rec.measured = null; }
+
+  // ── AN INFRASTRUCTURE FAILURE STOPS THE RUN. (Codex 2026-10-06.) ────────────────────────────
+  // The previous version recorded the failed parse, retained the estimate, and PASSED THE ERROR
+  // BACK TO THE APP — which then ran its fallback chain and kept taking turns. Twenty-nine calls
+  // were dispatched against a response path that returned nothing usable, every one of them
+  // reserving budget. The budget guard worked; an infrastructure stop was missing.
+  //
+  // NO_RESPONSE_FROM_FUNCTION is the local runtime failing to return a response the function may
+  // already have completed — so the upstream call may ALREADY BE BILLED. On the first one: keep
+  // the body, keep the exposure, refuse every further provider dispatch INCLUDING fallbacks, and
+  // end the scenario. This is a HARNESS stop; it does not disable GPT/Mistral fallback in normal
+  // production operation.
+  noteInfraFailure(text, resp, rec, url);
+
   // SETTLE: a receipt replaces the reservation; no receipt retains it.
   inFlight -= est;
   if (rec.measured != null) settled += rec.measured; else retained += est;
@@ -1186,7 +1261,40 @@ try {
       // COMPLETED, RENDERED REPLIES ONLY: post.replies is the length of d.liTurnHistory, which
       // production appends when a reply actually renders — not a count of requests, and the
       // authored opener is not one of them. A turn whose reply never landed does not count.
-      const renderedReplies = (post && typeof post.replies === 'number') ? post.replies : 0;
+      // A RENDERED REPLY IS NOT A MODEL REPLY. (Codex 2026-10-06.) The void run counted five
+      // "completed exchanges" that were the app's own fallback: the console said
+      // "[INTIMACY-DIALOGUE] using soft-deflect fallback (LLM call failed)" and then "first live
+      // Julian reply rendered". Counting populated dialogue cannot establish authorship, and the
+      // placeholder guard only checks the SUBMITTED INPUT — never the reply that comes back.
+      //
+      // So an exchange counts toward the six only when a model reply was actually RECEIVED: the
+      // app logged no fallback for this turn AND a receipt-bearing provider response was parsed.
+      const fallbackNow = consoleLog.filter(l =>
+        /using .*fallback \(LLM call failed\)|soft-deflect fallback/i.test(l)).length;
+      const fellBack = fallbackNow > fallbackSeen;
+      fallbackSeen = fallbackNow;
+      if (fellBack) {
+        modelBackedReplies = modelBackedReplies;   // unchanged — this turn was not model-authored
+        say('      *** THIS TURN WAS NOT A MODEL EXCHANGE — the app used its own fallback'
+          + ' ("using ... fallback (LLM call failed)"). It does NOT count toward the six. ***');
+      } else {
+        modelBackedReplies++;
+      }
+      const renderedReplies = modelBackedReplies;
+      if ((post && post.replies) !== modelBackedReplies) {
+        say('      rendered replies ' + ((post && post.replies) || 0)
+          + ' vs MODEL-BACKED replies ' + modelBackedReplies
+          + (fellBack ? '  (the difference is application fallback)' : ''));
+      }
+      // REPEATED FALLBACK IS NOT AN EVALUATION. If the model is not answering, the run has
+      // nothing to measure and should not keep spending to find out.
+      if (fallbackSeen >= 2 && modelBackedReplies === 0) {
+        halted = true;
+        haltReason = 'the app fell back ' + fallbackSeen + ' time(s) with ZERO model-backed '
+          + 'replies — there is no live-model exchange to evaluate';
+        say('  *** STOPPING — ' + haltReason + ' ***');
+        break;
+      }
       if (!exited && renderedReplies >= EXIT_AFTER_EXCHANGES) {
         const still = await page.evaluate(() => {
           const d = window.state.intimacyDialogue;
@@ -1395,6 +1503,7 @@ try {
     }));
     write('after_oas.json', { turnsTaken, resolved, oasFinal, interruption: intr, decision,
       scriptedExit, exitAfterExchanges: EXIT_AFTER_EXCHANGES, laneContradiction,
+      modelBackedReplies, fallbackCount: fallbackSeen, infraFailure,
       exitKind: scriptedExit ? 'SCRIPTED READER EXIT — not model resolution, not story timing' : null,
       snap: await snapshot('after_oas') });
     say('  turns ' + turnsTaken + ' · resolved=' + resolved + ' · archive=' + oasFinal.archive

@@ -1,0 +1,75 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.25.0 (Node.js 25.3.0)
+Retrieving project…
+> Local resources:
+  Vercel Queues   http://127.0.0.1:4782
+  Runtime Cache   http://127.0.0.1:4783/v1/suspense-cache/
+> Ready! Available at http://localhost:3000
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=9350ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=14412ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=12180ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=8556ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=42959ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=13133ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=62350ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=12420ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=47151ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=10861ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1736,"total_tokens":2016,"completion_tokens":280,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muq75wy3_u83lgmjx released=5230 held=2016 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1448,"total_tokens":1697,"completion_tokens":249,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muq9jf68_qb5jgkem released=4876 held=1697 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1444,"total_tokens":1711,"completion_tokens":267,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muqadzcy_k8984l57 released=4842 held=1711 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1444,"total_tokens":1711,"completion_tokens":267,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muqae7y2_jjkyutgt released=4842 held=1711 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1647,"total_tokens":1974,"completion_tokens":327,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muqc7xzy_fg9iykp0 released=5565 held=1974 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1652,"total_tokens":2004,"completion_tokens":352,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muqcxybg_vop3k0e5 released=5557 held=2004 exact=true
