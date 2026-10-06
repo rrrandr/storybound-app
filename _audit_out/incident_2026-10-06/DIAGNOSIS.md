@@ -115,10 +115,28 @@ non-POST, `:280` missing messages) — so it is provider-free by construction:
 /api/chatgpt-proxy -> HTTP 405 handler body    /api/mistral-proxy -> HTTP 405 handler body
 ```
 
-**The runtime does deliver these endpoints' responses.** So this verification **does not reproduce
-the void run's failure**, which remains **unreproduced and unexplained**. Reproducing it appears to
-require a real upstream call in flight, which is not provider-free — so I am not claiming a cause.
-The earlier "located gap" is withdrawn along with the timeout claim.
+Those are **smoke tests only** — they return before any upstream work. **Withdrawn: "reproducing it
+requires a real upstream call."** It does not: the upstream can be mocked *inside the process
+running the actual proxy*.
+
+`_runtime_upstream_mocked_control.mjs` (11/11) does that — the real handler served over real HTTP,
+`global.fetch` replaced so `api.x.ai` returns a representative delayed provider response and
+**every other host throws** (external network denied, not merely unused):
+
+```
+HTTP 200 | application/json | upstream calls made: 1 | escaped to real network: 0
+the reply content survived the round trip · the USAGE RECEIPT survived it
+correlation: client saw x-probe-request-id=probe-kisw61hn | handler completed for probe-kisw61hn
+
+a 12s upstream  ->  HTTP 200 in 12003ms, receipt intact
+[SPECIALIST-PROXY] latency=12002ms model=grok-4.3 status=200  ✓ succeeded
+```
+
+So an upstream response **is** received, processed and delivered — including at **the void run's own
+latency band** (median 13.1s), with request, handler completion and client receipt correlated.
+
+**The incident is therefore still not reproduced and still unexplained.** My earlier "located gap"
+is withdrawn along with the timeout claim, and I am claiming no cause.
 
 ## Cost: what the numbers are and are not
 
@@ -143,9 +161,21 @@ line read as success. A turn is now model-backed only on positive evidence: an O
 **and** the app rendering a new reply from it. Keyed by identity, so an unrelated successful call
 cannot vouch for a turn. No dollar receipt is required.
 
+Identity is **captured at dispatch** and carried into the recorder — reading the mutable context at
+response time credited a late reply to the current turn. The field-name regex is **gone**:
+malformed content that merely mentions `li_dialogue` is not a parsed reply. And the recorded
+response must be shown to have **supplied the rendered turn**, matched on its typed fields — not
+merely that the history count grew.
+
 ```
-model reply RECEIVED for turn 1 (call 7, 1018 chars) and rendered — counts toward the six
+model reply RECEIVED AND RENDERED for turn 1 — call 7, matched on dialogue — counts toward the six
 ```
+
+`_oas_reply_evidence_control.mjs` (16/16) covers the three reproduced defects as named negatives: a
+late prior-turn response (does not count for the later turn, still counts for its own), malformed
+content containing the field names (truncated JSON, prose, non-string and empty typed fields, an
+unparseable envelope — none are evidence), and a rejected response followed by application fallback
+(the rendered fallback text does not match the received response, so it does not count).
 
 And the negative case, where the OAS returns HTTP 200 with no reply in it:
 
@@ -157,8 +187,10 @@ And the negative case, where the OAS returns HTTP 200 with no reply in it:
 
 ## Before any further story evaluation
 
-1. **The cause is still unknown.** The failure is unreproduced provider-free, and no timeout or
-   policy change is warranted on the evidence.
+1. **The cause is still unknown.** The full response path now passes provider-free with the
+   upstream mocked in-process, at the incident's own latency band — so no timeout or policy change
+   is warranted on the evidence, and the difference between that pass and the incident is not yet
+   identified.
 2. **Reconcile against real billing** when available — the xAI console is ground truth. Nothing in
    this report attributes a specific number of charges to this run.
 3. `api/diag-slow.js` and the two diagnostic controls are left in place for the open response-path

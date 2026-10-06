@@ -231,30 +231,53 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
 // only if the app also rendered a new reply. A dollar receipt is not required to prove authorship;
 // an unrelated successful provider call is not sufficient, which is why the record is keyed by
 // identity rather than counted globally.
-const oasRepliesReceived = new Map();   // "encounter|turn" -> [{ callN, chars, hasDialogue }]
-function noteOasReplyReceived(sysPrompt, replyText, callN) {
+const oasRepliesReceived = new Map();   // "encounter|turn" -> [{ callN, dialogue, action }]
+
+// Identity is CAPTURED AT DISPATCH and carried in — never re-read here. (Codex 2026-10-06
+// reproduced a late response being credited to the CURRENT turn because this read the mutable
+// previewContext at response time, exactly the defect already fixed for preview provenance.)
+function noteOasReplyReceived(sysPrompt, replyText, callN, identity) {
   try {
     if (callFunction(sysPrompt) !== 'OAS') return;
-    let content = replyText;
+    if (!identity || !identity.encounter || identity.turn == null) return;  // untraceable
+    let content = null;
     try {
       const j = JSON.parse(replyText);
-      content = j?.choices?.[0]?.message?.content ?? j?.content ?? replyText;
-    } catch (_) { return; }            // unparseable: NOT evidence of anything
-    const text = String(content || '');
-    let hasDialogue = false;
-    try {
-      const p2 = JSON.parse(text);
-      hasDialogue = !!(p2 && (String(p2.li_dialogue || '').trim() || String(p2.li_action || '').trim()));
-    } catch (_) { hasDialogue = /li_dialogue|li_action/.test(text); }
-    if (!hasDialogue) return;          // a 200 with no reply in it is not a reply
-    const key = previewContext.encounter + '|' + previewContext.turn;
+      content = j?.choices?.[0]?.message?.content ?? j?.content ?? null;
+    } catch (_) { return; }                       // the envelope did not parse: not evidence
+    if (typeof content !== 'string' || !content.trim()) return;
+    // NO FIELD-NAME REGEX. Malformed content that merely MENTIONS li_dialogue is not a parsed
+    // reply — that fallback accepted unparseable bodies as evidence.
+    let parsed = null;
+    try { parsed = JSON.parse(content); } catch (_) { return; }
+    if (!parsed || typeof parsed !== 'object') return;
+    const dialogue = (typeof parsed.li_dialogue === 'string') ? parsed.li_dialogue.trim() : '';
+    const action = (typeof parsed.li_action === 'string') ? parsed.li_action.trim() : '';
+    if (!dialogue && !action) return;             // typed fields required, and usable
+    const key = identity.encounter + '|' + identity.turn;
     if (!oasRepliesReceived.has(key)) oasRepliesReceived.set(key, []);
-    oasRepliesReceived.get(key).push({ callN, chars: text.length, hasDialogue: true });
+    oasRepliesReceived.get(key).push({ callN, dialogue, action });
   } catch (_) {}
 }
-function oasReplyReceivedFor(encounter, turn) {
-  const r = oasRepliesReceived.get(encounter + '|' + turn);
-  return Array.isArray(r) && r.length > 0 ? r : null;
+
+// POSITIVE EVIDENCE THAT *THIS* RESPONSE BECAME *THIS* RENDERED TURN. Not "a reply was received
+// somewhere" and not "the history count grew": the rendered turn's own text must match the
+// recorded response's typed fields, which is what shows production accepted it.
+function oasReplyRenderedFor(encounter, turn, renderedEntry) {
+  const recs = oasRepliesReceived.get(encounter + '|' + turn);
+  if (!Array.isArray(recs) || !recs.length) return null;
+  if (!renderedEntry) return null;
+  const norm2 = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().toLowerCase();
+  const rd = norm2(renderedEntry.dialogue || renderedEntry.li_dialogue || renderedEntry.text);
+  const ra = norm2(renderedEntry.action || renderedEntry.li_action);
+  if (!rd && !ra) return null;
+  for (const r of recs) {
+    const d = norm2(r.dialogue), a = norm2(r.action);
+    const dialogueMatches = d && rd && (rd === d || rd.indexOf(d) !== -1 || d.indexOf(rd) !== -1);
+    const actionMatches = a && ra && (ra === a || ra.indexOf(a) !== -1 || a.indexOf(ra) !== -1);
+    if (dialogueMatches || actionMatches) return { ...r, matchedOn: dialogueMatches ? 'dialogue' : 'action' };
+  }
+  return null;
 }
 // ── ONE INFRASTRUCTURE DETECTOR, SHARED BY BOTH RESPONSE PATHS ───────────────────────────────
 // (Codex 2026-10-06.) The first version of this check lived only inside the live-fetch branch, so
@@ -504,8 +527,12 @@ await page.route('**/api/**', async (route) => {
   // THE IDENTITY THIS REQUEST IS SENT UNDER, frozen here. The reply may arrive after the runner
   // has moved on; it must keep the identity it was ASKED under, not the one in force when it lands.
   const sys0ForIdentity = (body.messages || [])[0]?.content;
-  const reqPreviewIdentity = isPreviewPrompt(sys0ForIdentity)
-    ? await capturePreviewIdentity(page) : null;
+  // Identity is captured for PREVIEW and OAS calls alike: both are credited to an encounter and
+  // turn later, and both must carry the identity they were SENT under rather than whatever the
+  // runner has moved on to. Capturing only preview prompts left every OAS reply untraceable.
+  const _needsIdentity = isPreviewPrompt(sys0ForIdentity)
+    || callFunction(sys0ForIdentity) === 'OAS';
+  const reqPreviewIdentity = _needsIdentity ? await capturePreviewIdentity(page) : null;
 
   // RESERVE ATOMICALLY, BEFORE THE REQUEST LEAVES.
   if (halted || exposure() + est > CEILING) {
@@ -716,7 +743,7 @@ await page.route('**/api/**', async (route) => {
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
     recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
-    noteOasReplyReceived(sys0ForIdentity, textF, calls.length + 1);
+    noteOasReplyReceived(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
     // THE FIXTURE PATH RUNS THE SAME DETECTOR. A fixture can carry the runtime's error page, and
     // the harness must stop on it exactly as it would live — that is how this guard is tested.
     if (noteInfraFailure(textF, null, recF, url)) {
@@ -738,7 +765,7 @@ await page.route('**/api/**', async (route) => {
     ]);
     text = await resp.text();
     recordPreviewReply(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
-    noteOasReplyReceived(sys0ForIdentity, text, calls.length + 1);
+    noteOasReplyReceived(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
 
@@ -896,6 +923,10 @@ try {
         beats: d.beatCount || 0,
         replies: h.length,
         lastHasDialogue: !!(last && last.liDialogue),
+        // THE RENDERED TURN'S OWN TEXT, so the recorded response can be shown to have SUPPLIED it
+        // rather than merely to have arrived. "the history count grew" is not that evidence.
+        lastRendered: last ? { dialogue: last.liDialogue || last.dialogue || '',
+          action: last.liAction || last.action || '' } : null,
         acceptingInput: !!d.active && !d._resolving };
     });
     // ── THE READER PLAYS A FATE CARD, NOT A LINE I MADE UP ──────────────────────────────────
@@ -1300,21 +1331,24 @@ try {
       // match, so a missed log line read as success. A turn is model-backed only on POSITIVE
       // evidence: an OAS-stage response RECEIVED AND PARSED for THIS encounter and turn, carrying
       // a usable reply, AND the app rendering a new reply off the back of it.
-      const evidence = oasReplyReceivedFor('opening OAS', i + 1);
+      // THE RECORDED RESPONSE MUST BE THE ONE PRODUCTION RENDERED for this turn.
       const renderedGrew = !!(post && typeof post.replies === 'number'
         && post.replies > (pre.replies || 0));
+      const evidence = renderedGrew
+        ? oasReplyRenderedFor('opening OAS', i + 1, post && post.lastRendered) : null;
       const fallbackNow = consoleLog.filter(l =>
         /using .*fallback \(LLM call failed\)|soft-deflect fallback/i.test(l)).length;
       const fellBack = fallbackNow > fallbackSeen;
       fallbackSeen = fallbackNow;
       if (evidence && renderedGrew && !fellBack) {
         modelBackedReplies++;
-        say('      model reply RECEIVED for turn ' + (i + 1) + ' (call ' + evidence[0].callN
-          + ', ' + evidence[0].chars + ' chars) and rendered — counts toward the six');
+        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — call '
+          + evidence.callN + ', matched on ' + evidence.matchedOn
+          + ' — counts toward the six');
       } else {
         say('      *** NOT A MODEL EXCHANGE — ' + (
-          !evidence ? 'no OAS reply was received and parsed for this turn'
-          : !renderedGrew ? 'a reply was received but the app rendered none'
+          !renderedGrew ? 'the app rendered no new reply for this turn'
+          : !evidence ? 'no parsed OAS response for THIS turn supplied the rendered reply'
           : 'the app logged its own fallback for this turn')
           + '. It does NOT count toward the six. ***');
       }
