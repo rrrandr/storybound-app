@@ -481,10 +481,13 @@ await page.route('**/api/**', async (route) => {
       // what she did, and the Dohkar's review does survive her ending the questioning.
       const displacedLane = (sysP.match(/NOT forced to "([a-z_]+)"/) || [])[1];
       if (/SCENE-SPINE planner/.test(sysP) && displaced && !forced && displacedLane) {
-        laneContradiction = { prompt: 'permits null when the frame is displaced',
-          gate: 'app.js:9311 rejects null unconditionally', resolvedAs: displacedLane };
+        laneContradiction = { wasContradiction: 'the prompt permitted null while the gate rejected '
+          + 'it unless a Tempt rupture was active',
+          fixed: 'the gate now receives the same seed-declared displacement decision the prompt '
+            + 'uses (_recordedChoiceDisplacesFrame)',
+          nowAnswering: 'null, honestly — the frame was displaced by the recorded choice' };
       }
-      if (false && /SCENE-SPINE planner/.test(sysP) && displaced && !forced) {
+      if (/SCENE-SPINE planner/.test(sysP) && displaced && !forced) {
         const wrapper = JSON.parse(f.body);
         const base = JSON.parse(wrapper.choices[0].message.content);
         base.chosen_aftermath_lane = null;
@@ -505,7 +508,7 @@ await page.route('**/api/**', async (route) => {
         wrapper.choices[0].message.content = JSON.stringify(base);
         f = Object.assign({}, f, { body: JSON.stringify(wrapper) });
         console.log('  [fixture] scene planner: the reader DISPLACED the frame — lane = null');
-      } else if ((want || (displaced && displacedLane)) && /SCENE-SPINE planner/.test(sysP)) {
+      } else if (want && /SCENE-SPINE planner/.test(sysP)) {
         const LANE_EVENT = {
           dohkar_preliminary_review: {
             tactical: 'The presiding Dohkar calls for a preliminary review of Lirael\'s conduct in the rite, before the assembly.',
@@ -547,10 +550,10 @@ await page.route('**/api/**', async (route) => {
             exit: 'Lirael has chosen the procedural path and her terms are on the record.',
             actor: 'Lirael'
           }
-        }[want || displacedLane];
+        }[want];
         if (LANE_EVENT) {
           const base = JSON.parse(JSON.parse(f.body).choices[0].message.content);
-          base.chosen_aftermath_lane = (want || displacedLane);
+          base.chosen_aftermath_lane = want;
           base.tactical_move = LANE_EVENT.tactical;
           base.state_change = LANE_EVENT.change;
           base.forces_choice = LANE_EVENT.forces;
@@ -561,10 +564,8 @@ await page.route('**/api/**', async (route) => {
           const wrapper = JSON.parse(f.body);
           wrapper.choices[0].message.content = JSON.stringify(base);
           f = Object.assign({}, f, { body: JSON.stringify(wrapper) });
-          console.log('  [fixture] scene planner: lane = "' + (want || displacedLane) + '"'
-            + (want ? ' (forced by the reader\'s card)' : ' (frame displaced; null is refused by'
-              + ' the gate, so the surviving lane is declared)')
-            + ' — serving an event that instantiates it');
+          console.log('  [fixture] scene planner: lane = "' + want
+            + '" (forced by the reader\'s card) — serving an event that instantiates it');
         }
       }
     } catch (_) {}

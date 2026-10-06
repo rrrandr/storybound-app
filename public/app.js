@@ -9306,6 +9306,15 @@ window.config = window.config || {
           // lane checks below apply — enforcing them would reject a planner that correctly let the
           // rupture break the schedule, leaving "narrow the wish" as the only passing strategy.
           try { console.log('[CG:PLANNER-GATE] lane requirement waived — active Tempt rupture outranks the scheduled frame' + (opts.requiredLaneId ? ' ("' + opts.requiredLaneId + '")' : '')); } catch (_) {}
+        } else if (!chosenLaneId && opts.choiceDisplaced) {
+          // NULL IS A LEGITIMATE ANSWER HERE, and is not rejected merely for being null. The
+          // prompt permits it when a declared displacing choice deferred or replaced the frame, and
+          // this is the SAME decision recomputed from the seed — not the planner's claim.
+          // NOTHING ELSE IS WAIVED: the concrete-consequence requirement, the canon protections and
+          // every other check still run, and when a lane IS declared it is still content-checked
+          // against that lane's own signal vocabulary.
+          try { console.log('[CG:PLANNER-GATE] null aftermath lane ACCEPTED — the recorded choice "'
+            + (opts.displacementChoice || '?') + '" displaced the scheduled frame'); } catch (_) {}
         } else if (opts.requiredLaneId && chosenLaneId && laneMatch && chosenLaneId !== opts.requiredLaneId) {
           reasons.push('the planner declared chosen_aftermath_lane="' + chosenLaneId + '" but the reader\'s own card selection deterministically resolved this scene to lane "' + opts.requiredLaneId + '" — the event frame is not a free choice for this scene; a different (even otherwise-valid) lane is not acceptable');
         } else if (!chosenLaneId || !laneMatch) {
@@ -239181,7 +239190,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // obeying its own instructions, and the only way to pass would be the narrowing this whole
         // fix exists to stop. Recomputed from the owned invocation, never from the model's reply.
         var _pfRuptureActive = !!(typeof _temptFateOwnedInvocation === 'function' && _temptFateOwnedInvocation());
-        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null, requiredLaneId: _pfRequiredLane ? _pfRequiredLane.laneId : null, ruptureActive: _pfRuptureActive });
+        // PLAYER-CHOICE DISPLACEMENT, ON THE SAME FOOTING AS A RUPTURE (Roman/Codex 2026-10-06).
+        // The planner prompt already tells the planner a displacing recorded choice frees the lane
+        // — "set it to null if her action deferred or replaced it" (~app.js:195982) — but that
+        // decision was never passed to this gate, which rejected null unless a Tempt rupture was
+        // active. A planner obeying its own instructions was therefore rejected.
+        //
+        // RECOMPUTED FROM THE SAME AUTHORITATIVE SOURCE THE PROMPT USES —
+        // _recordedChoiceDisplacesFrame, which reads the RECORDED run/remain decision against the
+        // SEED'S OWN axes.displacingChoices. Never the planner's self-report, and ending the OAS is
+        // NOT displacement: only the recorded choice decides. "remain" is not a declared displacing
+        // choice for First Sacrifice, so it gets no exemption.
+        var _pfDisplacement = null;
+        try {
+          _pfDisplacement = (typeof _recordedChoiceDisplacesFrame === 'function')
+            ? _recordedChoiceDisplacesFrame(state, _pfRequiredLane) : null;
+        } catch (_) { _pfDisplacement = null; }
+        var _pfChoiceDisplaced = !!(_pfDisplacement && _pfDisplacement.displaces === true);
+        if (_pfChoiceDisplaced) {
+          try { console.log('[CG:PLANNER-GATE] player-choice displacement in force — recorded "'
+            + (_pfDisplacement.choice || '?') + '" is declared situation-changing by the seed, so a '
+            + 'null aftermath lane is permitted (every other check stands)'); } catch (_) {}
+        }
+        var _pfGate = _detectPlannerFunctionGap(state._scenePlotContract.stateChange, { requiresAftermath: true, posture: _pfPosture, aftermathLanes: (_oeRow && Array.isArray(_oeRow.aftermathLanes)) ? _oeRow.aftermathLanes : null, requiredLaneId: _pfRequiredLane ? _pfRequiredLane.laneId : null, ruptureActive: _pfRuptureActive, choiceDisplaced: _pfChoiceDisplaced, displacementChoice: _pfDisplacement ? _pfDisplacement.choice : null });
         if (_pfGate.rejected) {
           try { console.warn('[CG:PLANNER-GATE] REJECTED before author dispatch, scene=' + sceneIndex + ' — ' + _pfGate.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, reason: _pfGate.reason, sceneIndex: sceneIndex };
