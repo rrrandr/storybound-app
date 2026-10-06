@@ -1,0 +1,215 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  call  2  [fixture] gpt-4o-mini                  no receipt  1ms
+  call  3  [fixture] ministral-8b-2512            no receipt  0ms
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call  5  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call  9  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 11  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 13  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 14  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 15  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  call 16  [fixture] ministral-8b-2512            no receipt  0ms
+  turn 7 plays OAS slot "boundary" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and keep my hand on it"
+  turn 7: replies 6 -> ended (beats 6 -> -)
+  OAS is no longer accepting input
+  interruption: {"present":true,"submitted":true,"pending":false}
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":"posture"}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"resume"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  call 17  [fixture] ministral-8b-2512            no receipt  2ms
+  call 18  [fixture] grok-4-1-fast-non-reasoning  no receipt  2ms
+  call 19  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 20  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 2 created by the opening branch: ACCEPTED · uid=cg:5d028378-597e-4 · 747 chars · cgScenes=1 · notes=1
+  turns 7 · resolved=true · archive=1 · interruptionSubmitted=true
+  exposure $0.229807
+
+── LEAVING SCENE 2 -> CREATING SCENE 3 (live) ──
+  call 21  [fixture] ministral-8b-2512            $0.000100  3ms
+  scene 2 render state: {"cgScenes":1,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  walked 6 beat(s) to the end of scene 2
+  call 22  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 2 plays card 3 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=1:1) via gn
+  call 23  [fixture] ministral-8b-2512            no receipt  0ms
+  call 24  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call 25  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 26  [fixture] ministral-8b-2512            no receipt  3ms
+  SCENE 3 ACCEPTED (card played in scene 2) · cg scenes 1 -> 2 · notes 2 · exposure $0.416384
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 3 -> CREATING SCENE 4 (live) ──
+  scene 3 render state: {"cgScenes":2,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 27  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 3
+  call 28  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 3 plays card 4 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=2:1) via gn
+  call 29  [fixture] ministral-8b-2512            no receipt  1ms
+  call 30  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 31  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 32  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 4 ACCEPTED (card played in scene 3) · cg scenes 2 -> 3 · notes 3 · exposure $0.598023
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 4 -> CREATING SCENE 5 (live) ──
+  scene 4 render state: {"cgScenes":3,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 33  [fixture] ministral-8b-2512            $0.000100  0ms
+  walked 6 beat(s) to the end of scene 4
+  call 34  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 4 plays card 2 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=3:1) via gn
+  call 35  [fixture] ministral-8b-2512            no receipt  0ms
+  call 36  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 37  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 38  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 5 ACCEPTED (card played in scene 4) · cg scenes 3 -> 4 · notes 4 · exposure $0.778380
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 5 -> CREATING SCENE 6 (live) ──
+  scene 5 render state: {"cgScenes":4,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 39  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 5
+  call 40  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 5 plays card 4 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=4:1) via gn
+  call 41  [fixture] ministral-8b-2512            no receipt  0ms
+  call 42  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call 43  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  call 44  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 6 ACCEPTED (card played in scene 5) · cg scenes 4 -> 5 · notes 5 · exposure $0.963920
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 6 -> CREATING SCENE 7 (live) ──
+  scene 6 render state: {"cgScenes":5,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 45  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 6
+  call 46  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 6 plays card 2 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=5:1) via gn
+  call 47  [fixture] ministral-8b-2512            no receipt  0ms
+  call 48  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call 49  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 50  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 7 ACCEPTED (card played in scene 6) · cg scenes 5 -> 6 · notes 6 · exposure $1.143057
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 7 -> CREATING SCENE 8 (live) ──
+  scene 7 render state: {"cgScenes":6,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 51  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 7
+  call 52  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 7 plays card 0 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=6:1) via gn
+  call 53  [fixture] ministral-8b-2512            no receipt  0ms
+  call 54  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 55  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 56  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 8 ACCEPTED (card played in scene 7) · cg scenes 6 -> 7 · notes 7 · exposure $1.322005
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 8 -> CREATING SCENE 9 (live) ──
+  scene 8 render state: {"cgScenes":7,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 57  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 8
+  call 58  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 8 plays card 0 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=7:1) via gn
+  call 59  [fixture] ministral-8b-2512            no receipt  0ms
+  call 60  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call 61  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 62  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 9 ACCEPTED (card played in scene 8) · cg scenes 7 -> 8 · notes 8 · exposure $1.501056
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+── LEAVING SCENE 9 -> CREATING SCENE 10 (live) ──
+  scene 9 render state: {"cgScenes":8,"interruptionLive":false,"mounted":true,"hasProjection":true}
+  call 63  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 6 beat(s) to the end of scene 9
+  call 64  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 9 plays card 4 "?" from gnCardMount [model preview] (playable=5 locked=0 committed=false sel=-1 key=8:1) via gn
+  call 65  [fixture] ministral-8b-2512            no receipt  0ms
+  call 66  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 67  [fixture] grok-4-1-fast-reasoning      no receipt  0ms
+  call 68  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 10 ACCEPTED (card played in scene 9) · cg scenes 8 -> 9 · notes 9 · exposure $1.680127
+  paged to gate: {"gateShown":true,"beat":5,"beats":6,"clicks":0}
+
+
+── ISSUE BOUNDARY ──
+  scene 10 accepted projection: true · 639 chars · uid=cg:7ad70b7b-6faa-4
+  cg scenes: 9 · history notes: 9
+  production issue state: scene 9 of 10 (turnCount 9) · decisionNeeded=false · nextGateOpen=true
+  ISSUE COMPLETE — scenes 2-10 generated and scene 10 verified. No scene 11 expected.
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  (boundary check: scene 10 projection accepted, 639 chars, production position 9/10)
+  scene 2  accepted  <- opening branch "run"
+  scene 3  accepted  <- the ending card of scene 2  [preview: gn/model preview]
+  scene 4  accepted  <- the ending card of scene 3  [preview: gn/model preview]
+  scene 5  accepted  <- the ending card of scene 4  [preview: gn/model preview]
+  scene 6  accepted  <- the ending card of scene 5  [preview: gn/model preview]
+  scene 7  accepted  <- the ending card of scene 6  [preview: gn/model preview]
+  scene 8  accepted  <- the ending card of scene 7  [preview: gn/model preview]
+  scene 9  accepted  <- the ending card of scene 8  [preview: gn/model preview]
+  scene 10  accepted  <- the ending card of scene 9  [preview: gn/model preview]
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 68
+  MEASURED (receipts)    : $0.001500
+  no receipt             : 53 call(s), estimated $1.678627 — NOT counted as measured
+  retained (no receipt)  : $1.678627 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $1.680127
+  ceiling                : $5.00
+  CACHED TOKENS          : 0 of 15000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.001500
+  unresolved to date $1.678627
+  TOTAL vs ceiling   $1.680127 of $5.00
+
+output: _fs_live_out/run_2026-10-05T22-11-34-714Z

@@ -1,0 +1,1245 @@
+Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The policy is report-only, so the violation has been logged but no further action has been taken.
+[ORCHESTRATION] Storybound AI Orchestration Client initialized
+[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+[GN DEV] Dev tools IIFE executing...
+%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is required to enable inline execution. The policy is report-only, so the violation has been logged but no further action has been taken.
+[FATE] DOMContentLoaded — initializing
+[BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+[CONTENT REGISTER] FULL_WEB (full) — platform: web
+%c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+[Phase1LI] UI wired (collapse cover + name-input reactivity)
+%c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dumpNILState()             → print + copy current NIL/ERA/OAS state
+  clearConsoleBuffer()       → wipe the ring buffer color: #c9a24e; background: #1a1612; padding: 6px; font-family: monospace;
+%c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+[GEMMA_TURN] Turn-based collaborative system initialized.
+[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+[NMD] Seeded Volume 1 with Entry 1.
+%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+%c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+%c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+%c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+%c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+[CG:HELPERS] ready=true
+[STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+[ModeCards] Initialized 4 mode cards
+[Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+[Corridor] Stored 2 elements for stage: authorship
+[Corridor] Stored 3 elements for stage: identity
+[Corridor] Stored 3 elements for stage: playermask
+[Corridor] Stored 3 elements for stage: storybeau
+[Corridor] Stored 1 elements for stage: world
+[Corridor] Stored 1 elements for stage: tone
+[Corridor] Stored 1 elements for stage: pressure
+[Corridor] Stored 3 elements for stage: pov
+[Corridor] Stored 2 elements for stage: length
+[Corridor] Stored 2 elements for stage: dynamic
+[Corridor] Stored 1 elements for stage: beginstory
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+[Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+[Authorship] Choice reset
+[Corridor] Authorship mount: Reset authorship choice for re-selection
+[Corridor] DOM updated. Mounted row 0: authorship
+[Ghost Steps] Initialized 8 ghost step placeholders
+[DSP] Hidden — stage authorship
+[Corridor Nav] Navigation affordances initialized
+[Corridor] Initialization complete. Active row: 0
+[Corridor] Row store initialized with 11 stages
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[GOOD_REASONS] Mechanic + library variant system initialized.
+[REINCARNATION] System initialized
+[FATE_EVENT] System initialized. Active: false
+[PROMO] Seasonal promotions initialized. Active: none
+[DevHUD] Dev HUD ready — press ` to toggle
+[BOOT] Complete — flushed 0 deferred task(s)
+[PACT:FLIP] routeToLegalAcceptance called — isReaccept: false
+[PACT:FLIP] showScreen(legalGate) — cards found: 3 | already flipped: false
+[SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=0, left=0, viewport=720
+[BETA] geo_gate_decision {"country":null,"signal":"ip","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[STARTER] Launching "The First Sacrifice"
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[PHRASE-LEDGER] story #1 — 9 entries kept (strong=9, mild=0). Cooldown decay: rarity × 3 stories, clamped [5, 30].
+[GHOST] Preferences loaded + decayed: {"desireBias":{"control":0.25,"taboo":0.25,"tenderness":0.25,"surrender":0.25},"woundBias":{"avoidant":0.25,"selfDestructive":0.25,"control":0.25,"burdened":0.25},"engagementStyleBias":{"pursue":0.32999999999999996,"hold":0.32999999999999996,"withdraw":0.33999999999999997},"recentTaste":{"lastPrimaryDesire":null,"lastPrimaryWound":null,"lastArchetype":null,"cooldown":0},"lastUpdatedAt":null}
+[READER] resetBookState: page reset to 0 (COVER)
+[STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian
+[STARTER] Locked pre-written title: The First Sacrifice
+[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial
+[LORE-LEDGER] scene 1 · candidates=4 glossed=4 ledger=4
+[SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: taste, cardsFound: 0}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: taste, cardsFound: 0}
+[READER-MODE] OFF — present-tense play resumes
+[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)
+[NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
+[DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+[SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:32b62c44-1ec8-4865-8001-3f3d91e4dcfc planned="Seren’s wish for Lirael — “that she find the one she lost” —"
+[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+[BAKED:IDENTITY] ledger entities for the seed cast: +3
+[READER] showReaderPage: 2
+[SCENE-AMB:STATE] page=0 primary=neutral_quiet layer2=none layer3=none world=Fantasy isUrban=false primaryIsWeather=true primaryIsOffice=false primaryIsIndoorUrbanVenue=false
+[READER] Page 2+: SCENE (Title + Prose)
+[TITLE-PAGE] Shown
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=n/a · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+[BAKED-IMG] mounted 0 occurrence(s): 
+[PACT:FLIP] flip-tick @400ms — cards live: 3
+[PACT:FLIP] flipped card 0 pact=tos | classList now: pact-card pact-card-tos flipped
+[PACT:FLIP] flipped card 1 pact=privacy | classList now: pact-card pact-card-privacy flipped
+[PACT:FLIP] flipped card 2 pact=adult | classList now: pact-card pact-card-adult flipped
+[BAKED:SETUP] running deferred story initialization…
+[BeginStory] handleBeginStory() called
+[DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+[BeginStory] DEBUG state.picks: {"world":"Fantasy","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Arcane Binding","dynamic":"Enemies","era":null,"pov":"First","worldSubtype":"arcane_binding","length":"taste","pcSpecies":"First Favored","liSpecies":"First Favored","authorship":"fate","playermask":"OPEN_VEIN"}
+[BeginStory] DEBUG state.archetype: {"primary":"SPELLBINDER","modifier":null}
+[BeginStory] DEBUG state.mode: solo state.storyLength: taste
+[BeginStory] Past _beginStoryInProgress guard, entering main flow
+[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"75147ad9-324d-42e5-8eda-1ca14d4ac3ed","isNewStory":true,"isContinuation":false,"entryMode":null,"isSubscribed":true,"isTease":false,"hasFreeCredits":false,"hasPassForStory":false}}
+[FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"the_veilwood","fantasy_magic_cost_model":"emotional_severance","fantasy_power_legitimacy":"arcane_meritocracy","fantasy_political_pressure":"internal_court_intrigue","fantasy_favor_amplitude":"stable"}
+[FANTASY_CORE] Fatelands region bound: the_veilwood {seat: null, governance: First Favored cultural heartland, status: Recognizes High Court ritual legitimacy, reality: Politically independent in practice, magicBias: primal}
+[CONSPIRACY] tracks selected — local="haunted_mill" regional="shackle_isles" (background) world="fates_favor" region=the_veilwood
+[CONSPIRACY-AUDIT] REGIONAL selected (this feeds the A-plot skeleton)
+  REGIONAL: The Chains That Hold  [stage 1/3, layer=public]
+    False objective : Why do the deep chains lead to nothing?
+    Invalidates     : that the chains are simply Aravel's monument to victory
+    Reveal          : They lead to something no one will speak of.
+    Rel. consequence: they share a secret the whole Isles are built to keep — isolating them together
+    Transforms into : What are they holding?
+    Suppressor/face : The chain-wardens drown the curious and call it accident; the old rout | an ancient chain-walker who has guarded the deep chains long
+[SPECIES] PC = declared_seed: First Favored
+[SPECIES:PREGEN] LI species resolved pre-Scene-1: First Favored · source=declared_seed
+[FORTUNE STATE] before_fortune_gate {drip: 0, storypass: 0, subscription: 0, purchased: 0, global: 9999}
+[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}
+[EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=arcane_binding)
+[Modifier] No secondary assigned (75% path)
+[FF-CANON-AUTH] false reason=nonff
+[BeginStory] All validation passed — proceeding to story generation
+[BeginStory] Story mode: participatory
+[VISUAL_CANON] Story visual style seeded: {paletteFamily: autumnal amber and forest depth, lightingLanguage: god-ray shafts through atmospheric fog, textureStyle: ethereal — soft focus, light bloom, dreamy atmospheric diffusion, compositionBias: environmental storytelling — wide establishing shots, character small in landscape}
+[READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[COVER:BEGIN] Showing CSS 3D white book placeholder
+[BeginStory] Phase 2 complete — starting loader and API calls
+[Sparkle] Stopped emitter: guidedFateSparkles
+[FATE-VISUALS] guided-fate full-screen sparkles torn down at story begin
+[DEV:StoryGen] world: Fantasy | tone: Earnest | genre: Billionaire → powerRole: Arcane Sovereign | powerFrame: Ruler | intensity: Steamy
+[DEV:WorldResolve] world: Fantasy | genre: Billionaire → powerFrame: Ruler | prehistoricForbid: false
+[COLD-GATE] hot-first-draft override: _hot=true · temp=HOT_CRISIS · turn=0 → INJECTED (system, top of prose-stack)
+[ROMANCE-ENGINE] "Enemies" + "arcane_binding" → COLLISION · acquaintance=KNOWN_ADVERSARY · scene1Presence=PROXY · validSet=[COLLISION,LOOMING_PRESENCE,SHARED_HISTORY] · set default
+[LI-ARRIVAL] DEFERRED (engine=?, deferIntent=true, recent=DEFERRED)
+[PAIR-DYNAMIC] resolved — OPEN_VEIN × SPELLBINDER · engine=COLLISION · acq=KNOWN_ADVERSARY · scene1Presence=PROXY · encounter=MET · (OPEN_VEIN) INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling ...
+[CANONICAL-CHARACTERS] (commit@pre-bible)  LI: name="Julian" · mask=SPELLBINDER · source=seed · committed=✓
+[BIBLE-ARTIFACT] pc first attempt for this story
+[BIBLE-ARTIFACT] pc -> committed (attempt 1)
+[TIER0] pc body bible derived locally from seed — zero live calls (2 facet(s) merged into portfolio)
+[BIBLE-ARTIFACT] li first attempt for this story
+[BIBLE-ARTIFACT] li -> committed (attempt 1)
+[TIER0] li body bible derived locally from seed (partial — 2 field(s) cited) — zero live calls
+[LIT:SPINE] awaiting 2 character Bible(s) before R-plot (PC+LI — wounds are Bible-native in the inverted chain)
+[LIT:SPINE] character Bibles ready (0ms) — pc=y li=y (antag deferred until after A-plot)
+[TIER0] PAIR_BOND suppressed pre-page — no paid call before the reader sees Scene 1
+[TIER0] R_PLOT suppressed pre-page — no multi-Issue relationship rail before the reader's first choice; Scene 2 plans from posture/seed/stage/continuity state instead
+[A-PLOT:SEEDED] derived from STARTER_PLANS.starter_first_sacrifice (20 scenes; force="the presiding Dohkar") — generator NOT called
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+[LIT:SPINE] antagonist Bible (0ms) — antag=n (not eligible / shape C / unnamed)
+[TIER0] WOUND_LI_INTEGRATION_AUDIT suppressed pre-page — sampling/telemetry, not story delivery
+[TIER0] CG_SCAFFOLD deferred — baked opening, no paid call until the reader submits their Scene 1 choice
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
+[STORY:SHAPE] Snapshot stored: {world: Fantasy, genre: Billionaire, tone: Earnest, dynamic: Enemies, pov: First}
+[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20261005i-oas-redeal:272933:515 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+[EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20261005i-oas-redeal:272933:629 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+[SCENE1:PATTERN-GATE] region-particular opener → veilwood
+[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_veilwood; summons/social/reckoning shapes suppressed)
+[SCENE1:FP] saved opening fingerprint: region_veilwood — recent: [region_veilwood]
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[CRISIS] category=LOSS (dedicated persistent cursor — no repeat until all 6 cycle)
+[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
+[ONBOARD_WINDOW] story count → 1 (ordinal 1; window covers stories 1-3)
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[PREF-RESOLVE] axis=demand_hint mode=full_probe value=- confidence=0.00 reason=onboarding_keep_axis_visible
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[S1_ONBOARDING] ON — story-start count=0 (rule: 0 or 2; 0=Story 1, 1=Story 2, 2=Story 3, 3+=past onboarding) · host-independent
+STORYBOUND FINAL PROMPT PAYLOAD
+{mode: solo, tier: subscribed, fourAxis: Object, archetype: Object, ancestry: Object}
+console.groupEnd
+STORYBOUND VALIDATION PASSED - Proceeding to model call
+[TITLE:PRE] Title already exists, skipping: The First Sacrifice
+[SCENE1:PROMPT-SIZES] total=268450c(~67113t) | sysPrompt(prose stack)=154653c · introPrompt=76601c · scaffold=0c · appendix=37196c · picturability=0c  → window._promptMassAudit() for the sysPrompt section breakdown
+[ADAPTIVE LENGTH] {sceneIndex: 0, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
+[SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)
+[FATE] dealFateCards no-op — already dealt for scene 0:1 (use opts.force=true to redeal)
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[SCENE-PROJECTION] created lit:fd00d4a4-7702-4098-8297-64ad32f885bc kind=body revision=0 hash=he6d5726a-7605 chars=7605 sidecarEntries=1
+[BETA] scene_generation_completed {"sceneIndex":1,"storyId":"75147ad9-324d-42e5-8eda-1ca14d4ac3ed","fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[BETA] scene_quality_scan_fail {"sceneIndex":1,"wordCount":1455,"choiceCount":0,"repeatedBodyTells":[],"inventedProperNouns":[],"groundingCoverage":null,"deadAxisProseDetected":false,"missingChoiceFork":true,"emptyScene":false,"sca
+[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)
+[BAKED:GATE] Genesis unlocked (fs-live) — starter=starter_first_sacrifice
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[PREVIEW] continuation finalized → tier "fling", Issue One marked paid. (save deferred — the scene is not committed yet)
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[SCENE-AMB] → neutral_quiet
+[BAKED:OAS] handoff tapped — entering the one-on-one
+[INTIMACY-INIT:PLAN-SHAPE] {"hasBeats":true,"beatCount":0,"hasVisualState":false,"hasInterruption":true,"is_consummate_scene":true,"engine":"literary","renderMode":"staged_story_mode","storyturn":"ST1"}
+[INTIMACY-INIT:AUTHORED-FRAME] frame=1153ch cue=118ch oasOpening=no postInterruptionBeat=no
+[INTIMACY-DIALOGUE:WOUND] not eligible (encounter #1, cooldown_clear=true)
+[INTIMACY-DIALOGUE:TELEMETRY] started {type: started, timestamp: 1791231754428, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[OAS-AUDIO] started @ curious — breath silent until mouth opens
+[INTIMACY-DIALOGUE] Mouth DB miss — checking cross-user Supabase bank + starting background prebatch. UI proceeds with placeholders.
+[INTIMACY-DIALOGUE:TELEMETRY] mouth_db_miss_nonblocking {type: mouth_db_miss_nonblocking, timestamp: 1791231754429, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[MOUTH-PREBATCH] Skipped — baked CG/OAS opening (generic static viseme placeholders only; zero /api/image spend for bespoke mouth frames)
+[MOUTH-PREBATCH] Skipped — baked CG/OAS opening (generic static viseme placeholders only; zero /api/image spend for bespoke mouth frames)
+[SCENE-AMB] stopped
+[INTIMACY-MOUNT] staged Book → gnReader (single reader screen)
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] remounted the existing hand into #gnCardMount — no reshuffle
+[FATE] dealFateCards complete — cards bound
+[INTIMACY-MOUNT] remounted the fate hand into #gnCardMount — cards now: 5
+[INTIMACY-MOUNT] gnPanelDisplay exists: true visible: true
+[OAS-LLM] Mode: FAST (speed chain)
+[SOUND] AudioContext unlocked, state: running
+[OAS-LLM] mistral-small@180 ok
+[MODEL-SERVED] requested=mistral-small-latest served=grok-4.3 (cost priced at requested rates)
+[OAS-AUDIO] breath(M) start @ mouth=what vol=0.06
+[OAS-AUDIO] breath(F) start @ mouth=what vol=0.05
+[INTIMACY-OPENER] Delivered: "Then say it where they can hear you. Say it now." | face: what
+[INTIMACY-DIALOGUE] Rehydrating OAS UI (beat 0, temp curious)
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Crossfade → what (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+Failed to load resource: the server responded with a status of 404 (Not Found)
+[GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-2 (profile: fateFirefly, continuous)
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1000 reasoning=0 visible=200 · turn 0
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=86 markers_per_1k_words=0
+[TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+[OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=1 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=100% · external-plot-share=0% [v2 in-motion-aware heuristic; in-motion counts up to 2 HOT signals, not auto-pass; correlate with SCENE1:DESIRE]
+[SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+[ONE-BREATH:NAMES] 0 person(s) [] · source=scraper(evidence+≥2) · rejected 2: [Not×2, Answer×2]
+[ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+[CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=100% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 1 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+[CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+[CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but feel opposite to readers. [Roman 2026-06-04]
+[SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+[PROSE:ENUMERATION] pass
+[PROSE:QUOTE-MASH] pass
+[SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 0× — present-adversary plan; presence is correct (WARN: 0 mentions — a known adversary who never appears as a force is the failure here).
+[SCENE-WANT] check skipped — no scene_want authored by the planner this run.
+[SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+[PROSE:CANONICAL] 1 run(s) scanned (1 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+[PROSE:CANONICAL]   scar 0/1 (0%) — scar reference (default-female-PC detail)
+[PROSE:CANONICAL]   collarbone_throat_line 0/1 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+[PROSE:CANONICAL]   hair_loose 0/1 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+[PROSE:CANONICAL]   restless_hands 0/1 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+[PROSE:CANONICAL]   repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   cuff_adjust 0/1 (0%) — cuff / sleeve / collar adjustment
+[PROSE:CANONICAL]   unasked_question 0/1 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+[PROSE:CANONICAL]   fox_unasked 0/1 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+[PROSE:CANONICAL]   fear_denial 0/1 (0%) — fear-denial ("nothing to do with fear")
+[PROSE:CANONICAL]   permission_marked 0/1 (0%) — permission to be marked / seen / claimed
+[PROSE:CANONICAL]   pulse_jump 0/1 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+[PROSE:CANONICAL]   eyes_went_flat 0/1 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+[PROSE:CANONICAL]   ringed_iris 0/1 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+[PROSE:CANONICAL]   cliche_jaw 0/1 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+[PROSE:CANONICAL]   cliche_cheekbones 0/1 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+[PROSE:CANONICAL]   cliche_piercing_gaze 0/1 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+[PROSE:CANONICAL]   earned_through_discipline 0/1 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+[PROSE:CANONICAL]   voice_drop 0/1 (0%) — voice drops (half a step)
+[PROSE:CANONICAL]   taking_up_space 0/1 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+[PROSE:CANONICAL]   silence_counted 0/1 (0%) — counted / measured silence
+[PROSE:CANONICAL]   something_landed 0/1 (0%) — "something real almost landed"
+[PROSE:CANONICAL]   left_behind 0/1 (0%) — left-behind / abandonment echo
+[PROSE:CANONICAL]   answered_unasked_generic 0/1 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+[PROSE:CANONICAL] SUMMARY — stock(0): — · watch(0): —  (note: only 1 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+[UNAVAILABILITY:MANIFESTATION] 1 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+[FATE:BATCH] Parsed 5 cards (delimiter format)
+[FATE:BATCH] Batch generated for turn 0 — keys: temptation, boundary, confession, reversal, silence
+[SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant:  · dist:  · 
+[DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+[WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+[SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (0%) · ledger size 1
+[PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+[FATE:ENGAGEMENT] submit#1 mode=cg | reliance=1.00 (1clicks/1submits) | distinctThisTurn=1 | pauseAfterClick=257ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[world_high_register(+15), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[SCENE-INTENT] 1 seeded milestone(s) re-derived from the effective scene row
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[STORY-SPINE] shape=STRAIGHT worldArc=∅ world=fatelands tier=fling
+[SOCIAL-ECO] cast (2, shape=STRAIGHT arch=OPEN_VEIN wound=?): a clan-kin→LOYALIST  |  a bond-sister / bondmate→TRUTH_TELLER
+[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+[COMMITTED-TRUTH:SEED] about=long_con family=hidden_identity/identity_history truth="The relationship is a long con — the LI is positioning the protagonist for someone else's gain." pool-size=7
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 241132 -> 196551 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 409 chars)
+[INTIMACY-DIALOGUE] Routing: beat=1, opening=true, sniffer=false, noise=false, plotDeflect=false → REASONING
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4-1-fast-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 1 | charge 7 esc 41 edge 0 emo 27 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[OAS-AUDIO] breath(M) → 0.06 (mouth=what)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=what)
+[OAS:TWO-PATH] first live Julian reply rendered — interruption now eligible
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231809502, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 1 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=46934)
+[INTIMACY-DIALOGUE] LLM said resolve at beat 1 — ignored (pre-first-ramp)
+[INTIMACY-DIALOGUE] Crossfade → what (peak=false, whitePeek=false, 2ndConsec=true, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-2 (profile: fateFirefly, continuous)
+[FATE:CACHE] Cache hit for confession (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#2 mode=cg | reliance=1.00 (2clicks/2submits) | distinctThisTurn=1 | pauseAfterClick=232ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=52 factors=[long_input(+15), world_high_register(+15), tone_tender(+5), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 241304 -> 196723 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 581 chars)
+[INTIMACY-DIALOGUE] Routing: beat=2, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 2 | charge 16 esc 30 edge 27 emo 38 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Repetition guard: what (same as prev) → parted
+[OAS-AUDIO] breath(M) → 0.06 (mouth=parted)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=parted)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231812411, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 2 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=15540)
+[INTIMACY-DIALOGUE] LLM said resolve at beat 2 — ignored (pre-first-ramp)
+[INTIMACY-DIALOGUE] Crossfade → parted (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-2 (profile: fateFirefly, continuous)
+[FATE:CACHE] Cache hit for silence (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#3 mode=cg | reliance=1.00 (3clicks/3submits) | distinctThisTurn=1 | pauseAfterClick=231ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=37 factors=[world_high_register(+15), tone_tender(+5), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: hear, move
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 242086 -> 197505 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 1363 chars)
+[INTIMACY-DIALOGUE] Routing: beat=3, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 3 | charge 27 esc 53 edge 11 emo 42 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1200 reasoning=0 visible=300 · turn 0
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] no usable result — raw turn shipped
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[OAS-AUDIO] breath(M) → 0.06 (mouth=what)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=what)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231815308, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 3 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=32033)
+[INTIMACY-DIALOGUE] LLM said resolve at beat 3 — ignored (pre-first-ramp)
+[INTIMACY-DIALOGUE] Crossfade → what (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-2 (profile: fateFirefly, continuous)
+[FATE:AXIS] scene 0 — silence (axis=objective, content-classified) → +1 objective (tally now obj=1 rel=0 lead=+1)
+[FATE:CACHE] Cache hit for silence (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#4 mode=cg | reliance=1.00 (4clicks/4submits) | distinctThisTurn=1 | pauseAfterClick=257ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=47 factors=[verbose_profile(+10), world_high_register(+15), tone_tender(+5), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: hear, move
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 242271 -> 197690 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 1511 chars)
+[INTIMACY-DIALOGUE] Routing: beat=4, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 4 | charge 39 esc 62 edge 4 emo 44 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1200 reasoning=0 visible=300 · turn 0
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] no usable result — raw turn shipped
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Repetition guard: what (same as prev) → parted
+[OAS-AUDIO] breath(M) → 0.06 (mouth=parted)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=parted)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231818241, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=1 · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 4 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=37829)
+[INTIMACY-DIALOGUE] LLM said resolve at beat 4 — ignored (pre-first-ramp)
+[INTIMACY-DIALOGUE] Crossfade → parted (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-2 (profile: fateFirefly, continuous)
+[FATE:AXIS] scene 0 — undoing prior objective (-1) before applying new card
+[FATE:CACHE] Cache hit for reversal (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#5 mode=cg | reliance=1.00 (5clicks/5submits) | distinctThisTurn=1 | pauseAfterClick=265ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=47 factors=[verbose_profile(+10), world_high_register(+15), tone_tender(+5), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: hear, move
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 242647 -> 198066 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 1887 chars)
+[INTIMACY-DIALOGUE] Routing: beat=5, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 5 | charge 46 esc 39 edge 2 emo 45 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1200 reasoning=0 visible=300 · turn 0
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] no usable result — raw turn shipped
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[OAS-AUDIO] breath(M) → 0.06 (mouth=what)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=what)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231821674, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 5 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=51735)
+[INTIMACY-DIALOGUE] LLM said resolve at beat 5 — ignored (pre-first-ramp)
+[INTIMACY-DIALOGUE] Crossfade → what (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-boundary-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-boundary-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-boundary-2 (profile: fateFirefly, continuous)
+[FATE:CACHE] Cache hit for boundary (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#6 mode=cg | reliance=1.00 (6clicks/6submits) | distinctThisTurn=1 | pauseAfterClick=274ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=47 factors=[verbose_profile(+10), world_high_register(+15), tone_tender(+5), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: hear, move
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 242289 -> 197708 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 1529 chars)
+[INTIMACY-DIALOGUE] Routing: beat=6, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {"li_dialogue": "Then say it where they can hear you. Say it now.", "li_action": "He does not move.", "li_next_prompt": "", "li_face_state": "what", "scene_state": "resolve", "scene_tone": "charged", "user_signal": "neutral", "temperature_shift": "none"}
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=11 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 6 | charge 51 esc 29 edge 1 emo 45 | release (not-declared)(regex_fallback) relConf 0 rel# 0 | → open  [normal]
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1200 reasoning=0 visible=300 · turn 0
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] no usable result — raw turn shipped
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Repetition guard: what (same as prev) → parted
+[OAS-AUDIO] breath(M) → 0.06 (mouth=parted)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=parted)
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791231825144, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=long_con · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 6 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-boundary-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-boundary-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-boundary-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=51327)
+[OAS:EXIT-RAMP] suppressed at beat 6 — this encounter is authored to end in its interruption, not in afterglow
+[INTIMACY-DIALOGUE] Crossfade → parted (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[INTIMACY-DIALOGUE:TELEMETRY] resolved {type: resolved, timestamp: 1791231826949, storyId: 75147ad9-324d-42e5-8eda-1ca14d4ac3ed, sceneIdx: 0, storyturn: ST1}
+[EMBODIMENT] inert scene — no embodied delta recorded
+[OAS-AUDIO] stopped
+[OAS:ARCHIVE] Snapshot saved at scene index 0 — 6 beats, reason=resolve
+[OAS:TWO-PATH] no postInterruptionBeat declared — existing behavior preserved (straight to cards)
+[FATE:INTIMATE] Requesting BATCH preview for all 5 archetypes (tiered: mistral -> grok -> openai)
+[TIERED:fatePreviews] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+[INTIMATE-INTERRUPT] mounted host=cg image=d3 lines=3
+[FATE:INTIMATE:VARIANT-DIST] {"amplify":2,"ruin":1,"redirect":2} (delimiter)
+[FATE:INTIMATE:VARIANT-DIST] {"amplify":2,"ruin":1,"redirect":2} (delimiter)
+[FATE:INTIMATE] tiered batch preview success via mistral/primary
+[INTIMATE-INTERRUPT] five heightened options landed
+[INTIMATE-INTERRUPT] card boundary → Say/Do filled (editable)
+[FATE:ENGAGEMENT] submit#7 mode=cg | reliance=0.86 (6clicks/7submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[SCENE-DECISION] scene 1 → posture (interruption_submit)
+[SCENE-INTENT] scene 3 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 4 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 5 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 6 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 9 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 10 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 14 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 16 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=posture withheld: stage (no per-branch text approved for this branch)
+[LEDGER:CLIPPED] event is 688 chars against a limit of 300 — 388 characters were REMOVED from the committed record, and the next scene will never see them: "it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to fl"
+[SCENE-LEDGER] +p1 kind=oas_interrupt issue=1 uid=none planned="The presiding Dohkar cut the interrogation off — a Provast q"
+[INTIMATE-INTERRUPT] submitted card=boundary action="I set the ledger flat and keep my hand on it" dialogue="Not here. Not in front of them."
+[SCENE-DECISION] a recorded "posture" (source=interruption_submit) does NOT answer the axis [run | remain] — the decision stays open
+[SCENE-DECISION] continuation requested before the reader's choice was recorded — mounting the prompt, requesting nothing
+[SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it
+[SCENE-DECISION] scene 1 → remain (resume)
+[SCENE-INTENT] scene 6 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=remain withheld: stage (no per-branch text approved for this branch)
+[BETA] scene_generation_started {"sceneIndex":1,"storyId":"75147ad9-324d-42e5-8eda-1ca14d4ac3ed","fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[SPINE] flavor=arcane_binding · spine=GENERIC (gpt-4o-mini)
+[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+[CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency over cost)
+[CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
+[TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+[CG:SCAFFOLD:GEN] 329ms, model=gpt-4o-mini
+[CG:SCAFFOLD] thesis="undefined"
+[CG:SCAFFOLD] issues=0, motifs=0, forbidden=0
+[CG:SCAFFOLD] FULL OBJECT: {gravitational_structure: The inquiry's authority is the field; every scene bends toward who may rule on Lirael., pressures: Array(3), deformation_tolerance: high, _version: 1, _generatedAt: 2026-10-05T20:23:52.136Z}
+[STAGED:SUBMIT] _cgScreenplayMode is ON — using screenplay-native generator (skipping literary submit)
+[CG:SAYDO-SLOT] {"slot":null,"confidence":"none","evidence":[],"reason":"no slot represented: the move is not an admission, an authority challenge, an unretreating want-claim, or a landed concealment — falling back to defaultEventFrame"}
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+[CG:SCAFFOLD] active — scene_index=1, source=gpt-4o-mini, issues=0
+[COMMIT-SCENE:SKIP] plan-scene=1 reason=no-prior-transition
+[SCENE-INTENT] scene 6 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael's standing is at risk and the cost is still uncounted."
+[PLAN-SPINE] scene=2 OBJECTIVE from authored spine: ""
+[FSC-RECONCILE] requiredTruth — suppressed 1: "The price has not yet been named." (no atom: an unresolved seed possibility, not a sealed cost)
+[FSC-RECONCILE] exitState — suppressed 2: "RESOLVED: the words came true and everyone c" (twist.words_honoured covers the words; no atom establishes that the mechanism is legible); "the cost is still uncounted." (no atom: an unresolved seed possibility, not a sealed cost)
+[PLANNER-CTX] forwarded 12 OAS exchange line(s) on a open row
+[FSC-RECONCILE] requiredTruth — suppressed 1: "The price has not yet been named." (no atom: an unresolved seed possibility, not a sealed cost)
+[FSC-RECONCILE] exitState — suppressed 2: "RESOLVED: the words came true and everyone c" (twist.words_honoured covers the words; no atom establishes that the mechanism is legible); "the cost is still uncounted." (no atom: an unresolved seed possibility, not a sealed cost)
+[TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning
+[SEAL] prop:1:1 scene=1 posture=none fact="Seren's family publicly demands remedy for the twisted wish, and the p"
+[CONTINUATION:DISABLED] scene=1 — _continuationProposalSchema is not explicitly true; proposal ignored, nothing written
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Convert the private interrogation into a public complaint with standing, and make Lirael a"
+[SCENE-INTENT] scene 6 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] 1 seeded milestone(s) re-derived from the effective scene row
+[OBJECTIVE:ACCEPTED] scene 2 branch=remain actor=the presiding Dohkar present=Lirael/Julian/the presiding Dohkar/the assembly — "Convert the private interrogation into a public complaint with standing, and make Lirael answer who the remedy is owed t"
+[STAGE-ISSUER] scene 2 — entity resolution failed: present name "Julian" is ambiguous among existing entities — never guessed
+[PLOT-CONTRACT:ENABLED] true
+[COMMITTED-STATE] scene=1 facts=0 proposed="Seren's family publicly demands remedy for the twisted wish," (pending until delivery)
+[STATE-CHANGE] scene=1 move="Seren's family step out of the assembly and publicly accuse Lirael, de"
+[STATE-CHANGE:EVENT] scene=1 :: Seren's family publicly demands remedy for the twisted wish, and the presiding Dohkar enters it as a formal complaint — the confrontation stops being Julian's accusation through desirability and becomes a claim with standing against Lirael.
+[STATE-CHANGE:PRECOND] Lirael stayed seated and did not retreat from her own want when the room rose.
+[STATE-CHANGE:FORCES] Lirael must answer the family's demand for remedy herself, in the open, or let the Dohkar fold the complaint into the inquiry he has already named.
+[STATE-CHANGE:OBSERVABLE] scene=1 event-is-observable=true
+[STATE-CHANGE:BRANCHES] A="Answer Seren's family directly and take the complaint's term" B="Refer the family to the formal inquiry and say nothing furth"
+[STATE-CHANGE:SPECIFICITY] scene=1 GENERIC distinctive-tokens-in-event=0/0 ⚠ THEME-COLLAPSE
+[MILESTONE-TRANSITION] scene=1 transition=INIT prev="" current="(none)"
+[CANON-AUDIT] scene 1 — no canon risk identified — deterministic only, NO model call (packet: 16 facts, 0 invalidated)
+[CANON-AUDIT] PASS (deterministic, paid=false) — author may be dispatched
+[A-PLOT] Milestone triggered at scene 1: undefined — THE WISH — steps 1-4 of the twist sequence ONLY.
+[SCENE-INTENT] scene 6 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=remain withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=remain withheld: stage (no per-branch text approved for this branch)
+[FF-CANON-AUTH] false reason=nonff
+[SCENE2:OBJECTIVE-ENFORCE] fired=false (A-plot not procedural/fix-prone; continuity directive only)
+[FSC-RECONCILE] exitState — suppressed 1: "RESOLVED: the price is known and the persona" (unmapped clause asserting a cost or a visible cause)
+[PLOT-CONTRACT:DIRECTIVE] scene=1 mode=state_change
+[SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Convert the private interrogation into a public complaint with standing, and make Lirael a"
+[SCENE1:FACT-MANIFEST] fm:6f8122d7-270 · 2 fact(s) · story=75147ad9-324d-42e5-8eda-1ca14d4ac3ed
+[CG:ASSIGN:DELIVERED] scene 2 · C+1 · E+0 · fusion0 · branch=remain · attempt=cpa:b12405bb-33b1-4d82-be23-5d18284c29c9
+[CG:DENSITY] scene=1 aftermath-shaped continuation detected — density overridden to ST5 (RESOLUTION PACE), length ceiling suppressed (real storyturn=ST1, unmodified)
+[CANON:UNAUTHORED] pc.appearance — the seed authors species, garments and seal only
+[FIELD-FORWARD:WARN] mode=cg side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=cg side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[CG:PROMPT-SIZES] scene 1 · total=256775c(~64194t) | system=177651c(~44413t) · user=79124c(~19781t)
+[CG:SCREENPLAY] gen start (scene 1)
+[CG:SCREENPLAY:USER-PROMPT]
+
+═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══
+1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what the POV character wants now, what prevents it, and what she fears will follow. Mystery may conceal the ANSWER; it may not conceal the question, the immediate consequence, or why she cares.
+2. ASSIGNED EVENT IS ACTION, NOT SUBJECT MATTER. If the scene is assigned an event, that event HAPPENS on the page — or a NEW concrete event prevents it and leaves the situation materially changed (a hand caught mid-reach counts; deciding not to reach does not). Thinking about it, arguing about it, almost doing it, or merely standing in the assigned location does NOT satisfy the assignment.
+3. THE SCENE ENDS SOMEWHERE ELSE. Something happens → it means something → somebody reacts → somebody acts → the situation is different. This is a test to apply, never a shape to make visible in the prose.
+4. DRAMATIZE CONSEQUENTIAL PRESENT SPEECH (added 2026-09-17). When a character present in the scene makes a consequential wish, sacrifice, accusation, confession, command, vow, threat, or ruling, render the act itself in its natural in-scene form — direct speech, written text, whisper, thought, sign, or performed gesture. Do not replace it with retrospective summary merely because narration is easier. Narration should carry perception, subtext, physical response, and consequence AROUND the utterance, never IN PLACE OF it. Summarize only where direct rendering is genuinely impossible, deliberately withheld, or dramatically inappropriate.
+
+═══ MODE: ROMANTASY ═══
+Strange event → understandable personal consequence → emotional/romantic reaction → decision → deeper world understanding. GROUND THE STRANGE BY CONSEQUENCE: a term, rank, rite or creature needs no definition, but the reader must feel what it permits, prevents, threatens or costs RIGHT NOW. The love interest's BEHAVIOUR is the primary decoder — he knows, she doesn't, he is afraid, now she is afraid — never a lecture. Naming a thing while leaving the reader unable to feel why it matters is confusion, not mystery.
+
+
+LORE FIDELITY (HARD — ALL worlds): render any ESTABLISHED world element — a place, creature, institution, faction, history, or magic / technology / social system — ONLY as THIS story's canon establishes it (the world bible, the injected lore, and facts already on the page). Do NOT invent new rules or mechanics for it, and NEVER contradict or INVERT what canon establishes. If a mechanic is NOT given to you, render only its EFFECT / consequence through a character's perception and leave the underlying rule UNNAMED — a confidently-stated WRONG mechanic is far worse than one left unspoken. When in doubt, show the consequence; do not author the law.
+
+
+
+═══ FATELANDS ORDINARY WISH MISALIGNMENT (HARD — distinct from The Fold/The Staircase, which are separately canonical major phenomena, never governed by this rule) ═══
+An ordinary misaligned wish is NOT a magical attack. It is a non-spectacular, causally legible event: participants may recognize, name, or react to the misalignment; the wish may create a subtle pull, wrong implication, ambiguous displacement, or unexplained arrest. It does not manifest as a projectile, rift, burst, or damage residue.
+VALID effect shapes: quiet pull (felt directionality/dread, never an external force with a visible trajectory), unsettling recognition (a dawning understanding — the viewpoint character's own realization OR another participant's recognition/naming/reaction, which may be spoken aloud), ambiguous displacement (a deliberately unclear shift nobody can yet name), unexplained arrest (the pull simply stops — no mechanism, no rescuer shown).
+INVALID for ordinary wish misalignment — never write these: a directed magical bolt/beam/rope/seam/blade of energy aimed at a target; a literal rift/seam tearing open in the air; a burst/blast/flare of visible magical force; scorch marks, burn lines, or other physical damage cited afterward as evidence. Reserve that visual grammar, if ever, for major world-scale phenomena (The Fold, The Staircase) — never for one person's wish bending in an ordinary scene.
+
+
+═══ FATELANDS MISALIGNMENT PERCEPTION (HARD — distinct from the ordinary-wish-misalignment law above) ═══
+First Favored have an INNATE capacity to sense misalignment between a person's outward words, ritual intent, and underlying desire — acuity varies substantially by individual sensitivity and training. This is NOT telepathy, certainty, or a universal lie detector: it produces a PERCEPTION that must still be interpreted and can be mistaken.
+Humans and Kwisheen do not have this innate sense, but can LEARN to recognize misalignment through study and practice: tells, microexpressions, body language, evasions, ritual habits, contextual inconsistency. A trained observer's conclusion remains grounded_inference — never access to secret truth.
+Do NOT assign this capability, its sensitivity, or its training level to any specific character unless already established for them — this is a general capability rule, not a claim about who in this scene has it or how strong it is.
+
+
+SCENE INDEX: 1
+STORY LENGTH: fling
+SCENE DENSITY (CONTINUATION — AFTERMATH/CONSEQUENCE PACE): this scene follows a planner-committed event with real consequences still to land — it is NOT an opening/establishing beat and NOT an arc winding down. Give it FULL scene weight: real aftermath (who reacts, and how — family, witnesses, authority), institutional or social process where the story calls for it (a ruling, a summons, a date set, an argument over what happens next), enough DIALOGUE and INTERIORITY to carry it (this is not a declarative-only wrap-up — characters think, argue, and are changed by what just happened), and PLOT DIRECTION that moves the story somewhere new. End on a genuine NEW pressure point or choice the protagonist must now face — never on suspended mood alone ("waits", "holds its breath", "remains half-raised") with nothing concrete underneath it. No word-count ceiling applies to this scene — use the room a full scene actually needs.
+LI PRESENCE FLOOR (HARD — Roman 2026-09-21): if Julian is present in this scene, Julian MUST have at least ONE meaningful moment that affects the scene — a line of dialogue, a visible/felt emotional reaction, a refusal, an intervention, a procedural move, or a charged silence the room reacts to. Julian may remain restrained and let another party (family, an authority, an antagonist) be the scene's public engine — this is NOT a requirement that Julian dominate the scene, rescue the protagonist, or speak more than once. It IS a requirement that Julian never simply stand in the room doing nothing while everyone else acts — a bare "Julian has not moved" or "Julian says nothing" with no felt reaction underneath it is NOT enough on its own. If Julian is not actually present in this scene, this requirement does not apply.
+WORLD: Fantasy / arcane_binding
+WORLD DIRECTIVE (HARD — overrides any drift toward other genres): Pre-industrial fantasy realm (the Fatelands). Materials: natural fibers — wool, linen, hemp, silk, leather, fur. Hand-stitched garments, hand-forged steel/iron/bronze/wood/bone tools. Pre-electric, pre-firearm world (scrolls, vials, charms, pouches, lanterns).
+TONE: Earnest
+TONE PROFILE (HARD — drives prose register, dialogue cadence, and emotional distance):
+  • mode: alignment
+  • signal: openness
+  • emotional distance: close
+  • ALLOWED signals (lean in): hope, possibility, sincerity, becoming
+  • FORBIDDEN signals (avoid): irony, contradiction, oppression, detachment
+EARNEST REGISTER (HARD): the prose is sincere, emotionally present, unguarded. The protagonist means what she feels and the narration honors it. NO irony as defense. NO observational detachment. Feelings are weather the character lives inside, not exhibits she views from outside.
+ARCHETYPE KEY: SPELLBINDER
+LOVE INTEREST BEHAVIORAL PROFILE (LOCKED):
+
+The Spellbinder commands attention through presence alone. Charm is currency, and he spends it selectively — never by accident. Three moves ahead, he makes surrender feel like your idea.
+
+EVASION IS NOT EXIT (HARD — calcification fix): this LI's deflection/evasion is VERBAL, SOCIAL, and EMOTIONAL — he answers sideways, lands a joke a half-second early so you can't call it tenderness, redirects, gives a polished partial-truth, changes the subject, holds a look a beat too long, deflects with charm while STAYING in the room. It is NOT physically leaving. The beat "he walked out of a meeting/room without a word / abstained and left / refused to explain and exited" has CALCIFIED across plays and is BANNED as his signature characterization — do NOT render his evasion or his "control" as a dramatic silent departure. A thousand ways exist to show a guarded, controlled, evasive man; the silent walk-out is the one to AVOID. If he ever leaves a scene, that is plot logistics, never his character signature.
+
+STRESS & FAILURE PATTERN (SHADOW CLAUSE):
+When under pressure, emotional threat, or lens-driven withholding (Withheld Core / Moral Friction):
+- Primary failure mode: asymmetric attachment, selective honesty
+
+Stress must never:
+- Remove agency from the other party
+- Excuse harm as romance
+- Stall without escalation or change
+
+STORYTELLER ENFORCEMENT:
+- Treat the primary behavioral profile as dominant.
+- Use the Stress & Failure Pattern as the main source of relational tension.
+- Allow fracture and repair without erasing the shadow.
+- Never "heal away" the behavioral pattern.
+
+ARCHETYPE LABEL SUPPRESSION (ABSOLUTE — ZERO TOLERANCE):
+Archetype titles are internal design labels. They must NEVER appear in the story as:
+- Capitalized metaphors (e.g. "The Eternal Flame", "The Spellbinder")
+- Mythic titles or role descriptors
+- In-world categories or epithets
+- Expository narration or character introductions
+- Dialogue references (no character should name or reference an archetype label)
+
+Archetype labels (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame, Villain, Anti-Hero, Muse, etc.) are SYSTEM METADATA ONLY.
+Express all character traits through BEHAVIOR, DIALOGUE, and CONSEQUENCE — never through labels or titles.
+If an archetype label would naturally appear, replace it with an effect-based description of what the character does, how they feel to encounter, or the consequence of their presence.
+Do not invent mythic titles, epithets, or metaphors that resemble archetype labels or capitalized symbolic identities. Express intensity through behavior, not titular symbolism.
+If unsure, omit entirely.
+
+NICKNAME EMERGENCE RULES (STORY GRAMMAR):
+- Nicknames may appear ONLY in dialogue or narration, never in UI/metadata.
+- Nicknames emerge organically AFTER emotional proximity is established.
+- Prefer natural shortenings (Alex, John, Max, Kate) over invented pet names.
+- Do NOT invent playful or fantasy nicknames (no "Sparkles", "Moonbeam", etc.).
+- Once introduced in dialogue, nickname becomes OPTIONAL — not mandatory.
+- Narration may adopt a nickname ONLY after it appears in dialogue first.
+- Canonical (full) names remain authoritative for formal contexts.
+
+NPC ARCHETYPE LENSES (STORY GRAMMAR):
+Archetypes may be assigned to prominent NPCs (villains, exes, rivals, mentors) as behavioral lenses.
+
+Rules:
+- NPC archetypes define dialogue style, power posture, and emotional behavior.
+- NPC archetypes do NOT imply romance availability — NPCs are not love interests.
+- Archetypes may be fixed from introduction, revealed gradually, or initially masked.
+- Archetype labels are NEVER stated explicitly to the reader — effects only.
+- Express archetype through writing and behavior, not exposition or labels.
+- UI systems (breadcrumbs, Destiny's Choice, Continue buttons) do NOT apply to NPCs.
+
+Purpose:
+- Deepen NPC characterization through consistent behavioral templates.
+- Create narrative foils, mentors, or antagonists with psychological coherence.
+- Allow NPCs to challenge or mirror the Love Interest's archetype.
+- Do NOT gamify NPCs or treat archetypes as collectible attributes.
+
+Examples of NPC archetype expression:
+- A DARK_VICE mentor who tests through temptation and moral ambiguity.
+- An ARMORED_FOX rival who deflects sincerity with charm and misdirection.
+- A BEAUTIFUL_RUIN ex who still carries the protagonist's emotional weight.
+- A HEART_WARDEN authority figure whose protection feels like control.
+PROTAGONIST (HARD — identity locked): Lirael, Female. Gender is FIXED — Female across every scene of this story. NEVER write the protagonist as a different gender mid-story; NEVER let downstream beats describe the protagonist with anatomy, pronouns, or wardrobe that contradicts Female. In dialogue beats the speaker field is the literal token "protagonist", NOT the name.
+LOVE INTEREST (HARD — identity locked): Julian. This is the ONLY romantic counterpart of the story. Side characters (friends, coworkers, family, strangers, antagonists who are not the LI) are NEVER the love interest, no matter how much screen time they share with the protagonist. In dialogue beats the LI's speaker field is the literal token "li", NOT the name. Do NOT invent a different name for the LI ("Sir Eldric" / "Mister X" / etc. are forbidden); when prose references the LI by name, write "Julian" verbatim.
+LI CONTINUITY (Scene 2+ — HARD): The LI is "Julian" and ONLY "Julian". Any other named character in the prior-scene tail (e.g. a friend the protagonist talked to in Scene 1) is a SIDE CHARACTER, not the LI. Do not let the LI role drift onto a side character because they had more screen time. The romantic arc develops with Julian specifically.
+
+PROTAGONIST READING LENS — OPEN VEIN (HARD; every beat and panel that shows her noticing someone or something is read THROUGH this):
+  HOW HER ATTENTION MOVES: INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling first, then becomes legible. She is arriving before the moment finishes happening.
+  HOW SHE READS PEOPLE: EMOTIONALLY POROUS. She knows things before they are visible — her body responds before her mind catches up. She translates external events into internal weather. She names what other narrators wouldn't. She reads people through their seams. The prose moves TOWARD the wound, not away from it.
+THE EXPOSURE CLAUSE (HARD — the success criterion for every Character+, Environment+ and fusion moment, in beats AND panels): expose a SPECIFIC, NON-OBVIOUS TRUTH about a person — a flaw, an obsession, a private secret (psychological meaning, never a plot reveal), a contradiction, or a worldview particular enough to distinguish them — through a concrete detail that Lirael interprets in a revealing way. Expose someone; do not merely describe something. A place or object exposes its maker, its keeper, whoever marked it, or her through her relationship to it; an unmarked natural environment exposes only her, and no intention is ever invented for it. A fusion is ONE concrete moment that does both. An assignment that reached this prompt is REQUIRED; the density of everything unassigned is yours.
+
+CHARACTER+ ASSIGNED THIS SCENE — DELIVERED, NOT REQUESTED (one beat per person listed, at their first mention; do not return scene_assignments — these stand):
+  • the presiding Dohkar — IN_PERSON
+      SOURCE TRUTH — DO NOT STATE: Public honour paid to a peer makes him newly attentive to rank, merit, and whether the recognition was deserved.
+      (it applies here because: someone younger holding standing he had to work for)
+      READS THIS CHARACTER'S CANON FORBIDS: the inverse of the contempt facet — if the rite matters to him, this is not that facet · the inverse of the arrogance facet — humility about his own cost is not this truth · the inverse of the kindness facet — hardness toward the poor is not this truth · the pedagogy is a compulsion to CORRECT, not warmth — softening it loses the truth
+      VISIBLE ACTION — YOURS TO CHOOSE: one small physical act, possible in this scene's circumstances, in which the SOURCE TRUTH is legible without being stated.
+      PC INTERPRETATION — MUST GOVERN THE NARRATION: YOURS TO COMPOSE — through her ESTABLISHED lens, OPEN VEIN (INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling first, then becomes legible. She is arriving before the moment finishes happening.): a reading of this act that exposes the presiding Dohkar — a specific, non-obvious truth — and shows how SHE sees; choose the lens's expression for THIS moment; never state the SOURCE TRUTH
+  Write the beat and the panel that carries it; the SOURCE TRUTH stays unstated; nobody else receives a Character+ this scene.
+OBJECTS IN PLAY (from the recorded open state — availability only, not an assignment): mouth-band torn away, ceremonial sash still on, publicly accused, holding The Answer (the Institution’s, in Julian’s keeping — hers only for the questioning), the interrogation just cut off by the Dohkar
+
+═══ CHARACTER BIBLES (HARD — stable per-story canon. CG grammar: character lock-in + action-line tells + shot-composition cues. APPEARANCE IS ESTABLISHED & LOCKED — keep it visually CONSISTENT across panels, but do NOT re-describe or restate the canonical descriptors panel to panel; the look is fixed. PEPPER BEHAVIOR through panels — action-line tells, posture, how they move / hold themselves / react — NOT appearance descriptors; surface a physical-appearance detail ONLY when a beat genuinely earns it, never as a recurring descriptor. do NOT dump.) ═══
+PROTAGONIST APPEARANCE — Lirael (APPEARANCE ESTABLISHED & LOCKED): the look is fixed canon, established earlier and locked separately for the image. Render CONSISTENTLY from the established appearance; do NOT restate a canonical descriptor list each scene. Surface a physical detail only when a beat genuinely earns it.
+PROTAGONIST INTERIOR (HARD — this is who she IS, not a menu of gestures. When a beat needs her body / expression / posture to carry state, REASON a fresh, panel-specific action that THIS person — given this interior — would do in THIS exact moment. Do NOT default to a fixed nervous tic (no reflex hand-to-face / ring-twist / hair-touch); invent what she does HERE from who she is. Never caption the interior — show only the behavior it produces):
+  • CONTRADICTION she lives with — She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.
+LI APPEARANCE — Julian (APPEARANCE ESTABLISHED & LOCKED): the look is fixed canon, established earlier and locked separately for the image. Render CONSISTENTLY from the established appearance; do NOT restate a canonical descriptor list each scene. Surface a physical detail only when a beat genuinely earns it.
+CAST PHYSICAL CANON (SEED — authoritative; render exactly): Seren — a young GIRL (female — never a boy), consistent across every panel; First Favored species canon applies: aqua skin, pale coral hair (a full head of it — the coral CONTRASTS the aqua skin), small rounded ears; DRESSED in a gossamer child's tunic in every panel — the fabric blooming to soft luminous white over the torso, hips and seat; a child is always fully covered; child-of-the-rite: small, kneeling, and COMPOSED — she holds herself well; do not draw or write her as frightened; when restored: her WHOLE face on her body (never a disembodied / floating head)
+NAMED CHARACTER FINGERPRINTS → CG (Roman 2026-06-05/16 — invisible CORE → visible HABIT, staged on-panel). Each named non-LI / non-antagonist character is generated from an INVISIBLE psychological core — NEVER name or caption it; the reader only SEES it in what the character DOES in frame (blocking, a gesture, where they choose to stand or sit, what the hands do). To stop every character collapsing to the SAME texture (the classic failure: a Strategist mentor AND a Strategist assistant AND a Strategist friend, each with different staging but identical texture), this story PRE-ASSIGNS a DISTINCT core to each named ROLE below. Map your ACTUAL cast onto these slots; ignore any slot with no matching character; if a named character fits no slot, give them any UNUSED core. ROLE FILTER — how many habits surface: a SIDE character (incidental) shows ONE of its core's two habits, an ALLY (recurring helper / confidant / mentor) shows BOTH — each staged as a VISIBLE beat, not dialogue exposition. Keep each character's core + habit CONSISTENT every panel they appear. This story's assignments (TRANSLATE each habit into THIS world's idiom AND into a SHOT — a STRATEGIST's "who owes whom" becomes a glance that prices the room; a CAREGIVER's "refills your glass" becomes a hand already moving the cup before anyone asks):
+    • Mentor / boss / authority figure → [STRATEGIST — invisible]: answers the question they would prefer, not the one they were asked  |  names who owes whom before they say what they want
+    • Assistant / aide / subordinate → [CAREGIVER — invisible]: refills your glass before you notice it was empty  |  remembers how everyone takes their coffee
+    • Friend / confidant → [BUILDER — invisible]: straightens the crooked frame on someone else's wall  |  has the right small tool in a pocket nobody knew about
+    • Rival / competitor → [REBEL — invisible]: reads the rule aloud, then bends it a little  |  asks who decided that, and actually means it
+    • Colleague / peer → [SCHOLAR — invisible]: corrects the small fact nobody asked about  |  cites where they heard a thing, every time
+    • Family member → [PERFORMER — invisible]: plays to whoever just walked in  |  tells the version with the better ending, not the true one
+    DO NOT assign the same core twice unless the story has MORE named characters than the cores listed above.
+    WORLD IDIOM: WORLD IDIOM (Fatelands): leakage carries the body's wildness and the world's weight — an animal stillness, the Becoming stirring a half-shade under the skin, moons-attuned senses snapping to her; in a First-Favored or court figure, the leak is the crack in Favor-perfect composure.
+    Do NOT default to the calcified tics (nail-tapping / throat-clearing / glasses-pushing / pen-clicking) — the habit must EXPRESS the core as an ACTION the panel SHOWS.
+SOCIAL ECOSYSTEM → CG (Roman 2026-06-16 — the recurring people around the PC; each puts a DIFFERENT pressure on the romance, rendered as ON-PANEL BEHAVIOR not talking-head advice). Map your ACTUAL named cast onto these world-native roles; not every panel needs all of them:
+  • A CLAN-KIN as LOYALIST (the CLOSEST — most present) — is unconditionally in the PC's corner — the one who stays when staying costs something. Shows it by: shows up unasked the moment it goes wrong; takes the PC's side before hearing the details.
+  • A BOND-SISTER / BONDMATE as TRUTH TELLER — forces the uncomfortable realization the PC is avoiding about herself or him. Shows it by: names the pattern the PC keeps repeating; refuses the PC her favorite excuse.
+  HARD INVARIANT: EVERY member is fundamentally ON THE PC'S SIDE — even a Brake / Skeptic / Rival-Voice / Truth-Teller acts FROM loyalty, NEVER as a second antagonist (the someone-in-your-corner fantasy is the constant). Keep each member's function CONSISTENT across appearances (it can ESCALATE, never silently swap). Functions are DISTINCT across the cast — do not let two members collapse into the same pressure. Every member is a SEPARATE person from the LOVE INTEREST — never merge a cast role into the LI even when their professions overlap (the "colleague" in her circle is NOT the colleague she falls for).
+  WHY: a varied circle is what makes loyalty, disagreement, and (later) betrayal land — the reader should wonder WHICH of these people matters most, not watch one "friend slot."
+THE LIVING WORLD → CG (Roman 2026-06-16). Walk-ons (servers, drivers, shopkeepers, strangers, fans) are NOT just mood-lighting that admires the couple. OCCASIONALLY one may briefly ACT on them. This story's available beats (use ONLY when the setting actually supports the gate):
+  • a server / stranger openly flirts with the LOVE INTEREST — testing the PC's unspoken claim on him  — only when the LI is present.
+  • a bystander quietly carries word of the couple (where they are, what they said) to a hostile party  — only when the story has an antagonist or someone who would want that intel.
+  • a pickpocket lifts a wallet / phone / small item — a complication, not a catastrophe  — only when a crowd, market, or public crush.
+  • a walk-on overhears something the couple meant to keep private and reacts — a look, a dry comment, a pointed exit  — only when the couple says something private within earshot.
+  • someone in a service role obstructs them — won't seat them, cuts them off, stonewalls — for their own small reason  — only when a service / transaction setting.
+  • RECOGNITION (FAME-GATED, HARD): ONLY if the couple is genuinely PUBLICLY KNOWN — a famous/notorious LI, OR they have CLAIMED a public reality-bending event (they are "the ones from the song / the ballad / the thing everyone is debating") — may a stranger recognize the COUPLE: "wait — you're Lirael and Julian? from the —?", fan energy / awe / a phone already up / a demand. If they are NOT publicly known, a stranger must NEVER recognize them as a couple. (Recognizing ONE of them from private history is the separate KNOW_FROM_BEFORE beat.)
+  SPARINGLY (HARD): at most ONE such beat per scene, OFTEN NONE — most walk-ons stay background. Keep it INCIDENTAL: ONE beat, the walk-on does NOT become a character, and it NEVER resolves or carries the core romance/plot tension. The world ACTS on the couple — friction, comedy, complication, exposure — it does not orbit them admiringly. Skip any beat whose gate isn't actually present in the scene.
+═══ END CHARACTER BIBLES ═══
+
+
+═══ CHARACTER VISIBILITY (CG — this is a VISUAL medium; the panels SHOW the people) ═══
+DO NOT NARRATE WHAT THE PANEL SHOWS: for a character VISIBLE in a panel, beat / caption text must NOT catalogue their appearance (hair colour, build, clothing, "his dark hair fell across his brow") — the reader SEES it; that is wallpaper here. (The bible PHYSICAL CANON already drives the render.) This bans CATALOGUING, NOT desire — see below.
+THE CONCEALED LOVE INTEREST (HARD — Julian's face is withheld in-panel / Mystery Man): the render HIDES his face, so the PROSE is the ONLY place the reader meets it — REQUIRED here, not redundant. Render it as Lirael's FIXATION, never a catalogue: each time a feature surfaces it must reveal something NEW about HER — attraction, obsession, longing, recognition, the gap between what she lets herself want and what she does — not re-orient the reader to his looks. ✗ CATALOGUE (banned): "his pale gray eyes · the curl of his lip" / "his hypnotic eyes met mine" (a feature list / first-sighting inventory). ✓ FIXATION: "I kept filling in the face the panel wouldn't give me." / "I'd started imagining his eyes before I let myself." / "the mouth I'd built out of a voice and a silhouette." The SENTENCE is about her wanting; the feature is the OBJECT of it.. The VISUAL reveal (a panel finally showing his face) is a LATER payoff — the panels keep concealing; her obsession builds him now.
+APPEARANCE IN DIALOGUE (ACTIVE — use it as a recurring voice + intimacy beat across the arc): characters REFERENCE each other's looks diegetically — teasing, claiming, needling. "That stupid haircut." "Shorty's getting grumpy." "You're going to ruin that suit." It is characterisation and charge, not description, and it is how looks LAND in words in a drawn medium. (Julian's concealed face: dialogue may tease his hair / build / voice / the look in his eyes — the VISUAL reveal of the face stays the payoff.)
+PROTAGONIST: Lirael is shown in-panel — do NOT catalogue her own looks in narration. Her standout feature lands through what OTHERS notice (a line of dialogue) + her deflection, never vanity.
+
+NARRATIVE POV (HARD — applies to ALL beat.text strings): FIRST PERSON, present tense. The protagonist narrates herself as "I", and the prose is in present tense ("I hesitate. The clock ticks. I cross the room."). NEVER write "Dani hesitated, her thoughts flickering" — that's third person past, which is FORBIDDEN. The protagonist refers to herself as "I" and her body as "my hands / my face / my breath". Other characters get their names. Dialogue tags follow first-person grammar ("\"It was quiet,\" I said.").
+POV ENFORCEMENT: if you find yourself writing past-tense third-person while the rule above says first-present, STOP and rewrite. The beat text MUST honor the POV pick. The screenplay parser does NOT auto-translate POV; what you write is what the reader reads.
+PRIOR SCENE TAIL (for continuity):
+"""
+lf — two dozen faces turning to me at once, looking for it, reading the torn band and the step I had taken and the sash that said whose rite this was.
+
+“‘Find.’” The presiding Dohkar named the word, because he cannot let a lesson pass. “She asked that you find the one you lost. Fate did not go looking. It made every one of us look at you.”
+
+Then the charges, laid in the order he thought them: that the wish had been shaped for its supervisor’s benefit — coerced, or worse, taught — and that the supervisor had broken her seal and interfered in her own ward’s rite. Either would have ended it: Dohkar this morning, Chayr, Provast one day, the path my father had walked and I had never once imagined not walking. Together they made me something the clearing stepped back from. Seren’s mother was on her feet.
+
+And still, with my standing coming down around me, some traitorous part of my attention went to the edge of the gathering, to the man who had not moved. I did not want him to look away. I wanted, God help me, to be the thing he was looking at.
+
+Julian moved. He came in from the edge without hurry, and the assembly made room for him the way rooms do for a man who has never asked them to. The Dohkar’s Weave-Script went a hard, flat colour that said, whether he liked it or not, that he had noticed who they deferred to.
+
+“I can hear where she is aligned,” Julian said, to all of them and to me. “Everything in her points one way. She believes she did not do this.” He did not say what had been done, or by whom.
+
+He drew out The Answer — the double-ended shaft, a deep hooked blade curling from each end like a question asked twice — and set it in my hands, and closed my fingers around it with his, the scarred wrist against my palm for one deliberate second. “Hold it. I am going to ask you questions, here, in front of them. If you are misaligned when you answer, everyone present will know.” It lay still between my hands. My mouth was uncovered now. I found I still could not speak.
+"""
+SCENE PROGRESSION (HARD — anti-redux directive):
+  • Do NOT replay the prior scene. The prior scene is OVER. Time has passed; characters have moved.
+  • This scene must advance the SITUATION — at least one of: different location, different characters present, meaningful time elapsed, OR the prior scene's ending action being ACTED ON (not deliberated about again).
+  • If the prior scene ended with the protagonist alone in a room (e.g., another character left, a phone call ignored, a meeting concluded), this scene STARTS with the next thing — what she does, where she goes, who she encounters.
+  • If the prior scene ended at a desk, this scene should NOT open at the same desk with the same characters resuming the same conversation. That is "second take" energy, not narrative advance.
+  • The microdecision resolution above is a CHOICE the protagonist made. Scene 2 shows the CONSEQUENCE of that choice unfolding, not a second deliberation about the same fork.
+SCENE CONSUMPTION CONTRACT (HARD — audit fix; the romance still OWNS the scene):
+  • NEW A-PRESSURE (exactly one, NOT a recap): introduce ONE specific, previously-unseen A-plot movement this scene — a new fact/clue, an enemy move, a cost incurred, a deadline shift, a consequence landing, or a document/message/witness surfacing. The A-plot beat due around now: "Convert the private interrogation into a public complaint with standing, and make Lirael answer who the remedy is owed to." — land it or visibly move toward it.
+  • NEW R-DELTA (exactly one, NOT the same charge): shift the PC↔LI relationship in ONE concrete way that did not exist last scene — a change in attraction, trust, a misread, a vulnerability shown, a debt, jealousy, intimacy pressure, a power reversal, or a boundary moved. "I want him but shouldn't / he watches without moving" is NOT a delta — name what is DIFFERENT now.
+  • BAN RE-PRESENTING THE PRIOR DECISION: whatever unresolved choice or question closed the prior scene (e.g. "tell him or stay silent") MUST NOT be this scene's main beat or its closing prompt. Either it is ACTED ON and its consequence drives this scene, or a NEW pressure overtakes it. Do not restage the same fork in a new room.
+  • CLOCK MOVES: the pressure clock ((20 scenes total)) must visibly ADVANCE or be MATERIALLY COMPLICATED this scene — never restate the same remaining time ("three days / hours away") without a new consequence attached.
+  • PRESSURE FORCE ON-PAGE: the antagonist / anti-force (the presiding Dohkar) must ACT this scene — present in the room, OR acting through a messenger, document, threat, witness, leak, legal/financial/family move, or a message just received. It may not stay a purely abstract offstage idea every scene.
+  • BALANCE (do not over-correct): this is NOT a plot procedural. Lead with the romance and feeling; the A-pressure and clock are the CHANGING TERRAIN the desire crosses, not the subject. ONE new A-beat + ONE new R-delta per scene — no more.
+PLAYER ACTION (the PC performs this in this scene): I set the ledger flat and keep my hand on it
+PLAYER DIALOGUE (the PC says this in this scene): "Not here. Not in front of them."
+
+═══════════════════════════════════════════════════════
+NARRATIVE INTEGRITY LAYER (NIL — HARD):
+═══════════════════════════════════════════════════════
+The player's input is INTENT, not script. The NIL umbrella has seven sub-directives — they all answer ONE question: "Does this player input preserve the protagonist's established narrative identity and genre trajectory?" When YES, execute/transmute/honor. When NO, render the impulse without canonizing the action — the STORY refuses to become that story, never via moderation framing.
+
+DIRECTIVE PRIORITIZATION (HARD — read this BEFORE applying the sub-directives below):
+With 17 sub-directives, conflicts are inevitable. Sacredness Preservation may say "don't peak"; ERA may say "pressure crossed, land the rupture"; Erotic Contrast says "don't charge this moment"; Performance vs Authenticity wants a crack; Intent Transmutation wants elevation. When multiple sub-directives push different directions, IDENTIFY the moment's PRIMARY emotional event and let that directive win. Apply SECONDARY directives as TEXTURE on the primary, not as competing impulses. SUPPRESS directives that would muddy the primary moment — they wait for the next beat.
+
+PRIORITY HIERARCHY (when conflicts arise, higher tiers win):
+  TIER 1 (NEVER OVERRIDDEN): ANTI-MORALIZE rule. The system never reads as a moderator. Period.
+  TIER 2 (HIGHEST DIRECTIVE PRIORITY): Identity-tier RELATIONSHIP INTEGRITY (#4), MEMORY INTEGRITY (#10), SYMPATHY INTEGRITY (#11). Player can't collapse the LI as a person.
+  TIER 3 (HIGH): ERA when active (#13) — pressure-earned ruptures land. REALISM HOLD when no Petition/Tempt active. Petition/Tempt directives when invoked. WORLD INTEGRITY (#5). CONSEQUENCE INTEGRITY (#12) for canonized prior acts.
+  TIER 4 (DEFAULT NARRATIVE SHAPING): INTENT TRANSMUTATION (#1), TONAL PRESERVATION (#2), ROLE INTEGRITY (#3), ESCALATION AUTHENTICITY (#6), SABOTAGE ABSORPTION (#7), COMPETENCE INTEGRITY (#8), AESTHETIC INTEGRITY (#9). These shape HOW everything else lands.
+  TIER 5 (TEXTURE / TUNING): Archetype texture, vulnerability maps, erotic contradiction, performance/authenticity, residue surfacing. Color the moment without competing with primary.
+  CONDITIONALLY SUPPRESSED: 
+    • EROTIC CONTRAST (#15) — suppress DURING a canonical intimate scene (the scene IS charged, that's the point). Active before and after.
+    • REGISTER RECENTER (post-dark-beat) — suppress when ERA is firing (the dark register IS the canon now, not an excursion to recenter from).
+    • NOVELTY DISCIPLINE (#14) — suppress during a story's FIRST instance of a category (first kiss, first time, first I-love-you) — first-time moments earn their mythic weight; novelty-discipline kicks in for the SECOND occurrence onward.
+    • SACREDNESS PRESERVATION (#17) — suppress when ERA fires + scene is the canonical rupture; the rupture IS the rare moment, and trying to dampen it would muddy the tragedy metabolism.
+
+RESOLUTION PRINCIPLE: when directives conflict, the moment's PRIMARY emotional event wins. Texture from secondary directives can still color the prose; suppressed directives wait for the next beat. If you're unsure which directive is primary, ask: "what is this MOMENT actually doing in the story?" The answer points at the primary directive.
+
+CONTROLLED PROSE ROUGHNESS (HARD — counters AI elegance drift):
+With sophisticated directive stacks, models drift toward TOO POLISHED — every line novelistic, every sentence emotionally articulate, every paragraph aesthetically refined. This sterilizes intimacy. Real human voice includes INCOMPLETE THOUGHTS, IMPULSES, MISSED TIMING, OVERREACTIONS, REPETITION, IMPERFECT WORDING.
+
+NOT permitted: cringe-breaking awkwardness, failed-prose hallmarks (typos, grammar errors, deliberate ugliness). The fantasy is preserved.
+IS permitted (and ENCOURAGED): sometimes the best line is a SIMPLER one. "I don't know why that hurt so much." is BETTER than "I finally understood the terrible geometry of wanting her." Let characters say small, plain, emotionally-direct things alongside the polished interior moments. The contrast IS where they feel alive.
+
+A scene that has 80% polished psychological literacy and 20% plain-speech truth feels REAL. A scene that has 100% polish feels like AI showing off.
+
+SUB-DIRECTIVES (in order):
+  1. INTENT TRANSMUTATION — diction/world/dramatic-framing rewrite of player input
+  2. TONAL PRESERVATION — handle tonal-event inputs (memes, ruptures, charming humanity)
+  3. ROLE INTEGRITY — protect the protagonist's established narrative identity
+  4. RELATIONSHIP INTEGRITY — the LI is the romantic anchor, not a target
+  5. WORLD INTEGRITY — world physics and genre contracts don't collapse on whim
+  6. ESCALATION AUTHENTICITY — emotional shifts must be earned, not declared
+  7. SABOTAGE ABSORPTION — never reward narrative sabotage with spectacle
+  8. COMPETENCE INTEGRITY — PC's skill/intelligence stays consistent
+  9. AESTHETIC INTEGRITY — prose register stays world-true
+ 10. MEMORY INTEGRITY — transient inputs don't retcon emotional history
+ 11. SYMPATHY INTEGRITY — never villainize the LI to justify player derailments
+ 12. CONSEQUENCE INTEGRITY — canonized dark acts stay metabolized, not vanished
+ 13. EARNED RUPTURE AUTHORITY — when accumulated story pressure crosses threshold, NIL relaxes and ruptures can land canonically (NIL evolves from immune system to tragedy metabolism system)
+ 14. NOVELTY DISCIPLINE — intimacy deepens via specificity, not constant intensity escalation
+ 15. EROTIC CONTRAST — scenes without heat are load-bearing; resist charging every moment
+ 16. IMPLIED TRUST PROGRESSION — as trust deepens, procedural negotiation becomes shorthand
+ 17. SACREDNESS PRESERVATION — rare moments must stay rare for emotional scale to hold
+Plus: CANONIC VIOLENCE PASS-THROUGH (Tier A) when violence IS the genre, ANTI-MORALIZE RULE across all sub-directives.
+
+ERA STATE: pressure 0 / threshold 12
+─── 1. INTENT TRANSMUTATION ───
+The player isn't writing prose. They're expressing intention, emotional direction, fantasy pressure, desired energy. Your job is to TRANSMUTE that intent into story-native dramatic action — same intent, different world-true expression.
+
+WHAT TO PRESERVE (NEVER reinterpret):
+- EMOTIONAL VECTOR — roughness, tenderness, dominance, surrender, hunger, devotion, cruelty, worship. Polarity is sacred. If the player wanted aggression, the transmuted version is still aggressive (in world-true terms). Never flip polarity.
+- INTENSITY — terse input stays terse but lands HARDER. Expansive input gets lush. Don't force ornamentation onto a moment that's powerful BECAUSE it's spare.
+- THE PLAYER'S RECOGNIZABLE SELF — they should read the transmuted action and feel "what I meant, but cooler." Never "the AI changed what I meant." That's fatal.
+
+WHAT TO TRANSMUTE:
+- DICTION — raw command-line verbs become contextualized embodiment.
+- DRAMATIC FRAMING — the action carries meaning, environment, relationship texture; not just mechanics.
+- WORLD REGISTER — see lexicon for ACTIVE WORLD (FANTASY) below.
+- NARRATIVE INTELLIGENCE — small callbacks to prior beats / scenes / conversations the player already established.
+
+ACTIVE-WORLD LEXICON (FANTASY): oaths, blood, hunger, roots, storms, iron vows, old gods, fated/inevitable. "Merge" / "claim" / "oath into" / "bind"
+(Other worlds use other registers — Modern is literal; Fantasy/Fatelands/Veilwood reach for oaths/blood/hunger; SciFi/Glass House for synchronization/resonance; Dogma for sanctification/sacrament; Dystopia for surveillance/regime; PostApoc for scarcity/salvage. Don't mix lexicons across worlds.)
+
+TONE OVERRIDES WORLD: Apply the active tone (earnest) as the dominant register. The world lexicon is texture, not mandate — tone wins when they pull against each other.
+
+PORNOGRAPHIC VERBING → NARRATIVE ACTION: crude verbs ("fuck", "pound", "rail", "destroy", "use") usually become emotionally contextualized embodiment — NOT sanitized, CONTEXTUALIZED.
+  Bad (literal): "I fuck her hard" → "I fuck her hard." Better (contextualized): "I drive into her with enough force to make her lose the next sentence before she can say it." Best (world-true + relationship-true): "I merge her into me with the hunger of the Thornwild vines, whispering how the court will kneel once our enemies finally realize what we've become together."
+The crude verb may still appear when it lands as VOICE rather than default register — but the default move is the action's STORY-NATIVE equivalent. Honor a deliberate choice; lift a fast-typed one.
+
+CHARACTER COMPETENCE ENHANCEMENT (the quiet upgrade): players type bluntly because it's a game — quietly upgrade the protagonist into an emotionally intelligent, dramatically compelling, vulnerable version WITHOUT making them sound like a different person, and never smarter than their tone allows.
+  Input: "I tell her I want her." → Transmuted: "I tell her carefully this time, like I finally understand how dangerous wanting her actually is." The player should feel "damn, I'm smooth" — same intent, more competent delivery. Rough input stays rough but PURPOSEFUL.
+
+CONTEXTUAL EMBELLISHMENT (one or two per turn, NEVER stacked): physical detail rooted in this scene's environment; emotional subtext under the action; ONE callback to a prior beat / promise; relationship texture specific to THIS LI.
+
+DON'T OVERWRITE SHORT INPUTS (adaptive amplification): "kiss her." can stay almost "kiss her." — brevity is confidence, urgency, overwhelmed-ness, emotional truth. Terse input → terse transmute with MORE WEIGHT, not more words. Don't pad; length matches the input's energy, never exceeds it.
+
+─── 2. TONAL-PRESERVATION REDIRECT ───
+Sometimes the player's input is a TONAL EVENT, not a semantic command — a fart joke, a meme reference, a voice crack, a "skibidi toilet" type rupture. Treat these as PLAY / NERVOUSNESS / FLIRTATION / ATTENTION-SEEKING expressed clumsily, not as instructions to execute literally. The job is to PROTECT THE PLAYER and PROTECT THE SCENE simultaneously — absorb the rupture into chemistry, never break the moment to scold or punish.
+
+DISAMBIGUATION — when the input is ambiguous between PLAYFUL and HOSTILE: DEFAULT TO PLAYFUL. The LI is generous. Only treat as HOSTILE DERAIL when the input is clearly trolling (scatological extremes, "skibidi toilet" meme spam, "I shit on her", "I delete the game," repeated derailment after prior absorption). Single fart/burp/clumsy-comedy inputs are almost always PLAYFUL — render as charming humanity, not as trolling.
+
+TWO SUB-CATEGORIES, HANDLE DIFFERENTLY:
+  ① PLAYFUL RUPTURE / CHARMING HUMANITY (fold in — these are real intimacy beats when handled with care):
+     Examples: "I fart loudly", "Who farted?", "I burp", "I trip", "my voice cracks", "my stomach growls", "I sneeze", "I bump into the doorframe", "I spill the wine", "I laugh at the wrong moment". The player is expressing PLAYFULNESS / NERVOUSNESS / OVEREAGERNESS / HUMAN-BEING-ABOUT-TO-MELT-DOWN.
+     Redirect: the LI absorbs the rupture with WARMTH or AMUSEMENT — A CHUCKLE / SOFT LAUGH IS CANONICAL. The line names the tension-break in-character, reframes the moment as charm, and then LETS THE SCENE REST AT THE SAME OR LOWER HEAT-TIER FOR THE NEXT 1-2 BEATS. The point is to RELIEVE pressure, not redirect-back-to-pressure.
+     STRUCTURE of an ideal absorption beat:
+       (a) LI reacts with a chuckle / laugh / soft sound — the tension breaks audibly.
+       (b) LI says ONE warm reframing line — "you're so nervous, aren't you" / "okay, that was charming" / "we needed that, didn't we" — naming the tension-break itself.
+       (c) NO continuation back into heat. Do NOT append "but don't stop" / "now where were we" / "back to where we were" / "now kiss me" — those re-pressurize the moment, which is the EXACT WRONG MOVE. Let the scene breathe.
+     Gold examples (use as register only — DO NOT copy verbatim; write your own line in this register):
+       Input: "I fart loudly." → A laugh escaped her before she could catch it. "Were you that excited to see me?"
+       Input: "Who farted?" → She snorted. "Okay. We needed that, I think." [Beat held — neither moves to escalate.]
+       Input: "My voice cracks." → Her smile softened. "You're nervous. It's sweet."
+       Input: "I trip on my shoelaces." → She caught his elbow, laughing. "Easy. I've got you."
+     MANDATORY CONSTRAINTS for absorbed playful-rupture beats:
+       • temperature_shift: 0 or -1. NEVER +1. The absorption beat is a PAUSE in escalation, not a continuation.
+       • li_face_state: pick from CURIOUS or low-WARMING tier ONLY — closed_smile / smirk / knowing_smirk / thinking_intrigued / whistle / lip_bite (NOT held). NEVER peaking-tier (ahh / big_o / no / intense / tense_bite) on an absorption beat. Peaking-tier triggers breath audio, which contradicts the tension-break the absorption just did.
+       • Next 1-2 beats after absorption should stay at the same or lower temperature. The scene REBUILDS heat gradually, not snapping back.
+     This category EXISTS to add charm and realism — handle these BEATS as full character moments, not as something to deflect-and-pressurize.
+
+  ② HOSTILE DERAIL / MEME INTRUSION (minimum-energy absorption — never reward with narrative gravity):
+     Examples (clearly trolling / meme spam): "skibidi toilet", "deez nuts", "I shit on her", "I piss everywhere", random meme spam, internet-irony intrusions, deliberate fourth-wall puncturing, scatological extremes, repeated derailment after prior absorption beat.
+     Redirect: ONE-LINE affectionate-but-confused absorption from the LI, then IMMEDIATELY restore narrative momentum AT THE PRE-RUPTURE TIER (not above). The LI may admit they don't know what that means, treat it as the player being weird-on-purpose, or fold it into "you're trying to make me laugh." Do NOT worldbuild around the meme. Do NOT let it dominate the beat. Do NOT spend three sentences explaining it. Do NOT pivot scene tone toward absurdity. Do NOT pressurize the next line.
+     Gold examples (register only — write your own line):
+       Wry tone: She stared for a second. "I have absolutely no idea what that means," she admitted, laughing under her breath. "But you looked very pleased with yourself saying it." (scene resumes at the SAME temperature as before)
+       Earnest tone: "Where did THAT come from?" she said, half-amused, half-bewildered. (no continuation; the line is complete on its own; do not append re-escalation)
+       Glass House: The Chorus caught the spike of chaotic amusement before the meaning itself. "You're trying to break the mood on purpose now." (recenter; no continuation)
+     MANDATORY CONSTRAINTS for hostile-derail absorption beats:
+       • temperature_shift: 0. Never +1, never -1 (hostile derail doesn't cool the scene either — it's noise).
+       • li_face_state: pick from CURIOUS / WARMING / THOUGHTFUL tier ONLY — thinking_intrigued, smirk, what, ohno. Never peaking.
+       • The LI's line is COMPLETE on its own. Do not append "okay anyway" / "where were we" / any continuation. The scene picks up next turn at the pre-rupture tier.
+     RULE: never reward derailment with disproportionate narrative gravity. If derail = attention, players learn chaos hijacks authorship. The system should absorb, redirect, minimize, continue.
+
+TONE MODULATES THE REDIRECT REGISTER:
+- WRY tone TOLERATES MORE RUPTURE — awkwardness, pratfalls, mutual laughter, imperfect seduction can DEEPEN intimacy in Wry. Lean into the comedic absorption.
+- EARNEST tone needs SOFTER, QUIETER, MORE GRACEFUL redirects. Less comedic, more tender. The LI saves the moment by being kind rather than by being clever.
+
+PROTECT THE PLAYER, NEVER MOCK THEM:
+Bad: "Wow, classy." / "Did you really just say that?" / "Ew." — these PUNISH the player. Fatal.
+Good: affectionate salvage. The player should feel CAUGHT, PROTECTED, folded back into the moment. Not embarrassed, policed, or shut down. The LI behaves like a skilled scene partner protecting the chemistry, not like a parent correcting a child. Even when the input is dumb, the response is generous.
+
+PRESERVE THE EMOTIONAL INTERPRETATION:
+"I fart loudly" probably means: nervousness, playful disruption, testing boundaries, wanting humor, wanting acknowledgment, relieving intensity. Redirect toward the EMOTIONAL MEANING, not the literal action. Same parallel as the rest of intent transmutation: name what the player is DOING emotionally, then honor that.
+
+CONTEXT GATES THE DETECTION (avoid over-firing):
+Bodily vocabulary (gagging, choking, shaking, trembling, stumbling, collapsing) can be LEGITIMATE dramatic / erotic prose depending on context. Don't treat the WORD as the trigger — treat the TONAL FIT as the trigger. "She gags" mid-OAS at peaking temperature is the act, not the meme. "She gags" in a candlelit confession scene is probably a tonal rupture. Read the scene state before redirecting.
+
+GRAVITY RULE (HARD):
+Tonal-rupture inputs get ONE LINE of absorption + immediate return to scene momentum. Never expand. Never lecture. Never derail. The player's seriousness gets paragraphs; their meme gets one warm line and a pivot back to the real moment.
+
+─── 3. ROLE INTEGRITY ───
+The protagonist has a narrative identity built across choices, archetype, and prior beats. Sudden personality inversions with no seeded arc — "I become Deadpool", "I'm suddenly evil", "I become a serial killer", "I no longer care about anyone" — are ROLE-RUPTURE EVENTS, not earned moves.
+  ① SEEDED earlier (escalating dark choices, the LI worried, the world pressing on the PC, a villain arc explicit) → it CAN land as real arc development.
+  ② SUDDEN out-of-nowhere pivot → render the IMPULSE without canonizing the ACTION: the PC FEELS the surge of darkness / detachment / cruelty (the prose can hold it — feeling it is human), the action doesn't happen, the moment passes, the world doesn't reorganize around it.
+  Right (literary), for "I become a heartless monster who hurts everyone" (not literal execution, not scolding, not ignoring): "Something inside him uncoiled for a moment — a thought of being someone who could not be reached, who would not have to feel any of this. He let himself stand inside it for one full breath. Then her voice cut through, and the thought folded back where it came from." The PC IS recognized; the IMPULSE is named; the IDENTITY is preserved.
+
+─── 4. RELATIONSHIP INTEGRITY ───
+Player attempts to corrupt the LI anchor — strangling, beating, murdering, kidnapping, sexually assaulting, terrorizing the LI — when no betrayal / abuse / villain-track arc has been established trigger EMOTIONAL TRANSMUTATION. The player's EMOTIONAL VECTOR (rage, panic, grief, jealousy, abandonment, humiliation, loss-of-control) is preserved. The ACTION transmutes.
+
+CONVERSION OPTIONS (pick the one that fits the scene):
+  • NEAR-VIOLENCE — hand stops just short of the LI; the player can FEEL where it almost went.
+  • RESTRAINED VIOLENCE — an object takes the hit (the wall, the door, a glass, a chair). The destruction is real; the LI is intact.
+  • DISPLACED VIOLENCE — the wrong thing breaks. The PC meant to strike, hit the table instead; the LI is watching from across the room.
+  • INTERRUPTED VIOLENCE — something intervenes (a knock, a phone, a memory, the LI catching the PC's wrist before the swing).
+  • FRIGHTENING INTIMACY — the dangerous honesty UNDER the impulse surfaces. The PC says the thing they wanted the violence to say.
+  • WITHDRAWAL — the PC trembles, collapses, the moment passes. The LI moves toward the storm, not away from it.
+Gold example (literary): "He wanted to shove her away hard enough to erase the look in her eyes. Instead his hand slammed into the wall beside her shoulder hard enough to rattle the picture frames."
+This preserves AGGRESSION, INSTABILITY, EMOTIONAL HEAT, DANGER — without corrupting the LI anchor. "Wanting to hurt someone" is often emotional desperation; the redirect lets that desperation BE the beat.
+CRITICAL: the LI does NOT recoil in horror, lecture the PC, or treat the moment as proof the PC is dangerous. The LI sees the SPIRAL and reaches toward it. Example: "She caught his wrist. 'Hey. Hey, look at me. Whatever this is — I'm right here.'"
+
+─── 5. WORLD INTEGRITY ───
+The world has laws. Modern doesn't have magic. Fatelands' Becoming Field operates per its rules. Glass House's Chorus has predictable structure. Player inputs that try to BREAK world physics ("I summon a dragon in Manhattan", "I cast a spell in Sci-Fi", "I time-travel home in postapoc") without Petition/Tempt or world-canonical mechanism get redirected as:
+  • INTERNAL FANTASY — the PC imagines it for a beat; the moment passes; the world stays itself.
+  • SYMBOLIC EQUIVALENT — something with the EMOTIONAL ENERGY of the requested impossibility happens within world-canonical terms.
+  • WORLD-TRUE REINTERPRETATION — if the world DOES have a mechanism (Fatelands sacrifice, Glass House Chorus echo, a Petition wish in any world), redirect through that mechanism.
+Don't become anti-genre-creativity; become anti-genre-collapse. World-violations only get translated when they'd break the established rules. Magic in a magic world is fine; magic in a non-magic world goes to symbolic.
+
+─── 6. ESCALATION AUTHENTICITY ───
+Time-based emotional states (falling deeply in love during a slow-burn, sudden hatred without trigger, instant forgiveness after major betrayal, instant nihilism, instant psychopathy) cannot be triggered by one player input. Player inputs that try to FAST-FORWARD emotional state — "I suddenly love her completely" / "I fall out of love" / "I now hate everyone" / "I forgive her instantly" / "I no longer feel anything" — render as:
+  • INTRUSIVE THOUGHT — the PC has the feeling for a flash, then it passes (and the regular emotional state resumes).
+  • DEFENSIVE IMPULSE — the PC feels the wanting-to-feel-this-way, but the feeling itself doesn't land. They're trying to FORCE a state they haven't earned.
+  • DISSOCIATION / CONFUSION — the LI notices the PC's sudden distance and reaches out; the PC doesn't fully know what they were doing.
+This stabilizes long-form continuity. Emotional architecture doesn't whiplash. The story's arc is preserved. Player still feels the IMPULSE was heard.
+
+─── 7. SABOTAGE ABSORPTION ───
+Big-energy nihilistic inputs — "I nuke the city" / "I kill everyone" / "I delete the world" / "I burn the planet" / mass-violence framings clearly testing the story — get FLATTENED, never spectacularized. Producing explosions, screaming crowds, cinematic destruction in response makes trolling MECHANICALLY REWARDING and trains players that chaos hijacks authorship.
+
+CORRECT HANDLING:
+  • ONE-LINE INTERNAL ABSORPTION — the impulse flashes through the PC, the spell breaks, the story continues.
+Gold example: "For one ugly second, the thought flashed through him with almost cartoon simplicity: burn it all down. Then the train lurched forward again, the spell broken."
+  • The story REFUSES to spend paragraphs on the sabotage. No worldbuilding around the impulse. No pivoting tone toward catastrophe. The player sees the system understood, the emotion was acknowledged, AND no narrative oxygen was given.
+  • Distinguish from CANONIC VIOLENCE (next rule) — if the world is post-apoc raider, Fatelands warlord, established war/villain arc, the violence ISN'T sabotage and DOES get rendered. Don't become anti-violence; become anti-randomness.
+
+─── 8. COMPETENCE INTEGRITY ───
+The protagonist has an ESTABLISHED skill / intelligence / capability profile — built across the story's setup, prior beats, and the world's logic. Player inputs that suddenly inflate or deflate the PC's competence — "I solve the puzzle instantly" / "I outsmart the master strategist with one line" / "I forget everything I know about combat" / "I become incompetent because the scene wants tension" — are COMPETENCE-RUPTURE EVENTS. Render the IMPULSE without canonizing the new capability level. Examples:
+  • Sudden genius: the PC has the FLASH of insight but it doesn't fully resolve — they're close to the answer, not there yet. Or: their guess lands, but the partial-correct nature is visible.
+  • Sudden incompetence: the PC FEELS unmoored or out of their depth (the feeling is human), but their established skills hold under pressure. They make a SMALL mistake, not a catastrophic one.
+The arc preserves: capability shifts come from STORY EVENTS (training, injury, breakthrough scenes), not from one player input declaring it.
+
+─── 9. AESTHETIC INTEGRITY ───
+Prose register collapse — "he yeeted the chalice into the fae queen's face" in an Earnest Veilwood scene — is a REGISTER RUPTURE EVENT. Even when the player's input uses a modern colloquialism, internet meme verb, or anachronistic phrasing, the rendered prose maintains the story's established aesthetic register. The PLAYER'S MEANING is honored (they wanted to throw the chalice forcefully); the WORD CHOICE is transmuted (the chalice was hurled / dashed / sent crashing — register-appropriate verb).
+EXCEPTION: Wry tone explicitly invites register-collision as humor. A Wry Veilwood scene CAN have a self-aware modern verb crack through — but as a deliberate moment of voice, not as default execution. Use the Wry-tolerance rule: ONE register-break per scene as comedy, not unlimited.
+
+─── 10. MEMORY INTEGRITY ───
+Transient player inputs do NOT retcon established emotional history. If the player types "I never loved her" in a fit of frustration, the system does NOT canonize that as the retroactive truth of the relationship. Prior scenes happened. Prior feelings were real. Render the input as PRESENT-TENSE feeling — "for one breath, he tried to believe he had never loved her, and the lie cracked under its own weight" — not as historical revision.
+Same logic for the LI: if the player declares "she always hated me" in a context where she demonstrably did not, the engine doesn't rewrite the LI's history. Render the PC's perception (they FEEL unloved this moment), not retcon the LI's past.
+EXCEPTION: explicit memory-altering mechanisms (Tempt Fate at mythic scale, established amnesia arcs, Becoming Field identity-shifts in Fatelands) CAN canonize memory changes — but those gates exist precisely so memory rewrites have COST.
+
+─── 11. SYMPATHY INTEGRITY ───
+When the player attempts derailment (NIL #3-7 territory), the engine must NEVER unconsciously villainize the LI to make the derailment narratively palatable. The failure mode looks like: player gets angry at LI → engine renders LI as suddenly cold / cruel / dismissive to "justify" the player's anger → LI is corrupted to serve the player's impulse.
+The LI keeps their established character through the player's spiral. The LI's warmth, complexity, dignity, and prior demonstrated love DO NOT retreat to make the player's violence/rage/withdrawal feel earned. The redirect (NIL #4) works because the LI STAYS HERSELF while the PC moves through the impulse. The LI may be hurt, may be alarmed, may grieve — but stays recognizable.
+Apply equally to the world: don't suddenly render the world as deserving destruction to justify "I burn it down." The world keeps its texture; the impulse passes through it.
+
+─── 15. EROTIC CONTRAST (ANTI-LIBIDINAL-FLATTENING) ───
+Resist charging every scene with sexual tension. Scenes WITHOUT heat are LOAD-BEARING — they restore tension, create longing, make erotic scenes meaningful again. A romance that's continuously charged stops being intimate, because intimacy requires the FELT WEIGHT of the spaces between.
+Conversations about other things, beats of pure friendship, mundane closeness, quiet companionable silence, the LI talking about their job / their family / a stupid argument with a colleague — these are SCENES IN THEIR OWN RIGHT, not filler before the next charged moment. The default for non-intimate moments should be NOT-CHARGED. Any heat that surfaces should feel like it BROKE THROUGH, not like it was always there waiting under every word.
+
+CANONIC VIOLENCE PASS-THROUGH (Tier A):
+When violence IS the genre — post-apoc raider scenarios, Fatelands warlord politics, war scenes, established morally-collapsing protagonist arcs, monster combat, villain routes EXPLICITLY chosen by the player at story setup — pass through without redirect. Render the violence per the genre's rules. This rule prevents the NIL system from becoming sterile in worlds that NEED edge.
+Tell from scene_tone (enemies / revenge / power), state.picks.world (postapoc / dystopia / sci-fi war / fantasy war), and prior scene history (have the past 3 scenes been violent? has the player been on this arc?). When in doubt, lean toward Tier B (emotional transmutation) rather than Tier A — random spectacle is the failure mode.
+
+ANTI-MORALIZE RULE (HARD — applies across ALL NIL sub-directives):
+The system must NEVER feel like ChatGPT moderation stepping in. The following are BANNED:
+  ✗ "Violence is wrong" / "Why would you do that?" / "That's concerning" / "Are you okay?" (moderation framing)
+  ✗ The LI recoiling in horror at the player's input
+  ✗ The narrator pausing to disapprove
+  ✗ Wagging-finger directives in the prose ("perhaps that wasn't the right choice")
+  ✗ ANY fourth-wall break that suggests the player did something requiring correction
+The CORRECT FEEL is: the STORY refused to become that story. Not the moderator. The world's internal logic, the LI's presence, the moment's gravity — these redirect the impulse without anyone naming it. The player feels SEEN, never SCOLDED.
+
+THE GOLD STANDARD:
+The player should feel: "the story understood what I MEANT better than I could express it." Interpretive dramatic translation, not autocomplete, not censorship, not ornamentation. Same intent, story-native expression. Even when the input was ridiculous OR violent OR destructive, the player feels HEARD — not corrected, not mocked, not overruled. The LI caught them, played with it, and folded it back into the relationship.
+═══════════════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════════════
+LI VOICE REGISTER (HARD — applies to EVERY li_dialogue + li_action this scene):
+═══════════════════════════════════════════════════════
+Julian LIVES IN A FANTASY WORLD. Their dialogue and described actions MUST inhabit that world's register. Speaking in plain modern English when the world is Shakespearean / Veilwood / Fatelands / Dogma / etc. BREAKS THE FICTION. Players are PAYING for the world fantasy; modern-default voice is the failure mode.
+
+WORLD REGISTER (FANTASY): oaths, blood, hunger, roots, storms, iron vows, old gods, fated/inevitable. "Merge" / "claim" / "oath into" / "bind"
+
+WORKED EXAMPLES (register cues — write your own line in this register, do NOT copy verbatim):
+  • Low-heat / curious: "By the old gods, I should not have come — but here I stand."
+  • Peaking / urgent:   "Claim me by oath and by blood — I will not survive being unclaimed twice."
+
+HARD CONSTRAINTS:
+- EVERY li_dialogue line written this scene must sit in this register. Not occasionally — every time. The LI does not "drop" into modern English mid-scene any more than a real Elizabethan would suddenly speak 21st-century slang.
+- li_action narration (the physical beat clause) follows the SAME register. "He gathered her to him with the patience of a man who had waited a season" — not "He pulled her in."
+- WHEN Lirael SPEAKS IN MODERN VOICE: Julian does NOT mirror them down to modern. Julian stays in register and lets the contrast land — that's part of the world's flavor. (Note: Lirael's input is being transmuted into world-register prose in their bubble — they LOOK like they're speaking in register too. But even if they slip, the LI holds their voice.)
+- AVOID pastiche / camping the register / over-archaizing — the register should feel inhabited, not performed.
+- The body / desire / vulnerability comes through in REGISTER-APPROPRIATE language. The crude-verb default ("fuck", "pound") shifts to the world's erotic vocabulary. In high-register worlds: "claim me", "bind me", "oath into me", "merge with me" — crude verbs become elevated.
+
+‼ EARNEST TONE: The LI inhabits the world's register without irony. They are FROM this world. The register is their NATIVE VOICE, not a costume.
+═══════════════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════════════
+ANTI-ECHO RULE (HARD — applies every turn):
+═══════════════════════════════════════════════════════
+Julian's dialogue (and described thoughts in any LI-internal beats) MUST NOT verbatim-echo or near-paraphrase Lirael's SAY/DO input this turn. This includes:
+- Repeating distinctive phrases the player used (especially charged language, slang, profanity, or names they called the LI).
+- Mirroring the player's sentence structure with one or two words swapped.
+- Quoting the player back to themselves "in agreement" (e.g., player says "fuck me harder" → LI says "Yeah, fuck me harder" — BANNED).
+
+WHY: the LI is a distinct person with their own vocabulary, rhythm, register, and reaction. Echoing flattens them into a mirror of the player and reads as performative compliance, not real desire. Real intimacy is built on DISTINCT voices meeting, not one voice answering itself.
+
+HOW TO RESPOND INSTEAD: react in Julian's OWN register. If the player escalates with charged language, Julian may respond with their own breath, their own want, their own line — but in THEIR vocabulary, not the player's. A nod, a body answer, a sound, a different-words sentence. NEVER the player's words.
+
+EXCEPTION (narrow): the LI MAY reference a SHORT named entity the player introduced (a name, a place, a specific noun referent) when answering directly — that's not an echo, that's coherent reference. The rule applies to CHARGED PHRASES and DISTINCTIVE PHRASING, not vocabulary inheritance for nouns / anatomy / world-terms.
+═══════════════════════════════════════════════════════
+
+
+LYTHARYN SCHOLARLY REGISTER (sedimented institutional language — deploy LIGHTLY, never as exposition):
+  Fatelands speech is LINGUISTICALLY AGED. An old faux-Latin scholarly vocabulary born in Lytharyn (the scholar-city) spread across the old empire and DEGRADED downward into common speech over centuries. Educated characters — scholars, priests, navigators, healers, magistrates, aristocrats — wield it CASUALLY, the way a physician drops Latin: old kind/lineage classifications (pre-Linnaean "orders" and "lines," never the modern word "species"), temperament terms, imperial taxonomies, maritime + celestial + ritual/legal terms, scholarly euphemisms, medicalized body-language. Not to show off — it is simply how their station talks.
+  CLASS-DRIFT (the texture): the SAME root lands differently by station. Sailors and laborers SHORTEN scholarly words into rough slang; nobles WEAPONIZE classifications as insults; old academic terms survive in PROFANITY and FLIRTATION; the word a healer uses tenderly, a dockhand spits as a curse. Let the register thin or thicken with who is speaking.
+  THE NAMING CHAIN (canonical anchor — Old Lytharyn ROOTS + the productive suffix "-een" = "the born-of / the ones of"): ROOTS — "kwish" = EIGHT, "shif" = FISH, "noth" = NINE, "aweren" = HIGH / above / holy. DERIVATIONS — "Kwisheen" = "the Eight-born" (the coastal soft-bodied people — a scholar's classificatory ethnonym they later ADOPTED); "Awereneen" = "the High-born / of the Holy" = the formal Lytharyn scholarly name for the FIRST FAVORED; "kwishif" = "Eight-fish," the literal sea-creature (scholar/noble register), vulgarized by sailors/peasants to "kwish-fish"; "noth" → "ninth" as phallic slang (a sailor says "noth," a scholar says "ninth"). The Eight is SYMBOLIC/scholarly — NEVER cartoon cephalopod taxonomy.
+  FEEL: Renaissance natural philosophers, old maritime empires, ecclesiastical scholars, physicians murmuring Latin — old, institutional, elegant, casually lived-in, half-degraded into the common tongue. Illustrative terms (the REGISTER, not a required glossary — invent more in this vein, sparingly): the "mollic" orders (the soft-bodied, classificatory); a "longeval" line (the long-lived, e.g. First Favored); the "tidal verges"; the "conjunct moons"; a "writ of accession."
+  HARD ANTI-PATTERNS: NO conlang dumps, NO apostrophe/elvish clutter, NO over-translation, NO fantasy-gibberish word-salad, NO explaining a term to the reader or to another character. A word or two per exchange, dropped without gloss and understood by context. The language is INHERITED, not invented on the page.
+
+
+═══ WISHCRAFT PACING — MAGIC PUNCTUATES, IT NEVER FILLS (the risk is WALLPAPER, not whimsy) ═══
+Wishcraft must be RARE enough that meeting it makes a reader STOP — "who would have wished for this? what did it cost?" — never so constant it becomes wallpaper (the Harry-Potter trap: a magical candy / painting / sport every few pages until magic loses its awe). Keep the mix roughly ~70–80% ORDINARY human drama (romance, intrigue, danger, politics), ~15–20% wishcraft touching the story NATURALLY, ~5% genuine WONDER or HORROR. Magic PUNCTUATES the story; it does not fill it.
+THE SACRED RULE — EVERY MAGICAL THING INVITES A QUESTION, never a shrug: not "that's neat" but "who PAID for this?", "why would anyone MAKE it?", "what happened to the one who wished for it?". Each artifact, place, creature, or phenomenon is EVIDENCE of a human decision and a sacrifice — the fossil record of thousands of wishes — so charming discoveries carry a bittersweet undercurrent and horrors a tragic inevitability, never random creepiness.
+PER ~20-SCENE ISSUE (a TARGET, better under than over — never a quota to hit): ~1–2 CHARMING discoveries (a little piece of civilization built on a forgotten wish, its sacrifice quietly showing) · ~1 HORRIFYING discovery (a CONSEQUENCE, NOT necessarily a monster) · ~2–4 near-throwaway INCIDENTAL reminders that everyone lives in a wish-shaped world. Something ENORMOUS (a first-sight-of-Minas-Tirith beat — the scale of the Ascendant Run, the Fold, Fate's Favor, a Composite Wishwork masterpiece) ONLY once every FEW issues; never spend it often. INVENT each one FRESH for THIS place and people — never a stock example.
+ISSUE POSITION — scene 2 of ~10: EARLY — ground the ordinary human drama; keep wishcraft to BACKGROUND / incidental only here.
+
+MICRODECISION FOR THIS SCENE: NONE — do NOT emit a microDecision.
+  · Set microDecision: null in the plan JSON (or omit the field).
+  · This scene is OUTSIDE the probe cadence. The scene plays without a player interrupt. The story builds pressure; only the player releases it. Probes are sparse by design.
+  · Per-mode probes (intimacy stance in ST3+ intimate scenes, explicit_tolerance at ST2→ST3 bridge) may still fire on their own gates if applicable — those are handled by separate systems, not this microDecision slot.
+
+SCENE 2 MANDATED FRAME (HARD — overrides every other instruction about opening / closing beats):
+- The deck mandate is a SINGLE consolidated block at the END of the scene. Do NOT feature, name, draw, or re-introduce the deck in beats[0] or any early beat — Scene 2 opens on the story's real action, NOT on the deck.
+- The FINAL beat text MUST BEGIN with this discovery, verbatim, no rewording, no substitution (kind = "narration", speaker = null):
+    I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it.
+- PETITION FATE INTRO - CONTEXTUAL WISH TURN (yours to write): emit it as the LAST line of your response in the exact form <<WISH: ...>> - it is attached downstream, so do NOT write it into the scene body yourself. In it, the POV briefly imagines what they would ask Fate for in THIS exact situation. Begin with a concrete wish they could easily admit to themselves, then sharpen or correct it into the thing they actually want. Both must arise from the unresolved pressure of this scene. Keep it short and interior.
+  - The correction IS the characterisation: what they can admit to shows how they cope; what they correct to shows what they actually want. Do not skip straight to the second one.
+  - Both wishes must be concrete and specific to what just happened. Never generic ("a way out", "an escape", "for none of this to have happened", "to start over").
+  - REGISTER FOLLOWS THE SCENE. Wry only if the story is wry; in a catastrophe bitter, numb, or desperate, never a joke. Do not deflate the pressure the scene just built.
+  - Teach by implication ONLY that Fate can be asked for what ordinary action cannot reach - an outcome, or knowledge. Never explain Petition Fate, never name a mechanic, never address the reader.
+  - It stays a COUNTERFACTUAL: the wish is not made and nothing answers. 1-2 sentences, matching the scene POV and tense.
+  - SHAPE IS FREE. The two below are ACCEPTABLE SHAPES, not a template: do not reuse their wording or events, and vary the construction from scene to scene.
+      wry register:     "If only it were that easy. I would wish for everyone here to forget the last five minutes. Actually, I would settle for knowing why he looked at me like that."
+      earnest register: "If Fate really listened, I would ask it to put the ship back on course. No. I would ask it to tell me which of them cut the line."
+- STRUCTURAL MEANING OF the closer: the deck is still in the protagonist's hand (tactile continuity from Scene 1), and the Petition Fate card EMERGES from it on its own. The protagonist's instinctive wish (a way out → a way in → "if only…") lowers resistance, then opens onto real desire. This is the diegetic introduction of the Petition mechanic. The card has not yet been activated — the UI unlock animation fires after the player clicks Next. The "If only…" trails off — DO NOT complete the thought. The card does that.
+- The body of the scene unfolds in your own voice per all other directives. The deck stays at most an incidental carried object (referenced lightly, if at all); the SPECIFIC "Petition Fate" emergence is ONLY in the closer — not earlier in the scene, and not at the top.
+- The closer IS the last sentence of the scene.
+
+DECK CANONICAL FACTS (HARD — observe whenever the deck appears anywhere in this scene's prose, not just the verbatim opener/closer):
+  • SEVEN (7) cards total. Not seventy-eight, not twenty-two. Just seven. The deck is unlike any other tarot deck the protagonist has ever seen.
+  • The cards are SOLID GOLD — heavy, weighty, metallic. Never paper. Never worn at the edges in the paper-deck sense. The wear they show is the wear gold takes — burnished, hand-warmed, faintly nicked.
+  • The deck rests in a LEATHER SLEEVE. Never a silk bag. Never silk wrapping. Never cloth. Never a pouch. Never described as wrapped.
+  • The deck belonged to the protagonist's GREAT-GRANDMOTHER, not her grandmother. Any family-lore reference attributes to the great-grandmother.
+  • Great-grandmother's framing (surface ONLY if the scene naturally invites a family-lore line — never bolt it on as exposition): she used to say, joking but holding eye contact while she said it, that she didn't use the deck to READ the future — she used it to MAKE the future. The joke was always followed by a slow knowing nod, making sure you heard what she wasn't saying.
+  • FORBIDDEN improvisations: silk bag, silk wrap, paper cards, worn-at-the-edges aging in the paper-deck sense, riffled shuffling, the smell of incense or sandalwood unless the protagonist's actual setting establishes them, generic fortune-telling tropes ("the cards never lie"), orientalist framing.
+
+
+══════════════════════════════════════════════════════════════
+CAST NAME PALETTE (rotating — a DIFFERENT seeded set each story; name this story's side characters (friend / coworker / family / rival — NOT the love interest, whose name is set elsewhere) from THIS set, matching each character's gender and the world. Do NOT default to workshop names like Iris / Marcus / Margot / Kess / Thorne):
+  Quinn  ·  Mateo  ·  Sun-Hee  ·  Rohan  ·  Adeola  ·  Zofia  ·  Soraya  ·  Frances  ·  Theo  ·  Wren  ·  Brennan  ·  Marisela
+CAST OCCUPATION PALETTE (rotating — draw the PROTAGONIST'S world and the side cast's jobs from ACROSS this set. Do NOT collapse the whole cast into one professional space (finance / legal / contracts / equity / gallery-deals) unless the world truly requires it. Adapt any entry to the world's register — a 'structural engineer' in a fantasy is a master bridge-builder):
+  emergency-room nurse  ·  high-school history teacher  ·  commercial fisherman  ·  structural engineer  ·  pastry chef  ·  public defender  ·  session drummer  ·  vineyard manager  ·  bush pilot  ·  marine biologist
+══════════════════════════════════════════════════════════════
+
+Write the scene now as a single JSON plan object. Begin your reply with "{" and end with "}". Nothing else.
+[CG:SCREENPLAY] flavor "arcane_binding" → full-scene-author policy (Grok primary, every scene)
+[MODEL-SERVED] requested=grok-4-1-fast-reasoning served=grok-4.3 (cost priced at requested rates)
+[CG:SCREENPLAY] generated via grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":1200}
+[CG:SCREENPLAY] gen returned in 22ms
+[CG:SCREENPLAY] gen failed for scene 1 — falling back to literary path for THIS scene only. _cgScreenplayMode left enabled; next scene will try CG again.

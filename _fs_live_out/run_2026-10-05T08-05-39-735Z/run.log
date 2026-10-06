@@ -1,0 +1,16 @@
+*** 1 reservation(s) from an earlier run never settled — $0.250000 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $3.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $3.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.251700
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  0ms
+  *** STOPPING — the OAS deck never mounted at turn 1 (checked #gnCardMount, #cardMount, #intimacyDevCardMount, document; none had visible cards) ***
+
+*** RUN ERROR: page.waitForTimeout: Target page, context or browser has been closed ***

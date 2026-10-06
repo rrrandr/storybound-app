@@ -1,0 +1,94 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.099769
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  0ms
+  call  2  [fixture] gpt-4o-mini                  no receipt  1ms
+  call  3  [fixture] ministral-8b-2512            $0.000100  1ms
+  call  4  [fixture] grok-4-1-fast-non-reasoning  $0.000100  0ms
+  call  5  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  0ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call  9  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 11  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 13  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call 14  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 15  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  call 16  [fixture] ministral-8b-2512            $0.000100  0ms
+  call 17  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  call 18  [fixture] gpt-4o-mini                  $0.000100  0ms
+  turn 7 plays OAS slot "boundary" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      SAY "One thing at a time."
+      DO  "I make the rule out loud."
+  turn 7: replies 6 -> ended (beats 6 -> -)
+  OAS is no longer accepting input
+  interruption: {"present":true,"submitted":true,"pending":false}
+  axis decision: {"needed":true,"promptMounted":true,"recorded":{"axis":"run in shame vs remain and see where Julian was taking it","choice":"posture","label":"I make the rule out loud.","source":"interruption_submit","at":1791220496980,"storyId":"7dbf0e56-e78a-43fe-812e-ba8fde9b86b6"}}
+  turns 7 · resolved=true · archive=1 · interruptionSubmitted=true
+  exposure $0.119481
+
+── SCENE 2 (live) ──
+  scene 2 plays card 3 "boundary" [NO PREVIEW POPULATED]
+  call 19  [fixture] ministral-8b-2512            $0.000100  1ms
+  call 20  [fixture] grok-4-1-fast-non-reasoning  $0.000100  1ms
+  call 21  [fixture] ministral-8b-2512            $0.000100  0ms
+  outcome: no-generation · scenes 0 -> 0 · notes 0 · exposure $0.119781
+  *** STOPPING — scene 2 did not complete (no-generation). Not restarting; reporting as found. ***
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 21
+  MEASURED (receipts)    : $0.002000
+  no receipt             : 1 call(s), estimated $0.018012 — NOT counted as measured
+  retained (no receipt)  : $0.018012 — kept as exposure, NOT forgiven
+  prior runs             : $0.099769
+  TOTAL EXPOSURE         : $0.119781
+  ceiling                : $5.00  [HALTED: scene 2 did not complete (no-generation)]
+  CACHED TOKENS          : 0 of 20000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.011700
+  unresolved to date $0.108081
+  TOTAL vs ceiling   $0.119781 of $5.00
+
+output: _fs_live_out/run_2026-10-05T17-12-57-102Z

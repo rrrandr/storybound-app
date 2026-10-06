@@ -1,0 +1,10 @@
+{
+  "calls": 29,
+  "receipted": 0.0011000000000000003,
+  "retainedUnresolved": 0.41581500000000005,
+  "priorExposure": 2.1475215000000003,
+  "totalExposure": 2.5644365000000002,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "no scene Fate cards were offered at scene 3"
+}

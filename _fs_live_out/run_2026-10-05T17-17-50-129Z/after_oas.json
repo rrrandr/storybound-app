@@ -1,0 +1,119 @@
+{
+  "turnsTaken": 7,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": true,
+    "promptMounted": true,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "posture",
+      "label": "I tell her the order.",
+      "source": "interruption_submit",
+      "at": 1791220785422,
+      "storyId": "7dbf3f63-907e-4f27-80e8-05834f011667"
+    }
+  },
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "Ask me again, slower.",
+        "pcDo": "I step close enough that the stone warms between us",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I held it when it twisted. I felt it choose.",
+        "pcDo": "I turn The Answer so the cut edge faces him",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I held it when it twisted. I felt it choose.",
+        "pcDo": "I turn The Answer so the cut edge faces him",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  }
+}

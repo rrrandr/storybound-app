@@ -1,0 +1,138 @@
+{
+  "turnsTaken": 7,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "resume",
+      "at": 1791247663497,
+      "storyId": "df4a034f-41ae-4711-8904-58c8f6ec3d87"
+    }
+  },
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:6a5ace27-ed54-4cea-8808-dd39c41f07c9",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:6a5ace27-ed54-4cea-8808-dd39c41f07c9",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I held it when it twisted. I felt it choose.",
+        "pcDo": "I turn The Answer so the cut edge faces him",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Ask me again, slower.",
+        "pcDo": "I step close enough that the stone warms between us",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Ask me again, slower.",
+        "pcDo": "I step close enough that the stone warms between us",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  }
+}

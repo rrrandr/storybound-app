@@ -1,0 +1,124 @@
+{
+  "outcome": "no-generation",
+  "before": {
+    "count": 0,
+    "lastUid": null
+  },
+  "snap": {
+    "label": "scene2",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Ask me again, slower.",
+        "pcDo": "I step close enough that the stone warms between us",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "scene": 2,
+      "deck": {
+        "count": 5,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "0:1",
+        "labels": [
+          "temptation",
+          "silence",
+          "reversal",
+          "boundary",
+          "confession"
+        ]
+      },
+      "chosenIdx": 3,
+      "submitted": {
+        "action": "",
+        "dialogue": ""
+      }
+    }
+  ]
+}

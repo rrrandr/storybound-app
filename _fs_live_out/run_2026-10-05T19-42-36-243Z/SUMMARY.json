@@ -1,0 +1,10 @@
+{
+  "calls": 19,
+  "receipted": 0.0009000000000000002,
+  "retainedUnresolved": 0.06770250000000003,
+  "priorExposure": 1.0796355000000002,
+  "totalExposure": 1.148238,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "scene 2 never rendered, so no scene-end deck could be offered ({\"cgScenes\":0,\"interruptionLive\":false,\"mounted\":false,\"hasProjection\":false})"
+}

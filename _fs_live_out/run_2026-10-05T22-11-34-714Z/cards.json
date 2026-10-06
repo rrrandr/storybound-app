@@ -1,0 +1,796 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 0,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": false
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 2,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 3,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "I set the ledger flat and leave my hand on it",
+      "dialogue": "Not here. Not in front of them."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 4,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I go still and let the clearing finish its noise",
+      "dialogue": "mm"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 5,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I turn The Answer so the cut edge faces him",
+      "dialogue": "I held it when it twisted. I felt it choose."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 6,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 7,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": "temptation",
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": "silence",
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": "reversal",
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": "boundary",
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": "confession",
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 3,
+    "slot": "boundary",
+    "preview": {
+      "action": "I set the ledger flat and keep my hand on it",
+      "dialogue": "Not here. Not in front of them."
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "scene": 2,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "1:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 0,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 3,
+    "submitted": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 50,
+        "d": 29
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 3,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "2:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 1,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 51,
+        "d": 21
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 4,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "3:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 2,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 2,
+    "submitted": {
+      "action": "I turn The Answer so the cut edge faces him",
+      "dialogue": "I held it when it twisted. I felt it choose.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 43,
+        "d": 44
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 5,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "4:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 3,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 50,
+        "d": 29
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 6,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "5:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 4,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 2,
+    "submitted": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 50,
+        "d": 29
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 7,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "6:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 5,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 0,
+    "submitted": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 50,
+        "d": 29
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 8,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "7:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 6,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 0,
+    "submitted": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 50,
+        "d": 29
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  },
+  {
+    "scene": 9,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "8:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 7,
+        "temptation": {
+          "a": 51,
+          "d": 21
+        },
+        "boundary": {
+          "a": 45,
+          "d": 31
+        },
+        "confession": {
+          "a": 43,
+          "d": 44
+        },
+        "reversal": {
+          "a": 50,
+          "d": 29
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower.",
+      "source": "gn",
+      "origin": "model preview",
+      "previewCached": true,
+      "gn": {
+        "a": 51,
+        "d": 21
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      }
+    }
+  }
+]

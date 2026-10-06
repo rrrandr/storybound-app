@@ -1,0 +1,158 @@
+{
+  "outcome": "no-generation",
+  "before": {
+    "count": 0,
+    "lastUid": null
+  },
+  "snap": {
+    "label": "scene2",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I turn The Answer so its cut edge faces him",
+        "pcDo": "amplify",
+        "pcSayRaw": "I turn The Answer so its cut edge faces him",
+        "pcDoRaw": "amplify",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I put The Answer down between us and do not let go",
+        "pcDo": "redirect",
+        "pcSayRaw": "I put The Answer down between us and do not let go",
+        "pcDoRaw": "redirect",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I close the gap and let my sleeve touch his",
+        "pcDo": "amplify",
+        "pcSayRaw": "I close the gap and let my sleeve touch his",
+        "pcDoRaw": "amplify",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "scene": 2,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "0:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 0,
+          "temptation": {
+            "a": 7,
+            "d": 43
+          },
+          "boundary": {
+            "a": 8,
+            "d": 44
+          },
+          "confession": {
+            "a": 7,
+            "d": 43
+          },
+          "reversal": {
+            "a": 8,
+            "d": 50
+          },
+          "silence": {
+            "a": 4,
+            "d": 48
+          }
+        },
+        "labels": [
+          "temptation",
+          "silence",
+          "reversal",
+          "boundary",
+          "confession"
+        ]
+      },
+      "chosenIdx": 3,
+      "submitted": {
+        "action": "",
+        "dialogue": "",
+        "source": "neither",
+        "gn": {
+          "a": 0,
+          "d": 0
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        }
+      }
+    }
+  ]
+}

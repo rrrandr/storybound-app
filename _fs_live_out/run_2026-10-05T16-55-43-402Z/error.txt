@@ -1,0 +1,2 @@
+ReferenceError: nextPick is not defined
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:805:18

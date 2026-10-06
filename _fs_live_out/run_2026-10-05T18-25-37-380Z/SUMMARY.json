@@ -1,0 +1,10 @@
+{
+  "calls": 19,
+  "receipted": 0.0008000000000000001,
+  "retainedUnresolved": 0.07551900000000002,
+  "priorExposure": 0.8663950000000002,
+  "totalExposure": 0.9427140000000003,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "scene 2 did not complete (no-generation)"
+}

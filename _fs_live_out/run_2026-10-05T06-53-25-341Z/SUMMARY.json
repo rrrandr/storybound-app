@@ -1,0 +1,10 @@
+{
+  "calls": 1,
+  "receipted": 0.0001,
+  "retainedUnresolved": 0,
+  "priorExposure": 0.0013000000000000002,
+  "totalExposure": 0.0014000000000000002,
+  "ceiling": 0.01,
+  "halted": true,
+  "haltReason": "the OAS deck never mounted at turn 1 (mount=true, cards=0)"
+}

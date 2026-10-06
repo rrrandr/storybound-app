@@ -1,0 +1,119 @@
+{
+  "turnsTaken": 7,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": true,
+    "promptMounted": true,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "posture",
+      "label": "I set the ledger flat and keep my hand on it",
+      "source": "interruption_submit",
+      "at": 1791224586491,
+      "storyId": "cf107cd9-03bd-4703-8893-d6b2deac5885"
+    }
+  },
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I turn The Answer so its cut edge faces him",
+        "pcDo": "amplify",
+        "pcSayRaw": "I turn The Answer so its cut edge faces him",
+        "pcDoRaw": "amplify",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I put The Answer down between us and do not let go",
+        "pcDo": "redirect",
+        "pcSayRaw": "I put The Answer down between us and do not let go",
+        "pcDoRaw": "redirect",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I close the gap and let my sleeve touch his",
+        "pcDo": "amplify",
+        "pcSayRaw": "I close the gap and let my sleeve touch his",
+        "pcDoRaw": "amplify",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I go still and let the clearing finish its noise",
+        "pcDo": "ruin",
+        "pcSayRaw": "I go still and let the clearing finish its noise",
+        "pcDoRaw": "ruin",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  }
+}

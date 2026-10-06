@@ -1,0 +1,27 @@
+{
+  "turnsTaken": 1,
+  "resolved": false,
+  "oasFinal": {
+    "dialogue": true,
+    "archive": 0,
+    "interruptionPresent": false,
+    "interruptionSubmitted": false
+  },
+  "interruption": {
+    "present": false,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": true,
+    "promptMounted": false,
+    "recorded": null
+  },
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": null
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "calls": 18,
+  "receipted": 0.0017000000000000006,
+  "retainedUnresolved": 0.018015,
+  "priorExposure": 0.08005400000000001,
+  "totalExposure": 0.09976900000000002,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "scene 2 card click FAILED: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.fate-card').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <div data-card-index=\"3\" data-gleam-applied=\"1\" class=\"fate-card flipped\">…</div>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    28 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+}

@@ -1,0 +1,268 @@
+{
+  "outcome": "accepted",
+  "creating": 7,
+  "leaving": 6,
+  "before": {
+    "count": 5,
+    "lastUid": "cg:da3cf95f-0748-4966-92ce-a4dd9185c8b7"
+  },
+  "snap": {
+    "label": "scene6",
+    "scenes": 6,
+    "texts": [
+      {
+        "uid": "cg:f153d2a1-5486-4e23-bfe5-8800752d8646",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      },
+      {
+        "uid": "cg:20b9e628-ddd7-4d19-84fe-87bd8cd28d8e",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nI realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…"
+      },
+      {
+        "uid": "cg:0918503a-8162-4e04-8ab1-7a0f6f4d52e2",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:500280df-95e4-41ff-8327-dab1fbf8bf2d",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:da3cf95f-0748-4966-92ce-a4dd9185c8b7",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:39dc0b67-70d5-43dc-ba9b-5fa3e6e3d77f",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:f153d2a1-5486-4e23-bfe5-8800752d8646",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:20b9e628-ddd7-4d19-84fe-87bd8cd28d8e",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:0918503a-8162-4e04-8ab1-7a0f6f4d52e2",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:500280df-95e4-41ff-8327-dab1fbf8bf2d",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:da3cf95f-0748-4966-92ce-a4dd9185c8b7",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:39dc0b67-70d5-43dc-ba9b-5fa3e6e3d77f",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "I held it when it twisted. I felt it choose.",
+        "pcDo": "I turn The Answer so the cut edge faces him",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "Not here. Not in front of them.",
+        "pcDo": "I set the ledger flat and leave my hand on it",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "mm",
+        "pcDo": "I go still and let the clearing finish its noise",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Then say it where they can hear you. Say it now.",
+        "liAction": "He does not move.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 6,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "5:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 4,
+          "temptation": {
+            "a": 51,
+            "d": 21
+          },
+          "boundary": {
+            "a": 45,
+            "d": 31
+          },
+          "confession": {
+            "a": 43,
+            "d": 44
+          },
+          "reversal": {
+            "a": 50,
+            "d": 29
+          },
+          "silence": {
+            "a": 48,
+            "d": 2
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 2,
+      "submitted": {
+        "action": "I turn The Answer so the cut edge faces him",
+        "dialogue": "I held it when it twisted. I felt it choose.",
+        "source": "gn",
+        "cardId": "confession",
+        "selectedIndex": 2,
+        "cacheEntry": {
+          "action": "I turn The Answer so the cut edge faces him",
+          "dialogue": "I held it when it twisted. I felt it choose."
+        },
+        "gn": {
+          "a": 43,
+          "d": 44
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "matched-response",
+        "evidence": "identical to the preview reply served for \"confession\" on call 3"
+      },
+      "provenance": {
+        "provenance": "matched-response",
+        "evidence": "identical to the preview reply served for \"confession\" on call 3"
+      }
+    }
+  ]
+}

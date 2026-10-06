@@ -1,0 +1,44 @@
+=== FS SEQUENCE — ceiling $1.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $1.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $1.100000
+
+── OAS (live) ──
+
+*** HALTED BEFORE DISPATCH — ceiling: exposure $1.100000 + next $0.002676 would exceed $1.00 (prior runs $1.100000) ***
+  interruption: {"present":false,"submitted":false,"pending":false}
+  axis decision (before servicing): {"needed":true,"promptMounted":false,"recorded":null}
+  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $1.100000
+
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $1.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 0
+  MEASURED (receipts)    : $0.000000
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $1.100000
+  TOTAL EXPOSURE         : $1.100000
+  ceiling                : $1.00  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.900000
+  unresolved to date $0.200000
+  TOTAL vs ceiling   $1.100000 of $1.00
+
+output: _fs_live_out/run_2026-10-05T20-52-12-815Z

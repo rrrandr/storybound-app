@@ -1,0 +1,113 @@
+=== FS SEQUENCE — ceiling $1.50 — LIVE ===
+Authorized by Roman with an explicit go, ceiling $1.50.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.576715
+
+── OAS (live) ──
+  call  1  mistral-small-latest           served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.000418)  7373ms
+  call  2  grok-4.20-0309-non-reasoning   served=grok-4.3                       in=  1378 cached=  128 out=   85  $0.005293  14810ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: template-fallback — both fields are the card id — the deck's own placeholder — encounter=opening OAS turn=1 card="confession"
+      SAY "Confession…"
+      DO  "Confession…"
+  call  3  gpt-4o-mini                    served=?                              in=  2851 cached=    0 out=  138  NO RECEIPT (est $0.003781)  5930ms
+  call  4  gpt-4o-mini                    served=?                              in=  1007 cached=    0 out=   79  NO RECEIPT (est $0.000623)  3800ms
+  call  5  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=   508 cached=  128 out=    5  $0.001653  4741ms
+  call  6  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46068 cached=  192 out=  283  $0.060311  11979ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=2 card="reversal"
+      SAY "I will find out what you know, and you will help me."
+      DO  "Take a breath and seize the moment."
+  call  7  ministral-8b-2512              served=ministral-8b-2512              in=  3137 cached=    0 out= 1007  NO RECEIPT (est $0.000896)  12190ms
+  call  8  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46040 cached=  192 out=  301  $0.060773  13091ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=3 card="boundary"
+      SAY "I won't say anything until I know what happened."
+      DO  "Step back, keeping the Answer steady in my grip."
+  call  9  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46280 cached=32960 out=  375  $0.025950  10059ms
+  call 10  gpt-4o-mini                    served=?                              in=   167 cached=    0 out=   63  NO RECEIPT (est $0.000268)  2881ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=4 card="confession"
+      SAY "I feel lost without your guidance in this."
+      DO  "Meet his gaze, vulnerability spilling out."
+  call 11  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46432 cached=32960 out=  295  $0.026397  12363ms
+  call 12  gpt-4o-mini                    served=?                              in=   178 cached=    0 out=   57  NO RECEIPT (est $0.000269)  2240ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=5 card="temptation"
+      SAY "What if I just told everyone the truth?"
+      DO  "Lean closer, letting his warmth seep into me."
+  call 13  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46554 cached=38400 out=  283  $0.021022  11543ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=6 card="silence" — a stale record is not provenance for this submission
+      SAY "*A silent breath, a moment suspended.*"
+      DO  "Hold the Answer tightly, my heart racing."
+  call 14  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46443 cached=  192 out=  304  $0.060182  11271ms
+  call 15  gpt-4o-mini                    served=?                              in=   176 cached=    0 out=   42  NO RECEIPT (est $0.000268)  2251ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  turn 7 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=7 card="boundary"
+      SAY "I won't say anything until I know what happened."
+      DO  "Step back, keeping the Answer steady in my grip."
+  call 16  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46412 cached=32960 out=  330  $0.026670  13538ms
+  call 17  gpt-4o-mini                    served=?                              in=   192 cached=    0 out=   61  NO RECEIPT (est $0.000272)  3146ms
+  turn 7: replies 6 -> 7 (beats 6 -> 7)
+  turn 8 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=8 card="confession"
+      SAY "I feel lost without your guidance in this."
+      DO  "Meet his gaze, vulnerability spilling out."
+  call 18  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46412 cached=39808 out=  321  $0.020832  18841ms
+  call 19  gpt-4o-mini                    served=?                              in=   190 cached=    0 out=   60  NO RECEIPT (est $0.000271)  2345ms
+  turn 8: replies 7 -> 8 (beats 7 -> 8)
+  turn 9 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=9 card="reversal"
+      SAY "I will find out what you know, and you will help me."
+      DO  "Take a breath and seize the moment."
+  call 20  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46440 cached=39808 out=  318  $0.019762  13631ms
+  turn 9: replies 8 -> 9 (beats 8 -> 9)
+  interruption: {"present":false,"submitted":false,"pending":false}
+  axis decision (before servicing): {"needed":true,"promptMounted":false,"recorded":null}
+  SCENE 2 created by the opening branch: NOT ACCEPTED · uid=null · 0 chars · cgScenes=0 · notes=0
+  *** STOPPING — the opening branch did not produce an accepted Scene 2 ({"cgScenes":0,"uid":null,"hasProjection":false,"chars":0,"notes":0}) ***
+  turns 9 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.912626
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  scene 2  NOT accepted  <- opening branch "run"
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $1.50  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 20
+  MEASURED (receipts)    : $0.328844
+  no receipt             : 9 call(s), estimated $0.007067 — NOT counted as measured
+  retained (no receipt)  : $0.007067 — kept as exposure, NOT forgiven
+  prior runs             : $0.576715
+  TOTAL EXPOSURE         : $0.912626
+  ceiling                : $1.50  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+  CACHED TOKENS          : 217728 of 426865 input (51.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json
+  receipted to date  $0.838376
+  unresolved to date $0.074251
+  TOTAL vs ceiling   $0.912626 of $1.50
+
+output: _fs_live_out/run_2026-10-06T01-17-51-250Z
