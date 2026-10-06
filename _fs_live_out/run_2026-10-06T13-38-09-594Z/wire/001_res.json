@@ -1,0 +1,1 @@
+{"error":"Mistral API request failed","provider_status":429,"governor":false,"details":{"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}}

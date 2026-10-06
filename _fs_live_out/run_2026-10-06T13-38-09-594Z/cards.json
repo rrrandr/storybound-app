@@ -1,0 +1,70 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 0,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": false
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Look him in the eyes, my voice trembling.",
+      "dialogue": "I want to believe you’re not manipulating me.",
+      "cardId": "confession",
+      "selectedIndex": 2,
+      "optionIds": [
+        "reversal",
+        "boundary",
+        "confession",
+        "temptation",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 0
+      },
+      "cacheEntry": {
+        "action": "Look him in the eyes, my voice trembling.",
+        "dialogue": "I want to believe you’re not manipulating me."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=1 card=\"confession\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  }
+]

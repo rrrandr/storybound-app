@@ -1,6 +1,6 @@
 {
-  "receipted": 0.83837565,
-  "unresolved": 1.10727408,
+  "receipted": 0.92164185,
+  "unresolved": 1.1164809,
   "outstanding": [],
   "runs": [
     {
@@ -23,6 +23,12 @@
       "run": "_fs_live_out/run_2026-10-06T05-55-51-294Z",
       "receipted": 0,
       "unresolved": 1.0330232400000001,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-06T13-38-09-594Z",
+      "receipted": 0.0832662,
+      "unresolved": 0.00920682,
       "outstandingAtExit": 0
     }
   ],

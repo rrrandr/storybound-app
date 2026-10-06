@@ -1,0 +1,52 @@
+Vercel CLI 50.4.0
+Retrieving project…
+> Ready! Available at http://localhost:3000
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: mistral-small-latest
+[MISTRAL-PROXY] Mistral API error: {
+  object: 'error',
+  message: 'Rate limit exceeded',
+  type: 'rate_limited',
+  param: null,
+  code: '1300',
+  raw_status_code: 429
+}
+[SPECIALIST-PROXY] Client preferredModel: grok-4.20-0309-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: INTIMACY_SPECIALIST, Model chain: grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4.20-0309-non-reasoning
+[SPECIALIST-PROXY] latency=8935ms model=grok-4.3 effort=none (chain="grok-4.20-0309-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.20-0309-non-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: SPECIALIST_RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4-1-fast-non-reasoning
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=3276ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] usage {"prompt_tokens":3140,"total_tokens":4030,"completion_tokens":890,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muwq73q6_czh1kkqt released=9036 held=4030 exact=true
+[SPECIALIST-PROXY] latency=11284ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":4553,"total_tokens":4820,"completion_tokens":267,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muwq7gqs_8z8l4b03 released=13892 held=4820 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":6367,"total_tokens":7685,"completion_tokens":1318,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_muwq7kje_0gwwf2ni released=19960 held=7685 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] latency=9535ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=8197ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded

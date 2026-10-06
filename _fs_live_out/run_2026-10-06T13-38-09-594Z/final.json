@@ -1,0 +1,22 @@
+{
+  "label": "final",
+  "scenes": 0,
+  "texts": [],
+  "notes": [],
+  "oas": [
+    {
+      "pcSay": "I long to believe you weave no fate around me.",
+      "pcDo": "I hold his gaze, my voice trembling with the weight of old oaths.",
+      "pcSayRaw": "I want to believe you’re not manipulating me.",
+      "pcDoRaw": "Look him in the eyes, my voice trembling.",
+      "liDialogue": "You shaped Seren’s wish with nothing but the hunger your eyes draw from every soul present. Did you call to me hoping I would bind you to safety before them all?",
+      "liAction": "He leans nearer, the Answer’s cold metal pressing between our palms as his stare pins me in place.",
+      "faceState": "still",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "manipulation"
+    }
+  ]
+}

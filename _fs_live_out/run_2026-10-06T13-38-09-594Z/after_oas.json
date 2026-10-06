@@ -1,0 +1,71 @@
+{
+  "turnsTaken": 1,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "resume",
+      "at": 1791294019441,
+      "storyId": "f6d338cd-f9e8-4d49-ab02-720481376025"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 1,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 1,
+  "laneContradiction": null,
+  "modelBackedReplies": 1,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I long to believe you weave no fate around me.",
+        "pcDo": "I hold his gaze, my voice trembling with the weight of old oaths.",
+        "pcSayRaw": "I want to believe you’re not manipulating me.",
+        "pcDoRaw": "Look him in the eyes, my voice trembling.",
+        "liDialogue": "You shaped Seren’s wish with nothing but the hunger your eyes draw from every soul present. Did you call to me hoping I would bind you to safety before them all?",
+        "liAction": "He leans nearer, the Answer’s cold metal pressing between our palms as his stare pins me in place.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "manipulation"
+      }
+    ]
+  }
+}
