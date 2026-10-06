@@ -196515,7 +196515,8 @@ No text, no watermark, no UI elements, share-ready.`;
           if (seen[key]) return;
           seen[key] = 1; marks.push(key);
         });
-        if (marks.length) out.push({ truthIndex: i, markers: marks, text: txt.slice(0, 180) });
+        if (marks.length) out.push({ truthIndex: i, markers: marks, text: txt.slice(0, 180),
+                                            fullText: txt });
       });
     } catch (_) {}
     return out;
@@ -196599,32 +196600,48 @@ No text, no watermark, no UI elements, share-ready.`;
       // staging it is the scene's JOB, and this guard must not stand in the way of it.
       var groups = _reservedGroupsInForce(s || window.state, sceneNum).inForce;
       var hay = text.toLowerCase();
-      // ── A MARKER FROM A PROPER NOUN MUST MATCH A PROPER NOUN (Roman/Codex 2026-10-06) ──────
-      // Markers are harvested from the reserved truth by taking CAPITALISED words
-      // (/\b[A-Z][a-z]{2,}\b/, ~line 196509) and lowercasing them, so the venue "The Open" yields
-      // the marker "open". Matching then did a BARE SUBSTRING indexOf on lowercased text, so an
-      // ordinary phrase triggered the guard: a live scene-7 proposal reading
-      //   "The Dohkar's summons for review echoes through open doors into the streets."
-      // hit [dohkar, open] and was refused as though it convened the reserved inquiry. It did not —
-      // it made a PRELIMINARY REVIEW public, which the seed permits.
+      // ── A VENUE MARKER MUST BE USED AS A VENUE (Roman/Codex 2026-10-06, second pass) ─────
+      // Markers are harvested from the reserved truth by taking CAPITALISED words and lowercasing
+      // them (app.js ~196509), so the venue "The Open" arrives here as the bare marker "open".
+      // Matching it as a plain substring blocked ordinary language; matching it by CAPITALISATION
+      // was no better and failed BOTH ways — sentence-initial "Open doors" was blocked, and a
+      // genuinely convened inquiry at lowercase "the open" was allowed through.
       //
-      // THE FIX IS A DISTINCTION, NOT A RELAXATION. Every marker now needs a word boundary, so
-      // "opened"/"opening" no longer count. And a marker that is an ordinary English word must
-      // appear in PROPER-NOUN FORM — capitalised in the original text — because that is the only
-      // way it refers to the venue. Markers that are not ordinary words (dohkar, chayr, sacrificiant)
-      // still match case-insensitively, so genuinely convening the inquiry is caught exactly as
-      // before.
-      var _ORDINARY_WORD_MARKER = /^(open|answer|inquiry|price|witness|rite|wish|favor|favour|sacrifice|memory|cost|name|word|hand|house|court|circle)$/;
-      var _markerHit = function (m) {
-        var esc = String(m).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (_ORDINARY_WORD_MARKER.test(m)) {
-          // the venue sense only: capitalised, optionally "the Open"
-          return new RegExp('\\b' + esc.charAt(0).toUpperCase() + esc.slice(1) + 's?\\b').test(text);
-        }
-        return new RegExp('\\b' + esc + 's?\\b', 'i').test(text);
+      // Capitalisation does not distinguish a place from an ordinary word. GRAMMAR DOES, and the
+      // reserved truth supplies it: the truth says the inquiry "would be HELD AT The Open", so the
+      // seed itself tells us this marker names a PLACE. So: a marker the truth uses locatively is
+      // matched only where the proposal ALSO uses it locatively — as the head of a place phrase.
+      // Every other marker (dohkar, chayr, sacrificiant) matches plainly, as before. Nothing is
+      // hardcoded and no word list is invented; the distinction is read off the reserved entity.
+      var _LOC_PREP = '(?:held\\s+)?(?:at|to|from|within|inside|outside)';
+      // what may legitimately FOLLOW a venue — if a noun follows instead, the marker was an
+      // adjective modifying it ("the open doors"), not the place.
+      // A venue is the HEAD of its phrase. If a CONTENT word follows, the marker was an adjective
+      // modifying it ("the open doors", "the open air"); if a FUNCTION word, punctuation or the end
+      // follows, the marker is the head ("at The Open before...", "at the Open this evening"). The
+      // list below is the closed class of English function words — grammar, not domain vocabulary —
+      // and it is the one heuristic boundary left in this rule.
+      var _FN_WORD = 'before|after|for|with|under|over|through|where|when|and|or|but|on|by|to|in|into'
+        + '|that|this|these|those|which|who|whose|while|as|until|since|if|then|than|so|because'
+        + '|her|his|their|its|our|my|your|the|a|an|it|he|she|they|we|there'
+        + '|is|was|were|are|am|be|been|being|will|would|shall|should|may|might|must|can|could'
+        + '|has|have|had|does|do|did|again|once|now|today|tonight|tomorrow|yesterday|soon|already';
+      var _VENUE_TAIL = '(?=$|[^\\w\\s]|\\s+(?:' + _FN_WORD + ')\\b)';
+      var _escRx = function (x) { return String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+      var _truthUsesAsVenue = function (truthText, m) {
+        return new RegExp(_LOC_PREP + '\\s+(?:the\\s+)?' + _escRx(m) + '\\b', 'i').test(String(truthText || ''));
+      };
+      var _makeMarkerHit = function (truthText) {
+        return function (m) {
+          var esc = _escRx(m);
+          if (_truthUsesAsVenue(truthText, m)) {
+            return new RegExp(_LOC_PREP + '\\s+(?:the\\s+)?' + esc + '\\b' + _VENUE_TAIL, 'i').test(text);
+          }
+          return new RegExp('\\b' + esc + 's?\\b', 'i').test(text);
+        };
       };
       for (var i = 0; i < groups.length; i++) {
-        var hits = groups[i].markers.filter(_markerHit);
+        var hits = groups[i].markers.filter(_makeMarkerHit(groups[i].fullText || groups[i].text));
         // TWO markers plus a convening act. One marker is a mention; two staged together with a
         // convening verb is the reserved proceeding itself, whatever it is being called.
         if (hits.length >= 2) {
