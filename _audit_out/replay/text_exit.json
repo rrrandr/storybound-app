@@ -1,0 +1,38 @@
+{
+  "afterOne": {
+    "beat": 1,
+    "replies": 1,
+    "boredom": 0
+  },
+  "modal": {
+    "up": false,
+    "abrupt": {
+      "present": true,
+      "visible": true,
+      "label": "End Abruptly\n            Walk out cold. "
+    },
+    "fade": {
+      "present": true,
+      "visible": true,
+      "label": "Fade to Black\n            A successful e"
+    },
+    "metaphorical": {
+      "present": true,
+      "visible": true,
+      "label": "All Intimacy → Metaphorical\n            "
+    },
+    "cancel": {
+      "present": true,
+      "visible": true,
+      "label": "Never mind — keep going"
+    }
+  },
+  "out": {
+    "dialogueGone": false,
+    "interruptionPresent": false,
+    "interruptionSubmitted": false,
+    "exchangeMounted": false,
+    "archive": 0
+  },
+  "archive": ""
+}
