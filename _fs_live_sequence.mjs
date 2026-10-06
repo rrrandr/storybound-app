@@ -27,6 +27,29 @@ let boundaryCheck = null;
 let scene2 = {};
 const sceneLedger = [];
 let openingBranch = { requested: (process.env.SB_OPENING_BRANCH || 'run').toLowerCase(), control: null };
+// ── WHAT WAS THIS CALL FOR? Read from the prompt's own self-identification ───────────────────
+// (Codex 2026-10-05.) Role labels cannot establish function: this project also routes prose
+// through STRUCTURE_GENERATOR, so "PRIMARY_AUTHOR vs everything else" does not say which calls
+// wrote scenes. Each prompt names its own job in its opening line, and that is evidence.
+// Anything that does not self-identify is reported as UNCLASSIFIED, never folded into a bucket.
+function callFunction(sysPrompt) {
+  const t = String(sysPrompt || '');
+  if (/screenplay-native cinematic-romance writer|uninhibited romance fiction author/i.test(t)
+      && !/Say\/Do previews|amplify\|ruin\|redirect/i.test(t)) return 'scene author';
+  if (/Say\/Do previews|amplify\|ruin\|redirect|one per archetype/i.test(t)) return 'previews';
+  if (/intensely intimate mouth-closeup|opening an intimate|li_face_state/i.test(t)) return 'OAS';
+  if (/line editor for adult intimate dialogue/i.test(t)) return 'OAS line-edit';
+  if (/SCENE-SPINE planner/i.test(t)) return 'scene planner';
+  if (/CONTINUITY ARCHITECT/i.test(t)) return 'scaffold';
+  if (/RUNTIME COMMIT verifier|editorial auditor|craft auditor|audit prose for BANNED/i.test(t))
+    return 'verifier/audit';
+  if (/CHARACTER MEMORY EXTRACTOR|canonicalization and normalization/i.test(t)) return 'memory/canon';
+  if (/BODY BIBLE|A-PLOT GENERATOR|R-PLOT|SUBPLOT GENERATOR|architect of WHY THIS PAIR|Strategy Engine|WOUND/i.test(t))
+    return 'setup (bibles/plots)';
+  if (/ruthless line-editor/i.test(t)) return 'repair/cleanup';
+  if (/"panels"|panel/i.test(t)) return 'image/panel';
+  return 'UNCLASSIFIED';
+}
 // ── PREVIEW PROVENANCE BY EVIDENCE, NOT BY WORDING ──────────────────────────────────────────
 // (Codex 2026-10-05.) The previous classifier called anything that did not look like a
 // title+ellipsis fallback a "model preview" — including when previewCached was false. A populated
@@ -61,28 +84,55 @@ function recordPreviewReply(sysPrompt, replyText, callN) {
 //   matched-cache    : the app's cached preview for this card, written by some earlier reply
 //   template-fallback: the card's own title (with or without an ellipsis)
 //   UNKNOWN          : nothing links it to a model reply — reported as unknown, never as a preview
-function classifyPreview(cardId, action, dialogue, cacheEntry) {
+function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
   const id = String(cardId || '').toLowerCase().replace(/[^a-z]/g, '');
   const a = norm(action), d = norm(dialogue);
-  if (!a && !d) return { provenance: 'EMPTY', evidence: 'no text was submitted' };
+  const ctx = context || {};
+  const where = 'encounter=' + (ctx.encounter || '?') + ' turn=' + (ctx.turn == null ? '?' : ctx.turn)
+    + ' card="' + (id || '(none)') + '"';
+  if (!id) {
+    return { provenance: 'UNKNOWN', evidence: 'no card id was recorded for the selection, so '
+      + 'nothing can be traced to a preview record — ' + where };
+  }
+  if (!a && !d) return { provenance: 'EMPTY', evidence: 'no text was submitted — ' + where };
+
+  // THE COMPLETE PAIR MUST MATCH ONE RECORD. (Codex 2026-10-05.) Matching EITHER field let a
+  // repeated short line ("mm") earn "identical to the preview" while the other field differed
+  // completely. Both submitted fields are now compared against the SAME record, and a legitimately
+  // empty field is preserved: empty matches empty, and never matches text.
+  const pairMatches = (rec) => norm(rec.action) === a && norm(rec.dialogue) === d;
+
   const titleish = (t) => !t || t === id || t.replace(/[….]+$/, '') === id;
   if (titleish(a) && titleish(d)) {
     return { provenance: 'template-fallback',
-      evidence: 'both fields are the card id "' + id + '" — the deck\'s own placeholder' };
+      evidence: 'both fields are the card id — the deck\'s own placeholder — ' + where };
   }
+
   const served = previewResponses.get(id) || [];
-  const hit = served.find(r => (a && norm(r.action) === a) || (d && norm(r.dialogue) === d));
+  const hit = served.find(pairMatches);
   if (hit) {
     return { provenance: 'matched-response',
-      evidence: 'identical to the preview reply served for "' + id + '" on call ' + hit.callN };
+      evidence: 'the COMPLETE action+dialogue pair is identical to the preview reply served for '
+        + 'this card on call ' + hit.callN + ' — ' + where };
   }
-  if (cacheEntry && ((a && norm(cacheEntry.action) === a) || (d && norm(cacheEntry.dialogue) === d))) {
+  if (cacheEntry && pairMatches(cacheEntry)) {
     return { provenance: 'matched-cache',
-      evidence: 'identical to the app\'s cached preview for "' + id + '"' };
+      evidence: 'the COMPLETE pair is identical to the app\'s cached preview for this card, but no '
+        + 'reply served in THIS run matches it — the writing model is not established — ' + where };
+  }
+  // A PARTIAL MATCH IS NOT A MATCH. It is named, so a near-miss is visible rather than silently
+  // upgraded or silently dropped.
+  const partial = served.find(r => (a && norm(r.action) === a) || (d && norm(r.dialogue) === d))
+    || (cacheEntry && ((a && norm(cacheEntry.action) === a)
+        || (d && norm(cacheEntry.dialogue) === d)) ? cacheEntry : null);
+  if (partial) {
+    return { provenance: 'UNKNOWN',
+      evidence: 'ONE field matches a preview record and the other does not — a partial match does '
+        + 'not establish authorship — ' + where };
   }
   return { provenance: 'UNKNOWN',
-    evidence: 'no preview reply or cache entry for "' + id + '" matches the submitted text'
-      + ' (' + served.length + ' repl' + (served.length === 1 ? 'y' : 'ies') + ' recorded)' };
+    evidence: 'no preview reply or cache entry for this card matches the submitted pair ('
+      + served.length + ' repl' + (served.length === 1 ? 'y' : 'ies') + ' recorded) — ' + where };
 }
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
@@ -310,6 +360,7 @@ await page.route('**/api/**', async (route) => {
     if (f.delayMs) await new Promise(r => setTimeout(r, f.delayMs));
     if (f.fail) {
       calls.push({ n: calls.length + 1, requested, chars, ms: Date.now() - t0, estimate: est,
+        fn: callFunction((body.messages || [])[0]?.content),
         error: 'fixture failure', measured: null });
       inFlight -= est; retained += est;
       outstanding = outstanding.filter(x => x !== resv); persistBudget();
@@ -319,6 +370,7 @@ await page.route('**/api/**', async (route) => {
     }
     const textF = typeof f.body === 'string' ? f.body : JSON.stringify(f.body);
     const recF = { n: calls.length + 1, requested, chars, maxTokens: body.max_tokens || null,
+      fn: callFunction((body.messages || [])[0]?.content),
       convId: body.convId || null, role: body.role || null, ms: Date.now() - t0, estimate: est };
     try { const j = JSON.parse(textF); const u = j.usage || {};
       recF.served = j.model || null; recF.inTok = u.prompt_tokens ?? null;
@@ -355,6 +407,7 @@ await page.route('**/api/**', async (route) => {
   const ms = Date.now() - t0;
 
   const rec = { n: calls.length + 1, requested, chars, maxTokens: body.max_tokens || null,
+      fn: callFunction((body.messages || [])[0]?.content),
     convId: body.convId || null, role: body.role || null, ms, estimate: est };
   if (err || !resp) {
     rec.error = err || 'no response';
@@ -655,7 +708,7 @@ try {
       const say_ = (preview.dialogue || '').trim();
       const do_ = (preview.action || '').trim();
       const oasProv = classifyPreview(preview.cardId, preview.action, preview.dialogue,
-        preview.cacheEntry);
+        preview.cacheEntry, { encounter: 'opening OAS', turn: i + 1 });
       cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName, preview,
         provenance: oasProv, cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
       say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" from ' + deck.mountId
@@ -1195,7 +1248,8 @@ try {
       if ((sSub.action && sSub.action.trim()) || (sSub.dialogue && sSub.dialogue.trim())) break;
       await page.waitForTimeout(400);
     }
-    const prov = classifyPreview(sSub.cardId, sSub.action, sSub.dialogue, sSub.cacheEntry);
+    const prov = classifyPreview(sSub.cardId, sSub.action, sSub.dialogue, sSub.cacheEntry,
+      { encounter: 'scene ' + leaving + ' end', turn: leaving });
     sSub.origin = prov.provenance;
     sSub.evidence = prov.evidence;
     cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub, provenance: prov });
@@ -1292,6 +1346,9 @@ try {
         // planned length from ISSUE_PRICING: the issue has ENDED when the position has wrapped
         // back to the start, or equals the planned length with no further scene pending.
         sceneInIssue: (typeof window._getSceneInIssue === 'function') ? window._getSceneInIssue() : null,
+        // PRODUCTION'S OWN PREDICATE — the one that drives the issue-boundary Submit swap.
+        isLastSceneOfIssue: (typeof window._isLastSceneOfIssue === 'function')
+          ? !!window._isLastSceneOfIssue() : null,
         scenesPerIssue: (function () {
           try { return (window.ISSUE_PRICING || {})[window.state._storyMode === 'literary'
             ? 'literary' : 'cg'].scenesPerIssue; } catch (_) { return null; }
@@ -1330,20 +1387,22 @@ try {
     // The fixed opening is story scene 1 and generates nothing, so a complete ten-scene issue
     // leaves nine generated records. Production's own position must therefore read
     // scenesPerIssue - 1 if (and only if) its counter excludes the opening the same way.
-    const expectedPos = (endState.scenesPerIssue != null) ? endState.scenesPerIssue - 1 : null;
-    const boundaryOk = (endState.sceneInIssue != null)
-      && (endState.sceneInIssue === endState.scenesPerIssue
-          || endState.sceneInIssue === expectedPos);
-    const boundaryAgrees = (endState.sceneInIssue === endState.scenesPerIssue);
+    // THE PRODUCTION PREDICATE, NOT A TOLERANT RANGE. (Codex 2026-10-05.) Accepting 9 OR 10 made
+    // the test tolerate the counter defect instead of demonstrating a correct boundary.
+    // Production's own predicate is _isLastSceneOfIssue(): _getSceneInIssue() === scenesPerIssue.
+    // Nothing else passes.
+    const boundaryOk = (endState.isLastSceneOfIssue === true);
+    const boundaryAgrees = boundaryOk;
+    const expectedPos = endState.scenesPerIssue;
 
     say('  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): '
       + (corpusOk ? 'GENERATED' : 'NOT GENERATED')
       + '  (' + endState.cgScenes + ' generated records, scene ' + LAST_SCENE
       + ' projection ' + (endState.tenthAccepted ? 'accepted' : 'MISSING') + ')');
-    say('  CLAIM B — production issue boundary reached: '
-      + (boundaryOk ? (boundaryAgrees ? 'YES' : 'YES, off by the fixed opening') : 'NO')
-      + '  (production position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue
-      + '; a ten-scene issue whose first scene is fixed should read ' + expectedPos + ')');
+    say('  CLAIM B — production recognizes issue completion: ' + (boundaryOk ? 'YES' : 'NO')
+      + '  (_isLastSceneOfIssue()=' + endState.isLastSceneOfIssue
+      + '; position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue
+      + ' — production requires exactly ' + expectedPos + ')');
 
     if (!corpusOk) {
       halted = true;
@@ -1355,8 +1414,10 @@ try {
       // A COUNTER DISAGREEMENT IS A FAILURE, not a footnote. It is reported as a counter problem
       // rather than as grounds to generate an extra scene.
       halted = true;
-      haltReason = 'the corpus is complete but production does not agree the issue ended: '
-        + 'position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue;
+      haltReason = 'the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE '
+        + 'COMPLETION: _isLastSceneOfIssue()=' + endState.isLastSceneOfIssue + ' at position '
+        + endState.sceneInIssue + ' of ' + endState.scenesPerIssue + '. This is the counter '
+        + 'defect, NOT grounds to generate an eleventh scene.';
       say('  *** FAILED — ' + haltReason + ' ***');
     }
     boundaryCheck.corpusOk = corpusOk;
