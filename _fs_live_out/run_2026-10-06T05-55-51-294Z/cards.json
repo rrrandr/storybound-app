@@ -1,0 +1,342 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 0,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": false
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Decide now what you will and won't permit—before the moment decides for you.",
+      "dialogue": "\"Not yet. Not like this.\"",
+      "cardId": "boundary",
+      "selectedIndex": 2,
+      "optionIds": [
+        "temptation",
+        "reversal",
+        "boundary",
+        "confession",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 0
+      },
+      "cacheEntry": {
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "dialogue": "\"Not yet. Not like this.\""
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=1 card=\"boundary\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 2,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Something here calls to you against your better judgment.",
+      "dialogue": "\"Why does this feel so familiar?\"",
+      "cardId": "temptation",
+      "selectedIndex": 2,
+      "optionIds": [
+        "silence",
+        "reversal",
+        "temptation",
+        "boundary",
+        "confession"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 1
+      },
+      "cacheEntry": {
+        "action": "Something here calls to you against your better judgment.",
+        "dialogue": "\"Why does this feel so familiar?\""
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=2 card=\"temptation\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 3,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "Decide now what you will and won't permit—before the moment decides for you.",
+      "dialogue": "Not yet. Not like this.",
+      "cardId": "boundary",
+      "selectedIndex": 4,
+      "optionIds": [
+        "confession",
+        "temptation",
+        "silence",
+        "reversal",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 2
+      },
+      "cacheEntry": {
+        "action": "Decide now what you will and won't permit—before the moment decides for you.",
+        "dialogue": "\"Not yet. Not like this.\""
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=opening OAS turn=3 card=\"boundary\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 4,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Let the silence carry what your words won't. Julian can feel the absence.",
+      "dialogue": "(The thing you almost said folds back into your chest.)",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "optionIds": [
+        "boundary",
+        "temptation",
+        "silence",
+        "confession",
+        "reversal"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 3
+      },
+      "cacheEntry": {
+        "action": "Let the silence carry what your words won't. Julian can feel the absence.",
+        "dialogue": "(The thing you almost said folds back into your chest.)"
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=4 card=\"silence\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 5,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Let the silence carry what your words won't. Julian can feel the absence.",
+      "dialogue": "(The thing you almost said folds back into your chest.)",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "optionIds": [
+        "confession",
+        "reversal",
+        "silence",
+        "temptation",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 4
+      },
+      "cacheEntry": {
+        "action": "Let the silence carry what your words won't. Julian can feel the absence.",
+        "dialogue": "(The thing you almost said folds back into your chest.)"
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=5 card=\"silence\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  }
+]

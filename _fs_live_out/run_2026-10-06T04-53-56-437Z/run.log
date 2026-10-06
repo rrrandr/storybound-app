@@ -1,0 +1,100 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  call  2  [fixture] gpt-4o-mini                  no receipt  0ms
+  call  3  [fixture] ministral-8b-2512            no receipt  0ms
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call  5  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 3, requested under the SAME generation identity (turnCount=0 beat=0) — encounter=opening OAS turn=1 card="silence"
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=2 card="silence" — a stale record is not provenance for this submission
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  turn 2: replies 1 -> 2 (beats 1 -> 2)
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=3 card="boundary" — a stale record is not provenance for this submission
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call  9  [fixture] gpt-4o-mini                  no receipt  1ms
+  turn 3: replies 2 -> 3 (beats 2 -> 3)
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=4 card="temptation" — a stale record is not provenance for this submission
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 11  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 4: replies 3 -> 4 (beats 3 -> 4)
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=5 card="temptation" — a stale record is not provenance for this submission
+      SAY "Ask me again, slower."
+      DO  "I step close enough that the stone warms between us"
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 13  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 5: replies 4 -> 5 (beats 4 -> 5)
+  turn 6 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=6 card="reversal" — a stale record is not provenance for this submission
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call 14  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 15  [fixture] gpt-4o-mini                  no receipt  1ms
+  turn 6: replies 5 -> 6 (beats 5 -> 6)
+  --- SCRIPTED READER EXIT after 6 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":6,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  call 16  [fixture] ministral-8b-2512            no receipt  0ms
+  interruption: {"present":true,"submitted":false,"pending":true}
+    submit attempt: inputs filled (trusted click) -> submitted=true
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":"posture"}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"resume"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  call 17  [fixture] ministral-8b-2512            no receipt  1ms
+  call 18  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 19  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 2 created by the opening branch: NOT ACCEPTED · uid=null · 0 chars · cgScenes=0 · notes=0
+  *** STOPPING — the opening branch did not produce an accepted Scene 2 ({"cgScenes":0,"uid":null,"hasProjection":false,"chars":0,"notes":0}) ***
+  turns 6 · resolved=true · archive=1 · interruptionSubmitted=true
+  exposure $0.031430
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  scene 2  NOT accepted  <- opening branch "run"
+
+==============================================================================
+
+SPEND
+  MEASURED (receipts): $0.000000
+  UNMEASURED         : none — every dispatch returned a receipt
+  TOTAL EXPOSURE     : $0.000000 of $5.00  (0.0%)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 19
+  MEASURED (receipts)    : $0.000700
+  no receipt             : 12 call(s), estimated $0.030730 — NOT counted as measured
+  retained (no receipt)  : $0.030730 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.031430
+  ceiling                : $5.00  [HALTED: the opening branch did not produce an accepted Scene 2 ({"cgScenes":0,"uid":null,"hasProjection":false,"chars":0,"notes":0})]
+  CACHED TOKENS          : 0 of 7000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.000700
+  unresolved to date $0.030730
+  TOTAL vs ceiling   $0.031430 of $5.00
+
+output: _fs_live_out/run_2026-10-06T04-53-56-437Z

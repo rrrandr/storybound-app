@@ -1,0 +1,410 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 0,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": false
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I set The Answer down between us and do not let go",
+      "dialogue": "Ask me whose hands shaped it.",
+      "cardId": "reversal",
+      "selectedIndex": 2,
+      "optionIds": [
+        "boundary",
+        "confession",
+        "reversal",
+        "temptation",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 0
+      },
+      "cacheEntry": {
+        "action": "I set The Answer down between us and do not let go",
+        "dialogue": "Ask me whose hands shaped it."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-response",
+      "evidence": "the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 3, requested under the SAME generation identity (turnCount=0 beat=0) — encounter=opening OAS turn=1 card=\"reversal\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 2,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I set the ledger flat and leave my hand on it",
+      "dialogue": "Not here. Not in front of them.",
+      "cardId": "boundary",
+      "selectedIndex": 2,
+      "optionIds": [
+        "reversal",
+        "temptation",
+        "boundary",
+        "confession",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 1
+      },
+      "cacheEntry": {
+        "action": "I set the ledger flat and leave my hand on it",
+        "dialogue": "Not here. Not in front of them."
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=2 card=\"boundary\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 3,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower.",
+      "cardId": "temptation",
+      "selectedIndex": 4,
+      "optionIds": [
+        "reversal",
+        "boundary",
+        "silence",
+        "confession",
+        "temptation"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 2
+      },
+      "cacheEntry": {
+        "action": "I step close enough that the stone warms between us",
+        "dialogue": "Ask me again, slower."
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=3 card=\"temptation\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 4,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I set the ledger flat and leave my hand on it",
+      "dialogue": "Not here. Not in front of them.",
+      "cardId": "boundary",
+      "selectedIndex": 2,
+      "optionIds": [
+        "temptation",
+        "confession",
+        "boundary",
+        "reversal",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 3
+      },
+      "cacheEntry": {
+        "action": "I set the ledger flat and leave my hand on it",
+        "dialogue": "Not here. Not in front of them."
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=4 card=\"boundary\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 5,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "I step close enough that the stone warms between us",
+      "dialogue": "Ask me again, slower.",
+      "cardId": "temptation",
+      "selectedIndex": 2,
+      "optionIds": [
+        "confession",
+        "silence",
+        "temptation",
+        "reversal",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 4
+      },
+      "cacheEntry": {
+        "action": "I step close enough that the stone warms between us",
+        "dialogue": "Ask me again, slower."
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=5 card=\"temptation\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 6,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "I go still and let the clearing finish its noise",
+      "dialogue": "mm",
+      "cardId": "silence",
+      "selectedIndex": 4,
+      "optionIds": [
+        "temptation",
+        "reversal",
+        "confession",
+        "boundary",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 5
+      },
+      "cacheEntry": {
+        "action": "I go still and let the clearing finish its noise",
+        "dialogue": "mm"
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=1 turnCount=0, call 3), not under encounter=opening OAS turn=6 card=\"silence\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  }
+]

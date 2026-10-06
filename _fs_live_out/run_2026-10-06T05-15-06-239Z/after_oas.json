@@ -1,0 +1,137 @@
+{
+  "turnsTaken": 6,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "resume",
+      "at": 1791263822538,
+      "storyId": "69399dd5-5b03-4e9b-a616-1545735b5b03"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "Ask me whose hands shaped it.",
+        "pcDoRaw": "I set The Answer down between us and do not let go",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I confess the hunger I called to you with.",
+        "pcDo": "I confess the hunger I called to you with.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+        "liAction": "His hand tightens around mine on the Answer.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}

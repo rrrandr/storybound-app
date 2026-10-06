@@ -1,0 +1,10 @@
+{
+  "calls": 19,
+  "receipted": 0.0007000000000000001,
+  "retainedUnresolved": 0.03071214,
+  "priorExposure": 0,
+  "totalExposure": 0.03141214,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "the opening branch did not produce an accepted Scene 2 ({\"cgScenes\":0,\"uid\":null,\"hasProjection\":false,\"chars\":0,\"notes\":0})"
+}
