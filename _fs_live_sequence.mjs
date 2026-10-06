@@ -278,7 +278,14 @@ function noteOasCleanup(sysPrompt, reqBody, replyText, callN, identity) {
   try {
     if (callFunction(sysPrompt) !== 'OAS line-edit') return;
     if (!identity || !identity.encounter || identity.turn == null) return;
+    // DEFECT A (Codex 2026-10-06): the input check accepted EITHER author field appearing ANYWHERE
+    // in the request, so an unrelated dialogue passed whenever the action happened to be identical.
+    // The request carries a literal TURN object — `TURN: {"line":...,"beat":...}` — so parse it and
+    // compare the COMPLETE pair.
     const userMsg = String((reqBody && reqBody.messages || [])[1]?.content || '');
+    let turnObj = null;
+    const m = userMsg.match(/TURN:\s*(\{[\s\S]*?\})\s*$/m) || userMsg.match(/(\{[\s\S]*"beat"[\s\S]*?\})/);
+    if (m) { try { turnObj = JSON.parse(m[1]); } catch (_) { turnObj = null; } }
     let content = null;
     try {
       const j = JSON.parse(replyText);
@@ -289,15 +296,37 @@ function noteOasCleanup(sysPrompt, reqBody, replyText, callN, identity) {
       try {
         const o = JSON.parse(content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1));
         if (o && typeof o === 'object') {
-          outLine = (typeof o.line === 'string' && o.line.trim()) ? o.line : null;
-          outBeat = (typeof o.beat === 'string' && o.beat.trim()) ? o.beat : null;
+          // production: typeof === 'string', and EMPTY STRINGS ARE FALSY at `if (!nl && !nb)`
+          outLine = (typeof o.line === 'string' && o.line) ? o.line : null;
+          outBeat = (typeof o.beat === 'string' && o.beat) ? o.beat : null;
         }
       } catch (_) {}
     }
-    oasCleanups.set(identity.encounter + '|' + identity.turn,
-      { request: userMsg, outLine, outBeat, callN,
-        accepted: !!(outLine || outBeat) });   // production's own acceptance rule
+    oasCleanups.set(identity.encounter + '|' + identity.turn, {
+      turnObj, outLine, outBeat, callN,
+      // DEFECT B: acceptance is NOT inferred from nonempty output. production runs
+      // _validateRepairOutput (metaOnly) after the emptiness check and can REJECT a nonempty edit
+      // — logged [REPAIR:REJECTED_META] / "[OAS:CLEANUP] no usable result — raw turn shipped".
+      // So acceptance is READ FROM PRODUCTION'S OWN SIGNAL, recorded separately below, and this
+      // flag stays null until that signal is seen.
+      accepted: null
+    });
   } catch (_) {}
+}
+
+// PRODUCTION'S OWN ACCEPTANCE SIGNAL, per turn. "de-repeated vs N overused words" means the edit
+// was applied; "no usable result — raw turn shipped" and [REPAIR:REJECTED_META] mean the original
+// survived. Reading the app's decision beats re-implementing _validateRepairOutput.
+function noteCleanupVerdict(encounter, turn, consoleLines, sinceIndex) {
+  const seen = consoleLines.slice(sinceIndex);
+  const applied = seen.some(l => /OAS:CLEANUP\] de-repeated vs \d+ overused words/.test(l));
+  const shippedRaw = seen.some(l => /OAS:CLEANUP\] no usable result — raw turn shipped/.test(l)
+    || /REPAIR:REJECTED_META\] pass=oas-decalc/.test(l));
+  const rec = oasCleanups.get(encounter + '|' + turn);
+  if (!rec) return null;
+  if (applied && !shippedRaw) rec.accepted = true;
+  else if (shippedRaw) rec.accepted = false;
+  return rec.accepted;
 }
 // POSITIVE EVIDENCE THAT *THIS* RESPONSE BECAME *THIS* RENDERED TURN.
 // (Codex 2026-10-06 reproduced two false positives in the first version, which accepted EITHER
@@ -330,7 +359,9 @@ function oasReplyRenderedFor(encounter, turn, renderedEntry) {
   for (const r of recs) {
     const ad = norm2(r.dialogue), aa = norm2(r.action);
     // (1) NO CLEANUP, OR CLEANUP REJECTED -> the author's own pair must be what rendered.
-    if (!clean || !clean.accepted) {
+    // accepted === null means production's verdict was never observed — not traceable either way.
+    if (clean && clean.accepted === null) continue;
+    if (!clean || clean.accepted === false) {
       if (ad === rd && aa === ra) {
         return { ...r, matchedOn: 'the author pair, unedited'
           + (clean ? ' (cleanup ran and was rejected — original shipped)' : ''),
@@ -341,10 +372,11 @@ function oasReplyRenderedFor(encounter, turn, renderedEntry) {
     // (2) CLEANUP ACCEPTED -> its INPUT must be THIS turn's author text, and the rendered pair
     //     must equal what production accepted: the edited field where edited, the author's where
     //     the editor left it alone.
-    const inputCarriesAuthor =
-      (!!r.dialogue && clean.request.indexOf(r.dialogue) !== -1) ||
-      (!!r.action && clean.request.indexOf(r.action) !== -1);
-    if (!inputCarriesAuthor) continue;          // a cleanup for some other turn's text
+    // THE COMPLETE PAIR the editor was given must be THIS turn's author pair. An either-field
+    // substring test let an unrelated dialogue through on a shared action.
+    const ti = clean.turnObj;
+    if (!ti) continue;                          // no parseable TURN object: not traceable
+    if (norm2(ti.line) !== ad || norm2(ti.beat) !== aa) continue;
     const expectD = norm2(clean.outLine != null ? clean.outLine : r.dialogue);
     const expectA = norm2(clean.outBeat != null ? clean.outBeat : r.action);
     if (expectD === rd && expectA === ra) {
@@ -398,6 +430,7 @@ function noteInfraFailure(text, resp, rec, url) {
     + ' in flight — RETAINED, not released.');
   return true;
 }
+let _replayAuthorIdx = 0, _replayCleanupIdx = 0;
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
 const LIVE = !FIXTURES;
@@ -638,6 +671,29 @@ await page.route('**/api/**', async (route) => {
     const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
       (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
     let f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+
+    // ── REPLAY MODE: serve the captured paid run's OWN author replies and cleanup edits in order,
+    // so PRODUCTION does the parsing, the acceptance decision and the rendering. The runner never
+    // constructs the rendered text; it reads what the app actually rendered. This is the only way
+    // to exercise the ACCEPTED-CLEANUP path that defeated the paid evaluation.
+    try {
+      const sysR = String((body.messages || [])[0]?.content || '');
+      const fn = callFunction(sysR);
+      if (fn === 'OAS' && Array.isArray(FIXTURES._authorSequence) && FIXTURES._authorSequence.length) {
+        const c = FIXTURES._authorSequence[_replayAuthorIdx % FIXTURES._authorSequence.length];
+        _replayAuthorIdx++;
+        f = { body: JSON.stringify({ model: 'grok-4.3', choices: [{ message: { content: c } }],
+          usage: { prompt_tokens: 1000, completion_tokens: 200, cached_tokens: 0,
+            cost_in_usd_ticks: 1000000 } }) };
+        console.log('  [replay] author reply ' + _replayAuthorIdx + ' from the paid capture');
+      } else if (fn === 'OAS line-edit' && Array.isArray(FIXTURES._cleanupSequence)
+                 && FIXTURES._cleanupSequence.length) {
+        const c = FIXTURES._cleanupSequence[_replayCleanupIdx % FIXTURES._cleanupSequence.length];
+        _replayCleanupIdx++;
+        f = { body: JSON.stringify({ ok: true, content: c }) };
+        console.log('  [replay] cleanup edit ' + _replayCleanupIdx + ' from the paid capture');
+      }
+    } catch (_) {}
 
     // ── THE SCENE PLANNER'S LANE IS NOT A FIXTURE CONSTANT ──────────────────────────────────
     // (Codex 2026-10-06.) The reader's CARD SELECTION deterministically resolves the scene's
@@ -1098,6 +1154,7 @@ try {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
       setPreviewContext('opening OAS', i + 1);
+      const consoleAtTurnStart = consoleLog.length;
       // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
       const deck = await waitForOasDeck();
       if (!deck || !deck.count) {
@@ -1413,6 +1470,9 @@ try {
       // THE RECORDED RESPONSE MUST BE THE ONE PRODUCTION RENDERED for this turn.
       const renderedGrew = !!(post && typeof post.replies === 'number'
         && post.replies > (pre.replies || 0));
+      // PRODUCTION'S OWN CLEANUP VERDICT for this turn, read from the console lines emitted
+      // since the turn began — never inferred from the editor's payload.
+      noteCleanupVerdict('opening OAS', i + 1, consoleLog, consoleAtTurnStart);
       const evidence = renderedGrew
         ? oasReplyRenderedFor('opening OAS', i + 1, post && post.lastRendered) : null;
       const fallbackNow = consoleLog.filter(l =>

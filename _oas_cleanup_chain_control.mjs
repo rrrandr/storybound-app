@@ -1,4 +1,20 @@
-// ATTRIBUTION THROUGH THE CLEANUP PASS, tested on THE PAID RUN'S OWN CAPTURED RESPONSES. $0.
+// A UNIT TEST OF THE ATTRIBUTION MATCHER. $0. NOT the acceptance test.
+//
+// RELABELLED (Codex 2026-10-06): this helper CONSTRUCTS the "rendered" text from the captured
+// replies rather than obtaining it from production rendering, and its earlier count included the
+// opener, which the six-exchange exit excludes. It therefore cannot demonstrate the
+// accepted-cleanup path on its own.
+//
+// THE ACCEPTANCE TEST is the browser replay:
+//   SB_FIXTURES=_runner_fixtures/paid_replay.json SB_EXIT_AFTER=6 SB_STOP_AT=handoff
+// which serves the paid run's own author replies AND cleanup edits so PRODUCTION parses, accepts
+// and renders them, and the runner reads the rendered pairs out of liTurnHistory. Result:
+//   turns 1-2 the author pair, unedited · turns 3-6 the ACCEPTED cleanup of that turn's author pair
+//   SCRIPTED READER EXIT after 6 completed exchanges (opener excluded)
+//   reached: resolved=true · archive=1 · interruptionPresent=true · interruptionSubmitted=true
+//   four [OAS:CLEANUP] de-repeated passes applied, none rejected
+//
+// What follows exercises the matcher's rules directly, including the negatives.
 //
 // The paid evaluation produced nine real model exchanges and my matcher credited only four,
 // because production's auxiliary line editor (app.js:204930) rewrites the reply before it renders.
@@ -55,6 +71,7 @@ const contentOf = (res) => {
     return j?.choices?.[0]?.message?.content ?? j?.content ?? null;
   } catch (_) { return null; }
 };
+const envelope2 = (o) => JSON.stringify({ choices: [{ message: { content: JSON.stringify(o) } }] });
 const parseAuthor = (res) => {
   const c = contentOf(res);
   try { return c ? JSON.parse(c) : null; } catch (_) { return null; }
@@ -74,12 +91,19 @@ for (let i = 0; i < usable.length; i++) {
   const a = parseAuthor(usable[i].res);
   noteOasReplyReceived(AUTHOR_SYS, usable[i].res, 100 + i, ident(turn));
   // production pairs the i-th cleanup with the turn whose author text it carries
-  const cl = cleanups.find(c => (a.li_dialogue && c.user.indexOf(a.li_dialogue) !== -1)
-    || (a.li_action && c.user.indexOf(a.li_action) !== -1));
+  const turnOf = (u) => { const m = String(u).match(/TURN:\s*(\{[\s\S]*?\})\s*$/m); 
+    try { return m ? JSON.parse(m[1]) : null; } catch (_) { return null; } };
+  const cl = cleanups.find(c => { const tj = turnOf(c.user);
+    return tj && tj.line === a.li_dialogue && tj.beat === a.li_action; });
   let rendered = { dialogue: a.li_dialogue || '', action: a.li_action || '' };
   if (cl) {
     noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS }, { content: cl.user }] },
       cl.res, 200 + i, ident(turn));
+    // PRODUCTION'S VERDICT, taken from the paid run's own console: all five cleanups there logged
+    // "[OAS:CLEANUP] de-repeated vs N overused words", i.e. APPLIED. The matcher will not attribute
+    // without this, by design — a nonempty edit is never assumed accepted.
+    const rec = oasCleanups.get('opening OAS|' + turn);
+    if (rec) rec.accepted = true;
     const o = parseClean(cl.res);
     if (o && (o.line || o.beat)) {
       // production applies it exactly this way (app.js:204932-204933)
@@ -91,11 +115,11 @@ for (let i = 0; i < usable.length; i++) {
   console.log('  turn ' + String(turn).padEnd(2) + (cl ? ' [cleanup]' : ' [raw]    ')
     + (m ? ' ATTRIBUTED — ' + m.matchedOn : ' *** UNATTRIBUTED ***'));
 }
-t('EVERY captured turn is attributed, cleanup or not', attributed === usable.length,
-  attributed + ' of ' + usable.length);
+t('every captured turn is attributed by the matcher, cleanup or not',
+  attributed === usable.length, attributed + ' of ' + usable.length);
 t('and at least one went through an accepted cleanup', cleanups.length > 0);
-t('ENOUGH TURNS ATTRIBUTE TO TRIGGER THE SCRIPTED EXIT (needs 6)', attributed >= 6,
-  'attributed=' + attributed + ' — below six the exit never fires and the handoff is lost');
+// NO EXIT CLAIM HERE. Whether six exchanges trigger the exit is settled by the browser replay,
+// which excludes the opener and reads production's own rendering — not by this helper.
 
 console.log('');
 console.log('=== 2. NEGATIVES THAT MUST STILL FAIL ===');
@@ -106,9 +130,10 @@ noteOasReplyReceived(AUTHOR_SYS, envelope(A), 7, ident(1));
 {
   // a cleanup whose INPUT is some other turn's text must not license the rendered pair
   noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
-    { content: 'line: "a completely different line from another turn"' }] },
+    { content: 'OVERUSED: a.\nTURN: ' + JSON.stringify({ line: 'a completely different line', beat: 'elsewhere' }) }] },
     envelope({ line: 'Edited text that never came from this turn.', beat: 'He steps back.' }),
     8, ident(1));
+  oasCleanups.get('opening OAS|1').accepted = true;
   const m = oasReplyRenderedFor('opening OAS', 1,
     { dialogue: 'Edited text that never came from this turn.', action: 'He steps back.' });
   t('a cleanup whose INPUT is not this turn\'s author text does NOT attribute', m === null,
@@ -119,7 +144,9 @@ noteOasReplyReceived(AUTHOR_SYS, envelope(A), 7, ident(1));
 {
   // cleanup REJECTED (no usable line/beat) -> the ORIGINAL must be what rendered
   noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
-    { content: 'line: "' + A.li_dialogue + '"' }] }, envelope({}), 8, ident(1));
+    { content: 'OVERUSED: a.\nTURN: ' + JSON.stringify({ line: A.li_dialogue, beat: A.li_action }) }] },
+    envelope({}), 8, ident(1));
+  oasCleanups.get('opening OAS|1').accepted = false;   // production: "raw turn shipped"
   const orig = oasReplyRenderedFor('opening OAS', 1,
     { dialogue: A.li_dialogue, action: A.li_action });
   t('cleanup rejected -> the ORIGINAL reply attributes', !!orig,
@@ -132,8 +159,9 @@ oasRepliesReceived.clear(); oasCleanups.clear();
 noteOasReplyReceived(AUTHOR_SYS, envelope(A), 7, ident(1));
 {
   noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
-    { content: 'line: "' + A.li_dialogue + '"' }] },
+    { content: 'OVERUSED: a.\nTURN: ' + JSON.stringify({ line: A.li_dialogue, beat: A.li_action }) }] },
     envelope({ line: 'Say it where they can hear.', beat: 'He stays still.' }), 8, ident(1));
+  oasCleanups.get('opening OAS|1').accepted = true;    // production applied it
   const half = oasReplyRenderedFor('opening OAS', 1,
     { dialogue: 'Say it where they can hear.', action: A.li_action });
   t('a HALF-APPLIED cleanup (edited dialogue, stale action) does NOT attribute', half === null,
@@ -144,6 +172,57 @@ noteOasReplyReceived(AUTHOR_SYS, envelope(A), 7, ident(1));
   const wrongTurn = oasReplyRenderedFor('opening OAS', 4,
     { dialogue: 'Say it where they can hear.', action: 'He stays still.' });
   t('and it does not attribute to a DIFFERENT turn', wrongTurn === null);
+}
+
+console.log('');
+console.log('=== 3. THE TWO DEFECTS CODEX REPRODUCED — PERMANENT NEGATIVES ===');
+const turnReq = (line, beat) => 'OVERUSED (avoid all): a, b, c.\nTURN: '
+  + JSON.stringify({ line, beat }) + '\n';
+{
+  // (A) WRONG SOURCE DIALOGUE WITH A SHARED ACTION. The old either-field substring test passed
+  // this because the action matched; the complete TURN pair must agree.
+  oasRepliesReceived.clear(); oasCleanups.clear();
+  const author = { li_dialogue: 'I never told the Duke.', li_action: 'He does not move.' };
+  noteOasReplyReceived(AUTHOR_SYS, envelope2(author), 7, ident(1));
+  noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
+    { content: turnReq('A COMPLETELY DIFFERENT LINE FROM ANOTHER TURN.', 'He does not move.') }] },
+    envelope2({ line: 'Edited from the other turn.', beat: 'He is still.' }), 8, ident(1));
+  oasCleanups.get('opening OAS|1').accepted = true;   // production applied it
+  const m = oasReplyRenderedFor('opening OAS', 1,
+    { dialogue: 'Edited from the other turn.', action: 'He is still.' });
+  t('WRONG source dialogue with a SHARED action does NOT attribute', m === null, JSON.stringify(m));
+}
+{
+  // (B) A NONEMPTY EDIT THAT PRODUCTION REJECTED. The original pair must attribute, and the
+  // editor's text must not.
+  oasRepliesReceived.clear(); oasCleanups.clear();
+  const author = { li_dialogue: 'Then say it where they can hear you.', li_action: 'He does not move.' };
+  noteOasReplyReceived(AUTHOR_SYS, envelope2(author), 7, ident(1));
+  noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
+    { content: turnReq(author.li_dialogue, author.li_action) }] },
+    envelope2({ line: 'A nonempty edit production refused.', beat: 'He turns away.' }), 8, ident(1));
+  const rec = oasCleanups.get('opening OAS|1');
+  t('a nonempty edit is NOT assumed accepted', rec.accepted === null,
+    'accepted=' + rec.accepted);
+  rec.accepted = false;                              // production: "raw turn shipped"
+  const orig = oasReplyRenderedFor('opening OAS', 1,
+    { dialogue: author.li_dialogue, action: author.li_action });
+  t('a REJECTED nonempty edit leaves the ORIGINAL attributable', !!orig,
+    orig ? orig.matchedOn : 'null');
+  const edited = oasReplyRenderedFor('opening OAS', 1,
+    { dialogue: 'A nonempty edit production refused.', action: 'He turns away.' });
+  t('and the refused editor text does NOT attribute', edited === null, JSON.stringify(edited));
+}
+{
+  // acceptance unobserved -> not traceable either way
+  oasRepliesReceived.clear(); oasCleanups.clear();
+  const author = { li_dialogue: 'Say it again.', li_action: 'He waits.' };
+  noteOasReplyReceived(AUTHOR_SYS, envelope2(author), 7, ident(1));
+  noteOasCleanup(CLEAN_SYS, { messages: [{ content: CLEAN_SYS },
+    { content: turnReq(author.li_dialogue, author.li_action) }] },
+    envelope2({ line: 'Edited.', beat: 'He waits.' }), 8, ident(1));
+  const m = oasReplyRenderedFor('opening OAS', 1, { dialogue: 'Edited.', action: 'He waits.' });
+  t('with production\'s verdict UNOBSERVED, nothing attributes', m === null, JSON.stringify(m));
 }
 
 console.log('');
