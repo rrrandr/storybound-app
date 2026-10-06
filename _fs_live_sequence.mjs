@@ -224,6 +224,38 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
     evidence: 'no preview reply or cache entry for this card matches the submitted pair ('
       + served.length + ' repl' + (served.length === 1 ? 'y' : 'ies') + ' recorded) — ' + where };
 }
+// ── POSITIVE EVIDENCE THAT A MODEL REPLY WAS RECEIVED ────────────────────────────────────────
+// (Codex 2026-10-06.) Counting "no fallback line appeared" is absence, not evidence: a missed log
+// message still reads as success. A turn is model-backed only when an OAS-stage provider response
+// was actually RECEIVED and PARSED for that encounter/turn and carried a usable reply — and then
+// only if the app also rendered a new reply. A dollar receipt is not required to prove authorship;
+// an unrelated successful provider call is not sufficient, which is why the record is keyed by
+// identity rather than counted globally.
+const oasRepliesReceived = new Map();   // "encounter|turn" -> [{ callN, chars, hasDialogue }]
+function noteOasReplyReceived(sysPrompt, replyText, callN) {
+  try {
+    if (callFunction(sysPrompt) !== 'OAS') return;
+    let content = replyText;
+    try {
+      const j = JSON.parse(replyText);
+      content = j?.choices?.[0]?.message?.content ?? j?.content ?? replyText;
+    } catch (_) { return; }            // unparseable: NOT evidence of anything
+    const text = String(content || '');
+    let hasDialogue = false;
+    try {
+      const p2 = JSON.parse(text);
+      hasDialogue = !!(p2 && (String(p2.li_dialogue || '').trim() || String(p2.li_action || '').trim()));
+    } catch (_) { hasDialogue = /li_dialogue|li_action/.test(text); }
+    if (!hasDialogue) return;          // a 200 with no reply in it is not a reply
+    const key = previewContext.encounter + '|' + previewContext.turn;
+    if (!oasRepliesReceived.has(key)) oasRepliesReceived.set(key, []);
+    oasRepliesReceived.get(key).push({ callN, chars: text.length, hasDialogue: true });
+  } catch (_) {}
+}
+function oasReplyReceivedFor(encounter, turn) {
+  const r = oasRepliesReceived.get(encounter + '|' + turn);
+  return Array.isArray(r) && r.length > 0 ? r : null;
+}
 // ── ONE INFRASTRUCTURE DETECTOR, SHARED BY BOTH RESPONSE PATHS ───────────────────────────────
 // (Codex 2026-10-06.) The first version of this check lived only inside the live-fetch branch, so
 // the fixture path walked straight past it and the demonstration dispatched 84 calls. A guard that
@@ -684,6 +716,7 @@ await page.route('**/api/**', async (route) => {
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
     recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
+    noteOasReplyReceived(sys0ForIdentity, textF, calls.length + 1);
     // THE FIXTURE PATH RUNS THE SAME DETECTOR. A fixture can carry the runtime's error page, and
     // the harness must stop on it exactly as it would live — that is how this guard is tested.
     if (noteInfraFailure(textF, null, recF, url)) {
@@ -705,6 +738,7 @@ await page.route('**/api/**', async (route) => {
     ]);
     text = await resp.text();
     recordPreviewReply(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
+    noteOasReplyReceived(sys0ForIdentity, text, calls.length + 1);
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
 
@@ -1261,31 +1295,35 @@ try {
       // COMPLETED, RENDERED REPLIES ONLY: post.replies is the length of d.liTurnHistory, which
       // production appends when a reply actually renders — not a count of requests, and the
       // authored opener is not one of them. A turn whose reply never landed does not count.
-      // A RENDERED REPLY IS NOT A MODEL REPLY. (Codex 2026-10-06.) The void run counted five
-      // "completed exchanges" that were the app's own fallback: the console said
-      // "[INTIMACY-DIALOGUE] using soft-deflect fallback (LLM call failed)" and then "first live
-      // Julian reply rendered". Counting populated dialogue cannot establish authorship, and the
-      // placeholder guard only checks the SUBMITTED INPUT — never the reply that comes back.
-      //
-      // So an exchange counts toward the six only when a model reply was actually RECEIVED: the
-      // app logged no fallback for this turn AND a receipt-bearing provider response was parsed.
+      // A RENDERED REPLY IS NOT A MODEL REPLY, AND AN ABSENT FALLBACK LOG IS NOT EVIDENCE.
+      // (Codex 2026-10-06.) The previous counter incremented whenever its console pattern did not
+      // match, so a missed log line read as success. A turn is model-backed only on POSITIVE
+      // evidence: an OAS-stage response RECEIVED AND PARSED for THIS encounter and turn, carrying
+      // a usable reply, AND the app rendering a new reply off the back of it.
+      const evidence = oasReplyReceivedFor('opening OAS', i + 1);
+      const renderedGrew = !!(post && typeof post.replies === 'number'
+        && post.replies > (pre.replies || 0));
       const fallbackNow = consoleLog.filter(l =>
         /using .*fallback \(LLM call failed\)|soft-deflect fallback/i.test(l)).length;
       const fellBack = fallbackNow > fallbackSeen;
       fallbackSeen = fallbackNow;
-      if (fellBack) {
-        modelBackedReplies = modelBackedReplies;   // unchanged — this turn was not model-authored
-        say('      *** THIS TURN WAS NOT A MODEL EXCHANGE — the app used its own fallback'
-          + ' ("using ... fallback (LLM call failed)"). It does NOT count toward the six. ***');
-      } else {
+      if (evidence && renderedGrew && !fellBack) {
         modelBackedReplies++;
+        say('      model reply RECEIVED for turn ' + (i + 1) + ' (call ' + evidence[0].callN
+          + ', ' + evidence[0].chars + ' chars) and rendered — counts toward the six');
+      } else {
+        say('      *** NOT A MODEL EXCHANGE — ' + (
+          !evidence ? 'no OAS reply was received and parsed for this turn'
+          : !renderedGrew ? 'a reply was received but the app rendered none'
+          : 'the app logged its own fallback for this turn')
+          + '. It does NOT count toward the six. ***');
       }
       const renderedReplies = modelBackedReplies;
-      if ((post && post.replies) !== modelBackedReplies) {
+      if (((post && post.replies) || 0) !== modelBackedReplies) {
         say('      rendered replies ' + ((post && post.replies) || 0)
-          + ' vs MODEL-BACKED replies ' + modelBackedReplies
-          + (fellBack ? '  (the difference is application fallback)' : ''));
+          + ' vs MODEL-BACKED ' + modelBackedReplies);
       }
+
       // REPEATED FALLBACK IS NOT AN EVALUATION. If the model is not answering, the run has
       // nothing to measure and should not keep spending to find out.
       if (fallbackSeen >= 2 && modelBackedReplies === 0) {

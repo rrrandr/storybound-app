@@ -5,9 +5,18 @@
 // This imports the real handler and stubs global.fetch, so the function's own request handling and
 // response delivery are exercised without contacting a provider.
 //
-// A DISPROVEN HYPOTHESIS, recorded: I expected a missing maxDuration to be the cause. It is not —
-// api/diag-slow.js sleeping 40s returns HTTP 200 JSON through the same dev runtime. Duration alone
-// does not drop a response.
+// TWO DISPROVEN HYPOTHESES OF MINE, recorded so they are not repeated:
+//  1. "the proxies declare no maxDuration, so the runtime cuts them off" — api/diag-slow.js
+//     sleeping 40s returns HTTP 200 JSON through the same dev runtime. Duration alone does not
+//     drop a response.
+//  2. "the proxy has no upstream timeout" — IT HAS ONE. api/proxy.js:179 is
+//     XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000, and line ~451 wraps
+//     both the fetch AND the subsequent response.text() in an AbortController that fires at that
+//     bound. My earlier test waited SIX SECONDS against a NINETY-SECOND timeout and concluded
+//     there was none — and its mock ignored the abort signal entirely, so it would have hung even
+//     when a real abort fired. That test could not support the claim.
+//     The timeout is now tested properly: the mock HONOURS signal, and XAI_CALL_TIMEOUT_MS is
+//     overridden to make the bound fast.
 import assert from 'node:assert';
 
 let pass = 0, fail = 0;
@@ -85,23 +94,45 @@ console.log('=== 1. A HEALTHY UPSTREAM RETURNS A PARSEABLE RESPONSE ===');
 }
 
 console.log('');
-console.log('=== 2. AN UPSTREAM THAT NEVER SETTLES ===');
-// The failure shape to explain: the function logs success upstream, then the runtime returns
-// nothing. If the handler can be left hanging, it will never deliver a response.
+console.log('=== 2. THE PROXY\'S OWN UPSTREAM TIMEOUT, TESTED PROPERLY ===');
+// A mock that HONOURS cancellation, with the proxy's own bound overridden to 1.2s so the test is
+// fast. If the AbortController works, the handler stops waiting and returns on its own.
 {
-  stubFetch(() => new Promise(() => {}));   // never resolves
+  process.env.XAI_CALL_TIMEOUT_MS = '1200';
+  const mod2 = await import('./api/proxy.js?fresh=' + Date.now());
+  const h2 = mod2.default || mod2.handler;
+  let sawSignal = false, aborted = false;
+  stubFetch((url, opts) => new Promise((resolve, reject) => {
+    const sig = opts && opts.signal;
+    sawSignal = !!sig;
+    if (sig) {
+      if (sig.aborted) { aborted = true; const e = new Error('The operation was aborted.');
+        e.name = 'AbortError'; return reject(e); }
+      sig.addEventListener('abort', () => { aborted = true;
+        const e = new Error('The operation was aborted.'); e.name = 'AbortError'; reject(e); });
+    }
+    // otherwise never settle — only cancellation can end this
+  }));
   const req = mkReq({ messages: [{ role: 'system', content: 'x' }],
     model: 'grok-4-1-fast-non-reasoning', max_tokens: 100, role: 'INTIMACY_SPECIALIST' });
   const res = mkRes();
-  const raced = await Promise.race([
-    handler(req, res).then(() => 'returned').catch(e => 'threw: ' + e.message),
-    new Promise(r => setTimeout(() => r('still pending after 6s'), 6000))
+  const t0 = Date.now();
+  const outcome = await Promise.race([
+    h2(req, res).then(() => 'returned').catch(e => 'threw: ' + e.message),
+    new Promise(r => setTimeout(() => r('STILL PENDING after 20s'), 20000))
   ]);
-  console.log('  outcome: ' + raced + ' | ended ' + res.ended);
-  t('a hanging upstream leaves the handler without a response — the observed failure shape',
-    res.ended === false, 'ended=' + res.ended);
-  t('and the handler does NOT impose its own timeout',
-    raced === 'still pending after 6s', raced);
+  const elapsed = Date.now() - t0;
+  console.log('  bound ' + process.env.XAI_CALL_TIMEOUT_MS + 'ms | outcome: ' + outcome
+    + ' | elapsed ' + elapsed + 'ms | signal seen ' + sawSignal + ' | aborted ' + aborted);
+  t('the proxy PASSES an abort signal to its upstream fetch', sawSignal === true);
+  t('THE UPSTREAM TIMEOUT FIRES and the mock is cancelled', aborted === true);
+  t('the handler stops waiting rather than hanging forever', outcome !== 'STILL PENDING after 20s',
+    outcome);
+  t('and it does so near its configured bound, not at 90s',
+    elapsed < 15000, 'elapsed ' + elapsed + 'ms');
+  console.log('  -> "the proxy has no upstream timeout" is WITHDRAWN. It has one, it fires, and the');
+  console.log('     handler advances its model chain instead of waiting forever.');
+  delete process.env.XAI_CALL_TIMEOUT_MS;
 }
 
 global.fetch = realFetch;

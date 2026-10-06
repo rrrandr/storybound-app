@@ -60,36 +60,65 @@ real calls measured 8.5–62s, so I expected the runtime to be cutting them off.
 `api/diag-slow.js`, sleeping through the same dev runtime, returns HTTP 200 JSON at 2s, 9s, 12s,
 20s and **40s**. Duration alone does not drop a response.
 
-**What the preserved log establishes:** the functions were *succeeding upstream*.
+**What the preserved log shows — and what it does NOT attribute.** The log contains ten successful
+upstream calls:
 
 ```
 [SPECIALIST-PROXY] latency=9350ms  model=grok-4.3 ... status=200   ✓ succeeded
 [SPECIALIST-PROXY] latency=62350ms model=grok-4.3 ... status=200   ✓ succeeded
-10 successful upstream calls logged · latencies 8,556ms – 62,350ms, median 13,133ms
+10 successful upstream calls · latencies 8,556ms – 62,350ms, median 13,133ms
 ```
 
-So **real Grok calls completed and were billed** while the browser received error pages. That is
-worse than "no real calls were made", and it is why the exposure cannot simply be written off.
+**Corrected: these are NOT established as ten charges for this incident.** The log carries **no
+timestamps and no request identifiers** (`grep` for `x-vercel-id`/`request-id`/`req_`: 0 hits), so
+nothing ties those lines to the 29 failed responses of this run rather than to earlier activity in
+the same log. They establish successful upstream calls *somewhere in that log*, and no more. I
+previously presented them as ten attributable charges for the void run; that attribution was not
+supported.
 
-**What the proxy's own response path does**, exercised with the upstream mocked
-(`_proxy_response_path_control.mjs`, 8/8 — the real handler, `global.fetch` stubbed, no network):
+What remains true: successful upstream calls did occur, so real billing for the period is **not**
+near zero — which is why the exposure is retained rather than written off. The size and the
+attribution are both open.
 
-- a healthy upstream → the handler returns HTTP 200 JSON **carrying the usage receipt** the runner
-  needs. The response path itself is sound.
-- an upstream that never settles → **the handler never returns and imposes no timeout of its own**.
-  That is exactly the observed failure shape: the function cannot fail fast, cannot report, and the
-  runtime is left to emit `NO_RESPONSE_FROM_FUNCTION`.
+### Withdrawn: "the provider proxies have no upstream timeout"
 
-**The located gap is therefore application-level: the provider proxies have no upstream timeout or
-abort.** A stalled or very slow provider call leaves the handler unable to respond at all.
+**They have one.** `api/proxy.js:179` is
+`XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000`, and the call site wraps
+**both** the `fetch` and the subsequent `response.text()` in an `AbortController` firing at that
+bound. My earlier test waited **six seconds against a ninety-second timeout** and concluded there
+was none — and its mock ignored the abort signal entirely, so it would have hung even when a real
+abort fired. That test could not support the claim.
 
-**What is still not established**, and I am not guessing: whether all 29 failures were stalls, or
-whether some completed responses were dropped by the runtime after the handler returned. The
-preserved dev log covers only 10 calls — it had already rotated — so the other 19 cannot be
-attributed either way.
+**Tested properly** (`_proxy_response_path_control.mjs`, 10/10 — the real handler, `global.fetch`
+stubbed to honour `signal`, `XAI_CALL_TIMEOUT_MS` overridden to 1200ms):
 
-**Not fixed:** adding a timeout/abort to the proxies changes live provider behaviour and could mask
-genuine slowness. That is a product decision.
+```
+bound 1200ms | outcome: returned | elapsed 4808ms | signal seen true | aborted true
+[SPECIALIST-PROXY] Model grok-4.20-0309-non-reasoning TIMED OUT after 1202ms — advancing chain
+... all four models in the chain time out and the handler RETURNS
+```
+
+The proxy passes the signal, the timeout fires, the chain advances, and the handler returns. A
+healthy upstream returns HTTP 200 JSON **carrying the usage receipt** the runner needs. **No second
+timeout is being added and no provider policy is being changed.**
+
+### The real-runtime verification, and what it does not show
+
+Importing the handler with a fabricated `res` tests handler behaviour, not delivery.
+`_runtime_delivery_control.mjs` (11/11) exercises **the actual endpoints over HTTP through the
+running local runtime**, on paths that return *before* any upstream call (`api/proxy.js:248`
+non-POST, `:280` missing messages) — so it is provider-free by construction:
+
+```
+/api/proxy  POST no messages -> HTTP 400 application/json {"error":"Messages array is required"}
+  request identifiers: {"server":"Vercel","x-vercel-id":"dev1::dev1::an7vg-1791270166853-..."}
+/api/chatgpt-proxy -> HTTP 405 handler body    /api/mistral-proxy -> HTTP 405 handler body
+```
+
+**The runtime does deliver these endpoints' responses.** So this verification **does not reproduce
+the void run's failure**, which remains **unreproduced and unexplained**. Reproducing it appears to
+require a real upstream call in flight, which is not provider-free — so I am not claiming a cause.
+The earlier "located gap" is withdrawn along with the timeout claim.
 
 ## Cost: what the numbers are and are not
 
@@ -106,11 +135,31 @@ $1.9456497**. Per instruction, individual calls will be reconciled only against 
 usage/billing evidence or proof they never dispatched — and additional authorization would not make
 unknown charges disappear.
 
+## Positive evidence replaces absence-of-fallback counting
+
+The previous counter incremented whenever its console pattern did **not** match, so a missed log
+line read as success. A turn is now model-backed only on positive evidence: an OAS-stage response
+**received and parsed** for *that encounter and turn*, carrying a usable `li_dialogue`/`li_action`,
+**and** the app rendering a new reply from it. Keyed by identity, so an unrelated successful call
+cannot vouch for a turn. No dollar receipt is required.
+
+```
+model reply RECEIVED for turn 1 (call 7, 1018 chars) and rendered — counts toward the six
+```
+
+And the negative case, where the OAS returns HTTP 200 with no reply in it:
+
+```
+*** NOT A MODEL EXCHANGE — no OAS reply was received and parsed for this turn. ***
+*** STOPPING — the app fell back 2 time(s) with ZERO model-backed replies ***
+7 calls dispatched  (instead of running on)
+```
+
 ## Before any further story evaluation
 
-1. **Decide the proxy timeout question** — without it, a slow provider silently burns authorization
-   and returns nothing.
-2. **Reconcile against real billing** when it is available; the xAI console is the ground truth for
-   the ten logged calls.
-3. `api/diag-slow.js` is a diagnostic left in place for the response-path question; delete it once
-   settled.
+1. **The cause is still unknown.** The failure is unreproduced provider-free, and no timeout or
+   policy change is warranted on the evidence.
+2. **Reconcile against real billing** when available — the xAI console is ground truth. Nothing in
+   this report attributes a specific number of charges to this run.
+3. `api/diag-slow.js` and the two diagnostic controls are left in place for the open response-path
+   question; delete them once settled.
