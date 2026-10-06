@@ -1,0 +1,70 @@
+{
+  "caps": {
+    "softCap": 17,
+    "hardCap": 20,
+    "beat": 0
+  },
+  "turns": 20,
+  "after": {
+    "dialogueGone": true,
+    "beat": null,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "archive": 1,
+    "exchangeMounted": true,
+    "decisionNeeded": true
+  },
+  "oasServed": 21,
+  "captured": [
+    {
+      "file": "002_res.json",
+      "state": "continue",
+      "signal": "neutral"
+    },
+    {
+      "file": "006_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "008_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "009_res.json",
+      "state": "continue",
+      "signal": "neutral"
+    },
+    {
+      "file": "011_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "013_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "014_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "016_res.json",
+      "state": "continue",
+      "signal": "neutral"
+    },
+    {
+      "file": "018_res.json",
+      "state": "continue",
+      "signal": "positive"
+    },
+    {
+      "file": "020_res.json",
+      "state": "continue",
+      "signal": "positive"
+    }
+  ]
+}

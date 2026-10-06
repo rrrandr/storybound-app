@@ -788,6 +788,19 @@ try {
       }
       // WAIT FOR THE PREVIEW TO POPULATE rather than sleeping a fixed interval.
       let preview = { action: '', dialogue: '' };
+      // A USABLE SUGGESTION, NOT MERELY A POPULATED FIELD. (Codex 2026-10-06.) The old wait
+      // accepted any non-empty input, so the live run submitted the card's own title —
+      // SAY "Confession…" / DO "Confession…" — to the author as the player's words. Revealed
+      // cards and non-empty inputs are both insufficient: the deck fills the fields with a
+      // placeholder while the preview batch is still in flight.
+      const usable = (t, ids) => {
+        const v = String(t == null ? '' : t).trim();
+        if (!v) return false;
+        const bare = v.replace(/[….]+$/, '').trim().toLowerCase();
+        if (!bare) return false;
+        if (/[….]\s*$/.test(v) && bare.split(/\s+/).length <= 2) return false;  // "Confession…"
+        return ids.indexOf(bare) === -1;                                         // a bare card title
+      };
       const pvDeadline = Date.now() + 20000;
       while (Date.now() < pvDeadline) {
         preview = await page.evaluate(() => {
@@ -804,13 +817,15 @@ try {
           const entry = gc || cc || null;
           return { action: a ? a.value : '', dialogue: d ? d.value : '',
             cardId: sel ? sel.id : null, selectedIndex: window.state.fateSelectedIndex,
+            optionIds: (window.state.fateOptions || []).map(o => String(o.id || '')),
             appKey: { turnCount: window.state.turnCount || 0,
               sceneFateKey: window.state._fateOptionsSceneKey || null,
               oasBeat: window.state.intimacyDialogue
                 ? (window.state.intimacyDialogue.beatCount ?? null) : null },
             cacheEntry: entry ? { action: entry.action || '', dialogue: entry.dialogue || '' } : null };
         });
-        if ((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim())) break;
+        const ids = (preview.optionIds || []).map(x => String(x || '').toLowerCase());
+        if (usable(preview.action, ids) || usable(preview.dialogue, ids)) break;
         await page.waitForTimeout(400);
       }
       const rejectedAfter = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
@@ -819,6 +834,24 @@ try {
         haltReason = 'the OAS handler REJECTED the click at turn ' + (i + 1) + ' (untrusted input)';
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
+      }
+      // NEVER SUBMIT A PLACEHOLDER. If no usable suggestion arrives through the production flow,
+      // the run STOPS BEFORE THE AUTHOR CALL rather than sending the card title as the reader's
+      // words — that wasted a live author dispatch on turn 1 and corrupted the exchange.
+      {
+        const ids = (preview.optionIds || []).map(x => String(x || '').toLowerCase());
+        const okA = usable(preview.action, ids), okD = usable(preview.dialogue, ids);
+        if (!okA && !okD) {
+          halted = true;
+          haltReason = 'no USABLE suggestion arrived for OAS slot "' + slotName + '" at turn '
+            + (i + 1) + ' — the fields held only a placeholder ('
+            + JSON.stringify(String(preview.action || '').slice(0, 24)) + ' / '
+            + JSON.stringify(String(preview.dialogue || '').slice(0, 24))
+            + '). STOPPING BEFORE THE AUTHOR CALL rather than submitting the card title as the '
+            + 'reader\'s words.';
+          say('  *** STOPPING — ' + haltReason + ' ***');
+          break;
+        }
       }
       if (!((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim()))) {
         halted = true;
