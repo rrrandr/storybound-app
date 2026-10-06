@@ -1,0 +1,66 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You play Julian opening an intimate dialogue. Output ONE
+  call  1  [fixture] mistral-small-latest         $0.000100  1ms
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call  2  [fixture] gpt-4o-mini                  no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call  3  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] "You audit prose for BANNED-phrase "  <-  You audit prose for BANNED-phrase reuse. The user sends 
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  [fixture] "craft auditor measuring ARCHETYPE "  <-  You are a craft auditor measuring ARCHETYPE MANIFESTATIO
+  call  5  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 3, requested under the SAME generation identity (turnCount=0 beat=0) — encounter=opening OAS turn=1 card="boundary"
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  6  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  turn 1: replies 0 -> 1 (beats 0 -> 1)
+      model reply RECEIVED AND RENDERED for turn 1 — call 7, matched on the complete dialogue+action pair — counts toward the six
+  --- SCRIPTED READER EXIT after 1 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":1,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  [fixture] "amplify\|ruin\|redirect"  <-  You are an uninhibited romance fiction author. You write
+  call  7  [fixture] ministral-8b-2512            no receipt  0ms
+  interruption: {"present":true,"submitted":false,"pending":true}
+    submit attempt: inputs filled (trusted click) -> submitted=true
+
+*** STOPPING AS PLANNED — SB_STOP_AT=handoff — stopping at the promised handoff, before the run-or-remain branch is serviced and before any scene work ***
+    reached: resolved=true · archive=1 · interruptionPresent=true · interruptionSubmitted=true
+    model-backed exchanges: 1 · scripted exit: scripted reader text exit
+    the run-or-remain branch was NOT serviced, so no scene work was triggered.
+  turns 1 · resolved=true · archive=1 · interruptionSubmitted=true
+  exposure $0.009183
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 7
+  MEASURED (receipts)    : $0.000200
+  no receipt             : 5 call(s), estimated $0.008983 — NOT counted as measured
+  retained (no receipt)  : $0.008983 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.009183
+  ceiling                : $5.00  [HALTED: SB_STOP_AT=handoff — stopping at the promised handoff, before the run-or-remain branch is serviced and before any scene work]
+  CACHED TOKENS          : 0 of 2000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.000200
+  unresolved to date $0.008983
+  TOTAL vs ceiling   $0.009183 of $5.00
+
+output: _fs_live_out/run_2026-10-06T14-19-59-123Z

@@ -1464,6 +1464,44 @@ try {
         if (did === 'no #gnSubmitBtn') break;
       }
     }
+    // ── CHECK-ONLY STOPPING POINT, AT THE PROMISED HANDOFF ───────────────────────────────
+    // (Codex 2026-10-06.) The capped check's plan promised to stop at the interruption. It did
+    // not: SB_EXIT_AFTER controls when the DIALOGUE exits, not when the RUN ends, so the runner
+    // walked on into scene generation and only the CEILING prevented the author dispatch. That is
+    // the ceiling doing the plan's job by accident.
+    //
+    // SB_STOP_AT=handoff ends the run HERE — after the OAS resolved, archived and its interruption
+    // was submitted, and BEFORE the run-or-remain branch is serviced, since servicing that branch
+    // is what triggers Scene 2.
+    if (String(process.env.SB_STOP_AT || '').toLowerCase() === 'handoff') {
+      halted = true;
+      haltReason = 'SB_STOP_AT=handoff — stopping at the promised handoff, before the '
+        + 'run-or-remain branch is serviced and before any scene work';
+      say('');
+      say('*** STOPPING AS PLANNED — ' + haltReason + ' ***');
+      // READ THE STATE HERE. oasFinal is built further down, AFTER the decision is serviced —
+      // referencing it from this earlier point threw "Cannot access 'oasFinal' before
+      // initialization", which the provider-free verification caught.
+      const reached = await page.evaluate(() => {
+        const intr2 = window.state._intimateInterruption;
+        return {
+          archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
+          interruptionPresent: !!intr2,
+          interruptionSubmitted: !!(intr2 && intr2.submitted),
+          dialogueGone: !window.state.intimacyDialogue,
+          decisionRecorded: ((window.state._sceneDecisions || {})['1'] || null)
+        };
+      });
+      say('    reached: resolved=' + resolved + ' · archive=' + reached.archive
+        + ' · interruptionPresent=' + reached.interruptionPresent
+        + ' · interruptionSubmitted=' + reached.interruptionSubmitted);
+      say('    model-backed exchanges: ' + modelBackedReplies
+        + ' · scripted exit: ' + (scriptedExit ? scriptedExit.kind : 'not used'));
+      say('    the run-or-remain branch was NOT serviced, so no scene work was triggered.');
+      write('handoff_stop.json', { stoppedAt: 'handoff', resolved, reached,
+        modelBackedReplies, scriptedExit, exposure: exposure() });
+    }
+
     // ── SERVICE THE RUN-OR-REMAIN PROMPT IMMEDIATELY ──────────────────────────────────────
     // (Codex 2026-10-05.) This is what triggers Scene 2. Previously the runner only OBSERVED
     // the decision and then went looking for a Fate deck — and the deck it found was the
@@ -1481,11 +1519,12 @@ try {
         recorded: ((window.state._sceneDecisions || {})['1'] || null)
       };
     });
-    let decision = await readDecision();
-    say('  axis decision (before servicing): ' + JSON.stringify({ needed: decision.needed,
+    let decision = halted ? { needed: null, promptMounted: false, recorded: null }
+      : await readDecision();
+    if (!halted) say('  axis decision (before servicing): ' + JSON.stringify({ needed: decision.needed,
       promptMounted: decision.promptMounted, recorded: decision.recorded && decision.recorded.choice }));
 
-    if (decision.needed && decision.promptMounted) {
+    if (!halted && decision.needed && decision.promptMounted) {
       // THE OPENING BRANCH IS A TEST PARAMETER, NOT A CONVENIENCE. An earlier run took "run";
       // this runner had started preferring "remain", which is a DIFFERENT test condition and must
       // never be presented as a directly comparable continuation. SB_OPENING_BRANCH names it
@@ -2035,7 +2074,13 @@ write('console.log', consoleLog.join('\n'));
 write('cards.json', cardLog);
 write('calls.json', calls);
 say('\n' + '='.repeat(78));
-ledger.spendReport(CEILING);
+// THE STALE BANNER IS GONE. (Codex 2026-10-06.) ledger.spendReport keeps its OWN accumulator,
+// which this runner never feeds — so it printed "MEASURED (receipts): $0.000000" and "UNMEASURED:
+// none — every dispatch returned a receipt" while the per-call roll-up below showed $0.083266
+// receipted and SEVEN receiptless calls. A contradictory banner is worse than no banner. The
+// per-call accounting that follows is the real figure.
+say('');
+say('SPEND — from the runner\'s own per-call records (the only accounting fed by this run)');
 const measured = calls.reduce((n, c) => n + (c.measured || 0), 0);
 const noReceipt = calls.filter(c => c.measured == null);
 say('\nPER-CALL ROLL-UP');
