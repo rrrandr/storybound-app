@@ -1,0 +1,13 @@
+{
+  "wrapUpAt": null,
+  "after": {
+    "dialogueGone": true,
+    "beat": null,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "archive": 1,
+    "exchangeMounted": true,
+    "decisionNeeded": true
+  },
+  "archive": "[OAS:ARCHIVE] Snapshot saved at scene index 0 — 20 beats, reason=cap"
+}

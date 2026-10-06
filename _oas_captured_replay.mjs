@@ -16,6 +16,7 @@
 import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS } from './_fs_story_setup.mjs';
+import { canSubmit } from './_oas_submission_guard.mjs';
 import { stageOf, isProviderEndpoint } from './_replay_fixtures.mjs';
 import { setupStageOf, SETUP_RESPONSES } from './_reader_setup_fixtures.mjs';
 
@@ -70,12 +71,32 @@ await page.route('**/api/**', async (route) => {
       body: JSON.stringify({ content: out }) });
   }
   if (/amplify\|ruin\|redirect/.test(sys)) {
+    // NEGATIVE ARM (SB_REPLAY_ARM=no-preview): the preview batch returns nothing usable, so the
+    // deck's own placeholder is all that ever reaches the inputs. This is the delayed/missing
+    // preview case, and the run must BLOCK rather than submit.
+    if (process.env.SB_REPLAY_ARM === 'no-preview') {
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ content: '' }) });
+    }
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: [
       'TEMPTATION ||| amplify ||| I close the gap until the stone warms ||| Ask me again, slower.',
       'BOUNDARY ||| redirect ||| I set the ledger flat and keep my hand on it ||| Not here.',
       'CONFESSION ||| amplify ||| I turn The Answer so its cut edge faces him ||| I felt it choose.',
       'REVERSAL ||| redirect ||| I put The Answer down and do not let go ||| Ask me whose hands shaped it.',
       'SILENCE ||| ruin ||| I go still and let the clearing finish ||| mm'].join('\n') }) });
+  }
+  // THE PER-CARD PREVIEW, which the batch branch above does not cover. Without it this reply fell
+  // to the default '{}' and the DO field received the literal "{}" — which the OLD lenient gate
+  // passed and the strict gate correctly blocks. A fixture gap of mine, not a product defect.
+  if (/contextual Say\/Do previews/i.test(sys)) {
+    // The negative arm suppresses EVERY preview route, not just the batch.
+    if (process.env.SB_REPLAY_ARM === 'no-preview') {
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ content: '' }) });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      content: 'REVERSAL ||| I set The Answer down between us and do not let go '
+        + '||| Ask me whose hands shaped it.' }) });
   }
   const st = setupStageOf(sys);
   if (st && SETUP_RESPONSES[st]) return route.fulfill({ status: 200, contentType: 'application/json',
@@ -106,7 +127,7 @@ console.log('  that stops at 9 can never reach a cap of ' + caps.hardCap + '.');
 const BUDGET = (caps.hardCap || 20) + 3;
 
 // ── PLAY TURNS THROUGH THE PRODUCTION FLOW UNTIL THE APP RESOLVES ITSELF ────────────────────
-let turns = 0, resolvedAt = null;
+let turns = 0, resolvedAt = null, blockedAt = null, lastVals = null, wrapUpAt = null;
 for (let i = 0; i < BUDGET; i++) {
   const st = await page.evaluate(() => {
     const d = window.state.intimacyDialogue;
@@ -123,24 +144,47 @@ for (let i = 0; i < BUDGET; i++) {
     if (i2.actInput) i2.actInput.value = ''; if (i2.diaInput) i2.diaInput.value = ''; });
   await page.locator('#gnCardMount .fate-card:not(.locked)').nth(i % deck).click({ timeout: 15000 })
     .catch(() => {});
-  // the hardened usability wait: a bare card title is NOT a usable suggestion
+  // THE SAME GATE THE LIVE RUNNER USES — imported, not re-implemented — and the replay now STOPS
+  // ON TIMEOUT instead of clicking Submit regardless. "No placeholder happened in this replay" was
+  // not a test that a delayed or missing preview gets blocked (Codex 2026-10-06).
+  let gate = { ok: false, reason: 'the preview wait never ran' };
   const dl = Date.now() + 15000;
   while (Date.now() < dl) {
-    const r = await page.evaluate(() => {
+    const vals = await page.evaluate(() => {
       const i2 = window._getActiveTurnInputs();
-      const ids = (window.state.fateOptions || []).map(o => String(o.id || '').toLowerCase());
-      const ok = (v) => { const s2 = String(v || '').trim(); if (!s2) return false;
-        const bare = s2.replace(/[….]+$/, '').trim().toLowerCase();
-        if (!bare) return false;
-        if (/[….]\s*$/.test(s2) && bare.split(/\s+/).length <= 2) return false;
-        return ids.indexOf(bare) === -1; };
-      return ok(i2.actInput && i2.actInput.value) || ok(i2.diaInput && i2.diaInput.value);
+      return { action: i2.actInput ? i2.actInput.value : '',
+        dialogue: i2.diaInput ? i2.diaInput.value : '',
+        optionIds: (window.state.fateOptions || []).map(o => String(o.id || '')) };
     });
-    if (r) break;
+    gate = canSubmit(vals.action, vals.dialogue, vals.optionIds);
+    if (i === 0 && process.env.SB_REPLAY_ARM === 'no-preview') {
+      lastVals = vals;   // what actually reached the inputs when no preview was served
+    }
+    if (gate.ok) break;
     await page.waitForTimeout(400);
+  }
+  if (!gate.ok) {
+    blockedAt = { turn: i + 1, reason: gate.reason };
+    console.log('  *** BLOCKED at turn ' + (i + 1) + ' — ' + gate.reason
+      + ' — NOT submitting ***');
+    break;
   }
   await page.locator('#gnSubmitBtn').click({ timeout: 15000 }).catch(() => {});
   turns++;
+  // READER-CONTROLLED ROUTE (SB_REPLAY_ARM=wrap-up): production offers a "Wrap up" pivot from
+  // beat 7 (app.js:205870) whose handler calls _resolveIntimacyScene('user_pivot_end'). That is a
+  // reader interaction, not a forced resolution — the reader decides the exchange is finished.
+  if (process.env.SB_REPLAY_ARM === 'wrap-up') {
+    await page.waitForTimeout(2000);
+    const wrap = page.locator('.intimacy-pivot-btn[data-pivot="end"]');
+    if (await wrap.count() && await wrap.first().isVisible().catch(() => false)) {
+      wrapUpAt = turns;
+      console.log('  reader clicks "Wrap up" after ' + turns + ' turns');
+      await wrap.first().click({ timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(2500);
+      break;
+    }
+  }
   await page.waitForTimeout(2200);
 }
 
@@ -207,6 +251,50 @@ console.log('  frame state: ' + JSON.stringify(frame));
 const tail = consoleLog.filter(l => /INTIMACY|OAS:|afterglow|interrupt|Afterglow/i.test(l)).slice(-14);
 console.log('  --- resolution tail ---');
 tail.forEach(l => console.log('  | ' + l.slice(0, 165)));
+
+if (process.env.SB_REPLAY_ARM === 'no-preview') {
+  console.log('');
+  console.log('=== NEGATIVE ARM: THE PREVIEW NEVER ARRIVES ===');
+  console.log('  blockedAt: ' + JSON.stringify(blockedAt));
+  console.log('  what reached the inputs with NO preview served:');
+  console.log('    DO : ' + JSON.stringify(String((lastVals||{}).action || '').slice(0,90)));
+  console.log('    SAY: ' + JSON.stringify(String((lastVals||{}).dialogue || '').slice(0,90)));
+  console.log('  OAS author calls served: ' + oasServed);
+  t('the run BLOCKED instead of submitting', !!blockedAt, 'blockedAt=' + JSON.stringify(blockedAt));
+  t('and the block names a placeholder or missing suggestion',
+    !!(blockedAt && /placeholder|usable|empty/.test(blockedAt.reason)),
+    blockedAt ? blockedAt.reason : '');
+  t('NO OAS AUTHOR CALL was spent on a placeholder', oasServed <= 1,
+    'author replies served: ' + oasServed + ' (1 is the opener)');
+  fs.mkdirSync('_audit_out/replay', { recursive: true });
+  fs.writeFileSync('_audit_out/replay/no_preview_arm.json',
+    JSON.stringify({ blockedAt, oasServed, turns }, null, 2));
+  await browser.close();
+  console.log('');
+  console.log(pass + '/' + (pass + fail) + ' checks passed');
+  process.exit(fail ? 1 : 0);
+}
+
+if (process.env.SB_REPLAY_ARM === 'wrap-up') {
+  console.log('');
+  console.log('=== READER-CONTROLLED ROUTE: THE "Wrap up" PIVOT ===');
+  console.log('  clicked after ' + wrapUpAt + ' turns · ' + JSON.stringify(after));
+  const arch = consoleLog.find(l => /OAS:ARCHIVE. Snapshot saved/.test(l)) || '';
+  console.log('  ' + arch.slice(0, 120));
+  t('the reader could end the exchange without waiting for the cap', !!wrapUpAt && wrapUpAt < 20,
+    'wrapUpAt=' + wrapUpAt);
+  t('it resolved via user_pivot_end, not the cap', /reason=user_pivot_end/.test(arch),
+    arch.slice(0, 120));
+  t('THE AUTHORED DOHKAR INTERRUPTION MOUNTED on the reader\'s own exit',
+    after.interruptionPresent === true);
+  fs.mkdirSync('_audit_out/replay', { recursive: true });
+  fs.writeFileSync('_audit_out/replay/wrap_up_arm.json',
+    JSON.stringify({ wrapUpAt, after, archive: arch }, null, 2));
+  await browser.close();
+  console.log('');
+  console.log(pass + '/' + (pass + fail) + ' checks passed');
+  process.exit(fail ? 1 : 0);
+}
 
 t('the OAS RESOLVED without any reply saying "resolve"', after.dialogueGone === true,
   'beat ' + after.beat + ' of hardCap ' + caps.hardCap);
@@ -286,7 +374,7 @@ if (after.interruptionPresent) {
 
 fs.mkdirSync('_audit_out/replay', { recursive: true });
 fs.writeFileSync('_audit_out/replay/captured_replay.json',
-  JSON.stringify({ caps, turns, after, oasServed, captured: captured.map(c => ({
+  JSON.stringify({ caps, turns, after, oasServed, blockedAt, captured: captured.map(c => ({
     file: c.file, state: c.state, signal: c.signal })) }, null, 2));
 await browser.close();
 console.log('');

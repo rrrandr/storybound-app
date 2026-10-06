@@ -1,0 +1,8 @@
+{
+  "blockedAt": {
+    "turn": 1,
+    "reason": "a non-empty field holds a placeholder or degenerate value (DO=\"Reversal…\" SAY=\"Reversal…\") — it would be sent to the author as the reader's words"
+  },
+  "oasServed": 1,
+  "turns": 0
+}

@@ -13,6 +13,7 @@ import fs from 'fs';
 import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
 import { makeSpendLedger } from './_live_spend_ledger.mjs';
+import { canSubmit } from './_oas_submission_guard.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate, chooseBranch }
   from './_fs_story_setup.mjs';
 
@@ -793,14 +794,10 @@ try {
       // SAY "Confession…" / DO "Confession…" — to the author as the player's words. Revealed
       // cards and non-empty inputs are both insufficient: the deck fills the fields with a
       // placeholder while the preview batch is still in flight.
-      const usable = (t, ids) => {
-        const v = String(t == null ? '' : t).trim();
-        if (!v) return false;
-        const bare = v.replace(/[….]+$/, '').trim().toLowerCase();
-        if (!bare) return false;
-        if (/[….]\s*$/.test(v) && bare.split(/\s+/).length <= 2) return false;  // "Confession…"
-        return ids.indexOf(bare) === -1;                                         // a bare card title
-      };
+      // ONE SHARED PREDICATE (_oas_submission_guard.mjs). The first version accepted EITHER
+      // field as usable and then submitted BOTH, so DO "I step back." / SAY "Confession…" passed
+      // with a placeholder still in the payload. The gate now requires one usable field AND no
+      // non-empty placeholder in either, and the replay uses the very same module.
       const pvDeadline = Date.now() + 20000;
       while (Date.now() < pvDeadline) {
         preview = await page.evaluate(() => {
@@ -824,8 +821,7 @@ try {
                 ? (window.state.intimacyDialogue.beatCount ?? null) : null },
             cacheEntry: entry ? { action: entry.action || '', dialogue: entry.dialogue || '' } : null };
         });
-        const ids = (preview.optionIds || []).map(x => String(x || '').toLowerCase());
-        if (usable(preview.action, ids) || usable(preview.dialogue, ids)) break;
+        if (canSubmit(preview.action, preview.dialogue, preview.optionIds || []).ok) break;
         await page.waitForTimeout(400);
       }
       const rejectedAfter = consoleLog.filter(l => /FATE-CLICK\] Rejected/.test(l)).length;
@@ -839,16 +835,13 @@ try {
       // the run STOPS BEFORE THE AUTHOR CALL rather than sending the card title as the reader's
       // words — that wasted a live author dispatch on turn 1 and corrupted the exchange.
       {
-        const ids = (preview.optionIds || []).map(x => String(x || '').toLowerCase());
-        const okA = usable(preview.action, ids), okD = usable(preview.dialogue, ids);
-        if (!okA && !okD) {
+        const gate = canSubmit(preview.action, preview.dialogue, preview.optionIds || []);
+        if (!gate.ok) {
           halted = true;
-          haltReason = 'no USABLE suggestion arrived for OAS slot "' + slotName + '" at turn '
-            + (i + 1) + ' — the fields held only a placeholder ('
-            + JSON.stringify(String(preview.action || '').slice(0, 24)) + ' / '
-            + JSON.stringify(String(preview.dialogue || '').slice(0, 24))
-            + '). STOPPING BEFORE THE AUTHOR CALL rather than submitting the card title as the '
-            + 'reader\'s words.';
+          haltReason = 'OAS submission BLOCKED at turn ' + (i + 1) + ' slot "' + slotName
+            + '": ' + gate.reason + '. STOPPING BEFORE THE AUTHOR CALL — DO='
+            + JSON.stringify(String(preview.action || '').slice(0, 30)) + ' SAY='
+            + JSON.stringify(String(preview.dialogue || '').slice(0, 30));
           say('  *** STOPPING — ' + haltReason + ' ***');
           break;
         }

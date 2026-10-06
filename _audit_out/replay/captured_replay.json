@@ -15,6 +15,7 @@
     "decisionNeeded": true
   },
   "oasServed": 21,
+  "blockedAt": null,
   "captured": [
     {
       "file": "002_res.json",
