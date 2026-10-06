@@ -1,0 +1,682 @@
+Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The policy is report-only, so the violation has been logged but no further action has been taken.
+[ORCHESTRATION] Storybound AI Orchestration Client initialized
+[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+[GN DEV] Dev tools IIFE executing...
+%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is required to enable inline execution. The policy is report-only, so the violation has been logged but no further action has been taken.
+[FATE] DOMContentLoaded — initializing
+[BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+[CONTENT REGISTER] FULL_WEB (full) — platform: web
+%c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+[Phase1LI] UI wired (collapse cover + name-input reactivity)
+%c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dumpNILState()             → print + copy current NIL/ERA/OAS state
+  clearConsoleBuffer()       → wipe the ring buffer color: #c9a24e; background: #1a1612; padding: 6px; font-family: monospace;
+%c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+[GEMMA_TURN] Turn-based collaborative system initialized.
+[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+[NMD] Seeded Volume 1 with Entry 1.
+%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+%c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+%c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+%c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+%c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+[CG:HELPERS] ready=true
+[STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+[ModeCards] Initialized 4 mode cards
+[Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+[Corridor] Stored 2 elements for stage: authorship
+[Corridor] Stored 3 elements for stage: identity
+[Corridor] Stored 3 elements for stage: playermask
+[Corridor] Stored 3 elements for stage: storybeau
+[Corridor] Stored 1 elements for stage: world
+[Corridor] Stored 1 elements for stage: tone
+[Corridor] Stored 1 elements for stage: pressure
+[Corridor] Stored 3 elements for stage: pov
+[Corridor] Stored 2 elements for stage: length
+[Corridor] Stored 2 elements for stage: dynamic
+[Corridor] Stored 1 elements for stage: beginstory
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+[Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+[Authorship] Choice reset
+[Corridor] Authorship mount: Reset authorship choice for re-selection
+[Corridor] DOM updated. Mounted row 0: authorship
+[Ghost Steps] Initialized 8 ghost step placeholders
+[DSP] Hidden — stage authorship
+[Corridor Nav] Navigation affordances initialized
+[Corridor] Initialization complete. Active row: 0
+[Corridor] Row store initialized with 11 stages
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[GOOD_REASONS] Mechanic + library variant system initialized.
+[REINCARNATION] System initialized
+[FATE_EVENT] System initialized. Active: false
+[PROMO] Seasonal promotions initialized. Active: none
+[DevHUD] Dev HUD ready — press ` to toggle
+[BOOT] Complete — flushed 0 deferred task(s)
+[PACT:FLIP] routeToLegalAcceptance called — isReaccept: false
+[PACT:FLIP] showScreen(legalGate) — cards found: 3 | already flipped: false
+[SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=0, left=0, viewport=720
+[BETA] geo_gate_decision {"country":null,"signal":"ip","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[STARTER] Launching "The First Sacrifice"
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[PHRASE-LEDGER] story #1 — 9 entries kept (strong=9, mild=0). Cooldown decay: rarity × 3 stories, clamped [5, 30].
+[GHOST] Preferences loaded + decayed: {"desireBias":{"control":0.25,"taboo":0.25,"tenderness":0.25,"surrender":0.25},"woundBias":{"avoidant":0.25,"selfDestructive":0.25,"control":0.25,"burdened":0.25},"engagementStyleBias":{"pursue":0.32999999999999996,"hold":0.32999999999999996,"withdraw":0.33999999999999997},"recentTaste":{"lastPrimaryDesire":null,"lastPrimaryWound":null,"lastArchetype":null,"cooldown":0},"lastUpdatedAt":null}
+[READER] resetBookState: page reset to 0 (COVER)
+[STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian
+[STARTER] Locked pre-written title: The First Sacrifice
+[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial
+[LORE-LEDGER] scene 1 · candidates=4 glossed=4 ledger=4
+[SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: taste, cardsFound: 0}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: taste, cardsFound: 0}
+[READER-MODE] OFF — present-tense play resumes
+[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)
+[NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
+[DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+[SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:6505af0d-01a9-49d8-904b-d67233cf3632 planned="Seren’s wish for Lirael — “that she find the one she lost” —"
+[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+[BAKED:IDENTITY] ledger entities for the seed cast: +3
+[READER] showReaderPage: 2
+[SCENE-AMB:STATE] page=0 primary=neutral_quiet layer2=none layer3=none world=Fantasy isUrban=false primaryIsWeather=true primaryIsOffice=false primaryIsIndoorUrbanVenue=false
+[READER] Page 2+: SCENE (Title + Prose)
+[TITLE-PAGE] Shown
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=n/a · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+[BAKED-IMG] mounted 0 occurrence(s): 
+[PACT:FLIP] flip-tick @400ms — cards live: 3
+[PACT:FLIP] flipped card 0 pact=tos | classList now: pact-card pact-card-tos flipped
+[PACT:FLIP] flipped card 1 pact=privacy | classList now: pact-card pact-card-privacy flipped
+[PACT:FLIP] flipped card 2 pact=adult | classList now: pact-card pact-card-adult flipped
+[BAKED:SETUP] running deferred story initialization…
+[BeginStory] handleBeginStory() called
+[DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+[BeginStory] DEBUG state.picks: {"world":"Fantasy","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Arcane Binding","dynamic":"Enemies","era":null,"pov":"First","worldSubtype":"arcane_binding","length":"taste","pcSpecies":"First Favored","liSpecies":"First Favored","authorship":"fate","playermask":"OPEN_VEIN"}
+[BeginStory] DEBUG state.archetype: {"primary":"SPELLBINDER","modifier":null}
+[BeginStory] DEBUG state.mode: solo state.storyLength: taste
+[BeginStory] Past _beginStoryInProgress guard, entering main flow
+[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"6d5a7033-2893-4a54-9551-fb91e19e28ca","isNewStory":true,"isContinuation":false,"entryMode":null,"isSubscribed":true,"isTease":false,"hasFreeCredits":false,"hasPassForStory":false}}
+[FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"the_shackle_isles","fantasy_magic_cost_model":"lifespan_decay","fantasy_power_legitimacy":"hidden_heir","fantasy_political_pressure":"rebellion_underclass","fantasy_favor_amplitude":"stable"}
+[FANTASY_CORE] Fatelands region bound: the_shackle_isles {seat: null, governance: Politically fragmented, status: Some swear fealty to Vaelryn, others do not, reality: null, magicBias: bound}
+[CONSPIRACY] tracks selected — local="haunted_mill" regional="shackle_isles" (background) world="the_piercing" region=the_shackle_isles
+[CONSPIRACY-AUDIT] REGIONAL selected (this feeds the A-plot skeleton)
+  REGIONAL: The Chains That Hold  [stage 1/3, layer=public]
+    False objective : Why do the deep chains lead to nothing?
+    Invalidates     : that the chains are simply Aravel's monument to victory
+    Reveal          : They lead to something no one will speak of.
+    Rel. consequence: they share a secret the whole Isles are built to keep — isolating them together
+    Transforms into : What are they holding?
+    Suppressor/face : The chain-wardens drown the curious and call it accident; the old rout | an ancient chain-walker who has guarded the deep chains long
+[SPECIES] PC = declared_seed: First Favored
+[SPECIES:PREGEN] LI species resolved pre-Scene-1: First Favored · source=declared_seed
+[FORTUNE STATE] before_fortune_gate {drip: 0, storypass: 0, subscription: 0, purchased: 0, global: 9999}
+[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}
+[EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=arcane_binding)
+[Modifier] No secondary assigned (75% path)
+[FF-CANON-AUTH] false reason=nonff
+[BeginStory] All validation passed — proceeding to story generation
+[BeginStory] Story mode: participatory
+[VISUAL_CANON] Story visual style seeded: {paletteFamily: warm earth tones with golden-hour highlights, lightingLanguage: enchanted bioluminescence as ambient fill, textureStyle: gritty — high grain, desaturated midtones, tactile surface detail, compositionBias: dramatic angles — low or high camera, forced perspective, dynamic diagonals}
+[READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[COVER:BEGIN] Showing CSS 3D white book placeholder
+[BeginStory] Phase 2 complete — starting loader and API calls
+[Sparkle] Stopped emitter: guidedFateSparkles
+[FATE-VISUALS] guided-fate full-screen sparkles torn down at story begin
+[DEV:StoryGen] world: Fantasy | tone: Earnest | genre: Billionaire → powerRole: Arcane Sovereign | powerFrame: Ruler | intensity: Steamy
+[DEV:WorldResolve] world: Fantasy | genre: Billionaire → powerFrame: Ruler | prehistoricForbid: false
+[COLD-GATE] hot-first-draft override: _hot=true · temp=HOT_CRISIS · turn=0 → INJECTED (system, top of prose-stack)
+[ROMANCE-ENGINE] "Enemies" + "arcane_binding" → COLLISION · acquaintance=KNOWN_ADVERSARY · scene1Presence=PROXY · validSet=[COLLISION,LOOMING_PRESENCE,SHARED_HISTORY] · set default
+[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=FROM_START)
+[PAIR-DYNAMIC] resolved — OPEN_VEIN × SPELLBINDER · engine=COLLISION · acq=KNOWN_ADVERSARY · scene1Presence=PROXY · encounter=MET · (OPEN_VEIN) INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling ...
+[CANONICAL-CHARACTERS] (commit@pre-bible)  LI: name="Julian" · mask=SPELLBINDER · source=seed · committed=✓
+[BIBLE-ARTIFACT] pc first attempt for this story
+[BIBLE-ARTIFACT] pc -> committed (attempt 1)
+[TIER0] pc body bible derived locally from seed — zero live calls (2 facet(s) merged into portfolio)
+[BIBLE-ARTIFACT] li first attempt for this story
+[BIBLE-ARTIFACT] li -> committed (attempt 1)
+[TIER0] li body bible derived locally from seed (partial — 2 field(s) cited) — zero live calls
+[LIT:SPINE] awaiting 2 character Bible(s) before R-plot (PC+LI — wounds are Bible-native in the inverted chain)
+[LIT:SPINE] character Bibles ready (0ms) — pc=y li=y (antag deferred until after A-plot)
+[TIER0] PAIR_BOND suppressed pre-page — no paid call before the reader sees Scene 1
+[TIER0] R_PLOT suppressed pre-page — no multi-Issue relationship rail before the reader's first choice; Scene 2 plans from posture/seed/stage/continuity state instead
+[A-PLOT:SEEDED] derived from STARTER_PLANS.starter_first_sacrifice (20 scenes; force="the presiding Dohkar") — generator NOT called
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+[LIT:SPINE] antagonist Bible (0ms) — antag=n (not eligible / shape C / unnamed)
+[TIER0] WOUND_LI_INTEGRATION_AUDIT suppressed pre-page — sampling/telemetry, not story delivery
+[TIER0] CG_SCAFFOLD deferred — baked opening, no paid call until the reader submits their Scene 1 choice
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
+[STORY:SHAPE] Snapshot stored: {world: Fantasy, genre: Billionaire, tone: Earnest, dynamic: Enemies, pov: First}
+[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20261006a-lane-displacement:272964:515 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+[EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20261006a-lane-displacement:272964:629 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
+[SCENE1:PATTERN-GATE] region-particular opener → shackle
+[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_shackle; summons/social/reckoning shapes suppressed)
+[SCENE1:FP] saved opening fingerprint: region_shackle — recent: [region_shackle]
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[CRISIS] category=LOSS (dedicated persistent cursor — no repeat until all 6 cycle)
+[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
+[ONBOARD_WINDOW] story count → 1 (ordinal 1; window covers stories 1-3)
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[PREF-RESOLVE] axis=demand_hint mode=full_probe value=- confidence=0.00 reason=onboarding_keep_axis_visible
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+[S1_ONBOARDING] ON — story-start count=0 (rule: 0 or 2; 0=Story 1, 1=Story 2, 2=Story 3, 3+=past onboarding) · host-independent
+STORYBOUND FINAL PROMPT PAYLOAD
+{mode: solo, tier: subscribed, fourAxis: Object, archetype: Object, ancestry: Object}
+console.groupEnd
+STORYBOUND VALIDATION PASSED - Proceeding to model call
+[TITLE:PRE] Title already exists, skipping: The First Sacrifice
+[SCENE1:PROMPT-SIZES] total=264448c(~66112t) | sysPrompt(prose stack)=150220c · introPrompt=76611c · scaffold=0c · appendix=37617c · picturability=0c  → window._promptMassAudit() for the sysPrompt section breakdown
+[ADAPTIVE LENGTH] {sceneIndex: 0, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
+[SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)
+[CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+[BAKED:SETUP] story initialization complete — author dispatch skipped (Scene 1 is baked)
+[FATE] dealFateCards no-op — already dealt for scene 0:1 (use opts.force=true to redeal)
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[SCENE-PROJECTION] created lit:e4668fe6-6289-4e2f-b6da-f7b016608873 kind=body revision=0 hash=he6d5726a-7605 chars=7605 sidecarEntries=1
+[BETA] scene_generation_completed {"sceneIndex":1,"storyId":"6d5a7033-2893-4a54-9551-fb91e19e28ca","fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[BETA] scene_quality_scan_fail {"sceneIndex":1,"wordCount":1455,"choiceCount":0,"repeatedBodyTells":[],"inventedProperNouns":[],"groundingCoverage":null,"deadAxisProseDetected":false,"missingChoiceFork":true,"emptyScene":false,"sca
+[BAKED] Scene 1 committed to story state (turnCount=0, scenes=1)
+[BAKED:GATE] Genesis unlocked (fs-live) — starter=starter_first_sacrifice
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[PREVIEW] continuation finalized → tier "fling", Issue One marked paid. (save deferred — the scene is not committed yet)
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[BAKED:OAS] handoff tapped — entering the one-on-one
+[INTIMACY-INIT:PLAN-SHAPE] {"hasBeats":true,"beatCount":0,"hasVisualState":false,"hasInterruption":true,"is_consummate_scene":true,"engine":"literary","renderMode":"staged_story_mode","storyturn":"ST1"}
+[INTIMACY-INIT:AUTHORED-FRAME] frame=1153ch cue=118ch oasOpening=no postInterruptionBeat=no
+[INTIMACY-DIALOGUE:WOUND] not eligible (encounter #1, cooldown_clear=true)
+[INTIMACY-DIALOGUE:TELEMETRY] started {type: started, timestamp: 1791302162665, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[OAS-AUDIO] started @ curious — breath silent until mouth opens
+[INTIMACY-DIALOGUE] Mouth DB miss — checking cross-user Supabase bank + starting background prebatch. UI proceeds with placeholders.
+[INTIMACY-DIALOGUE:TELEMETRY] mouth_db_miss_nonblocking {type: mouth_db_miss_nonblocking, timestamp: 1791302162666, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[MOUTH-PREBATCH] Skipped — baked CG/OAS opening (generic static viseme placeholders only; zero /api/image spend for bespoke mouth frames)
+[MOUTH-PREBATCH] Skipped — baked CG/OAS opening (generic static viseme placeholders only; zero /api/image spend for bespoke mouth frames)
+[INTIMACY-MOUNT] staged Book → gnReader (single reader screen)
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] remounted the existing hand into #gnCardMount — no reshuffle
+[FATE] dealFateCards complete — cards bound
+[INTIMACY-MOUNT] remounted the fate hand into #gnCardMount — cards now: 5
+[INTIMACY-MOUNT] gnPanelDisplay exists: true visible: true
+[OAS-LLM] Mode: FAST (speed chain)
+[SOUND] AudioContext unlocked, state: running
+[OAS-LLM] Grok (grok-4.20-0309-non-reasoning) ok
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-OPENER] Delivered: "You angled your glances my way, hoping I would intervene." | face: knowing_smirk
+[INTIMACY-DIALOGUE] Rehydrating OAS UI (beat 0, temp curious)
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Crossfade → knowing_smirk (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-2 (profile: fateFirefly, continuous)
+[PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=1000 reasoning=0 visible=200 · turn 0
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=86 markers_per_1k_words=0
+[TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+[OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=1 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=100% · external-plot-share=0% [v2 in-motion-aware heuristic; in-motion counts up to 2 HOT signals, not auto-pass; correlate with SCENE1:DESIRE]
+[SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+[ONE-BREATH:NAMES] 0 person(s) [] · source=scraper(evidence+≥2) · rejected 2: [Not×2, Answer×2]
+[ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+[CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=100% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 1 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+[CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+[CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but feel opposite to readers. [Roman 2026-06-04]
+[SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+[PROSE:ENUMERATION] pass
+[PROSE:QUOTE-MASH] pass
+[SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 0× — present-adversary plan; presence is correct (WARN: 0 mentions — a known adversary who never appears as a force is the failure here).
+[SCENE-WANT] check skipped — no scene_want authored by the planner this run.
+[SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+[PROSE:CANONICAL] 1 run(s) scanned (1 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+[PROSE:CANONICAL]   scar 0/1 (0%) — scar reference (default-female-PC detail)
+[PROSE:CANONICAL]   collarbone_throat_line 0/1 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+[PROSE:CANONICAL]   hair_loose 0/1 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+[PROSE:CANONICAL]   restless_hands 0/1 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+[PROSE:CANONICAL]   repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+[PROSE:CANONICAL]   cuff_adjust 0/1 (0%) — cuff / sleeve / collar adjustment
+[PROSE:CANONICAL]   unasked_question 0/1 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+[PROSE:CANONICAL]   fox_unasked 0/1 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+[PROSE:CANONICAL]   fear_denial 0/1 (0%) — fear-denial ("nothing to do with fear")
+[PROSE:CANONICAL]   permission_marked 0/1 (0%) — permission to be marked / seen / claimed
+[PROSE:CANONICAL]   pulse_jump 0/1 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+[PROSE:CANONICAL]   eyes_went_flat 0/1 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+[PROSE:CANONICAL]   ringed_iris 0/1 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+[PROSE:CANONICAL]   cliche_jaw 0/1 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+[PROSE:CANONICAL]   cliche_cheekbones 0/1 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+[PROSE:CANONICAL]   cliche_piercing_gaze 0/1 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+[PROSE:CANONICAL]   earned_through_discipline 0/1 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+[PROSE:CANONICAL]   voice_drop 0/1 (0%) — voice drops (half a step)
+[PROSE:CANONICAL]   taking_up_space 0/1 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+[PROSE:CANONICAL]   silence_counted 0/1 (0%) — counted / measured silence
+[PROSE:CANONICAL]   something_landed 0/1 (0%) — "something real almost landed"
+[PROSE:CANONICAL]   left_behind 0/1 (0%) — left-behind / abandonment echo
+[PROSE:CANONICAL]   answered_unasked_generic 0/1 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+[PROSE:CANONICAL] SUMMARY — stock(0): — · watch(0): —  (note: only 1 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+[UNAVAILABILITY:MANIFESTATION] 1 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+[FATE:BATCH] Parsed 5 cards (delimiter format)
+[FATE:BATCH] Batch generated for turn 0 — keys: temptation, boundary, confession, reversal, silence
+[SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant:  · dist:  · 
+[DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+[WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+[SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (0%) · ledger size 1
+[PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+[FATE:ENGAGEMENT] submit#1 mode=cg | reliance=1.00 (1clicks/1submits) | distinctThisTurn=1 | pauseAfterClick=305ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[world_high_register(+15), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[SCENE-INTENT] 1 seeded milestone(s) re-derived from the effective scene row
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[STORY-SPINE] shape=STRAIGHT worldArc=∅ world=fatelands tier=fling
+[SOCIAL-ECO] cast (2, shape=STRAIGHT arch=OPEN_VEIN wound=?): a clan-kin→LOYALIST  |  a bond-sister / bondmate→ACCELERATOR
+[COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+[COMMITTED-TRUTH:SEED] about=hidden_bloodline family=identity_collapse truth="The protagonist carries a magical lineage they do not know about." pool-size=7
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 241212 -> 196631 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 438 chars)
+[INTIMACY-DIALOGUE] Routing: beat=1, opening=true, sniffer=false, noise=false, plotDeflect=false → REASONING
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[MODEL-SERVED] requested=grok-4-1-fast-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "A small, shaky breath escaped me.",
+    "do": "I breathed deeply, the air thick with tension from the rite."
+  },
+  "li_dialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+  "li_action": "Julian's gaze held mine, the double-ended shaft steady between my 
+[OAS:SPECULATIVE:GEN] 5/5 alternates parsed
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=27 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 1 | charge 0 esc 0 edge 0 emo 14 | release none(declared) relConf 0 rel# 0 | → open  [normal]
+[INTIMACY:ENGINE] recorded primaryEngine=control | saturation={"hunger":0,"devotion":0,"control":1,"vulnerability":0}
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 1 / 12
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Coherence clamp: knowing_smirk (urgent) → parted (warming) — current temp=curious
+[OAS-AUDIO] breath(M) start @ mouth=parted vol=0.06
+[OAS-AUDIO] breath(F) start @ mouth=parted vol=0.05
+[OAS:TRANSMUTE] swapped PC bubble — say: "Ask me whose hands shaped it." → "A small, shaky breath escaped me." / do: "I set The Answer down between us and do not let go." → "I breathed deeply, the air thick with tension from the rite."
+[OAS:TWO-PATH] first live Julian reply rendered — interruption now eligible
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302217907, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 1 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=20471)
+[INTIMACY-DIALOGUE] Crossfade → parted (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-temptation-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-temptation-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-temptation-2 (profile: fateFirefly, continuous)
+Failed to load resource: the server responded with a status of 404 (Not Found)
+[FATE:CACHE] Cache hit for temptation (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#2 mode=cg | reliance=1.00 (2clicks/2submits) | distinctThisTurn=1 | pauseAfterClick=231ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=22 factors=[world_high_register(+15), tone_kinetic(-10), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 241820 -> 197239 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 758 chars)
+[INTIMACY-DIALOGUE] Routing: beat=2, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "I will speak the truth, and you will hear it.",
+    "do": "I tightened my grip on The Answer, holding it steady between my hands."
+  },
+  "li_dialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+  "li_action": "Julian's gaze held mine, the double-ended sh
+[OAS:SPECULATIVE:GEN] 5/5 alternates parsed
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=27 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 2 | charge 8 esc 27 edge 27 emo 19 | release none(declared) relConf 0 rel# 0 | → open  [normal]
+[INTIMACY:ENGINE] recorded primaryEngine=control | saturation={"hunger":0,"devotion":0,"control":2,"vulnerability":0}
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 2 / 12
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Coherence clamp: intense (peaking) → ohno (warming) — current temp=curious
+[OAS-AUDIO] breath(M) → 0.06 (mouth=ohno)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=ohno)
+[OAS:TRANSMUTE] swapped PC bubble — say: "Ask me again, slower." → "I will speak the truth, and you will hear it." / do: "I step close enough that the stone warms between us." → "I tightened my grip on The Answer, holding it steady between"
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302220820, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 2 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-temptation-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-temptation-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-temptation-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=14999)
+[INTIMACY-DIALOGUE] Crossfade → ohno (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-reversal-2 (profile: fateFirefly, continuous)
+[FATE:CACHE] Cache hit for reversal (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#3 mode=cg | reliance=1.00 (3clicks/3submits) | distinctThisTurn=1 | pauseAfterClick=248ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=22 factors=[world_high_register(+15), tone_kinetic(-10), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: sought, rite, roots, seeking, water, call
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 242854 -> 198273 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 1792 chars)
+[INTIMACY-DIALOGUE] Routing: beat=3, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "I will speak truth, and you will hear it.",
+    "do": "I asserted my grip on The Answer, holding it steady between my hands."
+  },
+  "li_dialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+  "li_action": "Julian's hand remained on the shaft as he waited.",
+  "li_next_prompt": "Answer, Lirael.",
+[INTIMACY-DIALOGUE] Wicked override: face_state intense → blowing_smirk (score=2)
+[OAS:SPECULATIVE:GEN] 5/5 alternates parsed
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=17 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 3 | charge 11 esc 11 edge 11 emo 21 | release none(declared) relConf 0 rel# 0 | → open  [normal]
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] de-repeated vs 16 overused words (5ms)
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 3 / 12
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Coherence clamp: blowing_smirk (peaking) → still (warming) — current temp=curious
+[OAS-AUDIO] breath(M) → 0.00 (mouth=still)
+[OAS-AUDIO] breath(F) → 0.00 (mouth=still)
+[OAS:TRANSMUTE] swapped PC bubble — say: "Ask me whose hands shaped it." → "I will speak truth, and you will hear it." / do: "I set The Answer down between us and do not let go." → "I asserted my grip on The Answer, holding it steady between "
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302223747, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 3 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-reversal-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=51422)
+[INTIMACY-DIALOGUE] Crossfade → still (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-2 (profile: fateFirefly, continuous)
+[FATE:AXIS] scene 0 — silence (axis=objective, content-classified) → +1 objective (tally now obj=1 rel=0 lead=+1)
+[FATE:CACHE] Cache hit for silence (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#4 mode=cg | reliance=1.00 (4clicks/4submits) | distinctThisTurn=1 | pauseAfterClick=237ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[verbose_profile(+10), world_high_register(+15), tone_kinetic(-10), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: sought, rite, roots, seeking, water, call
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 243155 -> 198574 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 2056 chars)
+[INTIMACY-DIALOGUE] Routing: beat=4, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "I will speak truth, and you will hear it.",
+    "do": "I asserted my grip on The Answer, holding it steady between my hands."
+  },
+  "li_dialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+  "li_action": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=26 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 4 | charge 17 esc 31 edge 4 emo 8 | release none(declared) relConf 0.5 rel# 0 | → open  [normal]
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] de-repeated vs 16 overused words (3ms)
+[INTIMACY:ENGINE] recorded primaryEngine=control | saturation={"hunger":0,"devotion":0,"control":3,"vulnerability":0}
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 4 / 12
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Coherence clamp: knowing_smirk (urgent) → parted (warming) — current temp=curious
+[OAS-AUDIO] breath(M) → 0.06 (mouth=parted)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=parted)
+[OAS:TRANSMUTE] swapped PC bubble — say: "mm" → "I will speak truth, and you will hear it." / do: "I go still and let the clearing finish its noise." → "I asserted my grip on The Answer, holding it steady between "
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302227172, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=1 · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 4 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=16828)
+[INTIMACY-DIALOGUE] Crossfade → parted (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-confession-2 (profile: fateFirefly, continuous)
+[FATE:AXIS] scene 0 — undoing prior objective (-1) before applying new card
+[FATE:CACHE] Cache hit for confession (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#5 mode=cg | reliance=1.00 (5clicks/5submits) | distinctThisTurn=1 | pauseAfterClick=261ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=47 factors=[long_input(+15), verbose_profile(+10), world_high_register(+15), tone_kinetic(-10), pov_first(-8), temp_curious(-5)] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: sought, rite, roots, seeking, water, call
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 243695 -> 199114 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 2431 chars)
+[INTIMACY-DIALOGUE] Routing: beat=5, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "I will speak the truth, and you will hear it.",
+    "do": "I asserted my grip on The Answer, holding it steady between my hands."
+  },
+  "li_dialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+  "li_action": "Julian's hand remained on the shaft as his gaze held mine.",
+  "li_n
+[OAS:SPECULATIVE:GEN] 5/5 alternates parsed
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=22 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 5 | charge 23 esc 12 edge 29 emo 17 | release none(declared) relConf 0.5 rel# 0 | → open  [normal]
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] de-repeated vs 16 overused words (5ms)
+[INTIMACY:ENGINE] recorded primaryEngine=control | saturation={"hunger":0,"devotion":0,"control":4,"vulnerability":0}
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 5 / 12
+[OAS:HEARTBEAT-PULSE] temperature=curious period=920ms amp=0.4 (wrap=true, log=true)
+[INTIMACY-DIALOGUE] Coherence clamp: intense (peaking) → what (warming) — current temp=curious
+[OAS-AUDIO] breath(M) → 0.06 (mouth=what)
+[OAS-AUDIO] breath(F) → 0.05 (mouth=what)
+[OAS:TRANSMUTE] swapped PC bubble — say: "I held it when it twisted. I felt it choose." → "I will speak the truth, and you will hear it." / do: "I turn The Answer so the cut edge faces him." → "I asserted my grip on The Answer, holding it steady between "
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302230635, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 5 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-confession-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=15020)
+[INTIMACY-DIALOGUE] Crossfade → what (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-0 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-1 (profile: fateFirefly, continuous)
+[Sparkle] Started emitter: anchored-sparkle-fate-silence-2 (profile: fateFirefly, continuous)
+[FATE:AXIS] scene 0 — silence (axis=objective, content-classified) → +1 objective (tally now obj=1 rel=0 lead=+1)
+[FATE:CACHE] Cache hit for silence (turn 0) — no regeneration
+[FATE:ENGAGEMENT] submit#6 mode=cg | reliance=1.00 (6clicks/6submits) | distinctThisTurn=1 | pauseAfterClick=250ms (instant) | hedging=no
+[OAS:TRANSMUTE:AMP] level=medium score=32 factors=[verbose_profile(+10), world_high_register(+15), tone_kinetic(-10), pov_first(-8), temp_curious(-5), world_floor_raised_low_to_medium] budget={"embellishments":1,"metaphors":0,"callback":false,"max_chars_added":60,"lift":"one-contextual-clause"}
+[OAS:PC-EXPLICIT] turn=0 mode=default detected=false recent=0
+[OAS:ANTI-MONOTONY] banning motifs this turn: sought, rite, roots, seeking, water, call
+[FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+[OAS:SPECULATIVE:GATE] INCLUDE alternates (only 0 prior card-clicks — defaulting to include)
+[OAS:COMPACT] 243449 -> 198868 chars (44539 duplicated instruction chars dropped; volatile region moved intact, 2009 chars)
+[INTIMACY-DIALOGUE] Routing: beat=6, opening=false, sniffer=false, noise=false, plotDeflect=false → FAST
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[MODEL-SERVED] requested=grok-4.20-0309-non-reasoning served=grok-4.3 (cost priced at requested rates)
+[INTIMACY-DIALOGUE] LLM raw response (first 400 chars): {
+  "pc_input_transmuted": {
+    "say": "Let them witness what you have wrought upon me.",
+    "do": "I tilted The Answer toward him, my fingers brushing against his."
+  },
+  "li_dialogue": "Your gaze held to the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+  "li_action": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+  "li_next_pro
+[OAS:SPECULATIVE:GEN] 5/5 alternates parsed
+[PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=22 markers_per_1k_words=0
+[INTIMACY-STATE] v2 turn 6 | charge 30 esc 32 edge 12 emo 7 | release none(declared) relConf 0.5 rel# 0 | → open  [normal]
+[OAS:CLEANUP] auxiliary line-edit pass — model=gpt-4o-mini (not the author)
+[OAS:CLEANUP] de-repeated vs 16 overused words (5ms)
+[NIL:ERA] +1 (hostile_scene_tone:enemies, vector=violence). Pressure: 6 / 12
+[OAS-AUDIO] temperature → warming
+[OAS:HEARTBEAT-PULSE] temperature=warming period=800ms amp=0.65 (wrap=true, log=true)
+[OAS-AUDIO] breath(M) → 0.00 (mouth=knowing_smirk)
+[OAS-AUDIO] breath(F) → 0.00 (mouth=knowing_smirk)
+[OAS:TRANSMUTE] swapped PC bubble — say: "mm" → "Let them witness what you have wrought upon me." / do: "I go still and let the clearing finish its noise." → "I tilted The Answer toward him, my fingers brushing against "
+[INTIMACY-DIALOGUE:TELEMETRY] turn {type: turn, timestamp: 1791302234070, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=1 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=1 · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(11), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(12)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[OAS:DECK] dealt a fresh hand for beat 6 into #gnCardMount — cards: 5
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-0
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-1
+[Sparkle] Stopped emitter: anchored-sparkle-fate-silence-2
+[INTIMACY-DEV] fate-card cache reset for next turn (seed=41458)
+[OAS:EXIT-RAMP] suppressed at beat 6 — this encounter is authored to end in its interruption, not in afterglow
+[INTIMACY-DIALOGUE] Crossfade → knowing_smirk (peak=false, whitePeek=false, 2ndConsec=false, streak=0)
+[FATE:ENGAGEMENT] submit#7 mode=cg | reliance=0.86 (6clicks/7submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[INTIMACY-EXIT] Modal opened (trigger=text)
+[STAGED:SUBMIT] Routed to intimacy dialogue turn handler
+[INTIMACY-DIALOGUE:TELEMETRY] resolved {type: resolved, timestamp: 1791302236158, storyId: 6d5a7033-2893-4a54-9551-fb91e19e28ca, sceneIdx: 0, storyturn: ST1}
+[OAS:AFTERCARE-LOG] captured — dark=[] idAttempts=0 residue=[hunger,asymmetry_awareness]
+[EMBODIMENT] +4 delta(s) for lirael::julian @turn0 (issue 1, shape null) — touch←hunger_unresolved[medium], eye_contact←hunger_unresolved[medium], eye_contact←asymmetry[durable], risk_threshold←asymmetry[durable]
+[OAS-AUDIO] stopped
+[OAS:ARCHIVE] Snapshot saved at scene index 0 — 6 beats, reason=user_pivot_end
+[OAS:TWO-PATH] no postInterruptionBeat declared — existing behavior preserved (straight to cards)
+[FATE:INTIMATE] Requesting BATCH preview for all 5 archetypes (tiered: mistral -> grok -> openai)
+[TIERED:fatePreviews] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+[INTIMATE-INTERRUPT] mounted host=cg image=d3 lines=3
+[FATE:INTIMATE:VARIANT-DIST] {"amplify":2,"ruin":1,"redirect":2} (delimiter)
+[FATE:INTIMATE:VARIANT-DIST] {"amplify":2,"ruin":1,"redirect":2} (delimiter)
+[FATE:INTIMATE] tiered batch preview success via mistral/primary
+[INTIMATE-INTERRUPT] five heightened options landed
+[FATE:ENGAGEMENT] submit#8 mode=cg | reliance=0.75 (6clicks/8submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+[SCENE-DECISION] scene 1 → posture (interruption_submit)
+[SCENE-INTENT] scene 3 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 4 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 5 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 6 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 7 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 8 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 9 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 10 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 11 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 12 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 13 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 14 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 15 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 16 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 17 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 18 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 19 branch=posture withheld: stage (no per-branch text approved for this branch)
+[SCENE-INTENT] scene 20 branch=posture withheld: stage (no per-branch text approved for this branch)
+[LEDGER:CLIPPED] event is 688 chars against a limit of 300 — 388 characters were REMOVED from the committed record, and the next scene will never see them: "it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to fl"
+[SCENE-LEDGER] +p1 kind=oas_interrupt issue=1 uid=none planned="The presiding Dohkar cut the interrogation off — a Provast q"
+[INTIMATE-INTERRUPT] submitted card=- action="I step back from him." dialogue="Ask me in front of them, then."
+[SCENE-DECISION] a recorded "posture" (source=interruption_submit) does NOT answer the axis [run | remain] — the decision stays open
+[SCENE-DECISION] continuation requested before the reader's choice was recorded — mounting the prompt, requesting nothing
+[SCENE-DECISION] prompt mounted: run in shame vs remain and see where Julian was taking it

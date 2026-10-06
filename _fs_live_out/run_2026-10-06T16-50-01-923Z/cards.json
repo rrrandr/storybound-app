@@ -1,0 +1,780 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 0,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": false
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": false
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Meet his gaze directly, breath catching.",
+      "dialogue": "I wanted to believe I was innocent.",
+      "cardId": "confession",
+      "selectedIndex": 2,
+      "optionIds": [
+        "temptation",
+        "silence",
+        "confession",
+        "reversal",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 0
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze directly, breath catching.",
+        "dialogue": "I wanted to believe I was innocent."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=1 card=\"confession\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 2,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Meet his gaze directly, breath catching.",
+      "dialogue": "I wanted to believe I was innocent.",
+      "cardId": "confession",
+      "selectedIndex": 2,
+      "optionIds": [
+        "reversal",
+        "silence",
+        "confession",
+        "temptation",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 1
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze directly, breath catching.",
+        "dialogue": "I wanted to believe I was innocent."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=2 card=\"confession\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 3,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "Meet his gaze directly, breath catching.",
+      "dialogue": "I wanted to believe I was innocent.",
+      "cardId": "confession",
+      "selectedIndex": 4,
+      "optionIds": [
+        "silence",
+        "temptation",
+        "boundary",
+        "reversal",
+        "confession"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 2
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze directly, breath catching.",
+        "dialogue": "I wanted to believe I was innocent."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=3 card=\"confession\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 4,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Lift the Answer, asserting control over the moment.",
+      "dialogue": "I will decide how this unfolds, not you.",
+      "cardId": "reversal",
+      "selectedIndex": 2,
+      "optionIds": [
+        "temptation",
+        "silence",
+        "reversal",
+        "boundary",
+        "confession"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 3
+      },
+      "cacheEntry": {
+        "action": "Lift the Answer, asserting control over the moment.",
+        "dialogue": "I will decide how this unfolds, not you."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=4 card=\"reversal\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 5,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Hold my breath, letting the tension fill the air.",
+      "dialogue": "(You decide to say nothing. Julian notices anyway.)",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "optionIds": [
+        "confession",
+        "temptation",
+        "silence",
+        "boundary",
+        "reversal"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 4
+      },
+      "cacheEntry": {
+        "action": "Hold my breath, letting the tension fill the air.",
+        "dialogue": ""
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=opening OAS turn=5 card=\"silence\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 6,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "Step back, letting the Answer hang between us.",
+      "dialogue": "I won't answer until I know what was done.",
+      "cardId": "boundary",
+      "selectedIndex": 4,
+      "optionIds": [
+        "temptation",
+        "reversal",
+        "silence",
+        "confession",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 5
+      },
+      "cacheEntry": {
+        "action": "Step back, letting the Answer hang between us.",
+        "dialogue": "I won't answer until I know what was done."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=6 card=\"boundary\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "scene": 2,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "1:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 0,
+        "temptation": {
+          "a": 57,
+          "d": 25
+        },
+        "boundary": {
+          "a": 46,
+          "d": 42
+        },
+        "confession": {
+          "a": 40,
+          "d": 35
+        },
+        "reversal": {
+          "a": 51,
+          "d": 40
+        },
+        "silence": {
+          "a": 49,
+          "d": 0
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 3,
+    "submitted": {
+      "action": "Meet his gaze, revealing my uncertainty",
+      "dialogue": "I feel lost, and I can't pretend otherwise.",
+      "source": "gn",
+      "cardId": "confession",
+      "selectedIndex": 3,
+      "appKey": {
+        "turnCount": 1,
+        "sceneFateKey": "1:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze, revealing my uncertainty",
+        "dialogue": "I feel lost, and I can't pretend otherwise."
+      },
+      "gn": {
+        "a": 39,
+        "d": 43
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 2 end turn=2 card=\"confession\""
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 2 end turn=2 card=\"confession\""
+    }
+  },
+  {
+    "scene": 3,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "2:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 1,
+        "temptation": {
+          "a": 49,
+          "d": 37
+        },
+        "boundary": {
+          "a": 42,
+          "d": 44
+        },
+        "confession": {
+          "a": 39,
+          "d": 43
+        },
+        "reversal": {
+          "a": 45,
+          "d": 42
+        },
+        "silence": {
+          "a": 41,
+          "d": 16
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 3,
+    "submitted": {
+      "action": "Lean closer, brushing my shoulder against his",
+      "dialogue": "What if I just let everyone see us?",
+      "source": "gn",
+      "cardId": "temptation",
+      "selectedIndex": 3,
+      "appKey": {
+        "turnCount": 2,
+        "sceneFateKey": "2:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Lean closer, brushing my shoulder against his",
+        "dialogue": "What if I just let everyone see us?"
+      },
+      "gn": {
+        "a": 45,
+        "d": 35
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 3 end turn=3 card=\"temptation\""
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 3 end turn=3 card=\"temptation\""
+    }
+  },
+  {
+    "scene": 4,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "3:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 2,
+        "temptation": {
+          "a": 45,
+          "d": 35
+        },
+        "boundary": {
+          "a": 44,
+          "d": 38
+        },
+        "confession": {
+          "a": 38,
+          "d": 40
+        },
+        "reversal": {
+          "a": 43,
+          "d": 40
+        },
+        "silence": {
+          "a": 47,
+          "d": 4
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "Press the Answer into his palm, daring him to respond.",
+      "dialogue": "Let them see how aligned we really are, Julian.",
+      "source": "gn",
+      "cardId": "temptation",
+      "selectedIndex": 4,
+      "appKey": {
+        "turnCount": 3,
+        "sceneFateKey": "3:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Press the Answer into his palm, daring him to respond.",
+        "dialogue": "Let them see how aligned we really are, Julian."
+      },
+      "gn": {
+        "a": 54,
+        "d": 47
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 4 end turn=4 card=\"temptation\""
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 4 end turn=4 card=\"temptation\""
+    }
+  },
+  {
+    "scene": 5,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "4:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 3,
+        "temptation": {
+          "a": 54,
+          "d": 47
+        },
+        "boundary": {
+          "a": 54,
+          "d": 50
+        },
+        "confession": {
+          "a": 42,
+          "d": 45
+        },
+        "reversal": {
+          "a": 46,
+          "d": 47
+        },
+        "silence": {
+          "a": 54,
+          "d": 23
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 2,
+    "submitted": {
+      "action": "Meet his gaze, letting my breath hitch",
+      "dialogue": "I can't stop thinking about how you see me.",
+      "source": "gn",
+      "cardId": "confession",
+      "selectedIndex": 2,
+      "appKey": {
+        "turnCount": 4,
+        "sceneFateKey": "4:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze, letting my breath hitch",
+        "dialogue": "I can't stop thinking about how you see me."
+      },
+      "gn": {
+        "a": 38,
+        "d": 43
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 5 end turn=5 card=\"confession\""
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 5 end turn=5 card=\"confession\""
+    }
+  },
+  {
+    "scene": 6,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "5:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 4,
+        "temptation": {
+          "a": 45,
+          "d": 43
+        },
+        "boundary": {
+          "a": 46,
+          "d": 53
+        },
+        "confession": {
+          "a": 38,
+          "d": 43
+        },
+        "reversal": {
+          "a": 47,
+          "d": 50
+        },
+        "silence": {
+          "a": 49,
+          "d": 42
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "Take a bold step forward, reclaiming the moment",
+      "dialogue": "I’ll speak, but only if you promise to listen.",
+      "source": "gn",
+      "cardId": "reversal",
+      "selectedIndex": 4,
+      "appKey": {
+        "turnCount": 5,
+        "sceneFateKey": "5:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Take a bold step forward, reclaiming the moment",
+        "dialogue": "I’ll speak, but only if you promise to listen."
+      },
+      "gn": {
+        "a": 47,
+        "d": 46
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 6 end turn=6 card=\"reversal\""
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=scene 6 end turn=6 card=\"reversal\""
+    }
+  }
+]

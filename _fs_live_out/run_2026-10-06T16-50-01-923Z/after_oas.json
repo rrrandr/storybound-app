@@ -1,0 +1,161 @@
+{
+  "turnsTaken": 6,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true
+  },
+  "interruption": {
+    "present": true,
+    "submitted": true,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "resume",
+      "at": 1791305609277,
+      "storyId": "30aea721-9470-45ae-94d0-89fa4a8e26ee"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:a8070998-60cc-4b7f-a8b4-10719b606fdd",
+        "text": "The Dohkar's voice cuts across the clearing before the last echo of my words has died.\n\nTHE PRESIDING DOHKAR: \"A preliminary review is required.\"\n\nThe assembly shifts, a single wave of breath and fabric moving through the rings.\n\nMy step back still hangs between us, the grass crushed under my heel.\n\nTHE PRESIDING DOHKAR: \"The matter will be placed before a Chayr and two Dohkars.\"\n\nThe words land like a hand on my shoulder, heavy and deliberate.\n\nJulian has not moved, but the air around him has changed.\n\nJULIAN: \"Agreed.\"\n\nHis voice carries the weight of a decision already made.\n\nThe scar on his wrist catches the light when he shifts his stance.\n\nSeren remains kneeling, her small frame the only still point in the shifting crowd.\n\nThe Dohkar's gaze settles on me again, heavier now.\n\nI feel the weight of the review settle into the grass between us.\n\nThe Answer lies still in my hands, its double-ended shaft catching the last light.\n\nThe clearing has changed shape around the words now spoken.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:a8070998-60cc-4b7f-a8b4-10719b606fdd",
+        "quoted": [
+          "A preliminary review is required.",
+          "A preliminary review is required."
+        ],
+        "summary": [
+          "The player stepped back and demanded the question be asked in front of the assembly.",
+          "Julian registered the demand without moving to stop it."
+        ],
+        "obligations": [
+          "review"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I wanted to believe I was innocent.",
+        "pcDo": "I meet his gaze directly, breath catching on the weight of The Answer between my hands.",
+        "pcSayRaw": "I wanted to believe I was innocent.",
+        "pcDoRaw": "Meet his gaze directly, breath catching.",
+        "liDialogue": "You shaped Seren’s wish through your desirability alone, every gesture in the rite calling my eyes to you. Did you summon me hoping I would claim the blame and rescue you from it?",
+        "liAction": "Julian leans closer across the circle, the scarred wrist still resting against my palm.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I wanted to believe I was innocent.",
+        "pcDo": "I meet his gaze directly, breath catching on the weight of The Answer between my hands.",
+        "pcSayRaw": "I wanted to believe I was innocent.",
+        "pcDoRaw": "Meet his gaze directly, breath catching.",
+        "liDialogue": "You shaped Seren’s wish through your desirability alone, every gesture in the rite calling my eyes to you. Did you summon me hoping I would claim the blame and rescue you from it?",
+        "liAction": "Julian leans closer across the circle, the scarred wrist still resting against my palm.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I wanted to believe I was innocent.",
+        "pcDo": "I meet his gaze directly, my breath catching on the weight of The Answer.",
+        "pcSayRaw": "I wanted to believe I was innocent.",
+        "pcDoRaw": "Meet his gaze directly, breath catching.",
+        "liDialogue": "Your gaze locked onto me from across the circle, breath catching as you lingered for my response. Was that the invitation you intended for me to embrace?",
+        "liAction": "Julian's jaw clenches as he studies my expression.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will shape what comes next, not you.",
+        "pcDo": "I lift The Answer, claiming the moment for myself.",
+        "pcSayRaw": "I will decide how this unfolds, not you.",
+        "pcDoRaw": "Lift the Answer, asserting control over the moment.",
+        "liDialogue": "Each look you threw my way drew me closer, a silent invitation to step into your world. Was that the plea you wanted me to heed by accepting the blame?",
+        "liAction": "Julian's gaze sharpens, the intensity of his focus thickening the air between us.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I hold my silence, the circle listening.",
+        "pcDo": "I hold my breath, the tension stretching taut across the circle.",
+        "pcSayRaw": "(You decide to say nothing. Julian notices anyway.)",
+        "pcDoRaw": "Hold my breath, letting the tension fill the air.",
+        "liDialogue": "The stillness echoes more than any rejection. What reality do you dread the revelation will unveil?",
+        "liAction": "Julian's scarred wrist lies firm in my grasp, the gravity of his focus shrinking the distance between us.",
+        "faceState": "thinking_intrigued",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I won't answer until I know what was done.",
+        "pcDo": "I step back, letting the Answer hang between us.",
+        "pcSayRaw": "I won't answer until I know what was done.",
+        "pcDoRaw": "Step back, letting the Answer hang between us.",
+        "liDialogue": "You turned to me when the longing coiled, seeking my presence to shield you from the Dohkar's scrutiny. Was that the signal you wanted me to heed?",
+        "liAction": "Julian's eyes sharpen, the intensity of his focus thickening the air that separates us.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}
