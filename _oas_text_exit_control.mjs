@@ -162,7 +162,9 @@ let modal = null;
       const m = document.getElementById('intimacyExitModal');
       const btn = (id) => { const b = document.getElementById(id);
         return b ? { present: true, visible: shown(b), label: (b.textContent||'').trim().slice(0,40) } : null; };
+      const mr = m ? m.getBoundingClientRect() : null;
       return { up: !!(m && m.classList.contains('active') && shown(m)),
+        box: mr ? { w: Math.round(mr.width), h: Math.round(mr.height) } : null,
         abrupt: btn('intimacyExitAbrupt'), fade: btn('intimacyExitFade'),
         metaphorical: btn('intimacyExitMetaphorical'), cancel: btn('intimacyExitCancel') };
     });
@@ -179,9 +181,68 @@ t('no turn was fired into Julian instead', postStop.beat === preStop.beat,
 t('the modal was activated', postStop.modalHasActive === true);
 t('and it carries resolver-backed controls', !!(modal && (modal.abrupt || modal.fade)));
 // ...BUT IT IS NOT DISPLAYABLE. Documented as a defect, with the cause.
-t('DEFECT: the activated modal is NOT rendered for the reader', modal && modal.up === false,
-  'if this ever passes, the modal became visible and this control should be inverted');
+t('THE MODAL IS RENDERED FOR THE READER', modal && modal.up === true,
+  'it was parented inside the hidden #menuOverlay until 2026-10-06');
+t('and it has a real, non-zero box', !!(modal && modal.box && modal.box.w > 100 && modal.box.h > 100),
+  'box=' + JSON.stringify(modal && modal.box));
 const serveBefore = served;
+
+// ── CANCEL FIRST: "Never mind — keep going" must return to the ongoing conversation ─────────
+console.log('');
+console.log('=== CANCEL RETURNS TO THE CONVERSATION ===');
+const beforeCancel = await page.evaluate(() => {
+  const d = window.state.intimacyDialogue || {};
+  return { active: !!d.active, beat: d.beatCount, replies: (d.liTurnHistory || []).length };
+});
+await page.locator('#intimacyExitCancel').click({ timeout: 15000 }).catch(e =>
+  console.log('  cancel click error: ' + String(e.message).split('\n')[0]));
+await page.waitForTimeout(1500);
+const afterCancel = await page.evaluate(() => {
+  const d = window.state.intimacyDialogue || {};
+  const m = document.getElementById('intimacyExitModal');
+  const cs = m ? getComputedStyle(m) : null;
+  return { active: !!d.active, beat: d.beatCount, replies: (d.liTurnHistory || []).length,
+    modalActive: !!(m && m.classList.contains('active')),
+    modalShown: !!(cs && cs.display !== 'none'),
+    deckCards: (function () {
+      const mt = window._activeCardMount ? window._activeCardMount() : null;
+      return mt ? [...mt.querySelectorAll('.fate-card')].filter(e => e.offsetParent !== null).length : 0;
+    })() };
+});
+console.log('  before: ' + JSON.stringify(beforeCancel));
+console.log('  after : ' + JSON.stringify(afterCancel));
+t('Cancel is clickable', true);
+t('Cancel CLOSED the modal', afterCancel.modalActive === false && afterCancel.modalShown === false);
+t('the conversation is STILL ACTIVE after Cancel', afterCancel.active === true);
+t('no beat was consumed and no reply lost', afterCancel.beat === beforeCancel.beat
+  && afterCancel.replies === beforeCancel.replies,
+  JSON.stringify({ beforeCancel, afterCancel }));
+t('the reader can carry on — the deck is still there', afterCancel.deckCards > 0,
+  'cards=' + afterCancel.deckCards);
+
+// Re-open the modal the same way, to take the exit for real.
+console.log('');
+console.log('=== RE-OPENING THE EXIT THE SAME WAY ===');
+await page.evaluate(() => {
+  const i = window._getActiveTurnInputs();
+  if (i.diaInput) { i.diaInput.disabled = false; i.diaInput.value = 'enough';
+    i.diaInput.dispatchEvent(new Event('input', { bubbles: true })); }
+  if (i.actInput) { i.actInput.disabled = false; i.actInput.value = ''; }
+});
+await page.locator('#gnSubmitBtn').click({ timeout: 15000 }).catch(() => {});
+{ const dl = Date.now() + 20000;
+  while (Date.now() < dl) {
+    const up = await page.evaluate(() => {
+      const m = document.getElementById('intimacyExitModal');
+      return !!(m && m.classList.contains('active') && getComputedStyle(m).display !== 'none');
+    });
+    if (up) break;
+    await page.waitForTimeout(500);
+  } }
+t('a second exit word ("enough") reopens the modal', await page.evaluate(() => {
+  const m = document.getElementById('intimacyExitModal');
+  return !!(m && m.classList.contains('active') && getComputedStyle(m).display !== 'none');
+}));
 
 // ── THE READER CHOOSES "end it now" — the modal control, not the resolver ───────────────────
 console.log('');
@@ -249,25 +310,12 @@ console.log('  ' + JSON.stringify(out));
 console.log('  ' + arch.slice(0, 130));
 t('no further OAS author call was spent by the exit', served === serveBefore,
   'served ' + serveBefore + ' -> ' + served);
-// THE CONSEQUENCE: the reader cannot complete the exit, so nothing downstream happens.
-t('DEFECT: the exit cannot be completed, so no interruption mounts',
-  out && out.interruptionPresent === false,
-  'if this ever passes, the modal became clickable and this control should be inverted');
-t('and no archive is written, because the OAS never resolved',
-  out && out.archive === 0, 'archive=' + (out && out.archive));
-console.log('');
-console.log('  CAUSE: #intimacyExitModal is parented inside #menuOverlay, which is display:none');
-console.log('         on the staged reader. The modal gains .active and computes display:flex, but');
-console.log('         renders at 0x0 with opacity 0 and cannot be clicked. Same bug class as the');
-console.log('         fate deck dealt into a hidden mount.');
+t('THE AUTHORED DOHKAR INTERRUPTION MOUNTED from the reader\'s text exit',
+  out && out.interruptionPresent === true, JSON.stringify(out));
+t('the archive was preserved', out && out.archive >= 1, 'archive=' + (out && out.archive));
+t('and it resolved well before the beat-20 cap', !/20 beats/.test(arch), arch.slice(0, 110));
 
 // ── AND ON TO THE DECISION ──────────────────────────────────────────────────────────────────
-if (!(out && out.interruptionPresent)) {
-  console.log('');
-  console.log('=== INTERRUPTION -> SUBMISSION -> DECISION -> SCENE 2 ===');
-  console.log('  NOT REACHED — blocked by the defect above, not by the handoff. The same chain IS');
-  console.log('  proven from the hard cap in _oas_captured_replay.mjs (10/10).');
-}
 if (out && out.interruptionPresent) {
   console.log('');
   console.log('=== INTERRUPTION -> SUBMISSION -> DECISION -> SCENE 2 ===');
@@ -313,6 +361,39 @@ if (out && out.interruptionPresent) {
     .forEach(l => console.log('  | ' + l.slice(0, 140)));
   t('A SCENE 2 REQUEST WAS ISSUED', sceneReq);
 }
+
+// ── THE VAULT STILL OPENS AND CLOSES ────────────────────────────────────────────────────────
+// The modal used to live inside #menuOverlay. Moving it out must not have disturbed that overlay.
+console.log('');
+console.log('=== THE VAULT (#menuOverlay) STILL OPENS AND CLOSES ===');
+const vault = await page.evaluate(() => {
+  const shown = (el) => { if (!el) return false; const cs = getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  const m = document.getElementById('menuOverlay');
+  const out = { exists: !!m, closedAtRest: !shown(m) };
+  if (!m) return out;
+  // OPEN IT THE WAY THE APP DOES: the markup is class="overlay hidden" and every call site does
+  // classList.add('hidden') to close, so opening is removing it.
+  out.hiddenAtRest = m.classList.contains('hidden');
+  m.classList.remove('hidden');
+  const r1 = m.getBoundingClientRect();
+  out.openedBox = { w: Math.round(r1.width), h: Math.round(r1.height) };
+  out.openedShown = shown(m);
+  // its own content must still be inside it
+  out.holdsVaultContent = !!m.querySelector('.vault-back, #modelComparePanel');
+  out.stillHoldsExitModal = !!m.querySelector('#intimacyExitModal');
+  m.classList.add('hidden');
+  out.closedAgain = !shown(m);
+  return out;
+});
+console.log('  ' + JSON.stringify(vault));
+t('the Vault overlay still exists', vault.exists === true);
+t('it is closed at rest, via .hidden', vault.closedAtRest === true && vault.hiddenAtRest === true);
+t('it OPENS to a real box', vault.openedShown === true
+  && vault.openedBox && vault.openedBox.w > 100, JSON.stringify(vault.openedBox));
+t('it still contains its own Vault content', vault.holdsVaultContent === true);
+t('and it NO LONGER contains the exit modal', vault.stillHoldsExitModal === false);
+t('it closes again', vault.closedAgain === true);
 
 fs.mkdirSync('_audit_out/replay', { recursive: true });
 fs.writeFileSync('_audit_out/replay/text_exit.json',

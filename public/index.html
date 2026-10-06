@@ -176,49 +176,6 @@
     <div id="modelCompareList"></div>
   </div>
 
-  <div id="intimacyExitModal" class="intimacy-exit-overlay" role="dialog" aria-modal="true" aria-labelledby="intimacyExitTitle">
-    <div class="intimacy-exit-box">
-      <h2 id="intimacyExitTitle" class="intimacy-exit-title">How would you like to step out?</h2>
-      <p class="intimacy-exit-lead">
-        You can end this intimate scene right now, or change how intimacy plays
-        out for the rest of this story.
-      </p>
-
-      <div class="intimacy-exit-group">
-        <div class="intimacy-exit-group-label">Right now</div>
-        <div class="intimacy-exit-row">
-          <button id="intimacyExitFade" class="intimacy-exit-btn intimacy-exit-btn-primary" type="button">
-            <span class="intimacy-exit-btn-title">Fade to Black</span>
-            <span class="intimacy-exit-btn-sub">A successful encounter, left to the imagination.</span>
-          </button>
-          <button id="intimacyExitAbrupt" class="intimacy-exit-btn intimacy-exit-btn-danger" type="button">
-            <span class="intimacy-exit-btn-title">End Abruptly</span>
-            <span class="intimacy-exit-btn-sub">Walk out cold. Your love interest may be hurt or angry.</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="intimacy-exit-divider"></div>
-
-      <div class="intimacy-exit-group">
-        <div class="intimacy-exit-group-label">Going forward (this story)</div>
-        <div class="intimacy-exit-row">
-          <button id="intimacyExitMetaphorical" class="intimacy-exit-btn" type="button">
-            <span class="intimacy-exit-btn-title">All Intimacy → Metaphorical</span>
-            <span class="intimacy-exit-btn-sub">Future intimate moments render through metaphor only.</span>
-          </button>
-          <button id="intimacyExitFadeAll" class="intimacy-exit-btn" type="button">
-            <span class="intimacy-exit-btn-title">All Intimacy → Fade to Black</span>
-            <span class="intimacy-exit-btn-sub">Future intimate moments skip past the bedroom door.</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="intimacy-exit-cancel-row">
-        <button id="intimacyExitCancel" class="intimacy-exit-cancel" type="button">Never mind — keep going</button>
-      </div>
-    </div>
-  </div>
 
   <div id="faqModal" class="overlay hidden" style="z-index:10090;">
     <div class="faq-modal-box">
@@ -409,6 +366,58 @@
 
 
 </div>
+
+  <!-- INTIMACY EXIT MODAL — MOVED OUT OF #menuOverlay (Roman/Codex 2026-10-06).
+       It was nested inside the Vault/menu overlay, which is display:none except when the Vault
+       is open. The handler fired correctly on a full-line "stop"/"skip"/"enough"
+       (_isIntimacyExitInput -> _showIntimacyExitModal), the modal gained .active and computed
+       display:flex — but inside a non-rendered ancestor it had a 0x0 box at opacity 0, so the
+       reader saw nothing and could not complete the exit. IDs, classes and handlers are
+       unchanged; only its position in the document moved. No closing tag was inserted: the
+       overlay closes where it always did, now at the line below this block. -->
+  <div id="intimacyExitModal" class="intimacy-exit-overlay" role="dialog" aria-modal="true" aria-labelledby="intimacyExitTitle">
+    <div class="intimacy-exit-box">
+      <h2 id="intimacyExitTitle" class="intimacy-exit-title">How would you like to step out?</h2>
+      <p class="intimacy-exit-lead">
+        You can end this intimate scene right now, or change how intimacy plays
+        out for the rest of this story.
+      </p>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Right now</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitFade" class="intimacy-exit-btn intimacy-exit-btn-primary" type="button">
+            <span class="intimacy-exit-btn-title">Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">A successful encounter, left to the imagination.</span>
+          </button>
+          <button id="intimacyExitAbrupt" class="intimacy-exit-btn intimacy-exit-btn-danger" type="button">
+            <span class="intimacy-exit-btn-title">End Abruptly</span>
+            <span class="intimacy-exit-btn-sub">Walk out cold. Your love interest may be hurt or angry.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-divider"></div>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Going forward (this story)</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitMetaphorical" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Metaphorical</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments render through metaphor only.</span>
+          </button>
+          <button id="intimacyExitFadeAll" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments skip past the bedroom door.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-cancel-row">
+        <button id="intimacyExitCancel" class="intimacy-exit-cancel" type="button">Never mind — keep going</button>
+      </div>
+    </div>
+  </div>
 
 <div id="loadingOverlay" class="overlay hidden" style="z-index:9000;">
   <div id="loadingOverlayInner">

@@ -5,7 +5,11 @@
     "boredom": 0
   },
   "modal": {
-    "up": false,
+    "up": true,
+    "box": {
+      "w": 1280,
+      "h": 720
+    },
     "abrupt": {
       "present": true,
       "visible": true,
@@ -28,11 +32,11 @@
     }
   },
   "out": {
-    "dialogueGone": false,
-    "interruptionPresent": false,
+    "dialogueGone": true,
+    "interruptionPresent": true,
     "interruptionSubmitted": false,
-    "exchangeMounted": false,
-    "archive": 0
+    "exchangeMounted": true,
+    "archive": 1
   },
-  "archive": ""
+  "archive": "[OAS:ARCHIVE] Snapshot saved at scene index 0 — 1 beats, reason=user_pivot_end"
 }
