@@ -260,6 +260,45 @@ function noteOasReplyReceived(sysPrompt, replyText, callN, identity) {
   } catch (_) {}
 }
 
+// ── THE CLEANUP PASS IS PART OF THE CHAIN, NOT A BREAK IN IT ─────────────────────────────────
+// (Codex 2026-10-06.) Production runs an auxiliary line editor after the author
+// (app.js:204930): _oasGptMiniCleanup(parsed.li_dialogue, parsed.li_action, overused). If it
+// returns a usable line/beat the result REPLACES the author's text and is what renders; if not,
+// "no usable result — raw turn shipped" and the original survives.
+//
+// My complete-pair matcher compared the rendered text to the AUTHOR's response only, so all five
+// edited turns of the paid run read as unestablished, the scripted exit never reached six, and the
+// run ended with no scenes. The fix is to TRACE THE WHOLE CHAIN, not to loosen the match:
+//   author response -> cleanup request (must carry THAT turn's author text)
+//     -> accepted cleanup output -> rendered pair
+// all bound to the same encounter/turn. Matching "either response" is not enough: if the editor's
+// result was rejected, the ORIGINAL must be what rendered.
+const oasCleanups = new Map();   // "encounter|turn" -> { inDialogue, inAction, outLine, outBeat, callN }
+function noteOasCleanup(sysPrompt, reqBody, replyText, callN, identity) {
+  try {
+    if (callFunction(sysPrompt) !== 'OAS line-edit') return;
+    if (!identity || !identity.encounter || identity.turn == null) return;
+    const userMsg = String((reqBody && reqBody.messages || [])[1]?.content || '');
+    let content = null;
+    try {
+      const j = JSON.parse(replyText);
+      content = j?.choices?.[0]?.message?.content ?? j?.content ?? null;
+    } catch (_) { content = null; }
+    let outLine = null, outBeat = null;
+    if (typeof content === 'string') {
+      try {
+        const o = JSON.parse(content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1));
+        if (o && typeof o === 'object') {
+          outLine = (typeof o.line === 'string' && o.line.trim()) ? o.line : null;
+          outBeat = (typeof o.beat === 'string' && o.beat.trim()) ? o.beat : null;
+        }
+      } catch (_) {}
+    }
+    oasCleanups.set(identity.encounter + '|' + identity.turn,
+      { request: userMsg, outLine, outBeat, callN,
+        accepted: !!(outLine || outBeat) });   // production's own acceptance rule
+  } catch (_) {}
+}
 // POSITIVE EVIDENCE THAT *THIS* RESPONSE BECAME *THIS* RENDERED TURN.
 // (Codex 2026-10-06 reproduced two false positives in the first version, which accepted EITHER
 // field and allowed substrings: completely different dialogue passed because both actions happened
@@ -278,20 +317,40 @@ function oasReplyRenderedFor(encounter, turn, renderedEntry) {
   if (!Array.isArray(recs) || !recs.length) return null;
   if (!renderedEntry) return null;
   const norm2 = (t) => String(t == null ? '' : t)
-    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")      // curly single quotes -> '
-    .replace(/[\u201C\u201D\u201F\u2033]/g, '"')      // curly double quotes -> "
-    .replace(/[\u2013\u2014\u2015]/g, '-')            // en/em dashes -> -
-    .replace(/[\u00A0\u2007\u202F]/g, ' ')            // non-breaking spaces -> space
-    .replace(/\s+/g, ' ')
-    .trim().toLowerCase();
+    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201F\u2033]/g, '"')
+    .replace(/[\u2013\u2014\u2015]/g, '-')
+    .replace(/[\u00A0\u2007\u202F]/g, ' ')
+    .replace(/\s+/g, ' ').trim().toLowerCase();
   const rd = norm2(renderedEntry.dialogue || renderedEntry.li_dialogue || renderedEntry.text);
   const ra = norm2(renderedEntry.action || renderedEntry.li_action);
   if (!rd && !ra) return null;
+  const clean = oasCleanups.get(encounter + '|' + turn) || null;
+
   for (const r of recs) {
-    const d = norm2(r.dialogue), a = norm2(r.action);
-    // THE WHOLE PAIR, EXACTLY. Both fields must agree, including both being absent.
-    if (d === rd && a === ra) {
-      return { ...r, matchedOn: 'the complete dialogue+action pair' };
+    const ad = norm2(r.dialogue), aa = norm2(r.action);
+    // (1) NO CLEANUP, OR CLEANUP REJECTED -> the author's own pair must be what rendered.
+    if (!clean || !clean.accepted) {
+      if (ad === rd && aa === ra) {
+        return { ...r, matchedOn: 'the author pair, unedited'
+          + (clean ? ' (cleanup ran and was rejected — original shipped)' : ''),
+          chain: { author: r.callN, cleanup: clean ? clean.callN : null, cleanupAccepted: false } };
+      }
+      continue;
+    }
+    // (2) CLEANUP ACCEPTED -> its INPUT must be THIS turn's author text, and the rendered pair
+    //     must equal what production accepted: the edited field where edited, the author's where
+    //     the editor left it alone.
+    const inputCarriesAuthor =
+      (!!r.dialogue && clean.request.indexOf(r.dialogue) !== -1) ||
+      (!!r.action && clean.request.indexOf(r.action) !== -1);
+    if (!inputCarriesAuthor) continue;          // a cleanup for some other turn's text
+    const expectD = norm2(clean.outLine != null ? clean.outLine : r.dialogue);
+    const expectA = norm2(clean.outBeat != null ? clean.outBeat : r.action);
+    if (expectD === rd && expectA === ra) {
+      return { ...r, matchedOn: 'the accepted cleanup of this turn\'s author pair',
+        chain: { author: r.callN, cleanup: clean.callN, cleanupAccepted: true,
+          inputVerified: true } };
     }
   }
   return null;
@@ -548,7 +607,8 @@ await page.route('**/api/**', async (route) => {
   // turn later, and both must carry the identity they were SENT under rather than whatever the
   // runner has moved on to. Capturing only preview prompts left every OAS reply untraceable.
   const _needsIdentity = isPreviewPrompt(sys0ForIdentity)
-    || callFunction(sys0ForIdentity) === 'OAS';
+    || callFunction(sys0ForIdentity) === 'OAS'
+    || callFunction(sys0ForIdentity) === 'OAS line-edit';
   const reqPreviewIdentity = _needsIdentity ? await capturePreviewIdentity(page) : null;
 
   // RESERVE ATOMICALLY, BEFORE THE REQUEST LEAVES.
@@ -761,6 +821,7 @@ await page.route('**/api/**', async (route) => {
       + '  ' + recF.ms + 'ms');
     recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
     noteOasReplyReceived(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
+    noteOasCleanup(sys0ForIdentity, body, textF, calls.length + 1, reqPreviewIdentity);
     // THE FIXTURE PATH RUNS THE SAME DETECTOR. A fixture can carry the runtime's error page, and
     // the harness must stop on it exactly as it would live — that is how this guard is tested.
     if (noteInfraFailure(textF, null, recF, url)) {
@@ -783,6 +844,7 @@ await page.route('**/api/**', async (route) => {
     text = await resp.text();
     recordPreviewReply(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
     noteOasReplyReceived(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
+    noteOasCleanup(sys0ForIdentity, body, text, calls.length + 1, reqPreviewIdentity);
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
 
@@ -1359,9 +1421,11 @@ try {
       fallbackSeen = fallbackNow;
       if (evidence && renderedGrew && !fellBack) {
         modelBackedReplies++;
-        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — call '
-          + evidence.callN + ', matched on ' + evidence.matchedOn
-          + ' — counts toward the six');
+        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — author call '
+          + evidence.callN
+          + (evidence.chain && evidence.chain.cleanupAccepted
+              ? ', cleanup call ' + evidence.chain.cleanup + ' (input verified)' : '')
+          + ' — ' + evidence.matchedOn + ' — counts toward the six');
       } else {
         say('      *** NOT A MODEL EXCHANGE — ' + (
           !renderedGrew ? 'the app rendered no new reply for this turn'

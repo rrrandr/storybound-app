@@ -31,8 +31,8 @@ for (let i = cfStart; i < lines.length; i++) {
 }
 const cf = lines.slice(cfStart, cfEnd + 1).join('\n');
 const mod = new Function(cf + '\n' + block
-  + '\nreturn { oasRepliesReceived, noteOasReplyReceived, oasReplyRenderedFor };')();
-const { oasRepliesReceived, noteOasReplyReceived, oasReplyRenderedFor } = mod;
+  + '\nreturn { oasRepliesReceived, oasCleanups, noteOasReplyReceived, oasReplyRenderedFor };')();
+const { oasRepliesReceived, oasCleanups, noteOasReplyReceived, oasReplyRenderedFor } = mod;
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
@@ -54,7 +54,8 @@ noteOasReplyReceived(OAS_SYS, reply(DIA, ACT), 7, ident(1));
   const m = oasReplyRenderedFor('opening OAS', 1, { dialogue: DIA, action: ACT });
   t('the recorded response is matched to the rendered turn', !!m && m.callN === 7,
     JSON.stringify(m));
-  t('and the match is on the COMPLETE pair', !!m && /complete dialogue\+action pair/.test(m.matchedOn || ''),
+  t('and the match names the chain link it matched',
+    !!m && /author pair, unedited|accepted cleanup of this turn/.test(m.matchedOn || ''),
     m && m.matchedOn);
 }
 
