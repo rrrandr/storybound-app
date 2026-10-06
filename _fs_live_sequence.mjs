@@ -27,6 +27,8 @@ const CEILING = Number(process.env.SB_CEILING || 0);
 let boundaryCheck = null;
 let scene2 = {};
 const sceneLedger = [];
+let laneContradiction = null;
+let scriptedExit = null;
 let openingBranch = { requested: (process.env.SB_OPENING_BRANCH || 'run').toLowerCase(), control: null };
 // ── WHAT WAS THIS CALL FOR? Read from the prompt's own self-identification ───────────────────
 // (Codex 2026-10-05.) Role labels cannot establish function: this project also routes prose
@@ -444,7 +446,128 @@ await page.route('**/api/**', async (route) => {
     // exercised rather than described.
     const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
       (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
-    const f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+    let f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+
+    // ── THE SCENE PLANNER'S LANE IS NOT A FIXTURE CONSTANT ──────────────────────────────────
+    // (Codex 2026-10-06.) The reader's CARD SELECTION deterministically resolves the scene's
+    // aftermath lane, and the planner prompt states it verbatim: 'MUST be EXACTLY "<lane>"'. A
+    // fixture with one hardcoded lane passes only when the reader happens to pick that card —
+    // which is why a different scripted exit flipped the requirement to dohkar_preliminary_review
+    // and the plan was rejected. Production validation is NOT weakened and the reader's card is
+    // NOT changed: the fixture answers the contract it was handed, exactly as a model would, and
+    // the event is written to INSTANTIATE whichever lane is demanded (its own signalRx
+    // vocabulary, app.js:133117 ff) rather than merely naming it.
+    try {
+      const sysP = String((body.messages || [])[0]?.content || '');
+      // THE PROMPT HAS TWO VARIANTS, and the fixture must answer whichever it is handed:
+      //   FORCED      '"chosen_aftermath_lane" (MUST be EXACTLY "<lane>"' — the card resolved it
+      //   DISPLACED   'this is NOT forced to "<lane>" ... set it to null if her action deferred
+      //               or replaced it' — the reader's action displaced the scheduled frame
+      // A scripted reader exit DISPLACES the frame, so null is the honest answer there. Getting
+      // this wrong is what produced 'declared family_accusation but ... resolved to
+      // dohkar_preliminary_review': the fixture was answering a question it had not been asked.
+      const forced = (sysP.match(/"chosen_aftermath_lane" \(MUST be EXACTLY "([a-z_]+)"/) || [])[1];
+      const displaced = /NOT forced to "([a-z_]+)"/.test(sysP)
+        && /set it to null if her action deferred or replaced it/.test(sysP);
+      const want = forced || null;
+      // A CONTRACT/VALIDATOR CONTRADICTION, FOUND HERE AND REPORTED, NOT PAPERED OVER:
+      // the DISPLACED prompt says 'set it to null if her action deferred or replaced it', but the
+      // gate rejects null unconditionally — app.js:9311 is
+      //   else if (!chosenLaneId || !laneMatch) { reject 'no chosen_aftermath_lane' }
+      // with no displaced exemption. A real model obeying the prompt would be rejected too. It is
+      // reachable precisely because a READER-ENDED OAS displaces the scheduled frame.
+      // So the fixture gives the one answer valid under BOTH: the named lane, with an event that
+      // genuinely instantiates it — the prompt permits that when the frame survives alongside
+      // what she did, and the Dohkar's review does survive her ending the questioning.
+      const displacedLane = (sysP.match(/NOT forced to "([a-z_]+)"/) || [])[1];
+      if (/SCENE-SPINE planner/.test(sysP) && displaced && !forced && displacedLane) {
+        laneContradiction = { prompt: 'permits null when the frame is displaced',
+          gate: 'app.js:9311 rejects null unconditionally', resolvedAs: displacedLane };
+      }
+      if (false && /SCENE-SPINE planner/.test(sysP) && displaced && !forced) {
+        const wrapper = JSON.parse(f.body);
+        const base = JSON.parse(wrapper.choices[0].message.content);
+        base.chosen_aftermath_lane = null;
+        base.lane_posture_modulation = 'Her action REPLACED the scheduled frame: she ended the '
+          + 'questioning herself, so the Dohkar\'s review is deferred and what stands in its place '
+          + 'is her refusal to go on answering in public.';
+        base.tactical_move = 'Lirael ends the questioning herself and steps back from The Answer '
+          + 'before the Dohkar can call his review.';
+        base.state_change = 'Lirael refuses to continue answering in the open, and the assembly '
+          + 'sees her end it — the scheduled review is deferred rather than delivered.';
+        base.forces_choice = 'The Dohkar must either force the review now against her refusal, or '
+          + 'let the inquiry carry it.';
+        base.local_objective_actor = 'Lirael';
+        base.event_slots = Object.assign({}, base.event_slots || {}, {
+          actor: 'Lirael', action: 'ends the questioning and steps back from The Answer',
+          target: 'the presiding Dohkar',
+          exit_state: 'The questioning is ended by Lirael and the review is deferred.' });
+        wrapper.choices[0].message.content = JSON.stringify(base);
+        f = Object.assign({}, f, { body: JSON.stringify(wrapper) });
+        console.log('  [fixture] scene planner: the reader DISPLACED the frame — lane = null');
+      } else if ((want || (displaced && displacedLane)) && /SCENE-SPINE planner/.test(sysP)) {
+        const LANE_EVENT = {
+          dohkar_preliminary_review: {
+            tactical: 'The presiding Dohkar calls for a preliminary review of Lirael\'s conduct in the rite, before the assembly.',
+            change: 'The Dohkar calls for a preliminary review and Lirael must answer for the wish; a review will follow whatever she says here.',
+            forces: 'Lirael must answer for the rite now, or let the review proceed on the Dohkar\'s terms.',
+            slotAction: 'calls for a preliminary review of her conduct',
+            exit: 'A preliminary review of Lirael\'s conduct is now called and on the record.',
+            actor: 'the presiding Dohkar'
+          },
+          family_accusation: {
+            tactical: 'Seren\'s family step out of the assembly and publicly accuse Lirael, demanding remedy for what the wish cost Seren.',
+            change: 'Seren\'s family publicly demands remedy for the twisted wish, and the Dohkar enters it as a formal complaint.',
+            forces: 'Lirael must answer the family\'s demand for remedy herself, or let the Dohkar fold it into his inquiry.',
+            slotAction: 'publicly accuses Lirael and demands remedy for the twisted wish',
+            exit: 'A formal complaint with standing now sits against Lirael.',
+            actor: 'the presiding Dohkar'
+          },
+          julian_jurisdiction_challenge: {
+            tactical: 'Julian challenges the Dohkar\'s jurisdiction over the rite and reframes whose authority rules on Lirael.',
+            change: 'Julian contests his authority before the assembly, and the question of jurisdiction is now open.',
+            forces: 'Lirael must choose whose jurisdiction she answers to, here, in the open.',
+            slotAction: 'challenges the Dohkar and contests his authority over the rite',
+            exit: 'Jurisdiction over the ruling is contested and unresolved.',
+            actor: 'Julian'
+          },
+          lirael_constrained: {
+            tactical: 'The Dohkar has Lirael placed under watch and escorted away from The Answer, pending the inquiry.',
+            change: 'Lirael is confined pending the inquiry and separated from The Answer she was holding.',
+            forces: 'Lirael must submit to being watched, or say something now that changes the terms.',
+            slotAction: 'has Lirael placed under watch pending the inquiry',
+            exit: 'Lirael is constrained and watched pending the inquiry.',
+            actor: 'the presiding Dohkar'
+          },
+          lirael_defensive_path: {
+            tactical: 'Lirael submits to procedure and demands specific terms before she answers anything further.',
+            change: 'Lirael commits to procedure and demands specific terms, gathering what proof the rite left her.',
+            forces: 'Lirael must name her terms now, or lose the chance to set any.',
+            slotAction: 'submits to procedure and demands specific terms',
+            exit: 'Lirael has chosen the procedural path and her terms are on the record.',
+            actor: 'Lirael'
+          }
+        }[want || displacedLane];
+        if (LANE_EVENT) {
+          const base = JSON.parse(JSON.parse(f.body).choices[0].message.content);
+          base.chosen_aftermath_lane = (want || displacedLane);
+          base.tactical_move = LANE_EVENT.tactical;
+          base.state_change = LANE_EVENT.change;
+          base.forces_choice = LANE_EVENT.forces;
+          base.local_objective_actor = LANE_EVENT.actor;
+          base.event_slots = Object.assign({}, base.event_slots || {}, {
+            actor: LANE_EVENT.actor, action: LANE_EVENT.slotAction,
+            target: 'Lirael', exit_state: LANE_EVENT.exit });
+          const wrapper = JSON.parse(f.body);
+          wrapper.choices[0].message.content = JSON.stringify(base);
+          f = Object.assign({}, f, { body: JSON.stringify(wrapper) });
+          console.log('  [fixture] scene planner: lane = "' + (want || displacedLane) + '"'
+            + (want ? ' (forced by the reader\'s card)' : ' (frame displaced; null is refused by'
+              + ' the gate, so the surviving lane is declared)')
+            + ' — serving an event that instantiates it');
+        }
+      }
+    } catch (_) {}
     // SAY WHICH MATCHER SERVED WHICH CALL. Two fixtures were being answered by the wrong matcher
     // — the scene planner's contract went to "CONTINUITY ARCHITECT", which is the SCAFFOLD call —
     // and that is invisible unless the mapping is printed.
@@ -748,6 +871,8 @@ try {
       return last;
     };
 
+    // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
+    const EXIT_AFTER_EXCHANGES = Number(process.env.SB_EXIT_AFTER || 6);
     let turnsTaken = 0;
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
@@ -879,6 +1004,55 @@ try {
         break;
       }
 
+      // ── THE TESTED READER TEXT EXIT ──────────────────────────────────────────────────────
+      // Proven in _oas_text_exit_control.mjs (27/27): a full-line exit word reaches
+      // _isIntimacyExitInput -> _showIntimacyExitModal, and "End Abruptly" resolves via
+      // user_pivot_end, which reaches the authored Dohkar interruption. Real inputs, the real
+      // Submit control and the modal's own button — the resolver is never called directly.
+      const readerTextExit = async (afterReplies) => {
+        await page.evaluate(() => {
+          const i2 = window._getActiveTurnInputs();
+          if (i2.diaInput) { i2.diaInput.disabled = false; i2.diaInput.value = 'stop';
+            i2.diaInput.dispatchEvent(new Event('input', { bubbles: true })); }
+          if (i2.actInput) { i2.actInput.disabled = false; i2.actInput.value = '';
+            i2.actInput.dispatchEvent(new Event('input', { bubbles: true })); }
+        });
+        let e1 = null;
+        await page.locator('#gnSubmitBtn').click({ timeout: 15000 })
+          .catch(e => { e1 = (e && e.message) || 'submit click failed'; });
+        if (e1) return { taken: false, why: 'could not submit the exit word: ' + e1 };
+        let aff = null;
+        const dl0 = Date.now() + 20000;
+        while (Date.now() < dl0) {
+          aff = await exitAffordances();
+          if (aff.modalUp) break;
+          await page.waitForTimeout(500);
+        }
+        if (!aff || !aff.modalUp) {
+          return { taken: false, why: 'the exit modal never became visible', aff };
+        }
+        let e2 = null;
+        await page.locator('#intimacyExitAbrupt').click({ timeout: 15000 })
+          .catch(e => { e2 = (e && e.message) || 'modal click failed'; });
+        if (e2) return { taken: false, why: 'could not click End Abruptly: ' + e2, aff };
+        const dl = Date.now() + 60000;
+        while (Date.now() < dl) {
+          const st = await page.evaluate(() => {
+            const d = window.state.intimacyDialogue;
+            const intr = window.state._intimateInterruption;
+            return { active: !!(d && d.active),
+              archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
+              interruptionPresent: !!intr };
+          });
+          if (st.interruptionPresent || (!st.active && st.archive > 0)) {
+            return { taken: true, kind: 'scripted reader text exit', afterReplies,
+              modalBox: aff.modalBox, state: st };
+          }
+          await page.waitForTimeout(1000);
+        }
+        return { taken: false, why: 'End Abruptly was clicked but the OAS never resolved', aff };
+      };
+
       // ── THE SUPPORTED READER EXIT ────────────────────────────────────────────────────────
       // Production offers an EXIT RAMP at beats 6/13/17 — the log says "Exit ramp offered at
       // beat 6" — rendered as a "Drift to afterglow" control inside #intimacyStatus
@@ -886,13 +1060,25 @@ try {
       // affordance, then waited nine turns for a resolution nobody had asked for. Taking the
       // offered ramp is the supported way out, so it is taken when offered.
       const exitAffordances = async () => page.evaluate(() => {
+        // offsetParent IS NULL FOR A position:fixed ELEMENT, so it is the wrong test for the exit
+        // modal — the same mistake that made me report the modal as never opening. Use computed
+        // style plus a real box, and keep offsetParent only for the in-flow ramp control.
+        const shown = (el) => {
+          if (!el) return false;
+          const cs = getComputedStyle(el);
+          if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return false;
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        };
         const status = document.getElementById('intimacyStatus');
         const drift = status ? [...status.querySelectorAll('button,a,[role=button]')]
           .find(b => /drift|afterglow/i.test(b.innerText || '')) : null;
         const modal = document.getElementById('intimacyExitModal');
         return { driftOffered: !!(drift && drift.offsetParent !== null),
           driftText: drift ? (drift.innerText || '').trim().slice(0, 40) : null,
-          modalUp: !!(modal && modal.offsetParent !== null) };
+          modalUp: !!(modal && modal.classList.contains('active') && shown(modal)),
+          modalBox: modal ? (function () { const r = modal.getBoundingClientRect();
+            return { w: Math.round(r.width), h: Math.round(r.height) }; })() : null };
       });
       // TAKING AN EXIT IS AN OBSERVED OUTCOME, NOT AN ATTEMPTED ONE. The previous version
       // logged "TAKEN" after catching the click's failure, and when an exit appeared DURING the
@@ -904,19 +1090,30 @@ try {
         // would end it as though it had been sex and skip the interruption the run-or-remain
         // decision depends on. Production now suppresses the offer too — this is the harness
         // following the same rule rather than relying on it.
+        // THE RULE BANS THE AFTERGLOW RAMP, NOT EVERY EXIT. (Codex 2026-10-06.) The early return
+        // blocked the reader's own exit modal along with "Drift to afterglow", so the runner could
+        // never take the path that actually reaches the authored interruption. Afterglow is still
+        // refused for this encounter; the modal is not.
         const authored = await page.evaluate(() =>
           (typeof window._oasEndsInAuthoredInterruption === 'function')
             ? !!window._oasEndsInAuthoredInterruption() : false);
-        if (authored) return { taken: false, why: 'authored interruption — no afterglow exit' };
         const aff = await exitAffordances();
+        if (authored && aff.driftOffered && !aff.modalUp) {
+          return { taken: false, why: 'authored interruption — the afterglow ramp is refused' };
+        }
         if (!aff.driftOffered && !aff.modalUp) return { taken: false, why: 'none offered' };
         let err = null;
-        if (aff.driftOffered) {
+        if (aff.modalUp) {
+          // "End Abruptly" is the reader saying stop now; it resolves via user_pivot_end, which
+          // reaches the authored interruption. Never #intimacyExitFade on an authored encounter —
+          // that one resolves with reason 'cap' and reads as a fade-to-black.
+          await page.locator('#intimacyExitAbrupt').click({ timeout: 10000 })
+            .catch(e => { err = (e && e.message) || 'click failed'; });
+        } else if (authored) {
+          return { taken: false, why: 'authored interruption — the afterglow ramp is refused' };
+        } else {
           await page.locator('#intimacyStatus button, #intimacyStatus a, #intimacyStatus [role=button]')
             .filter({ hasText: /drift|afterglow/i }).first().click({ timeout: 10000 })
-            .catch(e => { err = (e && e.message) || 'click failed'; });
-        } else {
-          await page.locator('#intimacyExitFade').click({ timeout: 10000 })
             .catch(e => { err = (e && e.message) || 'click failed'; });
         }
         if (err) return { taken: false, why: 'click failed: ' + err };
@@ -980,6 +1177,38 @@ try {
         + (post ? post.beats : '-') + ')'
         + (landed ? '' : '  *** NO REPLY LANDED WITHIN 180s ***'));
       if (exited) { say('  OAS exited at turn ' + (i + 1) + '; no further dialogue turns.'); turnsTaken++; break; }
+      // ── THE SCRIPTED READER EXIT, AFTER SIX COMPLETED EXCHANGES ─────────────────────────
+      // (Codex 2026-10-06.) This is a SCRIPTED READER EXIT recorded as such — not a
+      // model-selected resolution and not evidence of automatic story timing, which remains an
+      // unimplemented editorial decision. Production interruption timing is untouched.
+      //
+      // COMPLETED, RENDERED REPLIES ONLY: post.replies is the length of d.liTurnHistory, which
+      // production appends when a reply actually renders — not a count of requests, and the
+      // authored opener is not one of them. A turn whose reply never landed does not count.
+      const renderedReplies = (post && typeof post.replies === 'number') ? post.replies : 0;
+      if (!exited && renderedReplies >= EXIT_AFTER_EXCHANGES) {
+        const still = await page.evaluate(() => {
+          const d = window.state.intimacyDialogue;
+          return { active: !!(d && d.active), resolving: !!(d && d._resolving) };
+        });
+        if (!still.active || still.resolving) {
+          // AN EARLIER LEGITIMATE RESOLUTION IS PRESERVED — the model, the cap or a reader
+          // control already ended it, and the script does not override that.
+          say('  the OAS had already resolved on its own after ' + renderedReplies
+            + ' rendered replies — the scripted exit is NOT used');
+        } else {
+          say('  --- SCRIPTED READER EXIT after ' + renderedReplies
+            + ' completed exchanges (rendered replies, opener excluded) ---');
+          scriptedExit = await readerTextExit(renderedReplies);
+          say('      ' + JSON.stringify(scriptedExit));
+          if (!scriptedExit.taken) {
+            halted = true;
+            haltReason = 'the scripted reader exit did not complete: ' + scriptedExit.why;
+            say('  *** STOPPING — ' + haltReason + ' ***');
+          }
+          break;
+        }
+      }
       if (!landed) {
         halted = true; haltReason = 'OAS turn ' + (i + 1) + ' produced no rendered reply';
         say('  *** STOPPING — ' + haltReason + ' ***');
@@ -1011,23 +1240,29 @@ try {
     say('  interruption: ' + JSON.stringify(intr));
     if (intr.present && !intr.submitted) {
       for (let i = 0; i < 20 && !intr.submitted; i++) {
+        // FILL THROUGH THE INPUTS, THEN CLICK THE CONTROL WITH A TRUSTED CLICK. The previous
+        // version called b.click() inside page.evaluate — an UNTRUSTED event. The text-exit
+        // control proved the submission works with a trusted Playwright click
+        // (_oas_text_exit_control.mjs, 27/27), and with the untrusted one the interruption stayed
+        // submitted=false and Scene 2 was never triggered.
         const did = await page.evaluate(() => {
           const a = document.getElementById('gnActionInput');
           const d = document.getElementById('gnDialogueInput');
           const b = document.getElementById('gnSubmitBtn');
           if (!b) return 'no #gnSubmitBtn';
-          if (a && !a.value) { a.value = 'I step back from him.';
-            a.dispatchEvent(new Event('input', { bubbles: true })); }
-          if (d && !d.value) { d.value = 'Ask me in front of them, then.';
-            d.dispatchEvent(new Event('input', { bubbles: true })); }
-          if (b.disabled) return 'submit disabled';
-          b.click();
-          return 'clicked';
+          if (a) { a.disabled = false; if (!a.value) { a.value = 'I step back from him.';
+            a.dispatchEvent(new Event('input', { bubbles: true })); } }
+          if (d) { d.disabled = false; if (!d.value) { d.value = 'Ask me in front of them, then.';
+            d.dispatchEvent(new Event('input', { bubbles: true })); } }
+          return b.disabled ? 'submit disabled' : 'inputs filled';
         });
+        if (did === 'inputs filled') {
+          await page.locator('#gnSubmitBtn').click({ timeout: 15000 }).catch(() => {});
+        }
         await page.waitForTimeout(3000);
         intr = await interruptionState();
         if (i === 0 || intr.submitted) say('    submit attempt: ' + did
-          + ' -> submitted=' + intr.submitted);
+          + ' (trusted click) -> submitted=' + intr.submitted);
         if (did === 'no #gnSubmitBtn') break;
       }
     }
@@ -1158,6 +1393,8 @@ try {
         && window.state._intimateInterruption.submitted)
     }));
     write('after_oas.json', { turnsTaken, resolved, oasFinal, interruption: intr, decision,
+      scriptedExit, exitAfterExchanges: EXIT_AFTER_EXCHANGES, laneContradiction,
+      exitKind: scriptedExit ? 'SCRIPTED READER EXIT — not model resolution, not story timing' : null,
       snap: await snapshot('after_oas') });
     say('  turns ' + turnsTaken + ' · resolved=' + resolved + ' · archive=' + oasFinal.archive
       + ' · interruptionSubmitted=' + oasFinal.interruptionSubmitted);
