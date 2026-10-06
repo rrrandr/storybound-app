@@ -1,0 +1,2 @@
+ReferenceError: Cannot access 'oasFinal' before initialization
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:1482:65

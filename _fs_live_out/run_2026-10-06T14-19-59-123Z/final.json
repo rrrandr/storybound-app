@@ -1,0 +1,22 @@
+{
+  "label": "final",
+  "scenes": 0,
+  "texts": [],
+  "notes": [],
+  "oas": [
+    {
+      "pcSay": "I confess the hunger I called to you with.",
+      "pcDo": "I confess the hunger I called to you with.",
+      "pcSayRaw": "Not here. Not in front of them.",
+      "pcDoRaw": "I set the ledger flat and leave my hand on it",
+      "liDialogue": "Speak it then, by root and storm, so every witness knows the oath you tried to bind me in.",
+      "liAction": "His hand tightens around mine on the Answer.",
+      "faceState": "thinking_intrigued",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    }
+  ]
+}

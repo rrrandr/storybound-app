@@ -1,0 +1,34 @@
+{
+  "stoppedAt": "handoff",
+  "resolved": true,
+  "reached": {
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": true,
+    "dialogueGone": true,
+    "decisionRecorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "posture",
+      "label": "I step back from him.",
+      "source": "interruption_submit",
+      "at": 1791296499224,
+      "storyId": "024e7fdf-3902-4e05-8aa9-6cd5e47b7a11"
+    }
+  },
+  "modelBackedReplies": 1,
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 1,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exposure": 0.00918338
+}
