@@ -157,20 +157,28 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
   const sameIdentity = (r) => {
     if (!r.encounter && !r.app) return false;
     const a = r.app, b = ctx.app;
-    // THE APP'S OWN GENERATION KEY DECIDES, because it is what the app uses to decide whether a
-    // cached preview still applies: the OAS batch is stored as
-    // _grokIntimateFateCards = { turnCount, ... } and the scene deck as _fateOptionsSceneKey.
-    // One OAS batch therefore serves every BEAT at the same turnCount — by design — so comparing
-    // beats was STRICTER THAN THE APP and wrongly called five legitimate selections UNKNOWN.
-    // Matching the app's key keeps previews generated ahead of a selection valid, while a batch
-    // from a different generation still cannot vouch for this one.
-    if (a && b && a.sceneFateKey != null && b.sceneFateKey != null) {
-      return a.sceneFateKey === b.sceneFateKey;
+    // WITHDRAWN: "one OAS batch serves every beat at the same turnCount — by design." That was
+    // wrong (Codex 2026-10-05). The production turn handler CLEARS the preview generation after
+    // every reply — d._fateCardPreviews = null (app.js:205729) and
+    // state._grokIntimateFateCards = null (app.js:205743) — so the next selection is meant to get
+    // a FRESH batch. Equal turnCount therefore does NOT establish the same preview generation,
+    // and matching on it alone let a beat-1 reply vouch for a beat-5 selection.
+    //
+    // So the BEAT is part of the identity for OAS, and an ambiguous reuse is reported UNKNOWN
+    // rather than matched. The count is not the objective: an honest UNKNOWN is the correct answer
+    // when the observed replies cannot establish where a suggestion came from.
+    if (a && b && a.sceneFateKey != null && b.sceneFateKey != null
+        && a.oasBeat == null && b.oasBeat == null) {
+      return a.sceneFateKey === b.sceneFateKey;      // scene decks are keyed by turn:page
     }
     if (a && b && a.turnCount != null && b.turnCount != null) {
-      return a.turnCount === b.turnCount;
+      if (a.turnCount !== b.turnCount) return false;
+      // Inside the OAS the generation is cleared per reply, so the beat must agree too. If either
+      // side has no beat the generation cannot be established — UNKNOWN, not a match.
+      if (a.oasBeat == null || b.oasBeat == null) return false;
+      return a.oasBeat === b.oasBeat;
     }
-    return r.encounter === ctx.encounter && r.turn === ctx.turn;
+    return false;   // no app-declared generation on one side: not establishable
   };
   const hit = served.find(r => pairMatches(r) && sameIdentity(r));
   if (hit) {

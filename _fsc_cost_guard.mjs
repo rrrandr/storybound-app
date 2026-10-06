@@ -12,6 +12,17 @@
 
 // Rates copied from public/app.js TEXT_PRICING (verified against a real receipt: predicted
 // $0.0813 vs measured $0.0827 on 56,499 prompt + 4,298 completion tokens).
+// Conservative constants, each biased against us. (Restored — an earlier edit of mine removed
+// this block while rewriting the rate table, which would have thrown ReferenceError on the first
+// estimate. Caught by running it, not by reading it.)
+export const CHARS_PER_TOKEN = 4.0;   // observed 4.46 on a real payload; 4.0 over-counts by ~11%
+export const REASONING_MULT  = 1.5;   // reasoning tokens are NOT bounded by max_tokens
+export const SAFETY_MARGIN   = 1.2;   // applied on top of everything above
+export const ASSUME_NO_CACHE = true;  // cached_tokens was 192 of 56,499 — assume zero
+// When a body declares no completion budget we must NOT assume a small one. The real CG author
+// dispatch (public/app.js, `max_tokens: 8000`) is the budget actually in play on this path.
+export const UNKNOWN_MAX_TOKENS = 8000;
+
 // VERIFIED RATES, copied from public/app.js TEXT_PRICING (the authoritative in-repo table).
 // WIDENED 2026-10-05 (Codex): the table held only three Grok entries, so WORST_RATE was the Grok
 // rate — and gpt-4o is 2x input / 4x output ABOVE it, gpt-4-turbo 8x / 12x. gpt-4o is the TERMINAL
@@ -30,6 +41,14 @@ export const RATES = {
   'ministral-8b-2512':            { in: 0.00000015, out: 0.00000015 }
 };
 
+// The most expensive rate in the verified table. NO LONGER a fallback for unknown models — those
+// are refused — and kept only to report the table's upper bound. (Restored: the same edit that
+// widened RATES dropped it, which broke an importer.)
+export const WORST_RATE = {
+  in:  Math.max(...Object.values(RATES).map(r => r.in)),
+  out: Math.max(...Object.values(RATES).map(r => r.out))
+};
+
 // MODELS THE APP CAN ROUTE TO WHOSE RATE IS PUBLISHED NOWHERE IN THIS REPO. A dispatch resolving
 // to one of these CANNOT be bounded, so it is REFUSED with a reason rather than silently priced at
 // some other model's rate. api/mistral-proxy.js:103 defaults to mistral-medium-latest, so this is
@@ -43,43 +62,60 @@ export const UNPRICED_MODELS = [
 //   · api/chatgpt-proxy.js uses getDefaultModel(role); api/orchestrator.js DEFAULT_MODELS are all
 //     gpt-4o-mini or Grok, both priced above.
 //   · api/mistral-proxy.js defaults to mistral-medium-latest, which is UNPRICED.
-export function resolveModel(requested, url) {
+// THE ENDPOINT DECIDES FIRST, because each proxy picks its own model chain — an explicit name in
+// the body does NOT settle what the Grok endpoint will actually call. (Codex 2026-10-05: the
+// previous version trusted the body name ahead of the endpoint and ignored overrides entirely, so
+// an unpriced _sbModelOverride was silently reserved at grok-4.3 rates.)
+//
+// Overrides api/proxy.js honours, read from its own source:
+//   req.body._sbModelOverride, restricted to _SB_MODEL_OVERRIDES = [grok-4.3, grok-4.6, grok-4.7]
+//   process.env.SB_FORCE_AUTHOR_MODEL as a server-side fallback when no body override is present
+// grok-4.6 and grok-4.7 are EXPERIMENT-ONLY models with no published rate in this repo, so a
+// dispatch carrying them cannot be bounded and must be refused rather than priced as 4.3.
+export const SB_MODEL_OVERRIDES = ['grok-4.3', 'grok-4.6', 'grok-4.7'];
+
+export function resolveModel(requested, url, body) {
   const name = String(requested || '').trim();
   const endpoint = String(url || '');
-  if (/^grok/i.test(name)) return { model: 'grok-4.3', how: 'proxy collapses every grok-* to 4.3' };
-  if (name && name !== '(unspecified)') return { model: name, how: 'explicit in the request body' };
+  const b = body || {};
+  const bodyOverride = b._sbModelOverride ? String(b._sbModelOverride) : null;
+  // The server-side override is only visible to this guard when the harness is told about it; it
+  // is named here so an unknown one is refused rather than assumed absent.
+  const envOverride = (typeof process !== 'undefined' && process.env
+    && process.env.SB_FORCE_AUTHOR_MODEL) ? String(process.env.SB_FORCE_AUTHOR_MODEL) : null;
+
+  if (/\/api\/proxy/.test(endpoint)) {
+    const ov = bodyOverride || envOverride;
+    if (ov) {
+      if (SB_MODEL_OVERRIDES.indexOf(ov) === -1) {
+        return { model: null, how: 'an _sbModelOverride/SB_FORCE_AUTHOR_MODEL of "' + ov
+          + '" is not in api/proxy.js _SB_MODEL_OVERRIDES, so what it resolves to is unknown' };
+      }
+      return { model: ov, how: 'model override "' + ov + '" honoured by api/proxy.js' };
+    }
+    return { model: 'grok-4.3',
+      how: 'api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override' };
+  }
   if (/mistral-proxy/.test(endpoint)) {
-    return { model: 'mistral-medium-latest', how: 'api/mistral-proxy.js:103 default' };
+    return name && name !== '(unspecified)'
+      ? { model: name, how: 'explicit model on the mistral endpoint' }
+      : { model: 'mistral-medium-latest', how: 'api/mistral-proxy.js:103 default' };
   }
   if (/chatgpt-proxy/.test(endpoint)) {
-    return { model: 'gpt-4o-mini', how: 'chatgpt-proxy role default (DEFAULT_MODELS)' };
+    return name && name !== '(unspecified)'
+      ? { model: name, how: 'explicit model on the chatgpt endpoint' }
+      : { model: 'gpt-4o-mini', how: 'chatgpt-proxy role default (DEFAULT_MODELS)' };
   }
-  // THE GROK PROXY RESOLVES EVERYTHING, including an empty name: api/proxy.js _resolveGrokModel
-  // returns { model: 'grok-4.3' } for any input absent an SB override. So a body with no model
-  // sent to /api/proxy is a grok-4.3 dispatch, and is priceable — it is not an unknown.
-  if (/\/api\/proxy/.test(endpoint)) {
-    return { model: 'grok-4.3', how: 'api/proxy.js _resolveGrokModel default for any name' };
+  // NO RECOGNISED ENDPOINT. A bare name cannot say which chain will run, so it is used only as a
+  // best effort and reported as such; an unpriced one still refuses downstream.
+  if (name && name !== '(unspecified)') {
+    return { model: name, how: 'body model with no recognised endpoint — routing not established' };
   }
   return { model: null, how: 'no model in the body and no proxy default could be resolved' };
 }
-// Conservative constants, each biased against us.
-export const CHARS_PER_TOKEN = 4.0;   // observed 4.46 on a real payload; 4.0 over-counts by ~11%
-export const REASONING_MULT  = 1.5;   // reasoning tokens are NOT bounded by max_tokens
-export const SAFETY_MARGIN   = 1.2;   // applied on top of everything above
-export const ASSUME_NO_CACHE = true;  // cached_tokens was 192 of 56,499 — assume zero
-// When a body declares no completion budget we must NOT assume a small one. The real CG author
-// dispatch (public/app.js, `max_tokens: 8000`) is the budget actually in play on this path.
-export const UNKNOWN_MAX_TOKENS = 8000;
-
-// The most expensive rate in the verified table. It is NO LONGER used as a fallback for unknown
-// models — those are refused — and is kept only for reporting the table's upper bound.
-export const WORST_RATE = {
-  in:  Math.max(...Object.values(RATES).map(r => r.in)),
-  out: Math.max(...Object.values(RATES).map(r => r.out))
-};
 
 export function estimateUsd(body, model, url) {
-  const res = resolveModel(model || (body && body.model), url);
+  const res = resolveModel(model || (body && body.model), url, body);
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
   const promptTokens = Math.ceil(chars / CHARS_PER_TOKEN);
   const maxOut = Number(body.max_tokens) || UNKNOWN_MAX_TOKENS;

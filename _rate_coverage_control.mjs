@@ -5,7 +5,8 @@
 // can route to is either priced from the verified table or REFUSED with a reason, and the
 // expensive fallback is refused before dispatch when too little budget remains.
 import fs from 'fs';
-import { RATES, UNPRICED_MODELS, WORST_RATE, estimateUsd, resolveModel } from './_fsc_cost_guard.mjs';
+import { RATES, UNPRICED_MODELS, WORST_RATE, estimateUsd, resolveModel, SB_MODEL_OVERRIDES }
+  from './_fsc_cost_guard.mjs';
 
 const APP = fs.readFileSync('public/app.js', 'utf8');
 const ORCH = fs.readFileSync('api/orchestrator.js', 'utf8');
@@ -90,6 +91,34 @@ console.log('  gpt-4o-mini from zero:             ' + (roomy.refused ? 'REFUSED'
   + ' — ' + roomy.why);
 t('the EXPENSIVE fallback is refused before dispatch when little budget remains', thin.refused);
 t('a cheap call with the budget free is still allowed', !roomy.refused);
+// ── MODEL OVERRIDES ARE PART OF RESOLUTION ─────────────────────────────────────────────────
+// Codex 2026-10-05: an unpriced _sbModelOverride was silently reserved at grok-4.3 rates.
+console.log('');
+console.log('=== _sbModelOverride ON THE REAL GROK ENDPOINT ===');
+console.log('  api/proxy.js _SB_MODEL_OVERRIDES: ' + JSON.stringify(SB_MODEL_OVERRIDES));
+const ov = (o) => estimateUsd(Object.assign({}, body, o ? { _sbModelOverride: o } : {}),
+  'grok-4-1-fast-reasoning', '/api/proxy');
+for (const o of [null, 'grok-4.3', 'grok-4.6', 'grok-4.7', 'bogus-model']) {
+  const r = ov(o);
+  console.log('  override ' + String(o).padEnd(16)
+    + (r.bounded ? ('$' + r.estimate.toFixed(6) + '   as ' + r.model)
+                 : ('REFUSED — ' + r.refuseReason.slice(0, 66))));
+}
+t('an UNPRICED override (grok-4.7) is REFUSED, not reserved at 4.3 rates',
+  ov('grok-4.7').bounded === false, JSON.stringify(ov('grok-4.7')).slice(0, 120));
+t('grok-4.6 is likewise refused', ov('grok-4.6').bounded === false);
+t('a priced override (grok-4.3) is accepted', ov('grok-4.3').bounded === true);
+t('an override outside the proxy allowlist is refused', ov('bogus-model').bounded === false);
+t('no override still resolves to grok-4.3', ov(null).bounded && ov(null).model === 'grok-4.3');
+t('the ENDPOINT decides before the body name — gpt-4o sent to /api/proxy prices as grok-4.3',
+  estimateUsd(body, 'gpt-4o', '/api/proxy').model === 'grok-4.3',
+  'the Grok endpoint picks its own chain, so a body name does not settle it');
+t('every override api/proxy.js accepts is either priced or refused — none silently mispriced',
+  SB_MODEL_OVERRIDES.every(m => {
+    const r = ov(m);
+    return r.bounded ? Object.prototype.hasOwnProperty.call(RATES, r.model) : true;
+  }));
+
 t('WORST_RATE is now a genuine cross-provider maximum',
   WORST_RATE.in >= Math.max(...Object.values(RATES).map(r => r.in))
   && WORST_RATE.out >= Math.max(...Object.values(RATES).map(r => r.out)),
