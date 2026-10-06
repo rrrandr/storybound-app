@@ -26,8 +26,10 @@ for (let i = clsStart; i < lines.length; i++) {
 if (clsEnd < 0) throw new Error('could not find the end of classifyPreview');
 const block = lines.slice(start, clsEnd + 1).join('\n');
 const mod = new Function(block
-  + '\nreturn { previewResponses, setPreviewContext, recordPreviewReply, classifyPreview };')();
-const { previewResponses, setPreviewContext, classifyPreview } = mod;
+  + '\nreturn { previewResponses, setPreviewContext, recordPreviewReply, classifyPreview,'
+  + ' isPreviewPrompt, capturePreviewIdentity };')();
+const { previewResponses, setPreviewContext, classifyPreview, recordPreviewReply,
+  isPreviewPrompt, capturePreviewIdentity } = mod;
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
@@ -117,6 +119,77 @@ previewResponses.clear();
     { encounter: 'opening OAS', turn: 1 });
   t('the title placeholder is template-fallback, never a preview',
     r.provenance === 'template-fallback', r.provenance);
+}
+
+// ── THE RECORDER ITSELF, not hand-inserted records ──────────────────────────────────────────
+// (Codex 2026-10-05.) The checks above inserted correctly-labelled records by hand, so they could
+// not see the recording defect: the recorder stamped replies with the runner's context AT RETURN,
+// so an OLD reply arriving after a turn change was credited to the NEW turn. These drive
+// recordPreviewReply the way the runner does — identity captured at REQUEST time and passed in.
+console.log('');
+console.log('=== THE RECORDER: AN OLD REPLY ARRIVING LATE ===');
+previewResponses.clear();
+const BATCH = [
+  'REVERSAL ||| redirect ||| ' + A + ' ||| ' + D,
+  'SILENCE ||| ruin ||| I go still ||| mm'
+].join('\n');
+const reply = (content) => JSON.stringify({ choices: [{ message: { content } }] });
+
+// The request is made at turn 2 (turnCount 4). Its identity is frozen HERE.
+const idTurn2 = { encounter: 'opening OAS', turn: 2, app: { turnCount: 4, oasBeat: 2 } };
+// The runner then moves on to turn 5 BEFORE the reply lands.
+setPreviewContext('opening OAS', 5);
+// The late reply is recorded with the identity it was REQUESTED under.
+recordPreviewReply('You generate 5 contextual Say/Do previews, one per archetype', reply(BATCH),
+  31, idTurn2);
+
+{
+  const rec = (previewResponses.get('reversal') || [])[0];
+  t('the record keeps the REQUEST identity, not the context at return',
+    rec && rec.turn === 2 && rec.app && rec.app.turnCount === 4,
+    rec ? JSON.stringify({ turn: rec.turn, app: rec.app }) : 'no record');
+}
+{ // the defect: a late reply must NOT vouch for the turn the runner had moved to
+  const r = classifyPreview('reversal', A, D, null,
+    { encounter: 'opening OAS', turn: 5, app: { turnCount: 7, oasBeat: 5 } });
+  t('a LATE reply cannot prove the NEW turn\'s provenance', r.provenance === 'UNKNOWN',
+    r.provenance + ' — ' + r.evidence);
+  t('and the evidence names the identity it was REQUESTED under',
+    /DIFFERENT identity/.test(r.evidence) && /turn=2/.test(r.evidence), r.evidence);
+}
+{ // and it still vouches for the turn it was actually asked for
+  const r = classifyPreview('reversal', A, D, null,
+    { encounter: 'opening OAS', turn: 2, app: { turnCount: 4, oasBeat: 2 } });
+  t('it DOES prove provenance for the turn it was requested under',
+    r.provenance === 'matched-response', r.provenance + ' — ' + r.evidence);
+}
+
+console.log('');
+console.log('=== A PREVIEW GENERATED AHEAD OF SELECTION ===');
+previewResponses.clear();
+// Generated during the runner's iteration 3 but for the app's turnCount 6; the selection happens
+// in a later runner iteration while the app is STILL at turnCount 6. The app key must decide.
+recordPreviewReply('amplify|ruin|redirect one per archetype', reply(BATCH), 44,
+  { encounter: 'scene 6 end', turn: 3, app: { turnCount: 6, oasBeat: null } });
+{
+  const r = classifyPreview('reversal', A, D, null,
+    { encounter: 'scene 6 end', turn: 99, app: { turnCount: 6, oasBeat: null } });
+  t('a preview generated AHEAD of selection still matches on the app generation key',
+    r.provenance === 'matched-response', r.provenance + ' — ' + r.evidence);
+}
+{
+  const r = classifyPreview('reversal', A, D, null,
+    { encounter: 'scene 7 end', turn: 4, app: { turnCount: 7, oasBeat: null } });
+  t('but NOT once the app has moved to the next generation', r.provenance === 'UNKNOWN',
+    r.provenance);
+}
+{ // a record with no identity at all never matches
+  previewResponses.clear();
+  recordPreviewReply('one per archetype', reply(BATCH), 50, null);
+  const r = classifyPreview('reversal', A, D, null,
+    { encounter: 'opening OAS', turn: 1, app: { turnCount: 1, oasBeat: 1 } });
+  t('a record with NO request identity never establishes provenance',
+    r.provenance === 'UNKNOWN', r.provenance + ' — ' + r.evidence);
 }
 
 console.log('');

@@ -12,12 +12,56 @@
 
 // Rates copied from public/app.js TEXT_PRICING (verified against a real receipt: predicted
 // $0.0813 vs measured $0.0827 on 56,499 prompt + 4,298 completion tokens).
+// VERIFIED RATES, copied from public/app.js TEXT_PRICING (the authoritative in-repo table).
+// WIDENED 2026-10-05 (Codex): the table held only three Grok entries, so WORST_RATE was the Grok
+// rate — and gpt-4o is 2x input / 4x output ABOVE it, gpt-4-turbo 8x / 12x. gpt-4o is the TERMINAL
+// AUTHOR FALLBACK, so the guard UNDER-reserved precisely when a fallback fired. Keeping GPT and
+// Mistral available as fallbacks means pricing them, not excluding them.
 export const RATES = {
-  'grok-4-1-fast-reasoning':     { in: 0.00000125, out: 0.0000025 },
-  'grok-4-1-fast-non-reasoning': { in: 0.00000125, out: 0.0000025 },
-  'grok-4.3':                    { in: 0.00000125, out: 0.0000025 }
+  'grok-4-1-fast-reasoning':      { in: 0.00000125, out: 0.0000025 },
+  'grok-4-1-fast-non-reasoning':  { in: 0.00000125, out: 0.0000025 },
+  'grok-4.20-0309-non-reasoning': { in: 0.00000125, out: 0.0000025 },
+  'grok-4.3':                     { in: 0.00000125, out: 0.0000025 },
+  'gpt-4o-mini':                  { in: 0.00000015, out: 0.0000006 },
+  'gpt-4o':                       { in: 0.0000025,  out: 0.00001   },
+  'gpt-4-turbo':                  { in: 0.00001,    out: 0.00003   },
+  'mistral-small-latest':         { in: 0.00000015, out: 0.0000006 },
+  'mistral-small-2603':           { in: 0.00000015, out: 0.0000006 },
+  'ministral-8b-2512':            { in: 0.00000015, out: 0.00000015 }
 };
 
+// MODELS THE APP CAN ROUTE TO WHOSE RATE IS PUBLISHED NOWHERE IN THIS REPO. A dispatch resolving
+// to one of these CANNOT be bounded, so it is REFUSED with a reason rather than silently priced at
+// some other model's rate. api/mistral-proxy.js:103 defaults to mistral-medium-latest, so this is
+// a reachable path, not a hypothetical.
+export const UNPRICED_MODELS = [
+  'mistral-medium-latest', 'mistral-large-latest', 'mistral-small'
+];
+
+// HOW A DISPATCH'S EFFECTIVE MODEL IS DECIDED, including proxy defaults:
+//   · api/proxy.js _resolveGrokModel collapses EVERY grok-* name to grok-4.3 (same rate).
+//   · api/chatgpt-proxy.js uses getDefaultModel(role); api/orchestrator.js DEFAULT_MODELS are all
+//     gpt-4o-mini or Grok, both priced above.
+//   · api/mistral-proxy.js defaults to mistral-medium-latest, which is UNPRICED.
+export function resolveModel(requested, url) {
+  const name = String(requested || '').trim();
+  const endpoint = String(url || '');
+  if (/^grok/i.test(name)) return { model: 'grok-4.3', how: 'proxy collapses every grok-* to 4.3' };
+  if (name && name !== '(unspecified)') return { model: name, how: 'explicit in the request body' };
+  if (/mistral-proxy/.test(endpoint)) {
+    return { model: 'mistral-medium-latest', how: 'api/mistral-proxy.js:103 default' };
+  }
+  if (/chatgpt-proxy/.test(endpoint)) {
+    return { model: 'gpt-4o-mini', how: 'chatgpt-proxy role default (DEFAULT_MODELS)' };
+  }
+  // THE GROK PROXY RESOLVES EVERYTHING, including an empty name: api/proxy.js _resolveGrokModel
+  // returns { model: 'grok-4.3' } for any input absent an SB override. So a body with no model
+  // sent to /api/proxy is a grok-4.3 dispatch, and is priceable — it is not an unknown.
+  if (/\/api\/proxy/.test(endpoint)) {
+    return { model: 'grok-4.3', how: 'api/proxy.js _resolveGrokModel default for any name' };
+  }
+  return { model: null, how: 'no model in the body and no proxy default could be resolved' };
+}
 // Conservative constants, each biased against us.
 export const CHARS_PER_TOKEN = 4.0;   // observed 4.46 on a real payload; 4.0 over-counts by ~11%
 export const REASONING_MULT  = 1.5;   // reasoning tokens are NOT bounded by max_tokens
@@ -27,22 +71,45 @@ export const ASSUME_NO_CACHE = true;  // cached_tokens was 192 of 56,499 — ass
 // dispatch (public/app.js, `max_tokens: 8000`) is the budget actually in play on this path.
 export const UNKNOWN_MAX_TOKENS = 8000;
 
-// An unknown model is priced at the MOST expensive rate in the table, never at a default.
+// The most expensive rate in the verified table. It is NO LONGER used as a fallback for unknown
+// models — those are refused — and is kept only for reporting the table's upper bound.
 export const WORST_RATE = {
   in:  Math.max(...Object.values(RATES).map(r => r.in)),
   out: Math.max(...Object.values(RATES).map(r => r.out))
 };
 
-export function estimateUsd(body, model) {
-  const r = RATES[model] || RATES[body && body.model] || WORST_RATE;
+export function estimateUsd(body, model, url) {
+  const res = resolveModel(model || (body && body.model), url);
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
   const promptTokens = Math.ceil(chars / CHARS_PER_TOKEN);
   const maxOut = Number(body.max_tokens) || UNKNOWN_MAX_TOKENS;
   const outTokens = Math.ceil(maxOut * REASONING_MULT);
+
+  // FAIL CLOSED WHEN THE COST CANNOT BE BOUNDED. Previously an unlisted model fell to WORST_RATE,
+  // which is only the Grok rate — so an expensive fallback was UNDER-reserved and dispatched. Now
+  // such a dispatch is refused with a reason (Codex 2026-10-05).
+  if (!res.model) {
+    return { bounded: false, estimate: Infinity, model: null, resolvedBy: res.how,
+      refuseReason: 'the effective model could not be resolved (' + res.how + '), so this '
+        + 'dispatch cannot be priced' };
+  }
+  if (UNPRICED_MODELS.indexOf(res.model) !== -1) {
+    return { bounded: false, estimate: Infinity, model: res.model, resolvedBy: res.how,
+      refuseReason: 'no published rate exists in this repo for "' + res.model + '" (resolved by '
+        + res.how + '), so this dispatch cannot be bounded' };
+  }
+  const r = RATES[res.model];
+  if (!r) {
+    return { bounded: false, estimate: Infinity, model: res.model, resolvedBy: res.how,
+      refuseReason: '"' + res.model + '" is not in the verified rate table (resolved by '
+        + res.how + '); refusing rather than applying another model\'s rate' };
+  }
   const raw = promptTokens * r.in + outTokens * r.out;
   const estimate = raw * SAFETY_MARGIN;
-  return { estimate, raw, promptChars: chars, promptTokens, outTokens,
-    rates: r, assumptions: { CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN, ASSUME_NO_CACHE } };
+  return { bounded: true, estimate, raw, promptChars: chars, promptTokens, outTokens,
+    model: res.model, resolvedBy: res.how, rates: r,
+    explicitMaxTokens: Number(body.max_tokens) || null,
+    assumptions: { CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN, ASSUME_NO_CACHE } };
 }
 
 // ── CHAINED RESERVATION (Roman 2026-09-30) ────────────────────────────────────────────────────

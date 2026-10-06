@@ -64,10 +64,39 @@ const previewResponses = new Map();   // cardId -> [{ action, dialogue, at, call
 let previewContext = { encounter: 'setup', turn: null };
 function setPreviewContext(encounter, turn) { previewContext = { encounter, turn }; }
 const norm = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').trim().toLowerCase();
-function recordPreviewReply(sysPrompt, replyText, callN) {
+// IS THIS A PREVIEW REQUEST? Needed at REQUEST time, before any reply exists.
+function isPreviewPrompt(sysPrompt) {
+  return /Say\/Do previews|amplify\|ruin\|redirect|one per archetype/i
+    .test(String(sysPrompt || ''));
+}
+
+// THE IDENTITY A PREVIEW REQUEST WAS SENT UNDER — captured when the request is intercepted and
+// passed through to the recorder, never re-read at response time. (Codex 2026-10-05: the recorder
+// stamped replies with the runner's context AT RETURN, so an old reply arriving after a turn change
+// was credited to the NEW turn. The 13/13 control inserted correctly-labelled records by hand and
+// could not see that.)
+//
+// It carries the APP'S OWN generation key as well as the runner's phase, because a preview batch
+// may legitimately be generated AHEAD of the selection that uses it. The app keys its preview cache
+// by turnCount (_cacheFateCardPreview) and its OAS batch by turnCount (_grokIntimateFateCards), so
+// that key — not the runner's loop counter — is what makes a preview "for" a selection.
+async function capturePreviewIdentity(page) {
+  let appKey = null;
+  try {
+    appKey = await page.evaluate(() => ({
+      turnCount: window.state ? (window.state.turnCount || 0) : null,
+      sceneFateKey: window.state ? (window.state._fateOptionsSceneKey || null) : null,
+      oasBeat: (window.state && window.state.intimacyDialogue)
+        ? (window.state.intimacyDialogue.beatCount ?? null) : null
+    }));
+  } catch (_) {}
+  return { encounter: previewContext.encounter, turn: previewContext.turn, app: appKey };
+}
+
+function recordPreviewReply(sysPrompt, replyText, callN, identity) {
   try {
     const sys = String(sysPrompt || '');
-    if (!/Say\/Do previews|amplify\|ruin\|redirect|one per archetype/i.test(sys)) return;
+    if (!isPreviewPrompt(sys)) return;
     let content = replyText;
     try { const j = JSON.parse(replyText);
       content = j?.choices?.[0]?.message?.content ?? j?.content ?? replyText; } catch (_) {}
@@ -81,8 +110,10 @@ function recordPreviewReply(sysPrompt, replyText, callN) {
       const action = parts.length >= 4 ? parts[2] : parts[1];
       const dialogue = parts.length >= 4 ? parts[3] : parts[2];
       if (!previewResponses.has(id)) previewResponses.set(id, []);
+      // THE REQUEST'S identity, passed in — not previewContext as it stands now.
+      const ident = identity || { encounter: '(unknown: no request identity)', turn: null, app: null };
       previewResponses.get(id).push({ action, dialogue, at: Date.now(), callN,
-        encounter: previewContext.encounter, turn: previewContext.turn });
+        encounter: ident.encounter, turn: ident.turn, app: ident.app });
     });
   } catch (_) {}
 }
@@ -118,21 +149,48 @@ function classifyPreview(cardId, action, dialogue, cacheEntry, context) {
   const served = previewResponses.get(id) || [];
   // IDENTITY IS CHECKED, NOT DECORATED. A record only establishes provenance for the encounter and
   // turn it was actually served under.
-  const sameIdentity = (r) => r.encounter === ctx.encounter && r.turn === ctx.turn;
+  // IDENTITY MATCHING. A preview batch may legitimately be generated AHEAD of the selection that
+  // uses it, so the runner's loop counter alone is the wrong test. The APP'S OWN generation key is
+  // authoritative when both sides have one: a preview generated for turnCount N is "for" a
+  // selection made at turnCount N, whatever the runner's iteration was. The phase labels are the
+  // fallback when no app key was captured, and a record with NO identity never matches.
+  const sameIdentity = (r) => {
+    if (!r.encounter && !r.app) return false;
+    const a = r.app, b = ctx.app;
+    // THE APP'S OWN GENERATION KEY DECIDES, because it is what the app uses to decide whether a
+    // cached preview still applies: the OAS batch is stored as
+    // _grokIntimateFateCards = { turnCount, ... } and the scene deck as _fateOptionsSceneKey.
+    // One OAS batch therefore serves every BEAT at the same turnCount — by design — so comparing
+    // beats was STRICTER THAN THE APP and wrongly called five legitimate selections UNKNOWN.
+    // Matching the app's key keeps previews generated ahead of a selection valid, while a batch
+    // from a different generation still cannot vouch for this one.
+    if (a && b && a.sceneFateKey != null && b.sceneFateKey != null) {
+      return a.sceneFateKey === b.sceneFateKey;
+    }
+    if (a && b && a.turnCount != null && b.turnCount != null) {
+      return a.turnCount === b.turnCount;
+    }
+    return r.encounter === ctx.encounter && r.turn === ctx.turn;
+  };
   const hit = served.find(r => pairMatches(r) && sameIdentity(r));
   if (hit) {
     return { provenance: 'matched-response',
       evidence: 'the COMPLETE action+dialogue pair is identical to the preview reply served for '
-        + 'this card on call ' + hit.callN + ' in THIS encounter and turn — ' + where };
+        + 'this card on call ' + hit.callN + ', requested under the SAME generation identity ('
+        + (hit.app && hit.app.turnCount != null ? 'turnCount=' + hit.app.turnCount
+            + (hit.app.oasBeat != null ? ' beat=' + hit.app.oasBeat : '')
+            : 'encounter="' + hit.encounter + '" turn=' + hit.turn) + ') — ' + where };
   }
   // A pair that matches a record from ANOTHER encounter or turn is a stale match. It is named, with
   // the identity it really came from, and it does NOT count as this submission's provenance.
   const stale = served.find(pairMatches);
   if (stale) {
     return { provenance: 'UNKNOWN',
-      evidence: 'the pair matches a preview reply served under a DIFFERENT identity (encounter="'
-        + stale.encounter + '" turn=' + stale.turn + ', call ' + stale.callN + '), not under '
-        + where + ' — a stale record is not provenance for this submission' };
+      evidence: 'the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="'
+        + stale.encounter + '" turn=' + stale.turn
+        + (stale.app && stale.app.turnCount != null ? ' turnCount=' + stale.app.turnCount : '')
+        + ', call ' + stale.callN + '), not under ' + where
+        + ' — a stale record is not provenance for this submission' };
   }
   if (cacheEntry && pairMatches(cacheEntry)) {
     return { provenance: 'matched-cache',
@@ -319,8 +377,27 @@ await page.route('**/api/**', async (route) => {
   let body = {}; try { body = JSON.parse(raw || '{}'); } catch (_) {}
   const requested = body.preferredModel || body.model || body.grokModel || '(unspecified)';
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
-  const est = estimateUsd({ messages: body.messages || [], max_tokens: body.max_tokens },
-    requested).estimate;
+  const quote = estimateUsd({ messages: body.messages || [], max_tokens: body.max_tokens },
+    requested, url);
+  const est = quote.estimate;
+
+  // REFUSE A DISPATCH WHOSE COST CANNOT BE BOUNDED. (Codex 2026-10-05.) An unlisted model used to
+  // fall to WORST_RATE — the Grok rate — so an expensive fallback was under-reserved and sent.
+  // Now the guard resolves the effective model, including each proxy's own default, and says so.
+  if (!quote.bounded) {
+    halted = true;
+    haltReason = 'UNBOUNDED DISPATCH REFUSED — ' + quote.refuseReason
+      + '  [endpoint ' + url.replace(/^https?:\/\/[^/]+/, '') + ']';
+    say('\n*** REFUSED BEFORE DISPATCH — ' + haltReason + ' ***');
+    return route.fulfill({ status: 503, contentType: 'application/json',
+      body: JSON.stringify({ error: 'harness refused an unpriceable dispatch' }) });
+  }
+
+  // THE IDENTITY THIS REQUEST IS SENT UNDER, frozen here. The reply may arrive after the runner
+  // has moved on; it must keep the identity it was ASKED under, not the one in force when it lands.
+  const sys0ForIdentity = (body.messages || [])[0]?.content;
+  const reqPreviewIdentity = isPreviewPrompt(sys0ForIdentity)
+    ? await capturePreviewIdentity(page) : null;
 
   // RESERVE ATOMICALLY, BEFORE THE REQUEST LEAVES.
   if (halted || exposure() + est > CEILING) {
@@ -380,6 +457,7 @@ await page.route('**/api/**', async (route) => {
     if (f.fail) {
       calls.push({ n: calls.length + 1, requested, chars, ms: Date.now() - t0, estimate: est,
         fn: callFunction((body.messages || [])[0]?.content),
+      pricedAs: quote.model, resolvedBy: quote.resolvedBy,
         error: 'fixture failure', measured: null });
       inFlight -= est; retained += est;
       outstanding = outstanding.filter(x => x !== resv); persistBudget();
@@ -390,6 +468,7 @@ await page.route('**/api/**', async (route) => {
     const textF = typeof f.body === 'string' ? f.body : JSON.stringify(f.body);
     const recF = { n: calls.length + 1, requested, chars, maxTokens: body.max_tokens || null,
       fn: callFunction((body.messages || [])[0]?.content),
+      pricedAs: quote.model, resolvedBy: quote.resolvedBy,
       convId: body.convId || null, role: body.role || null, ms: Date.now() - t0, estimate: est };
     try { const j = JSON.parse(textF); const u = j.usage || {};
       recF.served = j.model || null; recF.inTok = u.prompt_tokens ?? null;
@@ -406,7 +485,7 @@ await page.route('**/api/**', async (route) => {
     say('  call ' + String(recF.n).padStart(2) + '  [fixture] ' + String(requested).padEnd(28)
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
-    recordPreviewReply((body.messages || [])[0]?.content, textF, calls.length + 1);
+    recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
     return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
   }
   try {
@@ -421,12 +500,13 @@ await page.route('**/api/**', async (route) => {
         + (REQUEST_TIMEOUT_MS + 15000) + 'ms')), REQUEST_TIMEOUT_MS + 15000))
     ]);
     text = await resp.text();
-    recordPreviewReply((body.messages || [])[0]?.content, text, calls.length + 1);
+    recordPreviewReply(sys0ForIdentity, text, calls.length + 1, reqPreviewIdentity);
   } catch (e) { err = String(e && e.message); }
   const ms = Date.now() - t0;
 
   const rec = { n: calls.length + 1, requested, chars, maxTokens: body.max_tokens || null,
       fn: callFunction((body.messages || [])[0]?.content),
+      pricedAs: quote.model, resolvedBy: quote.resolvedBy,
     convId: body.convId || null, role: body.role || null, ms, estimate: est };
   if (err || !resp) {
     rec.error = err || 'no response';
@@ -706,6 +786,10 @@ try {
           const entry = gc || cc || null;
           return { action: a ? a.value : '', dialogue: d ? d.value : '',
             cardId: sel ? sel.id : null, selectedIndex: window.state.fateSelectedIndex,
+            appKey: { turnCount: window.state.turnCount || 0,
+              sceneFateKey: window.state._fateOptionsSceneKey || null,
+              oasBeat: window.state.intimacyDialogue
+                ? (window.state.intimacyDialogue.beatCount ?? null) : null },
             cacheEntry: entry ? { action: entry.action || '', dialogue: entry.dialogue || '' } : null };
         });
         if ((preview.action && preview.action.trim()) || (preview.dialogue && preview.dialogue.trim())) break;
@@ -728,7 +812,7 @@ try {
       const say_ = (preview.dialogue || '').trim();
       const do_ = (preview.action || '').trim();
       const oasProv = classifyPreview(preview.cardId, preview.action, preview.dialogue,
-        preview.cacheEntry, { encounter: 'opening OAS', turn: i + 1 });
+        preview.cacheEntry, { encounter: 'opening OAS', turn: i + 1, app: preview.appKey });
       cardLog.push({ turn: i + 1, deck, chosenIdx: slotIdx, slot: slotName, preview,
         provenance: oasProv, cacheFresh: deck.cacheFresh, cacheIds: deck.cacheIds });
       say('  turn ' + (i + 1) + ' plays OAS slot "' + slotName + '" from ' + deck.mountId
@@ -1263,6 +1347,10 @@ try {
           source: gnHas ? 'gn' : ((litA.trim() || litD.trim()) ? 'literary(HIDDEN)' : 'neither'),
           cardId: sel ? sel.id : null,
           selectedIndex: window.state.fateSelectedIndex,
+          appKey: { turnCount: window.state.turnCount || 0,
+            sceneFateKey: window.state._fateOptionsSceneKey || null,
+            oasBeat: window.state.intimacyDialogue
+              ? (window.state.intimacyDialogue.beatCount ?? null) : null },
           cacheEntry: cached ? { action: cached.action || '', dialogue: cached.dialogue || '' } : null,
           gn: { a: gnA.length, d: gnD.length }, lit: { a: litA.length, d: litD.length } };
       });
@@ -1270,7 +1358,7 @@ try {
       await page.waitForTimeout(400);
     }
     const prov = classifyPreview(sSub.cardId, sSub.action, sSub.dialogue, sSub.cacheEntry,
-      { encounter: 'scene ' + leaving + ' end', turn: leaving });
+      { encounter: 'scene ' + leaving + ' end', turn: leaving, app: sSub.appKey });
     sSub.origin = prov.provenance;
     sSub.evidence = prov.evidence;
     cardLog.push({ scene, deck: sDeck, chosenIdx: sIdx, submitted: sSub, provenance: prov });
