@@ -12,8 +12,14 @@ further fixture rehearsal is needed for it.
 
 **Not settled — better writing.** The OAS's repetitive questioning is a real finding, unaddressed:
 raw author dialogue scored mean 7.0% / max 100% pairwise, final rendered 3.7% / max 100%, with
-9 of 10 replies opening on her eyes or gaze and 7 of 10 asking *"Did you shape/call/summon…"*. And
-the repaired Scenes 2–10 have **never run live** — every scene result so far is from fixtures.
+9 of 10 replies opening on her eyes or gaze and 7 of 10 asking *"Did you shape/call/summon…"*.
+
+**Correction: Scenes 2–10 DID run live on 2026-10-02.** I wrote "never run live" and that erased a
+real baseline — `_fs_issue_corpus_out/run_2026-10-02T22-42-28-298Z/scenes/` holds 36 artefacts,
+`s2`…`s10` with author, planner and verifier for each, at $0.827537 receipted. What has **not**
+happened is a live run of Scenes 2–10 **with the subsequent repairs** — the scene-assignment seam,
+the continuation envelope, history notes, the lane-displacement fix and the handoff work. That is
+the gap, not an absence of any live scene evidence.
 
 There is also no resume path: the runner opens a browser at start and closes it at the end, so any
 run re-pays for the opening and OAS before reaching a single scene.
@@ -47,12 +53,18 @@ Scenes 2–10.
 | nine scenes at $0.11249 measured | $1.0124 |
 | retry allowance | $0.19 |
 | peak single reservation + margin | $0.2338 |
-| **additional headroom** | **$1.81** |
+| **headroom needed at the new ceiling** | **$1.8045459** |
 | **new cumulative ceiling** | **$4.20** |
+| **increase in authorization** (over the current $3.04) | **$1.16** |
 
-A ceiling stop is still partial, never lost: whatever scenes landed are kept with their history
-notes and per-scene costs, and `CLAIM A` reports how many of the nine were generated. **No promise
-of completion.**
+Those are two different numbers and I had labelled them as one: **$1.8045459 is the headroom
+available at $4.20** once the existing $2.3954541 exposure is retained, while **$1.16 is the
+increase in authorization** over the current $3.04 ceiling.
+
+A ceiling is a **spending cap, not a guarantee the issue completes**, and the **$0.37 OAS figure is
+a planning allowance, not a proven upper bound** — it is the cold-cache end of two observed runs.
+A ceiling stop is partial, never lost: whatever scenes landed are kept with their history notes and
+per-scene costs, and `CLAIM A` reports how many of the nine were generated.
 
 ## My recommendation
 
