@@ -385,8 +385,18 @@ await page.route('**/api/**', async (route) => {
   let body = {}; try { body = JSON.parse(raw || '{}'); } catch (_) {}
   const requested = body.preferredModel || body.model || body.grokModel || '(unspecified)';
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
-  const quote = estimateUsd({ messages: body.messages || [], max_tokens: body.max_tokens },
-    requested, url);
+  // PASS THE FIELDS RESOLUTION NEEDS, not just the two it used to. (Codex 2026-10-05: the helper
+  // was repaired but this caller still rebuilt a stripped body, so an _sbModelOverride of
+  // grok-4.7 was discarded here and priced as grok-4.3 — refused when the estimator was called
+  // directly, allowed through the runner.) The override fields are what decide the effective
+  // model on /api/proxy, so they travel with the messages.
+  const quote = estimateUsd({
+    messages: body.messages || [],
+    max_tokens: body.max_tokens,
+    model: body.model,
+    _sbModelOverride: body._sbModelOverride,
+    reasoningEffort: body.reasoningEffort
+  }, requested, url);
   const est = quote.estimate;
 
   // REFUSE A DISPATCH WHOSE COST CANNOT BE BOUNDED. (Codex 2026-10-05.) An unlisted model used to
