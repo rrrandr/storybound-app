@@ -875,9 +875,9 @@ await page.route('**/api/**', async (route) => {
     say('  call ' + String(recF.n).padStart(2) + '  [fixture] ' + String(requested).padEnd(28)
       + (recF.measured != null ? ' $' + recF.measured.toFixed(6) : ' no receipt')
       + '  ' + recF.ms + 'ms');
-    recordPreviewReply(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
-    noteOasReplyReceived(sys0ForIdentity, textF, calls.length + 1, reqPreviewIdentity);
-    noteOasCleanup(sys0ForIdentity, body, textF, calls.length + 1, reqPreviewIdentity);
+    recordPreviewReply(sys0ForIdentity, textF, recF.n, reqPreviewIdentity);
+    noteOasReplyReceived(sys0ForIdentity, textF, recF.n, reqPreviewIdentity);
+    noteOasCleanup(sys0ForIdentity, body, textF, recF.n, reqPreviewIdentity);
     // THE FIXTURE PATH RUNS THE SAME DETECTOR. A fixture can carry the runtime's error page, and
     // the harness must stop on it exactly as it would live — that is how this guard is tested.
     if (noteInfraFailure(textF, null, recF, url)) {
