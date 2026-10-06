@@ -196599,8 +196599,32 @@ No text, no watermark, no UI elements, share-ready.`;
       // staging it is the scene's JOB, and this guard must not stand in the way of it.
       var groups = _reservedGroupsInForce(s || window.state, sceneNum).inForce;
       var hay = text.toLowerCase();
+      // ── A MARKER FROM A PROPER NOUN MUST MATCH A PROPER NOUN (Roman/Codex 2026-10-06) ──────
+      // Markers are harvested from the reserved truth by taking CAPITALISED words
+      // (/\b[A-Z][a-z]{2,}\b/, ~line 196509) and lowercasing them, so the venue "The Open" yields
+      // the marker "open". Matching then did a BARE SUBSTRING indexOf on lowercased text, so an
+      // ordinary phrase triggered the guard: a live scene-7 proposal reading
+      //   "The Dohkar's summons for review echoes through open doors into the streets."
+      // hit [dohkar, open] and was refused as though it convened the reserved inquiry. It did not —
+      // it made a PRELIMINARY REVIEW public, which the seed permits.
+      //
+      // THE FIX IS A DISTINCTION, NOT A RELAXATION. Every marker now needs a word boundary, so
+      // "opened"/"opening" no longer count. And a marker that is an ordinary English word must
+      // appear in PROPER-NOUN FORM — capitalised in the original text — because that is the only
+      // way it refers to the venue. Markers that are not ordinary words (dohkar, chayr, sacrificiant)
+      // still match case-insensitively, so genuinely convening the inquiry is caught exactly as
+      // before.
+      var _ORDINARY_WORD_MARKER = /^(open|answer|inquiry|price|witness|rite|wish|favor|favour|sacrifice|memory|cost|name|word|hand|house|court|circle)$/;
+      var _markerHit = function (m) {
+        var esc = String(m).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (_ORDINARY_WORD_MARKER.test(m)) {
+          // the venue sense only: capitalised, optionally "the Open"
+          return new RegExp('\\b' + esc.charAt(0).toUpperCase() + esc.slice(1) + 's?\\b').test(text);
+        }
+        return new RegExp('\\b' + esc + 's?\\b', 'i').test(text);
+      };
       for (var i = 0; i < groups.length; i++) {
-        var hits = groups[i].markers.filter(function (m) { return hay.indexOf(m) !== -1; });
+        var hits = groups[i].markers.filter(_markerHit);
         // TWO markers plus a convening act. One marker is a mention; two staged together with a
         // convening verb is the reserved proceeding itself, whatever it is being called.
         if (hits.length >= 2) {
