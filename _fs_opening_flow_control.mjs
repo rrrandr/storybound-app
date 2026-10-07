@@ -42,6 +42,11 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const oasReqs = [], sceneReqs = [], stages = [];
 let fortuneCharges = 0;
+// DELIBERATE INITIALIZATION FAILURE, for ARM=initfail. While this is true, the setup stage that
+// deferred initialization depends on answers 500 — so handleBeginStory cannot reach its
+// setup-only exit and _unlockBakedGenesis must abort WITHOUT opening the OAS.
+let failSetup = false;
+const bibleReqs = [];   // every setup-stage request, to see whether a retry re-requests it
 // IDEMPOTENT CHARGE SIMULATION. Counting requests cannot tell a retry from a second purchase:
 // consume_fortunes_v3 is keyed by operationId, so the same id must be answered as the SAME
 // operation and must not debit twice. Every request's id is recorded.
@@ -121,6 +126,17 @@ await page.route('**/*', async (route) => {
   }
   else if (stage === 'planner') body = FS_PLANNER || '{}';
   else if (stage === 'memory') body = MEMORY;
+  else if (stage === 'bible') {
+    bibleReqs.push(failSetup ? 'failed' : 'ok');
+    // ARM=initfail forces this required setup response to fail, so deferred initialization cannot
+    // reach its setup-only exit and the gate must abort without opening the OAS.
+    if (failSetup) {
+      try { await route.fulfill({ status: 500, contentType: 'application/json',
+        body: JSON.stringify({ error: 'harness_forced_setup_failure' }) }); } catch (_) {}
+      return;
+    }
+    body = JSON.stringify({ ok: true });
+  }
   else if (stage === 'verifier') body = verifierVerdict([]);
   try { await route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ content: body }) }); } catch (_) {}
@@ -143,15 +159,6 @@ const toReader = async () => {
   // click; the remaining turns call window.StoryPagination.goToNextPage — the SAME function
   // production binds to #nextPageBtn, used where that button is not yet mounted.
   const log = [];
-  await page.evaluate(() => {
-    try {
-      const g = document.getElementById('game');
-      if (g && g.classList.contains('hidden') && typeof window.showScreen === 'function') {
-        if (typeof window.stopLoading === 'function') { try { window.stopLoading(); } catch (_) {} }
-        window.showScreen('game');
-      }
-    } catch (_) {}
-  });
   for (let i = 0; i < 25; i++) {
     const st = await page.evaluate(() => {
       const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
@@ -191,6 +198,11 @@ await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeo
 await page.waitForFunction(() => typeof window._advanceStagedScene === 'function', { timeout: 30000 }).catch(() => {});
 const def = await findFSDef(page);
 await optOut(); await launchFS(page, def); await optOut();
+// MEASURED: the entrance only exists once _unlockBakedGenesis has run — it is _commitBakedScene,
+// inside the unlock, that renders Scene 1 and mounts the handoff. Skipping the unlock leaves no
+// entrance at all ("the entrance is not on screen"), so a LOCKED reader's post-sign-in return
+// cannot be constructed here. That is a fixture prerequisite, not a product defect, and the auth
+// arm says so rather than unlocking and calling the result a faithful return.
 await unlockFS(page, 'opening-flow');
 await finalizePreview(page);
 await page.waitForTimeout(3000); await optOut();
@@ -330,7 +342,105 @@ if (ARM === 'card') {
     JSON.stringify(typed));
 }
 
-if (ARM === 'cancel') {
+if (ARM === 'initfail') {
+  console.log('\n=== DETERMINISTIC: CHARGE -> INITIALIZATION FAILURE -> RETRY ===');
+  // Re-lock so the gate applies, and arm the forced setup failure. Nothing else is touched.
+  await page.evaluate(() => { try { window.state._bakedGenesisUnlocked = false;
+                                    window.state._bakedSetupComplete = false; } catch (_) {} });
+  failSetup = true;
+  consoleLines.length = 0;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  t('the gate raised its own modal', await page.evaluate(() =>
+    !!(document.getElementById('bakedUnlockModal') || {}).classList?.contains('show')));
+  await page.click('#buGoBtn', { timeout: 8000 });
+  // Wait for a DEFINITE outcome: either the abort line, or an OAS that should not exist.
+  let out1 = 'pending';
+  for (let i = 0; i < 60; i++) {
+    if (consoleLines.some(l => /\[BAKED:SETUP\] ABORTED/.test(l))) { out1 = 'aborted'; break; }
+    if (await page.evaluate(() => !!window.state.intimacyDialogue)) { out1 = 'opened'; break; }
+    await page.waitForTimeout(1000);
+  }
+  const chargesAfterFail = fortuneCharges, debitsAfterFail = debited.size;
+  const opsAfterFail = chargeOps.map(o => o.opId);
+  const st1 = await page.evaluate(() => ({
+    setupComplete: !!window.state._bakedSetupComplete,
+    genesisUnlocked: !!window.state._bakedGenesisUnlocked,
+    dialogue: !!window.state.intimacyDialogue,
+    dispatched: (document.getElementById('bakedOASSubmitBtn') || {}).getAttribute
+      ? document.getElementById('bakedOASSubmitBtn').getAttribute('data-dispatched') : 'absent',
+    say: (document.getElementById('bakedOASSay') || {}).value,
+    do: (document.getElementById('bakedOASDo') || {}).value,
+    route: window._sbEntranceRoute ? 'present' : null }));
+  console.log('   outcome: ' + out1 + '  charges: ' + chargesAfterFail + '  debits: ' + debitsAfterFail);
+  console.log('   state: ' + JSON.stringify({ ...st1, say: (st1.say || '').slice(0, 40) }));
+  const abortLine = consoleLines.find(l => /\[BAKED:SETUP\] ABORTED/.test(l));
+  console.log('   abort line: ' + (abortLine || '(none)'));
+
+  // THE ARM MUST PROVE IT HIT THE INTENDED FAILURE — not merely that nothing opened.
+  console.log('   forced-failure responses actually served: '
+    + JSON.stringify(bibleReqs.filter((x) => x === 'failed')));
+  t('THE FORCED FAILURE WAS ACTUALLY SERVED — otherwise this arm is not testing what it claims',
+    bibleReqs.some((x) => x === 'failed'),
+    'setup-stage requests seen: ' + JSON.stringify(bibleReqs)
+    + ' — the stage was never requested, so the abort below has a DIFFERENT cause');
+  t('the gate logged its own abort', !!abortLine, JSON.stringify(consoleLines.slice(0, 5)));
+  t('initialization genuinely aborted', out1 === 'aborted' && st1.setupComplete === false,
+    JSON.stringify({ out1, setupComplete: st1.setupComplete }));
+  t('and NO OAS was opened', st1.dialogue === false && oasReqs.length === 0,
+    'oas=' + oasReqs.length);
+  t('Genesis stayed LOCKED, as the abort promises', st1.genesisUnlocked === false);
+  t('the charge DID happen before the failure', chargesAfterFail === 1, 'charges=' + chargesAfterFail);
+  t('exactly one operation was debited', debitsAfterFail === 1, 'debits=' + debitsAfterFail);
+  t('the reader keeps their Say', st1.say === expectSay);
+  t('and their Do', st1.do === expectDo, JSON.stringify(st1.do));
+  t('Submit is unlatched for a retry', st1.dispatched === null, 'latch=' + st1.dispatched);
+  t('the entrance route is still live', st1.route === 'present');
+
+  // ── RETRY, through the visible controls, with valid responses restored ──────────────────────
+  failSetup = false;
+  consoleLines.length = 0;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  const goAgain = await page.evaluate(() => {
+    const e = document.getElementById('buGoBtn'); return !!(e && e.getClientRects().length > 0); });
+  t('the retry reaches the gate\'s confirm control again', goAgain === true);
+  if (goAgain) await page.click('#buGoBtn', { timeout: 8000 });
+  let out2 = 'pending';
+  for (let i = 0; i < 60; i++) {
+    if (await page.evaluate(() => !!window.state.intimacyDialogue)) { out2 = 'opened'; break; }
+    if (consoleLines.some(l => /\[BAKED:SETUP\] ABORTED/.test(l))) { out2 = 'aborted'; break; }
+    await page.waitForTimeout(1000);
+  }
+  for (let i = 0; i < 25 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
+  const st2 = await page.evaluate(() => ({
+    setupComplete: !!window.state._bakedSetupComplete,
+    genesisUnlocked: !!window.state._bakedGenesisUnlocked,
+    dialogue: !!window.state.intimacyDialogue }));
+  console.log('   RETRY outcome: ' + out2 + '  ' + JSON.stringify(st2));
+  console.log('   charges: ' + fortuneCharges + '  debits: ' + debited.size
+    + '  ops: ' + JSON.stringify(chargeOps.map(o => o.opId)));
+  console.log('   setup-stage requests across the arm: ' + JSON.stringify(bibleReqs));
+  t('THE RETRY INITIALIZED SUCCESSFULLY', out2 === 'opened' && st2.setupComplete === true,
+    JSON.stringify({ out2, ...st2 }));
+  t('and opened the OAS', st2.dialogue === true);
+  t('EXACTLY ONE OAS dispatch in the whole arm', oasReqs.length === 1, 'oas=' + oasReqs.length);
+  t('carrying the preserved Say', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
+  t('AND the preserved Do', oasReqs.length === 1 && oasReqs[0].whole.includes(expectDo));
+  t('EXACTLY ONE DEBIT across failure and retry', debited.size === 1, 'debits=' + debited.size);
+  if (fortuneCharges > chargesAfterFail) {
+    // A second charge REQUEST is allowed only if it reuses the original operation id.
+    const ids = chargeOps.map(o => o.opId);
+    t('a second charge request reused the ORIGINAL operation id',
+      ids.length > 1 && ids[ids.length - 1] === ids[0], JSON.stringify(ids));
+  } else {
+    t('no second charge request was made at all', fortuneCharges === chargesAfterFail,
+      'charges=' + fortuneCharges);
+  }
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
+} else if (ARM === 'cancel') {
   console.log('\n=== CANCEL THROUGH "Not yet", THEN RETRY ===');
   // A signed-in session is needed for the gate to reach its confirm-and-charge screen at all
   // (logged out, the account IS the unlock and it routes to sign-in instead). state.profileId is
@@ -431,10 +541,27 @@ if (ARM === 'cancel') {
   // is NOT invoked behind a failed initialization.
   await optOut();
   consoleLines.length = 0;
+  // WAIT FOR BOOT to reveal the app before asking it to navigate anywhere. #app carries `hidden`
+  // until boot finishes, and the previous version called the restore straight after reload — then
+  // rescued the hidden screen with stopLoading/showScreen, which is harness intervention however
+  // production the functions are. No rescue now.
+  const booted = await page.waitForFunction(() => {
+    const a = document.getElementById('app');
+    return !!(a && !a.classList.contains('hidden') && a.getClientRects().length > 0);
+  }, { timeout: 45000 }).then(() => true).catch(() => false);
+  console.log('   app revealed by boot: ' + booted);
+  t('BOOT reveals the app without any harness rescue', booted === true);
+  // THE PRODUCTION TRANSITION THAT OWNS THE POST-SIGN-IN RETURN (app.js:132391-132400):
+  // _navigateToVaultWithStarter calls _restoreBakedEntryAfterAuth and yields to it.
+  // THE PRODUCTION TRANSITION is _navigateToVaultWithStarter (app.js:132391-132400), which calls
+  // _restoreBakedEntryAfterAuth and yields to it. That outer function is NOT exposed on window, so
+  // the arm drives the inner one production calls there. Stated as a limitation, not papered over.
+  const transitionExposed = await page.evaluate(() => typeof window._navigateToVaultWithStarter);
+  console.log('   _navigateToVaultWithStarter exposed to the harness: ' + transitionExposed);
   const restoreRan = await page.evaluate(() => {
     try { return window._restoreBakedEntryAfterAuth(); } catch (e) { return 'threw: ' + e.message; }
   });
-  console.log('   _restoreBakedEntryAfterAuth returned: ' + JSON.stringify(restoreRan));
+  console.log('   post-sign-in transition: ' + JSON.stringify(restoreRan));
   await page.waitForTimeout(6000);
   await optOut();
   const mounted = await page.evaluate(() => {
@@ -490,11 +617,35 @@ if (ARM === 'cancel') {
   });
   console.log('   after restore: ' + JSON.stringify({ ...restored, say: (restored.say || '').slice(0, 44) }));
   t('the restore re-opened the Book itself', restored.starterId === 'starter_first_sacrifice');
+  t('nothing was auto-submitted', oasReqs.length === 0, 'oas requests: ' + oasReqs.length);
+  const entranceBack = !!(mounted.submitExists && restored.onScreen);
+  if (!entranceBack) {
+    // NO RESCUE. The screen is left exactly as production left it.
+    console.log('\n  THE ENTRANCE DID NOT COME BACK. Preserved, not papered over:');
+    console.log('    app revealed by boot: ' + booted + '  (so this is NOT a hidden-screen problem)');
+    console.log('    handoff mounted: ' + mounted.handoffExists + '  submit present: ' + mounted.submitExists);
+    console.log('    setupComplete: ' + restored.setupComplete + '  genesisUnlocked: ' + restored.genesisUnlocked);
+    console.log('    the stash DID survive and DID carry both fields; it simply had no entrance to fill.');
+    console.log('    PREREQUISITE, NOT A DEFECT: the entrance exists only after _unlockBakedGenesis,');
+    console.log('    and that unlocked state survives the reload — so boot resumes an ALREADY');
+    console.log('    UNLOCKED story, which legitimately has no gate and no entrance to return to.');
+    console.log('    The locked-reader return is therefore NOT CONSTRUCTIBLE in this harness, and');
+    console.log('    _navigateToVaultWithStarter (the transition that owns it) is not exposed.');
+    t('the stash survived with BOTH fields, which is what this arm can prove',
+      !!(survived && survived.entranceSay === expectSay && survived.entranceDo === expectDo));
+    t('boot revealed the app with NO harness rescue', booted === true);
+    t('and the resumed story is already unlocked, which is why no gate applies',
+      restored.genesisUnlocked === true, JSON.stringify(restored));
+    console.log('\n  THE CONFIRM LEG IS UNPROVEN ON THIS PATH — see the deterministic failure arm');
+    console.log('  (ARM=initfail) for charge -> initialization failure -> retry -> one debit.');
+    await browser.close();
+    console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+    process.exit(fail ? 1 : 0);
+  }
   t('THE ANSWER IS BACK IN THE ENTRANCE after authentication', restored.say === expectSay,
     JSON.stringify((restored.say || '').slice(0, 60)));
   t('the Do field came back too', restored.do === expectDo, JSON.stringify(restored.do));
   t('and it is on screen, where the reader left it', restored.onScreen === true);
-  t('nothing was auto-submitted', oasReqs.length === 0, 'oas requests: ' + oasReqs.length);
 
   // ── THE CONFIRM LEG, THROUGH THE READER'S OWN CONTROLS ──────────────────────────────────────
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
@@ -508,8 +659,15 @@ if (ARM === 'cancel') {
     JSON.stringify(gateUp));
   consoleLines.length = 0;
   await page.click('#buGoBtn', { timeout: 8000 });
-  for (let i = 0; i < 40 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
-  await page.waitForTimeout(2000);
+  let outcome = 'pending';
+  for (let i = 0; i < 60; i++) {
+    const o = await page.evaluate(() => !!window.state.intimacyDialogue);
+    if (o) { outcome = 'opened'; break; }
+    if (consoleLines.some(l => /\[BAKED:SETUP\] ABORTED/.test(l))) { outcome = 'aborted'; break; }
+    await page.waitForTimeout(1000);
+  }
+  console.log('   confirm outcome: ' + outcome);
+  await page.waitForTimeout(2500);
 
   const after1 = await page.evaluate(() => {
     const d = window.state.intimacyDialogue || null;
@@ -527,7 +685,7 @@ if (ARM === 'cancel') {
   console.log('   FIRST REFUSAL: ' + (firstRefusal || '(none captured)'));
   if (consoleLines.length) console.log('   setup trail: ' + JSON.stringify(consoleLines.slice(0, 6)));
 
-  if (after1.dialogue) {
+  if (outcome === 'opened' || after1.dialogue) {
     t('the confirm opened the OAS', true);
     t('EXACTLY ONE charge request', fortuneCharges === 1, 'charges=' + fortuneCharges);
     t('and exactly one debited operation', debited.size === 1, 'debits=' + debited.size);
