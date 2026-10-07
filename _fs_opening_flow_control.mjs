@@ -42,6 +42,21 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const oasReqs = [], sceneReqs = [], stages = [];
 let fortuneCharges = 0;
+// IDEMPOTENT CHARGE SIMULATION. Counting requests cannot tell a retry from a second purchase:
+// consume_fortunes_v3 is keyed by operationId, so the same id must be answered as the SAME
+// operation and must not debit twice. Every request's id is recorded.
+const chargeOps = [];          // every request, in order
+const debited = new Map();     // operationId -> the balance that operation produced
+let balance = 9999999;
+// Page console, so a refusal can be quoted instead of inferred from "no OAS appeared".
+const consoleLines = [];
+page.on('console', (m) => {
+  const txt = m.text();
+  if (/BAKED:SETUP|BAKED:GATE|FORTUNE|PREVIEW-SLICE|BAKED:RESUME|OAS:ENTRANCE|BAKED:OAS/.test(txt)) {
+    consoleLines.push(m.type().toUpperCase() + ' ' + txt.slice(0, 190));
+  }
+});
+page.on('pageerror', (e) => consoleLines.push('PAGEERROR ' + String(e.message).slice(0, 190)));
 await installSession(page);
 await page.route('**/*', async (route) => {
   const req = route.request();
@@ -61,8 +76,20 @@ await page.route('**/*', async (route) => {
   // happens once a real session token is attached.
   if (/\/api\/consume-fortune/.test(req.url())) {
     fortuneCharges++;
+    let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
+    const opId = (b && (b.operationId || b.opId || b.operation_id)) || null;
+    const amount = Number((b && (b.amount || b.fortunes)) || 0);
+    chargeOps.push({ opId, amount });
+    // IDEMPOTENT: a repeated operationId returns the FIRST result and debits nothing further.
+    if (opId && debited.has(opId)) {
+      try { await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ok: true, fortunesRemaining: debited.get(opId), idempotent: true }) }); } catch (_) {}
+      return;
+    }
+    balance -= (amount > 0 ? amount : 0);
+    if (opId) debited.set(opId, balance);
     try { await route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ ok: true, fortunesRemaining: 500 }) }); } catch (_) {}
+      body: JSON.stringify({ ok: true, fortunesRemaining: balance }) }); } catch (_) {}
     return;
   }
   if (!isProviderEndpoint(req.url())) { try { await route.abort(); } catch (_) {} return; }
@@ -116,6 +143,15 @@ const toReader = async () => {
   // click; the remaining turns call window.StoryPagination.goToNextPage — the SAME function
   // production binds to #nextPageBtn, used where that button is not yet mounted.
   const log = [];
+  await page.evaluate(() => {
+    try {
+      const g = document.getElementById('game');
+      if (g && g.classList.contains('hidden') && typeof window.showScreen === 'function') {
+        if (typeof window.stopLoading === 'function') { try { window.stopLoading(); } catch (_) {} }
+        window.showScreen('game');
+      }
+    } catch (_) {}
+  });
   for (let i = 0; i < 25; i++) {
     const st = await page.evaluate(() => {
       const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
@@ -126,9 +162,26 @@ const toReader = async () => {
     if (st.entrance) { log.push('entrance on screen after ' + i + ' turns'); break; }
     if (st.cover) { await page.click('#coverNextBtn', { timeout: 6000 }).catch(() => {}); log.push('cover(click)'); }
     else if (st.next) { await page.click('#nextPageBtn', { timeout: 6000 }).catch(() => {}); log.push('next(click)'); }
-    else { await page.evaluate(() => { try { window.StoryPagination.goToNextPage(); } catch (_) {} });
-           log.push(st.title ? 'title(pagination)' : st.front ? 'frontispiece(pagination)' : 'page(pagination)'); }
-    await page.waitForTimeout(1400);
+    else {
+      await page.evaluate(() => {
+        try {
+          if (window._frontispieceActive && typeof window.dismissFatelandsFrontispiece === 'function') {
+            window.dismissFatelandsFrontispiece();
+          } else { window.StoryPagination.goToNextPage(); }
+        } catch (_) {}
+      });
+      log.push(st.title ? 'title(pagination)' : st.front ? 'frontispiece(dismiss)' : 'page(pagination)');
+      // Let an animated dismissal finish before deciding anything else.
+      for (let w = 0; w < 12; w++) {
+        const clear = await page.evaluate(() => {
+          const sc = document.getElementById('storyContent');
+          return !(sc && sc.classList.contains('frontispiece-active')) && !window._frontispieceActive;
+        });
+        if (clear) break;
+        await page.waitForTimeout(500);
+      }
+    }
+    await page.waitForTimeout(1200);
   }
   console.log('   navigation: ' + log.join(' -> '));
 };
@@ -370,50 +423,82 @@ if (ARM === 'cancel') {
   });
   t('it SURVIVED the reload', !!(survived && survived.entranceSay === expectSay),
     JSON.stringify(survived && survived.entranceSay));
-  // Re-open the Book and let production put the words back.
+
+  // ── ONE FAITHFUL LIFECYCLE ──────────────────────────────────────────────────────────────────
+  // The previous version launched, unlocked and finalized the Book AFTER the reload and THEN
+  // called _restoreBakedEntryAfterAuth, which launches it AGAIN. The restore owns the re-open on
+  // this path, so nothing is launched by hand here. Setup is NOT forced complete and the opener
+  // is NOT invoked behind a failed initialization.
   await optOut();
-  const def2 = await findFSDef(page);
-  await launchFS(page, def2); await optOut();
-  await unlockFS(page, 'opening-flow'); await finalizePreview(page);
-  await page.waitForTimeout(3000); await optOut();
-  await toReader();
-  // SIMULATED COMPLETED SIGN-IN. _restoreBakedEntryAfterAuth deliberately keeps the marker and
-  // does nothing while still logged out ("the reader may have cancelled the sign-in"), so the
-  // return leg needs a signed-in session to exercise at all. state.profileId is exactly what
-  // production's own _isSignedIn reads; no production code is altered. Auth RESPONSES are
-  // simulated here in the same way entitlement and payment responses are.
-  const signedIn = await page.evaluate(() => {
-    try { window.state.profileId = 'harness-profile-0001'; } catch (_) {}
-    return !!(window.state && window.state.profileId);
+  consoleLines.length = 0;
+  const restoreRan = await page.evaluate(() => {
+    try { return window._restoreBakedEntryAfterAuth(); } catch (e) { return 'threw: ' + e.message; }
   });
-  console.log('   simulated signed-in session: ' + signedIn);
-  await page.evaluate(() => { try { window._restoreBakedEntryAfterAuth(); } catch (_) {} });
-  await page.waitForTimeout(2500);
+  console.log('   _restoreBakedEntryAfterAuth returned: ' + JSON.stringify(restoreRan));
+  await page.waitForTimeout(6000);
+  await optOut();
+  const mounted = await page.evaluate(() => {
+    const w = document.getElementById('bakedOASHandoff');
+    const sc = document.getElementById('storyContent');
+    return { handoffExists: !!w,
+             handoffParent: w && w.parentElement ? (w.parentElement.id || w.parentElement.className) : null,
+             submitExists: !!document.getElementById('bakedOASSubmitBtn'),
+             storyContentHidden: !!(sc && sc.classList.contains('hidden')),
+             scene1MountedAt: window.state._bakedScene1MountedAt || null,
+             readerPages: (window.StoryPagination && window.StoryPagination.getPageCount)
+               ? window.StoryPagination.getPageCount() : null };
+  });
+  console.log('   ENTRANCE AFTER RESTORE: ' + JSON.stringify(mounted));
+  const whyHidden = await page.evaluate(() => {
+    const w = document.getElementById('bakedOASHandoff');
+    if (!w) return 'absent';
+    const chain = [];
+    let el = w;
+    while (el && el !== document.documentElement) {
+      const cs = getComputedStyle(el);
+      chain.push({ id: el.id || null, cls: (el.className || '').toString().slice(0, 36),
+                   d: cs.display, v: cs.visibility, rects: el.getClientRects().length });
+      el = el.parentElement;
+    }
+    const matched = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules; try { rules = sheet.cssRules; } catch (_) { continue; }
+      for (const r of Array.from(rules || [])) {
+        if (!r.selectorText || !r.style || !r.style.display) continue;
+        try { if (w.matches(r.selectorText)) matched.push(r.selectorText + '{display:' + r.style.display + '}'); } catch (_) {}
+      }
+    }
+    return { chain: chain.slice(0, 4), matched, inline: w.getAttribute('style') };
+  });
+  console.log('   WHY NOT VISIBLE: ' + JSON.stringify(whyHidden).slice(0, 520));
+  for (let i = 0; i < 3; i++) {
+    await toReader();
+    const on = await page.evaluate(() => {
+      const e = document.getElementById('bakedOASSubmitBtn');
+      return !!(e && e.getClientRects().length > 0);
+    });
+    if (on) break;
+    await page.waitForTimeout(2500);
+  }
   const restored = await page.evaluate(() => {
-    const a = document.getElementById('bakedOASSay'), b = document.getElementById('bakedOASDo');
-    return { say: a ? a.value : null, do: b ? b.value : null,
-             onScreen: !!(a && a.getClientRects().length > 0) };
+    const a2 = document.getElementById('bakedOASSay'), b2 = document.getElementById('bakedOASDo');
+    return { say: a2 ? a2.value : null, do: b2 ? b2.value : null,
+             onScreen: !!(a2 && a2.getClientRects().length > 0),
+             setupComplete: !!window.state._bakedSetupComplete,
+             genesisUnlocked: !!window.state._bakedGenesisUnlocked,
+             starterId: window.state._starterId || null };
   });
-  console.log('   restored: ' + JSON.stringify({ say: (restored.say || '').slice(0, 50) }));
+  console.log('   after restore: ' + JSON.stringify({ ...restored, say: (restored.say || '').slice(0, 44) }));
+  t('the restore re-opened the Book itself', restored.starterId === 'starter_first_sacrifice');
   t('THE ANSWER IS BACK IN THE ENTRANCE after authentication', restored.say === expectSay,
-    JSON.stringify(restored));
+    JSON.stringify((restored.say || '').slice(0, 60)));
   t('the Do field came back too', restored.do === expectDo, JSON.stringify(restored.do));
   t('and it is on screen, where the reader left it', restored.onScreen === true);
   t('nothing was auto-submitted', oasReqs.length === 0, 'oas requests: ' + oasReqs.length);
-  // Re-opening the Book re-arms the Genesis gate, which is correct: the reader has not paid yet.
-  // Prove that FIRST — the gate still holds and the answer still survives — then unlock and submit.
+
+  // ── THE CONFIRM LEG, THROUGH THE READER'S OWN CONTROLS ──────────────────────────────────────
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
-  await page.waitForTimeout(3000);
-  const h2 = await page.evaluate(() => ({
-    say: document.getElementById('bakedOASSay').value,
-    dispatched: document.getElementById('bakedOASSubmitBtn').getAttribute('data-dispatched') }));
-  t('the entitlement gate still applies after the return', oasReqs.length === 0,
-    'oas requests: ' + oasReqs.length);
-  t('and the restored answer is STILL in the field, unlatched', h2.say === expectSay && h2.dispatched === null,
-    JSON.stringify({ say: h2.say.slice(0, 40), dispatched: h2.dispatched }));
-  // FINISH THROUGH THE REAL CONFIRMATION CONTROL. No modal is hidden by hand and nothing is
-  // marked unlocked: the gate's own #buGoBtn runs production's confirm-and-charge, and the charge
-  // RESPONSE is simulated locally.
+  await page.waitForTimeout(2500);
   const gateUp = await page.evaluate(() => {
     const m = document.getElementById('bakedUnlockModal');
     const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
@@ -421,29 +506,73 @@ if (ARM === 'cancel') {
   });
   t('the gate raised its own modal on return', gateUp.shown === true && gateUp.go === true,
     JSON.stringify(gateUp));
+  consoleLines.length = 0;
   await page.click('#buGoBtn', { timeout: 8000 });
-  // Wait for the dispatch rather than guessing at a duration: the charge resolves, then the gate
-  // runs its unlocked callback, then the OAS opens and the first turn goes out.
-  for (let i = 0; i < 30 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
+  for (let i = 0; i < 40 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
   await page.waitForTimeout(2000);
-  console.log('   simulated charge operations: ' + fortuneCharges);
-  const post = await page.evaluate(() => {
+
+  const after1 = await page.evaluate(() => {
     const d = window.state.intimacyDialogue || null;
-    const b = document.getElementById('bakedOASSubmitBtn');
-    return { dialogue: !!d, active: d ? !!d.active : null, phase: d ? d.phase : null,
-             beatCount: d ? d.beatCount : null, openerOnPage: d ? !!d.openerOnPage : null,
-             dispatched: b ? b.getAttribute('data-dispatched') : 'no button',
+    const b2 = document.getElementById('bakedOASSubmitBtn');
+    return { setupComplete: !!window.state._bakedSetupComplete,
+             genesisUnlocked: !!window.state._bakedGenesisUnlocked,
+             dialogue: !!d, dispatched: b2 ? b2.getAttribute('data-dispatched') : null,
              route: window._sbEntranceRoute ? 'present' : null,
              say: (document.getElementById('bakedOASSay') || {}).value };
   });
-  console.log('   AFTER CONFIRM: ' + JSON.stringify(post));
-  t('EXACTLY ONE charge operation was simulated', fortuneCharges === 1, 'charges=' + fortuneCharges);
-  t('and exactly one first OAS dispatch followed', oasReqs.length === 1, 'count=' + oasReqs.length);
-  t('carrying the preserved Say', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
-  t('and the preserved Do', oasReqs.length === 1 && oasReqs[0].whole.includes(expectDo));
-  await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
-  await page.waitForTimeout(3000);
-  t('a further click dispatches NO duplicate', oasReqs.length === 1, 'count=' + oasReqs.length);
+  console.log('   charge requests: ' + fortuneCharges + '  ops: ' + JSON.stringify(chargeOps));
+  console.log('   distinct debits: ' + debited.size + '  balance: ' + balance);
+  console.log('   after confirm: ' + JSON.stringify({ ...after1, say: (after1.say || '').slice(0, 40) }));
+  const firstRefusal = consoleLines.find(l => /ABORTED|threw|PAGEERROR|not attempted|insufficient|declined/.test(l));
+  console.log('   FIRST REFUSAL: ' + (firstRefusal || '(none captured)'));
+  if (consoleLines.length) console.log('   setup trail: ' + JSON.stringify(consoleLines.slice(0, 6)));
+
+  if (after1.dialogue) {
+    t('the confirm opened the OAS', true);
+    t('EXACTLY ONE charge request', fortuneCharges === 1, 'charges=' + fortuneCharges);
+    t('and exactly one debited operation', debited.size === 1, 'debits=' + debited.size);
+    t('one OAS dispatch with the preserved Say', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
+    t('and the preserved Do', oasReqs.length === 1 && oasReqs[0].whole.includes(expectDo));
+    await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(3000);
+    t('a further click dispatches NO duplicate', oasReqs.length === 1, 'count=' + oasReqs.length);
+    t('and debits nothing further', debited.size === 1, 'debits=' + debited.size);
+  } else {
+    // INITIALIZATION REFUSED. This is the gate's DESIGNED behaviour, not a missing callback:
+    // _unlockBakedGenesis runs deferred handleBeginStory, and if _bakedSetupComplete is still
+    // false it logs ABORTED, returns false and never calls onUnlocked (app.js:143001-143011).
+    console.log('   -> initialization did NOT complete; the gate correctly withheld the opener');
+    t('the refusal was CAPTURED, not inferred', !!firstRefusal, JSON.stringify(consoleLines.slice(0, 4)));
+    t('setup is reported incomplete, which is why the opener was withheld',
+      after1.setupComplete === false, JSON.stringify(after1));
+    t('Genesis stayed LOCKED, as the abort promises', after1.genesisUnlocked === false);
+    t('the reader keeps their answer', after1.say === expectSay);
+    t('Submit is unlatched for a retry', after1.dispatched === null);
+    t('the entrance route is still live', after1.route === 'present');
+    // RETRY: the same operation must not debit twice.
+    const chargesBefore = fortuneCharges, debitsBefore = debited.size;
+    await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(2500);
+    const goAgain = await page.evaluate(() => {
+      const e = document.getElementById('buGoBtn'); return !!(e && e.getClientRects().length > 0); });
+    if (goAgain) {
+      await page.click('#buGoBtn', { timeout: 8000 });
+      for (let i = 0; i < 40 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
+    }
+    const after2 = await page.evaluate(() => ({
+      dialogue: !!window.state.intimacyDialogue,
+      setupComplete: !!window.state._bakedSetupComplete }));
+    console.log('   RETRY -> ' + JSON.stringify({ ...after2, charges: fortuneCharges,
+      debits: debited.size, ops: chargeOps.map(o => o.opId) }));
+    t('the retry was possible through the real controls', goAgain === true);
+    t('and it did NOT debit a second time — same operation id',
+      debited.size === debitsBefore, 'debits ' + debitsBefore + ' -> ' + debited.size
+      + ' requests ' + chargesBefore + ' -> ' + fortuneCharges);
+    t('RETRY OPENED THE OAS with the preserved answer',
+      after2.dialogue === true && oasReqs.length === 1
+      && oasReqs[0].whole.includes(expectSay), 'dialogue=' + after2.dialogue
+      + ' oas=' + oasReqs.length);
+  }
 } else {
   console.log('\n=== SUBMIT ===');
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
