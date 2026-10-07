@@ -34,8 +34,18 @@ const FS_PLANNER = (() => { try { return fsPlannerCaptured(); }
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const oasReqs = [], sceneReqs = [], stages = [];
+let fortuneCharges = 0;
 await page.route('**/api/**', async (route) => {
   const req = route.request();
+  // ENTITLEMENT AND PAYMENT RESPONSES ARE SIMULATED, exactly as the live runner simulates them —
+  // the charge is answered here instead of the unlocked flag being set by hand, so production's
+  // own confirm-and-charge path runs.
+  if (/\/api\/consume-fortune/.test(req.url())) {
+    fortuneCharges++;
+    try { await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ ok: true, fortunesRemaining: 500 }) }); } catch (_) {}
+    return;
+  }
   if (!isProviderEndpoint(req.url())) { try { await route.abort(); } catch (_) {} return; }
   let raw = null; try { raw = req.postData(); } catch (_) {}
   let msgs = []; try { msgs = (JSON.parse(raw || '{}').messages) || []; } catch (_) {}
@@ -72,25 +82,36 @@ await page.route('**/api/**', async (route) => {
 
 const optOut = () => page.evaluate(() => {
   try { window.state._pcLookSkipped = true; window.state._liRenderSkipped = true; } catch (_) {}
+  // A SIMULATED SIGNED-IN SESSION. Logged out, the reader is held at "Join The Masquerade" and the
+  // book will not open at all, so no reader flow can be demonstrated. state.profileId is exactly
+  // what production's own _isSignedIn reads; authentication RESPONSES are simulated here in the
+  // same way entitlement and payment responses are. Nothing else about the gate is bypassed.
+  try { window.state.profileId = 'harness-profile-0001'; } catch (_) {}
 });
 // SETUP: reach the page the entrance lives on, through production's own reader navigation.
 // showReaderPage re-adds frontispiece-active, whose CSS hides every sibling of the map, so the
 // class is cleared LAST — otherwise the entrance is display:none and nothing can be clicked.
 const toReader = async () => {
-  await page.evaluate(() => {
-    try { if (typeof window.dismissTitlePage === 'function') window.dismissTitlePage(); } catch (_) {}
-    try { if (typeof window.showReaderPage === 'function') window.showReaderPage(2); } catch (_) {}
-    const bc = document.getElementById('bookCoverPage'); if (bc) bc.classList.add('hidden');
-    const bo = document.getElementById('bookObject'); if (bo) bo.classList.add('hidden');
-  });
-  await page.waitForTimeout(700);
-  await page.evaluate(() => {
-    const sc = document.getElementById('storyContent');
-    if (sc) { sc.classList.remove('hidden'); sc.classList.remove('frontispiece-active'); }
-    window._frontispieceActive = false;
-    const fp = document.getElementById('fatelandsFrontispiece'); if (fp) fp.classList.add('hidden');
-  });
-  await page.waitForTimeout(600);
+  // READER NAVIGATION, through the reader's own page turns. Nothing is un-hidden by hand, no
+  // `hidden` class is removed and no frontispiece state is set. #coverNextBtn is a trusted pointer
+  // click; the remaining turns call window.StoryPagination.goToNextPage — the SAME function
+  // production binds to #nextPageBtn, used where that button is not yet mounted.
+  const log = [];
+  for (let i = 0; i < 25; i++) {
+    const st = await page.evaluate(() => {
+      const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+      return { entrance: v('bakedOASExamineBtn') && v('bakedOASSubmitBtn'),
+               cover: v('coverNextBtn'), next: v('nextPageBtn'),
+               title: !!window._titlePageActive, front: !!window._frontispieceActive };
+    });
+    if (st.entrance) { log.push('entrance on screen after ' + i + ' turns'); break; }
+    if (st.cover) { await page.click('#coverNextBtn', { timeout: 6000 }).catch(() => {}); log.push('cover(click)'); }
+    else if (st.next) { await page.click('#nextPageBtn', { timeout: 6000 }).catch(() => {}); log.push('next(click)'); }
+    else { await page.evaluate(() => { try { window.StoryPagination.goToNextPage(); } catch (_) {} });
+           log.push(st.title ? 'title(pagination)' : st.front ? 'frontispiece(pagination)' : 'page(pagination)'); }
+    await page.waitForTimeout(1400);
+  }
+  console.log('   navigation: ' + log.join(' -> '));
 };
 
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -168,35 +189,60 @@ t('the hand went to the ENTRANCE, not another mount', after.elsewhere === 0);
 console.log('\n=== THE READER\'S ANSWER ===');
 let expectSay = '', expectDo = '';
 if (ARM === 'card') {
-  // A REAL card click must populate the VISIBLE fields. No substitute text, and no assertion
-  // passes unless the card itself filled something.
+  // THE FIXTURE'S OWN ACTION AND LINE, asserted into the RIGHT fields. The previous version only
+  // checked that something appeared, which is how a reversed mapping passed: an ACTION was sitting
+  // in the Say box and a LINE in the Do box.
+  // The fixture's five cards, each an (ACTION, SPOKEN LINE) pair. Which card the shuffle offers
+  // first is not fixed, so the assertion is that the filled fields match ONE card with its ACTION
+  // in the Do field and its LINE in the Say field — role correctness, pinned to a single card.
+  const FIXTURE_CARDS = [
+    ['Grip the Answer tighter, leaning closer to Julian\'s face.', '"What if I told you I did?"'],
+    ['Step back, letting the Answer hang between us.', '"I won\'t answer until I know what was done."'],
+    ['Turn the Answer so the assembly can see my hands shake.', '"I wanted him to look at me."'],
+    ['Offer the Answer back to him, flat on both palms.', '"Then you ask, and let them hear you."'],
+    ['Close my mouth and hold his eyes.', '""']
+  ];
+  const strip = (x) => String(x || '').replace(/^"|"$/g, '').trim();
   const emptyBefore = await page.evaluate(() => ({
     say: document.getElementById('bakedOASSay').value, do: document.getElementById('bakedOASDo').value }));
   t('the fields start empty', !emptyBefore.say && !emptyBefore.do, JSON.stringify(emptyBefore));
-  await page.click('#bakedOASHand .fate-card, #bakedOASHand [data-card]', { timeout: 8000 });
-  let filled = { say: '', do: '' };
-  for (let i = 0; i < 20; i++) {
+  await page.click('#bakedOASHand [data-card-index="3"], #bakedOASHand .fate-card, #bakedOASHand [data-card]', { timeout: 8000 });
+  let filled = { say: '', do: '' }, prev = null, stable = 0;
+  for (let i = 0; i < 25; i++) {
     filled = await page.evaluate(() => ({
       say: document.getElementById('bakedOASSay').value,
       do: document.getElementById('bakedOASDo').value }));
-    if (filled.say || filled.do) break;
-    await page.waitForTimeout(1000);
+    const sig = filled.say + '\u0000' + filled.do;
+    if ((filled.say || filled.do) && sig === prev) { if (++stable >= 2) break; } else { stable = 0; }
+    prev = sig;
+    await page.waitForTimeout(700);
   }
-  console.log('   card filled: ' + JSON.stringify({ say: filled.say.slice(0, 60), do: filled.do.slice(0, 60) }));
-  t('THE CARD POPULATED THE ENTRANCE\'S OWN VISIBLE FIELDS',
-    !!(filled.say || filled.do), JSON.stringify(filled));
-  if (!(filled.say || filled.do)) {
-    console.log('\n  the card did not fill the fields — the edit-and-submit path cannot be demonstrated');
+  console.log('   card filled -> Say: ' + JSON.stringify(filled.say));
+  console.log('                  Do: ' + JSON.stringify(filled.do));
+  t('the card filled the entrance\'s own fields', !!(filled.say || filled.do), JSON.stringify(filled));
+  const matchedCard = FIXTURE_CARDS.find(([act, line]) =>
+    strip(filled.do) === strip(act) && strip(filled.say) === strip(line));
+  const reversedCard = FIXTURE_CARDS.find(([act, line]) =>
+    strip(filled.say) === strip(act) && strip(filled.do) === strip(line));
+  if (reversedCard) console.log('   REVERSED: the action is in Say and the line is in Do');
+  const sayIsLine = !!matchedCard, doIsAction = !!matchedCard;
+  t('THE SPOKEN LINE went into the Say field, and the ACTION into the Do field — one card, '
+    + 'correct roles', !!matchedCard,
+    'Say=' + JSON.stringify(filled.say) + ' Do=' + JSON.stringify(filled.do)
+    + (reversedCard ? ' — THESE ARE REVERSED' : ' — matches no fixture card'));
+  t('and they are NOT reversed', !reversedCard);
+  if (!sayIsLine || !doIsAction) {
+    console.log('\n  the fields are not carrying their correct roles — stopping here');
     await browser.close(); process.exit(1);
   }
-  // Now EDIT what the card suggested, by typing, as a reader would.
   const addition = ' And I still say I shaped nothing.';
+  const sayBeforeEdit = filled.say;
   await page.click('#bakedOASSay');
   await page.keyboard.press('End');
   await page.keyboard.type(addition, { delay: 8 });
   const edited = await page.evaluate(() => document.getElementById('bakedOASSay').value);
-  t('and the reader could EDIT it by typing', edited.endsWith(addition) && edited.length > addition.length,
-    JSON.stringify(edited.slice(0, 80)));
+  t('the reader could EDIT the spoken line by typing',
+    edited === sayBeforeEdit + addition, JSON.stringify(edited));
   expectSay = edited; expectDo = filled.do;
 } else {
   expectSay = 'I shaped nothing. Ask me properly.';
@@ -212,34 +258,58 @@ if (ARM === 'card') {
 }
 
 if (ARM === 'cancel') {
-  console.log('\n=== CANCEL THE GATE, THEN RETRY ===');
-  // Force the gate to hold the submission by re-locking Genesis, then cancel it.
-  await page.evaluate(() => { try { window.state._bakedGenesisUnlocked = false; } catch (_) {} });
+  console.log('\n=== CANCEL THROUGH "Not yet", THEN RETRY ===');
+  // A signed-in session is needed for the gate to reach its confirm-and-charge screen at all
+  // (logged out, the account IS the unlock and it routes to sign-in instead). state.profileId is
+  // what production's own _isSignedIn reads; nothing else is set by hand.
+  await page.evaluate(() => { try { window.state.profileId = 'harness-profile-0001'; } catch (_) {} });
+  // Put the gate back in front of the reader by clearing the harness's earlier unlock, so the
+  // real modal is raised. From here everything is the reader's own controls.
+  await page.evaluate(() => {
+    try {
+      window.state._bakedGenesisUnlocked = false;
+      // A WALLET BALANCE, simulated. _chargePreviewSlice declines LOCALLY when the balance is
+      // short, before it ever calls /api/consume-fortune — so without a balance the confirm button
+      // cannot exercise the charge at all. The gate, the modal and the charge request itself all
+      // still run; only the account's balance and the server's answer are simulated.
+      window.state.fortunes = 500;
+    } catch (_) {}
+  });
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
   await page.waitForTimeout(2500);
+  const modal = await page.evaluate(() => {
+    const m = document.getElementById('bakedUnlockModal');
+    const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+    return { shown: !!(m && m.classList.contains('show')), cancel: v('buCancelBtn'), go: v('buGoBtn'),
+             cancelLabel: (document.getElementById('buCancelBtn') || {}).textContent };
+  });
+  console.log('   gate modal: ' + JSON.stringify(modal));
+  t('the gate raised its own modal', modal.shown === true, JSON.stringify(modal));
+  t('and offers "Not yet" on screen', modal.cancel === true && /Not yet/i.test(modal.cancelLabel || ''));
+  await page.click('#buCancelBtn', { timeout: 8000 });     // the reader declines, for real
+  await page.waitForTimeout(2000);
   const held = await page.evaluate(() => ({
+    modalShown: !!(document.getElementById('bakedUnlockModal') || {}).classList?.contains('show'),
     dispatched: document.getElementById('bakedOASSubmitBtn').getAttribute('data-dispatched'),
     say: document.getElementById('bakedOASSay').value,
     oasOpen: !!(window.state.intimacyDialogue && window.state.intimacyDialogue.active) }));
-  console.log('   after the gate held: ' + JSON.stringify({ ...held, say: held.say.slice(0, 40) }));
-  t('the gate held the submission — no OAS opened', held.oasOpen === false);
+  console.log('   after "Not yet": ' + JSON.stringify({ ...held, say: held.say.slice(0, 40) }));
+  t('the modal closed on "Not yet"', held.modalShown === false);
+  t('no OAS opened and nothing was charged', held.oasOpen === false && oasReqs.length === 0
+    && fortuneCharges === 0, 'charges=' + fortuneCharges);
   t('SUBMIT IS NOT LATCHED, so it can be retried', held.dispatched === null,
     'data-dispatched=' + held.dispatched);
   t('and the reader\'s answer is still in the field', held.say === expectSay);
-  // Dismiss whatever modal the gate raised, unlock, and retry with a real click.
-  await page.evaluate(() => {
-    ['bakedUnlockModal', 'starterUnlockModal', 'payModal', 'genesisConfirmModal'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) { el.classList.remove('show'); el.classList.add('hidden'); }
-    });
-    try { window.state._bakedGenesisUnlocked = true; } catch (_) {}
-  });
-  await page.waitForTimeout(500);
+  // RETRY: submit again, and this time accept through the modal's own confirm button.
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(2000);
+  t('the gate raised the modal a second time', await page.evaluate(() =>
+    !!(document.getElementById('bakedUnlockModal') || {}).classList?.contains('show')));
+  await page.click('#buGoBtn', { timeout: 8000 });
+  await page.waitForTimeout(9000);
+  console.log('   fortune charges simulated: ' + fortuneCharges);
   t('the RETRY dispatched exactly one OAS request', oasReqs.length === 1, 'count=' + oasReqs.length);
   t('with the preserved answer intact', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
-  // A second click must not dispatch again.
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(3000);
   t('and a further click does NOT dispatch a duplicate', oasReqs.length === 1, 'count=' + oasReqs.length);
@@ -325,6 +395,24 @@ if (ARM === 'cancel') {
   t('the reader\'s exact Say reached it intact', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
   if (expectDo) t('the reader\'s exact Do reached it intact',
     oasReqs.length === 1 && oasReqs[0].whole.includes(expectDo));
+  // ROLES, not just presence: the spoken line must arrive labelled as speech and the action as
+  // action. A reversed mapping satisfies "both strings occur somewhere" perfectly well.
+  if (oasReqs.length === 1 && expectDo) {
+    const w = oasReqs[0].whole;
+    const ctx = (needle) => {
+      const i = w.indexOf(needle);
+      return i < 0 ? null : w.slice(Math.max(0, i - 90), i).replace(/\s+/g, ' ');
+    };
+    const sayCtx = ctx(expectSay), doCtx = ctx(expectDo);
+    console.log('   label before the SPOKEN line: ' + JSON.stringify((sayCtx || '').slice(-60)));
+    console.log('   label before the ACTION:      ' + JSON.stringify((doCtx || '').slice(-60)));
+    const SPEECH = /say|said|spoke|spoken|dialogue|line/i, ACTION = /\bdo\b|did|does|action|physical/i;
+    t('the SPOKEN line is labelled as speech in the request',
+      !!sayCtx && SPEECH.test(sayCtx) && !ACTION.test(sayCtx.slice(-28)), JSON.stringify((sayCtx||'').slice(-60)));
+    t('the ACTION is labelled as action in the request',
+      !!doCtx && ACTION.test(doCtx), JSON.stringify((doCtx||'').slice(-60)));
+    t('and the two are not the same position', sayCtx !== doCtx);
+  }
   t('no unrelated opener ran before it', oasReqs.length === 1);
   t('no Scene 2 request yet', sceneReqs.length === 0, 'scene requests: ' + sceneReqs.length);
 }
@@ -409,17 +497,91 @@ t('turn inputs route back to the reader\'s own fields',
   endCard.inputs.act && endCard.inputs.act !== 'bakedOASSay', JSON.stringify(endCard.inputs));
 t('and the card mount is a reader mount again',
   endCard.mount && endCard.mount !== 'bakedOASHand', 'mount=' + endCard.mount);
-const dealt = await page.evaluate(async () => {
-  try { window.dealFateCards({ force: true }); } catch (_) {}
-  await new Promise(r => setTimeout(r, 1500));
-  const m = window._activeCardMount();
-  const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
-  return { mount: m ? m.id : null, count: cards.length,
-           onScreen: cards.filter(c => c.getClientRects().length > 0).length };
+// READ SCENE 2 TO ITS FINAL BEAT with the reader's own control, and let PRODUCTION offer the hand.
+// The previous version called dealFateCards({force:true}) itself, which proves the mount resolves
+// and nothing else: a reader who never reaches the last beat is never offered a hand at all.
+const diag = await page.evaluate(() => {
+  const vis = [];
+  document.querySelectorAll('button[id], div[id]').forEach(el => {
+    try { if (el.getClientRects().length > 0 && el.id && /stag|beat|next|card|fate|gn/i.test(el.id)) vis.push(el.id); } catch (_) {}
+  });
+  return { visible: vis.slice(0, 16),
+           stateKeys: Object.keys(window.state).filter(k => /stag|beat|panel/i.test(k)).slice(0, 14),
+           mount: (() => { const m = window._activeCardMount(); return m ? m.id : null; })(),
+           surface: window._sbActiveReaderSurface && window._sbActiveReaderSurface() };
 });
-console.log('   scene-end deal: ' + JSON.stringify(dealt));
-t('a scene-end hand deals into the reader\'s mount', dealt.count === 5, JSON.stringify(dealt));
-t('and its cards are on screen', dealt.onScreen === 5, 'onScreen=' + dealt.onScreen);
+console.log('   POST-BRANCH DIAG: ' + JSON.stringify(diag));
+const reading = [];
+// Wait for production to finish building the scene before trying to read it.
+for (let i = 0; i < 40; i++) {
+  const loading = await page.evaluate(() => {
+    const e = document.getElementById('gnSceneLoading');
+    return !!(e && e.getClientRects().length > 0);
+  });
+  if (!loading) { reading.push('scene built after ' + i + 's'); break; }
+  await page.waitForTimeout(1000);
+}
+let dealt = { mount: null, count: 0, onScreen: 0, atEnd: false };
+for (let i = 0; i < 40; i++) {
+  const st = await page.evaluate(() => {
+    const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+    const m = window._activeCardMount();
+    const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
+    const nb = document.getElementById('gnNextPageBtn');
+    return { next: v('gnNextPageBtn'), nextDisabled: !!(nb && nb.disabled),
+             panel: v('gnPanelDisplay'),
+             mount: m ? m.id : null, count: cards.length,
+             onScreen: cards.filter(c => c.getClientRects().length > 0).length };
+  });
+  if (st.onScreen > 0) { dealt = { ...st, atEnd: true }; reading.push('hand offered after ' + i + ' turns'); break; }
+  // The reader advances the scene's beats by TAPPING THE PANEL; the page buttons move between
+  // pages and are disabled while a scene has only one.
+  if (st.panel) {
+    // Click what is ACTUALLY under the pointer — the panel's own image — with force, because the
+    // panel art animates and Playwright's stability wait never settles on it.
+    const tapped = await page.evaluate(() => {
+      const panel = document.getElementById('gnPanelDisplay');
+      if (!panel) return false;
+      const r = panel.getBoundingClientRect();
+      return !!document.elementFromPoint(Math.round(r.left + 40), Math.round(r.top + 40));
+    });
+    if (tapped) {
+      await page.mouse.move(0, 0);
+      const r = await page.evaluate(() => {
+        const p2 = document.getElementById('gnPanelDisplay').getBoundingClientRect();
+        return { x: Math.round(p2.left + 40), y: Math.round(p2.top + 40) };
+      });
+      await page.mouse.click(r.x, r.y);
+    } else { reading.push('nothing under the panel pointer'); }
+  } else if (st.next && !st.nextDisabled) {
+    await page.click('#gnNextPageBtn', { timeout: 6000 }).catch(() => reading.push('page turn failed'));
+  } else { reading.push('no usable reader control (next disabled=' + st.nextDisabled + ')');
+           dealt = { ...st }; break; }
+  await page.waitForTimeout(900);
+  dealt = { ...st };
+}
+const blocker = await page.evaluate(() => {
+  const panel = document.getElementById('gnPanelDisplay');
+  if (!panel) return 'no panel';
+  const r = panel.getBoundingClientRect();
+  const cx = Math.round(r.left + 40), cy = Math.round(r.top + 40);
+  const top = document.elementFromPoint(cx, cy);
+  const stage = document.getElementById('intimacyDialogueStage');
+  const cs = stage ? getComputedStyle(stage) : null;
+  return { topElementAt: top ? (top.id || top.className || top.tagName) : null,
+           stageOnScreen: !!(stage && stage.getClientRects().length > 0),
+           stagePointerEvents: cs ? cs.pointerEvents : null,
+           stageZ: cs ? cs.zIndex : null, stagePos: cs ? cs.position : null };
+});
+console.log('   WHAT IS OVER THE PANEL: ' + JSON.stringify(blocker));
+console.log('   reading scene 2: ' + reading.join(' | '));
+console.log('   production offered: ' + JSON.stringify(dealt));
+t('Scene 2 could be READ to the point where a hand is offered', dealt.atEnd === true,
+  JSON.stringify(dealt));
+t('PRODUCTION offered the hand — it was not force-dealt', dealt.onScreen === 5,
+  'onScreen=' + dealt.onScreen + ' count=' + dealt.count);
+t('and it offered it in the reader\'s own mount', !!dealt.mount && dealt.mount !== 'bakedOASHand',
+  'mount=' + dealt.mount);
 if (dealt.onScreen === 5) {
   const inputsBefore = await page.evaluate(() => { const i = window._getActiveTurnInputs();
     return { a: i.actInput.value, d: i.diaInput.value }; });

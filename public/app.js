@@ -143375,7 +143375,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // Declared, not borrowed: _activeCardMount and _getActiveTurnInputs both read this first,
       // so a card click fills the fields the reader can actually see. Nothing is renamed.
       try {
-        window._sbEntranceRoute = { mount: 'bakedOASHand', act: 'bakedOASSay', dia: 'bakedOASDo',
+        window._sbEntranceRoute = { mount: 'bakedOASHand', act: 'bakedOASDo', dia: 'bakedOASSay',
                                     submit: 'bakedOASSubmitBtn', examined: false };
       } catch (_) {}
 
@@ -143467,20 +143467,37 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           var a2 = document.getElementById('bakedOASSay'), d2 = document.getElementById('bakedOASDo');
           var say2 = a2 ? String(a2.value || '').trim() : say;
           var doT2 = d2 ? String(d2.value || '').trim() : doT;
-          try { _clearBakedEntry(); } catch (_) {}
-          try { window._sbEntranceRoute = null; } catch (_) {}   // the entrance is behind us
-          try { _initIntimacyDialogue(plan); } catch (e) {
-            console.warn('[BAKED:OAS] open failed:', e && e.message);
-            btn.removeAttribute('data-dispatched');              // nothing opened; let them retry
-            return;
-          }
-          try {
-            console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say2.length
-              + 'c do=' + doT2.length + 'c');
-            if (typeof window._intimacyDialogueConsumeInput === 'function') {
-              window._intimacyDialogueConsumeInput(say2, doT2);
-            }
-          } catch (e) { console.warn('[OAS:ENTRANCE] first turn failed:', e && e.message); }
+          // ── FAILURE MUST LEAVE THE READER WHERE THEY WERE ───────────────────────────────────
+          // _initIntimacyDialogue is ASYNC, so a synchronous try/catch around it catches nothing:
+          // a rejected promise escaped, the latch stayed set, the entrance route was already
+          // null'd and the saved answer was already cleared — Submit was dead and the words were
+          // gone. The route and the saved answer are now released only AFTER the open resolves,
+          // and a rejection restores both and unlatches Submit.
+          var _routeBefore = null;
+          try { _routeBefore = window._sbEntranceRoute; } catch (_) {}
+          var _recover = function (e, where) {
+            console.warn('[BAKED:OAS] ' + where + ' failed:', (e && e.message) || e);
+            try { window._sbEntranceRoute = _routeBefore; } catch (_) {}   // cards and fields work again
+            try { btn.removeAttribute('data-dispatched'); } catch (_) {}   // let them retry
+            try { _stashBakedEntry(); } catch (_) {}                       // keep the answer
+          };
+          var _opened;
+          try { _opened = _initIntimacyDialogue(plan); }
+          catch (e) { _recover(e, 'open'); return; }
+          Promise.resolve(_opened).then(function () {
+            // Only now is the entrance genuinely behind us.
+            try { window._sbEntranceRoute = null; } catch (_) {}
+            try {
+              console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say2.length
+                + 'c do=' + doT2.length + 'c');
+              if (typeof window._intimacyDialogueConsumeInput === 'function') {
+                var took = window._intimacyDialogueConsumeInput(say2, doT2);
+                if (took === false) { _recover(new Error('the first turn was refused'), 'first turn'); return; }
+              }
+              // The answer has been accepted by the live encounter — safe to drop the recovery copy.
+              try { _clearBakedEntry(); } catch (_) {}
+            } catch (e) { _recover(e, 'first turn'); }
+          }, function (e) { _recover(e, 'open'); });
         };
         // PERSIST BEFORE THE GATE. Sign-in RELOADS the page and the closure above dies with it,
         // so the words go to the same localStorage marker the rest of the baked resume path uses
