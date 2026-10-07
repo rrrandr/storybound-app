@@ -1,0 +1,36 @@
+{
+  "booted": true,
+  "afterLaunch": {
+    "genesisUnlocked": false,
+    "setupComplete": false,
+    "scene1MountedAt": 1791416663239,
+    "handoffInDom": true,
+    "submitInDom": true,
+    "examineOnScreen": false,
+    "submitOnScreen": false,
+    "titleActive": true,
+    "frontActive": false,
+    "plateActive": false,
+    "appHidden": false,
+    "gameHidden": false,
+    "storyContentCls": "story-content hidden",
+    "readerPages": 0
+  },
+  "navigation": [
+    "frontispiece(dismiss)",
+    "ENTRANCE REACHED after 2 turns"
+  ],
+  "final": {
+    "examineOnScreen": true,
+    "submitOnScreen": true,
+    "genesisUnlocked": false,
+    "setupComplete": false,
+    "whyHidden": null
+  },
+  "stages": [
+    "other",
+    "other",
+    "other",
+    "other"
+  ]
+}
