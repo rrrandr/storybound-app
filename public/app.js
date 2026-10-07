@@ -143078,10 +143078,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   function _stashBakedEntry() {
     try {
       if (!state || !state._starterId) return;
+      // THE ENTRANCE'S OWN FIELDS COUNT TOO (2026-10-06). This saved only the literary boxes, so
+      // a reader who typed an answer to Julian on the First Sacrifice entrance and was sent to
+      // sign in came back to an empty field — the words were only ever in a closure, and sign-in
+      // reloads the page. entranceSay/entranceDo travel with the same one-shot marker.
+      var _eSay = document.getElementById('bakedOASSay');
+      var _eDo  = document.getElementById('bakedOASDo');
       var payload = {
         starterId: state._starterId,
         act: String(document.getElementById('actionInput')?.value || '').slice(0, 2000),
         dia: String(document.getElementById('dialogueInput')?.value || '').slice(0, 2000),
+        entranceSay: String((_eSay && _eSay.value) || '').slice(0, 2000),
+        entranceDo:  String((_eDo && _eDo.value) || '').slice(0, 2000),
         savedAt: Date.now()
       };
       localStorage.setItem(_BAKED_ENTRY_KEY, JSON.stringify(payload));
@@ -143138,8 +143146,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // Put the words back once the scene has mounted. The action is NOT
     // auto-submitted: the reader decides when to spend, and for a CG Book the
     // handoff button is waiting for them in the same place they left it.
-    if (payload.act || payload.dia) {
+    if (payload.act || payload.dia || payload.entranceSay || payload.entranceDo) {
       setTimeout(function () {
+        // THE ENTRANCE FIRST, when the Book has one: those are the fields the reader was actually
+        // typing in. Not auto-submitted — they decide when to spend, and Submit is waiting live.
+        try {
+          var es = document.getElementById('bakedOASSay'), ed = document.getElementById('bakedOASDo');
+          if (es && payload.entranceSay) {
+            es.value = payload.entranceSay;
+            es.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          if (ed && payload.entranceDo) {
+            ed.value = payload.entranceDo;
+            ed.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          if ((es && payload.entranceSay) || (ed && payload.entranceDo)) {
+            console.log('[BAKED:RESUME] the answer to Julian was put back on the entrance');
+          }
+        } catch (_) {}
         try {
           var a = document.getElementById('actionInput'), d = document.getElementById('dialogueInput');
           if (a && payload.act) a.value = payload.act;
@@ -143347,9 +143371,40 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       wrap.querySelector('#bakedOASExamineBtn').textContent = String(_ent.examineLabel || 'Examine the cards');
       host.appendChild(wrap);
 
-      // ── THE EXAMINE GATE. No playable hand exists before this is tapped: the hand host is empty
-      // AND hidden, so neither a query nor a click can reach a card. Petition and Tempt appear only
-      // with the hand, and only as locked, unavailable faces.
+      // ── THE ENTRANCE OWNS ITS HAND AND ITS INPUTS, EXPLICITLY ─────────────────────────────
+      // Declared, not borrowed: _activeCardMount and _getActiveTurnInputs both read this first,
+      // so a card click fills the fields the reader can actually see. Nothing is renamed.
+      try {
+        window._sbEntranceRoute = { mount: 'bakedOASHand', act: 'bakedOASSay', dia: 'bakedOASDo',
+                                    submit: 'bakedOASSubmitBtn', examined: false };
+      } catch (_) {}
+
+      // ── EXAMINE GATES THE FIRST PLAYABLE HAND EVERYWHERE ──────────────────────────────────
+      // _renderBakedScene1 already called dealFateCards() on mount, so a playable hand exists in
+      // #cardMount before this entrance is built. Emptying only our own host would leave that one
+      // reachable, and "no playable card before Examine" would simply be false. Every mount is
+      // cleared and hidden here; the hand is dealt — into our host — only when Examine is tapped.
+      var _ALL_CARD_MOUNTS = ['cardMount', 'gnCardMount', 'fateSpecialCards', 'gnFateSection'];
+      var _clearAllHands = function () {
+        _ALL_CARD_MOUNTS.forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          try {
+            el.querySelectorAll('.fate-card, [data-card]').forEach(function (c) {
+              try { c.remove(); } catch (_) {}
+            });
+          } catch (_) {}
+          el.classList.add('hidden');
+        });
+      };
+      _clearAllHands();
+      try {
+        var _n0 = _ALL_CARD_MOUNTS.reduce(function (t, id) {
+          var el = document.getElementById(id);
+          return t + (el ? el.querySelectorAll('.fate-card, [data-card]').length : 0); }, 0);
+        console.log('[OAS:ENTRANCE] pre-dealt hands cleared across every mount — playable cards now ' + _n0);
+      } catch (_) {}
+
       wrap.querySelector('#bakedOASExamineBtn').addEventListener('click', function () {
         var btn = this;
         if (btn.getAttribute('data-examined') === '1') return;
@@ -143357,20 +143412,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         var handHost = document.getElementById('bakedOASHand');
         var lockHost = document.getElementById('bakedOASLocked');
         try {
-          if (handHost) {
-            handHost.classList.remove('hidden');
-            handHost.id = 'bakedOASHand';
-            // Deal into THIS host. _activeCardMount is what dealFateCards targets, so the host is
-            // given the id it looks for while the hand is built, then handed back its own.
-            var prior = document.getElementById('cardMount');
-            var priorId = null;
-            if (prior && prior !== handHost) { priorId = 'cardMount'; prior.id = 'cardMount__parked'; }
-            handHost.id = 'cardMount';
-            try { if (typeof window.dealFateCards === 'function') window.dealFateCards({ force: true }); }
-            catch (e) { console.warn('[OAS:ENTRANCE] deal failed:', e && e.message); }
-            handHost.id = 'bakedOASHand';
-            if (priorId) { var parked = document.getElementById('cardMount__parked'); if (parked) parked.id = priorId; }
-          }
+          if (handHost) handHost.classList.remove('hidden');
+          try { if (window._sbEntranceRoute) window._sbEntranceRoute.examined = true; } catch (_) {}
+          // dealFateCards targets _activeCardMount(), which resolves to our host through the
+          // declared route — so the deal lands here with no id juggling.
+          try { if (typeof window.dealFateCards === 'function') window.dealFateCards({ force: true }); }
+          catch (e) { console.warn('[OAS:ENTRANCE] deal failed:', e && e.message); }
           if (lockHost) {
             lockHost.classList.remove('hidden');
             lockHost.innerHTML = '';
@@ -143387,16 +143434,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             });
           }
           try { handHost.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
-          console.log('[OAS:ENTRANCE] examined — hand revealed, '
-            + (lockHost ? lockHost.children.length : 0) + ' locked card(s) shown');
+          console.log('[OAS:ENTRANCE] examined — '
+            + (handHost ? handHost.querySelectorAll('.fate-card, [data-card]').length : 0)
+            + ' playable card(s), ' + (lockHost ? lockHost.children.length : 0) + ' locked');
         } catch (e) { console.warn('[OAS:ENTRANCE] examine threw:', e && e.message); }
       });
 
       // ── SUBMIT STARTS THE OAS WITH THE READER'S EXACT INPUT ───────────────────────────────
-      // The input is captured BEFORE the gate and replayed after it, so sign-in or the Genesis
-      // charge never costs the reader what they typed. Card selection is optional: a typed answer
-      // and a card-assisted one both arrive here the same way.
       wrap.querySelector('#bakedOASSubmitBtn').addEventListener('click', function () {
+        var btn = this;
         var sayEl = document.getElementById('bakedOASSay');
         var doEl  = document.getElementById('bakedOASDo');
         var say = sayEl ? String(sayEl.value || '').trim() : '';
@@ -143405,26 +143451,44 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           try { if (typeof showToast === 'function') showToast('Answer him, or say nothing — but type it first.'); } catch (_) {}
           return;
         }
-        if (this.getAttribute('data-submitted') === '1') return;   // exactly once
-        this.setAttribute('data-submitted', '1');
+        // ── THE LATCH GUARDS DISPATCH, NOT THE ATTEMPT ──────────────────────────────────────
+        // It used to be set here, before the gate. Cancelling the purchase prompt then left
+        // Submit permanently dead: the reader picked "Not yet", came back, and the button
+        // silently returned. The latch now lives where the OAS actually opens, so a cancelled or
+        // failed unlock stays retryable while a successful dispatch still happens exactly once.
+        if (btn.getAttribute('data-dispatched') === '1') return;
         var plan = _bakedOASPlan(pkg);
         var _open = function () {
+          if (btn.getAttribute('data-dispatched') === '1') return;
+          btn.setAttribute('data-dispatched', '1');
+          // Re-read at dispatch time: after an authentication reload the restored values are in
+          // the fields, and those are the reader's words — not what this closure captured in a
+          // page that no longer exists.
+          var a2 = document.getElementById('bakedOASSay'), d2 = document.getElementById('bakedOASDo');
+          var say2 = a2 ? String(a2.value || '').trim() : say;
+          var doT2 = d2 ? String(d2.value || '').trim() : doT;
+          try { _clearBakedEntry(); } catch (_) {}
+          try { window._sbEntranceRoute = null; } catch (_) {}   // the entrance is behind us
           try { _initIntimacyDialogue(plan); } catch (e) {
-            console.warn('[BAKED:OAS] open failed:', e && e.message); return;
+            console.warn('[BAKED:OAS] open failed:', e && e.message);
+            btn.removeAttribute('data-dispatched');              // nothing opened; let them retry
+            return;
           }
-          // The opener is ALREADY on the page, so no opener is generated. Feed the reader's exact
-          // submission as turn one; _fireIntimacyOpener has set phase=awaiting_first_response.
           try {
-            console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say.length
-              + 'c do=' + doT.length + 'c');
+            console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say2.length
+              + 'c do=' + doT2.length + 'c');
             if (typeof window._intimacyDialogueConsumeInput === 'function') {
-              window._intimacyDialogueConsumeInput(say, doT);
+              window._intimacyDialogueConsumeInput(say2, doT2);
             }
           } catch (e) { console.warn('[OAS:ENTRANCE] first turn failed:', e && e.message); }
         };
+        // PERSIST BEFORE THE GATE. Sign-in RELOADS the page and the closure above dies with it,
+        // so the words go to the same localStorage marker the rest of the baked resume path uses
+        // — including the entrance's own fields, which _stashBakedEntry did not know about.
+        try { _stashBakedEntry(); } catch (_) {}
         if (typeof _bakedGenesisGate === 'function' && _bakedGenesisGate(_open)) {
-          console.log('[OAS:ENTRANCE] gate held the submission — the typed input is preserved');
-          return;
+          console.log('[OAS:ENTRANCE] gate held the submission — the answer is saved and Submit stays live');
+          return;   // NOT latched: cancel or a failed unlock must be retryable
         }
         _open();
       });
@@ -309120,15 +309184,38 @@ Condensed (under ${maxLength} chars):` }
   // suggestions into the correct pair regardless of current mode — the
   // earlier hardcoded literary IDs silently no-op'd in GN mode, which
   // is why fate-card clicks "did nothing" while reading a graphic novel.
+  // ── ONE DECISION ABOUT WHICH READER IS ACTIVE (2026-10-06) ──────────────────────────────────
+  // _getActiveTurnInputs and fatecards' _activeCardMount each used to decide this for themselves,
+  // with the same hand-rolled test duplicated in two files. They DISAGREED in production: the turn
+  // inputs resolved to the gn pair while the card mount resolved to the literary #cardMount, so a
+  // scene-end fate card dealt into a mount the reader could not see and filling "did nothing".
+  // Both now call this, so they cannot diverge.
+  //
+  // The test is getClientRects(), not offsetParent: offsetParent is NULL for a position:fixed
+  // element even when it is plainly on screen, which is what made the two tests unreliable.
+  window._sbActiveReaderSurface = function () {
+      try {
+          var r = window._sbEntranceRoute;
+          if (r && r.act && r.dia && r.mount
+              && document.getElementById(r.act) && document.getElementById(r.dia)) {
+              return { kind: 'entrance', mount: r.mount, act: r.act, dia: r.dia };
+          }
+      } catch (_) {}
+      try {
+          var gn = document.getElementById('gnReader');
+          var onScreen = !!(gn && !gn.classList.contains('hidden') && gn.getClientRects().length > 0);
+          if (onScreen && document.getElementById('gnActionInput')
+              && document.getElementById('gnDialogueInput')) {
+              return { kind: 'gn', mount: 'gnCardMount', act: 'gnActionInput', dia: 'gnDialogueInput' };
+          }
+      } catch (_) {}
+      return { kind: 'literary', mount: 'cardMount', act: 'actionInput', dia: 'dialogueInput' };
+  };
+
   window._getActiveTurnInputs = function() {
-      var gnReader = document.getElementById('gnReader');
-      var gnActive = gnReader && !gnReader.classList.contains('hidden') &&
-                     gnReader.offsetParent !== null;
-      if (gnActive) {
-          var gnAct = document.getElementById('gnActionInput');
-          var gnDia = document.getElementById('gnDialogueInput');
-          if (gnAct && gnDia) return { actInput: gnAct, diaInput: gnDia };
-      }
+      var s = window._sbActiveReaderSurface();
+      var a = document.getElementById(s.act), d = document.getElementById(s.dia);
+      if (a && d) return { actInput: a, diaInput: d };
       return {
           actInput: document.getElementById('actionInput'),
           diaInput: document.getElementById('dialogueInput')

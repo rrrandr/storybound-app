@@ -383,17 +383,34 @@ const chosen = deck[0];
 // Say/Do inputs — so the planner request contained empty player action and dialogue, and the
 // card-action assertion was failing on the harness's own shortcut rather than on anything in
 // production. Roman caught that; it is corrected here.
-const submitted = await page.evaluate(() => {
+// TWO DEFECTS IN THIS CONTROL, not in the product (diagnosed 2026-10-07):
+//   (a) it read the inputs IMMEDIATELY after the card click, but the fill is ASYNCHRONOUS — the
+//       preview batch has to come back first — so it always read them empty and every downstream
+//       assertion failed on a measurement, not on behaviour;
+//   (b) it hardcoded the gn pair, while the card fills whichever pair _getActiveTurnInputs
+//       resolves to.
+// It now waits for the fill and reads the ACTIVE pair. _fs_opening_flow_control demonstrates the
+// same fill independently with a trusted pointer click.
+await page.evaluate(() => {
   const card = document.querySelector('[data-card-index="0"]');
   if (card) card.click();
-  const a = document.getElementById('gnActionInput');
-  const d = document.getElementById('gnDialogueInput');
-  const filled = { action: a ? String(a.value || '') : null, dialogue: d ? String(d.value || '') : null };
-  const btn = document.getElementById('gnSubmitBtn');
-  if (!btn) return { ok: false, why: 'no #gnSubmitBtn', filled };
+});
+let _filled = { action: '', dialogue: '' };
+for (let i = 0; i < 25; i++) {
+  _filled = await page.evaluate(() => {
+    const i2 = window._getActiveTurnInputs();
+    return { action: i2.actInput ? String(i2.actInput.value || '') : null,
+             dialogue: i2.diaInput ? String(i2.diaInput.value || '') : null };
+  });
+  if (_filled.action || _filled.dialogue) break;
+  await page.waitForTimeout(1000);
+}
+const submitted = await page.evaluate((filled) => {
+  const btn = document.getElementById('gnSubmitBtn') || document.getElementById('submitBtn');
+  if (!btn) return { ok: false, why: 'no submit button', filled };
   btn.click();
   return { ok: true, filled };
-});
+}, _filled);
 console.log('     say/do the reader control carried: ' + JSON.stringify(submitted.filled));
 t('the card filled the reader\'s Say/Do inputs',
   !!(submitted.filled && (submitted.filled.action || submitted.filled.dialogue)),
@@ -450,6 +467,13 @@ const openingFacts = [
   ['The Answer was put in her hand', /The Answer/],
   ['a formal inquiry is the venue', /formal inquiry/i]
 ];
+// DIAGNOSTIC: what the second planner was actually told about the opening.
+try {
+  const ledgerSec = (p2.match(/STORY LEDGER[\s\S]{0,420}/) || ['(no STORY LEDGER section)'])[0];
+  console.log('     p2 STORY LEDGER section: ' + ledgerSec.replace(/\s+/g, ' ').slice(0, 330));
+  console.log('     p2 mentions Seren: ' + /Seren/.test(p2) + ' · p1 of the opening present: '
+    + /began to twist/.test(p2));
+} catch (_) {}
 openingFacts.forEach(([name, rx]) => {
   t('the planner received: ' + name, !!p2 && rx.test(p2), 'absent from the planner payload');
 });

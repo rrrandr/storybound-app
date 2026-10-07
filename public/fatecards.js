@@ -390,13 +390,12 @@ window.stopContinuousSparkles = stopContinuousSparkles;
 // visible screen this returns #cardMount exactly as before, so the literary deck and ordinary CG
 // scene-end cards keep their existing behaviour.
 function _activeCardMount() {
+    // ONE DECISION, shared with _getActiveTurnInputs (app.js _sbActiveReaderSurface). These two
+    // used to decide independently and disagreed: inputs resolved to the gn pair while the hand
+    // was dealt into the literary #cardMount, which the reader could not see.
     try {
-        const gn = document.getElementById('gnReader');
-        const gnActive = gn && !gn.classList.contains('hidden') && gn.offsetParent !== null;
-        if (gnActive) {
-            const m = document.getElementById('gnCardMount');
-            if (m) return m;
-        }
+        const s = window._sbActiveReaderSurface && window._sbActiveReaderSurface();
+        if (s && s.mount) { const m = document.getElementById(s.mount); if (m) return m; }
     } catch (_) {}
     return document.getElementById('cardMount');
 }
