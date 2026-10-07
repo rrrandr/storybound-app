@@ -63,13 +63,46 @@ export const unlockFS = async (page, how) => {
 // the handler falls through to _initIntimacyDialogue, which is the production path post-unlock.
 export const enterOAS = async (page, opts) => {
   const o = opts || {};
-  const present = await page.evaluate(() => !!document.getElementById('bakedOASEnterBtn'));
-  if (!present) return { ok: false, why: 'no #bakedOASEnterBtn mounted' };
+  // ── TWO ENTRANCES (2026-10-06) ───────────────────────────────────────────────────────────────
+  // The First Sacrifice opening no longer has a standalone Continue: the authored page ends on
+  // Julian's question, and the reader ENTERS BY ANSWERING IT — Examine the cards (optional), then
+  // Say/Do, then Submit. That submission IS the first OAS turn. Every other package still mounts
+  // #bakedOASEnterBtn, so both are handled here and the caller is told which it used, and whether
+  // a first turn was consumed, since that shifts turn accounting by one.
+  const which = await page.evaluate(() => ({
+    legacy: !!document.getElementById('bakedOASEnterBtn'),
+    entrance: !!document.getElementById('bakedOASSubmitBtn')
+  }));
+  if (!which.legacy && !which.entrance) {
+    return { ok: false, why: 'neither #bakedOASEnterBtn nor #bakedOASSubmitBtn is mounted' };
+  }
   let route = 'playwright';
-  await page.click('#bakedOASEnterBtn', { timeout: 8000 }).catch(async () => {
-    route = 'in-page el.click() — host not rendered in this harness';
-    await page.evaluate(() => { const b = document.getElementById('bakedOASEnterBtn'); if (b) b.click(); });
-  });
+  let firstTurnConsumed = false;
+  if (!which.legacy) {
+    const say = o.say != null ? String(o.say) : 'I shaped nothing. Ask me properly.';
+    const doText = o.doText != null ? String(o.doText) : '';
+    // Examine is optional; tap it when present so the hand exists for controls that look for it.
+    await page.evaluate(() => {
+      const b = document.getElementById('bakedOASExamineBtn'); if (b) b.click();
+    });
+    await page.waitForTimeout(o.examineMs || 1200);
+    await page.evaluate((v) => {
+      const a = document.getElementById('bakedOASSay'), b = document.getElementById('bakedOASDo');
+      if (a) { a.value = v.s; a.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (b) { b.value = v.d; b.dispatchEvent(new Event('input', { bubbles: true })); }
+    }, { s: say, d: doText });
+    route = 'entrance submit';
+    await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(async () => {
+      route = 'entrance submit (in-page el.click() — host not rendered in this harness)';
+      await page.evaluate(() => { const b = document.getElementById('bakedOASSubmitBtn'); if (b) b.click(); });
+    });
+    firstTurnConsumed = true;
+  } else {
+    await page.click('#bakedOASEnterBtn', { timeout: 8000 }).catch(async () => {
+      route = 'in-page el.click() — host not rendered in this harness';
+      await page.evaluate(() => { const b = document.getElementById('bakedOASEnterBtn'); if (b) b.click(); });
+    });
+  }
   await page.waitForTimeout(o.settleMs || 6000);
   return page.evaluate(() => ({
     ok: true,
@@ -80,7 +113,7 @@ export const enterOAS = async (page, opts) => {
     oasPlanPending: !!window.state._bakedPendingOASPlan,
     sceneDecisionNeeded: typeof window._sceneDecisionNeeded === 'function'
       ? !!window._sceneDecisionNeeded() : null
-  })).then(r => Object.assign(r, { route }));
+  })).then(r => Object.assign(r, { route, firstTurnConsumed }));
 };
 
 export const finalizePreview = async (page) => {

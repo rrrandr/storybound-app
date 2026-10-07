@@ -333,14 +333,23 @@ if (out && out.interruptionPresent) {
       st2 = await page.evaluate(() => {
         const r = window.state._intimateInterruption;
         return { submitted: !!(r && r.submitted),
+          // THE AUTHORED OPENING HAS NO SUBMIT STEP (2026-10-06). It completes on its own terms
+          // and ends on run-or-remain instead, so completion is EITHER a real submission (every
+          // other encounter) OR this flow's no-submit completion — never a fabricated submission.
+          noSubmit: !!(r && r.completedWithoutSubmission),
+          flow: !!(r && r.noSubmitFlow),
           promptMounted: !!document.getElementById('sceneDecisionPrompt'),
           recorded: ((window.state._sceneDecisions || {})['1'] || null) };
       });
-      if (st2.submitted) break;
+      if (st2.submitted || st2.noSubmit) break;
       await page.waitForTimeout(1000);
     } }
   console.log('  ' + JSON.stringify(st2));
-  t('the interruption was submitted through the reader\'s control', st2 && st2.submitted === true);
+  t('the interruption completed through the reader\'s own path',
+    st2 && (st2.submitted === true || st2.noSubmit === true), JSON.stringify(st2));
+  t('and for the authored opening that means NO fabricated submission',
+    st2 && (st2.flow ? (st2.noSubmit === true && st2.submitted === false) : st2.submitted === true),
+    JSON.stringify(st2));
   if (st2 && st2.promptMounted) {
     await page.locator('#sceneDecisionA').click({ timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2500);

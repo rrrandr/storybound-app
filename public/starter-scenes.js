@@ -263,10 +263,20 @@
         { idx: 18, kind: "dialogue", speaker: "Julian", image: "d4",
           text: "“I can hear where she is aligned,” Julian said, to all of them and to me. “Everything in her points one way. She believes she did not do this.” He did not say what had been done, or by whom." },
         { idx: 19, kind: "dialogue", speaker: "Julian", image: "d4",
-          text: "He drew out The Answer — the double-ended shaft, a deep hooked blade curling from each end like a question asked twice — and set it in my hands, and closed my fingers around it with his, the scarred wrist against my palm for one deliberate second. “Hold it. I am going to ask you questions, here, in front of them. If you are misaligned when you answer, everyone present will know.” It lay still between my hands. My mouth was uncovered now. I found I still could not speak." },
+          text: "He drew out The Answer — the double-ended shaft, a deep hooked blade curling from each end like a question asked twice — and set it in my right hand, and closed my fingers around it with his, the scarred wrist against my palm for one deliberate second. “Hold it. I am going to ask you questions, here, in front of them. If you are misaligned when you answer, everyone present will know.” It lay still in my hand. My mouth was uncovered now. “What have you to say?”" },
+        { idx: 20, kind: "narration", speaker: null, image: "d4",
+          text: "My other hand tightened around my great-grandmother’s tarot deck. I didn’t remember bringing it. I toyed with the idea of letting the cards decide." },
       ],
       endsAt: 'oas_interrupt',
       oasHandoff: {
+        // THE OPENING ENTRANCE (Roman 2026-10-06). Julian's question closes the authored page,
+        // so the conversation is already open: there is no OAS opener to generate, and the
+        // player's submitted input is the FIRST turn. Scoped to this package.
+        openerOnPage: true,
+        oasEntrance: {
+          examineLabel: 'Examine the cards',
+          lockedLabels: ['Petition Fate', 'Tempt Fate']
+        },
         cue: 'Julian, the Provast, closes Lirael’s fingers around The Answer and says he will question her in front of the assembly.',
         // The interrogation is a REQUIRED part of the opening (Roman 2026-09-11): it occurs after the CG endpoint and before
         // any player choice; the Dohkar's interruption ends it; only then does the run-or-remain choice arise.

@@ -143286,7 +143286,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
    */
   function _mountBakedOASHandoff(pkg) {
     try {
-      var host = document.getElementById('storyContent') || document.getElementById('gnPanelDisplay');
+      // A VISIBLE HOST, not merely an existing one (2026-10-06). #storyContent carries the
+      // `hidden` class while the staged/CG reader owns the screen, so mounting there put the whole
+      // entrance inside display:none — present in the DOM, unreachable by the reader. Same class
+      // of bug as dealing the hand into the hidden #cardMount. _mountSceneDecisionPrompt already
+      // picks its host this way; this now matches it.
+      var _visHost = function (id) {
+        var el = document.getElementById(id);
+        try { return (el && el.getClientRects().length > 0) ? el : null; } catch (_) { return null; }
+      };
+      var host = _visHost('gnPanelDisplay') || _visHost('storyContent')
+              || document.getElementById('storyContent') || document.getElementById('gnPanelDisplay');
       if (!host) { console.warn('[BAKED:OAS] no host element for the handoff affordance'); return; }
       var prior = document.getElementById('bakedOASHandoff');
       if (prior) prior.remove();
@@ -143295,20 +143305,128 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       wrap.id = 'bakedOASHandoff';
       wrap.setAttribute('style', 'margin:28px auto 12px;max-width:520px;text-align:center;');
       var cue = (pkg.oasHandoff && pkg.oasHandoff.cue) ? String(pkg.oasHandoff.cue) : '';
-      wrap.innerHTML = (cue ? '<p class="baked-oas-cue" style="font-style:italic;color:#c9bfa8;line-height:1.6;margin:0 0 16px;"></p>' : '')
-        + '<button id="bakedOASEnterBtn" class="sb-btn-png md">Continue</button>';   // the interrogation is a REQUIRED part of the opening (Roman 2026-09-11) — this is a continue, not a choice to stay
-      if (cue) wrap.querySelector('.baked-oas-cue').textContent = cue;   // authored text, never innerHTML
+      // ── THE OPENING ENTRANCE (Roman 2026-10-06) ───────────────────────────────────────
+      // The standalone Continue is gone. The authored page already ends on Julian's question and
+      // the deck passage, so the conversation is OPEN: the reader answers it here, and that exact
+      // submission is the OAS's first turn. Scoped by oasHandoff.oasEntrance, so every other
+      // package keeps the Continue button.
+      var _ent = (pkg.oasHandoff && pkg.oasHandoff.oasEntrance) || null;
+      if (!_ent) {
+        wrap.innerHTML = (cue ? '<p class="baked-oas-cue" style="font-style:italic;color:#c9bfa8;line-height:1.6;margin:0 0 16px;"></p>' : '')
+          + '<button id="bakedOASEnterBtn" class="sb-btn-png md">Continue</button>';
+        if (cue) wrap.querySelector('.baked-oas-cue').textContent = cue;
+        host.appendChild(wrap);
+        wrap.querySelector('#bakedOASEnterBtn').addEventListener('click', function () {
+          console.log('[BAKED:OAS] handoff tapped — entering the one-on-one');
+          var plan = _bakedOASPlan(pkg);
+          if (typeof _bakedGenesisGate === 'function' && _bakedGenesisGate(function () {
+                try { _initIntimacyDialogue(plan); } catch (e) { console.warn('[BAKED:OAS] open failed:', e && e.message); }
+              })) { return; }
+          try { _initIntimacyDialogue(plan); } catch (e) { console.warn('[BAKED:OAS] open failed:', e && e.message); }
+        });
+        console.log('[BAKED:OAS] handoff affordance mounted — this is the CG Book\'s gate');
+        return;
+      }
+
+      wrap.setAttribute('style', 'margin:22px auto 16px;max-width:560px;');
+      wrap.innerHTML =
+          '<div style="text-align:center;margin:0 0 14px;">'
+        +   '<button id="bakedOASExamineBtn" class="sb-btn-png md"></button>'
+        + '</div>'
+        + '<div id="bakedOASHand" class="hidden" style="margin:0 0 10px;"></div>'
+        + '<div id="bakedOASLocked" class="hidden" style="display:flex;gap:10px;justify-content:center;margin:0 0 16px;"></div>'
+        + '<div id="bakedOASSayDo" style="display:flex;flex-direction:column;gap:8px;">'
+        +   '<input id="bakedOASSay" type="text" maxlength="400" autocomplete="off" '
+        +     'placeholder="Say…" style="width:100%;box-sizing:border-box;padding:10px 12px;">'
+        +   '<input id="bakedOASDo" type="text" maxlength="400" autocomplete="off" '
+        +     'placeholder="Do…" style="width:100%;box-sizing:border-box;padding:10px 12px;">'
+        +   '<div style="text-align:center;margin-top:6px;">'
+        +     '<button id="bakedOASSubmitBtn" class="sb-btn-png md">Submit</button>'
+        +   '</div>'
+        + '</div>';
+      wrap.querySelector('#bakedOASExamineBtn').textContent = String(_ent.examineLabel || 'Examine the cards');
       host.appendChild(wrap);
 
-      wrap.querySelector('#bakedOASEnterBtn').addEventListener('click', function () {
-        console.log('[BAKED:OAS] handoff tapped — entering the one-on-one');
-        var plan = _bakedOASPlan(pkg);
-        if (typeof _bakedGenesisGate === 'function' && _bakedGenesisGate(function () {
-              try { _initIntimacyDialogue(plan); } catch (e) { console.warn('[BAKED:OAS] open failed:', e && e.message); }
-            })) {
-          return;   // gate blocked; it will resume via the callback
+      // ── THE EXAMINE GATE. No playable hand exists before this is tapped: the hand host is empty
+      // AND hidden, so neither a query nor a click can reach a card. Petition and Tempt appear only
+      // with the hand, and only as locked, unavailable faces.
+      wrap.querySelector('#bakedOASExamineBtn').addEventListener('click', function () {
+        var btn = this;
+        if (btn.getAttribute('data-examined') === '1') return;
+        btn.setAttribute('data-examined', '1');
+        var handHost = document.getElementById('bakedOASHand');
+        var lockHost = document.getElementById('bakedOASLocked');
+        try {
+          if (handHost) {
+            handHost.classList.remove('hidden');
+            handHost.id = 'bakedOASHand';
+            // Deal into THIS host. _activeCardMount is what dealFateCards targets, so the host is
+            // given the id it looks for while the hand is built, then handed back its own.
+            var prior = document.getElementById('cardMount');
+            var priorId = null;
+            if (prior && prior !== handHost) { priorId = 'cardMount'; prior.id = 'cardMount__parked'; }
+            handHost.id = 'cardMount';
+            try { if (typeof window.dealFateCards === 'function') window.dealFateCards({ force: true }); }
+            catch (e) { console.warn('[OAS:ENTRANCE] deal failed:', e && e.message); }
+            handHost.id = 'bakedOASHand';
+            if (priorId) { var parked = document.getElementById('cardMount__parked'); if (parked) parked.id = priorId; }
+          }
+          if (lockHost) {
+            lockHost.classList.remove('hidden');
+            lockHost.innerHTML = '';
+            (Array.isArray(_ent.lockedLabels) ? _ent.lockedLabels : []).forEach(function (lbl) {
+              var d = document.createElement('div');
+              d.className = 'oas-entrance-locked-card';
+              d.setAttribute('aria-disabled', 'true');
+              d.setAttribute('data-locked', '1');
+              d.setAttribute('style', 'opacity:0.38;pointer-events:none;filter:grayscale(1);'
+                + 'border:1px solid #6b6253;border-radius:8px;padding:10px 14px;font-size:0.82rem;'
+                + 'color:#c9bfa8;text-align:center;');
+              d.textContent = String(lbl);
+              lockHost.appendChild(d);
+            });
+          }
+          try { handHost.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+          console.log('[OAS:ENTRANCE] examined — hand revealed, '
+            + (lockHost ? lockHost.children.length : 0) + ' locked card(s) shown');
+        } catch (e) { console.warn('[OAS:ENTRANCE] examine threw:', e && e.message); }
+      });
+
+      // ── SUBMIT STARTS THE OAS WITH THE READER'S EXACT INPUT ───────────────────────────────
+      // The input is captured BEFORE the gate and replayed after it, so sign-in or the Genesis
+      // charge never costs the reader what they typed. Card selection is optional: a typed answer
+      // and a card-assisted one both arrive here the same way.
+      wrap.querySelector('#bakedOASSubmitBtn').addEventListener('click', function () {
+        var sayEl = document.getElementById('bakedOASSay');
+        var doEl  = document.getElementById('bakedOASDo');
+        var say = sayEl ? String(sayEl.value || '').trim() : '';
+        var doT = doEl ? String(doEl.value || '').trim() : '';
+        if (!say && !doT) {
+          try { if (typeof showToast === 'function') showToast('Answer him, or say nothing — but type it first.'); } catch (_) {}
+          return;
         }
-        try { _initIntimacyDialogue(plan); } catch (e) { console.warn('[BAKED:OAS] open failed:', e && e.message); }
+        if (this.getAttribute('data-submitted') === '1') return;   // exactly once
+        this.setAttribute('data-submitted', '1');
+        var plan = _bakedOASPlan(pkg);
+        var _open = function () {
+          try { _initIntimacyDialogue(plan); } catch (e) {
+            console.warn('[BAKED:OAS] open failed:', e && e.message); return;
+          }
+          // The opener is ALREADY on the page, so no opener is generated. Feed the reader's exact
+          // submission as turn one; _fireIntimacyOpener has set phase=awaiting_first_response.
+          try {
+            console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say.length
+              + 'c do=' + doT.length + 'c');
+            if (typeof window._intimacyDialogueConsumeInput === 'function') {
+              window._intimacyDialogueConsumeInput(say, doT);
+            }
+          } catch (e) { console.warn('[OAS:ENTRANCE] first turn failed:', e && e.message); }
+        };
+        if (typeof _bakedGenesisGate === 'function' && _bakedGenesisGate(_open)) {
+          console.log('[OAS:ENTRANCE] gate held the submission — the typed input is preserved');
+          return;
+        }
+        _open();
       });
       console.log('[BAKED:OAS] handoff affordance mounted — this is the CG Book\'s gate');
     } catch (e) { console.warn('[BAKED:OAS] handoff mount threw:', e && e.message); }
@@ -143336,6 +143454,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // exact ≤14-word line Julian speaks (bypasses the live-generated opener when present).
       // postInterruptionBeat: {speaker,image,kind,text}, rendered once after the fixed tail, before
       // the Fate cards. See _fireIntimacyOpener / _mountIntimateInterruption.
+      // THE OPENER IS ALREADY ON THE AUTHORED PAGE (Roman 2026-10-06). Julian's question closes
+      // Scene 1, so the OAS must neither generate an opener nor render one — the reader's
+      // submission from the entrance is turn one. Package-scoped: absent elsewhere.
+      openerOnPage: !!(h.openerOnPage),
+      oasEntrance: (h.oasEntrance && typeof h.oasEntrance === 'object') ? h.oasEntrance : null,
       oasOpening: (h.oasOpening && typeof h.oasOpening === 'object') ? h.oasOpening : null,
       postInterruptionBeat: (h.postInterruptionBeat && typeof h.postInterruptionBeat === 'object') ? h.postInterruptionBeat : null
     };
@@ -191631,6 +191754,19 @@ No text, no watermark, no UI elements, share-ready.`;
     // for every package today (including the real starter-scenes.js First
     // Sacrifice entry) — falls straight through to the existing
     // live-generated opener below, unchanged.
+    // ── THE OPENER IS ON THE PAGE (Roman 2026-10-06) ──────────────────────────────────────
+    // The authored Scene 1 ends on Julian's question, so the conversation is already open. Render
+    // nothing and call nothing: just advance the phase so the reader's submission from the
+    // entrance counts as the FIRST response, exactly as a rendered opener would. Without this the
+    // first submission would fall through to the live opener and either discard the input or ask
+    // for it a second time.
+    if (d.openerOnPage) {
+      d.phase = 'awaiting_first_response';
+      try { console.log('[OAS:TWO-PATH] opener is on the authored page — no model call, no render. '
+        + 'phase=' + d.phase); } catch (_) {}
+      return;
+    }
+
     if (d._authoredFrame && d._authoredFrame.oasOpening && d._authoredFrame.oasOpening.text) {
       var _openerText = String(d._authoredFrame.oasOpening.text);
       try { _appendLIResponseToHistory(_openerText, ''); } catch (_) {}
@@ -191872,6 +192008,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // CARRY THE ENCOUNTER FLAG onto the live dialogue, so the afterglow predicate reads THIS
     // encounter rather than the story's opening package.
     try { d.endsInAuthoredInterruption = !!(plan && plan.endsInAuthoredInterruption); } catch (_) {}
+    try { d.openerOnPage = !!(plan && plan.openerOnPage); } catch (_) {}
     d.active = true;
     d.startedAt = Date.now();
     // ── AUTHORED HANDOFF FRAME (fixed editorial Scene 1) ──
@@ -191881,6 +192018,12 @@ No text, no watermark, no UI elements, share-ready.`;
     d._authoredFrame = (plan && (plan.openingFrame || plan.cue)) ? { openingFrame: String(plan.openingFrame || ''), cue: String(plan.cue || ''),
       // INTERRUPTION (Roman 2026-09-11): an authored end to this exchange — plate + fixed lines — rendered instead of the afterglow.
       interruption: String(plan.interruption || ''), interruptionImage: String(plan.interruptionImage || ''), interruptionExchange: Array.isArray(plan.interruptionExchange) ? plan.interruptionExchange.slice() : [],
+      // CARRIED ON THE FRAME, not read off the live dialogue (2026-10-06). By the time the
+      // interruption mounts the OAS has torn down and state.intimacyDialogue is gone — reading the
+      // flag there made it silently false, and the opening fell back to the card + Say/Do step.
+      // The frame survives teardown inside state._intimateInterruption.frame, so the flag travels
+      // with the encounter that declared it and no other encounter can pick it up.
+      openerOnPage: !!(plan && plan.openerOnPage),
       // TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) — optional, both null for every package
       // today. See _bakedOASPlan.
       oasOpening: (plan.oasOpening && typeof plan.oasOpening === 'object') ? { speaker: plan.oasOpening.speaker || null, text: String(plan.oasOpening.text || '') } : null,
@@ -208211,8 +208354,44 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   function _intimateInterruptionPending() {
     var r = state && state._intimateInterruption;
-    return !!(r && !r.submitted && r.storyId === state.storyId);
+    // completedWithoutSubmission (Roman 2026-10-06) is the OPENING's completion: that flow has no
+    // Say/Do step at all, so there is no submission to wait for and none is fabricated. It is set
+    // ONLY by _completeIntimateInterruptionNoSubmit, which refuses unless the encounter declared
+    // itself the authored opening. Every other encounter still completes on r.submitted alone.
+    return !!(r && !r.submitted && !r.completedWithoutSubmission && r.storyId === state.storyId);
   }
+
+  /** The opening's interruption completes on its own authored terms: the canon record and the OAS
+   *  archive are preserved exactly as the submit path writes them, but NO player action/dialogue is
+   *  invented and NO 'posture' decision is recorded — so the run-or-remain axis stays the open
+   *  question it is meant to be, and the reader's branch is the only thing that answers it. */
+  function _completeIntimateInterruptionNoSubmit() {
+    var r = state && state._intimateInterruption;
+    if (!r || r.submitted || r.completedWithoutSubmission) return false;
+    if (r.storyId !== state.storyId) return false;
+    if (!r.noSubmitFlow) {
+      console.warn('[INTIMATE-INTERRUPT] refusing no-submit completion: this encounter did not '
+        + 'declare the authored-opening flow');
+      return false;
+    }
+    r.completedWithoutSubmission = true; r.completedAt = Date.now();
+    // THE SAME canon record the submit path writes — the authored interruption plus its fixed
+    // closing exchange, under the same kind and eventSource, so Scene 2 reads an identical row.
+    try {
+      _sceneLedgerCommit(state, { kind: 'oas_interrupt', sceneNumber: r.sceneNum || 1,
+        event: String(r.frame.interruption) + ' '
+          + (r.frame.interruptionExchange || []).map(function (l) {
+              return l && l.text ? ((l.speaker ? l.speaker + ': ' : '') + l.text) : '';
+            }).filter(Boolean).join(' '),
+        eventSource: 'interruption' });
+    } catch (e) { console.warn('[INTIMATE-INTERRUPT] ledger commit threw:', e && e.message); }
+    try { var note = document.querySelector('#intimateInterruption .intimate-interruption-note'); if (note) note.remove(); } catch (_) {}
+    try { console.log('[INTIMATE-INTERRUPT] completed WITHOUT a submission (authored opening) — '
+      + 'canon row written, no posture recorded, run-or-remain is next'); } catch (_) {}
+    try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
+    return true;
+  }
+  window._completeIntimateInterruptionNoSubmit = _completeIntimateInterruptionNoSubmit;
   function _intrCardText(slot) {
     var r = state._intimateInterruption; var c = r && r.cards && r.cards[slot];
     var a = c && c.action ? String(c.action) : '', dl = c && c.dialogue ? String(c.dialogue) : '';
@@ -208270,7 +208449,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!r || r.submitted || r.storyId !== state.storyId) {
       var _pib = frame.postInterruptionBeat;
       r = state._intimateInterruption = { host: hostKey, sceneNum: opts.sceneNum || 1, storyId: state.storyId, at: Date.now(), imageId: frame.interruptionImage || null,
-            frame: { interruption: String(frame.interruption), interruptionImage: String(frame.interruptionImage || ''), interruptionExchange: (frame.interruptionExchange || []).slice(),
+            frame: { openerOnPage: !!frame.openerOnPage, interruption: String(frame.interruption), interruptionImage: String(frame.interruptionImage || ''), interruptionExchange: (frame.interruptionExchange || []).slice(),
               // TWO-PATH OAS LIFECYCLE (Roman, Option E, 2026-09-17) — optional, null for every
               // package today. Stored once here (never regenerated) so every remount (including
               // resume-after-reload) renders the identical, deterministic content.
@@ -208283,6 +208462,10 @@ No text, no watermark, no UI elements, share-ready.`;
             // function runs — a pre-existing architectural boundary in this file (see
             // _resolveIntimacyScene's `state.intimacyDialogue = null;` ahead of this call).
             entryPath: (opts.reason === 'boundary_first_response') ? 'boundary' : 'normal',
+            // THE AUTHORED OPENING HAS NO SAY/DO STEP (Roman 2026-10-06). Declared from the live
+            // dialogue's own openerOnPage flag, so it is ENCOUNTER-scoped: a later First Sacrifice
+            // OAS, and every other story, keeps the card + Say/Do + Submit step unchanged.
+            noSubmitFlow: !!(state.intimacyDialogue && state.intimacyDialogue.openerOnPage),
             phase: 'interrupted', postBeatRendered: false };
     }
     var prior = document.getElementById('intimateInterruption'); if (prior) prior.remove();
@@ -208343,6 +208526,68 @@ No text, no watermark, no UI elements, share-ready.`;
     // deals cards / opens the inputs, and the one-on-one flattens them. Show them here.
     try { (hostKey === 'cg' ? ['gnReaderControls', 'gnFateSection'] : ['cardMount', 'fateSpecialCards']).forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = ''; });
           if (hostKey !== 'cg') { var _ai = document.getElementById('actionInput'); var _grid = _ai && _ai.closest('div[style*="grid-template-columns"], .say-do-grid, .input-grid'); if (_grid) _grid.style.display = ''; var _row = document.getElementById('submitBtn') && document.getElementById('submitBtn').parentElement; if (_row) _row.style.display = ''; } } catch (_) {}
+    // The record is CREATED once and REUSED on later mounts, so the flag must be refreshed here
+    // rather than only at creation — otherwise a record made before the dialogue existed keeps
+    // noSubmitFlow false and the opening falls back to the card + Say/Do step.
+    try {
+      if ((r.frame && r.frame.openerOnPage)
+          || (state.intimacyDialogue && state.intimacyDialogue.openerOnPage)) r.noSubmitFlow = true;
+      console.log('[INTIMATE-INTERRUPT] flow check — frame.openerOnPage='
+        + !!(r.frame && r.frame.openerOnPage) + ' noSubmitFlow=' + !!r.noSubmitFlow);
+    } catch (_) {}
+
+    // ── THE AUTHORED OPENING ENDS ON THE BRANCH, NOT ON ANOTHER SUBMIT (Roman 2026-10-06) ──
+    // The authored interruption and its fixed closing exchange have rendered above. For this
+    // encounter there is no second card step and no second Say/Do: run-or-remain IS Scene 1's
+    // final decision. The interruption completes on its own terms (canon row written, no
+    // fabricated submission), then the existing decision prompt is mounted — the same prompt,
+    // the same recorder, the same displacement rule.
+    if (r.noSubmitFlow) {
+      r.phase = 'awaiting_branch';
+      try { _completeIntimateInterruptionNoSubmit(); } catch (e) {
+        console.warn('[INTIMATE-INTERRUPT] no-submit completion threw:', e && e.message);
+      }
+      // Hide the reader controls this encounter does not use, so no stray Submit remains.
+      try {
+        ['gnReaderControls', 'gnFateSection', 'cardMount', 'fateSpecialCards', 'gnCardMount']
+          .forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+        ['gnActionInput', 'gnDialogueInput', 'gnSubmitBtn', 'actionInput', 'dialogueInput', 'submitBtn']
+          .forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) { try { el.style.display = 'none'; } catch (_) {} el.disabled = true; }
+          });
+        // The Scene 1 entrance belongs to the authored page, which is behind us now: remove it so
+        // the deck introduction and its Examine gate cannot appear a second time.
+        var ent = document.getElementById('bakedOASHandoff'); if (ent) ent.remove();
+      } catch (_) {}
+      try {
+        _mountSceneDecisionPrompt(function () {
+          // The same handoff every other decision site uses. Empty act/dia because this flow has
+          // no player submission and inventing one is exactly what must not happen.
+          try { console.log('[INTIMATE-INTERRUPT] branch chosen — advancing to Scene 2'); } catch (_) {}
+          // GIVE THE READER THEIR CONTROLS BACK. Hiding them above is for THIS screen only, which
+          // takes no submission. Leaving them hidden and disabled carried into Scene 2: its Fate
+          // card could no longer fill Say/Do, so nothing could be submitted and the whole
+          // continuation chain went dead. Caught by _integrated_opening_replay.
+          try {
+            ['gnReaderControls', 'gnFateSection', 'cardMount', 'fateSpecialCards', 'gnCardMount']
+              .forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
+            ['gnActionInput', 'gnDialogueInput', 'gnSubmitBtn', 'actionInput', 'dialogueInput', 'submitBtn']
+              .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) { try { el.style.display = ''; } catch (_) {} el.disabled = false; }
+              });
+          } catch (_) {}
+          try { _advanceStagedScene('', ''); } catch (e) {
+            console.warn('[INTIMATE-INTERRUPT] advance threw:', e && e.message);
+          }
+        });
+      } catch (e) { console.warn('[INTIMATE-INTERRUPT] decision prompt threw:', e && e.message); }
+      try { console.log('[INTIMATE-INTERRUPT] authored opening — no card/Say-Do/Submit step; '
+        + 'run-or-remain mounted as the final decision'); } catch (_) {}
+      return;
+    }
+
     var mount = _dealInterruptionFateCards(hostKey);
     r.phase = 'cards_open';
     var aEl = document.getElementById(H.action), dEl = document.getElementById(H.dialogue), sEl = document.getElementById(H.submit);

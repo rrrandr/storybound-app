@@ -226,9 +226,21 @@ console.log('\n1c. the reader submits at the authored Dohkar interruption');
     pending: typeof window._intimateInterruptionPending === 'function'
       ? !!window._intimateInterruptionPending() : 'absent',
     lines: ((window.state._intimateInterruption || {}).frame || {}).interruptionExchange
-      ? ((window.state._intimateInterruption || {}).frame.interruptionExchange || []).length : null
+      ? ((window.state._intimateInterruption || {}).frame.interruptionExchange || []).length : null,
+    // THE AUTHORED OPENING TAKES NO SUBMISSION (2026-10-06), so it is not left PENDING one: it
+    // completes on its own terms and ends on run-or-remain. "Pending" is still the right state for
+    // every encounter that does collect a Say/Do.
+    flow: !!(window.state._intimateInterruption || {}).noSubmitFlow,
+    noSubmit: !!(window.state._intimateInterruption || {}).completedWithoutSubmission,
+    recordExists: !!window.state._intimateInterruption
   }));
-  t('the authored interruption is pending after the OAS', pending.pending === true,
+  t('the authored interruption arrived after the OAS',
+    pending.recordExists === true && pending.lines === 3, JSON.stringify(pending));
+  t(pending.flow
+      ? 'and the authored opening completed it WITHOUT waiting on a submission'
+      : 'and it is pending the reader\'s submission, as other encounters are',
+    pending.flow ? (pending.noSubmit === true && pending.pending === false)
+                 : pending.pending === true,
     JSON.stringify(pending));
   const committed = await page.evaluate(() => {
     if (typeof window._commitIntimateInterruption !== 'function') return 'absent';
@@ -435,7 +447,7 @@ t('the next planner received the committed facts, not an empty ledger',
 const openingFacts = [
   ['the wish twisted and nothing came of it', /began to twist|went wrong, then it stopped|nothing came of it/i],
   ['the Dohkar charged Lirael', /charged (Lirael|her) with shaping|shaping and interfering/i],
-  ['The Answer was put in her hands', /The Answer/],
+  ['The Answer was put in her hand', /The Answer/],
   ['a formal inquiry is the venue', /formal inquiry/i]
 ];
 openingFacts.forEach(([name, rx]) => {
