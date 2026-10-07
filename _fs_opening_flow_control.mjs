@@ -11,6 +11,13 @@ import { chromium } from 'playwright-core';
 import fs from 'fs';
 import { stageOf, isProviderEndpoint, MEMORY, verifierVerdict, fsPlannerCaptured }
   from './_replay_fixtures.mjs';
+// THE EXISTING SESSION FIXTURE (_test_session_env.mjs), not another authentication shortcut.
+// _postFortuneCharge refuses BEFORE fetch when there is no Authorization header, and it builds
+// that header from sb.auth.getSession(). supabase-js resolves getSession() from localStorage at
+// load, so the session must be seeded via addInitScript before any page script runs — setting
+// profileId and a balance afterwards cannot satisfy it. /api/config must also be served, or no
+// auth client is constructed at all.
+import { configBody, installSession, isAuthOrigin, installEntitledProfileStub } from './_test_session_env.mjs';
 import { findFSDef, launchFS, unlockFS, finalizePreview } from './_fs_story_setup.mjs';
 
 const ARM = process.argv[2] || 'typed';   // typed | card | auth | cancel | remain
@@ -35,11 +42,23 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const oasReqs = [], sceneReqs = [], stages = [];
 let fortuneCharges = 0;
-await page.route('**/api/**', async (route) => {
+await installSession(page);
+await page.route('**/*', async (route) => {
   const req = route.request();
-  // ENTITLEMENT AND PAYMENT RESPONSES ARE SIMULATED, exactly as the live runner simulates them —
-  // the charge is answered here instead of the unlocked flag being set by hand, so production's
-  // own confirm-and-charge path runs.
+  const url = req.url();
+  // The auth client's own origin is unreachable by design; answer it locally.
+  if (isAuthOrigin(url)) { try { await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {} return; }
+  if (!/\/api\//.test(url)) { try { await route.continue(); } catch (_) {} return; }
+  if (/\/api\/config\b/.test(url)) {
+    try { await route.fulfill({ status: 200, contentType: 'application/json', body: configBody() }); } catch (_) {}
+    return;
+  }
+  if (/\/api\/(geo|csp-report|beta-events)\b/.test(url)) {
+    try { await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {}
+    return;
+  }
+  // PAYMENT RESPONSES ARE SIMULATED LOCALLY; the charge REQUEST is production's own, and it only
+  // happens once a real session token is attached.
   if (/\/api\/consume-fortune/.test(req.url())) {
     fortuneCharges++;
     try { await route.fulfill({ status: 200, contentType: 'application/json',
@@ -114,6 +133,7 @@ const toReader = async () => {
   console.log('   navigation: ' + log.join(' -> '));
 };
 
+await installEntitledProfileStub(page, { log: (m) => console.log('   ' + m) });
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._advanceStagedScene === 'function', { timeout: 30000 }).catch(() => {});
 const def = await findFSDef(page);
@@ -265,14 +285,14 @@ if (ARM === 'cancel') {
   await page.evaluate(() => { try { window.state.profileId = 'harness-profile-0001'; } catch (_) {} });
   // Put the gate back in front of the reader by clearing the harness's earlier unlock, so the
   // real modal is raised. From here everything is the reader's own controls.
+  // Put the gate back in front of the reader, and give the account a BALANCE. _chargePreviewSlice
+  // declines locally when state.fortunes is short of the price, before it ever posts, so a wallet
+  // the server would have reported is part of the simulated entitlement. Nothing unlocks the gate
+  // by hand from here: the reader's own confirm button runs production's charge, and only the
+  // charge RESPONSE is simulated.
   await page.evaluate(() => {
     try {
       window.state._bakedGenesisUnlocked = false;
-      // A WALLET BALANCE, simulated. _chargePreviewSlice declines LOCALLY when the balance is
-      // short, before it ever calls /api/consume-fortune — so without a balance the confirm button
-      // cannot exercise the charge at all. The gate, the modal and the charge request itself all
-      // still run; only the account's balance and the server's answer are simulated.
-      window.state.fortunes = 500;
     } catch (_) {}
   });
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
@@ -305,6 +325,22 @@ if (ARM === 'cancel') {
   await page.waitForTimeout(2000);
   t('the gate raised the modal a second time', await page.evaluate(() =>
     !!(document.getElementById('bakedUnlockModal') || {}).classList?.contains('show')));
+  const sessDiag = await page.evaluate(async () => {
+    const out = { sbPresent: false, token: null, fortunes: window.state.fortunes,
+                  previewActive: !!window.state.previewActive,
+                  previewProductId: window.state.previewProductId || null,
+                  profileId: window.state.profileId || null };
+    try {
+      const sb = window.sb || window._sb || window.supabase || null;
+      out.sbPresent = !!(sb && sb.auth && sb.auth.getSession);
+      if (out.sbPresent) {
+        const r = await sb.auth.getSession();
+        out.token = r && r.data && r.data.session ? String(r.data.session.access_token).slice(0, 18) : null;
+      }
+    } catch (e) { out.err = String(e.message).slice(0, 60); }
+    return out;
+  });
+  console.log('   SESSION DIAG: ' + JSON.stringify(sessDiag));
   await page.click('#buGoBtn', { timeout: 8000 });
   await page.waitForTimeout(9000);
   console.log('   fortune charges simulated: ' + fortuneCharges);
@@ -375,18 +411,39 @@ if (ARM === 'cancel') {
     'oas requests: ' + oasReqs.length);
   t('and the restored answer is STILL in the field, unlatched', h2.say === expectSay && h2.dispatched === null,
     JSON.stringify({ say: h2.say.slice(0, 40), dispatched: h2.dispatched }));
-  await page.evaluate(() => {
-    ['bakedUnlockModal', 'starterUnlockModal', 'payModal', 'genesisConfirmModal'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) { el.classList.remove('show'); el.classList.add('hidden'); }
-    });
-    try { window.state._bakedGenesisUnlocked = true; } catch (_) {}
+  // FINISH THROUGH THE REAL CONFIRMATION CONTROL. No modal is hidden by hand and nothing is
+  // marked unlocked: the gate's own #buGoBtn runs production's confirm-and-charge, and the charge
+  // RESPONSE is simulated locally.
+  const gateUp = await page.evaluate(() => {
+    const m = document.getElementById('bakedUnlockModal');
+    const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+    return { shown: !!(m && m.classList.contains('show')), go: v('buGoBtn') };
   });
-  await page.waitForTimeout(600);
-  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
-  await page.waitForTimeout(7000);
-  t('submitting after the unlock sends the restored answer, once',
-    oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay), 'count=' + oasReqs.length);
+  t('the gate raised its own modal on return', gateUp.shown === true && gateUp.go === true,
+    JSON.stringify(gateUp));
+  await page.click('#buGoBtn', { timeout: 8000 });
+  // Wait for the dispatch rather than guessing at a duration: the charge resolves, then the gate
+  // runs its unlocked callback, then the OAS opens and the first turn goes out.
+  for (let i = 0; i < 30 && oasReqs.length === 0; i++) await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
+  console.log('   simulated charge operations: ' + fortuneCharges);
+  const post = await page.evaluate(() => {
+    const d = window.state.intimacyDialogue || null;
+    const b = document.getElementById('bakedOASSubmitBtn');
+    return { dialogue: !!d, active: d ? !!d.active : null, phase: d ? d.phase : null,
+             beatCount: d ? d.beatCount : null, openerOnPage: d ? !!d.openerOnPage : null,
+             dispatched: b ? b.getAttribute('data-dispatched') : 'no button',
+             route: window._sbEntranceRoute ? 'present' : null,
+             say: (document.getElementById('bakedOASSay') || {}).value };
+  });
+  console.log('   AFTER CONFIRM: ' + JSON.stringify(post));
+  t('EXACTLY ONE charge operation was simulated', fortuneCharges === 1, 'charges=' + fortuneCharges);
+  t('and exactly one first OAS dispatch followed', oasReqs.length === 1, 'count=' + oasReqs.length);
+  t('carrying the preserved Say', oasReqs.length === 1 && oasReqs[0].whole.includes(expectSay));
+  t('and the preserved Do', oasReqs.length === 1 && oasReqs[0].whole.includes(expectDo));
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(3000);
+  t('a further click dispatches NO duplicate', oasReqs.length === 1, 'count=' + oasReqs.length);
 } else {
   console.log('\n=== SUBMIT ===');
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
@@ -500,19 +557,12 @@ t('and the card mount is a reader mount again',
 // READ SCENE 2 TO ITS FINAL BEAT with the reader's own control, and let PRODUCTION offer the hand.
 // The previous version called dealFateCards({force:true}) itself, which proves the mount resolves
 // and nothing else: a reader who never reaches the last beat is never offered a hand at all.
-const diag = await page.evaluate(() => {
-  const vis = [];
-  document.querySelectorAll('button[id], div[id]').forEach(el => {
-    try { if (el.getClientRects().length > 0 && el.id && /stag|beat|next|card|fate|gn/i.test(el.id)) vis.push(el.id); } catch (_) {}
-  });
-  return { visible: vis.slice(0, 16),
-           stateKeys: Object.keys(window.state).filter(k => /stag|beat|panel/i.test(k)).slice(0, 14),
-           mount: (() => { const m = window._activeCardMount(); return m ? m.id : null; })(),
-           surface: window._sbActiveReaderSurface && window._sbActiveReaderSurface() };
-});
-console.log('   POST-BRANCH DIAG: ' + JSON.stringify(diag));
+// READ SCENE 2 WITH THE CONTROLS _wireStagedAdvance BINDS: #stagedNextBtn (click) and
+// #stagedBeatReader (tap anywhere except .staged-next-btn / .staged-prev-btn / .staged-micro-opt /
+// .staged-decision-gate). Clicking coordinates on the illustration proved nothing about reaching
+// the last beat. currentBeatIdx, any micro-decision and any gate are observed as we go, and a
+// refusal is captured verbatim rather than retried blindly.
 const reading = [];
-// Wait for production to finish building the scene before trying to read it.
 for (let i = 0; i < 40; i++) {
   const loading = await page.evaluate(() => {
     const e = document.getElementById('gnSceneLoading');
@@ -522,60 +572,75 @@ for (let i = 0; i < 40; i++) {
   await page.waitForTimeout(1000);
 }
 let dealt = { mount: null, count: 0, onScreen: 0, atEnd: false };
-for (let i = 0; i < 40; i++) {
+let lastState = null;
+for (let i = 0; i < 60; i++) {
   const st = await page.evaluate(() => {
     const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+    const act = window.state._stagedActive || null;
+    const beats = act && Array.isArray(act.beats) ? act.beats.length
+                : (act && act.plan && Array.isArray(act.plan.beats) ? act.plan.beats.length : null);
     const m = window._activeCardMount();
     const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
-    const nb = document.getElementById('gnNextPageBtn');
-    return { next: v('gnNextPageBtn'), nextDisabled: !!(nb && nb.disabled),
-             panel: v('gnPanelDisplay'),
-             mount: m ? m.id : null, count: cards.length,
-             onScreen: cards.filter(c => c.getClientRects().length > 0).length };
+    const nb = document.getElementById('stagedNextBtn');
+    return {
+      beatIdx: act && typeof act.currentBeatIdx === 'number' ? act.currentBeatIdx : null,
+      beats: beats,
+      nextBtn: v('stagedNextBtn'), nextDisabled: !!(nb && nb.disabled),
+      beatReader: v('stagedBeatReader'),
+      micro: Array.from(document.querySelectorAll('.staged-micro-opt'))
+        .filter(x => x.getClientRects().length > 0).length,
+      gate: Array.from(document.querySelectorAll('.staged-decision-gate'))
+        .filter(x => x.getClientRects().length > 0
+          && (x.textContent || '').trim().length > 0).length,
+      mount: m ? m.id : null, count: cards.length,
+      onScreen: cards.filter(c => c.getClientRects().length > 0).length
+    };
   });
-  if (st.onScreen > 0) { dealt = { ...st, atEnd: true }; reading.push('hand offered after ' + i + ' turns'); break; }
-  // The reader advances the scene's beats by TAPPING THE PANEL; the page buttons move between
-  // pages and are disabled while a scene has only one.
-  if (st.panel) {
-    // Click what is ACTUALLY under the pointer — the panel's own image — with force, because the
-    // panel art animates and Playwright's stability wait never settles on it.
-    const tapped = await page.evaluate(() => {
-      const panel = document.getElementById('gnPanelDisplay');
-      if (!panel) return false;
-      const r = panel.getBoundingClientRect();
-      return !!document.elementFromPoint(Math.round(r.left + 40), Math.round(r.top + 40));
+  lastState = st;
+  if (st.onScreen > 0) { dealt = { ...st, atEnd: true };
+    reading.push('hand offered at beat ' + st.beatIdx + '/' + st.beats); break; }
+  // A micro-decision or a gate is its own offered control — take it rather than advancing past it.
+  if (st.micro > 0) {
+    await page.click('.staged-micro-opt', { timeout: 6000 })
+      .catch((e) => reading.push('micro-opt refused: ' + String(e.message).split('\n')[0].slice(0, 60)));
+    reading.push('micro-decision at beat ' + st.beatIdx);
+  } else if (st.gate > 0) {
+    // A GATE IS AN OFFERED CONTROL. Describe it, then take whatever it actually offers.
+    const g = await page.evaluate(() => {
+      const el = document.querySelector('.staged-decision-gate');
+      if (!el) return null;
+      const opts = Array.from(el.querySelectorAll('button, [role=button], .staged-gate-opt, a'))
+        .filter(x => x.getClientRects().length > 0)
+        .map(x => ({ id: x.id || null, cls: (x.className || '').toString().slice(0, 40),
+                     txt: (x.textContent || '').trim().slice(0, 40) }));
+      return { text: (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120), opts };
     });
-    if (tapped) {
-      await page.mouse.move(0, 0);
-      const r = await page.evaluate(() => {
-        const p2 = document.getElementById('gnPanelDisplay').getBoundingClientRect();
-        return { x: Math.round(p2.left + 40), y: Math.round(p2.top + 40) };
-      });
-      await page.mouse.click(r.x, r.y);
-    } else { reading.push('nothing under the panel pointer'); }
-  } else if (st.next && !st.nextDisabled) {
-    await page.click('#gnNextPageBtn', { timeout: 6000 }).catch(() => reading.push('page turn failed'));
-  } else { reading.push('no usable reader control (next disabled=' + st.nextDisabled + ')');
-           dealt = { ...st }; break; }
-  await page.waitForTimeout(900);
-  dealt = { ...st };
+    reading.push('gate at beat ' + st.beatIdx + ': ' + JSON.stringify(g && g.opts));
+    if (g && g.opts.length) {
+      await page.click('.staged-decision-gate button, .staged-decision-gate [role=button], '
+        + '.staged-decision-gate .staged-gate-opt', { timeout: 6000 })
+        .catch((e) => reading.push('gate option refused: ' + String(e.message).split('\n')[0].slice(0, 60)));
+    } else {
+      reading.push('GATE WITH NO OFFERED OPTION: ' + JSON.stringify(g && g.text));
+      dealt = { ...st }; break;
+    }
+  } else if (st.nextBtn && !st.nextDisabled) {
+    await page.click('#stagedNextBtn', { timeout: 6000 })
+      .catch((e) => reading.push('#stagedNextBtn refused at beat ' + st.beatIdx + ': '
+        + String(e.message).split('\n')[0].slice(0, 70)));
+  } else if (st.beatReader) {
+    await page.click('#stagedBeatReader', { timeout: 6000 })
+      .catch((e) => reading.push('#stagedBeatReader refused at beat ' + st.beatIdx + ': '
+        + String(e.message).split('\n')[0].slice(0, 70)));
+  } else {
+    reading.push('NEITHER CONTROL IS ON SCREEN at beat ' + st.beatIdx + '/' + st.beats
+      + ' (nextBtn=' + st.nextBtn + ' disabled=' + st.nextDisabled + ' beatReader=' + st.beatReader + ')');
+    dealt = { ...st }; break;
+  }
+  await page.waitForTimeout(700);
 }
-const blocker = await page.evaluate(() => {
-  const panel = document.getElementById('gnPanelDisplay');
-  if (!panel) return 'no panel';
-  const r = panel.getBoundingClientRect();
-  const cx = Math.round(r.left + 40), cy = Math.round(r.top + 40);
-  const top = document.elementFromPoint(cx, cy);
-  const stage = document.getElementById('intimacyDialogueStage');
-  const cs = stage ? getComputedStyle(stage) : null;
-  return { topElementAt: top ? (top.id || top.className || top.tagName) : null,
-           stageOnScreen: !!(stage && stage.getClientRects().length > 0),
-           stagePointerEvents: cs ? cs.pointerEvents : null,
-           stageZ: cs ? cs.zIndex : null, stagePos: cs ? cs.position : null };
-});
-console.log('   WHAT IS OVER THE PANEL: ' + JSON.stringify(blocker));
-console.log('   reading scene 2: ' + reading.join(' | '));
-console.log('   production offered: ' + JSON.stringify(dealt));
+console.log('   reading scene 2: ' + reading.slice(0, 6).join(' | '));
+console.log('   final beat state: ' + JSON.stringify(lastState));
 t('Scene 2 could be READ to the point where a hand is offered', dealt.atEnd === true,
   JSON.stringify(dealt));
 t('PRODUCTION offered the hand — it was not force-dealt', dealt.onScreen === 5,
