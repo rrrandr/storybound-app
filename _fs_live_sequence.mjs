@@ -1039,7 +1039,31 @@ try {
   if (!halted) {
     say('── OAS (live) ──');
     await optOutPortraits();
-    await enterOAS(page, { settleMs: 9000 });
+    // THE REVISED OPENING ENTERS BY ANSWERING JULIAN, so that submission IS the first exchange.
+    // enterOAS reports firstTurnConsumed for the new entrance (the legacy Continue button does
+    // not), and the six are counted INCLUDING it.
+    const _entry = await enterOAS(page, { settleMs: 9000 });
+    const _entryCounted = _entry && _entry.firstTurnConsumed ? 1 : 0;
+    say('  entered via ' + ((_entry && _entry.route) || '?')
+      + (_entryCounted ? ' — the submitted answer IS exchange 1 of the six' : ''));
+    // SUBMIT -> FIRST READABLE PROSE, measured separately from provider latency (which the
+    // per-call roll-up already reports). This is what the reader actually waits through.
+    let _submitToProseMs = null;
+    if (_entryCounted) {
+      const _t0 = Date.now();
+      for (let w = 0; w < 120; w++) {
+        const readable = await page.evaluate(() => {
+          const d = window.state.intimacyDialogue;
+          const h = (d && Array.isArray(d.liTurnHistory)) ? d.liTurnHistory : [];
+          const last = h.length ? h[h.length - 1] : null;
+          return !!(last && String(last.liResponse || '').trim().length > 20);
+        }).catch(() => false);
+        if (readable) { _submitToProseMs = Date.now() - _t0; break; }
+        await page.waitForTimeout(500);
+      }
+      say('  submit -> first readable prose: '
+        + (_submitToProseMs == null ? 'NOT OBSERVED within 60s' : _submitToProseMs + 'ms'));
+    }
 
     // EACH INPUT IS ACCEPTED AND ITS RESPONSE COMPLETED BEFORE THE NEXT ONE. The previous
     // version fired inputs nine seconds apart while calls were taking fifteen, never checked
@@ -1485,7 +1509,8 @@ try {
           + evidence.callN
           + (evidence.chain && evidence.chain.cleanupAccepted
               ? ', cleanup call ' + evidence.chain.cleanup + ' (input verified)' : '')
-          + ' — ' + evidence.matchedOn + ' — counts toward the six');
+          + ' — ' + evidence.matchedOn + ' — exchange '
+          + (modelBackedReplies + _entryCounted) + ' of ' + EXIT_AFTER_EXCHANGES);
       } else {
         say('      *** NOT A MODEL EXCHANGE — ' + (
           !renderedGrew ? 'the app rendered no new reply for this turn'
@@ -1508,7 +1533,7 @@ try {
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
-      if (!exited && renderedReplies >= EXIT_AFTER_EXCHANGES) {
+      if (!exited && (renderedReplies + _entryCounted) >= EXIT_AFTER_EXCHANGES) {
         const still = await page.evaluate(() => {
           const d = window.state.intimacyDialogue;
           return { active: !!(d && d.active), resolving: !!(d && d._resolving) };
@@ -1755,6 +1780,8 @@ try {
     }));
     write('after_oas.json', { turnsTaken, resolved, oasFinal, interruption: intr, decision,
       scriptedExit, exitAfterExchanges: EXIT_AFTER_EXCHANGES, laneContradiction,
+      entryRoute: (_entry && _entry.route) || null, entryCountedAsExchange: !!_entryCounted,
+      submitToFirstReadableProseMs: _submitToProseMs,
       modelBackedReplies, fallbackCount: fallbackSeen, infraFailure,
       exitKind: scriptedExit ? 'SCRIPTED READER EXIT — not model resolution, not story timing' : null,
       snap: await snapshot('after_oas') });

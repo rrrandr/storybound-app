@@ -1,0 +1,11 @@
+{
+  "deck": {
+    "route": null,
+    "mount": "gnCardMount",
+    "inMount": 5,
+    "visibleInMount": 5,
+    "anywhere": 7,
+    "visibleAnywhere": 5,
+    "committed": false
+  }
+}

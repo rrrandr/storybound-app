@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card | stale | commit | cardless
+const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card | stale | commit | cardless | oasdeck
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -394,6 +394,93 @@ if (ARM === 'cardless') {
   t('NO COMMITTED ROW CLAIMS A CARD', rows.every(r => !r.assist),
     JSON.stringify(rows.map(r => r.assist)));
   fs.writeFileSync(OUT + '/cardless.json', JSON.stringify({ sel0, selAtPlan, rows }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
+}
+
+if (ARM === 'oasdeck') {
+  console.log('\n=== PRE-FLIGHT: does the OAS deck mount after entering via the entrance? ===');
+  // The live runner's replay stopped with "the OAS deck never mounted at turn 1". Its harness does
+  // not render the reader surface, so it cannot tell a missing deck from an unseen one. This
+  // harness DOES render, so the question can actually be answered before any paid run.
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened from the entrance', o1 === 'opened', 'outcome=' + o1);
+  // Let the first reply render, then look for the OAS's own deck.
+  for (let i = 0; i < 30; i++) {
+    const got = await page.evaluate(() => {
+      const d = window.state.intimacyDialogue;
+      const h = (d && Array.isArray(d.liTurnHistory)) ? d.liTurnHistory : [];
+      return h.length > 0;
+    });
+    if (got) break;
+    await page.waitForTimeout(1000);
+  }
+  let deck = null;
+  for (let i = 0; i < 40; i++) {
+    deck = await page.evaluate(() => {
+      const route = window._sbEntranceRoute;
+      const m = window._activeCardMount();
+      const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
+      const anywhere = Array.from(document.querySelectorAll('.fate-card, [data-card]'));
+      return { route: route ? route.mount : null, mount: m ? m.id : null,
+               inMount: cards.length, visibleInMount: cards.filter(c => c.getClientRects().length > 0).length,
+               anywhere: anywhere.length,
+               visibleAnywhere: anywhere.filter(c => c.getClientRects().length > 0).length,
+               beat: (window.state.intimacyDialogue || {})._beat,
+               committed: !!window.state.fateCommitted };
+    });
+    if (deck.visibleAnywhere > 0) break;
+    await page.waitForTimeout(1000);
+  }
+  console.log('   deck state: ' + JSON.stringify(deck));
+  const where = await page.evaluate(() => {
+    const out = {};
+    Array.from(document.querySelectorAll('.fate-card, [data-card]')).forEach((c) => {
+      let host = c.parentElement, id = null;
+      while (host && host !== document.body) { if (host.id) { id = host.id; break; } host = host.parentElement; }
+      const key = id || '(no id)';
+      out[key] = out[key] || { count: 0, visible: 0, hostHidden: null, hostDisplay: null };
+      out[key].count++;
+      if (c.getClientRects().length > 0) out[key].visible++;
+      const h = id ? document.getElementById(id) : null;
+      if (h) { out[key].hostHidden = h.classList.contains('hidden');
+               out[key].hostDisplay = getComputedStyle(h).display; }
+    });
+    const ent = document.getElementById('bakedOASHandoff');
+    return { byHost: out, entranceStillInDom: !!ent,
+             entranceDisplay: ent ? getComputedStyle(ent).display : null };
+  });
+  console.log('   WHERE THE CARDS ARE: ' + JSON.stringify(where));
+  t('the entrance route was released once the OAS opened', deck.route === null);
+  t('THE OAS DECK MOUNTS WITH VISIBLE CARDS', deck.visibleAnywhere > 0, JSON.stringify(deck));
+  if (deck.visibleAnywhere > 0) {
+    t('and the active mount is where they are', deck.visibleInMount > 0,
+      'mount=' + deck.mount + ' visibleInMount=' + deck.visibleInMount);
+    const before = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+      return { a: i.actInput.value, d: i.diaInput.value }; });
+    await page.click('.fate-card, [data-card]', { timeout: 8000 }).catch(() => {});
+    let filled = before;
+    for (let i = 0; i < 20; i++) {
+      filled = await page.evaluate(() => { const i2 = window._getActiveTurnInputs();
+        return { a: i2.actInput.value, d: i2.diaInput.value }; });
+      if (filled.a !== before.a || filled.d !== before.d) break;
+      await page.waitForTimeout(1000);
+    }
+    // The OAS has its OWN preview batch (generateIntimateFatePreviewsBatch). This harness does not
+    // fixture that stage, so the suggestion never arrives and the fields stay empty. The DECK
+    // mounting is what this pre-flight set out to answer, and that is now proven; the fill needs
+    // an intimate-preview fixture and is reported, not claimed.
+    t('an OAS card click fills the reader\'s Say/Do', filled.a !== before.a || filled.d !== before.d,
+      JSON.stringify(filled) + ' — the OAS intimate-preview stage is NOT fixtured in this '
+      + 'harness, so this is a harness gap unless a preview response is served');
+  }
+  fs.writeFileSync(OUT + '/oasdeck.json', JSON.stringify({ deck }, null, 2));
   await browser.close();
   console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
   process.exit(fail ? 1 : 0);

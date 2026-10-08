@@ -143749,6 +143749,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           Promise.resolve(_opened).then(function () {
             // Only now is the entrance genuinely behind us.
             try { window._sbEntranceRoute = null; } catch (_) {}
+          // The entrance is behind us: remove it so its dealt hand is not stranded in a hidden
+          // host while the OAS deals its own into the active mount.
+          try {
+            var _entWrap = document.getElementById('bakedOASHandoff');
+            if (_entWrap) _entWrap.remove();
+            // AND RELEASE THE MOUNTS THE ENTRANCE HID. The Examine gate hides every card mount so
+            // no playable hand exists before it is tapped; only the post-interruption advance used
+            // to un-hide them, so the OAS ran its whole encounter with its deck dealt into a
+            // hidden #gnCardMount. Released here, as the OAS takes the screen.
+            ['cardMount', 'gnCardMount', 'fateSpecialCards', 'gnFateSection']
+              .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+              });
+          } catch (_) {}
             try {
               console.log('[OAS:ENTRANCE] submitting as the first turn — say=' + say2.length
                 + 'c do=' + doT2.length + 'c');
@@ -210030,7 +210045,14 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _d = state.intimacyDialogue;
       var _beat = _d && _d.beatCount;
-      if (state.fateCommitted && _beat !== _d._fateHandBeat) {
+      // THE OAS NEEDS A DECK EVEN WHEN NOTHING WAS COMMITTED (2026-10-08).
+      // This gate required state.fateCommitted, which used to be satisfied because the reader
+      // reached the OAS through a path that had already committed a hand. The revised opening
+      // lets them enter BY TYPING AN ANSWER, so nothing is committed — and measured in the
+      // rendered harness the OAS then had NO deck at all: 5 cards stranded in the entrance's own
+      // hidden host, 2 locked specials, and #gnCardMount empty. The reader would see no cards for
+      // the whole encounter. A deck per beat does not depend on a prior commitment.
+      if (_beat !== _d._fateHandBeat) {
         _d._fateHandBeat = _beat;
         if (typeof window.dealFateCards === 'function') {
           window.dealFateCards({ force: true });

@@ -1,5 +1,5 @@
 ROLE: You are the SCENE-SPINE planner
-CHARS: 37385
+CHARS: 37313
 
 === SYSTEM ===
 You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.
@@ -15,14 +15,14 @@ Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_c
 
 RECENT ONE-ON-ONE EXCHANGE (already happened, archived before this handoff — what was ACTUALLY said and done just before the reader's submission. Plan FROM its consequences; do not re-stage or re-tell it):
   PLAYER: I am still here. / I hold his gaze.
-  Julian: Keep looking at me like that and The Answer might surprise you.
-    (Julian's game was as dangerous as it was exciting; I couldn't help noticing his tunic getting tighter.)
-  PLAYER: I am still here. / I hold his gaze.
   Julian: Say it plainly and I will stop. You do not want me to stop.
     (Somewhere behind us a guest shifts, and I remember we are still being watched.)
   PLAYER: I am still here. / I hold his gaze.
   Julian: Then we understand each other, and everyone here understands us.
     (The clearing has not made a sound in a long while.)
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: Hold it or set it down. Either tells them something.
+    (He sets The Answer down on the stone between us and steps back.)
   PLAYER: I am still here. / I hold his gaze.
   Julian: Then say it where they can hear you, or do not say it at all.
     (He waits, and the clearing waits with him.)
@@ -126,11 +126,11 @@ IMMUTABLE AFTERMATH (already read; build FROM it, never re-establish or reverse 
   • what the cast now perceive of each other: [object Object] | [object Object] | [object Object] | [object Object] | [object Object] | [object Object] | [object Object]
 RECENT OAS EXCHANGE (this scene's own live turn history, archived before handoff — what was ACTUALLY said just before the reader's posture below; your objective must carry this forward, not restage a question or accusation already answered here):
   PLAYER: I am still here. / I hold his gaze.
-  Julian: Say it plainly and I will stop. You do not want me to stop.
-    (Somewhere behind us a guest shifts, and I remember we are still being watched.)
-  PLAYER: I am still here. / I hold his gaze.
   Julian: Then we understand each other, and everyone here understands us.
     (The clearing has not made a sound in a long while.)
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: Hold it or set it down. Either tells them something.
+    (He sets The Answer down on the stone between us and steps back.)
   PLAYER: I am still here. / I hold his gaze.
   Julian: Then say it where they can hear you, or do not say it at all.
     (He waits, and the clearing waits with him.)

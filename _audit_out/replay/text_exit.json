@@ -1,7 +1,7 @@
 {
   "afterOne": {
-    "beat": 1,
-    "replies": 1,
+    "beat": 2,
+    "replies": 2,
     "boredom": 0
   },
   "modal": {
@@ -38,5 +38,5 @@
     "exchangeMounted": true,
     "archive": 1
   },
-  "archive": "[OAS:ARCHIVE] Snapshot saved at scene index 0 — 1 beats, reason=user_pivot_end"
+  "archive": "[OAS:ARCHIVE] Snapshot saved at scene index 0 — 2 beats, reason=user_pivot_end"
 }
