@@ -102179,6 +102179,44 @@ function _buildAuthorFloorDirective(s) {
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
             + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
+            + ((function () {
+                // ── WHAT THE READER HAS ALREADY READ (2026-10-07) ────────────────────────────
+                // The planner used to get COMMITTED WORLD STATE only, which is fed solely by
+                // _commitTransition (sealed proposal adjudicated against generated prose). The
+                // BAKED OPENING has no sealed proposal, so none of its facts reached the planner
+                // while the AUTHOR saw them all through _buildContinuitySpineBlock's STORY LEDGER.
+                //
+                // This forwards the SAME BOUNDED ROWS via the shared _renderLedgerHistoryRows —
+                // NOT the whole continuity spine, so history notes, the OAS exchange and durable
+                // consequences already present in this payload are not duplicated.
+                //
+                // A row exists only once its event was COMMITTED, so nothing planned can appear
+                // and a future interruption cannot become past history.
+                try {
+                  if (typeof _renderLedgerHistoryRows !== 'function') return '';
+                  var _L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
+                  var _lg = (_L && Array.isArray(_L.entries)) ? _L.entries : [];
+                  if (!_lg.length) return '';
+                  // VERIFIED OUTCOMES, keyed by the scene that committed them — the same mapping
+                  // the author's block builds, so "verified on the page" keeps its meaning.
+                  var _vb = {};
+                  try {
+                    var _cf = (s._committedState && Array.isArray(s._committedState.facts))
+                      ? s._committedState.facts : [];
+                    _cf.forEach(function (f) {
+                      if (!f || !f.fact) return;
+                      var k = (typeof f.committedAtScene === 'number') ? f.committedAtScene : null;
+                      if (k == null) { var m = /^scene(\d+)_transition$/.exec(String(f.sourceEvent || '')); if (m) k = Number(m[1]); }
+                      if (k == null) return;
+                      (_vb[k] = _vb[k] || []).push(String(f.fact).slice(0, 200));
+                    });
+                  } catch (_) {}
+                  var _rows = _renderLedgerHistoryRows(s, _lg, _vb, 1600) || [];
+                  if (!_rows.length) return '';
+                  return '\nALREADY ON THE PAGE (authored events and verified outcomes the reader '
+                    + 'has read; context only, NOT the event to propose):\n' + _rows.join('\n');
+                } catch (_) { return ''; }
+              })())
             + '\nReachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.\n'
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
@@ -133570,6 +133608,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         storyId: String(s.storyId || ''), sceneNumber: n,
         act: _slClip(extras.act, 240, 'act'), dia: _slClip(extras.dia, 240, 'dia'),
         card: s.tempt_fate_invoked_this_turn ? 'tempt' : ((s.fate && s.fate.pendingPetition) ? 'petition' : 'ordinary'),
+        // ── WHICH CARD ASSISTED THIS SUBMISSION (2026-10-07) ────────────────────────────────
+        // `card` above is the submitted MECHANISM, and its 'ordinary' value is a fallback that
+        // also covers TYPED-ONLY input — so it can never evidence that a Fate card was played.
+        // This captures the card's own identity and label, and it is captured HERE, at the
+        // accepted submission boundary, onto a key already stamped with storyId + sceneNumber.
+        // Planning must never re-read the mutable live selection later.
+        //
+        // It is ASSISTANCE PROVENANCE, deliberately separate from act/dia above: the reader may
+        // have edited the suggestion, and their wording stays authoritative.
+        cardAssist: (function () {
+          try {
+            if (!s.fateCommitted) return null;                       // nothing was played
+            var idx = s.fateSelectedIndex;
+            if (typeof idx !== 'number' || idx < 0) return null;     // typed-only: NOT a card
+            var opts2 = Array.isArray(s.fateOptions) ? s.fateOptions : [];
+            var c = opts2[idx];
+            if (!c) return null;
+            var label = String(c.title || c.name || c.archetype || c.label || '').trim();
+            var id = String(c.id || c.key || c.archetype || label || '').trim();
+            if (!label && !id) return null;
+            return { id: id.slice(0, 48), label: label.slice(0, 48), index: idx };
+          } catch (_) { return null; }
+        })(),
         plannedEvent: asg && asg.event ? _slClip(asg.event, 300, 'plannedEvent') : null, plannedSource: (asg && asg.source) || null,
         setting: asg && asg.setting ? _slClip(asg.setting, 120, 'setting') : null,
         participants: (asg && Array.isArray(asg.participants)) ? asg.participants.slice(0, 8).map(String) : null,
@@ -133624,7 +133685,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // becomes a competing source of truth — one entry, one history, a bounded view of it.
         plannedEventFull: eventFull,
         act: useKey ? key.act : _slClip(opts.act, 240), dia: useKey ? key.dia : _slClip(opts.dia, 240),
-        card: useKey ? key.card : (opts.card || null), posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
+        card: useKey ? key.card : (opts.card || null),
+        cardAssist: useKey ? (key.cardAssist || null) : (opts.cardAssist || null),
+        posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
       };
       Object.freeze(entry); L.entries.push(entry);
       if (useKey) s._authoringSceneKey = null;
@@ -133853,6 +133916,64 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // is exactly what _validateStageProposal's pre-commit BUDGET CHECK calls, so a stage proposal is
   // measured against the REAL remaining room, never a guessed split. No recursion risk: with
   // includeStage:false this function never calls _buildCurrentStageDirective at all.
+  /** THE BOUNDED LEDGER ROWS, shared with the planner (2026-10-07).
+   *  Extracted VERBATIM from _buildContinuitySpineBlock so both consumers render history the same
+   *  way and the distinctions already encoded here are preserved wherever it is used:
+   *    kind 'baked'        -> "the authored opening established:"  (AUTHORED EVENT)
+   *    kind 'oas_interrupt'-> "the opening ended:"                 (AUTHORED EVENT)
+   *    act / dia           -> "reader did / reader said"           (what the reader submitted)
+   *    card 'tempt'/'petition' -> the actual submitted mechanism; 'ordinary' is NEVER rendered as
+   *                            a card, because typed input shares that category
+   *    verifiedBy[scene]   -> "verified on the page:"              (VERIFIED OUTCOME)
+   *  A row exists only once its event has been COMMITTED, so nothing planned can appear here.
+   *  Returns the same array the spine block used to build inline. */
+  function _renderLedgerHistoryRows(s, entries, verifiedBy, historyBudget) {
+    var historyLines = [];
+    entries = entries || []; verifiedBy = verifiedBy || {};
+        if (entries.length) {
+          var cur = (Number.isInteger(s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
+          for (var windowSize = Math.min(_SPINE_RECENT, entries.length); windowSize >= 0; windowSize--) {
+            var recent = windowSize ? entries.slice(-windowSize) : [];
+            var older = entries.length - recent.length;
+            var candidate = ['  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:'];
+            recent.forEach(function (e) {
+              var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
+              // ── READ THE WHOLE EVENT WHERE THE RECORD HAS ONE (Roman 2026-10-03) ──────────────
+              // Keeping the full text in `plannedEventFull` preserved it in STORAGE and changed
+              // nothing about planning, because every consumer still read the truncated
+              // `plannedEvent`. That is the same mistake as archiving the OAS and not forwarding it.
+              // The builder below already fits its output to a budget by dropping whole PAGES, so a
+              // longer line here is bounded by that existing mechanism rather than by a blind cut
+              // mid-sentence. Older records without the field fall back unchanged.
+              var _evText = function (ent) { return (ent && (ent.plannedEventFull || ent.plannedEvent)) || ''; };
+              if (e.kind === 'baked' && _evText(e)) bits.push('the authored opening established: ' + _evText(e));   // 2026-09-10: a fixed seed opening records what it established
+              if (e.kind === 'oas_interrupt' && _evText(e)) bits.push('the opening ended: ' + _evText(e));            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
+              if (e.act) bits.push('reader did: ' + e.act);
+              if (e.dia) bits.push('reader said: "' + e.dia + '"');
+              if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
+            // The card that supplied the suggestion, if one did. Separate from the mechanism tags
+            // above and from the reader's own wording, which remains authoritative. Absent for
+            // typed-only turns, so its presence is real evidence that a card was played.
+            if (e.cardAssist && (e.cardAssist.label || e.cardAssist.id)) {
+              bits.push('[suggestion taken from the ' + (e.cardAssist.label || e.cardAssist.id) + ' card]');
+            }
+              // posture: the interruption fate-card slot the reader picked (context only — the
+              // reader's own act/dia above is the words; this never substitutes for them). A
+              // SEPARATE field from `card` on purpose — never collapse a posture slot into the
+              // tempt/petition/ordinary vocabulary that field carries.
+              if (e.posture) { var _pSlot = (typeof _INTR_SLOTS !== 'undefined') ? _INTR_SLOTS.filter(function (sl) { return sl.key === e.posture; })[0] : null; bits.push('answered from a posture of ' + (_pSlot ? _pSlot.label : e.posture)); }
+              if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
+              var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
+              candidate.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
+            });
+            if (candidate.join('\n').length <= historyBudget || windowSize === 0) { historyLines = candidate; break; }
+          }
+        }
+    return historyLines;
+  }
+  window._renderLedgerHistoryRows = _renderLedgerHistoryRows;
+
+
   function _buildContinuitySpineBlock(s, opts) {
     try {
       s = s || window.state; if (!s) return '';
@@ -133911,39 +134032,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var protectedLen = ('\n' + [headerLine].concat(whoLine ? [whoLine] : []).concat(durableLine ? [durableLine] : []).concat(temptDurableLine ? [temptDurableLine] : []).concat(stageLine ? [stageLine] : []).concat([nowLine]).join('\n') + '\n').length;
       var historyBudget = Math.max(0, _SPINE_MAX_CHARS - protectedLen);
       var historyLines = [];
-      if (entries.length) {
-        var cur = (Number.isInteger(s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
-        for (var windowSize = Math.min(_SPINE_RECENT, entries.length); windowSize >= 0; windowSize--) {
-          var recent = windowSize ? entries.slice(-windowSize) : [];
-          var older = entries.length - recent.length;
-          var candidate = ['  ALREADY READ (' + entries.length + ' page' + (entries.length === 1 ? '' : 's') + (older ? '; ' + older + ' earlier not listed' : '') + ') — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:'];
-          recent.forEach(function (e) {
-            var tag = (e.issue !== cur ? 'issue ' + e.issue + ' ' : '') + 'p' + e.sceneNumber, bits = [];
-            // ── READ THE WHOLE EVENT WHERE THE RECORD HAS ONE (Roman 2026-10-03) ──────────────
-            // Keeping the full text in `plannedEventFull` preserved it in STORAGE and changed
-            // nothing about planning, because every consumer still read the truncated
-            // `plannedEvent`. That is the same mistake as archiving the OAS and not forwarding it.
-            // The builder below already fits its output to a budget by dropping whole PAGES, so a
-            // longer line here is bounded by that existing mechanism rather than by a blind cut
-            // mid-sentence. Older records without the field fall back unchanged.
-            var _evText = function (ent) { return (ent && (ent.plannedEventFull || ent.plannedEvent)) || ''; };
-            if (e.kind === 'baked' && _evText(e)) bits.push('the authored opening established: ' + _evText(e));   // 2026-09-10: a fixed seed opening records what it established
-            if (e.kind === 'oas_interrupt' && _evText(e)) bits.push('the opening ended: ' + _evText(e));            // 2026-09-11: the interruption's fixed exchange, then the reader's own answer (act/dia below)
-            if (e.act) bits.push('reader did: ' + e.act);
-            if (e.dia) bits.push('reader said: "' + e.dia + '"');
-            if (e.card === 'tempt') bits.push('[Tempt Fate played]'); else if (e.card === 'petition') bits.push('[Petition made]');
-            // posture: the interruption fate-card slot the reader picked (context only — the
-            // reader's own act/dia above is the words; this never substitutes for them). A
-            // SEPARATE field from `card` on purpose — never collapse a posture slot into the
-            // tempt/petition/ordinary vocabulary that field carries.
-            if (e.posture) { var _pSlot = (typeof _INTR_SLOTS !== 'undefined') ? _INTR_SLOTS.filter(function (sl) { return sl.key === e.posture; })[0] : null; bits.push('answered from a posture of ' + (_pSlot ? _pSlot.label : e.posture)); }
-            if (e.changes && e.changes.length) bits.push('[Fate recorded a permanent change]');
-            var vf = verifiedBy[e.sceneNumber]; if (vf && vf.length) bits.push('verified on the page: ' + vf.join('; '));
-            candidate.push('    ' + tag + ': ' + (bits.length ? bits.join(' — ') : 'page read (no recorded facts)'));
-          });
-          if (candidate.join('\n').length <= historyBudget || windowSize === 0) { historyLines = candidate; break; }
-        }
-      }
+      historyLines = _renderLedgerHistoryRows(s, entries, verifiedBy, historyBudget);
       var lines = [headerLine];
       if (whoLine) lines.push(whoLine);
       if (historyLines.length) lines = lines.concat(historyLines);

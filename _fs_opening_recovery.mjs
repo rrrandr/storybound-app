@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | setupchar
+const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -34,6 +34,7 @@ let failSetupKeys = [];        // system-prompt substrings to fail, for the inje
 const setupReqs = [];          // every provider request seen while setup runs
 const providerReqs = [];       // all provider requests, classified
 const oasReqs = [];
+const plannerReqs = [];
 const chargeOps = [];
 const debited = new Map();
 let balance = 9999999;
@@ -90,10 +91,12 @@ await page.route('**/*', async (route) => {
     oasReqs.push({ whole: msgs.map(m => String(m.content || '')).join('\n') });
     body = JSON.stringify({ li_dialogue: 'You answer me in front of them, then.',
       li_action: 'He does not lower The Answer.', li_next_prompt: 'Say it again, louder.',
-      li_face_state: 'neutral', scene_state: 'continue', scene_tone: 'tense',
+      li_face_state: 'neutral',
+      scene_state: (oasReqs.length >= 6 ? 'resolve' : 'continue'), scene_tone: 'tense',
       user_signal: 'engaged', temperature_shift: 0 });
   } else if (stage === 'author') body = AUTHOR_FIXTURE;
-  else if (stage === 'planner') body = FS_PLANNER || '{}';
+  else if (stage === 'planner') plannerReqs.push({ whole: msgs.map(m => String(m.content || '')).join('\n') });
+  if (stage === 'planner') body = FS_PLANNER || '{}';
   else if (stage === 'memory') body = MEMORY;
   else if (stage === 'verifier') body = verifierVerdict([]);
   else if (stage === 'bible') body = JSON.stringify({ ok: true });
@@ -257,6 +260,69 @@ if (ARM === 'auth') {
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(3000);
   t('no duplicate dispatch', oasReqs.length === 1, 'oas=' + oasReqs.length);
+}
+
+if (ARM === 'continuity') {
+  console.log('\n=== CONTINUITY: WHAT REACHES THE OUTGOING PLANNER REQUEST ===');
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  // Drive the OAS to the authored interruption, then take the branch, so BOTH ledger rows exist.
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  const rows = await page.evaluate(() => {
+    const L = window._sceneLedgerGet ? window._sceneLedgerGet(window.state, false) : null;
+    return (L && L.entries ? L.entries : []).map(e => ({ kind: e.kind, scene: e.sceneNumber,
+      card: e.card, assist: e.cardAssist || null,
+      event: String(e.plannedEventFull || e.plannedEvent || '').slice(0, 70) }));
+  });
+  console.log('   ledger rows before the branch: ' + JSON.stringify(rows, null, 1).slice(0, 600));
+  t('the authored opening row exists', rows.some(r => r.kind === 'baked'), JSON.stringify(rows.map(r => r.kind)));
+  t('the interruption row exists too', rows.some(r => r.kind === 'oas_interrupt'),
+    JSON.stringify(rows.map(r => r.kind)));
+  const btnId = await page.evaluate(() => {
+    for (const id of ['sceneDecisionA', 'sceneDecisionB']) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('data-choice') === 'run') return id;
+    } return null;
+  });
+  t('the branch is offered', !!btnId, 'btn=' + btnId);
+  await clearOverlays();
+  if (btnId) await page.click('#' + btnId, { timeout: 15000 });
+  for (let i = 0; i < 40 && plannerReqs.length === 0; i++) await page.waitForTimeout(1000);
+  console.log('   planner requests captured: ' + plannerReqs.length);
+  t('a planner request went out', plannerReqs.length >= 1);
+  if (plannerReqs.length) {
+    const w = plannerReqs[0].whole;
+    fs.writeFileSync(OUT + '/planner_continuity.txt', w);
+    const has = (rx) => rx.test(w);
+    console.log('   section present: ' + has(/ALREADY ON THE PAGE/));
+    t('the bounded ledger section reached the planner', has(/ALREADY ON THE PAGE/));
+    t('the authored opening is labelled as authored', has(/the authored opening established:/));
+    t('OPENING FACT — the wish twisted', has(/began to twist/));
+    t('OPENING FACT — the charge of shaping', has(/charged Lirael with shaping/));
+    t('OPENING FACT — The Answer in her hand', has(/The Answer in her hand/));
+    t('the interruption row is labelled as the opening ending', has(/the opening ended:/));
+    t('INTERRUPTION FACT — the formal inquiry venue', has(/formal inquiry/i));
+    // NO DUPLICATION of what the payload already carries.
+    const count = (rx) => (w.match(rx) || []).length;
+    console.log('   RECENT ONE-ON-ONE EXCHANGE blocks: ' + count(/RECENT ONE-ON-ONE EXCHANGE/g));
+    t('the OAS exchange is not duplicated', count(/RECENT ONE-ON-ONE EXCHANGE/g) <= 1);
+    t('the whole continuity spine was NOT appended', !has(/STORY LEDGER \(authoritative/));
+    t('NOW: page … is not appended either', !has(/\n  NOW: page /));
+    t('no planned event is presented as history', !has(/the authored opening established: *$/m));
+  }
+  fs.writeFileSync(OUT + '/continuity.json', JSON.stringify({ rows, planners: plannerReqs.length }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
 }
 
 if (ARM === 'setupchar') {

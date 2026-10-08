@@ -1,0 +1,19 @@
+{
+  "rows": [
+    {
+      "kind": "baked",
+      "scene": 1,
+      "card": null,
+      "assist": null,
+      "event": "Seren’s wish for Lirael — “that she find the one she lost” — began to "
+    },
+    {
+      "kind": "oas_interrupt",
+      "scene": 1,
+      "card": null,
+      "assist": null,
+      "event": "The presiding Dohkar cut the interrogation off — a Provast questioning"
+    }
+  ],
+  "planners": 1
+}
