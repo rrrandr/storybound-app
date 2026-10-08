@@ -1,12 +1,12 @@
 {
   "sceneAt": 3,
-  "played1": "Reversal",
+  "played1": "Temptation",
   "committedAfterFail": null,
   "after": null,
   "provLines": [
-    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (typed-only)",
-    "LOG [SUBMISSION-PROVENANCE] scene 3 - card none (typed-only)",
-    "LOG [SUBMISSION-PROVENANCE] scene 4 - card Reversal"
+    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (no selection) - attempt cgGenAttempt:cpa:f67236a9",
+    "LOG [SUBMISSION-PROVENANCE] scene 3 - card Temptation - attempt cgGenAttempt:cpa:4e325167",
+    "LOG [SUBMISSION-PROVENANCE] scene 4 - card Temptation - attempt cgGenAttempt:cpa:5adf8918"
   ],
   "injectedFailures": 3
 }

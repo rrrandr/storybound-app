@@ -395,19 +395,42 @@ if (ARM === 'stale') {
   // ── ATTEMPT 2: the replacement submission for the SAME scene is TYPED ONLY ──────────────────
   await clearOverlays();
   const hand2 = await reachSceneEndHand();
+  // ── A GENUINELY UNSELECTED SUBMISSION ──────────────────────────────────────────────────────
+  // Retyping over a suggestion must NOT deselect the card — keeping "this began as a Reversal
+  // suggestion" beside the player's edited words is the provenance we want. So the cardless case
+  // needs a hand on which NO card was clicked. If a selection survives onto the fresh hand, look
+  // for a real deselection control (clicking the selected card again is the only candidate the
+  // deck offers); if none works, that is REPORTED as a limitation, not engineered around.
+  let sel2 = await page.evaluate(() => ({ index: window.state.fateSelectedIndex,
+    committed: !!window.state.fateCommitted }));
+  console.log('   selection on the fresh hand: ' + JSON.stringify(sel2));
+  let deselectRoute = 'fresh hand was already unselected';
+  if (sel2.index >= 0) {
+    const sel = '#' + hand2.mount + ' [data-card-index="' + sel2.index + '"]';
+    const exists = await page.evaluate((q) => !!document.querySelector(q), sel);
+    if (exists) {
+      await page.click(sel, { timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+      const re = await page.evaluate(() => window.state.fateSelectedIndex);
+      deselectRoute = (re < 0) ? 'clicking the selected card again cleared it'
+                               : 'NO DESELECTION CONTROL FOUND — selection survived a second click';
+      sel2 = await page.evaluate(() => ({ index: window.state.fateSelectedIndex,
+        committed: !!window.state.fateCommitted }));
+    } else { deselectRoute = 'the selected card is not on this hand'; }
+  }
+  console.log('   deselection: ' + deselectRoute + ' -> ' + JSON.stringify(sel2));
+  const genuinelyCardless = sel2.index < 0;
+  t('THE CARDLESS CASE COULD BE CONSTRUCTED', genuinelyCardless,
+    deselectRoute + ' — selection is ' + JSON.stringify(sel2)
+    + '; without a deselection control a genuinely unselected submission cannot be produced here');
   const REPL = 'I say it in my own words this time.';
   await typeOnly(REPL);
-  const sel2 = await page.evaluate(() => ({ index: window.state.fateSelectedIndex,
-    committed: !!window.state.fateCommitted }));
   console.log('   replacement selection state: ' + JSON.stringify(sel2));
   // CLEARING THE TEXT IS NOT DESELECTING THE CARD. fateSelectedIndex and fateCommitted survive a
   // reader retyping over the suggestion, so from production's point of view the card is still
   // played and this replacement is NOT "explicitly cardless". Recorded, because it decides what
   // the assertions below can honestly mean.
-  t('DIAGNOSIS: retyping over a suggestion does NOT clear the selection',
-    sel2.index >= 0 && sel2.committed === true,
-    'index=' + sel2.index + ' committed=' + sel2.committed
-    + ' — if this ever goes false, the deselection path changed');
+
   const pBefore2 = plannerReqs.length;
   await clearOverlays();
   await page.click('#gnSubmitBtn', { timeout: 15000 }).catch(async () => {
@@ -419,18 +442,49 @@ if (ARM === 'stale') {
   if (plannerReqs.length > pBefore2) {
     const w2 = plannerReqs[plannerReqs.length - 1].whole;
     fs.writeFileSync(OUT + '/planner_replacement.txt', w2);
-    t('THE REPLACEMENT PLANNER CLAIMS NO CARD', !/Fate card played this turn/.test(w2),
-      'a card was claimed on a typed-only replacement');
-    t('and it does not name the abandoned attempt\'s card',
-      !played1 || !w2.includes('Fate card played this turn: ' + played1));
+    if (genuinelyCardless) {
+      t('AN UNSELECTED SUBMISSION CLAIMS NO CARD', !/Fate card played this turn/.test(w2),
+        'a card was claimed on a submission with no selection');
+      t('and it does not name the abandoned attempt\'s card',
+        !played1 || !w2.includes('Fate card played this turn: ' + played1));
+    } else {
+      console.log('   (the no-card assertions are SKIPPED — the submission was not cardless; a '
+        + 'selection survived and editing deliberately does not clear it)');
+    }
     t('the reader\'s own replacement wording is what was submitted', w2.includes(REPL));
   }
   const provLines = consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l));
   console.log('   provenance trail: ' + JSON.stringify(provLines.slice(-4)));
+  // ── ACCEPTED HISTORY: REQUIRE IT EXISTS BEFORE ASSERTING ANYTHING ABOUT IT ────────────────
+  // "!after || !after.assist" passed VACUOUSLY when no row existed at all, and the trace moved
+  // from scene 3 to scene 4 — so it never demonstrated a replacement at the SAME scene. Both are
+  // now preconditions, reported rather than assumed.
+  const sceneAfter = await page.evaluate(() => window._currentSceneNumber(window.state));
+  const accepted = await page.evaluate(() => {
+    const cg = (window.state.scenes || []).filter(x => x && String(x.uid || '').startsWith('cg:'));
+    const last = cg[cg.length - 1] || null;
+    return { cgScenes: cg.length, chars: last ? String(last.text || '').length : 0 };
+  });
   const after = await committedFor(sceneAt);
-  console.log('   committed row now: ' + JSON.stringify(after));
-  t('ACCEPTED HISTORY CARRIES NO STALE CARD for that scene',
-    !after || !after.assist, JSON.stringify(after));
+  const afterNew = await committedFor(sceneAfter);
+  console.log('   scene then/now: ' + sceneAt + ' -> ' + sceneAfter
+    + '  accepted projection: ' + JSON.stringify(accepted));
+  console.log('   row @' + sceneAt + ': ' + JSON.stringify(after)
+    + '  row @' + sceneAfter + ': ' + JSON.stringify(afterNew));
+  t('AN ACCEPTED PROJECTION EXISTS to reason about', accepted.cgScenes >= 1 && accepted.chars > 400,
+    JSON.stringify(accepted));
+  const sameScene = Number(sceneAfter) === Number(sceneAt);
+  t('BOTH ATTEMPTS WERE AT THE SAME SCENE', sameScene,
+    'first attempt at scene ' + sceneAt + ', replacement planned at scene ' + sceneAfter
+    + ' — if these differ the replacement is a NEW scene, not a second attempt at the same one');
+  const row = sameScene ? after : null;
+  t('and that scene HAS a committed ledger row to inspect', !!row,
+    'row @' + sceneAt + ' = ' + JSON.stringify(after));
+  if (row) {
+    t('ACCEPTED HISTORY CARRIES NO STALE CARD from the abandoned attempt',
+      !row.assist || !played1 || (row.assist.label !== played1),
+      JSON.stringify(row.assist));
+  }
   fs.writeFileSync(OUT + '/stale.json', JSON.stringify(
     { sceneAt, played1, committedAfterFail, after, provLines, injectedFailures }, null, 2));
   await browser.close();
@@ -557,8 +611,9 @@ if (ARM === 'card') {
       fs.writeFileSync(OUT + '/planner_card.txt', w);
       const provLine = consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)).pop() || '';
       console.log('   provenance at planning: ' + JSON.stringify(provLine));
-      const m = /- card (.+)$/.exec(provLine);
-      const lab = (m && m[1] !== 'none (typed-only)') ? m[1].trim() : (deckLabels.label || '');
+      const m = /- card (.+?)(?: - attempt .*)?$/.exec(provLine);
+      const cap = m ? m[1].trim() : '';
+      const lab = (cap && !/^none \(/.test(cap)) ? cap : (deckLabels.label || '');
       console.log('   looking for: ' + JSON.stringify(lab));
       t('THE CARD\'S IDENTITY REACHED THAT PLANNER REQUEST', /Fate card played this turn/.test(w),
         'no provenance line in the request');

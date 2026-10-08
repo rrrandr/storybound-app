@@ -133627,9 +133627,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // wording stays authoritative.
     try {
       s = s || window.state; if (!s) return null;
-      if (!s.fateCommitted) return null;
+      // fateCommitted IS NOT RELIABLE HERE: measured, it is already true when the literary route
+      // plans and still false when the CG route does, so requiring it HID a genuinely selected
+      // card on one route. THE SELECTION ITSELF is the evidence; ownership is enforced by the
+      // attempt identity on the snapshot, not by this flag.
       var idx = s.fateSelectedIndex;
-      if (typeof idx !== 'number' || idx < 0) return null;
+      if (typeof idx !== 'number' || idx < 0) return null;      // no selection: NOT a card
       var opts = Array.isArray(s.fateOptions) ? s.fateOptions : [];
       var c = opts[idx];
       if (!c) return null;
@@ -133651,15 +133654,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try {
       s = s || window.state; if (!s) return null;
       var n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : (s.turnCount || 0);
-      // ATTEMPT IDENTITY, reused rather than invented: storyId + sceneNumber cannot tell an
-      // ABANDONED attempt at a scene from its REPLACEMENT.
-      var attempt = (s._cpAttemptId != null) ? String(s._cpAttemptId) : null;
+      // THE OWNING GENERATION'S ATTEMPT IDENTITY. The two routes mint DIFFERENT ones: the CG
+      // route creates state._cgGenAttempt (app.js:239412) before it plans, while _cpAttemptId
+      // belongs to the continuation-planner scaffold. Assuming _cpAttemptId spoke for a running
+      // CG attempt was wrong, so the CG attempt wins wherever one exists.
+      var attempt = null, attemptSource = null;
+      try {
+        if (s._cgGenAttempt && s._cgGenAttempt.id != null
+            && String(s._cgGenAttempt.storyId || '') === String(s.storyId || '')) {
+          attempt = String(s._cgGenAttempt.id); attemptSource = 'cgGenAttempt';
+        } else if (s._cpAttemptId != null) {
+          attempt = String(s._cpAttemptId); attemptSource = 'cpAttemptId';
+        }
+      } catch (_) {}
       var snap = { storyId: String(s.storyId || ''), sceneNumber: n, attemptId: attempt,
-                   cardAssist: _currentCardAssist(s), at: Date.now() };
+                   attemptSource: attemptSource, cardAssist: _currentCardAssist(s), at: Date.now() };
       s._submissionProvenance = snap;
       try {
         console.log('[SUBMISSION-PROVENANCE] scene ' + n + ' - card '
-          + (snap.cardAssist ? (snap.cardAssist.label || snap.cardAssist.id) : 'none (typed-only)'));
+          + (snap.cardAssist ? (snap.cardAssist.label || snap.cardAssist.id) : 'none (no selection)')
+          + ' - attempt ' + (attempt ? (attemptSource + ':' + attempt.slice(0, 12)) : 'NONE'));
       } catch (_) {}
       return snap;
     } catch (_) { return null; }
@@ -133676,9 +133690,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (sceneNumber != null && Number(sp.sceneNumber) !== Number(sceneNumber)) return null;
       // Scene alone cannot separate an abandoned attempt from the replacement that followed it
       // at the same scene, so the attempt must agree where both sides have one.
-      var want = (attemptId != null) ? String(attemptId)
-               : ((s._cpAttemptId != null) ? String(s._cpAttemptId) : null);
-      if (want != null && sp.attemptId != null && String(sp.attemptId) !== want) return null;
+      var want = attemptId != null ? String(attemptId) : null;
+      if (want == null) {
+        try {
+          if (s._cgGenAttempt && s._cgGenAttempt.id != null
+              && String(s._cgGenAttempt.storyId || '') === String(s.storyId || '')) {
+            want = String(s._cgGenAttempt.id);
+          } else if (s._cpAttemptId != null) { want = String(s._cpAttemptId); }
+        } catch (_) {}
+      }
+      // A MISSING IDENTITY ON EITHER SIDE IS NOT A SUCCESSFUL MATCH. Treating absence as
+      // agreement is exactly how another attempt's snapshot would be inherited.
+      if (want == null || sp.attemptId == null) return null;
+      if (String(sp.attemptId) !== want) return null;
       return sp;
     } catch (_) { return null; }
   }
