@@ -89,6 +89,49 @@ console.log('\n4. THE CEILING STOPS DISPATCH');
 }
 
 restore();
+
+// ── REGRESSION: ONE EXCHANGE IDENTITY ────────────────────────────────────────────────────────
+// The defect this guards: the runner recorded its dispatch under i + 2 and matched the rendered
+// reply under i + 2, but wrote the CLEANUP VERDICT under i + 1. Production logged "no usable
+// result — raw turn shipped" for the turn that shipped unedited, while the record for the turn
+// being matched kept accepted:null — which the strict matcher rejects, by design. The symptom was
+// turns 4-6 reporting "no parsed OAS response for THIS turn supplied the rendered reply" while
+// turns 1-3, which had no cleanup, attributed fine. The matcher was never wrong; the turn identity
+// was. Three divergent expressions at three call sites is the bug class, so that is what is
+// asserted: ONE identity, used for dispatch, cleanup verdict, rendered-response matching and
+// reporting.
+{
+  const src = fs.readFileSync('_fs_live_sequence.mjs', 'utf8');
+  const callSites = [
+    ["setPreviewContext (dispatch)", /setPreviewContext\('opening OAS', ([^)]+)\)/g],
+    ["noteCleanupVerdict (verdict)", /noteCleanupVerdict\('opening OAS', ([^,]+),/g],
+    ["oasReplyRenderedFor (matching)", /oasReplyRenderedFor\('opening OAS', ([^,]+),/g]
+  ];
+  const loopArgs = [];
+  callSites.forEach(([label, rx]) => {
+    const args = [...src.matchAll(rx)].map((m) => m[1].trim());
+    // The entrance is its own literal turn 1; the LOOP call sites are the ones that must agree.
+    const inLoop = args.filter((a) => a !== '1');
+    t(label + ' uses exactly one in-loop identity',
+      inLoop.length > 0 && new Set(inLoop).size === 1,
+      label + ' in-loop arguments were ' + JSON.stringify(inLoop));
+    inLoop.forEach((a) => loopArgs.push(a));
+  });
+  t('dispatch, cleanup verdict and rendered-response matching share ONE identity',
+    loopArgs.length >= 3 && new Set(loopArgs).size === 1,
+    'the loop call sites disagree: ' + JSON.stringify([...new Set(loopArgs)]));
+  t('and that identity is a single named binding, not a repeated expression',
+    /^[A-Za-z_$][\w$]*$/.test(loopArgs[0] || ''),
+    'the shared identity is the expression ' + JSON.stringify(loopArgs[0]));
+  t('THE CHECK BITES: a bare "i + 1"/"i + 2" at any of those sites is refused',
+    !loopArgs.some((a) => /i\s*[+]\s*\d/.test(a)),
+    'an arithmetic expression is still used at a call site: ' + JSON.stringify(loopArgs));
+  // The identity must also be the one REPORTED, or a passing run can still name the wrong turn.
+  t('the reported turn number uses that same identity',
+    new RegExp("for turn ' \\+ " + (loopArgs[0] || '\\0')).test(src),
+    'the report line does not use ' + JSON.stringify(loopArgs[0]));
+}
+
 // THE REAL LEDGER MUST BE UNTOUCHED BY A FIXTURE SUITE.
 t('the real authorization ledger was not modified by these tests',
   fs.readFileSync(REAL_BUDGET, 'utf8') === realBefore,

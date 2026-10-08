@@ -1426,7 +1426,12 @@ try {
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
-      setPreviewContext('opening OAS', i + 2);   // the entrance was turn 1
+      // ONE EXCHANGE IDENTITY for dispatch, cleanup verdict, matching and reporting. These were
+      // three separate expressions and the cleanup verdict was written to i + 1 while the reply was
+      // matched under i + 2, so the verdict landed on the previous exchange and the correct one kept
+      // accepted:null — which the strict matcher rejects, by design.
+      const exchangeTurn = i + 2;   // the entrance was turn 1
+      setPreviewContext('opening OAS', exchangeTurn);
       const consoleAtTurnStart = consoleLog.length;
       // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
       await clearOverlaysNow();
@@ -1746,9 +1751,9 @@ try {
         && post.replies > (pre.replies || 0));
       // PRODUCTION'S OWN CLEANUP VERDICT for this turn, read from the console lines emitted
       // since the turn began — never inferred from the editor's payload.
-      noteCleanupVerdict('opening OAS', i + 1, consoleLog, consoleAtTurnStart);
+      noteCleanupVerdict('opening OAS', exchangeTurn, consoleLog, consoleAtTurnStart);
       const evidence = renderedGrew
-        ? oasReplyRenderedFor('opening OAS', i + 2, post && post.lastRendered) : null;
+        ? oasReplyRenderedFor('opening OAS', exchangeTurn, post && post.lastRendered) : null;
       const fallbackNow = consoleLog.filter(l =>
         /using .*fallback \(LLM call failed\)|soft-deflect fallback/i.test(l)).length;
       const fellBack = fallbackNow > fallbackSeen;
@@ -1758,7 +1763,7 @@ try {
         // NOTE: the entrance reply is attributed BEFORE this loop, on its own evidence. Setting
         // _entryCounted here would have credited the entrance because a LATER reply qualified,
         // which is not evidence about the entrance at all.
-        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 2) + ' — author call '
+        say('      model reply RECEIVED AND RENDERED for turn ' + exchangeTurn + ' — author call '
           + evidence.callN
           + (evidence.chain && evidence.chain.cleanupAccepted
               ? ', cleanup call ' + evidence.chain.cleanup + ' (input verified)' : '')
@@ -2057,7 +2062,14 @@ try {
       archive: Object.keys(window.state._oasSceneSnapshots || {}).length,
       interruptionPresent: !!window.state._intimateInterruption,
       interruptionSubmitted: !!(window.state._intimateInterruption
-        && window.state._intimateInterruption.submitted)
+        && window.state._intimateInterruption.submitted),
+      interruptionDone: !!(window.state._intimateInterruption
+        && (window.state._intimateInterruption.submitted
+            || window.state._intimateInterruption.completedWithoutSubmission)),
+      decisionOnScreen: (() => { const d = document.getElementById('sceneDecisionPrompt');
+        return !!(d && d.getClientRects().length > 0); })(),
+      decisionBranches: ['sceneDecisionA', 'sceneDecisionB'].filter((id) => {
+        const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); })
     }));
     write('after_oas.json', { turnsTaken, resolved, oasFinal, interruption: intr, decision,
       scriptedExit, exitAfterExchanges: EXIT_AFTER_EXCHANGES, laneContradiction,
@@ -2067,15 +2079,21 @@ try {
       exitKind: scriptedExit ? 'SCRIPTED READER EXIT — not model resolution, not story timing' : null,
       snap: await snapshot('after_oas') });
     say('  turns ' + turnsTaken + ' · resolved=' + resolved + ' · archive=' + oasFinal.archive
-      + ' · interruptionSubmitted=' + oasFinal.interruptionSubmitted);
+      + ' · interruptionDone=' + oasFinal.interruptionDone
+      + ' · run/remain on screen=' + oasFinal.decisionOnScreen
+      + ' · branches=' + JSON.stringify(oasFinal.decisionBranches));
 
-    // THE FULL HANDOFF IS THE GATE: resolution, the archive, AND the interruption submitted.
+    // THE FULL HANDOFF IS THE GATE, under the SAME predicate used at the handoff checkpoint:
+    // resolution, the archive, the interruption COMPLETED (by submission or by the revised
+    // opening's completion-without-submission route), and run-or-remain actually on screen.
     if (!resolved || !oasFinal.archive
-        || (oasFinal.interruptionPresent && !oasFinal.interruptionSubmitted)) {
+        || (oasFinal.interruptionPresent && !oasFinal.interruptionDone)
+        || !oasFinal.decisionOnScreen) {
       halted = true;
       haltReason = 'OAS handoff incomplete (resolved=' + resolved + ', archive=' + oasFinal.archive
         + ', interruptionPresent=' + oasFinal.interruptionPresent
-        + ', interruptionSubmitted=' + oasFinal.interruptionSubmitted + ')';
+        + ', interruptionDone=' + oasFinal.interruptionDone
+        + ', runRemainOnScreen=' + oasFinal.decisionOnScreen + ')';
       say('\n*** STOPPING BEFORE SCENE GENERATION — ' + haltReason + ' ***');
       say('    No further call will be labelled "scene 2".');
     }
