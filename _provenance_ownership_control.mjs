@@ -167,6 +167,37 @@ console.log('\n=== A MISSING GENERATION IDENTITY IS NOT OWNERSHIP ===');
   t('nor with an identity whose attempt is null', !!r.row && r.row.assist === null,
     JSON.stringify(r.row));
 }
+console.log('\n=== ABSENCE MUST NOT MASQUERADE AS AGREEMENT ===');
+{
+  // TWO EMPTY ATTEMPT IDS compared equal under the previous check, so a record with no attempt
+  // identity at all satisfied a test meant to require one.
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: '', cardAssist: CARD_A },
+    resultIdentity: { storyId: STORY, attemptId: '', sceneIndex: 2 },
+    sharedSnapshot: null });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('two EMPTY attempt ids record NO card', !!r.row && r.row.assist === null, JSON.stringify(r.row));
+}
+{
+  // Whitespace is not an identity either.
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: '   ', cardAssist: CARD_A },
+    resultIdentity: { storyId: STORY, attemptId: '   ', sceneIndex: 2 },
+    sharedSnapshot: null });
+  t('whitespace-only attempt ids record NO card', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
+}
+{
+  // ALL THREE STORY IDS MISSING compared equal as well, so the destination check passed vacuously.
+  const r = await commitCG({ storyId: '', sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: '', sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A },
+    resultIdentity: { storyId: '', attemptId: 'attempt-A', sceneIndex: 2 },
+    sharedSnapshot: null });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('all three story ids MISSING records NO card', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
+}
+
 console.log('\n=== EXPLICITLY CARDLESS STAYS CARDLESS ===');
 {
   const r = await commitCG({ storyId: STORY, sceneNumber: 4, liveAttempt: 'attempt-C',
@@ -246,8 +277,10 @@ t('the cg branch contains NO shared-state lookup and NO stamped-key fallback', (
     && !/opts\.cardAssist/.test(branch)
     && /return null;/.test(branch);
 })(), 'the cg branch must not reach any fallback');
-t('and it compares attempt EQUALITY, not existence',
-  /String\(_rp\.attemptId \|\| ''\) !== String\(_gi\.attemptId\)/.test(SRC));
+t('and it compares attempt EQUALITY, not existence', /_rpAtt !== _giAtt/.test(SRC));
+t('after requiring every id to be NONEMPTY first',
+  /a story id is missing/.test(SRC) && /an attempt id is missing/.test(SRC)
+  && /\.trim\(\)/.test(SRC));
 t('the planner hands its snapshot back through the caller\'s object',
   /provOut\.snapshot = _subProv/.test(SRC));
 // A comment match proved nothing; this checks the STRUCTURE — the identity is assigned from

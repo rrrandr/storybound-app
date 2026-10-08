@@ -133824,9 +133824,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               var _destStory = String(s.storyId || '');
               var _genScene = (_gi.sceneIndex == null) ? null : (Number(_gi.sceneIndex) + 1);
               var _why = null;
-              if (String(_rp.storyId || '') !== String(_gi.storyId || '')) _why = 'snapshot/identity story differ';
-              else if (String(_gi.storyId || '') !== _destStory) _why = 'identity story is not the destination story';
-              else if (String(_rp.attemptId || '') !== String(_gi.attemptId)) _why = 'attempt mismatch';
+              // NONEMPTY FIRST. Equality alone let absence masquerade as agreement: two EMPTY
+              // attempt ids compared equal, and snapshot/identity/destination stories that were
+              // all missing compared equal too — so a record with no identity at all satisfied a
+              // check that was supposed to require one.
+              var _rpStory = String(_rp.storyId || '').trim();
+              var _giStory = String(_gi.storyId || '').trim();
+              var _rpAtt   = String(_rp.attemptId == null ? '' : _rp.attemptId).trim();
+              var _giAtt   = String(_gi.attemptId == null ? '' : _gi.attemptId).trim();
+              if (!_rpStory || !_giStory || !_destStory.trim()) _why = 'a story id is missing';
+              else if (!_rpAtt || !_giAtt) _why = 'an attempt id is missing';
+              else if (_rpStory !== _giStory) _why = 'snapshot/identity story differ';
+              else if (_giStory !== _destStory) _why = 'identity story is not the destination story';
+              else if (_rpAtt !== _giAtt) _why = 'attempt mismatch';
               else if (n == null) _why = 'no destination scene number';
               else if (Number(_rp.sceneNumber) !== Number(n)) _why = 'snapshot scene is not the committed scene';
               else if (_genScene == null) _why = 'generation identity has no scene index';
