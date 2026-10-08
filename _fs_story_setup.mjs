@@ -82,19 +82,61 @@ export const enterOAS = async (page, opts) => {
   if (!which.legacy) {
     const say = o.say != null ? String(o.say) : 'I shaped nothing. Ask me properly.';
     const doText = o.doText != null ? String(o.doText) : '';
-    // Examine is optional; tap it when present so the hand exists for controls that look for it.
-    await page.evaluate(() => {
-      const b = document.getElementById('bakedOASExamineBtn'); if (b) b.click();
-    });
+    // EXAMINE BY TRUSTED CLICK, and the answer by REAL TYPING. Both used to go through
+    // page.evaluate — an in-page click and a direct value assignment — which demonstrate handlers,
+    // not that a reader can reach the control or type into the field.
+    try {
+      await page.click('#bakedOASExamineBtn', { timeout: 8000 });
+    } catch (e) {
+      return { ok: false, route: 'examine REFUSED',
+               why: 'the Examine control was not clickable: ' + String(e.message).split('\n')[0],
+               firstTurnConsumed: false, submitAt: null };
+    }
     await page.waitForTimeout(o.examineMs || 1200);
-    await page.evaluate((v) => {
-      const a = document.getElementById('bakedOASSay'), b = document.getElementById('bakedOASDo');
-      if (a) { a.value = v.s; a.dispatchEvent(new Event('input', { bubbles: true })); }
-      if (b) { b.value = v.d; b.dispatchEvent(new Event('input', { bubbles: true })); }
-    }, { s: say, d: doText });
+    for (const [sel, text] of [['#bakedOASSay', say], ['#bakedOASDo', doText]]) {
+      if (!text) continue;
+      try {
+        await page.click(sel, { timeout: 8000 });
+        await page.keyboard.press('Meta+a');
+        await page.keyboard.type(text, { delay: 4 });
+      } catch (e) {
+        return { ok: false, route: 'typing REFUSED',
+                 why: sel + ' was not typable: ' + String(e.message).split('\n')[0],
+                 firstTurnConsumed: false, submitAt: null };
+      }
+    }
     route = 'entrance submit (trusted click)';
     // STAMPED IMMEDIATELY BEFORE THE CLICK, so the caller can measure Submit -> visibly rendered
     // reply without any of this helper's settling delay.
+    // THE OBSERVER GOES IN BEFORE THE CLICK, recording the first appearance of text that is not
+    // already on screen — so the measurement cannot latch onto the authored opening.
+    await page.evaluate(() => {
+      try {
+        window.__sbProseAppearedAt = null;
+        const hosts = ['intimacyDialogueStage', 'gnPanelDisplay', 'storyContent']
+          .map((id) => document.getElementById(id)).filter(Boolean);
+        const baseline = new Set();
+        hosts.forEach((h) => String(h.textContent || '').split(/\n+/)
+          .forEach((l) => { const t = l.trim(); if (t.length > 20) baseline.add(t); }));
+        const check = () => {
+          for (const h of hosts) {
+            if (!h || h.getClientRects().length === 0) continue;
+            const lines = String(h.textContent || '').split(/\n+/);
+            for (const l of lines) {
+              const t = l.trim();
+              if (t.length > 20 && !baseline.has(t)) {
+                window.__sbProseAppearedAt = Date.now();
+                if (window.__sbProseObs) { window.__sbProseObs.disconnect(); window.__sbProseObs = null; }
+                return;
+              }
+            }
+          }
+        };
+        window.__sbProseObs = new MutationObserver(check);
+        hosts.forEach((h) => window.__sbProseObs.observe(h,
+          { childList: true, subtree: true, characterData: true }));
+      } catch (_) {}
+    });
     submitAt = Date.now();
     try {
       await page.click('#bakedOASSubmitBtn', { timeout: 8000 });

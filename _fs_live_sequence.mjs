@@ -977,21 +977,27 @@ await page.route('**/api/**', async (route) => {
 // Seeded BEFORE any page script runs: supabase-js resolves getSession() from storage at load, and
 // the real gate refuses to charge without a session token.
 await installSession(page);
+// ── ROUTE PRECEDENCE MATTERS, AND I HAD IT BACKWARDS ─────────────────────────────────────────
+// Playwright runs matching handlers NEWEST-FIRST. I registered the generic auth catch-all LAST,
+// so it answered every sb-test request with {} and MASKED both the profiles stub and the zero-row
+// purchase_intents handler — recreating the exact phantom-purchase fixture bug that cost hours.
+// The passing control's order is: generic FIRST, then the profiles stub, then purchase_intents —
+// so the most specific handler is the newest and therefore wins.
 await page.route('**/sb-test.localhost/**', async (r) => {
-  const q = r.request();
-  // ZERO ROWS for purchase_intents — an empty object reads as an unresumed purchase and sends boot
-  // into checkout recovery, which starts a second, literary generation.
-  if (q.method() === 'GET' && /\/rest\/v1\/purchase_intents(\?|$)/.test(q.url())) {
-    try { await r.fulfill({ status: 200, contentType: 'application/json',
-      headers: { 'Content-Range': '*/0' }, body: '[]' }); } catch (_) {}
+  if (isAuthOrigin(r.request().url())) {
+    try { await r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {}
     return;
   }
   try { await r.fallback(); } catch (_) {}
 });
 await installEntitledProfileStub(page);
+const _piSeen = [];
 await page.route('**/sb-test.localhost/**', async (r) => {
-  if (isAuthOrigin(r.request().url())) {
-    try { await r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {}
+  const q = r.request();
+  if (q.method() === 'GET' && /\/rest\/v1\/purchase_intents(\?|$)/.test(q.url())) {
+    _piSeen.push('served []');
+    try { await r.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'Content-Range': '*/0' }, body: '[]' }); } catch (_) {}
     return;
   }
   try { await r.fallback(); } catch (_) {}
@@ -1046,12 +1052,11 @@ try {
   // intercepting pointer events, and the look modal RE-OPENS after every dismissal. These are
   // the product's OWN opt-out flags (_pcLookSkipped is commented in app.js as 'user clicked
   // "skip"'), so this is the state a reader reaches by clicking Skip. Images are blocked anyway.
-  const optOutPortraits = () => page.evaluate(() => {
-    try { window.state._pcLookSkipped = true; window.state._liRenderSkipped = true; } catch (_) {}
-  });
-  await optOutPortraits();
+  // optOutPortraits REMOVED: writing _pcLookSkipped/_liRenderSkipped asserts the opt-out instead
+  // of performing it, and this route now clicks the real Skip controls.
+  /* portrait opt-out STATE WRITES removed on this route — clearOnboarding() uses the reader's own Skip controls */
   await launchFS(page, def);
-  await optOutPortraits();
+  /* portrait opt-out STATE WRITES removed on this route — clearOnboarding() uses the reader's own Skip controls */
   // DETERMINISTIC CARD PICKING, shared by the OAS turns AND the scene loop. These were
   // declared inside the OAS block and used again in the scene loop, so scene 2 died on
   // "nextPick is not defined" the moment the OAS handoff finally succeeded — the same class
@@ -1120,7 +1125,7 @@ try {
 
   if (!halted) {
     say('── OAS (live) ──');
-    await optOutPortraits();
+    /* portrait opt-out STATE WRITES removed on this route — clearOnboarding() uses the reader's own Skip controls */
     // THE REVISED OPENING ENTERS BY ANSWERING JULIAN, so that submission IS the first exchange.
     // enterOAS reports firstTurnConsumed for the new entrance (the legacy Continue button does
     // not), and the six are counted INCLUDING it.
@@ -1154,6 +1159,8 @@ try {
           say('\n*** STOPPING — the gate was confirmed but the OAS did not open '
             + JSON.stringify(_unlocked) + ' ***');
         }
+          // The entrance reply is attributed just before the turn loop, where oasState is in
+          // scope — referencing it here hit its temporal dead zone and aborted the run.
       } else {
         say('  no unlock modal appeared at Submit: ' + JSON.stringify(_gate));
       }
@@ -1170,27 +1177,23 @@ try {
     let _entryCounted = 0;
     // SUBMIT -> FIRST READABLE PROSE, measured separately from provider latency (which the
     // per-call roll-up already reports). This is what the reader actually waits through.
-    let _submitToProseMs = null;
-    if (!halted && _entry && _entry.submitAt) {
-      // STARTS IMMEDIATELY BEFORE SUBMIT (stamped inside enterOAS) and stops when the reply is
-      // VISIBLY RENDERED. It used to start after enterOAS returned, so it excluded the real wait
-      // and included none of the settling delay it was meant to exclude.
+    // ── SUBMIT -> THE NEW REPLY'S FIRST APPEARANCE ────────────────────────────────────────
+    // The previous stop condition accepted ANY visible container holding more than 80 characters,
+    // which the authored opening text already satisfied — so it could "measure" prose that was on
+    // screen before Submit. An observer is installed BEFORE Submit (inside the entrance helper's
+    // pre-click window) and records when text that was NOT there first appears, with no fixed
+    // settling delay in the measurement.
+    let _submitToProseMs = _entry && _entry.proseAppearedMs != null ? _entry.proseAppearedMs : null;
+    if (!halted && _submitToProseMs == null && _entry && _entry.submitAt) {
       const _t0 = _entry.submitAt;
-      for (let w = 0; w < 120; w++) {
-        // VISIBLY RENDERED, not merely present in state: the reader's wait ends when the words
-        // are on screen.
-        const readable = await page.evaluate(() => {
-          const els = Array.from(document.querySelectorAll(
-            '#intimacyDialogueStage, #gnPanelDisplay, #storyContent'));
-          for (const el of els) {
-            if (!el || el.getClientRects().length === 0) continue;
-            if (String(el.textContent || '').trim().length > 80) return true;
-          }
-          return false;
-        }).catch(() => false);
-        if (readable) { _submitToProseMs = Date.now() - _t0; break; }
-        await page.waitForTimeout(500);
+      for (let w = 0; w < 240; w++) {
+        const seen = await page.evaluate(() => (window.__sbProseAppearedAt || null)).catch(() => null);
+        if (seen) { _submitToProseMs = seen - 0; break; }
+        await page.waitForTimeout(250);
       }
+      if (_submitToProseMs != null) _submitToProseMs = _submitToProseMs - _t0;
+    }
+    if (!halted) {
       say('  submit -> first readable prose: '
         + (_submitToProseMs == null ? 'NOT OBSERVED within 60s' : _submitToProseMs + 'ms'));
     }
@@ -1302,6 +1305,22 @@ try {
     };
 
     // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
+    // ── THE ENTRANCE REPLY, ATTRIBUTED ON ITS OWN EVIDENCE ──────────────────────────────────
+    // Through the same helper every other turn uses, counted at most once, and BEFORE the loop so
+    // no later reply can be mistaken for it.
+    if (!halted && _entry && _entry.firstTurnConsumed) {
+      const _post0 = await oasState();
+      const _ev0 = oasReplyRenderedFor('opening OAS', 1, _post0 && _post0.lastRendered);
+      if (_ev0) {
+        _entryCounted = 1;
+        modelBackedReplies++;
+        say('  the entrance submission IS exchange 1 — author call ' + _ev0.callN
+          + ' — ' + _ev0.matchedOn);
+      } else {
+        say('  the entrance submission produced no attributable rendered reply — it does NOT '
+          + 'count toward the six');
+      }
+    }
     const EXIT_AFTER_EXCHANGES = Number(process.env.SB_EXIT_AFTER || 6);
     let turnsTaken = 0;
     for (let i = 0; i < 9 && !halted; i++) {
@@ -1635,12 +1654,9 @@ try {
       fallbackSeen = fallbackNow;
       if (evidence && renderedGrew && !fellBack) {
         modelBackedReplies++;
-        // THE ENTRANCE SUBMISSION EARNS ITS PLACE HERE, on the same evidence every other turn
-        // needs — an attributed model reply that actually rendered. A click never counted.
-        if (_entry && _entry.firstTurnConsumed && !_entryCounted) {
-          _entryCounted = 1;
-          say('      the entrance submission is CONFIRMED as exchange 1 — attributed and rendered');
-        }
+        // NOTE: the entrance reply is attributed BEFORE this loop, on its own evidence. Setting
+        // _entryCounted here would have credited the entrance because a LATER reply qualified,
+        // which is not evidence about the entrance at all.
         say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — author call '
           + evidence.callN
           + (evidence.chain && evidence.chain.cleanupAccepted

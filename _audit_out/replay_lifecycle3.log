@@ -1,0 +1,106 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000200
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  [replay] author reply 2 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  2  [fixture] ministral-8b-2512            $0.000100  1ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first readable prose: 9241ms
+  the entrance submission produced no attributable rendered reply — it does NOT count toward the six
+  *** STOPPING — OAS card click FAILED at turn 1 slot 2: locator.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#gnCardMount .fate-card:not(.locked)').nth(2)[22m
+[2m    - locator resolved to <div data-revealed="1" data-card-index="2" data-gleam-applied="1" class="fate-card flipped">…</div>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <button class="primary-btn" id="pcLookGenerateBtn">Generate (free)</button> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div>These render reliably. Direct sizing terms (DD, h…</div> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    7 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div>These render reliably. Direct sizing terms (DD, h…</div> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <button class="primary-btn" id="pcLookGenerateBtn">Generate (free)</button> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div>These render reliably. Direct sizing terms (DD, h…</div> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+[2m      - waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div>These render reliably. Direct sizing terms (DD, h…</div> from <div class="overlay" id="pcLookModal">…</div> subtree intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 500ms[22m
+ ***
+  interruption: {"present":false,"submitted":false,"pending":false}
+
+*** STOPPING AS PLANNED — SB_STOP_AT=handoff — stopping at the promised handoff, before the run-or-remain branch is serviced and before any scene work ***
+    reached: resolved=false · archive=0 · interruptionPresent=false · interruptionSubmitted=false
+    model-backed exchanges: 0 · scripted exit: not used
+    the run-or-remain branch was NOT serviced, so no scene work was triggered.
+  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.000400
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 2
+  MEASURED (receipts)    : $0.000200
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000200
+  TOTAL EXPOSURE         : $0.000400
+  ceiling                : $5.00  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.000400
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000400 of $5.00
+
+output: _fs_live_out/run_2026-10-08T06-33-25-824Z
