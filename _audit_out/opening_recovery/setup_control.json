@@ -1,15 +1,15 @@
 {
   "ctrlOut": "opened",
   "startIdx": 146,
-  "doneIdx": 235,
+  "doneIdx": 236,
   "inSetup": [],
   "providerReqs": [
     {
       "stage": "oas",
       "head": "You are the LI (love interest) in an intensely intimate mouth-closeup dialogue scene. You ",
       "chars": 2804,
-      "at": 1791419311650,
-      "consoleAt": 288
+      "at": 1791420144071,
+      "consoleAt": 289
     }
   ]
 }

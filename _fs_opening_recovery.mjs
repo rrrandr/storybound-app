@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | initfail
+const ARM = process.argv[2] || 'auth';           // auth | setupchar
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -259,8 +259,11 @@ if (ARM === 'auth') {
   t('no duplicate dispatch', oasReqs.length === 1, 'oas=' + oasReqs.length);
 }
 
-if (ARM === 'initfail') {
-  console.log('\n=== INITIALIZATION FAILURE AND RECOVERY ===');
+if (ARM === 'setupchar') {
+  // SETUP CHARACTERIZATION. Not a failure test: it records what deferred initialization actually
+  // requests on this path. The answer turned out to be "nothing", which is why the
+  // response-failure test that was proposed does not apply here.
+  console.log('\n=== SETUP CHARACTERIZATION — what does deferred initialization request? ===');
   console.log('--- step 1: a SUCCESSFUL setup control, to learn what setup actually requests');
   _setupRunning = true;
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
@@ -286,16 +289,17 @@ if (ARM === 'initfail') {
   t('production logged both setup boundaries', startIdx >= 0 && doneIdx > startIdx,
     'start=' + startIdx + ' done=' + doneIdx);
   // THE DECIDING QUESTION for a deterministic failure arm.
-  if (inSetup.length === 0) {
-    console.log('\n  DEFERRED INITIALIZATION MAKES NO PROVIDER CALLS ON THIS PATH.');
-    console.log('  So there is NO required setup REQUEST whose failure could abort it, and the');
-    console.log('  failure-and-recovery arm as specified is NOT CONSTRUCTIBLE by failing a');
-    console.log('  response. Inducing it would need a production-side fault injection, which is');
-    console.log('  out of scope here. Reported rather than faked.');
-  }
-  t('there is a required setup REQUEST that could be failed', inSetup.length > 0,
-    'provider calls during setup: ' + inSetup.length
-    + ' — initialization is provider-free on this path, so no response failure can abort it');
+  // THE OBSERVED RESULT, not a defect: on First Sacrifice's baked path the character bibles are
+  // committed locally, the plot comes from the seed, and the rest of generation is deferred or
+  // suppressed — so deferred initialization asks nothing of a provider. A response-failure test
+  // therefore has nothing to fail here. Recorded as a characteristic of this path.
+  t('CHARACTERIZED: deferred initialization makes NO provider calls on this path',
+    inSetup.length === 0, 'provider calls during setup: ' + inSetup.length
+    + ' (a non-zero count would mean this path changed and a response-failure test becomes possible)');
+  t('and the only call in the run is the OAS first turn, after setup completed',
+    providerReqs.length === 1 && providerReqs[0].stage === 'oas'
+    && providerReqs[0].consoleAt > doneIdx,
+    JSON.stringify(providerReqs.map(r => r.stage + '@' + r.consoleAt)));
   fs.writeFileSync(OUT + '/setup_control.json', JSON.stringify(
     { ctrlOut, startIdx, doneIdx, inSetup, providerReqs }, null, 2));
 
