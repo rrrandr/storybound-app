@@ -1,6 +1,6 @@
 {
-  "receipted": 0.013400000000000002,
-  "unresolved": 1.6866899999999996,
+  "receipted": 0.0159,
+  "unresolved": 3.12444072,
   "outstanding": [],
   "runs": [
     {
@@ -115,6 +115,30 @@
       "run": "_fs_live_out/run_2026-10-08T21-24-14-136Z",
       "receipted": 0.0006000000000000001,
       "unresolved": 0.00879456,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-08T21-34-01-603Z",
+      "receipted": 0.0001,
+      "unresolved": 0.011764919999999998,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-08T21-40-35-593Z",
+      "receipted": 0.0001,
+      "unresolved": 0.011652779999999998,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-08T21-44-45-559Z",
+      "receipted": 0.0001,
+      "unresolved": 0.011764919999999998,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-08T21-48-24-209Z",
+      "receipted": 0.0022,
+      "unresolved": 1.4025681,
       "outstandingAtExit": 0
     }
   ],

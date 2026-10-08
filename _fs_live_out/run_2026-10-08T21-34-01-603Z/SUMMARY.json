@@ -1,0 +1,10 @@
+{
+  "calls": 6,
+  "receipted": 0.0001,
+  "retainedUnresolved": 0.011764919999999998,
+  "priorExposure": 1.7000899999999997,
+  "totalExposure": 1.7119549199999997,
+  "ceiling": 5.05,
+  "halted": true,
+  "haltReason": "OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false)"
+}

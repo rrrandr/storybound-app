@@ -191938,6 +191938,16 @@ No text, no watermark, no UI elements, share-ready.`;
   // re-init). Rebuilds the dialogue stage HTML, restores mouth + last
   // directive, replays liTurnHistory into the scrollback log, re-starts
   // audio + body class.
+  // ── LIVE REQUEST OWNERSHIP (Roman 2026-10-08) ──
+  // Which OAS request ids have a fetch actually in flight IN THIS PAGE. A request is registered
+  // when it is dispatched and unregistered the moment its await returns, success or throw. The set
+  // lives only in memory, so a reload starts empty by construction: an id restored from a snapshot
+  // is never owned, which is exactly the orphan the rehydration path must still clear.
+  // This replaces inferring liveness from lastRequestStartedAt vs performance.timeOrigin — having
+  // started since page load is not proof a request is still running.
+  var _oasLiveRequestIds = new Set();
+  function _oasRequestIsLive(id) { return !!id && _oasLiveRequestIds.has(id); }
+
   function _rehydrateOASUI() {
     var d = state && state.intimacyDialogue;
     if (!d || !d.active) return false;
@@ -191954,7 +191964,35 @@ No text, no watermark, no UI elements, share-ready.`;
     // a Back-nav rather than reload — JS scope still alive) gets
     // discarded by the staleness check. Clear awaitingResponse so the
     // UI doesn't show a stuck loading state.
-    if (d.awaitingResponse) {
+    if (d.awaitingResponse && _oasRequestIsLive(d.pendingRequestId)) {
+      // A request THIS PAGE dispatched is still in flight. The entrance's deferred gnReader
+      // auto-resume (~145250) fires 80ms after entry, inside that window: replacing the id here
+      // made the real reply fail the staleness check 16s later and the reader saw nothing. The UI
+      // is still rebuilt below; only the request identity is left alone.
+      console.log('[INTIMACY-DIALOGUE] Rehydrate: PRESERVING a live in-flight request (age ' +
+                  Math.round((Date.now() - (d.lastRequestStartedAt || 0)) / 1000) + 's, id ' +
+                  d.pendingRequestId + ') — its fetch is still running in this page');
+      // Restore the WAITING state the rebuild just wiped: production's own thinking overlay, and
+      // the reader's controls put back out of reach until the reply lands. Scheduled after the
+      // rebuild below so it is not undone by it.
+      try {
+        setTimeout(function () {
+          try {
+            var _d2 = state.intimacyDialogue;
+            if (!_d2 || !_d2.awaitingResponse || !_oasRequestIsLive(_d2.pendingRequestId)) return;
+            if (typeof _showIntimacyThinking === 'function') _showIntimacyThinking();
+            // Clear only what the rebuild left behind. The fields are NOT disabled: nothing here
+            // re-enables them, and a reply that never lands must not strand the reader.
+            ['gnActionInput', 'gnDialogueInput', 'actionInput', 'dialogueInput']
+              .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && el.value) el.value = '';
+              });
+            console.log('[INTIMACY-DIALOGUE] Rehydrate: waiting state restored for the live request');
+          } catch (_) {}
+        }, 0);
+      } catch (_) {}
+    } else if (d.awaitingResponse) {
       var ageMs = Date.now() - (d.lastRequestStartedAt || 0);
       console.log('[INTIMACY-DIALOGUE] Rehydrate: dropping stale in-flight request (age ' +
                   Math.round(ageMs / 1000) + 's, id ' + d.pendingRequestId + ')');
@@ -204923,6 +204961,8 @@ No text, no watermark, no UI elements, share-ready.`;
     d.pendingRequestId = _turnRequestId;
     d.awaitingResponse = true;
     d.lastRequestStartedAt = Date.now();
+    // This page owns this request until its await returns.
+    try { _oasLiveRequestIds.add(_turnRequestId); } catch (_) {}
     // ── ROUTING-SIGNAL PRECOMPUTATION ──
     // All deflection / routing signals are computed BEFORE the prompt
     // build so the directive that lands in the prompt matches the
@@ -205323,6 +205363,9 @@ No text, no watermark, no UI elements, share-ready.`;
       console.warn('[INTIMACY-DIALOGUE] LLM call failed:', e && e.message);
       _llmFailed = true;
     }
+    // The fetch is finished — success, failure or throw — so this page no longer owns it. Done
+    // BEFORE the staleness check so a discarded response still releases ownership.
+    try { _oasLiveRequestIds.delete(_turnRequestId); } catch (_) {}
     if (!responseRaw) _llmFailed = true;
     // ── STALENESS CHECK ──
     // If d.pendingRequestId has moved on while we were awaiting, this
