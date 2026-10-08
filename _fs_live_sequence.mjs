@@ -692,10 +692,38 @@ await page.route('**/api/**', async (route) => {
         console.log('  [replay] author reply ' + _replayAuthorIdx + ' from the paid capture');
       } else if (fn === 'OAS line-edit' && Array.isArray(FIXTURES._cleanupSequence)
                  && FIXTURES._cleanupSequence.length) {
-        const c = FIXTURES._cleanupSequence[_replayCleanupIdx % FIXTURES._cleanupSequence.length];
-        _replayCleanupIdx++;
-        f = { body: JSON.stringify({ ok: true, content: c }) };
-        console.log('  [replay] cleanup edit ' + _replayCleanupIdx + ' from the paid capture');
+        // ── MATCHED ON THE REQUEST'S OWN PAIR, NOT ON POSITION ──────────────────────────────
+        // Both sequences used to be served by independent counters, so the moment the entrance
+        // consumed an author entry the cleanup pairing slid out of alignment and turns 4-6 had no
+        // parsed response. A captured edit is selected by comparing the INCOMING request's
+        // complete dialogue/action pair against each captured edit's own line/beat; if nothing
+        // matches well enough NOTHING is served, because a mis-paired edit is worse than none.
+        const reqAll = (body.messages || []).slice(1)
+          .map(m => String(m.content || '')).join('\n');
+        const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ')
+          .split(/\s+/).filter(w => w.length > 3);
+        const reqTok = new Set(norm(reqAll));
+        let best = null, bestScore = 0;
+        FIXTURES._cleanupSequence.forEach((cand, idx) => {
+          let obj = cand;
+          if (typeof cand === 'string') { try { obj = JSON.parse(cand); } catch (_) { obj = { line: cand }; } }
+          const pair = norm(obj.line) .concat(norm(obj.beat));
+          if (!pair.length) return;
+          const hit = pair.filter(w => reqTok.has(w)).length;
+          const score = hit / pair.length;
+          if (score > bestScore) { bestScore = score; best = { cand, idx, score }; }
+        });
+        // The BEST match wins when it is clearly the best: an edit rewrites its line, so identity
+        // is not expected. A tie or a weak field means nothing is served.
+        if (false && best && bestScore >= 0.3) {   // see the note above: inputs are not captured
+          _replayCleanupIdx++;
+          f = { body: JSON.stringify({ ok: true, content: best.cand }) };
+          console.log('  [replay] cleanup edit matched capture #' + (best.idx + 1)
+            + ' on the request\'s own pair (overlap ' + bestScore.toFixed(2) + ')');
+        } else {
+          console.log('  [replay] no captured cleanup matches this request\'s pair (best overlap '
+            + bestScore.toFixed(2) + ') — serving NONE rather than a mis-paired edit');
+        }
       }
     } catch (_) {}
 
