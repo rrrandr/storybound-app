@@ -1,114 +1,202 @@
-// OWNERSHIP OF SUBMISSION PROVENANCE. Provider-free, $0, no browser needed for the unit half.
+// OWNERSHIP OF SUBMISSION PROVENANCE — against the SHIPPED functions. Provider-free, $0.
 //
-// Codex ran my two previous helpers with synthetic state and showed the hole: an active attempt B
-// handed off and consumed attempt A's Reversal card for the same story and scene. The shared
-// "accepted" slot was not ownership. This control pins the replacement:
-//   · the snapshot is captured LOCALLY by the running generation and only when its attemptId IS
-//     that generation's attempt;
-//   · it rides the generation RESULT;
-//   · commit validates the PASSED object's story, scene AND attempt and never recovers from a
-//     shared slot.
-import fs from 'fs';
+// My previous control used handwritten ownedBy/commitAccepts stand-ins, so it passed while the
+// real _sceneLedgerCommit still (a) accepted attempt A's supplied snapshot with B active, because
+// `_rp.attemptId != null` tests existence rather than equality, and (b) recovered a card from
+// shared state when submissionProvenance was explicitly null. Both reproductions now run against
+// PRODUCTION CODE, plus an async interleaving where the globals move while planning waits.
+import { chromium } from 'playwright-core';
 
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
 
-const SRC = fs.readFileSync('public/app.js', 'utf8');
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.route('**/api/**', r => r.abort());
+await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.waitForFunction(() => typeof window._sceneLedgerCommit === 'function'
+  && typeof window._sceneLedgerGet === 'function', { timeout: 30000 }).catch(() => {});
 
-console.log('=== THE SHARED SLOT IS GONE ===');
-t('no _provenanceAtAccept slot exists anywhere', !/_provenanceAtAccept/.test(SRC));
-t('no _handOffSubmissionProvenance helper exists', !/_handOffSubmissionProvenance/.test(SRC));
-t('commit no longer recovers provenance from shared state',
-  !/_takeProvenanceAtAccept/.test(SRC));
+const exported = await page.evaluate(() => ({
+  commit: typeof window._sceneLedgerCommit, get: typeof window._sceneLedgerGet,
+  capture: typeof window._captureSubmissionProvenance,
+  currentAssist: typeof window._currentCardAssist
+}));
+console.log('shipped exports: ' + JSON.stringify(exported));
+if (exported.commit !== 'function' || exported.get !== 'function') {
+  console.log('\n  UNPROVEN — the shipped commit/get are not reachable; nothing below is asserted.');
+  await browser.close(); process.exit(1);
+}
 
-console.log('\n=== THE CAPTURE IS OWNED BY THE RUNNING GENERATION ===');
-const cap = SRC.slice(SRC.indexOf("// ── THIS INVOCATION'S OWN SNAPSHOT"),
-                      SRC.indexOf("} catch (_) { _subProvOwned = null; }") + 40);
-t('the capture compares the snapshot attempt with the running one',
-  /String\(_spNow\.attemptId \|\| ''\) === _mineNow/.test(cap), 'comparison missing');
-t('the running attempt comes from this generation\'s _cgGenAttempt',
-  /state\._cgGenAttempt && state\._cgGenAttempt\.id != null/.test(cap));
-t('a mismatch DISCARDS the snapshot rather than keeping it',
-  /_subProvOwned = null;[\s\S]{0,400}discarded/.test(cap));
-t('and it is held in a LOCAL, declared on the generation', /var _subProvOwned = null;/.test(SRC));
+// Drive the SHIPPED _sceneLedgerCommit with a controlled state, and read back the row it wrote.
+const commitCG = (opts) => page.evaluate((o) => {
+  const s = window.state;
+  s.storyId = o.storyId;
+  s._sceneLedger = null;                        // a clean ledger per case
+  // The shared slots the old code could fall back to — deliberately LOADED with another
+  // attempt's card, so any fallthrough shows up as that card appearing in the row.
+  s._submissionProvenance = o.sharedSnapshot || null;
+  s._cgGenAttempt = o.liveAttempt
+    ? { id: o.liveAttempt, storyId: o.storyId, sceneIndex: (o.sceneNumber || 1) - 1, at: Date.now() }
+    : null;
+  s.fateOptions = o.fateOptions || null;
+  s.fateSelectedIndex = (typeof o.fateSelectedIndex === 'number') ? o.fateSelectedIndex : -1;
+  s.fateCommitted = !!o.fateCommitted;
+  try {
+    window._sceneLedgerCommit(s, {
+      kind: 'cg', sceneNumber: o.sceneNumber,
+      event: 'harness row', eventSource: 'harness',
+      submissionProvenance: o.resultSnapshot === undefined ? null : o.resultSnapshot,
+      generationIdentity: o.resultIdentity === undefined ? null : o.resultIdentity
+    });
+  } catch (e) { return { threw: String(e.message).slice(0, 80) }; }
+  const L = window._sceneLedgerGet(s, false);
+  const rows = (L && L.entries) ? L.entries : [];
+  const r = rows[rows.length - 1] || null;
+  return { row: r ? { kind: r.kind, scene: r.sceneNumber, assist: r.cardAssist || null } : null,
+           rows: rows.length };
+}, opts);
 
-console.log('\n=== IT RIDES THE RESULT, AND COMMIT GETS IT EXPLICITLY ===');
-t('the result carries __submissionProvenance', /_normalized\.__submissionProvenance = _subProvOwned \|\| null;/.test(SRC));
-t('the commit call passes the RESULT\'s provenance',
-  /submissionProvenance: \(plan && plan\.__submissionProvenance\) \|\| null/.test(SRC));
-t('commit validates storyId, sceneNumber AND attemptId',
-  /_rp\.storyId[\s\S]{0,200}_rp\.sceneNumber[\s\S]{0,120}_rp\.attemptId != null/.test(SRC));
-t('and a rejected provenance yields NO card rather than a fallback',
-  /REJECTED at commit[\s\S]{0,220}return null;/.test(SRC));
+const STORY = 'story-ownership-1';
+const CARD_A = { id: 'reversal', label: 'Reversal', index: 0 };
+const CARD_B = { id: 'temptation', label: 'Temptation', index: 1 };
+const SNAP_A = { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A };
+const ID_B  = { storyId: STORY, attemptId: 'attempt-B', sceneIndex: 2 };
+const ID_A  = { storyId: STORY, attemptId: 'attempt-A', sceneIndex: 2 };
 
-// ── THE EXACT NEGATIVE, run against the shipped rule text ───────────────────────────────────
-console.log('\n=== ATTEMPT B MUST NOT CONSUME ATTEMPT A\'S SNAPSHOT ===');
-// The committed ownership rule, lifted from the source so the shipped predicate is what runs.
-const ownedBy = (snapshot, runningAttempt, storyId) => {
-  if (!snapshot) return null;
-  const mine = runningAttempt != null ? String(runningAttempt) : null;
-  if (!mine) return null;
-  if (String(snapshot.attemptId || '') !== mine) return null;
-  if (String(snapshot.storyId || '') !== String(storyId || '')) return null;
-  return { storyId: String(snapshot.storyId || ''), sceneNumber: snapshot.sceneNumber,
-           attemptId: mine, cardAssist: snapshot.cardAssist || null };
-};
-const commitAccepts = (passed, storyId, sceneNumber) => {
-  if (!passed) return { used: false, card: null, why: 'nothing passed' };
-  const ok = String(passed.storyId || '') === String(storyId || '')
-    && (sceneNumber == null || Number(passed.sceneNumber) === Number(sceneNumber))
-    && passed.attemptId != null;
-  return ok ? { used: true, card: passed.cardAssist || null }
-            : { used: false, card: null, why: 'rejected' };
-};
-const STORY = 'story-1';
-const A = { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-A',
-            cardAssist: { id: 'reversal', label: 'Reversal', index: 0 } };
+console.log('\n=== REPRODUCTION 1: attempt A\'s snapshot, attempt B running ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-B',
+    resultSnapshot: SNAP_A, resultIdentity: ID_B,
+    sharedSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-B', cardAssist: CARD_B } });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('the shipped commit REFUSES attempt A\'s snapshot under identity B',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
+  t('and it did not substitute B\'s shared card either',
+    !r.row || !r.row.assist || r.row.assist.label !== 'Temptation', JSON.stringify(r.row));
+}
 
-{   // attempt A's snapshot, attempt B running — the exact case Codex reproduced
-  const owned = ownedBy(A, 'attempt-B', STORY);
-  console.log('   B capturing A\'s snapshot -> ' + JSON.stringify(owned));
-  t('B does NOT take ownership of A\'s snapshot', owned === null, JSON.stringify(owned));
-  const atCommit = commitAccepts(owned, STORY, 3);
-  t('so nothing reaches commit, and no card is recorded',
-    atCommit.used === false && atCommit.card === null, JSON.stringify(atCommit));
+console.log('\n=== REPRODUCTION 2: submissionProvenance explicitly NULL ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-B',
+    resultSnapshot: null, resultIdentity: ID_B,
+    // shared state loaded, and a live selection too — neither may be consulted
+    sharedSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-B', cardAssist: CARD_B },
+    fateOptions: [{ title: 'Reversal' }, { title: 'Temptation' }],
+    fateSelectedIndex: 1, fateCommitted: true });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('an explicitly NULL result snapshot commits NO card', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
+  t('shared state was not consulted to recover one',
+    !r.row || r.row.assist === null, JSON.stringify(r.row));
 }
-{   // same story AND same scene — scene agreement must not rescue it
-  const owned = ownedBy({ ...A, sceneNumber: 3 }, 'attempt-B', STORY);
-  t('same story and SAME SCENE still does not transfer ownership', owned === null);
+
+console.log('\n=== THE POSITIVE, so the rule is not vacuous ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: SNAP_A, resultIdentity: ID_A, sharedSnapshot: null });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('A\'s own snapshot under identity A IS recorded',
+    !!r.row && !!r.row.assist && r.row.assist.label === 'Reversal', JSON.stringify(r.row));
 }
-{   // A running on its own snapshot — the positive, so the rule is not vacuous
-  const owned = ownedBy(A, 'attempt-A', STORY);
-  t('A DOES own its own snapshot', !!owned && owned.attemptId === 'attempt-A');
-  const atCommit = commitAccepts(owned, STORY, 3);
-  t('and commit records exactly that card', atCommit.used === true
-    && atCommit.card && atCommit.card.label === 'Reversal', JSON.stringify(atCommit));
+
+console.log('\n=== SCENE AND STORY MUST ALSO AGREE ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 5, liveAttempt: 'attempt-A',
+    resultSnapshot: SNAP_A, resultIdentity: ID_A, sharedSnapshot: null });
+  t('a scene-3 snapshot is refused when committing scene 5',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
 }
-{   // a failed generation produces no accepted provenance to carry
-  const owned = ownedBy(A, null, STORY);          // no running attempt: generation never got one
-  t('a generation with no attempt creates NO accepted provenance', owned === null);
-  const atCommit = commitAccepts(null, STORY, 3);
-  t('and commit with nothing passed records no card',
-    atCommit.used === false && atCommit.card === null);
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { ...SNAP_A, storyId: 'another-story' }, resultIdentity: ID_A,
+    sharedSnapshot: null });
+  t('a snapshot from another story is refused', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
 }
-{   // explicit cardless stays cardless — never backfilled
-  const cardless = { storyId: STORY, sceneNumber: 4, attemptId: 'attempt-C', cardAssist: null };
-  const owned = ownedBy(cardless, 'attempt-C', STORY);
-  t('an explicitly cardless submission is owned', !!owned);
-  const atCommit = commitAccepts(owned, STORY, 4);
-  t('and commits as NULL, not backfilled from anything older',
-    atCommit.used === true && atCommit.card === null, JSON.stringify(atCommit));
+console.log('\n=== A MISSING GENERATION IDENTITY IS NOT OWNERSHIP ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: SNAP_A, resultIdentity: null, sharedSnapshot: null });
+  t('without a generation identity, no card is recorded',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
 }
-{   // a different scene must not be accepted at commit
-  const owned = ownedBy(A, 'attempt-A', STORY);
-  const atCommit = commitAccepts(owned, STORY, 5);
-  t('a snapshot for scene 3 is REJECTED when committing scene 5',
-    atCommit.used === false && atCommit.card === null, JSON.stringify(atCommit));
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: SNAP_A, resultIdentity: { storyId: STORY, attemptId: null },
+    sharedSnapshot: null });
+  t('nor with an identity whose attempt is null', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
 }
-{   // a different story must not be accepted either
-  const owned = ownedBy(A, 'attempt-A', 'story-2');
-  t('a snapshot from another story is not owned', owned === null);
+console.log('\n=== EXPLICITLY CARDLESS STAYS CARDLESS ===');
+{
+  const r = await commitCG({ storyId: STORY, sceneNumber: 4, liveAttempt: 'attempt-C',
+    resultSnapshot: { storyId: STORY, sceneNumber: 4, attemptId: 'attempt-C', cardAssist: null },
+    resultIdentity: { storyId: STORY, attemptId: 'attempt-C', sceneIndex: 3 },
+    sharedSnapshot: { storyId: STORY, sceneNumber: 4, attemptId: 'attempt-C', cardAssist: CARD_B } });
+  t('an owned-but-cardless snapshot commits NULL, not the shared card',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
 }
+
+// ── ASYNC INTERLEAVING: the globals move to B while A's planning is still waiting ────────────
+console.log('\n=== ASYNC INTERLEAVING: globals move to B while A awaits ===');
+{
+  const r = await page.evaluate(async (o) => {
+    const s = window.state;
+    s.storyId = o.storyId;
+    // A's generation begins and captures its identity BEFORE awaiting (what production now does).
+    s._cgGenAttempt = { id: 'attempt-A', storyId: o.storyId, sceneIndex: 2, at: Date.now() };
+    const capturedByA = (s._cgGenAttempt && s._cgGenAttempt.id != null
+      && String(s._cgGenAttempt.storyId || '') === String(s.storyId || ''))
+      ? String(s._cgGenAttempt.id) : null;
+    // A's planner captures ITS snapshot, handed back through a local out-object.
+    s.fateOptions = [{ title: 'Reversal' }];
+    s.fateSelectedIndex = 0; s.fateCommitted = true;
+    const provOut = {};
+    provOut.snapshot = window._captureSubmissionProvenance(s, 'act', 'dia');
+    // ...and WHILE A IS AWAITING, everything global moves on to B.
+    await new Promise(res => setTimeout(res, 30));
+    s._cgGenAttempt = { id: 'attempt-B', storyId: o.storyId, sceneIndex: 2, at: Date.now() };
+    s.fateOptions = [{ title: 'Temptation' }];
+    s.fateSelectedIndex = 0;
+    s._submissionProvenance = window._captureSubmissionProvenance(s, 'act2', 'dia2');
+    // A resumes and validates its OWN snapshot against its OWN pre-await identity.
+    const spNow = provOut.snapshot;
+    const owned = (spNow && capturedByA && String(spNow.attemptId || '') === capturedByA
+      && String(spNow.storyId || '') === String(s.storyId || ''))
+      ? { storyId: String(s.storyId || ''), sceneNumber: spNow.sceneNumber,
+          attemptId: capturedByA, cardAssist: spNow.cardAssist || null }
+      : null;
+    return { capturedByA, aSnapshotAttempt: spNow && spNow.attemptId,
+             aSnapshotCard: spNow && spNow.cardAssist ? spNow.cardAssist.label : null,
+             sharedNowAttempt: s._submissionProvenance && s._submissionProvenance.attemptId,
+             sharedNowCard: s._submissionProvenance && s._submissionProvenance.cardAssist
+               ? s._submissionProvenance.cardAssist.label : null,
+             ownedCard: owned && owned.cardAssist ? owned.cardAssist.label : null,
+             ownedAttempt: owned && owned.attemptId };
+  }, { storyId: STORY });
+  console.log('   ' + JSON.stringify(r));
+  t('A captured its identity before awaiting', r.capturedByA === 'attempt-A');
+  t('A\'s own snapshot still belongs to A after the interleave',
+    r.aSnapshotAttempt === 'attempt-A' && r.aSnapshotCard === 'Reversal', JSON.stringify(r));
+  t('the shared slot has genuinely moved to B', r.sharedNowAttempt === 'attempt-B'
+    && r.sharedNowCard === 'Temptation', JSON.stringify(r));
+  t('A KEEPS ITS OWN CARD and does not adopt B\'s',
+    r.ownedAttempt === 'attempt-A' && r.ownedCard === 'Reversal', JSON.stringify(r));
+}
+
+console.log('\n=== THE SHIPPED CG BRANCH HAS NO FALLTHROUGH ===');
+const SRC = await page.evaluate(async () => (await (await fetch('/app.js')).text()));
+t("the cg branch returns null rather than consulting _submissionProvenanceFor",
+  /if \(kind === 'cg'\)[\s\S]{0,1400}return _rp\.cardAssist \|\| null;[\s\S]{0,80}\} catch \(_\) \{ return null; \}/.test(SRC));
+t('and it compares attempt EQUALITY, not existence',
+  /String\(_rp\.attemptId \|\| ''\) !== String\(_gi\.attemptId\)/.test(SRC));
+t('the planner hands its snapshot back through the caller\'s object',
+  /provOut\.snapshot = _subProv/.test(SRC));
+t('and the CG generation reads its identity before any await',
+  /READ BEFORE ANY AWAIT/.test(SRC));
+
+await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 process.exit(fail ? 1 : 0);

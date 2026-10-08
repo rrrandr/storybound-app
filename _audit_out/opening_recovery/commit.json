@@ -1,8 +1,8 @@
 {
-  "picked": "Boundary",
+  "picked": "Temptation",
   "newScenes": [
     {
-      "uid": "cg:7b307135-1287-435e-a538-7a7083074405",
+      "uid": "cg:72734789-01f7-459e-872b-ecf006b533e6",
       "chars": 1814
     }
   ],
@@ -12,12 +12,12 @@
       "scene": 3,
       "card": null,
       "assist": {
-        "id": "boundary",
-        "label": "Boundary",
+        "id": "temptation",
+        "label": "Temptation",
         "index": 0
       },
       "act": "{}",
-      "dia": "\"Do you want me to stay, or go?\" And I am done being asked."
+      "dia": "\"I keep telling myself to stop wanting this.\" And I am done being asked."
     }
   ],
   "handoff": []
