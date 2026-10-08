@@ -2094,10 +2094,21 @@ try {
     // still be visible would fail every successful continuation. What must be true now is that the
     // choice was RECORDED, the decision is CLOSED, and the handoff had passed beforehand.
     const _choiceRecorded = (decision && decision.recorded && decision.recorded.choice) || null;
-    const _postChoiceOk = handoffOk && !!_choiceRecorded && !oasFinal.decisionOnScreen;
-    say('  after the choice: recorded=' + JSON.stringify(_choiceRecorded)
-      + ' · prompt removed by production=' + (!oasFinal.decisionOnScreen)
-      + ' · handoff had passed=' + handoffOk);
+    // IN STOP MODE THERE IS NO CHOICE TO CHECK. Stopping at the validated handoff means the branch
+    // was deliberately NOT serviced, so recordedChoice is null and the prompt is still up — both
+    // correct. Running the post-choice check anyway printed "STOPPING AS PLANNED" and then declared
+    // the handoff incomplete for exactly the state that mode guarantees.
+    const _stoppedAtHandoff = halted
+      && String(process.env.SB_STOP_AT || '').toLowerCase() === 'handoff';
+    const _postChoiceOk = _stoppedAtHandoff
+      || (handoffOk && !!_choiceRecorded && !oasFinal.decisionOnScreen);
+    if (_stoppedAtHandoff) {
+      say('  post-choice check SKIPPED — stopped at the validated handoff, before any choice');
+    } else {
+      say('  after the choice: recorded=' + JSON.stringify(_choiceRecorded)
+        + ' · prompt removed by production=' + (!oasFinal.decisionOnScreen)
+        + ' · handoff had passed=' + handoffOk);
+    }
     if (!_postChoiceOk) {
       halted = true;
       haltReason = 'OAS handoff incomplete (handoffOk=' + handoffOk
