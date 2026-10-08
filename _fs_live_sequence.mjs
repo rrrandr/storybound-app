@@ -14,7 +14,9 @@ import { chromium } from 'playwright-core';
 import { estimateUsd } from './_fsc_cost_guard.mjs';
 import { makeSpendLedger } from './_live_spend_ledger.mjs';
 import { canSubmit } from './_oas_submission_guard.mjs';
-import { findFSDef, launchFS, unlockFS, finalizePreview, enterOAS, advanceExpectingGate, chooseBranch }
+import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
+  from './_test_session_env.mjs';
+import { findFSDef, launchFS, enterOAS, advanceExpectingGate, chooseBranch }
   from './_fs_story_setup.mjs';
 
 // NO SILENT DEFAULT. The ceiling IS the authorization, and inheriting a stale one is how a run
@@ -573,8 +575,10 @@ await page.route('**/api/**', async (route) => {
   const req = route.request(); const url = req.url();
 
   if (/\/api\/config/.test(url)) {
-    return route.fulfill({ status: 200, contentType: 'application/json',
-      body: JSON.stringify({ supabaseUrl: 'http://localhost:3000/_h', supabaseAnonKey: 'h' }) });
+    // THE SHARED FIXTURE'S CONFIG, so supabase-js is constructed against the fixture origin and
+    // _isSignedIn becomes true. The old dummy supabaseUrl meant no session could ever exist, which
+    // is why this route had to reach for _unlockBakedGenesis directly.
+    return route.fulfill({ status: 200, contentType: 'application/json', body: configBody() });
   }
   // SIMULATED ENTITLEMENT — supplies the payment prerequisite only. No purchase occurs.
   if (/consume-fortune|fortune|charge|pricing|entitle|storypass|subscription/i.test(url)) {
@@ -969,6 +973,29 @@ await page.route('**/api/**', async (route) => {
   return route.fulfill({ status: resp.status(), headers: resp.headers(), body: text });
 });
 
+// ── THE CORRECTED LIFECYCLE'S SESSION SETUP (2026-10-08) ──────────────────────────────────────
+// Seeded BEFORE any page script runs: supabase-js resolves getSession() from storage at load, and
+// the real gate refuses to charge without a session token.
+await installSession(page);
+await page.route('**/sb-test.localhost/**', async (r) => {
+  const q = r.request();
+  // ZERO ROWS for purchase_intents — an empty object reads as an unresumed purchase and sends boot
+  // into checkout recovery, which starts a second, literary generation.
+  if (q.method() === 'GET' && /\/rest\/v1\/purchase_intents(\?|$)/.test(q.url())) {
+    try { await r.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'Content-Range': '*/0' }, body: '[]' }); } catch (_) {}
+    return;
+  }
+  try { await r.fallback(); } catch (_) {}
+});
+await installEntitledProfileStub(page);
+await page.route('**/sb-test.localhost/**', async (r) => {
+  if (isAuthOrigin(r.request().url())) {
+    try { await r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {}
+    return;
+  }
+  try { await r.fallback(); } catch (_) {}
+});
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._advanceStagedScene === 'function', { timeout: 30000 });
 say('app loaded\n');
@@ -1031,9 +1058,64 @@ try {
   // of defect as the deleted waitForHand(). One sequence now covers both phases.
   let pickSeed = 1013904223;
   const nextPick = (n) => { pickSeed = (1664525 * pickSeed + 1013904223) >>> 0; return pickSeed % n; };
-  await unlockFS(page, 'fs-live');
-  await finalizePreview(page);
-  await page.waitForTimeout(4000);
+  // ── NO UNLOCK SHORTCUT ON THIS ROUTE (2026-10-08) ───────────────────────────────────────────
+  // unlockFS called _unlockBakedGenesis directly and finalizePreview skipped the preview flow, so
+  // this runner never exercised the gate the reader meets, and it reached the OAS with Genesis
+  // already unlocked. Both are gone. The reader's own path is: clear the onboarding overlays with
+  // their real controls, turn the pages to a GENUINELY LOCKED, VISIBLE entrance, and let the gate
+  // ask for payment at Submit.
+  const ONBOARD_CTRLS = [
+    { sel: '.skip-render-warn-btn[data-act="skip"]', what: '"Skip anyway"' },
+    { sel: '#pcLookSkipBtn', what: 'look Skip' },
+    { sel: '#liRenderSkipBtn', what: 'LI render Skip' }
+  ];
+  const clearOnboarding = async () => {
+    for (let r = 0; r < 6; r++) {
+      let acted = false;
+      for (const o of ONBOARD_CTRLS) {
+        const vis = await page.evaluate((q) => {
+          const e = document.querySelector(q); return !!(e && e.getClientRects().length > 0); }, o.sel);
+        if (!vis) continue;
+        await page.click(o.sel, { timeout: 6000 }).catch(() => {});
+        acted = true; await page.waitForTimeout(1200); break;
+      }
+      if (!acted) break;
+    }
+  };
+  let _navLog = [];
+  for (let i = 0; i < 25; i++) {
+    const st = await page.evaluate(() => {
+      const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+      return { entrance: v('bakedOASExamineBtn') && v('bakedOASSubmitBtn'),
+               cover: v('coverNextBtn'), next: v('nextPageBtn'), front: !!window._frontispieceActive };
+    });
+    if (st.entrance) { _navLog.push('entrance on screen after ' + i + ' turns'); break; }
+    await clearOnboarding();
+    if (st.cover) { await page.click('#coverNextBtn', { timeout: 6000 }).catch(() => {}); _navLog.push('cover'); }
+    else if (st.front) {
+      await page.evaluate(() => { try { window.dismissFatelandsFrontispiece(); } catch (_) {} });
+      _navLog.push('frontispiece');
+      for (let w = 0; w < 12; w++) { if (await page.evaluate(() => !window._frontispieceActive)) break; await page.waitForTimeout(500); }
+    } else if (st.next) { await page.click('#nextPageBtn', { timeout: 6000 }).catch(() => {}); _navLog.push('next'); }
+    else { _navLog.push('no control'); break; }
+    await page.waitForTimeout(1100);
+  }
+  const _atEntrance = await page.evaluate(() => {
+    const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+    return { onScreen: v('bakedOASExamineBtn') && v('bakedOASSubmitBtn'),
+             locked: !window.state._bakedGenesisUnlocked,
+             setupComplete: !!window.state._bakedSetupComplete };
+  });
+  say('  navigation: ' + _navLog.join(' -> '));
+  say('  at the entrance: ' + JSON.stringify(_atEntrance));
+  if (!_atEntrance.onScreen) {
+    halted = true;
+    say('\n*** STOPPING — the locked entrance was never reachable; no provider dispatch attempted ***');
+  } else if (!_atEntrance.locked) {
+    halted = true;
+    say('\n*** STOPPING — the entrance was reached ALREADY UNLOCKED, so the gate would not be '
+      + 'exercised; no provider dispatch attempted ***');
+  }
   say('  setup complete · exposure $' + exposure().toFixed(6) + '\n');
 
   if (!halted) {
@@ -1043,20 +1125,68 @@ try {
     // enterOAS reports firstTurnConsumed for the new entrance (the legacy Continue button does
     // not), and the six are counted INCLUDING it.
     const _entry = await enterOAS(page, { settleMs: 9000 });
-    const _entryCounted = _entry && _entry.firstTurnConsumed ? 1 : 0;
-    say('  entered via ' + ((_entry && _entry.route) || '?')
-      + (_entryCounted ? ' — the submitted answer IS exchange 1 of the six' : ''));
+    say('  entered via ' + ((_entry && _entry.route) || '?'));
+    // ENTRY FAILURE HALTS IMMEDIATELY. enterOAS now refuses rather than clicking a hidden
+    // element, and a refusal means the reader never reached the OAS — so there is nothing to
+    // measure and nothing to spend on.
+    // THE GATE'S VISIBLE CONFIRMATION. Submit raises the real unlock modal because the reader is
+    // locked; the run continues only through its own confirm control, and the charge request is
+    // production's with a simulated response.
+    if (_entry && _entry.ok !== false) {
+      const _gate = await page.evaluate(() => {
+        const m = document.getElementById('bakedUnlockModal');
+        const v = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+        return { shown: !!(m && m.classList.contains('show')), go: v('buGoBtn') };
+      });
+      if (_gate.shown && _gate.go) {
+        say('  the gate asked for payment — confirming through its own control');
+        await page.click('#buGoBtn', { timeout: 15000 }).catch((e) => {
+          say('  *** the gate confirm was not clickable: ' + String(e.message).split('\n')[0]);
+        });
+        await page.waitForTimeout(6000);
+        const _unlocked = await page.evaluate(() => ({
+          unlocked: !!window.state._bakedGenesisUnlocked,
+          setupComplete: !!window.state._bakedSetupComplete,
+          dialogue: !!window.state.intimacyDialogue }));
+        say('  after the confirmation: ' + JSON.stringify(_unlocked));
+        if (!_unlocked.dialogue) {
+          halted = true;
+          say('\n*** STOPPING — the gate was confirmed but the OAS did not open '
+            + JSON.stringify(_unlocked) + ' ***');
+        }
+      } else {
+        say('  no unlock modal appeared at Submit: ' + JSON.stringify(_gate));
+      }
+    }
+    if (!_entry || _entry.ok === false) {
+      halted = true;
+      say('\n*** STOPPING — the OAS entrance was not reachable: '
+        + ((_entry && (_entry.why || _entry.route)) || 'enterOAS returned nothing')
+        + ' — no provider dispatch attempted ***');
+    }
+    // A CLICK IS NOT AN EXCHANGE. firstTurnConsumed says a submission was made; it counts toward
+    // the six only once its model reply is ATTRIBUTED AND RENDERED, by the same evidence chain
+    // every other turn uses. Set below, not here.
+    let _entryCounted = 0;
     // SUBMIT -> FIRST READABLE PROSE, measured separately from provider latency (which the
     // per-call roll-up already reports). This is what the reader actually waits through.
     let _submitToProseMs = null;
-    if (_entryCounted) {
-      const _t0 = Date.now();
+    if (!halted && _entry && _entry.submitAt) {
+      // STARTS IMMEDIATELY BEFORE SUBMIT (stamped inside enterOAS) and stops when the reply is
+      // VISIBLY RENDERED. It used to start after enterOAS returned, so it excluded the real wait
+      // and included none of the settling delay it was meant to exclude.
+      const _t0 = _entry.submitAt;
       for (let w = 0; w < 120; w++) {
+        // VISIBLY RENDERED, not merely present in state: the reader's wait ends when the words
+        // are on screen.
         const readable = await page.evaluate(() => {
-          const d = window.state.intimacyDialogue;
-          const h = (d && Array.isArray(d.liTurnHistory)) ? d.liTurnHistory : [];
-          const last = h.length ? h[h.length - 1] : null;
-          return !!(last && String(last.liResponse || '').trim().length > 20);
+          const els = Array.from(document.querySelectorAll(
+            '#intimacyDialogueStage, #gnPanelDisplay, #storyContent'));
+          for (const el of els) {
+            if (!el || el.getClientRects().length === 0) continue;
+            if (String(el.textContent || '').trim().length > 80) return true;
+          }
+          return false;
         }).catch(() => false);
         if (readable) { _submitToProseMs = Date.now() - _t0; break; }
         await page.waitForTimeout(500);
@@ -1505,6 +1635,12 @@ try {
       fallbackSeen = fallbackNow;
       if (evidence && renderedGrew && !fellBack) {
         modelBackedReplies++;
+        // THE ENTRANCE SUBMISSION EARNS ITS PLACE HERE, on the same evidence every other turn
+        // needs — an attributed model reply that actually rendered. A click never counted.
+        if (_entry && _entry.firstTurnConsumed && !_entryCounted) {
+          _entryCounted = 1;
+          say('      the entrance submission is CONFIRMED as exchange 1 — attributed and rendered');
+        }
         say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — author call '
           + evidence.callN
           + (evidence.chain && evidence.chain.cleanupAccepted

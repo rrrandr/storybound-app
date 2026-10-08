@@ -78,6 +78,7 @@ export const enterOAS = async (page, opts) => {
   }
   let route = 'playwright';
   let firstTurnConsumed = false;
+  let submitAt = null;
   if (!which.legacy) {
     const say = o.say != null ? String(o.say) : 'I shaped nothing. Ask me properly.';
     const doText = o.doText != null ? String(o.doText) : '';
@@ -92,12 +93,15 @@ export const enterOAS = async (page, opts) => {
       if (b) { b.value = v.d; b.dispatchEvent(new Event('input', { bubbles: true })); }
     }, { s: say, d: doText });
     route = 'entrance submit (trusted click)';
+    // STAMPED IMMEDIATELY BEFORE THE CLICK, so the caller can measure Submit -> visibly rendered
+    // reply without any of this helper's settling delay.
+    submitAt = Date.now();
     try {
       await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
     } catch (e) {
       return { ok: false, route: 'entrance submit REFUSED',
                why: 'the entrance Submit was not clickable: ' + String(e.message).split('\n')[0],
-               firstTurnConsumed: false };
+               firstTurnConsumed: false, submitAt: submitAt };
     }
     firstTurnConsumed = true;
   } else {
@@ -116,7 +120,7 @@ export const enterOAS = async (page, opts) => {
     oasPlanPending: !!window.state._bakedPendingOASPlan,
     sceneDecisionNeeded: typeof window._sceneDecisionNeeded === 'function'
       ? !!window._sceneDecisionNeeded() : null
-  })).then(r => Object.assign(r, { route, firstTurnConsumed }));
+  })).then(r => Object.assign(r, { route, firstTurnConsumed, submitAt }));
 };
 
 export const finalizePreview = async (page) => {

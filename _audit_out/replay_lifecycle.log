@@ -1,0 +1,36 @@
+=== FS SEQUENCE — ceiling $5.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: no control
+  at the entrance: {"onScreen":false,"locked":true,"setupComplete":false}
+
+*** STOPPING — the locked entrance was never reachable; no provider dispatch attempted ***
+  setup complete · exposure $0.000000
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 0
+  MEASURED (receipts)    : $0.000000
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.000000
+  ceiling                : $5.00  [HALTED: ]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.000000
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000000 of $5.00
+
+output: _fs_live_out/run_2026-10-08T06-25-05-879Z
