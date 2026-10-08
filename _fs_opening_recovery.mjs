@@ -469,11 +469,22 @@ if (ARM === 'commit') {
   t('AN ACCEPTED PROJECTION WAS ADDED', newScenes.length >= 1 && newScenes[0].chars > 400,
     JSON.stringify(newScenes));
   t('AND A CORRESPONDING LEDGER ROW WAS ADDED', newRows.length >= 1, JSON.stringify(newRows));
-  const carrier = newRows.find(r => r.assist && (r.assist.label || r.assist.id)) || null;
+  // MATCH THE ROW TO *THIS* ACCEPTED RESULT, not to any new row that happens to carry the label.
+  // The planner's own provenance line names the scene it planned; the row must be that scene, and
+  // it must be the row added alongside the accepted projection.
+  const planLine = consoleAll.filter(l => /SUBMISSION-PROVENANCE. scene/.test(l)).pop() || '';
+  const planScene = (() => { const m = /scene (\d+)/.exec(planLine); return m ? Number(m[1]) : null; })();
+  console.log('   planner planned scene: ' + planScene + '  from ' + JSON.stringify(planLine.slice(-70)));
+  t('the planner\'s own line names the scene it planned', planScene != null, JSON.stringify(planLine));
+  t('exactly ONE ledger row was added', newRows.length === 1, JSON.stringify(newRows.map(r => r.scene)));
+  const carrier = newRows.find(r => Number(r.scene) === Number(planScene)) || null;
+  t('and that row IS the scene the planner planned', !!carrier,
+    'planner scene ' + planScene + ', new rows at ' + JSON.stringify(newRows.map(r => r.scene)));
   t('THE COMMITTED ROW RETAINS THE SAME IDENTITY THE PLANNER RECEIVED',
-    !!carrier && !!picked && (carrier.assist.label === picked || carrier.assist.id === picked),
-    'planner got ' + JSON.stringify(picked) + '; rows carry '
-    + JSON.stringify(newRows.map(r => r.assist)));
+    !!carrier && !!carrier.assist && !!picked
+      && (carrier.assist.label === picked || carrier.assist.id === picked),
+    'planner got ' + JSON.stringify(picked) + '; that row carries '
+    + JSON.stringify(carrier && carrier.assist));
   t('and the reader\'s own edited wording is in that row',
     !!carrier && (String(carrier.dia).indexOf(EDIT.trim()) >= 0
       || String(carrier.act).indexOf(EDIT.trim()) >= 0),

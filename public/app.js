@@ -133680,45 +133680,6 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._captureSubmissionProvenance = _captureSubmissionProvenance;
 
-  /** THE ACCEPTED GENERATION HANDS ITS PROVENANCE TO COMMIT (2026-10-07).
-   *  _runCGScreenplayGen clears state._cgGenAttempt in its `finally` (app.js:239529) BEFORE
-   *  _completeStagedSceneFromScreenplay commits the ledger row (241203). With the owning attempt
-   *  gone, strict matching correctly refused the snapshot and CG history lost the card identity
-   *  the planner had been given. So the generation records the snapshot — WITH its owning attempt
-   *  — on its own handoff slot, and commit consumes it. The global's life is NOT extended and
-   *  identity matching is NOT relaxed: the handoff carries the identity with it.
-   */
-  function _handOffSubmissionProvenance(s) {
-    try {
-      s = s || window.state; if (!s) return null;
-      var sp = s._submissionProvenance;
-      if (!sp || !sp.attemptId) return null;
-      if (String(sp.storyId) !== String(s.storyId || '')) return null;
-      s._provenanceAtAccept = { storyId: sp.storyId, sceneNumber: sp.sceneNumber,
-                                attemptId: sp.attemptId, attemptSource: sp.attemptSource || null,
-                                cardAssist: sp.cardAssist || null, at: Date.now() };
-      try {
-        console.log('[SUBMISSION-PROVENANCE] handed to commit - scene ' + sp.sceneNumber
-          + ' - attempt ' + String(sp.attemptId).slice(0, 12)
-          + ' - card ' + (sp.cardAssist ? (sp.cardAssist.label || sp.cardAssist.id) : 'none'));
-      } catch (_) {}
-      return s._provenanceAtAccept;
-    } catch (_) { return null; }
-  }
-  window._handOffSubmissionProvenance = _handOffSubmissionProvenance;
-
-  /** The handoff, consumed once, and only for the scene it was recorded against. */
-  function _takeProvenanceAtAccept(s, sceneNumber) {
-    try {
-      var h = s && s._provenanceAtAccept;
-      if (!h) return null;
-      if (String(h.storyId) !== String(s.storyId || '')) return null;
-      if (sceneNumber != null && Number(h.sceneNumber) !== Number(sceneNumber)) return null;
-      s._provenanceAtAccept = null;        // consumed; never reused by a later scene
-      return h;
-    } catch (_) { return null; }
-  }
-
   function _submissionProvenanceFor(s, sceneNumber, attemptId) {
     // The snapshot, but only if it belongs to THIS story and scene. One from an earlier or
     // abandoned turn is never inherited.
@@ -133835,15 +133796,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           // its cardAssist is null, so an explicitly cardless submission is never backfilled with
           // older provenance by a truthy fallback. Only with no matching snapshot does the
           // stamped key apply.
+          // THE ACCEPTED RESULT'S OWN PROVENANCE, passed in explicitly and validated against
+          // that result's story, scene AND attempt — never recovered from whichever shared slot
+          // happens to be current at commit time.
+          try {
+            var _rp = opts.submissionProvenance;
+            if (_rp) {
+              var _okOwner = String(_rp.storyId || '') === String(s.storyId || '')
+                && (n == null || Number(_rp.sceneNumber) === Number(n))
+                && _rp.attemptId != null;
+              if (_okOwner) return _rp.cardAssist || null;
+              console.warn('[SUBMISSION-PROVENANCE] result provenance REJECTED at commit — scene '
+                + _rp.sceneNumber + ' vs ' + n + ', attempt '
+                + (_rp.attemptId ? String(_rp.attemptId).slice(0, 12) : 'NONE'));
+              return null;
+            }
+          } catch (_) {}
+          // The literary route supplies it on its own stamped key, where the snapshot is still
+          // resolvable at stamp time.
           try {
             var _sp = _submissionProvenanceFor(s, n, null);
             if (_sp) return _sp.cardAssist || null;
-          } catch (_) {}
-          // THE ACCEPTED GENERATION'S HANDOFF, for the CG path where the owning attempt has
-          // already been released. Scene-checked and consumed once, so it cannot be inherited.
-          try {
-            var _h = _takeProvenanceAtAccept(s, n);
-            if (_h) return _h.cardAssist || null;
           } catch (_) {}
           return useKey ? (key.cardAssist || null) : (opts.cardAssist || null);
         })(),
@@ -239679,6 +239652,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   window._cgMintDeliveredAssignments = _cgMintDeliveredAssignments; window._cgAcceptDelivered = _cgAcceptDelivered; window._renderCGDeliveredAssignments = _renderCGDeliveredAssignments; window._cgBranchKey = _cgBranchKey;
 
   async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue) {
+    var _subProvOwned = null;   // this invocation's submission provenance, validated below
     // TEMPT FATE PROPOSAL — STABLE IDENTITY CAPTURED HERE (Roman 2026-09-23), before any await in
     // this function. "Most recent ledger entry" (the prior version of this wiring) is safe ONLY if
     // no newer/unrelated wish can be sealed while THIS generation is in flight. Traced the real
@@ -239769,9 +239743,26 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // mid-flight could otherwise poison (Roman/Codex review, 2026-09-24).
         var _tfoCtxForPlanner = { invoked: _tfoWasInvokedAtStart, wishText: (_tfoWasInvokedAtStart && _tfoProposalEntry) ? (_tfoProposalEntry.wishText || '') : '' };
         await _generateLiteraryPlotContract(playerAction, playerDialogue, _tfoCtxForPlanner);
-        // Hand the snapshot to commit NOW, while this generation's attempt is still the owner:
-        // the finally below clears _cgGenAttempt before the ledger row is written.
-        try { _handOffSubmissionProvenance(state); } catch (_) {}
+        // ── THIS INVOCATION'S OWN SNAPSHOT ────────────────────────────────────────────────────
+        // Captured into a LOCAL and validated against THIS generation's attempt. A shared slot
+        // copied "at acceptance" was NOT ownership: an active attempt B could hand off and consume
+        // attempt A's card for the same story and scene. It counts only when its attemptId IS this
+        // generation's attempt, and it then rides the RESULT (beside __temptOwnership).
+        try {
+          var _spNow = state._submissionProvenance;
+          var _mineNow = (state._cgGenAttempt && state._cgGenAttempt.id != null)
+            ? String(state._cgGenAttempt.id) : null;
+          if (_spNow && _mineNow && String(_spNow.attemptId || '') === _mineNow
+              && String(_spNow.storyId || '') === String(state.storyId || '')) {
+            _subProvOwned = { storyId: String(_spNow.storyId || ''), sceneNumber: _spNow.sceneNumber,
+                              attemptId: _mineNow, cardAssist: _spNow.cardAssist || null };
+          } else {
+            _subProvOwned = null;
+            console.warn('[SUBMISSION-PROVENANCE] not owned by this generation — snapshot attempt '
+              + (_spNow && _spNow.attemptId ? String(_spNow.attemptId).slice(0, 12) : 'NONE')
+              + ' vs running ' + (_mineNow ? _mineNow.slice(0, 12) : 'NONE') + '; discarded');
+          }
+        } catch (_) { _subProvOwned = null; }
       }
     } catch (_pcCgErr) {}
     // OPEN ROW GATE (2026-09-11): with no ACCEPTED local objective there is nothing to stage, assign or write. The caller
@@ -240423,6 +240414,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       // (captured before any await, at this generation's start — see _tfoProposalEntry /
       // _tfoWasInvokedAtStart above) and the raw, still-uncommitted outcome report here. A
       // generation that never reaches persistence therefore commits nothing, by construction.
+      if (_normalized) {
+        // Travels with the generation RESULT into acceptance and commit. Null unless this
+        // invocation owned it.
+        _normalized.__submissionProvenance = _subProvOwned || null;
+      }
       if (_normalized && plan) {
         _normalized.__temptOwnership = {
           proposalEntry: _tfoProposalEntry,
@@ -241248,7 +241244,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           : null;
         var proseAssembled = _sbRec ? _sbRec.text : plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
         if (plan) plan.__sceneUid = (_sbRec && _sbRec.uid) || _sbSceneUid || plan.__sceneUid || null;
-        try { _sceneLedgerCommit(state, { kind: 'cg', sceneNumber: (typeof sceneIndex === 'number' ? sceneIndex + 1 : undefined), act: playerAction, dia: playerDialogue }); } catch (_) {}
+        try { _sceneLedgerCommit(state, { kind: 'cg', submissionProvenance: (plan && plan.__submissionProvenance) || null, sceneNumber: (typeof sceneIndex === 'number' ? sceneIndex + 1 : undefined), act: playerAction, dia: playerDialogue }); } catch (_) {}
         try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(proseAssembled); } catch (_) {}
         // TEMPT FATE OUTCOME — commit HERE, immediately after real persistence (state.scenes.push/
         // _sceneLedgerCommit above). Extracted to its own function (mirrors
