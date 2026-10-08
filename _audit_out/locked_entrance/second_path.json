@@ -1,37 +1,10 @@
 {
   "secondPath": {
-    "checkoutAutoBegin": [
-      "LOG [CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story"
-    ],
-    "beginStoryCalled": 1,
-    "literaryAuthoring": 2,
-    "zeroApiViolations": 1,
-    "providerRequests": 4
+    "checkoutAutoBegin": [],
+    "beginStoryCalled": 0,
+    "literaryAuthoring": 0,
+    "zeroApiViolations": 0,
+    "providerRequests": 0
   },
-  "stages": [
-    {
-      "stage": "other",
-      "head": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write ",
-      "chars": 13504,
-      "model": "ministral-8b-2512"
-    },
-    {
-      "stage": "other",
-      "head": " ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are the LOAD-BEARING contract for Scene 1. E",
-      "chars": 150696,
-      "model": "grok-4-1-fast-reasoning"
-    },
-    {
-      "stage": "other",
-      "head": "You are a cinematic visual-novel director for adult romance fiction. You DO NOT write prose. You analyze prose",
-      "chars": 90522,
-      "model": "gpt-4o-mini"
-    },
-    {
-      "stage": "other",
-      "head": "You are a cinematic visual-novel director for adult romance fiction. You DO NOT write prose. You analyze prose",
-      "chars": 90522,
-      "model": "gpt-4o-mini"
-    }
-  ]
+  "stages": []
 }

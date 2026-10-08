@@ -3,22 +3,21 @@
   "afterLaunch": {
     "genesisUnlocked": false,
     "setupComplete": false,
-    "scene1MountedAt": 1791417786822,
+    "scene1MountedAt": 1791418226833,
     "handoffInDom": true,
     "submitInDom": true,
-    "examineOnScreen": false,
-    "submitOnScreen": false,
+    "examineOnScreen": true,
+    "submitOnScreen": true,
     "titleActive": true,
     "frontActive": false,
     "plateActive": false,
     "appHidden": false,
     "gameHidden": false,
-    "storyContentCls": "story-content hidden",
-    "readerPages": 0
+    "storyContentCls": "story-content",
+    "readerPages": 1
   },
   "navigation": [
-    "frontispiece(dismiss)",
-    "ENTRANCE REACHED after 2 turns"
+    "ENTRANCE REACHED after 0 turns"
   ],
   "final": {
     "examineOnScreen": true,
@@ -27,30 +26,5 @@
     "setupComplete": false,
     "whyHidden": null
   },
-  "stages": [
-    {
-      "stage": "other",
-      "head": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel. Your job is NOT to write ",
-      "chars": 13504,
-      "model": "ministral-8b-2512"
-    },
-    {
-      "stage": "other",
-      "head": " ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are the LOAD-BEARING contract for Scene 1. E",
-      "chars": 150696,
-      "model": "grok-4-1-fast-reasoning"
-    },
-    {
-      "stage": "other",
-      "head": "You are a cinematic visual-novel director for adult romance fiction. You DO NOT write prose. You analyze prose",
-      "chars": 90522,
-      "model": "gpt-4o-mini"
-    },
-    {
-      "stage": "other",
-      "head": "You are a cinematic visual-novel director for adult romance fiction. You DO NOT write prose. You analyze prose",
-      "chars": 90522,
-      "model": "gpt-4o-mini"
-    }
-  ]
+  "stages": []
 }

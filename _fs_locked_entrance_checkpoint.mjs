@@ -65,16 +65,54 @@ await page.route('**/*', async (route) => {
   try { await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: body }) }); } catch (_) {}
 });
 await installEntitledProfileStub(page);
+const purchaseIntentReqs = [];
+await page.route('**/sb-test.localhost/**', async (route) => {
+  const req = route.request(), url = req.url();
+  if (req.method() === 'GET' && /\/rest\/v1\/purchase_intents(\?|$)/.test(url)) {
+    purchaseIntentReqs.push(url.slice(url.indexOf('purchase_intents')).slice(0, 120));
+    try { await route.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'Content-Range': '*/0' }, body: '[]' }); } catch (_) {}
+    return;
+  }
+  try { await route.fallback(); } catch (_) {}
+});
 
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 // BOOT COMPLETE, on boot's own terms.
-const booted = await page.waitForFunction(() => {
+// BOOT COMPLETE = the app's own entry points are live. #app VISIBILITY is not part of it on this
+// path: with the phantom purchase intent gone, boot no longer detours through showScreen('setup'),
+// so the app is revealed later, when the reader opens the Book. That visibility is asserted where
+// it belongs — the locked entrance being on screen at the end of this checkpoint.
+const booted = await page.waitForFunction(
+  () => typeof window._advanceStagedScene === 'function' && document.readyState === 'complete',
+  { timeout: 45000 }).then(() => true).catch(() => false);
+const appAtBoot = await page.evaluate(() => {
   const a = document.getElementById('app');
-  return !!(a && !a.classList.contains('hidden') && a.getClientRects().length > 0)
-    && typeof window._advanceStagedScene === 'function';
-}, { timeout: 45000 }).then(() => true).catch(() => false);
-console.log('boot complete: ' + booted);
-t('boot completes and reveals the app on its own', booted === true);
+  return { hidden: !!(a && a.classList.contains('hidden')), rects: a ? a.getClientRects().length : null };
+});
+console.log('boot complete: ' + booted + '  app at boot: ' + JSON.stringify(appAtBoot));
+t('boot completes on its own', booted === true);
+
+// VERIFY THE FIXTURE PRODUCES data:null, not {} — through the same query production runs.
+const intentProbe = await page.evaluate(async () => {
+  try {
+    const sb = window.sb || window._sb || null;
+    if (!sb || !sb.from) return { ok: false, why: 'supabase client not reachable from window' };
+    const r = await sb.from('purchase_intents').select('*')
+      .eq('user_id', '00000000-0000-0000-0000-000000000001')
+      .eq('status', 'completed').is('resumed_at', null)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    return { ok: true, data: r.data, dataIsNull: r.data === null,
+             error: r.error ? String(r.error.message || r.error).slice(0, 80) : null };
+  } catch (e) { return { ok: false, why: String(e.message).slice(0, 80) }; }
+});
+console.log('maybeSingle probe: ' + JSON.stringify(intentProbe));
+if (intentProbe.ok) {
+  t('maybeSingle on zero rows yields data:null, not {}', intentProbe.dataIsNull === true,
+    JSON.stringify(intentProbe));
+} else {
+  console.log('   (the client is not exposed on window; the boot-path assertions below cover it)');
+}
 
 // LAUNCH ONCE. Nothing else.
 const def = await findFSDef(page);
@@ -209,10 +247,17 @@ console.log('\nSECOND GENERATION PATH: ' + JSON.stringify(secondPath, null, 1));
 console.log('INTERCEPTED PROVIDER REQUESTS, classified:');
 stages.forEach((x, i) => console.log('   ' + (i + 1) + '. [' + x.stage + '] model=' + x.model
   + ' sys=' + x.chars + 'c :: ' + x.head));
-t('reaching the entrance started NO second story-generation path',
-  secondPath.beginStoryCalled === 0 && secondPath.providerRequests === 0,
-  JSON.stringify({ beginStory: secondPath.beginStoryCalled, requests: secondPath.providerRequests,
-                   autoBegin: secondPath.checkoutAutoBegin.slice(0, 1) }));
+const phantom = consoleAll.filter(l => /Found unresumed purchase intent/.test(l));
+console.log('purchase_intents GETs served: ' + JSON.stringify(purchaseIntentReqs));
+console.log('phantom intent lines: ' + JSON.stringify(phantom));
+t('NO phantom purchase intent was found', phantom.length === 0, JSON.stringify(phantom));
+t('NO checkout-triggered auto-begin', secondPath.checkoutAutoBegin.length === 0,
+  JSON.stringify(secondPath.checkoutAutoBegin));
+t('handleBeginStory was never called', secondPath.beginStoryCalled === 0,
+  'called ' + secondPath.beginStoryCalled + ' time(s)');
+t('NO provider requests at all', secondPath.providerRequests === 0,
+  JSON.stringify(stages.map(x => x.stage + '/' + (x.model || '?'))));
+t('NO charge requests', !consoleAll.some(l => /unexpected consume-fortune/.test(l)));
 fs.writeFileSync(OUT + '/console.full.log', consoleAll.join('\n'));
 fs.writeFileSync(OUT + '/second_path.json', JSON.stringify({ secondPath, stages }, null, 2));
 fs.writeFileSync(OUT + '/result.json', JSON.stringify(
