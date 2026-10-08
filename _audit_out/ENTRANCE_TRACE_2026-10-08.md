@@ -31,8 +31,14 @@ requests, exactly as the log labels them.
 
 So one rendered reply is never attributed, and a second author dispatch fires around the same
 submission. **Whether that second dispatch is a retry, a fallback, or a genuine double-dispatch is
-not established here**, and it matters on a paid run because each dispatch is billable. That is the
-next thing to trace — from call 1's and call 2's recorded request/response through production's
+not established here**.
+
+> **Correction (Codex, 2026-10-08):** these were **FIXTURE dispatches, not billable provider
+> calls** — the run was `SB_FIXTURES=...` and the `$0.000100` figures are simulated. My earlier
+> "each dispatch is billable" framing was wrong for this run. **Whether the same fallback would
+> occur live is untested**, and that is the open question — not a known cost.
+
+That is the next thing to trace — from call 1's and call 2's recorded request/response through production's
 parsing and any fallback or editing, to the first rendered history entry.
 
 ## Acceptance conditions — still unmet, unchanged
