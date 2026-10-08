@@ -1,0 +1,40 @@
+[
+  {
+    "at": 1791502395682,
+    "ms": 24,
+    "threw": null,
+    "provider": "grok",
+    "model": "grok-4.20-0309-non-reasoning",
+    "textLen": 1090,
+    "textHead": "{\n  \"pc_input_transmuted\": {\n    \"say\": \"A small, shaky breath escaped me.\",\n    \"do\": \"I ",
+    "attempts": [
+      {
+        "tier": 1,
+        "provider": "grok",
+        "model": "grok-4.20-0309-non-reasoning",
+        "ok": true,
+        "status": 200,
+        "ms": 23
+      }
+    ]
+  },
+  {
+    "at": 1791502395639,
+    "ms": 5062,
+    "threw": null,
+    "provider": "grok",
+    "model": "grok-4-1-fast-reasoning",
+    "textLen": 268,
+    "textHead": "{\n  \"li_dialogue\": \"You angled your glances my way, hoping I would intervene.\",\n  \"li_acti",
+    "attempts": [
+      {
+        "tier": 1,
+        "provider": "grok",
+        "model": "grok-4-1-fast-reasoning",
+        "ok": true,
+        "status": 200,
+        "ms": 5061
+      }
+    ]
+  }
+]

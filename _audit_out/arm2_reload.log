@@ -1,0 +1,57 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+    fixture ledger: _fs_live_out/BUDGET.arm_reload.json
+    admission: exposure USD 0.000000 of ceiling USD 5.05 - headroom USD 5.050000
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  3ms
+  [hold] the entrance OAS author request ARRIVED — holding its response
+    ok   the entrance OAS request ARRIVED at the interceptor
+      in flight: {"awaiting":true,"id":"1791502206853-9scfvk"}
+    ok   production reports awaitingResponse=true with a nonempty request id
+      persisted snapshot: {"awaiting":false,"id":null,"active":true}
+    FAIL production persisted the pending request before the reload  - {"awaiting":false,"id":null,"active":true}
+
+*** RUN ERROR: page.evaluate: TypeError: Cannot read properties of undefined (reading '_bakedGenesisUnlocked')
+    at eval (eval at evaluate (:311:30), <anonymous>:2:36)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) ***
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.000100
+  ceiling                : $5.05
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.arm_reload.json
+  receipted to date  $0.000100
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000100 of $5.05
+
+output: _fs_live_out/run_2026-10-08T23-29-38-918Z
+    FAIL the arm ran without throwing  - page.reload: Target page, context or browser has been closed
+Call log:
+[2m  - waiting for navigation until "domcontentloaded"[22m
+[2m    - navigated to "http://localhost:3000/"[22m
+
+  [hold] released after 5854ms

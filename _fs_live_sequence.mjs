@@ -22,6 +22,26 @@ import { findFSDef, launchFS, enterOAS, advanceExpectingGate, chooseBranch }
 // NO SILENT DEFAULT. The ceiling IS the authorization, and inheriting a stale one is how a run
 // spends against a number nobody approved — which is what happened on the first attempt of
 // 2026-10-05, where $3.00 printed after Roman had approved $1.50.
+// ── ENTRANCE-REPLY HOLD (test synchronisation) ──────────────────────────────────────────────
+// The interceptor already holds the entrance reply. Instead of a blind sleep it now ANNOUNCES that
+// the request arrived and waits to be released, so a test can drive Submit and the unlock
+// confirmation normally and still act while the response is genuinely in flight. Every wait is
+// bounded and the hold is always released, including on failure.
+let _holdArm = false, _holdArrived = null, _holdGate = null, _holdReleased = false;
+let _holdArrivedAt = null;
+function _armHold() {
+  _holdArm = true; _holdReleased = false;
+  let _ra, _rg;
+  _holdArrived = new Promise((r) => { _ra = r; });
+  _holdGate = new Promise((r) => { _rg = r; });
+  _holdArrived._resolve = _ra; _holdGate._resolve = _rg;
+}
+function _releaseHold() {
+  if (_holdReleased) return;
+  _holdReleased = true;
+  try { if (_holdGate && _holdGate._resolve) _holdGate._resolve(); } catch (_) {}
+}
+
 const CEILING = Number(process.env.SB_CEILING || 0);
 // FIXTURE MODE EXERCISES THIS RUNNER, not a copy of its logic. Every gate, deadline, budget
 // rule and sequencing decision below is the same code the paid run uses; only the provider
@@ -458,8 +478,10 @@ let settled = 0;           // receipted spend
 let retained = 0;          // reservations kept for calls that returned no receipt
 // FIXTURE RUNS USE THEIR OWN LEDGER. Exercising the runner must never touch the ledger that
 // records real authorization spend (Codex 2026-10-05).
-const BUDGET_FILE = FIXTURES ? '_fs_live_out/BUDGET.fixture.json' : '_fs_live_out/BUDGET.json';
-const LOCK_FILE = FIXTURES ? '_fs_live_out/BUDGET.fixture.lock' : '_fs_live_out/BUDGET.lock';
+const FIXTURE_BUDGET = process.env.SB_FIXTURE_BUDGET
+  || '_fs_live_out/BUDGET.fixture.json';
+const BUDGET_FILE = FIXTURES ? FIXTURE_BUDGET : '_fs_live_out/BUDGET.json';
+const LOCK_FILE = FIXTURES ? (FIXTURE_BUDGET + '.lock') : '_fs_live_out/BUDGET.lock';
 
 // ── THE BUDGET FAILS CLOSED ─────────────────────────────────────────────────────────────────
 // A missing or malformed ledger must REFUSE a continuation run, not silently restart exposure
@@ -916,6 +938,14 @@ await page.route('**/api/**', async (route) => {
       return route.fulfill({ status: 503, contentType: 'application/json',
         body: JSON.stringify({ error: 'harness halted: infrastructure failure' }) });
     }
+    if (_holdArm && callFunction(sys0ForIdentity) === 'OAS' && _replayAuthorIdx === 1) {
+      _holdArm = false;
+      _holdArrivedAt = Date.now();
+      console.log('  [hold] the entrance OAS author request ARRIVED — holding its response');
+      try { if (_holdArrived && _holdArrived._resolve) _holdArrived._resolve(); } catch (_) {}
+      await Promise.race([_holdGate, new Promise((r) => setTimeout(r, 120000))]);
+      console.log('  [hold] released after ' + (Date.now() - _holdArrivedAt) + 'ms');
+    }
     const _rd = Number(process.env.SB_REPLY_DELAY_MS || 0);
     if (_rd > 0 && callFunction(sys0ForIdentity) === 'OAS' && _replayAuthorIdx === 1) {
       console.log('  [replay] delaying the ENTRANCE OAS author response by ' + _rd
@@ -1255,6 +1285,163 @@ try {
     // was never NOTED under any turn and there was nothing for the attribution to match. Its
     // context is set before its dispatch; the loop therefore starts at turn 2.
     setPreviewContext('opening OAS', 1);
+    const _scenario = String(process.env.SB_SCENARIO || '').toLowerCase();
+    const _sres = { scenario: _scenario, checks: [] };
+    const _sck = (label, ok, detail) => {
+      _sres.checks.push({ label, ok: !!ok, detail: detail || null });
+      say('    ' + (ok ? 'ok   ' : 'FAIL ') + label + (ok || !detail ? '' : '  - ' + detail));
+    };
+    let _armWork = null;
+    if (_scenario) {
+      const _exp = exposure();
+      const _head = CEILING ? (CEILING - _exp) : Infinity;
+      say('    fixture ledger: ' + BUDGET_FILE);
+      say('    admission: exposure USD ' + _exp.toFixed(6) + ' of ceiling USD ' + CEILING
+        + ' - headroom USD ' + (isFinite(_head) ? _head.toFixed(6) : 'unbounded'));
+      if (isFinite(_head) && _head <= 0.25) {
+        say('*** NOT ADMITTED - the fixture ledger has USD ' + _head.toFixed(6)
+          + ' of headroom against USD ' + CEILING + '. This is the SAME refusal the spending'
+          + ' guard raises before dispatch; give this arm its own ledger via SB_FIXTURE_BUDGET.');
+        halted = true;
+        haltReason = 'fixture budget not admitted (headroom USD ' + _head.toFixed(6) + ')';
+      } else {
+        _armHold();
+        _armWork = (async () => {
+          let _arrived = false;
+          try {
+            await Promise.race([_holdArrived.then(() => { _arrived = true; }),
+                                new Promise((r) => setTimeout(r, 120000))]);
+            _sck('the entrance OAS request ARRIVED at the interceptor', _arrived,
+              'no entrance author request within 120s');
+            if (!_arrived) return;
+            const _live = await page.evaluate(() => {
+              const d = (window.state && window.state.intimacyDialogue) || {};
+              return { awaiting: !!d.awaitingResponse, id: d.pendingRequestId || null };
+            });
+            say('      in flight: ' + JSON.stringify(_live));
+            _sck('production reports awaitingResponse=true with a nonempty request id',
+              _live.awaiting && !!_live.id && String(_live.id).trim() !== '',
+              JSON.stringify(_live));
+
+            if (_scenario === 'waiting') {
+              const _dl = Date.now() + 25000;
+              let _rehyd = [];
+              while (Date.now() < _dl) {
+                _rehyd = await page.evaluate(() => (window.__sbRace || { rehydrations: [] }).rehydrations);
+                if (_rehyd.length > 0) break;
+                await page.waitForTimeout(400);
+              }
+              _sck('the automatic rehydration occurred while the reply was held', _rehyd.length > 0,
+                'no rehydration recorded within 25s');
+              _sck('it PRESERVED the live request rather than replacing it',
+                _rehyd.some((r) => r.preservedALiveRequest) && !_rehyd.some((r) => r.replacedALiveRequest),
+                JSON.stringify(_rehyd.map((r) => ({ preserved: r.preservedALiveRequest, replaced: r.replacedALiveRequest }))));
+              // Search the WHOLE document, not one panel: an 18-character sample from
+              // gnPanelDisplay proved only that I was reading the wrong container.
+              const _visAll = await page.evaluate(() => {
+                const panel = document.getElementById('gnPanelDisplay');
+                const story = document.getElementById('storyContent');
+                // Distinguish RENDERED-BUT-COVERED from NOT RENDERED: body.innerText excludes
+                // hidden subtrees, and a Concierge overlay was dominating it.
+                return { body: String(document.body.innerText || ''),
+                         storyText: story ? String(story.innerText || story.textContent || '') : '',
+                         panelText: panel ? String(panel.innerText || panel.textContent || '') : '',
+                         panel: panel ? String(panel.innerText || '').length : null,
+                         story: story ? String(story.innerText || '').length : null,
+                         snippet: String(document.body.innerText || '').slice(0, 220) };
+              });
+              const _vis = _visAll.body;
+              say('      visible text: body=' + _vis.length + ' panel=' + _visAll.panel
+                + ' story=' + _visAll.story);
+              say('      snippet: ' + JSON.stringify(_visAll.snippet));
+              const _conv = _vis + '\n' + (_visAll.storyText || '') + '\n' + (_visAll.panelText || '');
+              _sck('the submitted SAY is present in the conversation while the reply is held',
+                _conv.indexOf('I shaped nothing') >= 0,
+                'absent from body(' + _vis.length + ') + storyContent('
+                + (_visAll.storyText || '').length + ') + panel('
+                + (_visAll.panelText || '').length + ')');
+              _sck('the submitted DO is present in the conversation while the reply is held',
+                _conv.indexOf('keep my hand open') >= 0,
+                'absent from the same three containers');
+              _releaseHold();
+              await page.waitForTimeout(18000);
+              const _turns = await page.evaluate(() => {
+                const d = (window.state && window.state.intimacyDialogue) || {};
+                return (Array.isArray(d.liTurnHistory) ? d.liTurnHistory : []).length;
+              });
+              _sck('exactly ONE reply rendered after the hold was released', _turns === 1,
+                'liTurnHistory length is ' + _turns);
+            }
+
+            if (_scenario === 'reload') {
+              const _persisted = await page.evaluate(() => {
+                try {
+                  const sn = (typeof window._loadPersistedOASState === 'function')
+                    ? window._loadPersistedOASState() : null;
+                  return sn ? { awaiting: !!sn.awaitingResponse, id: sn.pendingRequestId || null,
+                                active: !!sn.active } : null;
+                } catch (e) { return { error: String(e && e.message) }; }
+              });
+              say('      persisted snapshot: ' + JSON.stringify(_persisted));
+              _sck('production persisted the pending request before the reload',
+                !!(_persisted && _persisted.awaiting && _persisted.id), JSON.stringify(_persisted));
+              await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+              _releaseHold();
+              await page.waitForTimeout(16000);
+              const _post = await page.evaluate(() => {
+                const d = (window.state && window.state.intimacyDialogue) || {};
+                const el = document.getElementById('gnDialogueInput')
+                  || document.getElementById('dialogueInput');
+                return { awaiting: !!d.awaitingResponse, id: d.pendingRequestId || null,
+                         active: !!d.active, inputUsable: !!(el && !el.disabled),
+                         thinking: !!document.querySelector('.intimacy-thinking, #intimacyThinking') };
+              });
+              say('      after the reload: ' + JSON.stringify(_post));
+              _sck('the restored orphan was CLEARED - awaitingResponse is false', !_post.awaiting,
+                'still awaiting after a real reload');
+              _sck('no stuck waiting state is left on screen', !_post.thinking,
+                'a thinking indicator is still showing');
+            }
+
+            if (_scenario === 'supersede') {
+              const _id1 = _live.id;
+              const _before = await page.evaluate(() => {
+                const d = (window.state && window.state.intimacyDialogue) || {};
+                return (Array.isArray(d.liTurnHistory) ? d.liTurnHistory : []).length;
+              });
+              await page.evaluate(() => {
+                try { window._intimacyDialogueConsumeInput('A second thing entirely.', 'I step back.'); }
+                catch (e) { window.__sbSupersedeErr = String(e && e.message); }
+              });
+              await page.waitForTimeout(5000);
+              const _id2 = await page.evaluate(() => {
+                const d = (window.state && window.state.intimacyDialogue) || {};
+                return d.pendingRequestId || null;
+              });
+              say('      ids: first=' + JSON.stringify(_id1) + ' now=' + JSON.stringify(_id2));
+              _sck('production moved the request identity on the second submission',
+                !!_id2 && !!_id1 && _id2 !== _id1, JSON.stringify([_id1, _id2]));
+              _releaseHold();
+              await page.waitForTimeout(18000);
+              const _disc = consoleLog.filter((l) => /Stale response/.test(l)
+                && String(l).indexOf(String(_id1)) >= 0);
+              _sck('the SUPERSEDED reply was still discarded', _disc.length > 0,
+                'no stale-response discard naming ' + JSON.stringify(_id1));
+              const _after = await page.evaluate(() => {
+                const d = (window.state && window.state.intimacyDialogue) || {};
+                return (Array.isArray(d.liTurnHistory) ? d.liTurnHistory : []).length;
+              });
+              _sck('it did not append the superseded turn to history', _after <= _before + 1,
+                'history grew from ' + _before + ' to ' + _after);
+            }
+          } catch (e) {
+            _sck('the arm ran without throwing', false, String(e && e.message));
+          } finally {
+            _releaseHold();
+          }
+        })();
+      }
+    }
     const _entry = await enterOAS(page, { settleMs: 9000 });
     say('  entered via ' + ((_entry && _entry.route) || '?'));
     // ENTRY FAILURE HALTS IMMEDIATELY. enterOAS now refuses rather than clicking a hidden
@@ -1432,6 +1619,15 @@ try {
 
     // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
     await dumpPolicy('after the entrance submission, before any further input');
+    if (_armWork) {
+      await Promise.race([_armWork, new Promise((r) => setTimeout(r, 180000))]);
+      write('scenario_' + _scenario + '.json', _sres);
+      const _bad = _sres.checks.filter((c) => !c.ok).length;
+      say('    scenario "' + _scenario + '": '
+        + (_sres.checks.length - _bad) + '/' + _sres.checks.length + ' checks passed');
+      halted = true;
+      haltReason = 'SB_SCENARIO=' + _scenario + ' - bounded arm only, no story work';
+    }
     try {
       const _race = await page.evaluate(() => (window.__sbRace || { rehydrations: [] }).rehydrations);
       write('rehydrations.json', _race);

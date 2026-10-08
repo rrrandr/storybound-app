@@ -1,0 +1,40 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance OAS request ARRIVED at the interceptor",
+      "ok": true,
+      "detail": "no entrance author request within 120s"
+    },
+    {
+      "label": "production reports awaitingResponse=true with a nonempty request id",
+      "ok": true,
+      "detail": "{\"awaiting\":true,\"id\":\"1791501948712-zweh77\"}"
+    },
+    {
+      "label": "the automatic rehydration occurred while the reply was held",
+      "ok": true,
+      "detail": "no rehydration recorded within 25s"
+    },
+    {
+      "label": "it PRESERVED the live request rather than replacing it",
+      "ok": true,
+      "detail": "[{\"preserved\":true,\"replaced\":false}]"
+    },
+    {
+      "label": "the submitted SAY is present in the conversation while the reply is held",
+      "ok": false,
+      "detail": "absent from body(3104) + storyContent(10184) + panel(16)"
+    },
+    {
+      "label": "the submitted DO is present in the conversation while the reply is held",
+      "ok": false,
+      "detail": "absent from the same three containers"
+    },
+    {
+      "label": "exactly ONE reply rendered after the hold was released",
+      "ok": true,
+      "detail": "liTurnHistory length is 1"
+    }
+  ]
+}

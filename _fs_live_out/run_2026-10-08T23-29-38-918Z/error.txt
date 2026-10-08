@@ -1,0 +1,5 @@
+page.evaluate: TypeError: Cannot read properties of undefined (reading '_bakedGenesisUnlocked')
+    at eval (eval at evaluate (:311:30), <anonymous>:2:36)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:1465:38

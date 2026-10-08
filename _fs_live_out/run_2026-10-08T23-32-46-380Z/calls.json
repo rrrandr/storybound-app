@@ -1,0 +1,42 @@
+[
+  {
+    "n": 1,
+    "requested": "grok-4-1-fast-reasoning",
+    "chars": 200627,
+    "maxTokens": 400,
+    "fn": "OAS",
+    "pricedAs": "grok-4.3",
+    "resolvedBy": "api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override",
+    "convId": "sb-grok-2cebec6a-35e2-4990-8f48-de0d4af83f6a",
+    "role": "STRUCTURE_GENERATOR",
+    "ms": 3,
+    "estimate": 0.0770355,
+    "served": "grok-4.3",
+    "inTok": 1000,
+    "outTok": 200,
+    "cachedTok": null,
+    "ticks": 1000000,
+    "measured": 0.0001,
+    "exposureAfter": 0.0001
+  },
+  {
+    "n": 2,
+    "requested": "grok-4.20-0309-non-reasoning",
+    "chars": 200629,
+    "maxTokens": 400,
+    "fn": "OAS",
+    "pricedAs": "grok-4.3",
+    "resolvedBy": "api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override",
+    "convId": "sb-grok-2cebec6a-35e2-4990-8f48-de0d4af83f6a",
+    "role": "STRUCTURE_GENERATOR",
+    "ms": 1,
+    "estimate": 0.07703700000000001,
+    "served": "grok-4.3",
+    "inTok": 1000,
+    "outTok": 200,
+    "cachedTok": null,
+    "ticks": 1000000,
+    "measured": 0.0001,
+    "exposureAfter": 0.0002
+  }
+]

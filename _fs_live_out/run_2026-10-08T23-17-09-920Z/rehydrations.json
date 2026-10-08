@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791501459498,
+    "before": {
+      "pendingRequestId": "1791501459426-vxae4v",
+      "awaitingResponse": true,
+      "ageMs": 71
+    },
+    "afterPendingRequestId": "1791501459426-vxae4v",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": true,
+    "stack": [
+      "at wrapped (<anonymous>:12:29)",
+      "at http://localhost:3000/app.js?v=20261008e-live-req-own:145250:26"
+    ]
+  }
+]

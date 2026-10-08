@@ -1,0 +1,68 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+    fixture ledger: _fs_live_out/BUDGET.arm_waiting.json
+    admission: exposure USD 0.000000 of ceiling USD 5.05 - headroom USD 5.050000
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  [hold] the entrance OAS author request ARRIVED — holding its response
+    ok   the entrance OAS request ARRIVED at the interceptor
+      in flight: {"awaiting":true,"id":"1791501459426-vxae4v"}
+    ok   production reports awaitingResponse=true with a nonempty request id
+    ok   the automatic rehydration occurred while the reply was held
+    ok   it PRESERVED the live request rather than replacing it
+    FAIL the submitted SAY is visible in the conversation while the reply is held  - not found in 18 chars of visible text
+    FAIL the submitted DO is visible in the conversation while the reply is held  - not found in 18 chars of visible text
+  [hold] released after 406ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9663ms
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=268 attempts=["1:grok:ok"]
+    ok   exactly ONE reply rendered after the hold was released
+    scenario "waiting": 5/7 checks passed
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=true age=71ms  1791501459426-vxae4v -> 1791501459426-vxae4v   (identity preserved)
+  interruption: {"present":false,"submitted":false,"pending":false}
+  handoff (before the branch is serviced): {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}
+  turns 0 · resolved=false · archive=0 · interruptionDone=false · run/remain on screen=false · branches=[]
+  after the choice: recorded=null · prompt removed by production=true · handoff had passed=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.000100
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.000100
+  ceiling                : $5.05  [HALTED: OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false)]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.arm_waiting.json
+  receipted to date  $0.000100
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000100 of $5.05
+
+output: _fs_live_out/run_2026-10-08T23-17-09-920Z

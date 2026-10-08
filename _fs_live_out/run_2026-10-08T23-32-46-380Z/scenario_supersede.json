@@ -1,0 +1,30 @@
+{
+  "scenario": "supersede",
+  "checks": [
+    {
+      "label": "the entrance OAS request ARRIVED at the interceptor",
+      "ok": true,
+      "detail": "no entrance author request within 120s"
+    },
+    {
+      "label": "production reports awaitingResponse=true with a nonempty request id",
+      "ok": true,
+      "detail": "{\"awaiting\":true,\"id\":\"1791502395621-oyx49w\"}"
+    },
+    {
+      "label": "production moved the request identity on the second submission",
+      "ok": true,
+      "detail": "[\"1791502395621-oyx49w\",\"1791502395678-a2kdvv\"]"
+    },
+    {
+      "label": "the SUPERSEDED reply was still discarded",
+      "ok": true,
+      "detail": "no stale-response discard naming \"1791502395621-oyx49w\""
+    },
+    {
+      "label": "it did not append the superseded turn to history",
+      "ok": true,
+      "detail": "history grew from 0 to 1"
+    }
+  ]
+}
