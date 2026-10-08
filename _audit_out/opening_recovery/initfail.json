@@ -1,0 +1,32 @@
+{
+  "at0": {
+    "onScreen": true,
+    "locked": true,
+    "setupComplete": false
+  },
+  "providerReqs": [
+    {
+      "stage": "oas",
+      "head": "You are the LI (love interest) in an intensely intimate mouth-closeup dialogue scene. You ",
+      "chars": 2804,
+      "at": 1791419311650,
+      "consoleAt": 288
+    }
+  ],
+  "oas": 1,
+  "chargeOps": [
+    {
+      "opId": "930cd959-4e8e-4b78-97d1-834b3aaa4db3",
+      "amount": 15,
+      "at": 1791419311515
+    }
+  ],
+  "debits": [
+    "930cd959-4e8e-4b78-97d1-834b3aaa4db3"
+  ],
+  "purchaseIntentReqs": [
+    "purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.comple"
+  ],
+  "injectedFailures": 0,
+  "trail": []
+}
