@@ -101824,6 +101824,8 @@ function _buildAuthorFloorDirective(s) {
   // run before prompt-build for literary Scene 2+. Produces 1–3 concrete causal hard beats →
   // state._scenePlotContract, which _buildPlotContractDirective then injects at the two roots.
   async function _generateLiteraryPlotContract(act, dia, temptCtx) {
+    // BEFORE the payload is built, so the planner can be told which card assisted this turn.
+    try { _captureSubmissionProvenance(state, act, dia); } catch (_) {}
     try {
       var s = window.state || {};
       if (!_plotContractActive()) return;
@@ -102220,6 +102222,21 @@ function _buildAuthorFloorDirective(s) {
             + '\nReachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.\n'
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
+            + ((function () {
+                // THE CARD THAT ASSISTED THIS SUBMISSION — the snapshot captured at the planning
+                // entry above, so nothing re-reads the mutable live selection here. Absent for a
+                // typed-only turn. The reader's wording above remains authoritative; this only
+                // says where the suggestion came from.
+                try {
+                  var _sp = _submissionProvenanceFor(s, null);
+                  if (!_sp || !_sp.cardAssist) return '';
+                  var _lab = _sp.cardAssist.label || _sp.cardAssist.id;
+                  if (!_lab) return '';
+                  return '\nFate card played this turn: ' + String(_lab).slice(0, 48)
+                    + ' (the reader took this card\'s suggestion and may have edited it — the '
+                    + 'Player action and dialogue above are what they actually submitted)';
+                } catch (_) { return ''; }
+              })())
             + '\nScene index: ' + (s.turnCount || 0)
             // TEMPT FATE — PLANNER CHANNEL (Roman/Codex review, 2026-09-24). Placed in the BASE
             // _scUsr construction (unlike an earlier draft of this fix, which only reached the
@@ -133599,6 +133616,63 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   // Called BEFORE the author pass with the reader's inputs: ONE key per authored scene, consumed once
   // at commit (the scene-key rule: stamp before the pass, never recompute from turnCount afterwards).
+  function _currentCardAssist(s) {
+    // WHICH CARD ASSISTED THIS SUBMISSION, from live state at the moment of the call. Returns
+    // null for a typed-only turn: `card` elsewhere in the ledger is the submitted MECHANISM and
+    // its 'ordinary' value also covers typed input, so it can never evidence a card was played.
+    // ASSISTANCE PROVENANCE only — the reader may have edited the suggestion, and their final
+    // wording stays authoritative.
+    try {
+      s = s || window.state; if (!s) return null;
+      if (!s.fateCommitted) return null;
+      var idx = s.fateSelectedIndex;
+      if (typeof idx !== 'number' || idx < 0) return null;
+      var opts = Array.isArray(s.fateOptions) ? s.fateOptions : [];
+      var c = opts[idx];
+      if (!c) return null;
+      var label = String(c.title || c.name || c.archetype || c.label || '').trim();
+      var id = String(c.id || c.key || c.archetype || label || '').trim();
+      if (!label && !id) return null;
+      return { id: id.slice(0, 48), label: label.slice(0, 48), index: idx };
+    } catch (_) { return null; }
+  }
+  window._currentCardAssist = _currentCardAssist;
+
+  function _captureSubmissionProvenance(s, act, dia) {
+    // CAPTURED BEFORE PLANNING, on whichever route is planning. _sceneLedgerStamp runs only in
+    // literary author preparation, AFTER its planner call, and the CG route neither calls it nor
+    // consumes its key at commit (that path requires kind 'scene' while CG commits kind 'cg') —
+    // so the planner never saw the current submission's card. This snapshot is taken at the
+    // planning entry both routes share, bound to the story and scene it belongs to, and is
+    // retained into accepted history only once that scene commits.
+    try {
+      s = s || window.state; if (!s) return null;
+      var n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : (s.turnCount || 0);
+      var snap = { storyId: String(s.storyId || ''), sceneNumber: n,
+                   cardAssist: _currentCardAssist(s), at: Date.now() };
+      s._submissionProvenance = snap;
+      try {
+        console.log('[SUBMISSION-PROVENANCE] scene ' + n + ' - card '
+          + (snap.cardAssist ? (snap.cardAssist.label || snap.cardAssist.id) : 'none (typed-only)'));
+      } catch (_) {}
+      return snap;
+    } catch (_) { return null; }
+  }
+  window._captureSubmissionProvenance = _captureSubmissionProvenance;
+
+  function _submissionProvenanceFor(s, sceneNumber) {
+    // The snapshot, but only if it belongs to THIS story and scene. One from an earlier or
+    // abandoned turn is never inherited.
+    try {
+      var sp = s && s._submissionProvenance;
+      if (!sp) return null;
+      if (String(sp.storyId) !== String(s.storyId || '')) return null;
+      if (sceneNumber != null && Number(sp.sceneNumber) !== Number(sceneNumber)) return null;
+      return sp;
+    } catch (_) { return null; }
+  }
+  window._submissionProvenanceFor = _submissionProvenanceFor;
+
   function _sceneLedgerStamp(s, extras) {
     try {
       s = s || window.state; if (!s) return null; extras = extras || {};
@@ -133617,20 +133691,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         //
         // It is ASSISTANCE PROVENANCE, deliberately separate from act/dia above: the reader may
         // have edited the suggestion, and their wording stays authoritative.
-        cardAssist: (function () {
-          try {
-            if (!s.fateCommitted) return null;                       // nothing was played
-            var idx = s.fateSelectedIndex;
-            if (typeof idx !== 'number' || idx < 0) return null;     // typed-only: NOT a card
-            var opts2 = Array.isArray(s.fateOptions) ? s.fateOptions : [];
-            var c = opts2[idx];
-            if (!c) return null;
-            var label = String(c.title || c.name || c.archetype || c.label || '').trim();
-            var id = String(c.id || c.key || c.archetype || label || '').trim();
-            if (!label && !id) return null;
-            return { id: id.slice(0, 48), label: label.slice(0, 48), index: idx };
-          } catch (_) { return null; }
-        })(),
+        cardAssist: _currentCardAssist(s),
         plannedEvent: asg && asg.event ? _slClip(asg.event, 300, 'plannedEvent') : null, plannedSource: (asg && asg.source) || null,
         setting: asg && asg.setting ? _slClip(asg.setting, 120, 'setting') : null,
         participants: (asg && Array.isArray(asg.participants)) ? asg.participants.slice(0, 8).map(String) : null,
@@ -133686,7 +133747,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         plannedEventFull: eventFull,
         act: useKey ? key.act : _slClip(opts.act, 240), dia: useKey ? key.dia : _slClip(opts.dia, 240),
         card: useKey ? key.card : (opts.card || null),
-        cardAssist: useKey ? (key.cardAssist || null) : (opts.cardAssist || null),
+        // RETAINED ONLY AT COMMIT, and for either route: the literary path can supply it on the
+        // stamped key, the CG path (kind 'cg') cannot, so the scene-bound snapshot is the source
+        // of record for both. Never read live selection here.
+        cardAssist: (useKey ? (key.cardAssist || null) : (opts.cardAssist || null))
+          || (function () {
+               try {
+                 var _sp = _submissionProvenanceFor(s, n);
+                 return (_sp && _sp.cardAssist) ? _sp.cardAssist : null;
+               } catch (_) { return null; }
+             })(),
         posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
       };
       Object.freeze(entry); L.entries.push(entry);

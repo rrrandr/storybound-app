@@ -1,0 +1,14 @@
+{
+  "planners": 2,
+  "hand": {
+    "mount": "gnCardMount",
+    "count": 5,
+    "onScreen": 5,
+    "nextBtn": true,
+    "reader": true
+  },
+  "provenance": [
+    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (typed-only)",
+    "LOG [SUBMISSION-PROVENANCE] scene 3 - card Silence"
+  ]
+}

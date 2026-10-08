@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity
+const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -260,6 +260,145 @@ if (ARM === 'auth') {
   await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(() => {});
   await page.waitForTimeout(3000);
   t('no duplicate dispatch', oasReqs.length === 1, 'oas=' + oasReqs.length);
+}
+
+if (ARM === 'card') {
+  console.log('\n=== CARD IDENTITY -> THE NEXT OUTGOING PLANNER REQUEST ===');
+  // Get through the opening to a real scene-end submission. The opening turn is typed-only, which
+  // is itself the first negative.
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  await clearOverlays();
+  const b1 = await page.evaluate(() => {
+    for (const id of ['sceneDecisionA', 'sceneDecisionB']) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('data-choice') === 'run') return id;
+    } return null; });
+  if (b1) await page.click('#' + b1, { timeout: 15000 });
+  for (let i = 0; i < 45 && plannerReqs.length === 0; i++) await page.waitForTimeout(1000);
+  t('the opening produced a planner request', plannerReqs.length >= 1, 'planners=' + plannerReqs.length);
+  // NEGATIVE 1 — the opening submission was TYPED-ONLY.
+  const p1 = plannerReqs[0] ? plannerReqs[0].whole : '';
+  t('TYPED-ONLY: no card is claimed in that request', !/Fate card played this turn/.test(p1));
+  console.log('   provenance lines so far: ' + JSON.stringify(
+    consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)).slice(0, 3)));
+
+  // Read scene 2 to its end so production offers the hand, then PLAY A CARD and EDIT the wording.
+  for (let i = 0; i < 40; i++) {
+    const loading = await page.evaluate(() => {
+      const e = document.getElementById('gnSceneLoading'); return !!(e && e.getClientRects().length > 0); });
+    if (!loading) break;
+    await page.waitForTimeout(1000);
+  }
+  let hand = { count: 0, onScreen: 0, mount: null };
+  for (let i = 0; i < 60; i++) {
+    hand = await page.evaluate(() => {
+      const m = window._activeCardMount();
+      const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
+      return { mount: m ? m.id : null, count: cards.length,
+               onScreen: cards.filter(c => c.getClientRects().length > 0).length,
+               nextBtn: !!document.getElementById('stagedNextBtn'),
+               reader: !!document.getElementById('stagedBeatReader') };
+    });
+    if (hand.onScreen > 0) break;
+    await clearOverlays();
+    const adv = await page.evaluate(() => {
+      const nb = document.getElementById('stagedNextBtn');
+      if (nb && nb.getClientRects().length > 0 && !nb.disabled) return 'next';
+      const br = document.getElementById('stagedBeatReader');
+      if (br && br.getClientRects().length > 0) return 'reader';
+      return null;
+    });
+    if (adv === 'next') await page.click('#stagedNextBtn', { timeout: 6000 }).catch(() => {});
+    else if (adv === 'reader') await page.click('#stagedBeatReader', { timeout: 6000 }).catch(() => {});
+    else break;
+    await page.waitForTimeout(600);
+  }
+  console.log('   scene-end hand: ' + JSON.stringify(hand));
+  t('production offered the scene-end hand', hand.onScreen === 5, JSON.stringify(hand));
+  if (hand.onScreen === 5) {
+    const before = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+      return { a: i.actInput.value, d: i.diaInput.value }; });
+    await page.click('#' + hand.mount + ' .fate-card, #' + hand.mount + ' [data-card]', { timeout: 8000 });
+    let filled = before;
+    for (let i = 0; i < 25; i++) {
+      filled = await page.evaluate(() => { const i2 = window._getActiveTurnInputs();
+        return { a: i2.actInput.value, d: i2.diaInput.value }; });
+      if (filled.a !== before.a || filled.d !== before.d) break;
+      await page.waitForTimeout(1000);
+    }
+    t('A REAL CARD CLICK filled the reader\'s Say/Do', filled.a !== before.a || filled.d !== before.d,
+      JSON.stringify(filled));
+    // The selection is not COMMITTED until the reader submits, so the identity is derivable at
+    // PLANNING time — which is exactly where the capture runs. Taken from production's own line.
+    const deckLabels = await page.evaluate(() => {
+      const opts = Array.isArray(window.state.fateOptions) ? window.state.fateOptions : [];
+      const i = window.state.fateSelectedIndex;
+      const c = (typeof i === 'number' && i >= 0) ? opts[i] : null;
+      return { index: i, committed: !!window.state.fateCommitted,
+               label: c ? String(c.title || c.name || c.archetype || c.label || '') : null };
+    });
+    console.log('   selection at fill time: ' + JSON.stringify(deckLabels));
+    t('a card is selected, with a label, before submitting',
+      deckLabels.index >= 0 && !!deckLabels.label, JSON.stringify(deckLabels));
+    // EDIT the wording — the reader's own words must stay authoritative.
+    const EDIT = ' And I am done being asked.';
+    let prevV = null, stableV = 0;
+    for (let i = 0; i < 20; i++) {
+      const v = await page.evaluate(() => { const i2 = window._getActiveTurnInputs();
+        return i2.actInput.value + '\u0000' + i2.diaInput.value; });
+      if (v === prevV) { if (++stableV >= 3) break; } else stableV = 0;
+      prevV = v; await page.waitForTimeout(600);
+    }
+    const ids = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+      return { a: i.actInput.id, d: i.diaInput.id }; });
+    const origD = await page.evaluate((id) => document.getElementById(id).value, ids.d);
+    await page.click('#' + ids.d);
+    await page.keyboard.press('Meta+a');          // select the suggestion
+    await page.keyboard.type(origD + EDIT, { delay: 4 });   // and retype it, extended
+    const edited = await page.evaluate((id) => document.getElementById(id).value, ids.d);
+    t('the reader could EDIT the suggestion', edited === origD + EDIT,
+      JSON.stringify(edited.slice(-70)));
+    const plannersBefore = plannerReqs.length;
+    await clearOverlays();
+    await page.click('#gnSubmitBtn', { timeout: 15000 }).catch(async () => {
+      await page.click('#submitBtn', { timeout: 8000 }).catch(() => {}); });
+    for (let i = 0; i < 60 && plannerReqs.length === plannersBefore; i++) await page.waitForTimeout(1000);
+    t('the submission produced the NEXT planner request', plannerReqs.length > plannersBefore,
+      'planners ' + plannersBefore + ' -> ' + plannerReqs.length);
+    if (plannerReqs.length > plannersBefore) {
+      const w = plannerReqs[plannerReqs.length - 1].whole;
+      fs.writeFileSync(OUT + '/planner_card.txt', w);
+      const provLine = consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)).pop() || '';
+      console.log('   provenance at planning: ' + JSON.stringify(provLine));
+      const m = /- card (.+)$/.exec(provLine);
+      const lab = (m && m[1] !== 'none (typed-only)') ? m[1].trim() : (deckLabels.label || '');
+      console.log('   looking for: ' + JSON.stringify(lab));
+      t('THE CARD\'S IDENTITY REACHED THAT PLANNER REQUEST', /Fate card played this turn/.test(w),
+        'no provenance line in the request');
+      t('and it names THIS card', !!lab && w.includes(lab), 'label=' + JSON.stringify(lab));
+      t('the reader\'s EDITED wording is what was submitted', w.includes(EDIT.trim()),
+        'edit not found in the payload');
+      t('the edited wording is still presented as the player\'s own',
+        /Player dialogue: /.test(w) || /Player action: /.test(w));
+    }
+  }
+  fs.writeFileSync(OUT + '/card.json', JSON.stringify(
+    { planners: plannerReqs.length, hand,
+      provenance: consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)) }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
 }
 
 if (ARM === 'continuity') {
