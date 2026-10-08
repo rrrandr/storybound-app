@@ -1,0 +1,12 @@
+[
+  {
+    "at": 1791499763395,
+    "ms": 52,
+    "threw": "[FULL-SCENE-AUTHOR:oas-turn] all 3 tiers genuinely failed — Grok, ministral-8b-2512, and gpt-4o",
+    "provider": null,
+    "model": null,
+    "textLen": 0,
+    "textHead": null,
+    "attempts": null
+  }
+]

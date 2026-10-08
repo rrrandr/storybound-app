@@ -1,0 +1,10 @@
+{
+  "calls": 0,
+  "receipted": 0,
+  "retainedUnresolved": 0,
+  "priorExposure": 5.02295376,
+  "totalExposure": 5.02295376,
+  "ceiling": 5.05,
+  "halted": true,
+  "haltReason": "SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: {\"resolved\":false,\"archive\":0,\"interruptionPresent\":false,\"interruptionDone\":false,\"decisionOnScreen\":false,\"decisionOpen\":true,\"branches\":[]}"
+}

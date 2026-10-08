@@ -1,0 +1,55 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $5.022954
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+
+*** HALTED BEFORE DISPATCH — ceiling: exposure $5.022954 + next $0.077011 would exceed $5.05 (prior runs $5.022954) ***
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=null/null textLen=0 attempts=[]
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=false age=77ms  1791499763378-9t1y97 -> 1791499763378-9t1y97
+  interruption: {"present":false,"submitted":false,"pending":false}
+  handoff (before the branch is serviced): {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}
+
+*** STOPPING — NOT AS PLANNED — SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]} ***
+    reached: resolved=false · archive=0 · interruptionPresent=false · interruptionSubmitted=false
+    model-backed exchanges: 0 · scripted exit: not used
+    the run-or-remain branch was NOT serviced, so no scene work was triggered.
+  turns 0 · resolved=false · archive=0 · interruptionDone=false · run/remain on screen=false · branches=[]
+  post-choice check SKIPPED — stopped at the validated handoff, before any choice
+  exposure $5.022954
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 0
+  MEASURED (receipts)    : $0.000000
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $5.022954
+  TOTAL EXPOSURE         : $5.022954
+  ceiling                : $5.05  [HALTED: SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.018300
+  unresolved to date $5.004654
+  TOTAL vs ceiling   $5.022954 of $5.05
+
+output: _fs_live_out/run_2026-10-08T22-48-55-902Z

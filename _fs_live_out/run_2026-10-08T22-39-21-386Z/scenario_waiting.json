@@ -1,0 +1,10 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance OAS request ARRIVED at the interceptor",
+      "ok": false,
+      "detail": "no entrance author request within 90s"
+    }
+  ]
+}
