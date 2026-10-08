@@ -1178,6 +1178,10 @@ try {
     // THE REVISED OPENING ENTERS BY ANSWERING JULIAN, so that submission IS the first exchange.
     // enterOAS reports firstTurnConsumed for the new entrance (the legacy Continue button does
     // not), and the six are counted INCLUDING it.
+    // THE ENTRANCE IS TURN 1. setPreviewContext only ran inside the loop, so the entrance's reply
+    // was never NOTED under any turn and there was nothing for the attribution to match. Its
+    // context is set before its dispatch; the loop therefore starts at turn 2.
+    setPreviewContext('opening OAS', 1);
     const _entry = await enterOAS(page, { settleMs: 9000 });
     say('  entered via ' + ((_entry && _entry.route) || '?'));
     // ENTRY FAILURE HALTS IMMEDIATELY. enterOAS now refuses rather than clicking a hidden
@@ -1394,7 +1398,7 @@ try {
     for (let i = 0; i < 9 && !halted; i++) {
       const pre = await oasState();
       if (!pre || !pre.active || pre.resolving) { say('  OAS is no longer accepting input'); break; }
-      setPreviewContext('opening OAS', i + 1);
+      setPreviewContext('opening OAS', i + 2);   // the entrance was turn 1
       const consoleAtTurnStart = consoleLog.length;
       // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
       await clearOverlaysNow();
@@ -1716,7 +1720,7 @@ try {
       // since the turn began — never inferred from the editor's payload.
       noteCleanupVerdict('opening OAS', i + 1, consoleLog, consoleAtTurnStart);
       const evidence = renderedGrew
-        ? oasReplyRenderedFor('opening OAS', i + 1, post && post.lastRendered) : null;
+        ? oasReplyRenderedFor('opening OAS', i + 2, post && post.lastRendered) : null;
       const fallbackNow = consoleLog.filter(l =>
         /using .*fallback \(LLM call failed\)|soft-deflect fallback/i.test(l)).length;
       const fellBack = fallbackNow > fallbackSeen;
@@ -1726,12 +1730,12 @@ try {
         // NOTE: the entrance reply is attributed BEFORE this loop, on its own evidence. Setting
         // _entryCounted here would have credited the entrance because a LATER reply qualified,
         // which is not evidence about the entrance at all.
-        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 1) + ' — author call '
+        say('      model reply RECEIVED AND RENDERED for turn ' + (i + 2) + ' — author call '
           + evidence.callN
           + (evidence.chain && evidence.chain.cleanupAccepted
               ? ', cleanup call ' + evidence.chain.cleanup + ' (input verified)' : '')
           + ' — ' + evidence.matchedOn + ' — exchange '
-          + (modelBackedReplies + _entryCounted) + ' of ' + EXIT_AFTER_EXCHANGES);
+          + modelBackedReplies + ' of ' + EXIT_AFTER_EXCHANGES);
       } else {
         say('      *** NOT A MODEL EXCHANGE — ' + (
           !renderedGrew ? 'the app rendered no new reply for this turn'
@@ -1754,7 +1758,7 @@ try {
         say('  *** STOPPING — ' + haltReason + ' ***');
         break;
       }
-      if (!exited && (renderedReplies + _entryCounted) >= EXIT_AFTER_EXCHANGES) {
+      if (!exited && renderedReplies >= EXIT_AFTER_EXCHANGES) {
         const still = await page.evaluate(() => {
           const d = window.state.intimacyDialogue;
           return { active: !!(d && d.active), resolving: !!(d && d._resolving) };
@@ -1851,12 +1855,22 @@ try {
         const r = window.state._intimateInterruption || {};
         const arch = (window.state.scenes || []).filter(x => x && x.oasArchive).length;
         const d = window.state.intimacyDialogue;
+        const dp = document.getElementById('sceneDecisionPrompt');
+        const vis = (el) => !!(el && el.getClientRects().length > 0);
         return { resolved: !!(!d || (!d.active && !d._resolving)), archive: arch,
                  interruptionPresent: !!document.getElementById('intimateInterruption'),
-                 interruptionDone: !!(r.submitted || r.completedWithoutSubmission) };
+                 interruptionDone: !!(r.submitted || r.completedWithoutSubmission),
+                 decisionOnScreen: vis(dp),
+                 decisionOpen: (typeof window._sceneDecisionNeeded === 'function')
+                   ? !!window._sceneDecisionNeeded() : null,
+                 branches: dp ? ['sceneDecisionA', 'sceneDecisionB']
+                   .filter((id) => vis(document.getElementById(id))) : [] };
       });
-      const _hok = _hs.resolved && _hs.archive > 0
-        && (_hs.interruptionPresent || _hs.interruptionDone);
+      // ONE PREDICATE, AND IT REQUIRES THE DECISION TO BE AVAILABLE. "present or completed"
+      // permitted an UNFINISHED interruption and said nothing about run/remain, which is the
+      // revised opening's actual end state.
+      const _hok = _hs.resolved && _hs.archive > 0 && _hs.interruptionDone
+        && _hs.decisionOnScreen && _hs.decisionOpen;
       haltReason = 'SB_STOP_AT=handoff — stopping at the promised handoff, before the '
         + 'run-or-remain branch is serviced and before any scene work';
       say('');
