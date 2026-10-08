@@ -1,0 +1,33 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $3.140341
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  3ms
+file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:920
+    if (_rd > 0 && fn === 'OAS' && _replayAuthorIdx === 1) {
+                   ^
+
+ReferenceError: fn is not defined
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:920:20
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at process.processImmediate (node:internal/timers:472:9)
+    at async Promise.all (index 1)
+    at async RouteHandler._handleInternal (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:60184:27)
+    at async RouteHandler._handleImpl (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:60153:18)
+    at async RouteHandler.handle (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:60147:16)
+    at async _Page._onRoute (/Users/romantsukerman/storybound-app/node_modules/playwright-core/lib/coreBundle.js:61441:27)
+
+Node.js v25.3.0

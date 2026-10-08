@@ -917,7 +917,11 @@ await page.route('**/api/**', async (route) => {
         body: JSON.stringify({ error: 'harness halted: infrastructure failure' }) });
     }
     const _rd = Number(process.env.SB_REPLY_DELAY_MS || 0);
-    if (_rd > 0) await new Promise((r) => setTimeout(r, _rd));
+    if (_rd > 0 && callFunction(sys0ForIdentity) === 'OAS' && _replayAuthorIdx === 1) {
+      console.log('  [replay] delaying the ENTRANCE OAS author response by ' + _rd
+        + 'ms (previews and every other fixture response are untouched)');
+      await new Promise((r) => setTimeout(r, _rd));
+    }
     return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
   }
   try {
@@ -1062,7 +1066,14 @@ await page.addInitScript(() => {
         window.__sbRace.rehydrations.push({ at: Date.now(), before,
           afterPendingRequestId: d2.pendingRequestId || null,
           replacedALiveRequest: before.awaitingResponse && before.ageMs !== null
-            && before.ageMs < 5000, stack });
+            && before.ageMs < 5000
+            && !!before.pendingRequestId
+            && before.pendingRequestId !== ((window.state && window.state.intimacyDialogue
+                 && window.state.intimacyDialogue.pendingRequestId) || null),
+          preservedALiveRequest: before.awaitingResponse && !!before.pendingRequestId
+            && before.pendingRequestId === ((window.state && window.state.intimacyDialogue
+                 && window.state.intimacyDialogue.pendingRequestId) || null),
+          stack });
       }
       return out;
     };
@@ -1429,7 +1440,8 @@ try {
         say('    #' + (i + 1) + ' awaiting=' + r.before.awaitingResponse
           + ' age=' + r.before.ageMs + 'ms  ' + r.before.pendingRequestId
           + ' -> ' + r.afterPendingRequestId
-          + (r.replacedALiveRequest ? '   *** REPLACED A LIVE REQUEST ***' : ''));
+          + (r.replacedALiveRequest ? '   *** REPLACED A LIVE REQUEST ***'
+             : r.preservedALiveRequest ? '   (identity preserved)' : ''));
         if (r.replacedALiveRequest) r.stack.slice(0, 6).forEach((l) => say('        ' + l));
       });
     } catch (e) { say('  [rehydrate] dump failed: ' + (e && e.message)); }

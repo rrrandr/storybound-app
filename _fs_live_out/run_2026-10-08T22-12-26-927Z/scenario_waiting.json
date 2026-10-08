@@ -1,0 +1,30 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance request IS in flight when the screen is inspected",
+      "ok": false,
+      "detail": "{\"awaiting\":false,\"id\":null}"
+    },
+    {
+      "label": "the reader's submitted words are visible WHILE the reply is pending",
+      "ok": false,
+      "detail": "not found mid-flight (0 chars visible)"
+    },
+    {
+      "label": "the reader's submitted words are VISIBLE in the conversation after the rebuild",
+      "ok": false,
+      "detail": "not found in the rendered panel (0 chars of visible text)"
+    },
+    {
+      "label": "the request completed rather than being left in flight",
+      "ok": true,
+      "detail": "still awaiting: null"
+    },
+    {
+      "label": "a live request was preserved and none was replaced",
+      "ok": false,
+      "detail": "preserved=0 replaced=0"
+    }
+  ]
+}

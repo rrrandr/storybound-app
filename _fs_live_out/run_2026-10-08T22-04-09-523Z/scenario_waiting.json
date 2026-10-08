@@ -1,0 +1,20 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance request is still in flight",
+      "ok": false,
+      "detail": "null"
+    },
+    {
+      "label": "the reader's submitted words are VISIBLE in the conversation while waiting",
+      "ok": false,
+      "detail": "looked for \"\" in the rendered panel"
+    },
+    {
+      "label": "a waiting indicator is on screen",
+      "ok": false,
+      "detail": "no thinking element found"
+    }
+  ]
+}
