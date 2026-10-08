@@ -19,3 +19,32 @@ app loaded
   call refused after the infrastructure failure: gpt-4o (/api/chatgpt-proxy)
   entered via entrance submit (in-page el.click() — host not rendered in this harness) — the submitted answer IS exchange 1 of the six
   submit -> first readable prose: NOT OBSERVED within 60s
+  interruption: {"present":false,"submitted":false,"pending":false}
+  turns 0 · resolved=false · archive=0 · interruptionSubmitted=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false) ***
+    No further call will be labelled "scene 2".
+  exposure $3.317512
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000000
+  no receipt             : 1 call(s), estimated $0.077205 — NOT counted as measured
+  retained (no receipt)  : $0.077205 — kept as exposure, NOT forgiven
+  prior runs             : $3.240307
+  TOTAL EXPOSURE         : $3.317512
+  ceiling                : $5.05  [HALTED: OAS handoff incomplete (resolved=false, archive=0, interruptionPresent=false, interruptionSubmitted=false)]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json
+  receipted to date  $2.076160
+  unresolved to date $1.241352
+  TOTAL vs ceiling   $3.317512 of $5.05
+
+output: _fs_live_out/run_2026-10-08T05-58-52-111Z

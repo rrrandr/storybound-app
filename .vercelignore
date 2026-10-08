@@ -1,0 +1,11 @@
+# HARNESS OUTPUT, NOT APPLICATION FILES (2026-10-08, measurement).
+# Measured: `vercel dev` held 10,284 open descriptors against 10,229 files in the tree — about one
+# per file — while failing intermittently with `spawn EBADF` (4 of 30 mocked requests served).
+# These six directories are run artefacts the served app never reads. This file ALSO excludes them
+# from deployment uploads, which is why it is being measured rather than assumed.
+_fs_live_out/
+_continuation_live_eval_out/
+_fs_issue_corpus_out/
+_audit_out/
+_tempt_fate_fixtures/
+_fs_planner_capture_out/

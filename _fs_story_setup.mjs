@@ -91,11 +91,14 @@ export const enterOAS = async (page, opts) => {
       if (a) { a.value = v.s; a.dispatchEvent(new Event('input', { bubbles: true })); }
       if (b) { b.value = v.d; b.dispatchEvent(new Event('input', { bubbles: true })); }
     }, { s: say, d: doText });
-    route = 'entrance submit';
-    await page.click('#bakedOASSubmitBtn', { timeout: 8000 }).catch(async () => {
-      route = 'entrance submit (in-page el.click() — host not rendered in this harness)';
-      await page.evaluate(() => { const b = document.getElementById('bakedOASSubmitBtn'); if (b) b.click(); });
-    });
+    route = 'entrance submit (trusted click)';
+    try {
+      await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+    } catch (e) {
+      return { ok: false, route: 'entrance submit REFUSED',
+               why: 'the entrance Submit was not clickable: ' + String(e.message).split('\n')[0],
+               firstTurnConsumed: false };
+    }
     firstTurnConsumed = true;
   } else {
     await page.click('#bakedOASEnterBtn', { timeout: 8000 }).catch(async () => {
