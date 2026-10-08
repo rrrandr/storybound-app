@@ -1194,7 +1194,7 @@ try {
       if (_submitToProseMs != null) _submitToProseMs = _submitToProseMs - _t0;
     }
     if (!halted) {
-      say('  submit -> first readable prose: '
+      say('  submit -> first NEW text on screen (NOT yet tied to an attributed reply): '
         + (_submitToProseMs == null ? 'NOT OBSERVED within 60s' : _submitToProseMs + 'ms'));
     }
 
@@ -1321,6 +1321,24 @@ try {
           + 'count toward the six');
       }
     }
+    // THE PORTRAIT MODAL RE-OPENS AFTER UNLOCK and intercepts pointer events over the OAS deck —
+    // the click error said so explicitly, with the card itself visible, enabled and stable. It is
+    // cleared through its own controls before each interaction. Not force-clicked through, and no
+    // opt-out state writes.
+    const clearOverlaysNow = async () => {
+      for (let r = 0; r < 6; r++) {
+        let acted = false;
+        for (const o of ONBOARD_CTRLS) {
+          const vis = await page.evaluate((q) => {
+            const e = document.querySelector(q); return !!(e && e.getClientRects().length > 0); }, o.sel);
+          if (!vis) continue;
+          await page.click(o.sel, { timeout: 6000 }).catch(() => {});
+          acted = true; await page.waitForTimeout(1000); break;
+        }
+        if (!acted) return;
+      }
+    };
+    await clearOverlaysNow();
     const EXIT_AFTER_EXCHANGES = Number(process.env.SB_EXIT_AFTER || 6);
     let turnsTaken = 0;
     for (let i = 0; i < 9 && !halted; i++) {
@@ -1329,6 +1347,7 @@ try {
       setPreviewContext('opening OAS', i + 1);
       const consoleAtTurnStart = consoleLog.length;
       // Draw the OAS deck, wait for it to settle, and play one with a REAL click.
+      await clearOverlaysNow();
       const deck = await waitForOasDeck();
       if (!deck || !deck.count) {
         halted = true;
@@ -1776,10 +1795,28 @@ try {
     // is what triggers Scene 2.
     if (String(process.env.SB_STOP_AT || '').toLowerCase() === 'handoff') {
       halted = true;
+      // "AS PLANNED" REQUIRES THE HANDOFF TO HAVE HAPPENED. The log printed it with every handoff
+      // condition false, which reads as success and is not.
+      const _hs = await page.evaluate(() => {
+        const r = window.state._intimateInterruption || {};
+        const arch = (window.state.scenes || []).filter(x => x && x.oasArchive).length;
+        const d = window.state.intimacyDialogue;
+        return { resolved: !!(!d || (!d.active && !d._resolving)), archive: arch,
+                 interruptionPresent: !!document.getElementById('intimateInterruption'),
+                 interruptionDone: !!(r.submitted || r.completedWithoutSubmission) };
+      });
+      const _hok = _hs.resolved && _hs.archive > 0
+        && (_hs.interruptionPresent || _hs.interruptionDone);
       haltReason = 'SB_STOP_AT=handoff — stopping at the promised handoff, before the '
         + 'run-or-remain branch is serviced and before any scene work';
       say('');
-      say('*** STOPPING AS PLANNED — ' + haltReason + ' ***');
+      if (_hok) {
+        say('*** STOPPING AS PLANNED — ' + haltReason + ' ***');
+      } else {
+        haltReason = 'SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: '
+          + JSON.stringify(_hs);
+        say('*** STOPPING — NOT AS PLANNED — ' + haltReason + ' ***');
+      }
       // READ THE STATE HERE. oasFinal is built further down, AFTER the decision is serviced —
       // referencing it from this earlier point threw "Cannot access 'oasFinal' before
       // initialization", which the provider-free verification caught.
