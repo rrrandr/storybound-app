@@ -1,0 +1,23 @@
+[
+  {
+    "n": 1,
+    "requested": "grok-4-1-fast-reasoning",
+    "chars": 200597,
+    "maxTokens": 400,
+    "fn": "OAS",
+    "pricedAs": "grok-4.3",
+    "resolvedBy": "api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override",
+    "convId": "sb-grok-1d095cfb-c16b-418e-a148-fdfd5e41afb8",
+    "role": "STRUCTURE_GENERATOR",
+    "ms": 16083,
+    "estimate": 0.07702500000000001,
+    "served": "grok-4.3",
+    "inTok": 46190,
+    "outTok": 289,
+    "cachedTok": 192,
+    "reasoningTok": 884,
+    "ticks": 604684000,
+    "measured": 0.060468400000000005,
+    "exposureAfter": 3.37798031
+  }
+]

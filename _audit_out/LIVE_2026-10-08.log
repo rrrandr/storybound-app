@@ -1,0 +1,54 @@
+=== FS SEQUENCE — ceiling $5.05 — LIVE ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $3.317512
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  call  1  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46190 cached=  192 out=  289  $0.060468  16083ms
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): NOT OBSERVED within 60s
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=1049 attempts=["1:grok:ok"]
+  the entrance submission produced no attributable rendered reply — it does NOT count toward the six
+  *** STOPPING — the OAS deck never mounted at turn 1 (checked #gnCardMount, #cardMount, #intimacyDevCardMount, document; none had visible cards) ***
+  interruption: {"present":false,"submitted":false,"pending":false}
+  handoff (before the branch is serviced): {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}
+  turns 0 · resolved=false · archive=0 · interruptionDone=false · run/remain on screen=false · branches=[]
+  after the choice: recorded=null · prompt removed by production=true · handoff had passed=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false) ***
+    No further call will be labelled "scene 2".
+  exposure $3.377980
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.060468
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $3.317512
+  TOTAL EXPOSURE         : $3.377980
+  ceiling                : $5.05  [HALTED: OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false)]
+  CACHED TOKENS          : 192 of 46190 input (0.4%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json
+  receipted to date  $2.136628
+  unresolved to date $1.241352
+  TOTAL vs ceiling   $3.377980 of $5.05
+
+output: _fs_live_out/run_2026-10-08T20-47-40-024Z

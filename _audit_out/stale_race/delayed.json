@@ -1,0 +1,22 @@
+{
+  "delay": 16000,
+  "race": {
+    "rehydrations": [],
+    "dispatches": []
+  },
+  "rendered": {
+    "turns": 0,
+    "beat": 0,
+    "pendingRequestId": null,
+    "lastText": null
+  },
+  "dropLines": [],
+  "staleDiscard": [],
+  "entry": {
+    "ok": false,
+    "route": "examine REFUSED",
+    "why": "the Examine control was not clickable: page.click: Timeout 8000ms exceeded.",
+    "firstTurnConsumed": false,
+    "submitAt": null
+  }
+}

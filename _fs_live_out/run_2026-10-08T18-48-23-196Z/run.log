@@ -1,0 +1,27 @@
+*** 1 reservation(s) from an earlier run never settled — $0.250000 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $3.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $3.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.520318
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9267ms
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=2 attempts=["1:grok:ok"]
+  the entrance submission produced no attributable rendered reply — it does NOT count toward the six
+  call  2  [fixture] gpt-4o-mini                  $0.000100  0ms
+  call  3  [fixture] gpt-4o-mini                  $0.000100  0ms
+  *** STOPPING — OAS submission BLOCKED at turn 1 slot "null": a non-empty field holds a placeholder or degenerate value (DO="{}") — it would be sent to the author as the reader's words. STOPPING BEFORE THE AUTHOR CALL — DO="{}" SAY="\"I need to know where this is " ***
+
+*** RUN ERROR: page.waitForTimeout: Target page, context or browser has been closed ***

@@ -1,0 +1,59 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $1.690595
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): NOT OBSERVED within 60s
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=268 attempts=["1:grok:ok"]
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=true age=69ms  1791494387283-zlfmym -> rehydrated-1791494387352   *** REPLACED A LIVE REQUEST ***
+        at wrapped (<anonymous>:12:29)
+        at http://localhost:3000/app.js?v=20261008d-oas-deck:145250:26
+  the entrance submission produced no attributable rendered reply — it does NOT count toward the six
+  *** STOPPING — the OAS deck never mounted at turn 1 (checked #gnCardMount, #cardMount, #intimacyDevCardMount, document; none had visible cards) ***
+  interruption: {"present":false,"submitted":false,"pending":false}
+  handoff (before the branch is serviced): {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}
+
+*** STOPPING — NOT AS PLANNED — SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]} ***
+    reached: resolved=false · archive=0 · interruptionPresent=false · interruptionSubmitted=false
+    model-backed exchanges: 0 · scripted exit: not used
+    the run-or-remain branch was NOT serviced, so no scene work was triggered.
+  turns 0 · resolved=false · archive=0 · interruptionDone=false · run/remain on screen=false · branches=[]
+  post-choice check SKIPPED — stopped at the validated handoff, before any choice
+  exposure $1.690695
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $1.690595
+  TOTAL EXPOSURE         : $1.690695
+  ceiling                : $5.05  [HALTED: SB_STOP_AT=handoff was requested, but THE HANDOFF DID NOT HAPPEN: {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.fixture.json
+  receipted to date  $0.012800
+  unresolved to date $1.677895
+  TOTAL vs ceiling   $1.690695 of $5.05
+
+output: _fs_live_out/run_2026-10-08T21-19-17-712Z

@@ -1,0 +1,14 @@
+{
+  "stoppedAt": "handoff",
+  "resolved": false,
+  "reached": {
+    "archive": 0,
+    "interruptionPresent": false,
+    "interruptionSubmitted": false,
+    "dialogueGone": false,
+    "decisionRecorded": null
+  },
+  "modelBackedReplies": 3,
+  "scriptedExit": null,
+  "exposure": 0.0704195
+}

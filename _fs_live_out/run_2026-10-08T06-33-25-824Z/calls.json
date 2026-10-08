@@ -1,0 +1,42 @@
+[
+  {
+    "n": 1,
+    "requested": "grok-4-1-fast-reasoning",
+    "chars": 200559,
+    "maxTokens": 400,
+    "fn": "OAS",
+    "pricedAs": "grok-4.3",
+    "resolvedBy": "api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override",
+    "convId": "sb-grok-dbbe8bbc-2214-4fce-9724-a2464e2331e3",
+    "role": "STRUCTURE_GENERATOR",
+    "ms": 2,
+    "estimate": 0.07701000000000001,
+    "served": "grok-4.3",
+    "inTok": 1000,
+    "outTok": 200,
+    "cachedTok": null,
+    "ticks": 1000000,
+    "measured": 0.0001,
+    "exposureAfter": 0.00030000000000000003
+  },
+  {
+    "n": 2,
+    "requested": "ministral-8b-2512",
+    "chars": 200559,
+    "maxTokens": 400,
+    "fn": "OAS",
+    "pricedAs": "ministral-8b-2512",
+    "resolvedBy": "explicit model on the mistral endpoint",
+    "convId": null,
+    "role": null,
+    "ms": 1,
+    "estimate": 0.0091332,
+    "served": "grok-4.3",
+    "inTok": 1000,
+    "outTok": 200,
+    "cachedTok": null,
+    "ticks": 1000000,
+    "measured": 0.0001,
+    "exposureAfter": 0.0004
+  }
+]

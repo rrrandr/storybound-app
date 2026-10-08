@@ -1,0 +1,2 @@
+ReferenceError: Cannot access 'oasState' before initialization
+    at file:///Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:1164:25

@@ -1,0 +1,13 @@
+=== THE STALE-RESPONSE RACE — arm "delayed" (reply delayed 16000ms, provider-free, $0) ===
+
+  entrance: {"route":"examine REFUSED","ok":false}
+
+  dispatches:   []
+  rehydrations: 0
+  drop lines:    []
+  stale discards:[]
+
+  FAIL a rehydration replaced a request that was still running  — no rehydration saw awaitingResponse with a young age
+  FAIL and the returning reply was discarded as stale  — no stale-response discard was logged
+  ok   so no turn was rendered despite a valid reply
+1/3 checks passed

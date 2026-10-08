@@ -916,6 +916,8 @@ await page.route('**/api/**', async (route) => {
       return route.fulfill({ status: 503, contentType: 'application/json',
         body: JSON.stringify({ error: 'harness halted: infrastructure failure' }) });
     }
+    const _rd = Number(process.env.SB_REPLY_DELAY_MS || 0);
+    if (_rd > 0) await new Promise((r) => setTimeout(r, _rd));
     return route.fulfill({ status: 200, contentType: 'application/json', body: textF });
   }
   try {
@@ -1038,6 +1040,38 @@ await page.addInitScript(() => {
   };
   if (!install()) {
     const iv = setInterval(() => { if (install()) clearInterval(iv); }, 50);
+    setTimeout(() => clearInterval(iv), 60000);
+  }
+});
+await page.addInitScript(() => {
+  window.__sbRace = { rehydrations: [] };
+  const install = () => {
+    const orig = window._rehydrateOASUI;
+    if (typeof orig !== 'function' || orig.__sbRaceWrapped) return false;
+    const wrapped = function (...args) {
+      const d = (window.state && window.state.intimacyDialogue) || {};
+      const before = { pendingRequestId: d.pendingRequestId || null,
+        awaitingResponse: !!d.awaitingResponse,
+        ageMs: d.lastRequestStartedAt ? (Date.now() - d.lastRequestStartedAt) : null };
+      const stack = String((new Error('rehydrate-caller')).stack || '')
+        .split('\n').slice(1, 10).map((l) => l.trim());
+      let out;
+      try { out = orig.apply(this, args); }
+      finally {
+        const d2 = (window.state && window.state.intimacyDialogue) || {};
+        window.__sbRace.rehydrations.push({ at: Date.now(), before,
+          afterPendingRequestId: d2.pendingRequestId || null,
+          replacedALiveRequest: before.awaitingResponse && before.ageMs !== null
+            && before.ageMs < 5000, stack });
+      }
+      return out;
+    };
+    wrapped.__sbRaceWrapped = true;
+    window._rehydrateOASUI = wrapped;
+    return true;
+  };
+  if (!install()) {
+    const iv = setInterval(() => { if (install()) clearInterval(iv); }, 25);
     setTimeout(() => clearInterval(iv), 60000);
   }
 });
@@ -1387,6 +1421,18 @@ try {
 
     // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
     await dumpPolicy('after the entrance submission, before any further input');
+    try {
+      const _race = await page.evaluate(() => (window.__sbRace || { rehydrations: [] }).rehydrations);
+      write('rehydrations.json', _race);
+      say('  [rehydrate] ' + _race.length + ' rehydration(s) during the entrance');
+      _race.forEach((r, i) => {
+        say('    #' + (i + 1) + ' awaiting=' + r.before.awaitingResponse
+          + ' age=' + r.before.ageMs + 'ms  ' + r.before.pendingRequestId
+          + ' -> ' + r.afterPendingRequestId
+          + (r.replacedALiveRequest ? '   *** REPLACED A LIVE REQUEST ***' : ''));
+        if (r.replacedALiveRequest) r.stack.slice(0, 6).forEach((l) => say('        ' + l));
+      });
+    } catch (e) { say('  [rehydrate] dump failed: ' + (e && e.message)); }
     // ── THE ENTRANCE REPLY, ATTRIBUTED ON ITS OWN EVIDENCE ──────────────────────────────────
     // Through the same helper every other turn uses, counted at most once, and BEFORE the loop so
     // no later reply can be mistaken for it.

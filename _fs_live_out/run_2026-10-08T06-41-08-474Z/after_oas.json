@@ -1,0 +1,149 @@
+{
+  "turnsTaken": 6,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": null,
+    "promptMounted": false,
+    "recorded": null
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": false,
+  "submitToFirstReadableProseMs": 9244,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Your gaze locked onto me amidst the ritual. Did you craft the desire, yearning for the Provast to intercede?",
+        "liAction": "Julian's hand lingered on the shaft as he held his breath.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "You observed the ceremony, your attention drawn to the Provast rather than the circle. Did you craft your desire, anticipating my help?",
+        "liAction": "Julian's hand remained on the length, his focus locked onto me.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your focus lingered on the Provast during the ritual. Did you craft the desire, yearning for the Provast to offer its support?",
+        "liAction": "Julian's hand gripped the length as his intensity locked onto mine.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "Let them witness what you have wrought upon me.",
+        "pcDo": "I tilted The Answer toward him, my fingers brushing against his.",
+        "pcSayRaw": "Ask me whose hands shaped it.",
+        "pcDoRaw": "I set The Answer down between us and do not let go",
+        "liDialogue": "Your stare remained fixed on the Provast during the ritual. Did you mold the wish with the hope that the Provast would offer its support?",
+        "liAction": "Julian's grip lingered on the length, his focus unwavering as he watched me.",
+        "faceState": "knowing_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-KNOWINGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}

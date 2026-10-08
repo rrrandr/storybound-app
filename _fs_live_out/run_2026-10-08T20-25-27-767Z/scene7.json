@@ -1,0 +1,273 @@
+{
+  "outcome": "accepted",
+  "creating": 7,
+  "leaving": 6,
+  "before": {
+    "count": 5,
+    "lastUid": "cg:c459f242-3c64-404d-b800-604cc10d72eb"
+  },
+  "snap": {
+    "label": "scene6",
+    "scenes": 6,
+    "texts": [
+      {
+        "uid": "cg:08223cc5-ccf1-4497-abc8-12cd70e1ef6f",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      },
+      {
+        "uid": "cg:8960c6c2-2224-4cf3-8990-7201c4fb15ab",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nI realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…"
+      },
+      {
+        "uid": "cg:9536e4e5-695d-4e9d-b5b4-25876f74528d",
+        "text": "The room stood when the Dohkar stood. I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:b98ec782-e8b0-4132-a673-2b62fbc513a4",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:c459f242-3c64-404d-b800-604cc10d72eb",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      },
+      {
+        "uid": "cg:88771c18-6db7-4fd8-ba03-e3272a4879a9",
+        "text": "I did not, and that was the first thing anyone noticed about me that day.\n\nOut of the assembly came three of Seren's people, and they did not look at me at all. They looked at the Dohkar, which was worse.\n\nSEREN'S ELDEST COUSIN: “We ask remedy for what the rite cost her. Enter it, Dohkar, and enter it before your inquiry.”\n\nJulian set The Answer's case down on the table and closed it, and did not say the thing he had been building toward for an hour.\n\nTHE PRESIDING DOHKAR: “It is entered. The complaint stands apart from my ruling on her conduct.”\n\nSo there were two of them now, and only one of me, and The Answer still was not mine."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:08223cc5-ccf1-4497-abc8-12cd70e1ef6f",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:8960c6c2-2224-4cf3-8990-7201c4fb15ab",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:9536e4e5-695d-4e9d-b5b4-25876f74528d",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:b98ec782-e8b0-4132-a673-2b62fbc513a4",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:c459f242-3c64-404d-b800-604cc10d72eb",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      },
+      {
+        "ref": "cg:88771c18-6db7-4fd8-ba03-e3272a4879a9",
+        "quoted": [
+          "It is entered. The complaint stands apart from my ruling on her conduct.",
+          "Julian set The Answer's case down on the table and closed it"
+        ],
+        "summary": [],
+        "obligations": [
+          "ob_remedy_owed"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+        "liAction": "Julian's hand remained on the shaft as he waited.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+        "liAction": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+        "liAction": "Julian's hand remained on the shaft as his gaze held mine.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 6,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "5:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 4,
+          "temptation": {
+            "a": 51,
+            "d": 21
+          },
+          "boundary": {
+            "a": 45,
+            "d": 31
+          },
+          "confession": {
+            "a": 43,
+            "d": 44
+          },
+          "reversal": {
+            "a": 50,
+            "d": 29
+          },
+          "silence": {
+            "a": 48,
+            "d": 2
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 2,
+      "submitted": {
+        "action": "I go still and let the clearing finish its noise",
+        "dialogue": "mm",
+        "source": "gn",
+        "cardId": "silence",
+        "selectedIndex": 2,
+        "appKey": {
+          "turnCount": 5,
+          "sceneFateKey": "5:1",
+          "oasBeat": null
+        },
+        "cacheEntry": {
+          "action": "I go still and let the clearing finish its noise",
+          "dialogue": "mm"
+        },
+        "gn": {
+          "a": 48,
+          "d": 2
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "matched-response",
+        "evidence": "the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 48, requested under the SAME generation identity (turnCount=5) — encounter=scene 6 end turn=6 card=\"silence\""
+      },
+      "provenance": {
+        "provenance": "matched-response",
+        "evidence": "the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 48, requested under the SAME generation identity (turnCount=5) — encounter=scene 6 end turn=6 card=\"silence\""
+      }
+    }
+  ]
+}

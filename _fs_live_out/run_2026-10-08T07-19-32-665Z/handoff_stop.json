@@ -1,0 +1,27 @@
+{
+  "stoppedAt": "handoff",
+  "resolved": true,
+  "reached": {
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "dialogueGone": true,
+    "decisionRecorded": null
+  },
+  "modelBackedReplies": 6,
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exposure": 0.029889539999999996
+}

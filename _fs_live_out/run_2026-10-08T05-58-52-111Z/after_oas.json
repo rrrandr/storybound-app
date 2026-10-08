@@ -1,0 +1,54 @@
+{
+  "turnsTaken": 0,
+  "resolved": false,
+  "oasFinal": {
+    "dialogue": true,
+    "archive": 0,
+    "interruptionPresent": false,
+    "interruptionSubmitted": false
+  },
+  "interruption": {
+    "present": false,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": null,
+    "promptMounted": false,
+    "recorded": null
+  },
+  "scriptedExit": null,
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (in-page el.click() — host not rendered in this harness)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": null,
+  "modelBackedReplies": 0,
+  "fallbackCount": 0,
+  "infraFailure": {
+    "at": "2026-10-08T05:59:47.461Z",
+    "call": 1,
+    "endpoint": "/api/proxy",
+    "httpStatus": 502,
+    "contentType": "text/plain; charset=utf-8",
+    "ms": 2892,
+    "requested": "grok-4-1-fast-reasoning",
+    "served": null,
+    "requestIds": {
+      "server": "Vercel",
+      "x-vercel-id": "dev1::uo47e-1791439184630-683041b6e0c5",
+      "x-vercel-cache": "MISS"
+    },
+    "bodyHead": "An error occurred with this application. NO_RESPONSE_FROM_FUNCTION ",
+    "outstandingAtStop": 1,
+    "inFlightUsd": 0.07720500000000001
+  },
+  "exitKind": null,
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": null
+  }
+}

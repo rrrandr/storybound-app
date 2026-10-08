@@ -1,0 +1,10 @@
+{
+  "calls": 13,
+  "receipted": 0.0006000000000000001,
+  "retainedUnresolved": 0.00879456,
+  "priorExposure": 0.26092308,
+  "totalExposure": 0.27031763999999997,
+  "ceiling": 5,
+  "halted": true,
+  "haltReason": "SB_STOP_AT=handoff — stopping at the promised handoff, before the run-or-remain branch is serviced and before any scene work"
+}

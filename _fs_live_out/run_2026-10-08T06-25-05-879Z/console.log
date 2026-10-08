@@ -1,0 +1,141 @@
+Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The policy is report-only, so the violation has been logged but no further action has been taken.
+[ORCHESTRATION] Storybound AI Orchestration Client initialized
+[BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+[GN DEV] Dev tools IIFE executing...
+%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is required to enable inline execution. The policy is report-only, so the violation has been logged but no further action has been taken.
+[FATE] DOMContentLoaded — initializing
+[BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+[CONTENT REGISTER] FULL_WEB (full) — platform: web
+%c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+[Phase1LI] UI wired (collapse cover + name-input reactivity)
+%c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dumpNILState()             → print + copy current NIL/ERA/OAS state
+  clearConsoleBuffer()       → wipe the ring buffer color: #c9a24e; background: #1a1612; padding: 6px; font-family: monospace;
+%c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+[GEMMA_TURN] Turn-based collaborative system initialized.
+[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+[NMD] Seeded Volume 1 with Entry 1.
+%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+%c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+%c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+%c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+%c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+[CG:HELPERS] ready=true
+[STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+[ModeCards] Initialized 4 mode cards
+[Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+[Corridor] Stored 2 elements for stage: authorship
+[Corridor] Stored 3 elements for stage: identity
+[Corridor] Stored 3 elements for stage: playermask
+[Corridor] Stored 3 elements for stage: storybeau
+[Corridor] Stored 1 elements for stage: world
+[Corridor] Stored 1 elements for stage: tone
+[Corridor] Stored 1 elements for stage: pressure
+[Corridor] Stored 3 elements for stage: pov
+[Corridor] Stored 2 elements for stage: length
+[Corridor] Stored 2 elements for stage: dynamic
+[Corridor] Stored 1 elements for stage: beginstory
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+[Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+[Authorship] Choice reset
+[Corridor] Authorship mount: Reset authorship choice for re-selection
+[Corridor] DOM updated. Mounted row 0: authorship
+[Ghost Steps] Initialized 8 ghost step placeholders
+[DSP] Hidden — stage authorship
+[Corridor Nav] Navigation affordances initialized
+[Corridor] Initialization complete. Active row: 0
+[Corridor] Row store initialized with 11 stages
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[GOOD_REASONS] Mechanic + library variant system initialized.
+[REINCARNATION] System initialized
+[FATE_EVENT] System initialized. Active: false
+[PROMO] Seasonal promotions initialized. Active: none
+[DevHUD] Dev HUD ready — press ` to toggle
+[BOOT] Complete — flushed 0 deferred task(s)
+[QA] Not enabled — host: localhost | _isQaHost: true | _devBypass: false
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=710, left=12, viewport=720
+[BETA] geo_gate_decision {"country":null,"signal":"ip","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[BOOT] Found unresumed purchase intent: undefined | type: undefined
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[STARTER] Launching "The First Sacrifice"
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[PHRASE-LEDGER] story #1 — 9 entries kept (strong=9, mild=0). Cooldown decay: rarity × 3 stories, clamped [5, 30].
+[GHOST] Preferences loaded + decayed: {"desireBias":{"control":0.25,"taboo":0.25,"tenderness":0.25,"surrender":0.25},"woundBias":{"avoidant":0.25,"selfDestructive":0.25,"control":0.25,"burdened":0.25},"engagementStyleBias":{"pursue":0.32999999999999996,"hold":0.32999999999999996,"withdraw":0.33999999999999997},"recentTaste":{"lastPrimaryDesire":null,"lastPrimaryWound":null,"lastArchetype":null,"cooldown":0},"lastUpdatedAt":null}
+[READER] resetBookState: page reset to 0 (COVER)
+[STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian
+[STARTER] Locked pre-written title: The First Sacrifice
+[BAKED] mounting Scene 1 — starter_first_sacrifice v1.8.0-editorial
+[LORE-LEDGER] scene 1 · candidates=4 glossed=4 ledger=4
+[SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: free, currentStoryLength: taste, cardsFound: 0}
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[ENTITLEMENT] applyLengthLocks: {access: free, currentStoryLength: taste, cardsFound: 0}
+[READER-MODE] OFF — present-tense play resumes
+[LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)
+[NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
+[DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+[SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:24f06e90-aafd-4a23-96ea-66b14ef68e0f planned="Seren’s wish for Lirael — “that she find the one she lost” —"
+[BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
+[BAKED:IDENTITY] ledger entities for the seed cast: +3
+[READER] showReaderPage: 2
+[SCENE-AMB:STATE] page=0 primary=neutral_quiet layer2=none layer3=none world=Fantasy isUrban=false primaryIsWeather=true primaryIsOffice=false primaryIsIndoorUrbanVenue=false
+[READER] Page 2+: SCENE (Title + Prose)
+[TITLE-PAGE] Shown
+[FATE:STAGE-DIAG] turnCount=0 · scenes.length=n/a · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
+[FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot=– · truth=– · grievances=0 · callbacks=0 · scars=0 · gravity=orbit · axis-lead=– · fateOAS=–
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(8), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(9)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(8), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(9)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(8), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(9)}
+[FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(8), verdict: TARGET_LOCKED_TO_STORYBEAU}
+[FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(9)}
+[FATE] templated wish candidates suppressed — this Book authors its own card slots
+[FATE] dealFateCards complete — cards bound
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[OAS:ENTRANCE] pre-dealt hands cleared across every mount — playable cards now 0
+[BAKED:OAS] handoff affordance mounted — this is the CG Book's gate
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[BAKED-IMG] mounted 0 occurrence(s): 
+[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false
+[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning CINEGRAPHIC story
+[STAGED] Beginning Staged Story flow (legacy GN button → staged_story_mode)
+[STYLE:DEFAULT-ENDER]
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined

@@ -1,0 +1,17 @@
+{
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "scenes": [
+    {
+      "sceneNumber": 2,
+      "createdBy": "opening branch \"run\"",
+      "uid": "cg:1b284195-06b3-4242-8b1b-6f6273b03b4a",
+      "accepted": true,
+      "chars": 747,
+      "notesAfter": 1
+    }
+  ],
+  "boundaryCheck": null
+}
