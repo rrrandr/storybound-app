@@ -101824,8 +101824,11 @@ function _buildAuthorFloorDirective(s) {
   // run before prompt-build for literary Scene 2+. Produces 1–3 concrete causal hard beats →
   // state._scenePlotContract, which _buildPlotContractDirective then injects at the two roots.
   async function _generateLiteraryPlotContract(act, dia, temptCtx) {
-    // BEFORE the payload is built, so the planner can be told which card assisted this turn.
-    try { _captureSubmissionProvenance(state, act, dia); } catch (_) {}
+    // CAPTURED ONCE, BEFORE ANY AWAIT, and held LOCALLY for the rest of this call. The payload
+    // used to re-read state via _submissionProvenanceFor(s, null) — which disabled scene matching
+    // and read a shared mutable slot after asynchronous work had run.
+    var _subProv = null;
+    try { _subProv = _captureSubmissionProvenance(state, act, dia); } catch (_) {}
     try {
       var s = window.state || {};
       if (!_plotContractActive()) return;
@@ -102228,7 +102231,7 @@ function _buildAuthorFloorDirective(s) {
                 // typed-only turn. The reader's wording above remains authoritative; this only
                 // says where the suggestion came from.
                 try {
-                  var _sp = _submissionProvenanceFor(s, null);
+                  var _sp = _subProv;            // THIS call's own snapshot, not shared state
                   if (!_sp || !_sp.cardAssist) return '';
                   var _lab = _sp.cardAssist.label || _sp.cardAssist.id;
                   if (!_lab) return '';
@@ -133648,7 +133651,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try {
       s = s || window.state; if (!s) return null;
       var n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : (s.turnCount || 0);
-      var snap = { storyId: String(s.storyId || ''), sceneNumber: n,
+      // ATTEMPT IDENTITY, reused rather than invented: storyId + sceneNumber cannot tell an
+      // ABANDONED attempt at a scene from its REPLACEMENT.
+      var attempt = (s._cpAttemptId != null) ? String(s._cpAttemptId) : null;
+      var snap = { storyId: String(s.storyId || ''), sceneNumber: n, attemptId: attempt,
                    cardAssist: _currentCardAssist(s), at: Date.now() };
       s._submissionProvenance = snap;
       try {
@@ -133660,7 +133666,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._captureSubmissionProvenance = _captureSubmissionProvenance;
 
-  function _submissionProvenanceFor(s, sceneNumber) {
+  function _submissionProvenanceFor(s, sceneNumber, attemptId) {
     // The snapshot, but only if it belongs to THIS story and scene. One from an earlier or
     // abandoned turn is never inherited.
     try {
@@ -133668,6 +133674,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (!sp) return null;
       if (String(sp.storyId) !== String(s.storyId || '')) return null;
       if (sceneNumber != null && Number(sp.sceneNumber) !== Number(sceneNumber)) return null;
+      // Scene alone cannot separate an abandoned attempt from the replacement that followed it
+      // at the same scene, so the attempt must agree where both sides have one.
+      var want = (attemptId != null) ? String(attemptId)
+               : ((s._cpAttemptId != null) ? String(s._cpAttemptId) : null);
+      if (want != null && sp.attemptId != null && String(sp.attemptId) !== want) return null;
       return sp;
     } catch (_) { return null; }
   }
@@ -133691,7 +133702,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         //
         // It is ASSISTANCE PROVENANCE, deliberately separate from act/dia above: the reader may
         // have edited the suggestion, and their wording stays authoritative.
-        cardAssist: _currentCardAssist(s),
+        // NOT re-derived: re-reading live selection here let committed history record a
+        // different card from the one its planner was told about. An explicitly CARDLESS
+        // submission stays cardless.
+        cardAssist: (function () {
+          var _sp = _submissionProvenanceFor(s, n, null);
+          return _sp ? (_sp.cardAssist || null) : null;
+        })(),
         plannedEvent: asg && asg.event ? _slClip(asg.event, 300, 'plannedEvent') : null, plannedSource: (asg && asg.source) || null,
         setting: asg && asg.setting ? _slClip(asg.setting, 120, 'setting') : null,
         participants: (asg && Array.isArray(asg.participants)) ? asg.participants.slice(0, 8).map(String) : null,
@@ -133750,13 +133767,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // RETAINED ONLY AT COMMIT, and for either route: the literary path can supply it on the
         // stamped key, the CG path (kind 'cg') cannot, so the scene-bound snapshot is the source
         // of record for both. Never read live selection here.
-        cardAssist: (useKey ? (key.cardAssist || null) : (opts.cardAssist || null))
-          || (function () {
-               try {
-                 var _sp = _submissionProvenanceFor(s, n);
-                 return (_sp && _sp.cardAssist) ? _sp.cardAssist : null;
-               } catch (_) { return null; }
-             })(),
+        cardAssist: (function () {
+          // A snapshot matching this story, scene AND attempt is AUTHORITATIVE — including when
+          // its cardAssist is null, so an explicitly cardless submission is never backfilled with
+          // older provenance by a truthy fallback. Only with no matching snapshot does the
+          // stamped key apply.
+          try {
+            var _sp = _submissionProvenanceFor(s, n, null);
+            if (_sp) return _sp.cardAssist || null;
+          } catch (_) {}
+          return useKey ? (key.cardAssist || null) : (opts.cardAssist || null);
+        })(),
         posture: opts.posture || null, changes: Object.freeze(changes), committedAt: Date.now()
       };
       Object.freeze(entry); L.entries.push(entry);

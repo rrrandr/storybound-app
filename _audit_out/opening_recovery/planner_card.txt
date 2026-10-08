@@ -88,6 +88,6 @@ Reachability (HARD): the event must be reachable in ONE scene FROM the committed
 
 Continuity (where the last scene ended — context only, NOT the event to repeat): {"forScene":1,"source":"deterministic","sealedProposalRef":"prop:1:1","sealedFact":"The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.","activation":"pending","sceneTail":" only still point left in the clearing. The scar on his wrist catches the las
 Player action: {}
-Player dialogue: (The thing you almost said folds back into your chest.) And I am done being asked.
-Fate card played this turn: Silence (the reader took this card's suggestion and may have edited it — the Player action and dialogue above are what they actually submitted)
+Player dialogue: "I need you to understand something." And I am done being asked.
+Fate card played this turn: Confession (the reader took this card's suggestion and may have edited it — the Player action and dialogue above are what they actually submitted)
 Scene index: 2

@@ -1,0 +1,12 @@
+{
+  "sceneAt": 3,
+  "played1": "Reversal",
+  "committedAfterFail": null,
+  "after": null,
+  "provLines": [
+    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (typed-only)",
+    "LOG [SUBMISSION-PROVENANCE] scene 3 - card none (typed-only)",
+    "LOG [SUBMISSION-PROVENANCE] scene 4 - card Reversal"
+  ],
+  "injectedFailures": 3
+}

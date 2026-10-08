@@ -1,0 +1,84 @@
+You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.
+STATE_CHANGE CONTRACT (HARD — reused from the proven Scene-1 primitive, do NOT soften):
+  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", the negation of the state_change, phrased so the scene must OPEN with it still false. 8-16 words.
+  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.
+  • forces_choice: the decision the event UNLOCKS — the scene's closing choice, which could NOT have been posed before it (the event exists to CREATE this choice). "forces [PC] to choose between A and B" where A and B are TWO ACTIVE responses to the new fact (NOT one action + one escape hatch like "act or do nothing").
+  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone's SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone's OWN nouns and actions.
+  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.
+  • DELETE TEST (the sufficiency invariant — the state_change is valid ONLY if it passes): delete the event, and BOTH branch_a AND branch_b become impossible or materially different. If either branch would still stand unchanged without the event, the event is too weak — pick a stronger one.
+DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene's state (below). The new state MUST differ from the prior scene's — never re-flip an already-true fact, and never re-emit the prior event merely reworded.
+Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":"" }
+
+[WHAT THE SCENES THEMSELVES SAY — quoted verbatim]
+  scene 1 — the scene's own words: "I wish for the strength to face what comes next without breaking."
+  scene 1 — the scene's own words: "The memory of the scar on the Provast's wrist is the price that must be paid."
+  scene 1 — the scene's own words: "I feel lost, and I can't pretend otherwise."
+  scene 1 — the scene's own words: "The memory of the scar on the Provast's wrist is the price that must be paid."
+
+[THE AUTHOR'S SUMMARY OF PRIOR SCENES — UNVERIFIED, NOT CANON. These are the previous author's own words about its own scene. They have NOT been checked for truth: treat them as a reading aid for continuity, never as settled fact, and never contradict the quoted text above on their authority.]
+  scene 1 [events, author's gloss on the above]: The protagonist invoked Petition Fate with a small wish for clarity.
+  scene 1 [events, author's gloss on the above]: The presiding Dohkar named the memory of Julian's scar as the required sacrifice.
+  scene 1 [decisions, author's gloss on the above]: The player met Julian's gaze and spoke her uncertainty aloud.
+  scene 1 [consequences, author's gloss on the above]: The demand for the memory forces an irreversible choice between surrender and defiance.
+  scene 1 [disclosures]: Julian's gaze remained fixed, registering the shift without stopping it.
+
+[PROPOSED OBLIGATIONS STILL OPEN — commitments a prior scene set up and nothing has resolved yet. They do NOT expire with the recent-scene window. They are proposals, not established facts.]
+  - [memory-demand] Lirael must answer for her conduct and decide whether to surrender the memory. (owed by protagonist)
+
+RECENT ONE-ON-ONE EXCHANGE (already happened, archived before this handoff — what was ACTUALLY said and done just before the reader's submission. Plan FROM its consequences; do not re-stage or re-tell it):
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: You answer me in front of them, then.
+    (He does not lower The Answer.)
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: You answer me in front of them, then.
+    (He does not lower The Answer.)
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: You answer me in front of them, then.
+    (He does not lower The Answer.)
+  PLAYER: I am still here. / I hold his gaze.
+  Julian: You answer me in front of them, then.
+    (He does not lower The Answer.)
+
+STAGE PACKET (optional — add only if natural, never required): "stage_present" (array of names on stage this scene), "stage_location" (one short phrase for where this scene physically happens), "stage_issued_objects" (array of {"label":"","kind":""}), "stage_affordances" (array of short strings).
+
+STRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \"Julian is present in the scene\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \"none\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \"the elders now believe Julian caused it\")", "mechanism_grounding":"REQUIRED. What makes this event PHYSICALLY POSSIBLE in this world. Write exactly \"ordinary\" when it needs no special capability — speaking, moving, refusing, arriving, deciding, withholding, and institutions convening or suspending are ALL ordinary. Otherwise name the specific WORLD TRUTH, stage affordance, or established canon that grants the capability, in its own words. You may NOT invent a capability, power, faculty or supernatural mechanism to make an event possible — if no grounded source supports it, choose a different event." }. EXIT_STATE is the PRIMARY invariant. These four are the author's SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.
+
+PLAYER MOVE MUST EXIST ON THE PAGE (HARD RULE):
+The player committed to a specific move. It must be VISIBLE in the scene as behaviour or
+speech, not reported as an inner wish. Desire felt and never enacted is NOT a rendering of
+an action the player took.
+- THE PLAYER SPOKE. This was DIALOGUE. It must reach the page as an UTTERANCE — spoken,
+  or visibly attempted: begun and cut off, muffled, talked over, mumbled, or misheard. It
+  may NOT become an unspoken thought, a remembered impulse, a thing she "almost says", or a
+  line only the reader is told she wanted to say.
+- AND IT MUST BE RECEIVED: someone in the scene registers that she spoke or tried to.
+ALL OF THESE ARE ACCEPTABLE ANSWERS, and you may choose freely among them:
+- it lands and the scene moves on from it;
+- the other party REFUSES, hesitates, withdraws, or redirects, for an in-character reason;
+- an event interrupts it — but the interruption happens ON PAGE, after the move is visible,
+  never instead of showing it;
+- it is displaced by something more urgent that ARRIVES in the scene, shown as it arrives.
+CONSENT IS NOT YOURS TO INVENT EITHER WAY: this rule never obliges another character to
+accept the move, and never licenses depicting more than the scene's own limits allow. It
+obliges only that the player's move is answered where the reader can see it.
+
+
+Output STRICT JSON ONLY — no preamble, no code fences.
+THIS SCENE'S OBJECTIVE (authored story spine — the scene's central development to realize NOW as this scene's state_change, NOT a distant target): "NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is
+  FORBIDDEN INVENTIONS: do NOT introduce new NAMED characters, new factions or orders, new magical rules or ritual mechanics, new celestial bodies, new locations, or new stakes. Enrich perception, embodiment and phrasing freely — but add no STATE. Every invention becomes canon the next scene has to carry.
+Issue pressures: []
+COMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): []
+PENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: "The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it."
+Prior proposed transition (context): "The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it."
+ALREADY ON THE PAGE (authored events and verified outcomes the reader has read; context only, NOT the event to propose):
+  ALREADY READ (3 pages) — what is listed here HAPPENED and is finished; do not replay, re-stage or re-argue it:
+    p1: the authored opening established: Seren’s wish for Lirael — “that she find the one she lost” — began to twist; all felt it go wrong, then it stopped and nothing came of it. The Dohkar charged Lirael with shaping and interfering. Julian, the Provast, put The Answer in her hand and said he would question her before the assembly.
+    p1: the opening ended: The presiding Dohkar cut the interrogation off — a Provast questioning a Sacrificiant about her desires, in front of her ward’s family — and the clearing went still around the two of them. the presiding Dohkar: “That is enough, Provast. This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to flirt with the accused.” Julian: “Agreed. A formal inquiry — I will convene it, and preside. That was always where this was going.” The assembly’s attention came back to me, and to The Answer still in my hands, which was not mine.
+    p2: page read (no recorded facts)
+Reachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.
+
+Continuity (where the last scene ended — context only, NOT the event to repeat): {"forScene":2,"source":"deterministic","sealedProposalRef":"prop:2:2","sealedFact":"The presiding Dohkar declares that Lirael's conduct will be reviewed and that she will answer for it.","activation":"pending","sceneTail":" only still point left in the clearing. The scar on his wrist catches the las
+Player action: 
+Player dialogue: I say it in my own words this time.
+Fate card played this turn: Reversal (the reader took this card's suggestion and may have edited it — the Player action and dialogue above are what they actually submitted)
+Scene index: 3

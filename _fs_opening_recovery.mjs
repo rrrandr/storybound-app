@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card
+const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card | stale
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -39,6 +39,7 @@ const chargeOps = [];
 const debited = new Map();
 let balance = 9999999;
 let injectedFailures = 0;
+let failAuthor = false;
 const consoleAll = [];
 
 const browser = await chromium.launch();
@@ -94,7 +95,16 @@ await page.route('**/*', async (route) => {
       li_face_state: 'neutral',
       scene_state: (oasReqs.length >= 6 ? 'resolve' : 'continue'), scene_tone: 'tense',
       user_signal: 'engaged', temperature_shift: 0 });
-  } else if (stage === 'author') body = AUTHOR_FIXTURE;
+  } else if (stage === 'author') {
+    if (failAuthor) {
+      injectedFailures++;
+      consoleAll.push('HARNESS failed the author call for this attempt');
+      try { await route.fulfill({ status: 500, contentType: 'application/json',
+        body: JSON.stringify({ error: 'harness_injected_author_failure' }) }); } catch (_) {}
+      return;
+    }
+    body = AUTHOR_FIXTURE;
+  }
   else if (stage === 'planner') plannerReqs.push({ whole: msgs.map(m => String(m.content || '')).join('\n') });
   if (stage === 'planner') body = FS_PLANNER || '{}';
   else if (stage === 'memory') body = MEMORY;
@@ -262,6 +272,172 @@ if (ARM === 'auth') {
   t('no duplicate dispatch', oasReqs.length === 1, 'oas=' + oasReqs.length);
 }
 
+
+// Reach the point where production offers the scene-end hand, with the reader's own controls.
+async function reachSceneEndHand() {
+  for (let i = 0; i < 40; i++) {
+    const loading = await page.evaluate(() => {
+      const e = document.getElementById('gnSceneLoading'); return !!(e && e.getClientRects().length > 0); });
+    if (!loading) break;
+    await page.waitForTimeout(1000);
+  }
+  let hand = { count: 0, onScreen: 0, mount: null };
+  for (let i = 0; i < 60; i++) {
+    hand = await page.evaluate(() => {
+      const m = window._activeCardMount();
+      const cards = m ? Array.from(m.querySelectorAll('.fate-card, [data-card]')) : [];
+      return { mount: m ? m.id : null, count: cards.length,
+               onScreen: cards.filter(c => c.getClientRects().length > 0).length };
+    });
+    if (hand.onScreen > 0) break;
+    await clearOverlays();
+    const adv = await page.evaluate(() => {
+      const nb = document.getElementById('stagedNextBtn');
+      if (nb && nb.getClientRects().length > 0 && !nb.disabled) return 'next';
+      const br = document.getElementById('stagedBeatReader');
+      if (br && br.getClientRects().length > 0) return 'reader';
+      return null;
+    });
+    if (adv === 'next') await page.click('#stagedNextBtn', { timeout: 6000 }).catch(() => {});
+    else if (adv === 'reader') await page.click('#stagedBeatReader', { timeout: 6000 }).catch(() => {});
+    else break;
+    await page.waitForTimeout(600);
+  }
+  return hand;
+}
+const settleInputs = async () => {
+  let prev = null, stable = 0;
+  for (let i = 0; i < 20; i++) {
+    const v = await page.evaluate(() => { const i2 = window._getActiveTurnInputs();
+      return i2.actInput.value + '\u0000' + i2.diaInput.value; });
+    if (v === prev) { if (++stable >= 3) break; } else stable = 0;
+    prev = v; await page.waitForTimeout(600);
+  }
+};
+const typeOnly = async (txt) => {
+  const ids = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+    return { a: i.actInput.id, d: i.diaInput.id }; });
+  for (const id of [ids.a, ids.d]) {
+    await page.click('#' + id);
+    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('Backspace');
+  }
+  await page.click('#' + ids.d);
+  await page.keyboard.type(txt, { delay: 4 });
+  return ids;
+};
+const committedFor = (sceneNumber) => page.evaluate((n) => {
+  const L = window._sceneLedgerGet ? window._sceneLedgerGet(window.state, false) : null;
+  const rows = (L && L.entries) ? L.entries : [];
+  const r = rows.filter(e => Number(e.sceneNumber) === Number(n)).pop() || null;
+  return r ? { kind: r.kind, scene: r.sceneNumber, card: r.card || null,
+               assist: r.cardAssist || null } : null;
+}, sceneNumber);
+
+if (ARM === 'stale') {
+  console.log('\n=== FAILED CARD ATTEMPT -> TYPED-ONLY REPLACEMENT AT THE SAME SCENE ===');
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  await clearOverlays();
+  const b1 = await page.evaluate(() => {
+    for (const id of ['sceneDecisionA', 'sceneDecisionB']) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('data-choice') === 'run') return id;
+    } return null; });
+  if (b1) await page.click('#' + b1, { timeout: 15000 });
+  const hand = await reachSceneEndHand();
+  t('production offered the scene-end hand', hand.onScreen === 5, JSON.stringify(hand));
+  if (hand.onScreen !== 5) { await browser.close(); console.log('\n' + pass + '/' + (pass+fail) + ' checks passed  [ARM=' + ARM + ']'); process.exit(1); }
+
+  const sceneAt = await page.evaluate(() => window._currentSceneNumber(window.state));
+  console.log('   working at scene ' + sceneAt);
+
+  // ── ATTEMPT 1: a card is played, and the attempt FAILS ──────────────────────────────────────
+  await page.click('#' + hand.mount + ' .fate-card, #' + hand.mount + ' [data-card]', { timeout: 8000 });
+  await settleInputs();
+  const played1 = await page.evaluate(() => {
+    const o = Array.isArray(window.state.fateOptions) ? window.state.fateOptions : [];
+    const i = window.state.fateSelectedIndex;
+    const c = (typeof i === 'number' && i >= 0) ? o[i] : null;
+    return c ? String(c.title || c.name || c.archetype || c.label || '') : null; });
+  t('a card is selected for the first attempt', !!played1, JSON.stringify(played1));
+  const pBefore = plannerReqs.length;
+  failAuthor = true;
+  await clearOverlays();
+  await page.click('#gnSubmitBtn', { timeout: 15000 }).catch(async () => {
+    await page.click('#submitBtn', { timeout: 8000 }).catch(() => {}); });
+  for (let i = 0; i < 50 && plannerReqs.length === pBefore; i++) await page.waitForTimeout(1000);
+  await page.waitForTimeout(6000);
+  failAuthor = false;
+  const attempt1Planner = plannerReqs.length > pBefore ? plannerReqs[plannerReqs.length - 1].whole : '';
+  t('the failed attempt still produced a planner request', plannerReqs.length > pBefore,
+    'planners ' + pBefore + ' -> ' + plannerReqs.length);
+  const provAtAttempt1 = consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)).pop() || '';
+  console.log('   provenance at the failed attempt: ' + JSON.stringify(provAtAttempt1));
+  t('and that request named the played card', !!played1 && attempt1Planner.includes(played1),
+    'card=' + JSON.stringify(played1) + ' — provenance said ' + JSON.stringify(provAtAttempt1)
+    + ', so fateCommitted was still false when THIS route planned');
+  t('the author call was genuinely failed', injectedFailures > 0, 'injected=' + injectedFailures);
+  const committedAfterFail = await committedFor(sceneAt);
+  console.log('   after the failed attempt, committed row for scene ' + sceneAt + ': '
+    + JSON.stringify(committedAfterFail));
+
+  // ── ATTEMPT 2: the replacement submission for the SAME scene is TYPED ONLY ──────────────────
+  await clearOverlays();
+  const hand2 = await reachSceneEndHand();
+  const REPL = 'I say it in my own words this time.';
+  await typeOnly(REPL);
+  const sel2 = await page.evaluate(() => ({ index: window.state.fateSelectedIndex,
+    committed: !!window.state.fateCommitted }));
+  console.log('   replacement selection state: ' + JSON.stringify(sel2));
+  // CLEARING THE TEXT IS NOT DESELECTING THE CARD. fateSelectedIndex and fateCommitted survive a
+  // reader retyping over the suggestion, so from production's point of view the card is still
+  // played and this replacement is NOT "explicitly cardless". Recorded, because it decides what
+  // the assertions below can honestly mean.
+  t('DIAGNOSIS: retyping over a suggestion does NOT clear the selection',
+    sel2.index >= 0 && sel2.committed === true,
+    'index=' + sel2.index + ' committed=' + sel2.committed
+    + ' — if this ever goes false, the deselection path changed');
+  const pBefore2 = plannerReqs.length;
+  await clearOverlays();
+  await page.click('#gnSubmitBtn', { timeout: 15000 }).catch(async () => {
+    await page.click('#submitBtn', { timeout: 8000 }).catch(() => {}); });
+  for (let i = 0; i < 60 && plannerReqs.length === pBefore2; i++) await page.waitForTimeout(1000);
+  await page.waitForTimeout(8000);
+  t('the replacement produced its own planner request', plannerReqs.length > pBefore2,
+    'planners ' + pBefore2 + ' -> ' + plannerReqs.length);
+  if (plannerReqs.length > pBefore2) {
+    const w2 = plannerReqs[plannerReqs.length - 1].whole;
+    fs.writeFileSync(OUT + '/planner_replacement.txt', w2);
+    t('THE REPLACEMENT PLANNER CLAIMS NO CARD', !/Fate card played this turn/.test(w2),
+      'a card was claimed on a typed-only replacement');
+    t('and it does not name the abandoned attempt\'s card',
+      !played1 || !w2.includes('Fate card played this turn: ' + played1));
+    t('the reader\'s own replacement wording is what was submitted', w2.includes(REPL));
+  }
+  const provLines = consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l));
+  console.log('   provenance trail: ' + JSON.stringify(provLines.slice(-4)));
+  const after = await committedFor(sceneAt);
+  console.log('   committed row now: ' + JSON.stringify(after));
+  t('ACCEPTED HISTORY CARRIES NO STALE CARD for that scene',
+    !after || !after.assist, JSON.stringify(after));
+  fs.writeFileSync(OUT + '/stale.json', JSON.stringify(
+    { sceneAt, played1, committedAfterFail, after, provLines, injectedFailures }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
+}
+
 if (ARM === 'card') {
   console.log('\n=== CARD IDENTITY -> THE NEXT OUTGOING PLANNER REQUEST ===');
   // Get through the opening to a real scene-end submission. The opening turn is typed-only, which
@@ -410,7 +586,40 @@ if (ARM === 'continuity') {
   const o1 = await waitOutcome();
   _setupRunning = false;
   t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  // ── BEFORE THE INTERRUPTION ──────────────────────────────────────────────────────────────
+  // Scoped to COMPLETED-HISTORY claims. An authored instruction that DESCRIBES a coming
+  // interruption is not a history leak; a committed row asserting it already happened is.
+  const beforeRows = await page.evaluate(() => {
+    const L = window._sceneLedgerGet ? window._sceneLedgerGet(window.state, false) : null;
+    return (L && L.entries ? L.entries : []).map(e => ({ kind: e.kind,
+      event: String(e.plannedEventFull || e.plannedEvent || '') }));
+  });
+  const bakedBefore = beforeRows.find(r => r.kind === 'baked');
+  console.log('   BEFORE the interruption — rows: ' + JSON.stringify(beforeRows.map(r => r.kind)));
+  t('the opening row exists before the interruption', !!bakedBefore);
+  t('no interruption row exists yet', !beforeRows.some(r => r.kind === 'oas_interrupt'),
+    JSON.stringify(beforeRows.map(r => r.kind)));
+  t('BEFORE: the opening row does NOT claim the interruption happened',
+    !!bakedBefore && !/cut it off|cut the interrogation off/i.test(bakedBefore.event),
+    JSON.stringify((bakedBefore && bakedBefore.event || '').slice(-90)));
+  t('BEFORE: it does not claim the interrogation already happened either',
+    !!bakedBefore && !/questioned her before all/i.test(bakedBefore.event),
+    JSON.stringify((bakedBefore && bakedBefore.event || '').slice(-90)));
+  t('BEFORE: it still records what Scene 1 did establish',
+    !!bakedBefore && /began to twist/.test(bakedBefore.event)
+    && /charged Lirael with shaping/.test(bakedBefore.event));
+  if (plannerReqs.length) {
+    const pw = plannerReqs[plannerReqs.length - 1].whole;
+    t('BEFORE: no planner request claims the interruption as past history',
+      !/the opening ended:/.test(pw), 'an oas_interrupt row reached a planner before it occurred');
+  }
   // Drive the OAS to the authored interruption, then take the branch, so BOTH ledger rows exist.
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  // Now let the interruption arrive.
   for (let i = 0; i < 16; i++) {
     if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
     await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
