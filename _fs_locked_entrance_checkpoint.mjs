@@ -52,8 +52,11 @@ await page.route('**/*', async (route) => {
   }
   if (!isProviderEndpoint(url)) { try { await route.abort(); } catch (_) {} return; }
   let msgs = []; try { msgs = (JSON.parse(req.postData() || '{}').messages) || []; } catch (_) {}
-  const stage = stageOf(String((msgs[0] || {}).content || ''));
-  stages.push(stage);
+  const sys0 = String((msgs[0] || {}).content || '');
+  const stage = stageOf(sys0);
+  stages.push({ stage, head: sys0.replace(/\s+/g, ' ').slice(0, 110), chars: sys0.length,
+                model: (() => { try { const b = JSON.parse(req.postData() || '{}');
+                  return b.preferredModel || b.grokModel || b.model || null; } catch (_) { return null; } })() });
   let body = '{}';
   if (stage === 'planner') body = FS_PLANNER || '{}';
   else if (stage === 'memory') body = MEMORY;
@@ -73,51 +76,40 @@ const booted = await page.waitForFunction(() => {
 console.log('boot complete: ' + booted);
 t('boot completes and reveals the app on its own', booted === true);
 
-// The portrait modals are the product's own opt-out; images are blocked here anyway.
-await page.evaluate(() => {
-  try { window.state._pcLookSkipped = true; window.state._liRenderSkipped = true; } catch (_) {}
-});
-
 // LAUNCH ONCE. Nothing else.
 const def = await findFSDef(page);
 await launchFS(page, def);
-// THE LOOK MODAL RE-OPENS AFTER LAUNCH and intercepts the page-turn — measured, with the refusal
-// quoted: "<summary>Need help? Optional fields ▾</summary> from <div class=overlay id=pcLookModal>".
-// These are the product's OWN opt-out flags (a reader reaches this state by clicking Skip), and
-// _fs_live_sequence re-applies them after every launch for the same reason. Not a lock issue.
-await page.evaluate(() => {
-  try { window.state._pcLookSkipped = true; window.state._liRenderSkipped = true; } catch (_) {}
-});
+// THE ONBOARDING OVERLAYS intercept the page-turn — measured, with the refusal quoted from the
+// click itself. A reader clicks through them, so this clicks their EXACT controls with TRUSTED
+// pointer clicks: #pcLookSkipBtn, then the confirmation's .skip-render-warn-btn[data-act="skip"].
+// No "last button" fallback and NO opt-out flags are written — a flag write proves nothing about
+// whether a reader can get past the overlay.
 const modalTrail = [];
-for (let i = 0; i < 12; i++) {
-  const step = await page.evaluate(() => {
-    const ids = ['skipRenderWarnModal', 'liRenderModal', 'pcLookModal'];
-    for (const id of ids) {
-      const m = document.getElementById(id);
-      if (!m || m.getClientRects().length === 0) continue;
-      const btns = Array.from(m.querySelectorAll('button, [role=button]'))
-        .filter(b => b.getClientRects().length > 0);
-      const pick = btns.find(b => /skip anyway|skip|not now|later|continue|confirm/i.test(b.textContent || ''))
-                || btns[btns.length - 1];
-      if (pick) return { id: id, sel: '#' + id, label: (pick.textContent || '').trim().slice(0, 24) };
-      return { id: id, sel: null, label: 'no control' };
+const ONBOARD = [
+  { sel: '.skip-render-warn-btn[data-act="skip"]', what: '"Skip anyway" (the confirmation, on top)' },
+  { sel: '#pcLookSkipBtn', what: 'the look modal\'s Skip' },
+  { sel: '#liRenderSkipBtn', what: 'the LI render modal\'s Skip' }
+];
+for (let round = 0; round < 6; round++) {
+  let acted = false;
+  for (const o of ONBOARD) {
+    const visible = await page.evaluate((sel) => {
+      const e = document.querySelector(sel);
+      return !!(e && e.getClientRects().length > 0);
+    }, o.sel);
+    if (!visible) continue;
+    try {
+      await page.click(o.sel, { timeout: 6000 });     // TRUSTED pointer click
+      modalTrail.push(o.what + ' (trusted click)');
+    } catch (e) {
+      const line = (String(e.message || '').split('\n').find(l => /intercepts pointer events/.test(l)) || '').trim();
+      modalTrail.push(o.what + ' REFUSED: ' + (line ? line.slice(0, 80) : String(e.message).split('\n')[0].slice(0, 50)));
     }
-    return null;
-  });
-  if (!step) { modalTrail.push('clear'); break; }
-  if (!step.sel) { modalTrail.push(step.id + ':' + step.label); break; }
-  const clicked = await page.evaluate((id) => {
-    const m = document.getElementById(id);
-    const btns = Array.from(m.querySelectorAll('button, [role=button]'))
-      .filter(b => b.getClientRects().length > 0);
-    const pick = btns.find(b => /skip anyway|skip|not now|later|continue|confirm/i.test(b.textContent || ''))
-              || btns[btns.length - 1];
-    if (!pick) return false;
-    pick.click();
-    return true;
-  }, step.id);
-  modalTrail.push(step.id + ' -> "' + step.label + '"' + (clicked ? '' : ' (click failed)'));
-  await page.waitForTimeout(1500);
+    acted = true;
+    await page.waitForTimeout(1500);
+    break;
+  }
+  if (!acted) { modalTrail.push('clear'); break; }
 }
 console.log('onboarding chain: ' + modalTrail.join(' | '));
 await page.waitForTimeout(5000);
@@ -205,7 +197,24 @@ t('A LOCKED READER REACHES THE ENTRANCE ON SCREEN',
 t('and it is still locked when they get there', final.genesisUnlocked === false);
 t('nothing was charged', !consoleAll.some(l => /unexpected consume-fortune/.test(l)));
 
+// DID REACHING THE ENTRANCE START A SECOND GENERATION PATH?
+const secondPath = {
+  checkoutAutoBegin: consoleAll.filter(l => /CHECKOUT_RETURN.*auto-beginning/.test(l)),
+  beginStoryCalled: consoleAll.filter(l => /\[BeginStory\] handleBeginStory\(\) called/.test(l)).length,
+  literaryAuthoring: consoleAll.filter(l => /MODEL\] Literary prose|GROK-LIT/.test(l)).length,
+  zeroApiViolations: await page.evaluate(() => (window.__bakedZeroApiViolations || []).length),
+  providerRequests: stages.length
+};
+console.log('\nSECOND GENERATION PATH: ' + JSON.stringify(secondPath, null, 1));
+console.log('INTERCEPTED PROVIDER REQUESTS, classified:');
+stages.forEach((x, i) => console.log('   ' + (i + 1) + '. [' + x.stage + '] model=' + x.model
+  + ' sys=' + x.chars + 'c :: ' + x.head));
+t('reaching the entrance started NO second story-generation path',
+  secondPath.beginStoryCalled === 0 && secondPath.providerRequests === 0,
+  JSON.stringify({ beginStory: secondPath.beginStoryCalled, requests: secondPath.providerRequests,
+                   autoBegin: secondPath.checkoutAutoBegin.slice(0, 1) }));
 fs.writeFileSync(OUT + '/console.full.log', consoleAll.join('\n'));
+fs.writeFileSync(OUT + '/second_path.json', JSON.stringify({ secondPath, stages }, null, 2));
 fs.writeFileSync(OUT + '/result.json', JSON.stringify(
   { booted, afterLaunch, navigation: log, final, stages }, null, 2));
 console.log('\nfull console: ' + consoleAll.length + ' lines -> ' + OUT + '/console.full.log');

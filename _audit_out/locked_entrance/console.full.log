@@ -85,6 +85,7 @@ LOG [STARTER] Launching "The First Sacrifice"
 LOG [PHRASE-LEDGER] seeded 9 starter cooldown item(s).
 LOG [PHRASE-LEDGER] story #1 — 9 entries kept (strong=9, mild=0). Cooldown decay: rarity × 3 stories, clamped [5, 30].
 LOG [GHOST] Preferences loaded + decayed: {"desireBias":{"control":0.25,"taboo":0.25,"tenderness":0.25,"surrender":0.25},"woundBias":{"avoidant":0.25,"selfDestructive":0.25,"control":0.25,"burdened":0.25},"engagementStyleBias":{"pursue":0.32999999999999996,"hold":0.32999999999999996,"withdraw":0.33999999999999997},"recentTaste":{"lastPrimaryDesire":null,"lastPrimaryWound":null,"lastArchetype":null,"cooldown":0},"lastUpdatedAt":null}
+LOG [NOVELTY] Activated. Desire target: surrender Wound target: avoidant Strength: 0.20
 LOG [READER] resetBookState: page reset to 0 (COVER)
 LOG [STARTER] fixed-cast names from STARTER_SEEDS: playerName=Lirael loveInterestName=Julian
 LOG [STARTER] Locked pre-written title: The First Sacrifice
@@ -101,7 +102,7 @@ LOG [READER-MODE] OFF — present-tense play resumes
 LOG [LEDGER:ADMIT] baked opening — character-memory extractor deferred (no OpenAI request for a fixed opening; authored ledgerSeeds are the record)
 LOG [NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
 LOG [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
-LOG [SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:dbc56d69-4c82-4846-b6ea-10f03aee38e8 planned="Seren’s wish for Lirael — “that she find the one she lost” —"
+LOG [SCENE-LEDGER] +p1 kind=baked issue=1 uid=pg:bc8630c7-0583-4f9c-8eee-1e6e7a46fa27 planned="Seren’s wish for Lirael — “that she find the one she lost” —"
 LOG [BAKED:EMITTED] parked on state._bakedEmitted (no verified consumer yet): sceneSummary, openState, obligations, ledgerSeeds, calcification, axes, expansions
 LOG [BAKED:IDENTITY] ledger entities for the seed cast: +3
 LOG [READER] showReaderPage: 2
@@ -139,18 +140,18 @@ LOG [BeginStory] DEBUG state.archetype: {"primary":"SPELLBINDER","modifier":null
 LOG [BeginStory] DEBUG state.mode: solo state.storyLength: taste
 LOG [BeginStory] Past _beginStoryInProgress guard, entering main flow
 LOG [OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)
-LOG [ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"5eaf620e-f529-4179-8197-3fcf6cfe066d","isNewStory":true,"isContinuation":false,"entryMode":null,"isSubscribed":true,"isTease":false,"hasFreeCredits":false,"hasPassForStory":false}}
-LOG [FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"the_thornwild","fantasy_magic_cost_model":"no_cost_high_corruption","fantasy_power_legitimacy":"conquest_claim","fantasy_political_pressure":"external_monster_threat","fantasy_favor_amplitude":"low"}
-LOG [FANTASY_CORE] Fatelands region bound: the_thornwild {seat: null, governance: Oath of the Root (internal enforcement by Keepers), status: Outside political structure — sealed community, reality: Populated by humans at various stages of Becoming, magicBias: occult}
-LOG [CONSPIRACY] tracks selected — local="haunted_mill" regional="thornwild" (aplot) world="the_piercing" region=the_thornwild
+LOG [ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"d5e7b604-333c-410f-a40d-23b592ec77c1","isNewStory":true,"isContinuation":false,"entryMode":null,"isSubscribed":true,"isTease":false,"hasFreeCredits":false,"hasPassForStory":false}}
+LOG [FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"the_shackle_isles","fantasy_magic_cost_model":"no_cost_high_corruption","fantasy_power_legitimacy":"arcane_meritocracy","fantasy_political_pressure":"internal_court_intrigue","fantasy_favor_amplitude":"low"}
+LOG [FANTASY_CORE] Fatelands region bound: the_shackle_isles {seat: null, governance: Politically fragmented, status: Some swear fealty to Vaelryn, others do not, reality: null, magicBias: bound}
+LOG [CONSPIRACY] tracks selected — local="haunted_mill" regional="shackle_isles" (background) world="fates_favor" region=the_shackle_isles
 LOG [CONSPIRACY-AUDIT] REGIONAL selected (this feeds the A-plot skeleton)
-  REGIONAL: The Becoming of Thornwild  [stage 1/6, layer=public]
-    False objective : Why is everyone obeying the Keepers?
-    Invalidates     : that the Keepers are tyrants ruling Thornwild by force
-    Reveal          : They are compelled — not led.
-    Rel. consequence: the PC and LI realize they can trust no one in the village — only each other
-    Transforms into : Compelled by what?
-    Suppressor/face : The Keepers hunt witnesses and compel the rest of Thornwild to forget; | the last Keeper who still remembers why the order was founde
+  REGIONAL: The Chains That Hold  [stage 1/3, layer=public]
+    False objective : Why do the deep chains lead to nothing?
+    Invalidates     : that the chains are simply Aravel's monument to victory
+    Reveal          : They lead to something no one will speak of.
+    Rel. consequence: they share a secret the whole Isles are built to keep — isolating them together
+    Transforms into : What are they holding?
+    Suppressor/face : The chain-wardens drown the curious and call it accident; the old rout | an ancient chain-walker who has guarded the deep chains long
 LOG [SPECIES] PC = declared_seed: First Favored
 LOG [SPECIES:PREGEN] LI species resolved pre-Scene-1: First Favored · source=declared_seed
 LOG [FORTUNE STATE] before_fortune_gate {drip: 0, storypass: 0, subscription: 0, purchased: 0, global: 9999999}
@@ -160,7 +161,7 @@ LOG [Modifier] No secondary assigned (75% path)
 LOG [FF-CANON-AUTH] false reason=nonff
 LOG [BeginStory] All validation passed — proceeding to story generation
 LOG [BeginStory] Story mode: participatory
-LOG [VISUAL_CANON] Story visual style seeded: {paletteFamily: soft naturals — honey, sage, wheat, warm stone, lightingLanguage: double-source: warm firelight vs cool moonlight, textureStyle: cinematic — film-grain texture, anamorphic light behavior, letterbox composition instinct, compositionBias: dramatic angles — low or high camera, forced perspective, dynamic diagonals}
+LOG [VISUAL_CANON] Story visual style seeded: {paletteFamily: soft naturals — honey, sage, wheat, warm stone, lightingLanguage: double-source: warm firelight vs cool moonlight, textureStyle: ethereal — soft focus, light bloom, dreamy atmospheric diffusion, compositionBias: dramatic angles — low or high camera, forced perspective, dynamic diagonals}
 LOG [READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
 LOG [FATE] initFateCards called
 LOG [FATE] Bind flags reset — ready for rebind
@@ -202,20 +203,20 @@ LOG [CG:SCAFFOLD] awaiting 1 Bible(s) before spine (P2 sequencing — latency ov
 LOG [CG:SCAFFOLD] Bibles ready (0ms) — pc=y li=y antag=n
 LOG [STORY-SPINE] shape=FORCED_ALLIANCE worldArc=∅ world=fatelands tier=taste
 LOG [TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
-LOG [CG:SCAFFOLD:GEN] 326ms, model=gpt-4o-mini
+LOG [CG:SCAFFOLD:GEN] 327ms, model=gpt-4o-mini
 LOG [CG:SCAFFOLD] thesis="undefined"
 LOG [CG:SCAFFOLD] issues=0, motifs=0, forbidden=0
-LOG [CG:SCAFFOLD] FULL OBJECT: {_version: 1, _generatedAt: 2026-10-07T23:44:24.060Z, storyId: 5eaf620e-f529-4179-8197-3fcf6cfe066d, _sourceModel: gpt-4o-mini, storyShape: FORCED_ALLIANCE}
-LOG [FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: false, world: Fantasy}
+LOG [CG:SCAFFOLD] FULL OBJECT: {_version: 1, _generatedAt: 2026-10-08T00:03:07.657Z, storyId: d5e7b604-333c-410f-a40d-23b592ec77c1, _sourceModel: gpt-4o-mini, storyShape: FORCED_ALLIANCE}
+LOG [FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
 LOG [STORYPASS] Eligibility computed at creation: true (length: taste )
 LOG [STORY:SHAPE] Snapshot stored: {world: Fantasy, genre: Billionaire, tone: Earnest, dynamic: Enemies, pov: First}
 LOG [EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20261007b-say-do-roles:273342:515 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
 LOG [EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=true gateTextChars=183 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20261007b-say-do-roles:273342:629 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break protocol for her ward"
-LOG [SCENE1:PATTERN-GATE] region-particular opener → thornwild
-LOG [SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_thornwild; summons/social/reckoning shapes suppressed)
-LOG [SCENE1:FP] saved opening fingerprint: region_thornwild — recent: [region_thornwild]
+LOG [SCENE1:PATTERN-GATE] region-particular opener → shackle
+LOG [SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_shackle; summons/social/reckoning shapes suppressed)
+LOG [SCENE1:FP] saved opening fingerprint: region_shackle — recent: [region_shackle]
 LOG [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
-LOG [CRISIS] category=RESPONSIBILITY (dedicated persistent cursor — no repeat until all 6 cycle)
+LOG [CRISIS] category=STATUS_DESTRUCTION (dedicated persistent cursor — no repeat until all 6 cycle)
 LOG [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
 LOG [SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
 LOG [ONBOARD_WINDOW] story count → 1 (ordinal 1; window covers stories 1-3)
@@ -230,12 +231,12 @@ LOG {mode: solo, tier: subscribed, fourAxis: Object, archetype: Object, ancestry
 ENDGROUP console.groupEnd
 LOG STORYBOUND VALIDATION PASSED - Proceeding to model call
 LOG [TITLE:PRE] Title already exists, skipping: The First Sacrifice
-LOG [SCENE1:PROMPT-SIZES] total=273173c(~68293t) | sysPrompt(prose stack)=148289c · introPrompt=87001c · scaffold=0c · appendix=37883c · picturability=0c  → window._promptMassAudit() for the sysPrompt section breakdown
+LOG [SCENE1:PROMPT-SIZES] total=263672c(~65918t) | sysPrompt(prose stack)=150696c · introPrompt=75807c · scaffold=0c · appendix=37169c · picturability=0c  → window._promptMassAudit() for the sysPrompt section breakdown
 LOG [ADAPTIVE LENGTH] {sceneIndex: 0, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
 LOG [SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)
 LOG [CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
 LOG [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
-WARNING [STORY-GEN-DEBUG] scene1-heavy exceeds soft limit: 331798 chars (limit: 50000)
+WARNING [STORY-GEN-DEBUG] scene1-heavy exceeds soft limit: 320362 chars (limit: 50000)
 ERROR [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
 ERROR Error: zero-api-violation
     at callChat (http://localhost:3000/app.js?v=20261007b-say-do-roles:289975:29)
@@ -307,18 +308,18 @@ LOG [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true
 LOG [FATE] Rebinding existing cards
 LOG [FATE] Existing cards rebound: 5
 LOG [FATE] initFateCards bound
-LOG [WORKING-TITLE] Applied Fate signature: "The First Sacrifice" → "The Stranger Fate Sent"
+LOG [WORKING-TITLE] Applied Fate signature: "The First Sacrifice" → "Fate Walks Into the Room"
 INFO Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 INFO Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 INFO Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 INFO Connecting to 'http://sb-test.localhost/rest/v1/story_snapshots?on_conflict=profile_id%2Cstory_id' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 LOG [DEBUG PAGE STATE] cover setTimeout: _bookPageIndex= 0 coverMode= PHASE_1_FORGED
 LOG [COVER:v1] Skipping PHASE_1_FORGED fallback — Minimal Cover owns cover
-LOG [STAGED:ANALYZE] attempt 1 returned in 68ms (max_tokens=8000)
+LOG [STAGED:ANALYZE] attempt 1 returned in 69ms (max_tokens=8000)
 WARNING [STAGED:PARSE] Missing visualState
 WARNING [STAGED:ANALYZE] attempt 1 returned null — retrying with larger max_tokens
-LOG [Supabase] Snapshot saved for story: 5eaf620e-f529-4179-8197-3fcf6cfe066d
-LOG [STAGED:ANALYZE] attempt 2 returned in 25ms (max_tokens=10000)
+LOG [Supabase] Snapshot saved for story: d5e7b604-333c-410f-a40d-23b592ec77c1
+LOG [STAGED:ANALYZE] attempt 2 returned in 34ms (max_tokens=10000)
 WARNING [STAGED:PARSE] Missing visualState
 WARNING [STAGED:ANALYZE] both attempts failed — falling back to synthesized plan
 WARNING [STAGED:ANALYZE] Synthesized fallback plan: 3 beats, single phase, no closeups/expressions. User gets readable text with static staging.
@@ -344,7 +345,7 @@ LOG [PANEL-SPEC] 0:scene cast=protagonist
 LOG [SHOT-DIRECTOR] wide/high/environment_led
 LOG [SCORECARD] overall 82 · storyboard 85  emotion 70  graphicLanguage 100  visualPolish 100  continuity 100  coverage 20  narrativeProgression n/a  shotRhythm n/a  identityDirective 100
 LOG [STORY-DIRECTOR] v1 canon=[protagonist,julian] panels=1
-LOG [STAGED:CONTRACT] region=Thornwild | species=[first_favored] | celestial=[] | anchors=3
+LOG [STAGED:CONTRACT] region=Fantasy (Fatelands generic) | species=[first_favored] | celestial=[] | anchors=2
 LOG [ONESHOT] scene 0 → one-shot sheet path (1 phase(s), normalized to 4 slots, default)
 LOG [STAGED:STAGING-MODE] solo (liAbsent=true, sideChars=0)
 LOG [LI:DIAG] image-prompt build — phase=0 phaseLIAbsent=true visualState.li_visibility=absent mysteryManInjected=false camera=over_shoulder_pc shotStyle=default
@@ -368,8 +369,9 @@ LOG Profile hydrated. Subscribed: true | Tier: storied | Keyhole: false | Fortun
 LOG [CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: 9999999 | subscribed: true
 LOG [SOUND] AudioContext unlocked, state: running
 LOG [PC:LOOK] skipped — PC will render freely (no description)
-LOG [LI:RENDER] skipped open — already locked / already skipped / already open
+LOG [LI:RENDER] modal opened
 LOG [TEMPT:CRACKLE] segmented into 2 discrete crackles
+LOG [LI:RENDER] skipped — LI will render freely (no description)
 INFO Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 INFO Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilling_grace_until%2Csignup_date%2Clast_seen_date%2Cwelcome_first_arc_granted%2Cwelcome_day2_granted%2Cbonus_tempt_charges%2Ctempt_grant_month%2Conboarding_complete%2Conboarding_gift_granted&id=eq.00000000-0000-0000-0000-000000000001' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no further action has been taken.
 LOG [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: chosen, subscribed: true, keyholeMarked: false}
@@ -380,7 +382,8 @@ LOG [READER] Awaiting story text + setting image...
 LOG [READER] Story text + setting image ready
 LOG [FRONTISPIECE] Fatelands map shown
 LOG [LOUPE] Hybrid flag: false
-LOG [LOUPE] Region locked: the_thornwild (source: entropy)
+LOG [LOUPE] Region locked: the_shackle_isles (source: entropy)
 LOG [READER] showReaderPage: 2
 LOG [SCENE-AMB:STATE] page=0 primary=neutral_quiet layer2=none layer3=none world=Fantasy isUrban=false primaryIsWeather=true primaryIsOffice=false primaryIsIndoorUrbanVenue=false
 LOG [READER] Page 2+: SCENE (Title + Prose)
+LOG [TEMPT:CRACKLE] segmented into 2 discrete crackles
