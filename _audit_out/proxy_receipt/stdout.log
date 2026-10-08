@@ -1,0 +1,16 @@
+[SPECIALIST-PROXY] Role: RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=2ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Role: RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=2ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Role: RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=1ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Role: RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=2ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded

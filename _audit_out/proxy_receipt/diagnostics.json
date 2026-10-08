@@ -1,0 +1,23 @@
+{
+  "executable": "/opt/homebrew/Cellar/node/25.3.0/bin/node",
+  "argv": [
+    "node_modules/vercel/dist/index.js",
+    "dev",
+    "--listen",
+    "3999",
+    "--yes"
+  ],
+  "pid": 2564,
+  "cwd": "/Users/romantsukerman/storybound-app",
+  "nodeOptions": "--require ./_mock_upstream.cjs",
+  "port": 3999,
+  "rounds": 4,
+  "ready": true,
+  "readyMs": 4054,
+  "exitCode": 143,
+  "exitSignal": null,
+  "spawnError": null,
+  "interceptions": 4,
+  "stderrBytes": 2190,
+  "stdoutBytes": 1400
+}

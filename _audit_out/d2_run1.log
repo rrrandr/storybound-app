@@ -1,0 +1,28 @@
+=== PROXY REPLY + RECEIPT DELIVERY (provider-free, $0) ===
+
+  ok   the project-local Vercel CLI is the one supervised
+  supervised process: pid=2167
+    executable: /opt/homebrew/Cellar/node/25.3.0/bin/node
+    argv:       ["node_modules/vercel/dist/index.js","dev","--listen","3999","--yes"]
+  FAIL the supervised server became ready  — exitCode=1 signal=null spawnError=null — see _audit_out/proxy_receipt/stderr.log
+
+  FAIL REPEATED replies were delivered through the real proxy  — 0 of 4 rounds returned 200 with text
+  FAIL every delivered reply carried a USAGE RECEIPT  — 0 of 4 rounds carried usage tokens
+  FAIL the receipts are DISTINCT per round, not one cached body  — prompt_tokens repeated across rounds: []
+  FAIL the replies are DISTINCT per round  — identical reply bodies were returned
+  ok   a cached-token field survived the proxy to the client
+  ok   the proxy reported its own upstream attempt count
+  ok   the interceptor was installed in the supervised process
+  FAIL every reply came from the MOCKED upstream, not a provider  — interceptions=0 for 4 rounds
+  ok   no external provider request escaped
+
+  SUPERVISION DIAGNOSTICS
+    executable : /opt/homebrew/Cellar/node/25.3.0/bin/node
+    argv       : ["node_modules/vercel/dist/index.js","dev","--listen","3999","--yes"]
+    pid        : 2167
+    exit code  : 1   signal: null
+    spawn error: null
+    stderr     : 707 bytes -> _audit_out/proxy_receipt/stderr.log
+  ok   the process terminated and its status was captured
+
+6/12 checks passed

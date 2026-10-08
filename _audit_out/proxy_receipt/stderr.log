@@ -1,0 +1,29 @@
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 62.4.0 (Node.js 25.3.0)
+Retrieving project…
+WARNING! Runtime Cache default port 4783 is unavailable; listening on 4785 instead.
+External clients configured for 4783 will not reach this dev server. Pin a port with --runtime-cache-port.
+WARNING! Vercel Queues default port 4782 is unavailable; listening on 4786 instead.
+External clients configured for 4782 will not reach this dev server. Pin a port with --queue-port.
+! Vercel Schedules default port 4784 is unavailable; listening on 4787 instead.
+  Pin a port with --schedules-port for clients outside the dev server.
+> Local resources:
+  Vercel Queues   http://127.0.0.1:4786
+  Vercel Schedules http://127.0.0.1:4787
+  Runtime Cache   http://127.0.0.1:4785/v1/suspense-cache/
+> Ready! Available at http://localhost:3999
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] intercepted api.x.ai — reply for [Round 1: describe one panel.] with a usage receipt (prompt_tokens 28019)
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] intercepted api.x.ai — reply for [Round 2: describe one panel.] with a usage receipt (prompt_tokens 7730)
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] intercepted api.x.ai — reply for [Round 3: describe one panel.] with a usage receipt (prompt_tokens 87441)
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] installed — provider hosts mocked, all other egress blocked
+[MOCK-UPSTREAM] intercepted api.x.ai — reply for [Round 4: describe one panel.] with a usage receipt (prompt_tokens 67152)
