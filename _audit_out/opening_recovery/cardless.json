@@ -1,0 +1,34 @@
+{
+  "sel0": {
+    "index": -1,
+    "committed": false,
+    "options": 5
+  },
+  "selAtPlan": -1,
+  "rows": [
+    {
+      "kind": "baked",
+      "scene": 1,
+      "card": null,
+      "assist": null,
+      "act": "",
+      "dia": ""
+    },
+    {
+      "kind": "oas_interrupt",
+      "scene": 1,
+      "card": null,
+      "assist": null,
+      "act": "",
+      "dia": ""
+    },
+    {
+      "kind": "cg",
+      "scene": 2,
+      "card": null,
+      "assist": null,
+      "act": "",
+      "dia": ""
+    }
+  ]
+}

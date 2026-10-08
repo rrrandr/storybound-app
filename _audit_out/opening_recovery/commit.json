@@ -1,0 +1,27 @@
+{
+  "picked": "Silence",
+  "newScenes": [
+    {
+      "uid": "cg:cd4cb61f-ba88-40cf-95f3-88aeb42045ca",
+      "chars": 1814
+    }
+  ],
+  "newRows": [
+    {
+      "kind": "cg",
+      "scene": 3,
+      "card": null,
+      "assist": {
+        "id": "silence",
+        "label": "Silence",
+        "index": 0
+      },
+      "act": "{}",
+      "dia": "(The thing you almost said folds back into your chest.) And I am done being asked."
+    }
+  ],
+  "handoff": [
+    "LOG [SUBMISSION-PROVENANCE] handed to commit - scene 2 - attempt cpa:992c9171 - card none",
+    "LOG [SUBMISSION-PROVENANCE] handed to commit - scene 3 - attempt cpa:10423ab9 - card Silence"
+  ]
+}

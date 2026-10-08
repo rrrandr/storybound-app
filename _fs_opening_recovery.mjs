@@ -15,7 +15,7 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub }
   from './_test_session_env.mjs';
 import { findFSDef, launchFS } from './_fs_story_setup.mjs';
 
-const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card | stale
+const ARM = process.argv[2] || 'auth';           // auth | setupchar | continuity | card | stale | commit | cardless
 const OUT = '_audit_out/opening_recovery';
 fs.mkdirSync(OUT, { recursive: true });
 let pass = 0, fail = 0;
@@ -333,6 +333,157 @@ const committedFor = (sceneNumber) => page.evaluate((n) => {
   return r ? { kind: r.kind, scene: r.sceneNumber, card: r.card || null,
                assist: r.cardAssist || null } : null;
 }, sceneNumber);
+
+
+// EVERY ledger entry, so rows are matched on recorded identity rather than on a scene number read
+// after completion (which reports the NEXT scene, not the one just planned).
+const allRows = () => page.evaluate(() => {
+  const L = window._sceneLedgerGet ? window._sceneLedgerGet(window.state, false) : null;
+  return (L && L.entries ? L.entries : []).map(e => ({
+    kind: e.kind, scene: e.sceneNumber, card: e.card || null, assist: e.cardAssist || null,
+    act: String(e.act || ''), dia: String(e.dia || '') }));
+});
+const acceptedScenes = () => page.evaluate(() => (window.state.scenes || [])
+  .filter(x => x && String(x.uid || '').startsWith('cg:'))
+  .map(x => ({ uid: String(x.uid), chars: String(x.text || '').length })));
+
+if (ARM === 'cardless') {
+  console.log('\n=== CARDLESS: a FRESH hand, NEVER selected ===');
+  // The opening submission itself is the cleanest never-selected case: the entrance's hand has not
+  // been examined, so no card has ever been clicked in this story.
+  const sel0 = await page.evaluate(() => ({ index: window.state.fateSelectedIndex,
+    committed: !!window.state.fateCommitted,
+    options: Array.isArray(window.state.fateOptions) ? window.state.fateOptions.length : 0 }));
+  console.log('   selection before any card click: ' + JSON.stringify(sel0));
+  t('NO CARD HAS EVER BEEN SELECTED in this story', sel0.index < 0,
+    JSON.stringify(sel0) + ' — this arm requires a genuinely never-selected hand');
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  await clearOverlays();
+  const b1 = await page.evaluate(() => {
+    for (const id of ['sceneDecisionA', 'sceneDecisionB']) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('data-choice') === 'run') return id;
+    } return null; });
+  if (b1) await page.click('#' + b1, { timeout: 15000 });
+  for (let i = 0; i < 45 && plannerReqs.length === 0; i++) await page.waitForTimeout(1000);
+  t('a planner request went out', plannerReqs.length >= 1, 'planners=' + plannerReqs.length);
+  const selAtPlan = await page.evaluate(() => window.state.fateSelectedIndex);
+  console.log('   selection at planning: ' + selAtPlan);
+  console.log('   provenance: ' + JSON.stringify(
+    consoleAll.filter(l => /SUBMISSION-PROVENANCE/.test(l)).slice(0, 3)));
+  if (plannerReqs.length) {
+    const w = plannerReqs[0].whole;
+    fs.writeFileSync(OUT + '/planner_cardless.txt', w);
+    t('AN UNSELECTED SUBMISSION CLAIMS NO CARD', !/Fate card played this turn/.test(w),
+      'a card was claimed with nothing selected');
+  }
+  // And the committed rows must carry no identity either.
+  const rows = await allRows();
+  console.log('   rows: ' + JSON.stringify(rows.map(r => ({ k: r.kind, s: r.scene, a: r.assist }))));
+  t('NO COMMITTED ROW CLAIMS A CARD', rows.every(r => !r.assist),
+    JSON.stringify(rows.map(r => r.assist)));
+  fs.writeFileSync(OUT + '/cardless.json', JSON.stringify({ sel0, selAtPlan, rows }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
+}
+
+if (ARM === 'commit') {
+  console.log('\n=== THE SIMPLEST POSITIVE, END TO END: planner identity == committed identity ===');
+  _setupRunning = true;
+  await page.click('#bakedOASSubmitBtn', { timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.click('#buGoBtn', { timeout: 8000 });
+  const o1 = await waitOutcome();
+  _setupRunning = false;
+  t('the OAS opened', o1 === 'opened', 'outcome=' + o1);
+  for (let i = 0; i < 16; i++) {
+    if (await page.evaluate(() => !!document.getElementById('sceneDecisionPrompt'))) break;
+    await page.evaluate(() => { try { window._intimacyDialogueConsumeInput('I am still here.', 'I hold his gaze.'); } catch (_) {} });
+    await page.waitForTimeout(2500);
+  }
+  await clearOverlays();
+  const b1 = await page.evaluate(() => {
+    for (const id of ['sceneDecisionA', 'sceneDecisionB']) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('data-choice') === 'run') return id;
+    } return null; });
+  if (b1) await page.click('#' + b1, { timeout: 15000 });
+  const hand = await reachSceneEndHand();
+  t('production offered the scene-end hand', hand.onScreen === 5, JSON.stringify(hand));
+  if (hand.onScreen !== 5) { await browser.close(); console.log('\n' + pass + '/' + (pass+fail) + ' checks passed  [ARM=' + ARM + ']'); process.exit(1); }
+
+  const rowsBefore = await allRows();
+  const scenesBefore = await acceptedScenes();
+  // SELECT a card, EDIT its suggestion, SUBMIT successfully.
+  await page.click('#' + hand.mount + ' .fate-card, #' + hand.mount + ' [data-card]', { timeout: 8000 });
+  await settleInputs();
+  const picked = await page.evaluate(() => {
+    const o = Array.isArray(window.state.fateOptions) ? window.state.fateOptions : [];
+    const i = window.state.fateSelectedIndex;
+    const c = (typeof i === 'number' && i >= 0) ? o[i] : null;
+    return c ? String(c.title || c.name || c.archetype || c.label || '') : null; });
+  t('a card is selected', !!picked, JSON.stringify(picked));
+  const EDIT = ' And I am done being asked.';
+  const ids = await page.evaluate(() => { const i = window._getActiveTurnInputs();
+    return { a: i.actInput.id, d: i.diaInput.id }; });
+  const origD = await page.evaluate((id) => document.getElementById(id).value, ids.d);
+  await page.click('#' + ids.d);
+  await page.keyboard.press('Meta+a');
+  await page.keyboard.type(origD + EDIT, { delay: 4 });
+  const pBefore = plannerReqs.length;
+  await clearOverlays();
+  await page.click('#gnSubmitBtn', { timeout: 15000 }).catch(async () => {
+    await page.click('#submitBtn', { timeout: 8000 }).catch(() => {}); });
+  for (let i = 0; i < 60 && plannerReqs.length === pBefore; i++) await page.waitForTimeout(1000);
+  t('a planner request went out', plannerReqs.length > pBefore);
+  const pw = plannerReqs.length > pBefore ? plannerReqs[plannerReqs.length - 1].whole : '';
+  t('THE PLANNER RECEIVED THIS CARD', !!picked && pw.includes('Fate card played this turn')
+    && pw.includes(picked), 'card=' + JSON.stringify(picked));
+  t('and the reader\'s EDITED wording is what was submitted', pw.includes(EDIT.trim()));
+  // Wait for the scene to be ACCEPTED, then match on recorded identity.
+  let scenesAfter = scenesBefore, rowsAfter = rowsBefore;
+  for (let i = 0; i < 70; i++) {
+    scenesAfter = await acceptedScenes();
+    rowsAfter = await allRows();
+    if (scenesAfter.length > scenesBefore.length && rowsAfter.length > rowsBefore.length) break;
+    await page.waitForTimeout(1000);
+  }
+  const newScenes = scenesAfter.filter(x => !scenesBefore.some(y => y.uid === x.uid));
+  const newRows = rowsAfter.slice(rowsBefore.length);
+  console.log('   handoff lines: ' + JSON.stringify(
+    consoleAll.filter(l => /handed to commit/.test(l)).slice(-2)));
+  console.log('   new accepted scene(s): ' + JSON.stringify(newScenes));
+  console.log('   new ledger row(s): ' + JSON.stringify(newRows));
+  t('AN ACCEPTED PROJECTION WAS ADDED', newScenes.length >= 1 && newScenes[0].chars > 400,
+    JSON.stringify(newScenes));
+  t('AND A CORRESPONDING LEDGER ROW WAS ADDED', newRows.length >= 1, JSON.stringify(newRows));
+  const carrier = newRows.find(r => r.assist && (r.assist.label || r.assist.id)) || null;
+  t('THE COMMITTED ROW RETAINS THE SAME IDENTITY THE PLANNER RECEIVED',
+    !!carrier && !!picked && (carrier.assist.label === picked || carrier.assist.id === picked),
+    'planner got ' + JSON.stringify(picked) + '; rows carry '
+    + JSON.stringify(newRows.map(r => r.assist)));
+  t('and the reader\'s own edited wording is in that row',
+    !!carrier && (String(carrier.dia).indexOf(EDIT.trim()) >= 0
+      || String(carrier.act).indexOf(EDIT.trim()) >= 0),
+    'dia tail=' + JSON.stringify(String(carrier && carrier.dia || '').slice(-60)));
+  fs.writeFileSync(OUT + '/commit.json', JSON.stringify(
+    { picked, newScenes, newRows, handoff: consoleAll.filter(l => /handed to commit/.test(l)) }, null, 2));
+  await browser.close();
+  console.log('\n' + pass + '/' + (pass + fail) + ' checks passed  [ARM=' + ARM + ']');
+  process.exit(fail ? 1 : 0);
+}
 
 if (ARM === 'stale') {
   console.log('\n=== FAILED CARD ATTEMPT -> TYPED-ONLY REPLACEMENT AT THE SAME SCENE ===');

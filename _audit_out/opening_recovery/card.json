@@ -8,7 +8,9 @@
     "reader": true
   },
   "provenance": [
-    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (no selection) - attempt cgGenAttempt:cpa:4479bac5",
-    "LOG [SUBMISSION-PROVENANCE] scene 3 - card Reversal - attempt cgGenAttempt:cpa:54a7996c"
+    "LOG [SUBMISSION-PROVENANCE] scene 2 - card none (no selection) - attempt cgGenAttempt:cpa:262853a4",
+    "LOG [SUBMISSION-PROVENANCE] handed to commit - scene 2 - attempt cpa:262853a4 - card none",
+    "LOG [SUBMISSION-PROVENANCE] scene 3 - card Reversal - attempt cgGenAttempt:cpa:a3b736f0",
+    "LOG [SUBMISSION-PROVENANCE] handed to commit - scene 3 - attempt cpa:a3b736f0 - card Reversal"
   ]
 }
