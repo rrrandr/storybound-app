@@ -1880,30 +1880,35 @@ try {
     // SB_STOP_AT=handoff ends the run HERE — after the OAS resolved, archived and its interruption
     // was submitted, and BEFORE the run-or-remain branch is serviced, since servicing that branch
     // is what triggers Scene 2.
+    // ── THE HANDOFF IS VALIDATED ONCE, HERE, BEFORE THE BRANCH IS SERVICED ──────────────────
+    // This is the ONLY lifecycle stage at which run-or-remain can legitimately be on screen:
+    // production's _mountSceneDecisionPrompt REMOVES the prompt when a choice is clicked. The
+    // post-selection gate used to re-assert decisionOnScreen, which rejected a SUCCESSFUL
+    // continuation. One read, one predicate, retained for whichever path follows.
+    const handoffState = await page.evaluate(() => {
+      const r = window.state._intimateInterruption || {};
+      const arch = (window.state.scenes || []).filter(x => x && x.oasArchive).length;
+      const d = window.state.intimacyDialogue;
+      const dp = document.getElementById('sceneDecisionPrompt');
+      const vis = (el) => !!(el && el.getClientRects().length > 0);
+      return { resolved: !!(!d || (!d.active && !d._resolving)), archive: arch,
+               interruptionPresent: !!document.getElementById('intimateInterruption'),
+               interruptionDone: !!(r.submitted || r.completedWithoutSubmission),
+               decisionOnScreen: vis(dp),
+               decisionOpen: (typeof window._sceneDecisionNeeded === 'function')
+                 ? !!window._sceneDecisionNeeded() : null,
+               branches: dp ? ['sceneDecisionA', 'sceneDecisionB']
+                 .filter((id) => vis(document.getElementById(id))) : [] };
+    });
+    const handoffOk = handoffState.resolved && handoffState.archive > 0
+      && handoffState.interruptionDone && handoffState.decisionOnScreen
+      && handoffState.decisionOpen;
+    say('  handoff (before the branch is serviced): ' + JSON.stringify(handoffState));
+
     if (String(process.env.SB_STOP_AT || '').toLowerCase() === 'handoff') {
       halted = true;
-      // "AS PLANNED" REQUIRES THE HANDOFF TO HAVE HAPPENED. The log printed it with every handoff
-      // condition false, which reads as success and is not.
-      const _hs = await page.evaluate(() => {
-        const r = window.state._intimateInterruption || {};
-        const arch = (window.state.scenes || []).filter(x => x && x.oasArchive).length;
-        const d = window.state.intimacyDialogue;
-        const dp = document.getElementById('sceneDecisionPrompt');
-        const vis = (el) => !!(el && el.getClientRects().length > 0);
-        return { resolved: !!(!d || (!d.active && !d._resolving)), archive: arch,
-                 interruptionPresent: !!document.getElementById('intimateInterruption'),
-                 interruptionDone: !!(r.submitted || r.completedWithoutSubmission),
-                 decisionOnScreen: vis(dp),
-                 decisionOpen: (typeof window._sceneDecisionNeeded === 'function')
-                   ? !!window._sceneDecisionNeeded() : null,
-                 branches: dp ? ['sceneDecisionA', 'sceneDecisionB']
-                   .filter((id) => vis(document.getElementById(id))) : [] };
-      });
-      // ONE PREDICATE, AND IT REQUIRES THE DECISION TO BE AVAILABLE. "present or completed"
-      // permitted an UNFINISHED interruption and said nothing about run/remain, which is the
-      // revised opening's actual end state.
-      const _hok = _hs.resolved && _hs.archive > 0 && _hs.interruptionDone
-        && _hs.decisionOnScreen && _hs.decisionOpen;
+      const _hs = handoffState;
+      const _hok = handoffOk;
       haltReason = 'SB_STOP_AT=handoff — stopping at the promised handoff, before the '
         + 'run-or-remain branch is serviced and before any scene work';
       say('');
@@ -2083,17 +2088,23 @@ try {
       + ' · run/remain on screen=' + oasFinal.decisionOnScreen
       + ' · branches=' + JSON.stringify(oasFinal.decisionBranches));
 
-    // THE FULL HANDOFF IS THE GATE, under the SAME predicate used at the handoff checkpoint:
-    // resolution, the archive, the interruption COMPLETED (by submission or by the revised
-    // opening's completion-without-submission route), and run-or-remain actually on screen.
-    if (!resolved || !oasFinal.archive
-        || (oasFinal.interruptionPresent && !oasFinal.interruptionDone)
-        || !oasFinal.decisionOnScreen) {
+    // ── AFTER THE CHOICE, A DIFFERENT TRUTH HOLDS ───────────────────────────────────────────
+    // The handoff itself was validated BEFORE the branch was serviced (handoffOk above). Here the
+    // choice has been clicked, so production has REMOVED the prompt by design — requiring it to
+    // still be visible would fail every successful continuation. What must be true now is that the
+    // choice was RECORDED, the decision is CLOSED, and the handoff had passed beforehand.
+    const _choiceRecorded = (decision && decision.recorded && decision.recorded.choice) || null;
+    const _postChoiceOk = handoffOk && !!_choiceRecorded && !oasFinal.decisionOnScreen;
+    say('  after the choice: recorded=' + JSON.stringify(_choiceRecorded)
+      + ' · prompt removed by production=' + (!oasFinal.decisionOnScreen)
+      + ' · handoff had passed=' + handoffOk);
+    if (!_postChoiceOk) {
       halted = true;
-      haltReason = 'OAS handoff incomplete (resolved=' + resolved + ', archive=' + oasFinal.archive
-        + ', interruptionPresent=' + oasFinal.interruptionPresent
-        + ', interruptionDone=' + oasFinal.interruptionDone
-        + ', runRemainOnScreen=' + oasFinal.decisionOnScreen + ')';
+      haltReason = 'OAS handoff incomplete (handoffOk=' + handoffOk
+        + ', recordedChoice=' + JSON.stringify(_choiceRecorded)
+        + ', promptRemoved=' + (!oasFinal.decisionOnScreen)
+        + ', resolved=' + resolved + ', archive=' + oasFinal.archive
+        + ', interruptionDone=' + oasFinal.interruptionDone + ')';
       say('\n*** STOPPING BEFORE SCENE GENERATION — ' + haltReason + ' ***');
       say('    No further call will be labelled "scene 2".');
     }
