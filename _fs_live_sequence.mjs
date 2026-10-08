@@ -976,6 +976,43 @@ await page.route('**/api/**', async (route) => {
 // ── THE CORRECTED LIFECYCLE'S SESSION SETUP (2026-10-08) ──────────────────────────────────────
 // Seeded BEFORE any page script runs: supabase-js resolves getSession() from storage at load, and
 // the real gate refuses to charge without a session token.
+// ── HARNESS INSTRUMENTATION: THE POLICY'S OWN RECORD ─────────────────────────────────────────
+// _authorFullScenePolicy already returns { text, provider, model, attempts } with tier 1 = grok and
+// tier 2 = ministral. Rather than infer the executed branch from payload sizes and model names,
+// wrap it here and keep what it actually returned. No production logging is added and the fallback
+// policy is untouched — this only observes.
+await page.addInitScript(() => {
+  window.__sbPolicyCalls = [];
+  const install = () => {
+    const orig = window._authorFullScenePolicy;
+    if (typeof orig !== 'function' || orig.__sbWrapped) return false;
+    const wrapped = async function (...args) {
+      const started = Date.now();
+      let out = null, threw = null;
+      try { out = await orig.apply(this, args); }
+      catch (e) { threw = String((e && e.message) || e); throw e; }
+      finally {
+        try {
+          window.__sbPolicyCalls.push({
+            at: started, ms: Date.now() - started, threw: threw,
+            provider: out && out.provider, model: out && out.model,
+            textLen: out && out.text ? String(out.text).length : 0,
+            textHead: out && out.text ? String(out.text).slice(0, 90) : null,
+            attempts: out && Array.isArray(out.attempts) ? out.attempts : null
+          });
+        } catch (_) {}
+      }
+      return out;
+    };
+    wrapped.__sbWrapped = true;
+    window._authorFullScenePolicy = wrapped;
+    return true;
+  };
+  if (!install()) {
+    const iv = setInterval(() => { if (install()) clearInterval(iv); }, 50);
+    setTimeout(() => clearInterval(iv), 60000);
+  }
+});
 await installSession(page);
 // ── ROUTE PRECEDENCE MATTERS, AND I HAD IT BACKWARDS ─────────────────────────────────────────
 // Playwright runs matching handlers NEWEST-FIRST. I registered the generic auth catch-all LAST,
@@ -1122,6 +1159,18 @@ try {
       + 'exercised; no provider dispatch attempted ***');
   }
   say('  setup complete · exposure $' + exposure().toFixed(6) + '\n');
+  const dumpPolicy = async (tag) => {
+    try {
+      const rec = await page.evaluate(() => window.__sbPolicyCalls || []);
+      write('policy_calls.json', rec);
+      say('  [policy] ' + tag + ' — ' + rec.length + ' invocation(s) recorded');
+      rec.slice(0, 4).forEach((r, i) => say('    #' + (i + 1) + ' selected=' + r.provider + '/'
+        + r.model + ' textLen=' + r.textLen + ' attempts='
+        + JSON.stringify((r.attempts || []).map(a => a.tier + ':' + a.provider
+          + (a.ok === false ? ':FAILED' + (a.status ? '(' + a.status + ')' : '')
+             : a.skipped ? ':skipped' : ':ok')))));
+    } catch (e) { say('  [policy] dump failed: ' + (e && e.message)); }
+  };
 
   if (!halted) {
     say('── OAS (live) ──');
@@ -1305,6 +1354,7 @@ try {
     };
 
     // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
+    await dumpPolicy('after the entrance submission, before any further input');
     // ── THE ENTRANCE REPLY, ATTRIBUTED ON ITS OWN EVIDENCE ──────────────────────────────────
     // Through the same helper every other turn uses, counted at most once, and BEFORE the loop so
     // no later reply can be mistaken for it.
