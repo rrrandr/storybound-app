@@ -1,0 +1,21 @@
+=== FS SEQUENCE — ceiling $5.05 — LIVE ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  setup complete · exposure $3.240307
+
+── OAS (live) ──
+
+*** STOPPING — INFRASTRUCTURE FAILURE — the local function did not return a usable response on call 1 (/api/proxy, HTTP 502, text/plain; charset=utf-8, 2892ms). The upstream call MAY ALREADY BE BILLED. Halting every further provider dispatch, fallbacks included. ***
+    request identifiers: {"server":"Vercel","x-vercel-id":"dev1::uo47e-1791439184630-683041b6e0c5","x-vercel-cache":"MISS"}
+    body: An error occurred with this application. NO_RESPONSE_FROM_FUNCTION 
+    1 reservation(s) still outstanding, $0.077205 in flight — RETAINED, not released.
+  call  1  grok-4-1-fast-reasoning        served=?                              in=     ? cached=    ? out=    ?  NO RECEIPT (est $0.077205)  2892ms
+  call refused after the infrastructure failure: ministral-8b-2512 (/api/mistral-proxy)
+  call refused after the infrastructure failure: gpt-4o (/api/chatgpt-proxy)
+  entered via entrance submit (in-page el.click() — host not rendered in this harness) — the submitted answer IS exchange 1 of the six
+  submit -> first readable prose: NOT OBSERVED within 60s
