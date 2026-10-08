@@ -41,6 +41,16 @@ not established here**.
 That is the next thing to trace — from call 1's and call 2's recorded request/response through production's
 parsing and any fallback or editing, to the first rendered history entry.
 
+## What counts as an exchange (Codex, 2026-10-08)
+
+**Two provider attempts for ONE reader submission are still ONE exchange**, provided one reply is
+accepted and rendered. A fallback changes **cost and authorship**, not the number of reader
+exchanges — so the two OAS author dispatches above do not make the entrance two exchanges, and
+finding a live fallback would not change what "six exchanges" means.
+
+The defect to fix is therefore narrow: **the entrance's one exchange is not being attributed at
+all** (`rendered 7 vs attributed 6`). It is not a counting-model question.
+
 ## Acceptance conditions — still unmet, unchanged
 
 | condition | state |
