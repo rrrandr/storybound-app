@@ -133816,12 +133816,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 return null;
               }
               if (!_rp) return null;                               // explicitly cardless or absent
-              if (String(_rp.storyId || '') !== String(_gi.storyId || '')
-                  || String(_rp.attemptId || '') !== String(_gi.attemptId)
-                  || (n != null && Number(_rp.sceneNumber) !== Number(n))) {
-                console.warn('[SUBMISSION-PROVENANCE] cg result provenance REJECTED — snapshot '
-                  + String(_rp.attemptId || 'NONE').slice(0, 12) + '/scene ' + _rp.sceneNumber
-                  + ' vs generation ' + String(_gi.attemptId).slice(0, 12) + '/scene ' + n);
+              // ── ALL THREE MUST AGREE, INCLUDING THE DESTINATION ──────────────────────────────
+              // Comparing the snapshot against the generation identity alone was not enough: a
+              // MATCHING PAIR from another story still attached its card here, and a generation
+              // identity for scene 5 still accepted a scene-3 snapshot, because the destination
+              // story was never consulted and the generation's own scene index never was either.
+              var _destStory = String(s.storyId || '');
+              var _genScene = (_gi.sceneIndex == null) ? null : (Number(_gi.sceneIndex) + 1);
+              var _why = null;
+              if (String(_rp.storyId || '') !== String(_gi.storyId || '')) _why = 'snapshot/identity story differ';
+              else if (String(_gi.storyId || '') !== _destStory) _why = 'identity story is not the destination story';
+              else if (String(_rp.attemptId || '') !== String(_gi.attemptId)) _why = 'attempt mismatch';
+              else if (n == null) _why = 'no destination scene number';
+              else if (Number(_rp.sceneNumber) !== Number(n)) _why = 'snapshot scene is not the committed scene';
+              else if (_genScene == null) _why = 'generation identity has no scene index';
+              else if (_genScene !== Number(n)) _why = 'generation scene is not the committed scene';
+              if (_why) {
+                console.warn('[SUBMISSION-PROVENANCE] cg result provenance REJECTED (' + _why + ') — '
+                  + 'snapshot ' + String(_rp.attemptId || 'NONE').slice(0, 12) + '/' + _rp.storyId
+                  + '/scene ' + _rp.sceneNumber + ' · generation '
+                  + String(_gi.attemptId).slice(0, 12) + '/' + _gi.storyId + '/scene ' + _genScene
+                  + ' · destination ' + _destStory + '/scene ' + n);
                 return null;
               }
               return _rp.cardAssist || null;

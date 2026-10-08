@@ -62,8 +62,8 @@ const STORY = 'story-ownership-1';
 const CARD_A = { id: 'reversal', label: 'Reversal', index: 0 };
 const CARD_B = { id: 'temptation', label: 'Temptation', index: 1 };
 const SNAP_A = { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A };
-const ID_B  = { storyId: STORY, attemptId: 'attempt-B', sceneIndex: 2 };
-const ID_A  = { storyId: STORY, attemptId: 'attempt-A', sceneIndex: 2 };
+const ID_B  = { storyId: STORY, attemptId: 'attempt-B', sceneIndex: 2 };   // scene 3
+const ID_A  = { storyId: STORY, attemptId: 'attempt-A', sceneIndex: 2 };   // scene 3
 
 console.log('\n=== REPRODUCTION 1: attempt A\'s snapshot, attempt B running ===');
 {
@@ -104,7 +104,9 @@ console.log('\n=== THE POSITIVE, so the rule is not vacuous ===');
 console.log('\n=== SCENE AND STORY MUST ALSO AGREE ===');
 {
   const r = await commitCG({ storyId: STORY, sceneNumber: 5, liveAttempt: 'attempt-A',
-    resultSnapshot: SNAP_A, resultIdentity: ID_A, sharedSnapshot: null });
+    resultSnapshot: SNAP_A,                                     // snapshot says scene 3
+    resultIdentity: { storyId: STORY, attemptId: 'attempt-A', sceneIndex: 4 },   // identity agrees
+    sharedSnapshot: null });                                                     // with scene 5
   t('a scene-3 snapshot is refused when committing scene 5',
     !!r.row && r.row.assist === null, JSON.stringify(r.row));
 }
@@ -112,9 +114,45 @@ console.log('\n=== SCENE AND STORY MUST ALSO AGREE ===');
   const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
     resultSnapshot: { ...SNAP_A, storyId: 'another-story' }, resultIdentity: ID_A,
     sharedSnapshot: null });
-  t('a snapshot from another story is refused', !!r.row && r.row.assist === null,
+  t('a snapshot whose story disagrees with its identity is refused', !!r.row && r.row.assist === null,
     JSON.stringify(r.row));
 }
+console.log('\n=== A MATCHING PAIR FROM ANOTHER STORY MUST NOT ATTACH HERE ===');
+{
+  // Snapshot AND identity agree with each other — and both belong to a DIFFERENT story. My earlier
+  // "another story" case mismatched the pair, so the pair check caught it and the destination was
+  // never consulted. This is the case Codex reproduced.
+  const OTHER = 'story-elsewhere';
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: OTHER, sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A },
+    resultIdentity: { storyId: OTHER, attemptId: 'attempt-A', sceneIndex: 2 },
+    sharedSnapshot: null });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('a self-consistent pair from ANOTHER story records NO card in this story',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
+}
+
+console.log('\n=== THE GENERATION\'S OWN SCENE MUST BE THE COMMITTED SCENE ===');
+{
+  // The snapshot agrees with the committed scene; the GENERATION says it was planning scene 5.
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A },
+    resultIdentity: { storyId: STORY, attemptId: 'attempt-A', sceneIndex: 4 },   // scene 5
+    sharedSnapshot: null });
+  console.log('   row: ' + JSON.stringify(r.row));
+  t('a generation identity for scene 5 records NO card in scene 3',
+    !!r.row && r.row.assist === null, JSON.stringify(r.row));
+}
+{
+  // And an identity with no scene index at all is not ownership either.
+  const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
+    resultSnapshot: { storyId: STORY, sceneNumber: 3, attemptId: 'attempt-A', cardAssist: CARD_A },
+    resultIdentity: { storyId: STORY, attemptId: 'attempt-A' },                  // no sceneIndex
+    sharedSnapshot: null });
+  t('an identity without a scene index records no card', !!r.row && r.row.assist === null,
+    JSON.stringify(r.row));
+}
+
 console.log('\n=== A MISSING GENERATION IDENTITY IS NOT OWNERSHIP ===');
 {
   const r = await commitCG({ storyId: STORY, sceneNumber: 3, liveAttempt: 'attempt-A',
@@ -133,14 +171,18 @@ console.log('\n=== EXPLICITLY CARDLESS STAYS CARDLESS ===');
 {
   const r = await commitCG({ storyId: STORY, sceneNumber: 4, liveAttempt: 'attempt-C',
     resultSnapshot: { storyId: STORY, sceneNumber: 4, attemptId: 'attempt-C', cardAssist: null },
-    resultIdentity: { storyId: STORY, attemptId: 'attempt-C', sceneIndex: 3 },
+    resultIdentity: { storyId: STORY, attemptId: 'attempt-C', sceneIndex: 3 },   // scene 4
     sharedSnapshot: { storyId: STORY, sceneNumber: 4, attemptId: 'attempt-C', cardAssist: CARD_B } });
   t('an owned-but-cardless snapshot commits NULL, not the shared card',
     !!r.row && r.row.assist === null, JSON.stringify(r.row));
 }
 
 // ── ASYNC INTERLEAVING: the globals move to B while A's planning is still waiting ────────────
-console.log('\n=== ASYNC INTERLEAVING: globals move to B while A awaits ===');
+console.log('\n=== COMPONENT DEMONSTRATION (not a production async-interleaving test) ===');
+console.log('    It calls the shipped _captureSubmissionProvenance, but RECONSTRUCTS the');
+console.log('    generation\'s identity capture, the provOut handoff and the ownership');
+console.log('    comparison. It does NOT suspend and resume the real planner/generation wiring,');
+console.log('    so it demonstrates the RULE under interleaving, not the wiring under it.');
 {
   const r = await page.evaluate(async (o) => {
     const s = window.state;
@@ -188,14 +230,44 @@ console.log('\n=== ASYNC INTERLEAVING: globals move to B while A awaits ===');
 
 console.log('\n=== THE SHIPPED CG BRANCH HAS NO FALLTHROUGH ===');
 const SRC = await page.evaluate(async () => (await (await fetch('/app.js')).text()));
-t("the cg branch returns null rather than consulting _submissionProvenanceFor",
-  /if \(kind === 'cg'\)[\s\S]{0,1400}return _rp\.cardAssist \|\| null;[\s\S]{0,80}\} catch \(_\) \{ return null; \}/.test(SRC));
+t('the cg branch contains NO shared-state lookup and NO stamped-key fallback', (() => {
+  const i = SRC.indexOf("if (kind === 'cg') {");
+  if (i < 0) return false;
+  // brace-match the branch so the check cannot drift past it
+  let depth = 0, end = -1;
+  for (let k = SRC.indexOf('{', i); k < SRC.length; k++) {
+    if (SRC[k] === '{') depth++;
+    else if (SRC[k] === '}') { depth--; if (depth === 0) { end = k; break; } }
+  }
+  if (end < 0) return false;
+  const branch = SRC.slice(i, end);
+  return !/\_submissionProvenanceFor/.test(branch)
+    && !/key\.cardAssist/.test(branch)
+    && !/opts\.cardAssist/.test(branch)
+    && /return null;/.test(branch);
+})(), 'the cg branch must not reach any fallback');
 t('and it compares attempt EQUALITY, not existence',
   /String\(_rp\.attemptId \|\| ''\) !== String\(_gi\.attemptId\)/.test(SRC));
 t('the planner hands its snapshot back through the caller\'s object',
   /provOut\.snapshot = _subProv/.test(SRC));
-t('and the CG generation reads its identity before any await',
-  /READ BEFORE ANY AWAIT/.test(SRC));
+// A comment match proved nothing; this checks the STRUCTURE — the identity is assigned from
+// _cgGenAttempt before the first await in the generator, and the post-await validation reads the
+// out-object rather than shared state.
+t('the generation assigns its attempt id BEFORE its first await',
+  (() => {
+    const fnStart = SRC.indexOf('async function _runCGScreenplayGenInner(');
+    if (fnStart < 0) return false;
+    const body = SRC.slice(fnStart, fnStart + 4000);
+    const assign = body.indexOf('_genAttemptId = String(state._cgGenAttempt.id)');
+    const firstAwait = body.indexOf('await ');
+    return assign > 0 && firstAwait > 0 && assign < firstAwait;
+  })(), 'the assignment must precede the first await in the generator body');
+t('and the post-await validation reads the OUT OBJECT, not shared state',
+  /var _spNow = _provOut\.snapshot;/.test(SRC)
+  && !/var _spNow = state\._submissionProvenance/.test(SRC));
+t('commit also validates the DESTINATION story and the generation scene',
+  /identity story is not the destination story/.test(SRC)
+  && /generation scene is not the committed scene/.test(SRC));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
