@@ -1,0 +1,168 @@
+{
+  "turnsTaken": 5,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "interruptionDone": true,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "oas_exit",
+      "at": 1791523650726,
+      "storyId": "14d4c0f0-5a76-4894-97a2-145a8075fac4"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": 9206,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7",
+        "text": "The Dohkar's voice cuts through the clearing like a blade drawn too late.\n\nI feel the command before the words land, a cold press against my ribs.\n\nTHE PRESIDING DOHKAR: \"Lirael. Halt.\"\n\nHis hand lifts, the smallest motion, as if the rite itself bores him.\n\nTHE PRESIDING DOHKAR: \"Submit to preliminary review of your conduct. Now.\"\n\nThe clearing stills around me, every eye a weight I cannot shift.\n\nJulian has not moved, yet the air bends toward him as if the clearing itself waits.\n\nJULIAN: \"She believes she did not do this.\"\n\nHis stillness pulls the assembly's gaze, a gravity I feel in my bones before I name it.\n\nThe Dohkar's order lands again, heavier now, forcing the choice into my hands.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7",
+        "quoted": [
+          "submit to preliminary review"
+        ],
+        "summary": [
+          "The presiding Dohkar called my name and ordered me to halt and face the assembly for preliminary review.",
+          "Julian stood still as if holding the world, his presence reorganizing the clearing around me.",
+          "The player chose to run in shame last scene; this forces the choice between claiming interference or letting the assumption stand.",
+          "The assembly assumes I interfered; claiming it would change everything."
+        ],
+        "obligations": [
+          "review"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You wove your gaze through the rite like roots seeking water, every tilt of your chin toward me. Did you shape Seren’s wish hoping I would step forward and bind you from their judgment?",
+        "liAction": "His hand remains closed over mine on the blade’s hilt, the scarred wrist pressing once more against my palm.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "You will answer my questions before I speak.",
+        "pcDo": "I hold the Answer firmly, my stance unyielding.",
+        "pcSayRaw": "You will answer my questions before I say anything.",
+        "pcDoRaw": "Hold the Answer firmly, my stance unyielding",
+        "liDialogue": "Your gaze sought me through the rite like roots through soil, every tilt of your chin an invitation. Did you shape the wish hoping I would claim you from their judgment?",
+        "liAction": "His scarred wrist presses once more against my palm on the blade’s hilt.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I'm not answering until I understand what's at stake.",
+        "pcDo": "I step back, releasing the blade from my grasp.",
+        "pcSayRaw": "I'm not answering until I understand what's at stake.",
+        "pcDoRaw": "Step back, releasing the blade from my grasp",
+        "liDialogue": "The weapon descends where you direct it. The point is your own stance before the gathering.",
+        "liAction": "Julian snatches the descending weapon, his marked wrist glinting briefly.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "a soft, uncertain breath that refuses to become words",
+        "pcDo": "I stand motionless, my eyes fixed on Julian, my breath trapped in my chest.",
+        "pcSayRaw": "a confused, wordless sound that never resolves into words",
+        "pcDoRaw": "Stand still, eyes locked on Julian, breath caught",
+        "liDialogue": "You kept your focus on me through the wish, every moment of your stillness an invitation. Did you call it into being hoping I would step forward and shield you from their judgment?",
+        "liAction": "His scarred wrist stays pressed against my palm on the blade’s hilt.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I did not recall bringing this, but I wish the cards had stayed away.",
+        "pcDo": "I meet his eyes, the vulnerability cracking through my stillness like lightning across stone.",
+        "pcSayRaw": "I didn’t remember bringing this, but I wish I hadn’t.",
+        "pcDoRaw": "Meet Julian's gaze, vulnerability breaking through",
+        "liDialogue": "Your attention lingered on me, the silence between us a siren's call. Did you conjure this moment, yearning for me to advance and protect you from the weight of their scrutiny?",
+        "liAction": "His weathered forearm rests against my hand, fingers brushing the weapon's grip.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will not speak until the stakes are made plain.",
+        "pcDo": "I step back, the blade slipping from my grasp.",
+        "pcSayRaw": "I'm not answering until I understand what's at stake.",
+        "pcDoRaw": "Step back, releasing the blade from my grasp",
+        "liDialogue": "The knife descends where you direct it. The stake is your own harmony before the gathering.",
+        "liAction": "Julian snatches the descending knife, his weathered forearm glinting briefly against my hand.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}

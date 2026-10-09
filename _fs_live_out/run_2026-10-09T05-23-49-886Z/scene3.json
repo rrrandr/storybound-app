@@ -1,0 +1,220 @@
+{
+  "outcome": "accepted",
+  "creating": 3,
+  "leaving": 2,
+  "before": {
+    "count": 1,
+    "lastUid": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7"
+  },
+  "snap": {
+    "label": "scene2",
+    "scenes": 2,
+    "texts": [
+      {
+        "uid": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7",
+        "text": "The Dohkar's voice cuts through the clearing like a blade drawn too late.\n\nI feel the command before the words land, a cold press against my ribs.\n\nTHE PRESIDING DOHKAR: \"Lirael. Halt.\"\n\nHis hand lifts, the smallest motion, as if the rite itself bores him.\n\nTHE PRESIDING DOHKAR: \"Submit to preliminary review of your conduct. Now.\"\n\nThe clearing stills around me, every eye a weight I cannot shift.\n\nJulian has not moved, yet the air bends toward him as if the clearing itself waits.\n\nJULIAN: \"She believes she did not do this.\"\n\nHis stillness pulls the assembly's gaze, a gravity I feel in my bones before I name it.\n\nThe Dohkar's order lands again, heavier now, forcing the choice into my hands.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      },
+      {
+        "uid": "cg:0d14b9db-96b8-48a4-8c3b-1d2b40001c94",
+        "text": "I pull my hand away, creating space between us.\n\nThe deck is still in my grasp.\n\nI make the wish small and in character, the gap between knowing and doing pressing at my ribs.\n\nI wish the review would clear me.\n\nA flicker of wind stirs the spiralgrass at the edge of the threshold.\n\nThe presiding Dohkar's attention shifts as if the air itself answered.\n\nThe review tilts in my favor for a moment, the words forming on his lips before they falter.\n\nI feel the coincidence settle like a question I cannot yet name.\n\nTHE PRESIDING DOHKAR: The memory of the lost one is the sacrifice demanded by the rite.\n\nThe words land as a weight I cannot shift.\n\nJulian has not moved.\n\nThe air bends toward him as if the clearing itself waits.\n\nHis stillness pulls the assembly's gaze.\n\nTHE PRESIDING DOHKAR: Yield the memory or let the assumption stand.\n\nThe gap between knowing and doing widens.\n\nJulian's presence reorganizes the space around me.\n\nJULIAN: The stake is your own stance before the gathering.\n\nHis words are felt in the air around me.\n\nThe Dohkar's corruption spreads through the ritual's observation.\n\nI stand at the threshold with the choice pressing in.\n\nTell Devorah about the email, or wait until morning?\n\nI realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…"
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7",
+        "quoted": [
+          "submit to preliminary review"
+        ],
+        "summary": [
+          "The presiding Dohkar called my name and ordered me to halt and face the assembly for preliminary review.",
+          "Julian stood still as if holding the world, his presence reorganizing the clearing around me.",
+          "The player chose to run in shame last scene; this forces the choice between claiming interference or letting the assumption stand.",
+          "The assembly assumes I interfered; claiming it would change everything."
+        ],
+        "obligations": [
+          "review"
+        ]
+      },
+      {
+        "ref": "cg:0d14b9db-96b8-48a4-8c3b-1d2b40001c94",
+        "quoted": [
+          "I pull my hand away, creating space between us"
+        ],
+        "summary": [
+          "I pulled my hand away from Julian and invoked Petition Fate at the threshold.",
+          "The Dohkar names the memory of the lost one as the sacrifice.",
+          "The presiding Dohkar names the memory of the lost one as the sacrifice."
+        ],
+        "obligations": [
+          "review"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You wove your gaze through the rite like roots seeking water, every tilt of your chin toward me. Did you shape Seren’s wish hoping I would step forward and bind you from their judgment?",
+        "liAction": "His hand remains closed over mine on the blade’s hilt, the scarred wrist pressing once more against my palm.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "You will answer my questions before I speak.",
+        "pcDo": "I hold the Answer firmly, my stance unyielding.",
+        "pcSayRaw": "You will answer my questions before I say anything.",
+        "pcDoRaw": "Hold the Answer firmly, my stance unyielding",
+        "liDialogue": "Your gaze sought me through the rite like roots through soil, every tilt of your chin an invitation. Did you shape the wish hoping I would claim you from their judgment?",
+        "liAction": "His scarred wrist presses once more against my palm on the blade’s hilt.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I'm not answering until I understand what's at stake.",
+        "pcDo": "I step back, releasing the blade from my grasp.",
+        "pcSayRaw": "I'm not answering until I understand what's at stake.",
+        "pcDoRaw": "Step back, releasing the blade from my grasp",
+        "liDialogue": "The weapon descends where you direct it. The point is your own stance before the gathering.",
+        "liAction": "Julian snatches the descending weapon, his marked wrist glinting briefly.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "a soft, uncertain breath that refuses to become words",
+        "pcDo": "I stand motionless, my eyes fixed on Julian, my breath trapped in my chest.",
+        "pcSayRaw": "a confused, wordless sound that never resolves into words",
+        "pcDoRaw": "Stand still, eyes locked on Julian, breath caught",
+        "liDialogue": "You kept your focus on me through the wish, every moment of your stillness an invitation. Did you call it into being hoping I would step forward and shield you from their judgment?",
+        "liAction": "His scarred wrist stays pressed against my palm on the blade’s hilt.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I did not recall bringing this, but I wish the cards had stayed away.",
+        "pcDo": "I meet his eyes, the vulnerability cracking through my stillness like lightning across stone.",
+        "pcSayRaw": "I didn’t remember bringing this, but I wish I hadn’t.",
+        "pcDoRaw": "Meet Julian's gaze, vulnerability breaking through",
+        "liDialogue": "Your attention lingered on me, the silence between us a siren's call. Did you conjure this moment, yearning for me to advance and protect you from the weight of their scrutiny?",
+        "liAction": "His weathered forearm rests against my hand, fingers brushing the weapon's grip.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will not speak until the stakes are made plain.",
+        "pcDo": "I step back, the blade slipping from my grasp.",
+        "pcSayRaw": "I'm not answering until I understand what's at stake.",
+        "pcDoRaw": "Step back, releasing the blade from my grasp",
+        "liDialogue": "The knife descends where you direct it. The stake is your own harmony before the gathering.",
+        "liAction": "Julian snatches the descending knife, his weathered forearm glinting briefly against my hand.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 2,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "1:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 0,
+          "temptation": {
+            "a": 56,
+            "d": 36
+          },
+          "boundary": {
+            "a": 44,
+            "d": 53
+          },
+          "confession": {
+            "a": 50,
+            "d": 53
+          },
+          "reversal": {
+            "a": 44,
+            "d": 51
+          },
+          "silence": {
+            "a": 49,
+            "d": 4
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 4,
+      "submitted": {
+        "action": "Pull my hand away, creating space between us",
+        "dialogue": "",
+        "source": "gn",
+        "cardId": "boundary",
+        "selectedIndex": 4,
+        "appKey": {
+          "turnCount": 1,
+          "sceneFateKey": "1:1",
+          "oasBeat": null
+        },
+        "cacheEntry": {
+          "action": "Pull my hand away, creating space between us",
+          "dialogue": "Not now, Julian. We need to focus on the ritual."
+        },
+        "gn": {
+          "a": 44,
+          "d": 0
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"boundary\""
+      },
+      "provenance": {
+        "provenance": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"boundary\""
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "scenes": [
+    {
+      "sceneNumber": 2,
+      "createdBy": "opening branch \"run\"",
+      "uid": "cg:35365639-6a59-469b-a296-f9c6d90dc5d7",
+      "accepted": true,
+      "chars": 855,
+      "notesAfter": 1
+    },
+    {
+      "sceneNumber": 3,
+      "createdBy": "the ending card of scene 2",
+      "cardFrom": 2,
+      "cardIdx": 4,
+      "cardLabel": null,
+      "previewSource": "gn",
+      "previewOrigin": "UNKNOWN",
+      "accepted": true,
+      "notesAfter": 2,
+      "cgScenesAfter": 2
+    }
+  ],
+  "boundaryCheck": {
+    "sceneNumber": 3,
+    "accepted": true,
+    "chars": 1564,
+    "uid": "cg:0d14b9db-96b8-48a4-8c3b-1d2b40001c94",
+    "sceneInIssue": 2,
+    "scenesPerIssue": 10,
+    "turnCount": 2,
+    "corpusOk": false,
+    "boundaryOk": false,
+    "boundaryAgrees": false,
+    "expectedPosition": 10
+  }
+}

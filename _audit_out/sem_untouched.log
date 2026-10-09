@@ -1,0 +1,20 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.goto: Target page, context or browser has been closed
+Call log:
+[2m  - navigating to "http://localhost:3000/", waiting until "domcontentloaded"[22m
+
+    at /Users/romantsukerman/storybound-app/_fs_live_sequence.mjs:1203:12 {
+  log: [
+    '  - navigating to "http://localhost:3000/", waiting until "domcontentloaded"'
+  ]
+}
+
+Node.js v25.3.0
