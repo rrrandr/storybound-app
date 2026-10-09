@@ -234051,14 +234051,14 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       beatBudget =
         '\nSCENE ROOM (HARD — this scene carries more than a usual one):\n' +
         '- Tempt Fate is a force-multiplier moment. GIVE IT ROOM: a thin invocation followed by rushed plot is the failure. Room means the moments below are each fully written, not that a count is reached.\n' +
-        '- SLOT RESERVATION (~6 beats for the Fate arc):\n' +
-        '  • INVOCATION: 1-2 beats — the deck reacts / probability tilts / system spikes / etc. per WORLD LAW.\n' +
-        '  • OMEN: 1-2 beats — reality reacts BEFORE the change. The room, the air, the witnesses.\n' +
-        '  • EFFECT: 1 beat (or 2 if the wish is spatially complex) — the wish manifests, concrete and external.\n' +
-        '  • REACTION: 1 beat — the protagonist (and any witness in frame) registers what just happened. Body before mind.\n' +
-        '- REMAINING ~24-32 beats: the player\'s say/do response, plot advancement, character work, aftershock build, and the scene\'s closing beat (one sentence).\n' +
-        '- DO NOT compress the Fate arc to make room for plot. If you cannot fit both, give the invocation and its consequence their full room rather than compressing them — better to slightly exceed the upper bound than to thin out either side.\n';
-    } else if (aftermathActive) {
+        '- THE FATE ARC - EVERY PART REQUIRED, each written as its own moment:\n' +
+        '  • INVOCATION: the deck reacts / probability tilts / system spikes / etc. per WORLD LAW.\n' +
+        '  • OMEN: reality reacts BEFORE the change. The room, the air, the witnesses.\n' +
+        '  • EFFECT: the wish manifests, concrete and external.\n' +
+        '  • REACTION: the protagonist (and any witness in frame) registers what just happened. Body before mind.\n' +
+        '- THE REST OF THE SCENE carries the player\'s say/do response, plot advancement, character work, aftershock build, and the closing beat (one sentence).\n' +
+        '- DO NOT compress the Fate arc to make room for plot, and do not thin the plot to make room for the arc. Both live inside the SAME scene-wide word budget: if they will not both fit, cut what is only marking time. NEVER EXCEED THE WORD CEILING.\n'
+      } else if (aftermathActive) {
       beatBudget =
         '\nSCENE ROOM (HARD — aftermath scene):\n' +
         '- The aftermath needs room for characters to PROCESS without rushing to the next plot point. Room means the processing is actually written, not that a count is reached.\n' +
@@ -235927,12 +235927,21 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // THE OPENING IDENTITY COMES FROM THIS GENERATION, not from turnCount: sceneIndex is
         // what this authoring call was given. The cast cap exists because an opening has no cast
         // yet - so it also requires that nothing has been written. Both conditions, defaulting OFF.
-        var _sbPriorWritten = 0;
+        var _sbPriorWritten = null;            // null = UNKNOWN, never "empty"
         try {
-          _sbPriorWritten = (window.state && Array.isArray(window.state.scenes))
-            ? window.state.scenes.filter(function (x) { return x && x.text; }).length : 0;
-        } catch (_) { _sbPriorWritten = 1; }   // unknown => treat as established => cap OFF
-        if (Number(sceneIndex) <= 1 && _sbPriorWritten === 0) {
+          if (window.state && Array.isArray(window.state.scenes)) {
+            _sbPriorWritten = window.state.scenes.filter(function (x) { return x && x.text; }).length;
+          }
+        } catch (_) { _sbPriorWritten = null; }
+        // OPENING = the first-scene index AND a KNOWN-EMPTY history. A continuation, an unknown
+        // history, or any other index leaves the cap OFF. Strict === so null/negative cannot pass.
+        var _sbIsStoryOpening = (sceneIndex === 1) && (_sbPriorWritten === 0);
+        try {
+          console.log('[CG:OPENING-GUARD] sceneIndex=' + JSON.stringify(sceneIndex)
+            + ' priorWritten=' + (_sbPriorWritten === null ? 'UNKNOWN' : _sbPriorWritten)
+            + ' -> opening cast cap ' + (_sbIsStoryOpening ? 'APPLIED' : 'off'));
+        } catch (_) {}
+        if (_sbIsStoryOpening) {
           lines.push('OPENING LOAD CONTROL (HARD — applies to the issue opening only): CAST CAP: give a PROPER NAME to AT MOST ONE person besides the protagonist and the love interest. Everyone else is UNNAMED — "a friend," "the clip," "a board member," "an unnamed guest," "the host" — or deferred to a later scene. FORBIDDEN in Scene 1: naming the love interest\'s brother, a brother\'s ex-girlfriend, a lawyer AND a friend AND an ex AND a board member; explaining a lawsuit / legal history / a family tree / a plot-truth mystery thread. The reader must summarize this scene in ONE sentence without a family tree. When in doubt, CUT the second thread and stay in the one fire.');
         }
         lines.push('BACKSTORY-FOR-CONTEXT (HARD — bounded exception to the load-control; Roman 2026-07-15, strengthened 2026-07-16): the ban is on plot-DUMPS, not on ORIENTATION — and an unexplained LOAD-BEARING name/place/past-event is its OWN failure. When the scene turns on something the reader CANNOT understand from the scene alone (an absent partner, a rival, a broken vow, a ceremony that failed, a debt owed), you MUST spend ~30–50 words EXPLAINING it CONCRETELY — who they are to the protagonist, what happened, what it COST — not merely HINT at it. Hinting at a load-bearing thing without ever saying WHAT it is is the failure this fixes. BAD (hint-only, reader left guessing): "The vow you witnessed. The thread still glows empty. My mother left before the final word." GOOD (oriented in one concrete pass): "Vael and I swore the tide-vow a year ago — the Kwisheen bond that ties two lives to one current. My mother walked out before the priestess sealed it, and the thread at my wrist has glowed empty since: a half-made promise anyone can read." Orient ONCE, concretely, then straight back to the scene. Still NOT a family tree, a mystery-box, or a second plot thread. (A natural FLASHBACK-INSERT opportunity — a SINGLE past-moment panel — never a played-out flashback scene.)');

@@ -2892,6 +2892,10 @@ try {
       await page.waitForTimeout(900);
     }
     say('  walked ' + beatSteps + ' beat(s) to the end of scene ' + scene);
+    if (process.env.SB_BREAK_SCENE_HISTORY) {
+      await page.evaluate(() => { try { delete window.state.scenes; } catch (_) {} });
+      say('      [probe] state.scenes REMOVED - the opening guard must see UNKNOWN history');
+    }
     const sDeck = await waitForSceneDeck();
     if (!sDeck || !sDeck.count) {
       halted = true;
