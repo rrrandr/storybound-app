@@ -235935,7 +235935,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         } catch (_) { _sbPriorWritten = null; }
         // OPENING = the first-scene index AND a KNOWN-EMPTY history. A continuation, an unknown
         // history, or any other index leaves the cap OFF. Strict === so null/negative cannot pass.
-        var _sbIsStoryOpening = (sceneIndex === 1) && (_sbPriorWritten === 0);
+        var _sbIsStoryOpening = (sceneIndex === 0) && (_sbPriorWritten === 0);
         try {
           console.log('[CG:OPENING-GUARD] sceneIndex=' + JSON.stringify(sceneIndex)
             + ' priorWritten=' + (_sbPriorWritten === null ? 'UNKNOWN' : _sbPriorWritten)
