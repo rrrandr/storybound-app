@@ -1,0 +1,243 @@
+{
+  "outcome": "accepted",
+  "creating": 4,
+  "leaving": 3,
+  "before": {
+    "count": 2,
+    "lastUid": "cg:f6c50fc5-dda5-463a-bdd4-91750cb6d3f9"
+  },
+  "snap": {
+    "label": "scene3",
+    "scenes": 3,
+    "texts": [
+      {
+        "uid": "cg:2150a27f-46be-49f5-8d20-92b5c9e8abd9",
+        "text": "The clearing has not emptied. The assembly lingers in uneven rings, their Weave-Script flickering with the weight of what they just witnessed.\n\nSeren remains kneeling at the center, composed, her aqua skin catching the last light. The presiding Dohkar steps forward.\n\nTHE PRESIDING DOHKAR: \"This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on.\"\n\nHis voice carries without effort. The assembly straightens around him.\n\nTHE PRESIDING DOHKAR: \"In a preliminary review, before this assembly.\"\n\nThe words land like a seal pressed into wax. My standing, the path my father walked, shifts visibly in the eyes of every witness.\n\nJulian has not moved from the edge, yet the assembly has already made room for him.\n\nHis stillness is the only thing that can make the Dohkar's gaze sharpen.\n\nTHE PRESIDING DOHKAR: \"The review will be recorded. The Sacrificiant will answer for her conduct.\"\n\nThe assembly's attention tightens around me. Seren's mother is still on her feet.\n\nJulian's gaze finds mine across the clearing. He does not speak, but the room has already adjusted to his presence.\n\nThe Dohkar's Weave-Script flares hard and flat.\n\nTHE PRESIDING DOHKAR: \"This will be settled before witnesses. The record will stand.\"\n\nMy standing fractures in the open air. The path I never imagined not walking narrows to a single recorded line.\n\nJulian's presence changes what the room believes is possible. The Dohkar notices.\n\nThe deck is still in my hand. The gold edges catch the failing light.\n\nOne of the heavy gold cards slips out.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      },
+      {
+        "uid": "cg:f6c50fc5-dda5-463a-bdd4-91750cb6d3f9",
+        "text": "I slide my fingers over the scarred wrist still holding mine.\n\nThe Dohkar's words still hang over the clearing.\n\nI need the review to pass without stripping what I still hold.\n\nLet the review pass without stripping what I still hold.\n\nOne crimson blade bends sharply toward my hand, then straightens.\n\nCoincidence. It has to be.\n\nJulian's hand stays where it is.\n\nThe Answer still rests between us.\n\nJULIAN: The Answer will take the memory of the one you lost.\n\nThe words land like a seal pressed into wax.\n\nThat memory is the only thing left of what I lost.\n\nThe deck is still in my free hand.\n\nJULIAN: You cannot withhold it during the review.\n\nHis stillness makes the clearing feel smaller.\n\nThe Dohkar's ruling has already begun to narrow what I can keep.\n\nMy fingers stay on the scar.\n\nIf I let go now the price will still be taken.\n\nThe assembly lingers behind us, watching.\n\nJulian's gaze does not waver.\n\nThe deck edges catch the last light.\n\nI realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…"
+      },
+      {
+        "uid": "cg:2b3b314e-7b83-4ed7-b8cb-df81c36ecf4e",
+        "text": "I step back. The Answer leaves my hands.\n\nThe Dohkar's voice cuts across the clearing.\n\nPRESIDING DOHKAR: \"The Provast demanded this review.\"\n\nThe words land while the grass still holds the warmth of the rite.\n\nPRESIDING DOHKAR: \"While it runs you will not leave the grounds.\"\n\nSeren's hands stay folded in her lap.\n\nPRESIDING DOHKAR: \"You will not speak of the rite.\"\n\nThe second restriction settles between my ribs.\n\nPRESIDING DOHKAR: \"And you will surrender The Answer to his keeping.\"\n\nJulian has not moved.\n\nThe assembly watches the space between us.\n\nJULIAN: \"Agreed.\"\n\nHis voice carries no triumph.\n\nOnly the weight of what he has set in motion.\n\nI feel the choice form before the Dohkar finishes speaking.\n\nAccept the restrictions with his name on record.\n\nOr contest his role before the assembly can disperse.\n\nEither path leaves the review in motion.\n\nJulian's stillness makes the clearing feel smaller.\n\nThe Dohkar waits."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:2150a27f-46be-49f5-8d20-92b5c9e8abd9",
+        "quoted": [
+          "a preliminary review, before this assembly"
+        ],
+        "summary": [
+          "The presiding Dohkar declares the preliminary review before the assembly.",
+          "Julian remains present, his stillness visibly altering the room's deference.",
+          "The player chose to run in shame; the review call lands anyway.",
+          "Lirael's standing visibly shifts before witnesses.",
+          "Julian's presence changes what the room believes is possible.",
+          "The Answer remains in Lirael's hand."
+        ],
+        "obligations": [
+          "review"
+        ]
+      },
+      {
+        "ref": "cg:f6c50fc5-dda5-463a-bdd4-91750cb6d3f9",
+        "quoted": [
+          "I slide my fingers over the scarred wrist still holding mine.",
+          "Let the review pass without stripping what I still hold.",
+          "One crimson blade bends sharply toward my hand, then straightens.",
+          "The Answer will take the memory of the one you lost.",
+          "I slide my fingers over the scarred wrist still holding mine.",
+          "The Answer will take the memory of the one you lost.",
+          "The Answer will take the memory of the one you lost."
+        ],
+        "summary": [],
+        "obligations": [
+          "review"
+        ]
+      },
+      {
+        "ref": "cg:2b3b314e-7b83-4ed7-b8cb-df81c36ecf4e",
+        "quoted": [
+          "The Provast demanded this review.",
+          "The Provast demanded this review."
+        ],
+        "summary": [
+          "The presiding Dohkar names Julian as the one who demanded the review and lists the three restrictions Lirael must keep.",
+          "Player stepped back and released the Answer from Julian's grip.",
+          "The Answer passes from Lirael's hands back toward Julian's keeping."
+        ],
+        "obligations": [
+          "restrictions"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "Ask me whose hands shaped it.",
+        "pcDoRaw": "I set The Answer down between us and do not let go",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me whose hands shaped it.",
+        "pcDoRaw": "I set The Answer down between us and do not let go",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+        "liAction": "Julian's hand remained on the shaft as he waited.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+        "liAction": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+        "liAction": "Julian's hand remained on the shaft as his gaze held mine.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 3,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "2:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 1,
+          "temptation": {
+            "a": 51,
+            "d": 21
+          },
+          "boundary": {
+            "a": 45,
+            "d": 31
+          },
+          "confession": {
+            "a": 43,
+            "d": 44
+          },
+          "reversal": {
+            "a": 50,
+            "d": 29
+          },
+          "silence": {
+            "a": 48,
+            "d": 2
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 3,
+      "submitted": {
+        "action": "I go still and let the clearing finish its noise",
+        "dialogue": "",
+        "source": "gn",
+        "cardId": "silence",
+        "selectedIndex": 3,
+        "appKey": {
+          "turnCount": 2,
+          "sceneFateKey": "2:1",
+          "oasBeat": null
+        },
+        "cacheEntry": {
+          "action": "I go still and let the clearing finish its noise",
+          "dialogue": "mm"
+        },
+        "gn": {
+          "a": 48,
+          "d": 0
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card=\"silence\""
+      },
+      "provenance": {
+        "provenance": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card=\"silence\""
+      }
+    }
+  ]
+}
