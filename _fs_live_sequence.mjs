@@ -949,6 +949,16 @@ await page.route('**/api/**', async (route) => {
       await Promise.race([_holdGate, new Promise((r) => setTimeout(r, 120000))]);
       console.log('  [hold] released after ' + (Date.now() - _holdArrivedAt) + 'ms');
     }
+    if (process.env.SB_DUMP_REQ) {
+      try {
+        const _dd = '_audit_out/req_dump';
+        fs.mkdirSync(_dd, { recursive: true });
+        fs.writeFileSync(_dd + '/' + String(recF.n).padStart(3, '0') + '_'
+          + String(callFunction(sys0ForIdentity) || 'other').replace(/[^a-z0-9]+/gi, '-') + '.json',
+          JSON.stringify({ n: recF.n, fn: callFunction(sys0ForIdentity), messages: body.messages },
+            null, 1));
+      } catch (_) {}
+    }
     const _rd = Number(process.env.SB_REPLY_DELAY_MS || 0);
     if (_rd > 0 && callFunction(sys0ForIdentity) === 'OAS' && _replayAuthorIdx === 1) {
       console.log('  [replay] delaying the ENTRANCE OAS author response by ' + _rd

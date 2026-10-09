@@ -201278,7 +201278,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'The player isn\'t writing prose. They\'re expressing intention, emotional direction, fantasy pressure, desired energy. Your job is to TRANSMUTE that intent into story-native dramatic action — same intent, different world-true expression.\n\n' +
       'WHAT TO PRESERVE (NEVER reinterpret):\n' +
       '- EMOTIONAL VECTOR — roughness, tenderness, dominance, surrender, hunger, devotion, cruelty, worship. Polarity is sacred. If the player wanted aggression, the transmuted version is still aggressive (in world-true terms). Never flip polarity.\n' +
-      '- INTENSITY — terse input stays terse but lands HARDER. Expansive input gets lush. Don\'t force ornamentation onto a moment that\'s powerful BECAUSE it\'s spare.\n' +
+      '- INTENSITY — terse input stays terse but lands HARDER. Expansive input gets lush. Don\'t force ornamentation onto a moment that\'s powerful BECAUSE it\'s spare. SCOPE: this governs the PLAYER\'S RENDERED CONTRIBUTION only — the transmuted line itself. It is not a pacing rule for the surrounding scene narration, which follows TEXT RULES.\n' +
       '- THE PLAYER\'S RECOGNIZABLE SELF — they should read the transmuted action and feel "what I meant, but cooler." Never "the AI changed what I meant." That\'s fatal.\n\n' +
       'WHAT TO TRANSMUTE:\n' +
       '- DICTION — raw command-line verbs become contextualized embodiment.\n' +
@@ -232878,9 +232878,9 @@ No text, no watermark, no UI elements, share-ready.`;
        '    I have not been told."\n' +
        '  The second is not better than the first. It is longer because the moment held more.\n' +
        '- ACROSS THE SCENE, connect action, perception and character voice so the prose reads as someone living it rather than a camera listing movements. NOT IN EVERY BEAT: plain physical action, sensory observation, dialogue and silence carry their own meaning and must be left to do it. Avoid BOTH failure modes — screenplay shorthand that only reports what moved, and a procession of explanatory observations where every detail is immediately interpreted for the reader.\n' +
-      '- GRAMMATICAL CAPTIONS (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. Terse is good; telegram/headline-ese that drops articles and the connecting verb is NOT — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
+      '- COMPLETE SENTENCES (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. This rule governs GRAMMAR ONLY and says nothing about length — see TEXT RULES for that. Telegram/headline-ese that drops articles and the connecting verb is NOT acceptable — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
       '- The FINAL beat of the scene is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
-      '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
+      '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show: world texture, character tells, noticed detail, hesitation. A BEAT IS ONE COHERENT NARRATIVE MOMENT, and its length follows that moment — see TEXT RULES. Do not atomise a single moment into separate beats to raise a count, and do not weld unrelated moments together to lower one. Short beats are valid and often right; a moment that earns development may take a compact paragraph. TARGET ~28–45 beats for a standard scene, as a consequence of how many moments the scene actually contains, not a figure to hit. PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
       '- Alternate dialogue and narration freely; do not bunch dialogue.\n\n' +
       (typeof buildProseDensityConductorDirective === 'function' ? buildProseDensityConductorDirective() +
         '  CG: the charge budget governs how richly NARRATION/EXPOSITION beats interpret; DIALOGUE and procedural beats stay plain regardless. The lyrical spike maps to the scene\'s peak beat(s) only, never the whole plan.\n\n' : '') +
@@ -236765,7 +236765,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           if (_axisLead > 0) {
             _biasLines.push('      – BEAT COUNT for this scene: aim for the LOWER end of the system prompt\'s beat range (fewer, denser beats). Goal-heavy rhythm is dense and forward-moving; the scene moves through its moments rather than holding them.');
             _biasLines.push('      – EXPRESSION PEAKS for this scene: cap at EXACTLY ONE non-neutral expression_target across the whole scene. (System prompt allows 1–2; goal-heavy narrows to 1.) Emotional restraint is the felt texture.');
-            _biasLines.push('      – BEAT-LENGTH preference: shorter narration beats. 1 sentence is usual; 2 is reserved for the single peak. NEVER 3-sentence narration beats in goal-heavy scenes — that\'s a lingered register that contradicts the axis.');
+            _biasLines.push('      – BEAT-LENGTH preference: a goal-heavy scene leans COMPACT — most moments resolve quickly and the scene should feel driven rather than lingered-over. This is a density lean, NOT a sentence count: each beat runs as long as its moment needs.\'s a lingered register that contradicts the axis.');
             _biasLines.push('      – AVOID silence-only beats: every narration beat carries forward motion (a noticed task, a moved object, a glanced clock). No beat exists ONLY to let a moment breathe.');
           } else {
             _biasLines.push('      – BEAT COUNT for this scene: aim for the UPPER end of the system prompt\'s beat range (more, richer beats). Connection-heavy rhythm leaves room for the small specifics of nearness; the scene EXPANDS into its moments.');
@@ -309662,6 +309662,49 @@ Condensed (under ${maxLength} chars):` }
   //
   // The test is getClientRects(), not offsetParent: offsetParent is NULL for a position:fixed
   // element even when it is plainly on screen, which is what made the two tests unreliable.
+  // ── CARD-SUPPLIED SPEECH: SILENCE MEANS NO SPEECH, AND A READER EDIT ALWAYS WINS ──────────
+  // The Silence card used to carry a parenthetical description of NOT speaking in its dialogue
+  // field, so it was submitted as the player's spoken line and rendered as LIRAEL: "...". The
+  // suggestion now defaults to empty, which these two helpers must not undo:
+  //  · the fill paths read (hit.dialogue || cardData.dialogue || ''), a chain of TRUTHY
+  //    fallbacks - so a deliberate empty string could be replaced by a stale cached preview;
+  //  · the preview arrives on a deferred timer, so it could overwrite words the reader typed.
+  // Silence is the card's DEFAULT, never an override: anything the reader types is preserved,
+  // deliberate vocalizations included, and nothing is blanked at Submit.
+  window._sbCardSuppressesSpeech = function (card) {
+    try {
+      var id = String((card && (card.cardId || card.id)) || '').toLowerCase();
+      return id === 'silence';
+    } catch (_) { return false; }
+  };
+  window._sbApplyCardSpeech = function (diaInput, candidate, card, note) {
+    if (!diaInput) return;
+    try {
+      // A READER EDIT IS NEVER OVERWRITTEN by a late suggestion.
+      if (diaInput.dataset && diaInput.dataset.sbReaderEdited === '1') return;
+      var suppress = window._sbCardSuppressesSpeech(card);
+      // For a speech-suppressing card the empty default STANDS - no truthy fallback may win.
+      diaInput.value = suppress ? '' : String(candidate == null ? '' : candidate);
+      var n = note || (card && (card.dialogueNote || card.altDialogueNote)) || '';
+      if (suppress && n) diaInput.placeholder = String(n);   // display-only; never submitted
+    } catch (_) {}
+  };
+  // Mark the field the moment the reader touches it, so the guard above can tell their words
+  // from a suggestion. Registered once, on the document, so it survives panel rebuilds.
+  try {
+    if (!window.__sbReaderEditWatch) {
+      window.__sbReaderEditWatch = true;
+      document.addEventListener('input', function (ev) {
+        try {
+          var t = ev && ev.target;
+          if (!t || !t.id) return;
+          if (!/^(gnDialogueInput|dialogueInput|gnActionInput|actionInput|bakedOASSay|bakedOASDo)$/.test(t.id)) return;
+          if (t.dataset) t.dataset.sbReaderEdited = t.value ? '1' : '0';
+        } catch (_) {}
+      }, true);
+    }
+  } catch (_) {}
+
   window._sbActiveReaderSurface = function () {
       try {
           var r = window._sbEntranceRoute;
@@ -309845,7 +309888,9 @@ Condensed (under ${maxLength} chars):` }
       if (_cache && _cache._cacheKey === _turnKey && _cache[cardData.id]) {
           var hit = _cache[cardData.id];
           actInput.value = (hit.action || cardData.action || '').replace(/^["“]|["”]$/g, '');
-          diaInput.value = (hit.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, '');
+          window._sbApplyCardSpeech(diaInput,
+            (hit.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, ''),
+            cardData, (hit && hit.dialogueNote) || cardData.dialogueNote);
           try { console.log('[FATE:CACHE] Cache hit for ' + cardData.id + ' (turn ' + _turnKey + ') — no regeneration'); } catch (_) {}
           return;
       }

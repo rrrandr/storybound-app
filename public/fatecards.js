@@ -1163,23 +1163,29 @@ function stopContinuousSparkles() {
             case 'CARNAL':
                 return {
                     action: `A raw animal sound. Grip ${li} hard enough to bruise.`,
-                    dialogue: '(A guttural moan—nothing human about it.)',
+                    dialogue: '',
+                    dialogueNote: '(A guttural moan—nothing human about it.)',
                     altAction: `Teeth in ${li}'s shoulder. Nails raking. No words left.`,
-                    altDialogue: '(The sound you make isn\'t voluntary.)'
+                    altDialogue: '',
+                    altDialogueNote: '(The sound you make isn\'t voluntary.)'
                 };
             case 'VISCERAL':
                 return {
                     action: `Bite ${li}'s shoulder. Nails down their back. No words.`,
-                    dialogue: '(A sharp intake of breath through clenched teeth.)',
+                    dialogue: '',
+                    dialogueNote: '(A sharp intake of breath through clenched teeth.)',
                     altAction: `Dig your fingers into ${li}'s hips and pull them closer.`,
-                    altDialogue: '(A moan you couldn\'t stop if you tried.)'
+                    altDialogue: '',
+                    altDialogueNote: '(A moan you couldn\'t stop if you tried.)'
                 };
             default: // ROMANTIC
                 return {
                     action: `Lips on ${li}'s pulse point. Fingertip tracing their jaw.`,
-                    dialogue: '(A soft sound against their skin.)',
+                    dialogue: '',
+                    dialogueNote: '(A soft sound against their skin.)',
                     altAction: `Close your eyes. Press your lips to ${li}'s collarbone.`,
-                    altDialogue: '(Your breath catches—that\'s enough.)'
+                    altDialogue: '',
+                    altDialogueNote: '(Your breath catches—that\'s enough.)'
                 };
         }
     }
@@ -1815,18 +1821,22 @@ function stopContinuousSparkles() {
             if (plot.recentNearMiss) {
                 return {
                     action: `Hold the silence in the spot where the other path almost forked.`,
-                    dialogue: `(You don't say it. You don't know why.)`,
+                    dialogue: '',
+                    dialogueNote: `(You don't say it. You don't know why.)`,
                     altAction: `Don't fill the pause. Whatever didn't happen is still in the air.`,
-                    altDialogue: `(Something in you decides not to speak.)`
+                    altDialogue: '',
+                    altDialogueNote: `(Something in you decides not to speak.)`
                 };
             }
             // Committed truth NOT in climax window — silence holds the truth
             if (plot.committedTruth && !plot.committedTruth.revealFired && !plot.committedTruth.inClimaxWindow) {
                 return {
                     action: `Let the silence carry what your words won't. ${liName} can feel the absence.`,
-                    dialogue: `(The thing you almost said folds back into your chest.)`,
+                    dialogue: '',
+                    dialogueNote: `(The thing you almost said folds back into your chest.)`,
                     altAction: `Hold the truth in. Not forever — just not now.`,
-                    altDialogue: `(You decide to say nothing. ${liName} notices anyway.)`
+                    altDialogue: '',
+                    altDialogueNote: `(You decide to say nothing. ${liName} notices anyway.)`
                 };
             }
             // Recent narrative scar — silence around the scar topic
@@ -1834,18 +1844,22 @@ function stopContinuousSparkles() {
                 var scS = plot.recentScars[plot.recentScars.length - 1];
                 return {
                     action: `${liName} drifts close to "${scS.target}". Don't take the bait. Let the silence steer them off.`,
-                    dialogue: `(You change the subject without speaking.)`,
+                    dialogue: '',
+                    dialogueNote: `(You change the subject without speaking.)`,
                     altAction: `Refuse to be drawn into the thing you've stopped touching.`,
-                    altDialogue: `(Your stillness is the answer.)`
+                    altDialogue: '',
+                    altDialogueNote: `(Your stillness is the answer.)`
                 };
             }
             // Heavy charge avoidance — silence as protective distance
             if (plot.chargeLean && plot.chargeLean.lead <= -4) {
                 return {
                     action: `Hold the space empty. Don't let ${liName} fill the silence for you.`,
-                    dialogue: `(You don't help. You don't soften it.)`,
+                    dialogue: '',
+                    dialogueNote: `(You don't help. You don't soften it.)`,
                     altAction: `Let ${liName} stay uncertain. Your quiet is intentional.`,
-                    altDialogue: `(The silence stretches because you keep it stretching.)`
+                    altDialogue: '',
+                    altDialogueNote: `(The silence stretches because you keep it stretching.)`
                 };
             }
         }
@@ -1853,9 +1867,11 @@ function stopContinuousSparkles() {
         if (isSetup || !liIntroduced) {
             return {
                 action: 'Let the silence speak. Your stillness is a statement.',
-                dialogue: '(The quiet holds meaning.)',
+                dialogue: '',
+                dialogueNote: '(The quiet holds meaning.)',
                 altAction: 'Words would break this. Stay silent on purpose.',
-                altDialogue: '(You let the moment stretch.)'
+                altDialogue: '',
+                altDialogueNote: '(You let the moment stretch.)'
             };
         }
 
@@ -1863,25 +1879,31 @@ function stopContinuousSparkles() {
         if (lastEmotionalBeat === 'conflict') {
             return {
                 action: 'Refuse to fill the silence after the fight. Let it suffocate.',
-                dialogue: '(Your silence is louder than any words.)',
+                dialogue: '',
+                dialogueNote: '(Your silence is louder than any words.)',
                 altAction: `Don't give ${liName} the satisfaction of a response.`,
-                altDialogue: '(You say nothing. That is your answer.)'
+                altDialogue: '',
+                altDialogueNote: '(You say nothing. That is your answer.)'
             };
         }
         if (lastEmotionalBeat === 'intimacy') {
             return {
                 action: 'No words could hold what just passed between you. Breathe together.',
-                dialogue: '(The silence is sacred.)',
+                dialogue: '',
+                dialogueNote: '(The silence is sacred.)',
                 altAction: 'Speaking would cheapen it. Stay wordless.',
-                altDialogue: '(Your eyes say everything.)'
+                altDialogue: '',
+                altDialogueNote: '(Your eyes say everything.)'
             };
         }
         if (tensionPhrase === 'unanswered question') {
             return {
                 action: 'They asked. You don\'t answer. Let the silence be your reply.',
-                dialogue: '(The question hangs. You let it.)',
+                dialogue: '',
+                dialogueNote: '(The question hangs. You let it.)',
                 altAction: 'Your non-answer is deliberate. Hold it.',
-                altDialogue: '(Some questions don\'t deserve words.)'
+                altDialogue: '',
+                altDialogueNote: '(Some questions don\'t deserve words.)'
             };
         }
 
@@ -1889,25 +1911,31 @@ function stopContinuousSparkles() {
         if (objectPhrase === 'window') {
             return {
                 action: `Turn to the window. Let ${liName} wonder what you\'re thinking.`,
-                dialogue: '(Your gaze says: follow me or don\'t.)',
+                dialogue: '',
+                dialogueNote: '(Your gaze says: follow me or don\'t.)',
                 altAction: 'The window offers escape from conversation. Take it.',
-                altDialogue: '(Silence and distance speak together.)'
+                altDialogue: '',
+                altDialogueNote: '(Silence and distance speak together.)'
             };
         }
         if (objectPhrase === 'drink' || objectPhrase === 'glass') {
             return {
                 action: `Sip your drink instead of speaking. Make ${liName} break first.`,
-                dialogue: '(The glass buys you time.)',
+                dialogue: '',
+                dialogueNote: '(The glass buys you time.)',
                 altAction: 'Hide behind the ritual of drinking. Wait them out.',
-                altDialogue: '(Actions louder than words.)'
+                altDialogue: '',
+                altDialogueNote: '(Actions louder than words.)'
             };
         }
 
         return {
             action: `Hold ${liName}\'s gaze without speaking. See who breaks first.`,
-            dialogue: '(The air between you thickens.)',
+            dialogue: '',
+            dialogueNote: '(The air between you thickens.)',
             altAction: 'Your silence is a test. Will they fill it, or endure?',
-            altDialogue: '(Neither of you speaks. Neither looks away.)'
+            altDialogue: '',
+            altDialogueNote: '(Neither of you speaks. Neither looks away.)'
         };
     }
 
@@ -3130,13 +3158,17 @@ function setSelectedState(mount, selectedCardEl){
                     // step-D detector's range — so prefill the crafted text directly.
                     if (data && data._fateWishCandidate) {
                         if (actInput) actInput.value = data.action;
-                        if (diaInput) diaInput.value = data.dialogue;
+                        // Silence keeps its empty default; a reader edit is never overwritten.
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        else if (diaInput) diaInput.value = data.dialogue;
                     } else if (typeof window.generateFatePreview === 'function') {
                         // Use contextual preview if available, fallback to card defaults
                         window.generateFatePreview(data);
                     } else {
                         if(actInput) actInput.value = data.action;
-                        if(diaInput) diaInput.value = data.dialogue;
+                        // Silence keeps its empty default; a reader edit is never overwritten.
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        else if (diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);
 
@@ -3382,12 +3414,16 @@ function setSelectedState(mount, selectedCardEl){
                     // (skip the archetype-only regenerator — see the sibling handler).
                     if (data && data._fateWishCandidate) {
                         if (actInput) actInput.value = data.action;
-                        if (diaInput) diaInput.value = data.dialogue;
+                        // Silence keeps its empty default; a reader edit is never overwritten.
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        else if (diaInput) diaInput.value = data.dialogue;
                     } else if (typeof window.generateFatePreview === 'function') {
                         window.generateFatePreview(data);
                     } else {
                         if (actInput) actInput.value = data.action;
-                        if (diaInput) diaInput.value = data.dialogue;
+                        // Silence keeps its empty default; a reader edit is never overwritten.
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        else if (diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);
 
