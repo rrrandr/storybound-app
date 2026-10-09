@@ -1,0 +1,23 @@
+{
+  "allowed": false,
+  "reason": "over_run_cap",
+  "estimate": 0.1288575,
+  "cap": 0,
+  "detail": {
+    "estimate": 0.1288575,
+    "raw": 0.10738125000000001,
+    "promptChars": 247619,
+    "promptTokens": 61905,
+    "outTokens": 12000,
+    "rates": {
+      "in": 0.00000125,
+      "out": 0.0000025
+    },
+    "assumptions": {
+      "CHARS_PER_TOKEN": 4,
+      "REASONING_MULT": 1.5,
+      "SAFETY_MARGIN": 1.2,
+      "ASSUME_NO_CACHE": true
+    }
+  }
+}

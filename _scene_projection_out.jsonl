@@ -18,3 +18,11 @@
 {"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790585838680,"loggedAt":1790585838680}
 {"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790585838690,"loggedAt":1790585838690}
 {"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790585838854,"loggedAt":1790585838854}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790663141003,"loggedAt":1790663141003}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790663151989,"loggedAt":1790663151989}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790663151998,"loggedAt":1790663151998}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790663152160,"loggedAt":1790663152160}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790663569528,"loggedAt":1790663569528}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/config","method":"GET","reason":"no registered stub or real-lane for this path","at":1790663581048,"loggedAt":1790663581048}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/csp-report","method":"POST","reason":"no registered stub or real-lane for this path","at":1790663581058,"loggedAt":1790663581058}
+{"kind":"abort-undeclared","url":"http://localhost:3000/api/geo","method":"GET","reason":"no registered stub or real-lane for this path","at":1790663581250,"loggedAt":1790663581250}

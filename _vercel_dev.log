@@ -1,56 +1,501 @@
 <claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
-Vercel CLI 59.25.0 (Node.js 25.3.0)
+Vercel CLI 62.4.0 (Node.js 25.3.0)
 Retrieving project…
 > Local resources:
   Vercel Queues   http://127.0.0.1:4782
+  Vercel Schedules http://127.0.0.1:4784
   Runtime Cache   http://127.0.0.1:4783/v1/suspense-cache/
 > Ready! Available at http://localhost:3000
-[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
-[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
-[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
-[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
-[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
-[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
-[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
-[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
-[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
-[MISTRAL-PROXY] usage {"prompt_tokens":5696,"total_tokens":7478,"completion_tokens":1782,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
-[MISTRAL-PROXY] quota reconcile op=mq_muioc0yy_fy3y1q82 released=17362 held=7478 exact=true
-[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-non-reasoning
-[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
-[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning
-[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-non-reasoning
-[SPECIALIST-PROXY] latency=9496ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
-[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
-[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4-1-fast-reasoning
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
 [SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
-[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning
-[SPECIALIST-PROXY] Trying model 1/1: grok-4-1-fast-reasoning
-[SPECIALIST-PROXY] latency=39243ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=12864ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[GEO-GATE] geo_gate_decision {"country":null,"decision":"dev_allow","mode":"log","reason":"dev","path":"geo"}
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15719ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: SPECIALIST_RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=3715ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] usage {"prompt_tokens":3140,"total_tokens":4140,"completion_tokens":1000,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0cz8j1_ke414oos released=8931 held=4140 exact=true
+[SPECIALIST-PROXY] latency=14599ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=19126ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15065ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=16876ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=14699ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":6336,"total_tokens":7923,"completion_tokens":1587,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d2yye_3hns9o6i released=19656 held=7923 exact=true
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=8774ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=53178ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
 [SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
 [MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
-[MISTRAL-PROXY] usage {"prompt_tokens":3144,"total_tokens":4071,"completion_tokens":927,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
-[MISTRAL-PROXY] quota reconcile op=mq_muiodk2x_ivknialt released=9188 held=4071 exact=true
-[CHATGPT-PROXY] Request body keys: [messages], role: PRIMARY_AUTHOR, model: (default)
-[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys: [ 'messages' ]
+[MISTRAL-PROXY] usage {"prompt_tokens":3225,"total_tokens":4217,"completion_tokens":992,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d4ret_kalsw6tw released=9377 held=4217 exact=true
 [MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
-[MISTRAL-PROXY] usage {"prompt_tokens":2005,"total_tokens":3347,"completion_tokens":1342,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
-[MISTRAL-PROXY] quota reconcile op=mq_muj1bn00_w57ebsp6 released=8260 held=3347 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1858,"total_tokens":2550,"completion_tokens":692,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d519a_sl6xp5tm released=6082 held=2550 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
 [MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
-[MISTRAL-PROXY] usage {"prompt_tokens":2250,"total_tokens":3568,"completion_tokens":1318,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
-[MISTRAL-PROXY] quota reconcile op=mq_muj5dbx0_8n6twzk9 released=9060 held=3568 exact=true
-[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
-[MISTRAL-PROXY] usage {"prompt_tokens":2597,"total_tokens":3897,"completion_tokens":1300,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
-[MISTRAL-PROXY] quota reconcile op=mq_muj84ntq_thr9b1g6 released=10249 held=3897 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1571,"total_tokens":1778,"completion_tokens":207,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d5j0d_iff8jb2w released=5343 held=1778 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=15285ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
 [SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
+[SPECIALIST-PROXY] Client preferredModel: grok-4.3 → chain reordered.
 [SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
 [SPECIALIST-PROXY] Trying model 1/1: grok-4.3
 [PROXY] SB model override -> grok-4.3 (effort high)
-[SPECIALIST-PROXY] latency=9979ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
+[SPECIALIST-PROXY] latency=14304ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
 [SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
-[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: grok-4.3
-[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4.3
-[SPECIALIST-PROXY] Trying model 1/1: grok-4.3
-[PROXY] SB model override -> grok-4.3 (effort high)
-[SPECIALIST-PROXY] latency=13033ms model=grok-4.3 effort=high (chain="grok-4.3") status=200
-[SPECIALIST-PROXY] ✓ Model grok-4.3 succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=64904ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3298,"total_tokens":4247,"completion_tokens":949,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d7px7_i799c25g released=9635 held=4247 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1922,"total_tokens":2353,"completion_tokens":431,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d7ud5_b64mn7b7 released=6543 held=2353 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1617,"total_tokens":1881,"completion_tokens":264,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d8hu5_005zd9c6 released=5476 held=1881 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=8046ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1183,"total_tokens":1249,"completion_tokens":66,"prompt_tokens_details":{"cached_tokens":640},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0d8u5n_pbol2ojk released=4474 held=1249 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=15962ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=53461ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3166,"total_tokens":4169,"completion_tokens":1003,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0dafmq_0g4d5xwm released=9152 held=4169 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1831,"total_tokens":2315,"completion_tokens":484,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0daivw_p9frkjpe released=6290 held=2315 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=11002ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=42164ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3260,"total_tokens":4279,"completion_tokens":1019,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0dcbrr_8pey85hv released=9505 held=4279 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1934,"total_tokens":2516,"completion_tokens":582,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0dcf21_sogouvfu released=6584 held=2516 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1583,"total_tokens":1956,"completion_tokens":373,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0dd1fg_7b3rs5zc released=5341 held=1956 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=7525ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=49054ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=10846ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: SPECIALIST_RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=3970ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] usage {"prompt_tokens":3136,"total_tokens":4099,"completion_tokens":963,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[SPECIALIST-PROXY] latency=9980ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] quota reconcile op=mq_mv0itsz8_bssibfca released=8979 held=4099 exact=true
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15406ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=17642ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=14589ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15329ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":6053,"total_tokens":7646,"completion_tokens":1593,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0ixd44_ofiuocq1 released=18923 held=7646 exact=true
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=12695ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=51043ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3178,"total_tokens":4110,"completion_tokens":932,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[SPECIALIST-PROXY] Role: INTIMACY_SPECIALIST, Model chain: grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4.20-0309-non-reasoning
+[MISTRAL-PROXY] quota reconcile op=mq_mv0iz7iz_ew0be0te released=9210 held=4110 exact=true
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1797,"total_tokens":2404,"completion_tokens":607,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0izhq8_4y23hh6t released=5894 held=2404 exact=true
+[SPECIALIST-PROXY] latency=10579ms model=grok-4.3 effort=none (chain="grok-4.20-0309-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4.20-0309-non-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1541,"total_tokens":1816,"completion_tokens":275,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0iztof_dowjp8ne released=5126 held=1816 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=11135ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=56613ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3325,"total_tokens":4301,"completion_tokens":976,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0j1g3a_tc6zijhr released=9717 held=4301 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15115ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: SPECIALIST_RENDERER, Model chain: grok-4-1-fast-non-reasoning → grok-4.20-0309-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/4: grok-4-1-fast-non-reasoning
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=6626ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[MISTRAL-PROXY] usage {"prompt_tokens":3135,"total_tokens":4141,"completion_tokens":1006,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[SPECIALIST-PROXY] latency=15595ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] quota reconcile op=mq_mv0l8h33_q83zogg4 released=8922 held=4141 exact=true
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15062ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=15803ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=19365ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] preferredModel "grok-4.20-0309-non-reasoning" is not in this role's chain — NOT reordering. The chain will run its own entries; only _sbModelOverride changes the model actually called.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=17407ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":6372,"total_tokens":7832,"completion_tokens":1460,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lcbbq_zysqwras released=19897 held=7832 exact=true
+[CHATGPT-PROXY] Request body keys: [role, model, temperature, max_tokens, messages], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=20395ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=53839ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3348,"total_tokens":4418,"completion_tokens":1070,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0ledpx_0jc2vgxv released=9715 held=4418 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1976,"total_tokens":2845,"completion_tokens":869,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0leo1c_3ydfs7xy released=6308 held=2845 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1725,"total_tokens":1986,"completion_tokens":261,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lf4lj_kqtigfpc released=5832 held=1986 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=14700ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=47587ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3281,"total_tokens":4209,"completion_tokens":928,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lgnb3_tv27cfni released=9583 held=4209 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1973,"total_tokens":2529,"completion_tokens":556,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lgs6u_3eg24l1m released=6572 held=2529 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1606,"total_tokens":1853,"completion_tokens":247,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lhdvo_uhl34zpx released=5450 held=1853 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=8997ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=39304ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1923,"total_tokens":2680,"completion_tokens":757,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0liowo_vv4vkzhi released=6276 held=2680 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3169,"total_tokens":4203,"completion_tokens":1034,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0liliw_5k0zfxxv released=9151 held=4203 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":1567,"total_tokens":2202,"completion_tokens":635,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lj71z_szej1isi released=4933 held=2202 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=16735ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=45983ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1973,"total_tokens":2551,"completion_tokens":578,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lkwxc_injdig3s released=6637 held=2551 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":3214,"total_tokens":4164,"completion_tokens":950,"prompt_tokens_details":{"cached_tokens":1536},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lktru_yhik6r88 released=9392 held=4164 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1535,"total_tokens":1850,"completion_tokens":315,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lljab_nvkbyt62 released=5249 held=1850 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=12941ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=34149ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2000,"total_tokens":2525,"completion_tokens":525,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lmumu_wayasfsj released=6791 held=2525 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":3186,"total_tokens":4234,"completion_tokens":1048,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lmr9f_qxkdowrb released=9204 held=4234 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1526,"total_tokens":1852,"completion_tokens":326,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lncm0_5u9v32jk released=5180 held=1852 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=20423ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=42593ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2072,"total_tokens":2613,"completion_tokens":541,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0loy43_s6irkpko released=7048 held=2613 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":3241,"total_tokens":4232,"completion_tokens":991,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0louvl_o9whvirr released=9461 held=4232 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1562,"total_tokens":1949,"completion_tokens":387,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lpl2g_qc4a54h5 released=5278 held=1949 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=14116ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=45900ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":2087,"total_tokens":2678,"completion_tokens":591,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lr4tf_xhz1t28w released=7050 held=2678 exact=true
+[MISTRAL-PROXY] usage {"prompt_tokens":3227,"total_tokens":4196,"completion_tokens":969,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lr1lx_bs9wdogq released=9415 held=4196 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1571,"total_tokens":1867,"completion_tokens":296,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lrq15_9hpvlxh4 released=5415 held=1867 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=13780ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=45430ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[MISTRAL-PROXY] Role: SD_FALLBACK, Model: ministral-8b-2512
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":3227,"total_tokens":4249,"completion_tokens":1022,"prompt_tokens_details":{"cached_tokens":0},"service_tier":"standard"}
+[MISTRAL-PROXY] usage {"prompt_tokens":2114,"total_tokens":2700,"completion_tokens":586,"prompt_tokens_details":{"cached_tokens":896},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lt4vo_8p5cr1jl released=9362 held=4249 exact=true
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lt843_4xaim3uo released=7154 held=2700 exact=true
+[CHATGPT-PROXY] Request body keys: [messages, role, model, temperature, max_tokens], role: PRIMARY_AUTHOR, model: gpt-4o-mini
+[CHATGPT-PROXY] Role: PRIMARY_AUTHOR, Model: gpt-4o-mini
+[MISTRAL-PROXY] Role: STRUCTURE_GENERATOR, Model: ministral-8b-2512
+[MISTRAL-PROXY] usage {"prompt_tokens":1559,"total_tokens":1769,"completion_tokens":210,"prompt_tokens_details":{"cached_tokens":1024},"service_tier":"standard"}
+[MISTRAL-PROXY] quota reconcile op=mq_mv0lttp6_slk7chlg released=5346 held=1769 exact=true
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-non-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-non-reasoning → grok-4-1-fast-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-non-reasoning
+[SPECIALIST-PROXY] latency=9385ms model=grok-4.3 effort=none (chain="grok-4-1-fast-non-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-non-reasoning succeeded
+[SPECIALIST-PROXY] Client preferredModel: grok-4-1-fast-reasoning → chain reordered.
+[SPECIALIST-PROXY] Role: STRUCTURE_GENERATOR, Model chain: grok-4-1-fast-reasoning → grok-4-1-fast-non-reasoning → grok-4.3
+[SPECIALIST-PROXY] Trying model 1/3: grok-4-1-fast-reasoning
+[SPECIALIST-PROXY] latency=40353ms model=grok-4.3 effort=high (chain="grok-4-1-fast-reasoning") status=200
+[SPECIALIST-PROXY] ✓ Model grok-4-1-fast-reasoning succeeded
+[beta-events] insert failed: Could not find the table 'public.beta_events' in the schema cache

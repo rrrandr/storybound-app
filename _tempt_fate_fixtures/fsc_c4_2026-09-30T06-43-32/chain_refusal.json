@@ -1,0 +1,50 @@
+{
+  "ok": false,
+  "reason": "chain_over_run_cap",
+  "reservation": {
+    "initial": 0.12890849999999998,
+    "repair": 0.00735,
+    "total": 0.13625849999999998,
+    "detail": {
+      "initial": {
+        "estimate": 0.12890849999999998,
+        "raw": 0.10742375,
+        "promptChars": 247753,
+        "promptTokens": 61939,
+        "outTokens": 12000,
+        "rates": {
+          "in": 0.00000125,
+          "out": 0.0000025
+        },
+        "assumptions": {
+          "CHARS_PER_TOKEN": 4,
+          "REASONING_MULT": 1.5,
+          "SAFETY_MARGIN": 1.2,
+          "ASSUME_NO_CACHE": true
+        }
+      },
+      "repair": {
+        "estimate": 0.00735,
+        "raw": 0.006125,
+        "promptChars": 12400,
+        "promptTokens": 3100,
+        "outTokens": 900,
+        "rates": {
+          "in": 0.00000125,
+          "out": 0.0000025
+        },
+        "assumptions": {
+          "CHARS_PER_TOKEN": 4,
+          "REASONING_MULT": 1.5,
+          "SAFETY_MARGIN": 1.2,
+          "ASSUME_NO_CACHE": true
+        }
+      }
+    },
+    "model": "grok-4-1-fast-reasoning",
+    "cap": 0.13,
+    "remaining": 0.13,
+    "repairState": "reserved",
+    "spent": 0
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "mode": "live",
+  "branch": "A",
+  "authorized": 0.02,
+  "reserved": 0.017550000000000003,
+  "axis": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "a": {
+      "key": "run",
+      "label": "run in shame"
+    },
+    "b": {
+      "key": "remain",
+      "label": "remain and see where Julian was taking it"
+    }
+  },
+  "decision": {
+    "axis": "run in shame vs remain and see where Julian was taking it",
+    "choice": "run",
+    "label": "run in shame",
+    "source": "resume",
+    "at": 1790949195912,
+    "storyId": "cb72e3a7-dd3b-4269-8719-afb2fa0cdaa0"
+  },
+  "clickRoute": "in-page el.click() — host not rendered in this harness",
+  "calls": [
+    {
+      "stage": "infrastructure",
+      "url": "/api/csp-report",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/config",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/csp-report",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/geo",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/beta-events",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "other",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "infrastructure",
+      "url": "/api/beta-events",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "planner",
+      "url": "/api/proxy",
+      "outcome": "dispatched_live",
+      "bytes": 4875
+    },
+    {
+      "stage": "author",
+      "url": "/api/proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "author",
+      "url": "/api/mistral-proxy",
+      "outcome": "aborted"
+    },
+    {
+      "stage": "author",
+      "url": "/api/chatgpt-proxy",
+      "outcome": "aborted"
+    }
+  ],
+  "plannerAnswered": 1,
+  "blockedRetries": 0,
+  "staleReasons": [
+    "[CONTINUATION:REJECT] scene=1 :: pressure_scope \"scene_local\" but this proposal DEPENDS on a continuing body persisting: [assembly] appears in branch_b, event_slots.exit_state. A body the player named is not canon by that act alone — but you may not keep it provisional while relying on it. Either adopt it as durable canon (pressure_scope \"durable\" with kind, aliases and future_relevance in introduces[]), or return a no-change alternative that does not rely on it"
+  ],
+  "outcome": {
+    "projLen": 7605,
+    "sceneCount": 1,
+    "turnCount": 1,
+    "staged": false
+  },
+  "checks": {
+    "pass": 13,
+    "fail": 0
+  }
+}

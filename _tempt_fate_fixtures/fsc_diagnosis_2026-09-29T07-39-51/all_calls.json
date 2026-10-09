@@ -1,0 +1,15 @@
+[
+  {
+    "n": 0,
+    "bytes": 952,
+    "url": "/api/csp-report",
+    "role": null,
+    "roleTag": null,
+    "model": null,
+    "msgs": null,
+    "sysHead": "",
+    "authorScore": 0,
+    "hasConsequence": false,
+    "hasWeave": false
+  }
+]

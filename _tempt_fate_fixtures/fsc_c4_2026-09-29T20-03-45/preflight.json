@@ -1,0 +1,240 @@
+{
+  "checks": [
+    {
+      "name": "starter catalog entry exists",
+      "ok": true
+    },
+    {
+      "name": "story launched through the normal path",
+      "ok": true
+    },
+    {
+      "name": "STRUCTURED identity: state._starterId === starter_first_sacrifice",
+      "ok": true,
+      "detail": "got starter_first_sacrifice"
+    },
+    {
+      "name": "the id resolves in STARTER_SEEDS",
+      "ok": true
+    },
+    {
+      "name": "the id resolves in STARTER_PLANS",
+      "ok": true
+    },
+    {
+      "name": "consequence compiled: unm.time_gives_way",
+      "ok": true,
+      "detail": "unm.time_gives_way"
+    },
+    {
+      "name": "roster is all five present",
+      "ok": true,
+      "detail": "the_assembly,named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael"
+    },
+    {
+      "name": "invokerScope in_population",
+      "ok": true,
+      "detail": "in_population"
+    },
+    {
+      "name": "an aftermath beat is present",
+      "ok": true
+    },
+    {
+      "name": "no delivery failure recorded",
+      "ok": true,
+      "detail": "null"
+    },
+    {
+      "name": "a terminal author request was captured",
+      "ok": true
+    },
+    {
+      "name": "payload carries First Sacrifice story identity",
+      "ok": true,
+      "detail": "hits=Veilwood,Sacrificiant,First Favored"
+    },
+    {
+      "name": "payload does NOT carry the default corporate story",
+      "ok": true
+    },
+    {
+      "name": "payload carries OUTCOME: unm.time_gives_way",
+      "ok": true
+    },
+    {
+      "name": "payload carries EFFECT BOUNDARY",
+      "ok": true
+    },
+    {
+      "name": "payload carries AFFECTED scope",
+      "ok": true
+    },
+    {
+      "name": "payload carries LIRAEL IS AFFECTED",
+      "ok": true
+    },
+    {
+      "name": "payload carries the AFTERMATH BEAT",
+      "ok": true
+    },
+    {
+      "name": "payload carries the authored beat text",
+      "ok": true
+    },
+    {
+      "name": "payload carries FORBIDDEN INVENTIONS",
+      "ok": true
+    },
+    {
+      "name": "payload forbids visible wish-energy",
+      "ok": true
+    },
+    {
+      "name": "the compiled record opens a pending choice",
+      "ok": true
+    },
+    {
+      "name": "payload carries END ON THE CHOICE",
+      "ok": true
+    },
+    {
+      "name": "payload forbids authoring past the choice",
+      "ok": true
+    },
+    {
+      "name": "payload derives the choice from ACTIVE CANON",
+      "ok": true
+    },
+    {
+      "name": "payload names what the choice MAY NOT rest on",
+      "ok": true
+    },
+    {
+      "name": "payload rejects an option that ONLY makes sense under the replaced history",
+      "ok": true
+    },
+    {
+      "name": "payload does NOT carry the withdrawn false claim about the assumption",
+      "ok": true
+    },
+    {
+      "name": "payload states unlisted facts remain available to the choice",
+      "ok": true
+    },
+    {
+      "name": "payload permits a standing assumption resting on active facts",
+      "ok": true
+    },
+    {
+      "name": "payload carries WRITE FROM INSIDE THE REPLACEMENT",
+      "ok": true
+    },
+    {
+      "name": "payload states the affected have NO memory of the replaced timeline",
+      "ok": true
+    },
+    {
+      "name": "payload states it is not something they forgot",
+      "ok": true
+    },
+    {
+      "name": "payload requires the replay be their ONLY experienced version",
+      "ok": true
+    },
+    {
+      "name": "the payload contains the forbidden-vocabulary list",
+      "ok": true
+    },
+    {
+      "name": "payload forbids the external-timeline vocabulary",
+      "ok": true,
+      "detail": "FORBIDDEN, in narration and dialogue alike: \"again\", \"a second time\", \"the second\", \"earlier\", \"the first time\", \"before"
+    },
+    {
+      "name": "payload states the record is the READER’S, not character knowledge",
+      "ok": true
+    },
+    {
+      "name": "payload forbids an unestablished shared understanding",
+      "ok": true
+    },
+    {
+      "name": "payload names the aftermath beat as the ONLY permitted trace",
+      "ok": true
+    },
+    {
+      "name": "payload forbids narrating an erased event’s absence or echo",
+      "ok": true
+    },
+    {
+      "name": "payload denies the non-event any perceptible trace",
+      "ok": true
+    },
+    {
+      "name": "payload states a non-event leaves nothing to perceive",
+      "ok": true
+    },
+    {
+      "name": "payload limits rendering to active canon + the sealed beat",
+      "ok": true
+    },
+    {
+      "name": "NOW TRUE uses writer language, not the ledger’s counting frame",
+      "ok": true
+    },
+    {
+      "name": "the audit phrase \"played through a second time\" is ABSENT from the payload",
+      "ok": true
+    },
+    {
+      "name": "payload carries the OPENING ORIENTATION rule",
+      "ok": true
+    },
+    {
+      "name": "it sits BEFORE the beats schema, not only in the later boundary block",
+      "ok": true,
+      "detail": "open@37060 beats@37876"
+    },
+    {
+      "name": "it says to begin inside the only timeline the characters know",
+      "ok": true
+    },
+    {
+      "name": "it names the permitted orientation: place, body, stakes, present action",
+      "ok": true
+    },
+    {
+      "name": "it forbids numbering / repetition / replacement / comparison",
+      "ok": true
+    },
+    {
+      "name": "it separates ledger language from writer language",
+      "ok": true
+    }
+  ],
+  "bytes": 257946,
+  "compiled": {
+    "outcomeId": "unm.time_gives_way",
+    "roster": [
+      "the_assembly",
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael"
+    ],
+    "invokerScope": "in_population",
+    "beat": "Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian's gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.",
+    "digest": "fsbgnmory:7126"
+  },
+  "identity": {
+    "found": true,
+    "defId": "starter_first_sacrifice",
+    "starterId": "starter_first_sacrifice",
+    "hasSeed": true,
+    "hasPlan": true,
+    "pcName": "Lirael",
+    "liName": "Julian",
+    "tone": "Earnest"
+  }
+}

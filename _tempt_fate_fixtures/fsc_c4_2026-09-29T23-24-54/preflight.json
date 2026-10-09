@@ -1,0 +1,236 @@
+{
+  "checks": [
+    {
+      "name": "starter catalog entry exists",
+      "ok": true
+    },
+    {
+      "name": "story launched through the normal path",
+      "ok": true
+    },
+    {
+      "name": "STRUCTURED identity: state._starterId === starter_first_sacrifice",
+      "ok": true,
+      "detail": "got starter_first_sacrifice"
+    },
+    {
+      "name": "the id resolves in STARTER_SEEDS",
+      "ok": true
+    },
+    {
+      "name": "the id resolves in STARTER_PLANS",
+      "ok": true
+    },
+    {
+      "name": "consequence compiled: unm.time_gives_way",
+      "ok": true,
+      "detail": "unm.time_gives_way"
+    },
+    {
+      "name": "roster is all five present",
+      "ok": true,
+      "detail": "the_assembly,named:seren,named:julian,role:first_sacrifice_presiding_dohkar,pc:lirael"
+    },
+    {
+      "name": "invokerScope in_population",
+      "ok": true,
+      "detail": "in_population"
+    },
+    {
+      "name": "an aftermath beat is present",
+      "ok": true
+    },
+    {
+      "name": "no delivery failure recorded",
+      "ok": true,
+      "detail": "null"
+    },
+    {
+      "name": "a terminal author request was captured",
+      "ok": true
+    },
+    {
+      "name": "payload carries First Sacrifice story identity",
+      "ok": true,
+      "detail": "hits=Veilwood,Sacrificiant,First Favored"
+    },
+    {
+      "name": "payload does NOT carry the default corporate story",
+      "ok": true
+    },
+    {
+      "name": "an author brief was rendered",
+      "ok": true,
+      "detail": "4 lines"
+    },
+    {
+      "name": "every line of the brief is in the author request",
+      "ok": true
+    },
+    {
+      "name": "the brief names reactions the characters do not explain",
+      "ok": true
+    },
+    {
+      "name": "the brief carries no price, debt or cost language",
+      "ok": true
+    },
+    {
+      "name": "the brief carries no glow or wish-energy",
+      "ok": true
+    },
+    {
+      "name": "the brief carries no replay, erasure or count",
+      "ok": true
+    },
+    {
+      "name": "the brief opens on present reality, not a count",
+      "ok": true
+    },
+    {
+      "name": "the brief gives the ground its colour, not a glow",
+      "ok": true
+    },
+    {
+      "name": "the brief states Julian kept the Answer throughout",
+      "ok": true
+    },
+    {
+      "name": "the brief states no question was put, and the suspicion remains",
+      "ok": true
+    },
+    {
+      "name": "the brief does NOT frame the choice as a payment calculation",
+      "ok": true
+    },
+    {
+      "name": "it states the active facts directly",
+      "ok": true
+    },
+    {
+      "name": "the brief gives Seren an individual, ordinary reaction",
+      "ok": true
+    },
+    {
+      "name": "the brief gives the Dohkar his own lapse",
+      "ok": true
+    },
+    {
+      "name": "the brief gives Julian his own unexplained attention",
+      "ok": true
+    },
+    {
+      "name": "the brief gives the crowd a hesitation, not a sensation",
+      "ok": true
+    },
+    {
+      "name": "Lirael is still not spared",
+      "ok": true
+    },
+    {
+      "name": "NO umbrella phrasing gives the reactions a common force",
+      "ok": true
+    },
+    {
+      "name": "the brief names no shared timing, transmission or source",
+      "ok": true
+    },
+    {
+      "name": "the brief names the pending alternatives and where to end",
+      "ok": true
+    },
+    {
+      "name": "NO machine-specification term reaches the author request",
+      "ok": true,
+      "detail": "leaked: "
+    },
+    {
+      "name": "NO internal schema label or prohibition vocabulary reaches the author request",
+      "ok": true,
+      "detail": "leaked: "
+    },
+    {
+      "name": "the world truths describe the world positively instead",
+      "ok": true
+    },
+    {
+      "name": "NO forbidden-token list reaches the author request",
+      "ok": true,
+      "detail": "leaked: "
+    },
+    {
+      "name": "NO scanner vocabulary reaches the author request",
+      "ok": true,
+      "detail": "leaked: "
+    },
+    {
+      "name": "the machine specification is still rendered",
+      "ok": true,
+      "detail": "8139 chars"
+    },
+    {
+      "name": "  it carries the outcome id",
+      "ok": true
+    },
+    {
+      "name": "  it carries the full roster scope",
+      "ok": true
+    },
+    {
+      "name": "  it carries the canon change and its atoms",
+      "ok": true
+    },
+    {
+      "name": "  it carries the cost rule",
+      "ok": true
+    },
+    {
+      "name": "  it carries the aftermath beat",
+      "ok": true
+    },
+    {
+      "name": "  it carries the forbidden inventions",
+      "ok": true
+    },
+    {
+      "name": "the compiled record opens a pending choice",
+      "ok": true
+    },
+    {
+      "name": "  the spec carries the choice-stop rule",
+      "ok": true
+    },
+    {
+      "name": "  the spec carries the inside-the-replacement POV rule",
+      "ok": true
+    },
+    {
+      "name": "  the spec carries the absence clause",
+      "ok": true
+    }
+  ],
+  "bytes": 251160,
+  "compiled": {
+    "outcomeId": "unm.time_gives_way",
+    "roster": [
+      "the_assembly",
+      "named:seren",
+      "named:julian",
+      "role:first_sacrifice_presiding_dohkar",
+      "pc:lirael"
+    ],
+    "invokerScope": "in_population",
+    "beat": "Everyone present carries the faint, unplaceable sense of having stood here before. Seren looks at her own hands as if checking them. The Dohkar loses his place in a rite he has performed a hundred times. Julian's gaze finds Lirael a moment before there is any reason for it, and neither of them can say why.",
+    "digest": "fsb12dzcb5:8139"
+  },
+  "identity": {
+    "found": true,
+    "defId": "starter_first_sacrifice",
+    "starterId": "starter_first_sacrifice",
+    "hasSeed": true,
+    "hasPlan": true,
+    "pcName": "Lirael",
+    "liName": "Julian",
+    "tone": "Earnest"
+  }
+}

@@ -58,7 +58,7 @@ t('  and it passes a per-proposal sealed id, not prevProposal.proposalRef',
   && !/prevProposal\.proposalRef/.test(callSites[0].text),
   callSites.length ? callSites[0].text : 'none');
 t('  and the ref comes from the pending sealed store',
-  /_pendProps\.forEach\(function \(pp\)/.test(src));
+  /_adjudicateSceneProposals\(_pendProps,/.test(src));
 
 // The ref that reaches it is minted as a state_change seal.
 const refAssign = lines.filter(ln => /_stateChange\.proposalRef\s*=/.test(ln)).map(l => l.trim());

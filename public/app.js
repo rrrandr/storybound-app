@@ -102130,7 +102130,7 @@ function _buildAuthorFloorDirective(s) {
           var _scSys = 'You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.\n'
             + 'STATE_CHANGE CONTRACT (HARD — reused from the proven Scene-1 primitive, do NOT soften):\n'
             + '  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", the negation of the state_change, phrased so the scene must OPEN with it still false. 8-16 words.\n'
-            + '  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.\n'
+            + '  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; and a change confined to a FACE OR BODY is not one either — a tightened jaw, a held gaze, a flinch or a step back is a REACTION, and a scene cannot turn on one. Name what is now TRUE OUTSIDE any face: a fact entered on a record, a permission granted or withdrawn, an object changing hands, a person arriving or leaving, a demand made aloud, a secret now known to someone who did not know it. A reaction may ACCOMPANY that event; it cannot BE it. If your branches only exist because of the reaction, the event is too thin — the delete test cannot vouch for an event the branches were built on; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.\n'
             + '  • forces_choice: the decision the event UNLOCKS — the scene\'s closing choice, which could NOT have been posed before it (the event exists to CREATE this choice). "forces [PC] to choose between A and B" where A and B are TWO ACTIVE responses to the new fact (NOT one action + one escape hatch like "act or do nothing").\n'
             + '  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone\'s SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone\'s OWN nouns and actions.\n'
             + '  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.\n'
@@ -197351,40 +197351,6 @@ No text, no watermark, no UI elements, share-ready.`;
       // short-circuit: convening a hearing needs no supernatural capability, so an ordinary
       // grounding is exactly how reserved content slips through. This is a scheduling violation,
       // not a capability one.
-      // (0a) THE SCENE REPEATS ITS PREDECESSOR. Added 2026-10-09 after a live Scene 9 reproduced
-      // Scene 8's 24 beat texts line for line, changing ONE speaker, and was accepted: this check
-      // tested reserved content and grounding but never asked whether the scene was new. Prompt
-      // directives alone did not stop it ("Do NOT replay the prior scene" was in the request).
-      // Deterministic, verbatim-beat comparison - no model, no similarity heuristic, no paid pass.
-      try {
-        var _priorProse = (typeof _sbLatestProseText === 'function')
-          ? String(_sbLatestProseText(window.state) || '') : '';
-        var _norm = function (x) { return String(x || '').trim().replace(/\s+/g, ' '); };
-        var _beatsOf = function (t) {
-          return String(t || '').split('\n').map(_norm).filter(function (x) { return x.length > 12; });
-        };
-        var _newBeats = ((proposal && proposal.beats) || []).map(function (b) {
-          return _norm(b && (b.text != null ? b.text : b));
-        }).filter(function (x) { return x.length > 12; });
-        var _priorBeats = _beatsOf(_priorProse);
-        if (_newBeats.length >= 4 && _priorBeats.length >= 4) {
-          var _priorSet = {};
-          _priorBeats.forEach(function (x) { _priorSet[x] = 1; });
-          var _shared = _newBeats.filter(function (x) { return _priorSet[x]; });
-          var _frac = _shared.length / _newBeats.length;
-          if (_frac >= 0.4) {
-            violations.push({ category: 'invalidated_objective',
-              claim: 'this scene reproduces the previous scene',
-              citedFactIds: [],
-              why: 'REDUX: ' + _shared.length + ' of ' + _newBeats.length + ' beats ('
-                + Math.round(_frac * 100) + '%) are VERBATIM repeats of the previous scene. The '
-                + 'previous scene is over; this one must advance the situation. Example repeated '
-                + 'beat: "' + String(_shared[0]).slice(0, 90) + '"' });
-            return { decided: true, violations: violations, source: 'deterministic' };
-          }
-        }
-      } catch (_) {}
-
       var _rb = _detectReservedContentBreach(proposal, window.state);
       if (_rb) {
         violations.push({ category: 'invalidated_objective',
@@ -240605,6 +240571,48 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             } catch (_) {}
             return { __fateRejected: true, sceneIndex: sceneIndex,
                      failures: _fscGateVerdict.failures || [] }; }
+          // ── REDUX GATE (Roman 2026-10-09) ────────────────────────────────────────────────
+          // A live Scene 9 came back as Scene 8 with ONE speaker changed - 23 of its 24 beats
+          // verbatim - and was accepted, mounted and committed. The acceptance path tested
+          // staleness, the sealed consequence, reserved content and grounding, but never asked
+          // whether the scene was NEW. Deterministic verbatim-beat comparison against the
+          // previous scene's prose; no model, no similarity scoring, no rewrite loop. Rejected
+          // on the SAME contract as the gates above: never mounted, never committed, no
+          // continuity written, raw plan preserved for diagnosis only.
+          try {
+            var _rdxPrior = (typeof _sbLatestProseText === 'function')
+              ? String(_sbLatestProseText(state) || '') : '';
+            var _rdxNorm = function (x) { return String(x == null ? '' : x).trim().replace(/\s+/g, ' '); };
+            var _rdxPriorBeats = _rdxPrior.split('\n').map(_rdxNorm)
+              .filter(function (x) { return x.length > 12; });
+            var _rdxNew = ((_normalized && _normalized.beats) || []).map(function (b) {
+              return _rdxNorm(b && (b.text != null ? b.text : b));
+            }).filter(function (x) { return x.length > 12; });
+            if (_rdxNew.length >= 4 && _rdxPriorBeats.length >= 4) {
+              var _rdxSet = {};
+              _rdxPriorBeats.forEach(function (x) { _rdxSet[x] = 1; });
+              var _rdxShared = _rdxNew.filter(function (x) { return _rdxSet[x]; });
+              var _rdxFrac = _rdxShared.length / _rdxNew.length;
+              if (_rdxFrac >= 0.4) {
+                try {
+                  state._reduxRejectedScenes = state._reduxRejectedScenes || [];
+                  state._reduxRejectedScenes.push({ at: Date.now(), sceneIndex: sceneIndex,
+                    sharedBeats: _rdxShared.length, totalBeats: _rdxNew.length,
+                    rawPlan: _normalized });
+                  if (state._reduxRejectedScenes.length > 6) state._reduxRejectedScenes.shift();
+                } catch (_) {}
+                try {
+                  console.error('[CG:REDUX-REJECTED] scene ' + sceneIndex + ' — ' + _rdxShared.length
+                    + ' of ' + _rdxNew.length + ' beats (' + Math.round(_rdxFrac * 100)
+                    + '%) are VERBATIM repeats of the previous scene. Not mounted, not committed, nothing reader-visible. First repeated beat: "'
+                    + String(_rdxShared[0]).slice(0, 90) + '"');
+                } catch (_) {}
+                return { __reduxRejected: true, sceneIndex: sceneIndex,
+                         sharedBeats: _rdxShared.length, totalBeats: _rdxNew.length,
+                         fraction: _rdxFrac };
+              }
+            }
+          } catch (_) {}
           if (plan && plan.scene_assignments) { try { console.log('[CG:ASSIGN:MODEL-IGNORED] the writer returned scene_assignments; delivered ones stand'); } catch (_) {} }
           _normalized.scene_assignments = _normalizeSceneAssignments(
             _acc.snapshot ? { character_plus: _acc.snapshot.character_plus || [], environment_plus: _acc.snapshot.environment_plus || null, fusion: _acc.snapshot.fusion || null } : null, sceneIndex, _acc.snapshot ? 'cg_delivered' : 'cg_none');
