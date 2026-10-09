@@ -1,0 +1,14 @@
+{
+  "stagedSubmitting": true,
+  "isAdvancingScene": false,
+  "resumable": null,
+  "reduxRejected": [],
+  "composingIndicatorVisible": false,
+  "turnCount": 3,
+  "sceneAssignments": [],
+  "acceptedPlannerProposal": null,
+  "eventDeliveryDiagnostics": [],
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

@@ -1,0 +1,30 @@
+{
+  "stagedSubmitting": true,
+  "isAdvancingScene": false,
+  "resumable": null,
+  "reduxRejected": [],
+  "composingIndicatorVisible": false,
+  "turnCount": 3,
+  "sceneAssignments": [
+    {
+      "uid": "cg:1c4a5f39-2398-4",
+      "event": "Lirael refuses to continue answering in the open, and the assembly see",
+      "attemptId": "cpa:ca7ae5ef-14fd-43eb-9847-d16aa545d655"
+    },
+    {
+      "uid": "cg:99343afd-e0a9-4",
+      "event": "Seren's family publicly demands remedy for the twisted wish, and the p",
+      "attemptId": "cpa:ed15cef1-b711-4b7d-9505-744c07196634"
+    },
+    {
+      "uid": "cg:f28c382b-9e13-4",
+      "event": "Seren's family publicly demands remedy for the twisted wish, and the p",
+      "attemptId": "cpa:c31602de-57eb-49dc-b7f8-c9de1bade5dd"
+    }
+  ],
+  "acceptedPlannerProposal": null,
+  "eventDeliveryDiagnostics": [],
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

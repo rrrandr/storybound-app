@@ -1,0 +1,49 @@
+{
+  "stagedSubmitting": true,
+  "isAdvancingScene": false,
+  "resumable": null,
+  "reduxRejected": [],
+  "composingIndicatorVisible": false,
+  "turnCount": 2,
+  "sceneAssignments": [
+    {
+      "uid": "cg:589ba85a-9875-4",
+      "event": "Lirael refuses to continue answering in the open, and the assembly see",
+      "attemptId": "cpa:5c90e6b2-c681-4b06-aac1-d7da06788af5"
+    },
+    {
+      "uid": "cg:62be5715-dd9c-4",
+      "event": "Seren's family publicly demands remedy for the twisted wish, and the p",
+      "attemptId": "cpa:b4771401-15a8-4ee1-8d9f-f19fa18aa1a8"
+    }
+  ],
+  "acceptedPlannerProposal": null,
+  "eventDeliveryDiagnostics": [
+    {
+      "sceneNum": 3,
+      "sceneUid": "cg:589ba85a-9875-4",
+      "assignmentUid": "cg:589ba85a-9875-4",
+      "assignmentAttemptId": "cpa:5c90e6b2-c681-4b",
+      "assignedEvent": "Lirael refuses to continue answering in the open, and t",
+      "verdict": "anticipated",
+      "citationsAllFound": false,
+      "citations": [
+        {
+          "found": false,
+          "passage": "The clearing holds its breath after the Do"
+        },
+        {
+          "found": false,
+          "passage": "A line that appears in no scene whatsoever"
+        }
+      ],
+      "assessedProse": {
+        "hash": "h48d07a6b-1711",
+        "revision": 0
+      }
+    }
+  ],
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

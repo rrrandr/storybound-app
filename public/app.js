@@ -31962,14 +31962,19 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // the event lands, because that would invite agreement rather than judgement.
       var _edBlock = '';
       try {
-        var _edRec = null;
+        // RESOLVED ONCE, FROM THIS SCENE'S OWN RECORD, BEFORE the request is built. No numeric
+        // fallback and no borrowing: a missing assignment means the diagnostic is UNAVAILABLE.
+        var _edRec = null, _edProse = null;
         try {
-          // BY UID FIRST - unambiguous. The numeric key is a fallback only.
           var _edScene = (window.state.scenes || []).filter(function (x) {
             return x && sceneUid && x.uid === sceneUid; })[0];
-          _edRec = (_edScene && _edScene.plan && _edScene.plan.__assignedEvent) || null;
+          if (_edScene && _edScene.assignedEvent && _edScene.assignedEvent.state_change) {
+            _edRec = _edScene.assignedEvent;
+            _edProse = { hash: (_edScene.projection && _edScene.projection.hash) || null,
+                         revision: (_edScene.projection && _edScene.projection.revision) != null
+                           ? _edScene.projection.revision : null };
+          }
         } catch (_) {}
-        if (!_edRec) _edRec = (window.state._assignedEventByScene || {})[sceneNum] || null;
         if (_edRec && _edRec.state_change) {
           _edBlock = 'ALSO assess ASSIGNED-EVENT DELIVERY. This scene was commissioned to land ONE'
             + ' specific event:\n  ASSIGNED EVENT: "' + String(_edRec.state_change).slice(0, 220) + '"\n'
@@ -32115,13 +32120,9 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // happened. Beat numbers are deliberately not compared: an event can span beats, and two
       // models agreeing on an index would say nothing about delivery.
       try {
-        var _edRec2 = null;
-        try {
-          var _edScene2 = (window.state.scenes || []).filter(function (x) {
-            return x && sceneUid && x.uid === sceneUid; })[0];
-          _edRec2 = (_edScene2 && _edScene2.plan && _edScene2.plan.__assignedEvent) || null;
-        } catch (_) {}
-        if (!_edRec2) _edRec2 = (window.state._assignedEventByScene || {})[sceneNum] || null;
+        // THE SAME LOCAL SNAPSHOT the request was built from. State may have moved while the
+        // model was awaited; the diagnostic must describe what it actually asked about.
+        var _edRec2 = _edRec;
         if (_edRec2 && parsed && parsed.eventDelivery) {
           var _ed = parsed.eventDelivery;
           var _edHay = String(sceneText || '').replace(/\s+/g, ' ').toLowerCase();
@@ -32138,6 +32139,9 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
             at: Date.now(),
             sceneNum: sceneNum, sceneUid: sceneUid || null,
             assignedEvent: _edRec2.state_change,          // the assignment this scene was given
+            assignmentUid: _edRec2.uid || null,
+            assignmentAttemptId: _edRec2.attemptId || null,
+            assessedProse: _edProse,                      // WHICH prose revision was judged
             verdict: _edVerdicts[_edVerdict] ? _edVerdict : 'malformed',
             explanation: String(_ed.explanation || '').slice(0, 300),
             citations: _edCites,                          // mechanical: do these words exist?
@@ -240662,19 +240666,13 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           try {
             var _aeProp = state._acceptedPlannerProposal;
             var _aeEvent = _aeProp && (_aeProp.state_change || (_aeProp.proposal && _aeProp.proposal.state_change));
-            if (_aeEvent) {
-              state._assignedEventByScene = state._assignedEventByScene || {};
-              var _aeEntry = { sceneIndex: sceneIndex, state_change: String(_aeEvent),
+            if (_aeEvent && _normalized) {
+              _normalized.__assignedEvent = {
+                sceneIndex: sceneIndex,
+                state_change: String(_aeEvent),
                 precondition: String((_aeProp && _aeProp.state_change_precondition) || ''),
+                attemptId: (_acc && _acc.snapshot && _acc.snapshot.attemptId) || null,
                 at: Date.now() };
-              // Keyed under BOTH identifiers: the extractor is called with sceneNum, which is not
-              // guaranteed to equal the generation's sceneIndex.
-              if (!state._assignedEventByScene[sceneIndex]) state._assignedEventByScene[sceneIndex] = _aeEntry;
-              // Carried ON THE PLAN too, so the scene itself holds its assignment and the
-              // diagnostic can resolve it by UID instead of a derived scene number.
-              try { if (_normalized) _normalized.__assignedEvent = _aeEntry; } catch (_) {}
-              var _aeNum = (_aeProp && _aeProp.sceneNum != null) ? _aeProp.sceneNum : null;
-              if (_aeNum != null && !state._assignedEventByScene[_aeNum]) state._assignedEventByScene[_aeNum] = _aeEntry;
             }
           } catch (_) {}
 
@@ -241679,7 +241677,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
               // THE AUTHOR'S OWN NOTE, carried on the same response that produced the beats, so
               // there is no second call and no window in which the note describes a different
               // scene than the one persisted. Verification happens inside the persist.
-              historyNote: (plan && plan.history_note) || null })
+              historyNote: (plan && plan.history_note) || null,
+              // The assignment travels on the SAME response that produced the beats, bound to
+              // this uid and this generation - so the diagnostic can never read another
+              // scene's event.
+              assignedEvent: (plan && plan.__assignedEvent) || null })
           : null;
         var proseAssembled = _sbRec ? _sbRec.text : plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
         if (plan) plan.__sceneUid = (_sbRec && _sbRec.uid) || _sbSceneUid || plan.__sceneUid || null;
@@ -327911,7 +327913,18 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       },
       attributionSidecar: proj.attributionSidecar,
       attributionAvailable: true,
-      historyNote: null              // filled below, after the record exists to hold it
+      historyNote: null,             // filled below, after the record exists to hold it
+      // THE SCENE'S OWN ASSIGNMENT (Roman 2026-10-09). Metadata ONLY - the event text, its
+      // precondition and the owning generation - never the plan. The delivery diagnostic runs
+      // after persistence, so without this the assignment cannot reach it; keying by a derived
+      // scene number was off by one and could borrow another scene's event.
+      assignedEvent: (spec.assignedEvent && spec.assignedEvent.state_change)
+        ? { state_change: String(spec.assignedEvent.state_change),
+            precondition: String(spec.assignedEvent.precondition || ''),
+            sceneIndex: (spec.assignedEvent.sceneIndex != null) ? spec.assignedEvent.sceneIndex : null,
+            attemptId: spec.assignedEvent.attemptId || null,
+            uid: uid }
+        : null
     };
     s.scenes.push(rec);
     // Attach the author's note NOW, against the prose this record actually holds. Verification

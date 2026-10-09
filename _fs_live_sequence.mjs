@@ -3238,14 +3238,23 @@ if (process.env.SB_DUMP_READER_STATE) {
           rawPlanBeats: (x.rawPlan && x.rawPlan.beats && x.rawPlan.beats.length) || 0 })),
         composingIndicatorVisible: vis('stagedComposingIndicator'),
         turnCount: st.turnCount,
-        assignedEventByScene: Object.keys(st._assignedEventByScene || {}).map((k) => ({
-          key: k, event: String((st._assignedEventByScene[k] || {}).state_change || '').slice(0, 80) })),
+        sceneAssignments: (st.scenes || []).filter((x) => x && x.assignedEvent).map((x) => ({
+          uid: String(x.uid || '').slice(0, 18),
+          event: String(x.assignedEvent.state_change || '').slice(0, 70),
+          attemptId: x.assignedEvent.attemptId || null })),
         acceptedPlannerProposal: st._acceptedPlannerProposal
           ? { sceneNum: st._acceptedPlannerProposal.sceneNum,
               state_change: String(st._acceptedPlannerProposal.state_change || '').slice(0, 80) }
           : null,
         eventDeliveryDiagnostics: (st._eventDeliveryDiagnostics || []).map((d) => ({
-          sceneNum: d.sceneNum, verdict: d.verdict, citationsAllFound: d.citationsAllFound })),
+          sceneNum: d.sceneNum, sceneUid: String(d.sceneUid || '').slice(0, 18),
+          assignmentUid: String(d.assignmentUid || '').slice(0, 18),
+          assignmentAttemptId: String(d.assignmentAttemptId || '').slice(0, 20),
+          assignedEvent: String(d.assignedEvent || '').slice(0, 55),
+          verdict: d.verdict, citationsAllFound: d.citationsAllFound,
+          citations: (d.citations || []).map((c) => ({ found: c.foundInScene,
+            passage: String(c.passage || '').slice(0, 42) })),
+          assessedProse: d.assessedProse })),
         sayUsable: en('gnDialogueInput') || en('dialogueInput'),
         doUsable: en('gnActionInput') || en('actionInput'),
         submitUsable: en('gnSubmitBtn') || en('submitBtn')

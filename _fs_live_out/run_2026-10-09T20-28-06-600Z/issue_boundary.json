@@ -1,0 +1,13 @@
+{
+  "cgScenes": 3,
+  "tenthUid": "cg:3b5117d6-c2cf-4ed9-b470-e08c8b06d7ec",
+  "tenthAccepted": true,
+  "tenthChars": 932,
+  "sceneInIssue": 3,
+  "isLastSceneOfIssue": false,
+  "scenesPerIssue": 10,
+  "turnCount": 3,
+  "decisionNeeded": false,
+  "nextGateOpen": true,
+  "notes": 3
+}
