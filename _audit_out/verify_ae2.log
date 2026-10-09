@@ -1,0 +1,156 @@
+=== FS SEQUENCE — ceiling $6.50 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $6.50.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  4ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9246ms
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=268 attempts=["1:grok:ok"]
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=false age=73ms  1791562323009-lhooak -> 1791562323009-lhooak
+  the entrance submission IS exchange 1 — author call 1 — the author pair, unedited
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call  2  [fixture] gpt-4o-mini                  no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call  3  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "You audit prose for BANNED-phrase "  <-  You audit prose for BANNED-phrase reuse. The user sends 
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "craft auditor measuring ARCHETYPE "  <-  You are a craft auditor measuring ARCHETYPE MANIFESTATIO
+  call  5  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 2, requested under the SAME generation identity (turnCount=0 beat=1) — encounter=opening OAS turn=1 card="silence"
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  [replay] author reply 2 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  6  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  turn 1: replies 1 -> 2 (beats 1 -> 2)
+      model reply RECEIVED AND RENDERED for turn 2 — author call 6 — the author pair, unedited — exchange 2 of 6
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=2 card="confession" — a stale record is not provenance for this submission
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  [replay] author reply 3 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  turn 2: replies 2 -> 3 (beats 2 -> 3)
+      model reply RECEIVED AND RENDERED for turn 3 — author call 7 — the author pair, unedited — exchange 3 of 6
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=3 card="boundary" — a stale record is not provenance for this submission
+      SAY "Not here. Not in front of them."
+      DO  "I set the ledger flat and leave my hand on it"
+  [replay] author reply 4 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  [replay] no captured cleanup matches this request's pair (best overlap 0.33) — serving NONE rather than a mis-paired edit
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call  9  [fixture] gpt-4o-mini                  no receipt  1ms
+  turn 3: replies 3 -> 4 (beats 3 -> 4)
+      model reply RECEIVED AND RENDERED for turn 4 — author call 8 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 4 of 6
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=4 card="silence" — a stale record is not provenance for this submission
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  [replay] author reply 5 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  [replay] no captured cleanup matches this request's pair (best overlap 0.48) — serving NONE rather than a mis-paired edit
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call 11  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 4: replies 4 -> 5 (beats 4 -> 5)
+      model reply RECEIVED AND RENDERED for turn 5 — author call 10 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 5 of 6
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=5 card="reversal" — a stale record is not provenance for this submission
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  [replay] author reply 6 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  [replay] no captured cleanup matches this request's pair (best overlap 0.41) — serving NONE rather than a mis-paired edit
+  [fixture] "line editor for adult intimate dia"  <-  You are a line editor for adult intimate dialogue (expli
+  call 13  [fixture] gpt-4o-mini                  no receipt  1ms
+  turn 5: replies 5 -> 6 (beats 5 -> 6)
+      model reply RECEIVED AND RENDERED for turn 6 — author call 12 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 6 of 6
+  --- SCRIPTED READER EXIT after 6 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":6,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  interruption: {"present":true,"submitted":false,"pending":false}
+    submit attempt: submit disabled (trusted click) -> submitted=false
+  handoff (before the branch is serviced): {"resolved":true,"archive":1,"interruptionPresent":true,"interruptionDone":true,"decisionOnScreen":true,"decisionOpen":true,"branches":["sceneDecisionA","sceneDecisionB"]}
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":null}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"oas_exit"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  [fixture] "CONTINUITY ARCHITECT"  <-  You are a CONTINUITY ARCHITECT for a serialized arcane b
+  call 14  [fixture] ministral-8b-2512            no receipt  1ms
+  [fixture] scene planner: the reader DISPLACED the frame — lane = null
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 15  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 16  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  [fixture] "editorial auditor measuring EMOTIO"  <-  You are an editorial auditor measuring EMOTIONAL GRAVITY
+  call 17  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 2 created by the opening branch: ACCEPTED · uid=cg:6c22fe18-9fee-4 · 747 chars · cgScenes=1 · notes=1
+  turns 5 · resolved=true · archive=1 · interruptionDone=true · run/remain on screen=false · branches=[]
+  after the choice: recorded="run" · prompt removed by production=true · handoff had passed=true
+  exposure $0.161211
+
+── LEAVING SCENE 2 -> CREATING SCENE 3 (live) ──
+  [fixture] DEFAULT  <-  You classify the ambient soundscape of a romance/fiction
+  [fixture] NO MATCHER — serving default for: You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag from this fixed enum, w
+  call 18  [fixture] (unspecified)                $0.000100  2ms
+  scene 2 render state: {"cgScenes":1,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  [fixture] DEFAULT  <-  You are the CHARACTER MEMORY EXTRACTOR for an interactiv
+  [fixture] NO MATCHER — serving default for: You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus
+  call 19  [fixture] ministral-8b-2512            $0.000100  0ms
+  walked 6 beat(s) to the end of scene 2
+  [fixture] "5 contextual Say/Do previews"  <-  You generate 5 contextual Say/Do previews for an interac
+  call 20  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 2 plays card 4 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=1:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card="boundary"
+  [fixture] "RUNTIME COMMIT verifier"  <-  You are the RUNTIME COMMIT verifier for an interactive s
+  call 21  [fixture] ministral-8b-2512            no receipt  0ms
+  [fixture] "SCENE-SPINE planner|local_objectiv"  <-  You are the SCENE-SPINE planner for an interactive roman
+  call 22  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  [fixture] "screenplay-native cinematic-romanc"  <-  You are a screenplay-native cinematic-romance writer for
+  call 23  [fixture] grok-4-1-fast-reasoning      no receipt  1ms
+  SCENE 3 NO-GENERATION (card played in scene 2) · cg scenes 1 -> 1 · notes 1 · exposure $0.318999
+  *** STOPPING — scene 3 did not complete (no-generation). Not restarting; reporting as found. ***
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  scene 2  accepted  <- opening branch "run"
+  scene 3  NOT accepted  <- the ending card of scene 2  [preview: gn/UNKNOWN]
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 23
+  MEASURED (receipts)    : $0.000800
+  no receipt             : 15 call(s), estimated $0.318199 — NOT counted as measured
+  retained (no receipt)  : $0.318199 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.318999
+  ceiling                : $6.50  [HALTED: scene 3 did not complete (no-generation)]
+  CACHED TOKENS          : 0 of 2000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.ae2.json
+  receipted to date  $0.000800
+  unresolved to date $0.318199
+  TOTAL vs ceiling   $0.318999 of $6.50
+
+output: _fs_live_out/run_2026-10-09T16-11-29-690Z

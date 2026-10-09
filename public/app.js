@@ -68575,11 +68575,11 @@ function _buildCharacterPlusShared(opts) {
     // progress toward it). If merely EXPOSING this makes scenes advance, the planner can consume milestones
     // and no controller is needed; if it doesn't, a persistent beat-sheet controller is justified.
     if (lastTriggered) {
-      lines.push('Previous A-plot milestone — COMPLETED (it already happened on-page; do NOT re-establish, re-argue, or re-play it): [' + lastTriggered.kind + '] ' + lastTriggered.event);
+      lines.push('Previous A-plot milestone — COMPLETED (it already happened on-page; do NOT re-establish, re-argue, or re-play it): ' + (lastTriggered.kind ? ('[' + lastTriggered.kind + '] ') : '') + lastTriggered.event);
     }
     if (nextPending) {
       const turnsUntil = (nextPending.atScene || turn) - turn;
-      lines.push('THIS SCENE\'S JOB — the CURRENT REQUIRED MILESTONE (drive the scene toward it; do NOT spin in place re-covering the prior beat): [' + nextPending.kind + '] ' + nextPending.event
+      lines.push('THIS SCENE\'S JOB — the CURRENT REQUIRED MILESTONE (drive the scene toward it; do NOT spin in place re-covering the prior beat): ' + (nextPending.kind ? ('[' + nextPending.kind + '] ') : '') + nextPending.event
         + (turnsUntil > 0
             ? ' — it is due by scene ' + nextPending.atScene + '; THIS scene must make concrete, visible PROGRESS toward it (a step that cannot be undone), not re-render where the last scene ended.'
             : ' — LAND it in THIS scene.'));
@@ -102130,7 +102130,7 @@ function _buildAuthorFloorDirective(s) {
           var _scSys = 'You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.\n'
             + 'STATE_CHANGE CONTRACT (HARD — reused from the proven Scene-1 primitive, do NOT soften):\n'
             + '  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", the negation of the state_change, phrased so the scene must OPEN with it still false. 8-16 words.\n'
-            + '  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; and a change confined to a FACE OR BODY is not one either — a tightened jaw, a held gaze, a flinch or a step back is a REACTION, and a scene cannot turn on one. Name what is now TRUE OUTSIDE any face: a fact entered on a record, a permission granted or withdrawn, an object changing hands, a person arriving or leaving, a demand made aloud, a secret now known to someone who did not know it. A reaction may ACCOMPANY that event; it cannot BE it. If your branches only exist because of the reaction, the event is too thin — the delete test cannot vouch for an event the branches were built on; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.\n'
+            + '  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; and the event must carry a CONSEQUENCE — after it, something is different in KNOWLEDGE (someone now knows what they did not), RELATIONSHIP (what these two can say or ask of each other has moved), OBLIGATION (a duty, permission or restriction begins or ends), DANGER (what can now be lost, and by whom), or AVAILABLE ACTION (a course opens or closes). A bodily act CAN be that event when the scene establishes what it costs or settles — a hand withdrawn that ends a bargain, a blade set down that concedes a claim. What fails is a reaction with nothing following from it: if the only thing the event supports is that two choices were written around it, name the consequential change instead; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.\n'
             + '  • forces_choice: the decision the event UNLOCKS — the scene\'s closing choice, which could NOT have been posed before it (the event exists to CREATE this choice). "forces [PC] to choose between A and B" where A and B are TWO ACTIVE responses to the new fact (NOT one action + one escape hatch like "act or do nothing").\n'
             + '  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone\'s SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone\'s OWN nouns and actions.\n'
             + '  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.\n'
@@ -231812,6 +231812,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "expression_arc": {\n' +
       '      "baseline_family": "suppression | warmth | sharpness | mixed | neutral",\n' +
       '      "micro_drift": "<one phrase describing the subtle emotional trend across the whole scene. Examples: \\"guarded-then-cracking\\" / \\"warm-but-tightening\\" / \\"steady simmer\\" / \\"sharp opening, softening into vulnerability\\". Even when no peak fires, this is the direction the face is drifting.>",\n' +
+      '      "state_change_beat": <int — the beat index where THIS SCENE\'S ASSIGNED EVENT (the state_change you were given) actually LANDS on the page. Not where it is anticipated, referred to or recalled: the beat a reader could point at and say "it happened here". If you cannot name such a beat, you have not written the assigned event and the scene is not finished.>,\n' +
       '      "peak_a_beat": <int — beat index of the first NON-NEUTRAL expression peak; the beat where peak_a\'s expression_target lands. The arc commits to peaks BEFORE beats are written.>,\n' +
       '      "peak_b_beat": <int | null — beat index of the second peak, or null if the scene only carries one peak. Must be at least 4 beats after peak_a_beat.>,\n' +
       '      "decay_window": <int 2-4 — beats over which each peak fades back to baseline. The renderer holds the peak frame at full opacity through the peak\'s beat + 1, then eases the mutation overlay to 0 across the next (decay_window − 1) beats. Default 3 if unsure.>\n' +
@@ -240571,6 +240572,41 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             } catch (_) {}
             return { __fateRejected: true, sceneIndex: sceneIndex,
                      failures: _fscGateVerdict.failures || [] }; }
+          // ── ASSIGNED-EVENT GATE (Roman 2026-10-09) ───────────────────────────────────────
+          // Scene 9's assigned event was absent from the output and acceptance never asked. The
+          // author must now point at the beat where the event LANDS. This verifies the POINTER
+          // resolves - present, an integer, within range, and a beat with real text - and not
+          // that the words match anything. Whether the event truly happened is a reading
+          // judgement no deterministic check can make; what this closes is the scene being
+          // accepted while NOTHING in it was even claimed to carry the event.
+          try {
+            var _aeBeats = (_normalized && _normalized.beats) || [];
+            var _aeIdx = _normalized ? _normalized.state_change_beat : undefined;
+            var _aeHas = (_aeIdx !== undefined && _aeIdx !== null && _aeIdx !== '');
+            var _aeNum = Number(_aeIdx);
+            var _aeOk = _aeHas && Number.isFinite(_aeNum) && _aeNum >= 0
+              && _aeNum < _aeBeats.length
+              && String((_aeBeats[_aeNum] && _aeBeats[_aeNum].text) || '').trim().length > 12;
+            if (_aeBeats.length >= 4 && !_aeOk) {
+              try {
+                state._assignedEventRejected = state._assignedEventRejected || [];
+                state._assignedEventRejected.push({ at: Date.now(), sceneIndex: sceneIndex,
+                  state_change_beat: _aeIdx === undefined ? null : _aeIdx,
+                  beatCount: _aeBeats.length, rawPlan: _normalized });
+                if (state._assignedEventRejected.length > 6) state._assignedEventRejected.shift();
+              } catch (_) {}
+              try {
+                console.error('[CG:EVENT-UNPLACED] scene ' + sceneIndex + ' — state_change_beat='
+                  + JSON.stringify(_aeIdx === undefined ? null : _aeIdx) + ' does not resolve to a'
+                  + ' beat (' + _aeBeats.length + ' beats). The scene never claims where its'
+                  + ' assigned event lands. Not mounted, not committed, nothing reader-visible.');
+              } catch (_) {}
+              return { __eventUnplaced: true, sceneIndex: sceneIndex,
+                       stateChangeBeat: _aeIdx === undefined ? null : _aeIdx,
+                       beatCount: _aeBeats.length };
+            }
+          } catch (_) {}
+
           // ── REDUX GATE (Roman 2026-10-09) ────────────────────────────────────────────────
           // A live Scene 9 came back as Scene 8 with ONE speaker changed - 23 of its 24 beats
           // verbatim - and was accepted, mounted and committed. The acceptance path tested
@@ -241335,6 +241371,44 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // rewrite here would make the validator a hidden second author. THE WRITER supplies the
         // replacement text; this code only splices it, and only if the result re-passes the gate.
         // ONE call. On failure, fall through to the existing resumable path — never a loop.
+        // An unplaced assigned event takes the SAME recoverable contract as the redux rejection
+        // below: diagnosis preserved, locks released, the reader's input kept, the scene left
+        // recoverable, and no automatic retry.
+        if (plan && plan.__eventUnplaced) {
+          try { console.warn('[CG:EVENT-UNPLACED] scene ' + sceneIndex + ' not accepted ('
+            + 'state_change_beat=' + JSON.stringify(plan.stateChangeBeat) + ' of '
+            + plan.beatCount + ' beats) — stopping with resumable state; no automatic retry'); } catch (_) {}
+          state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '',
+            dialogue: playerDialogue || '', reason: 'assigned_event_unplaced', at: Date.now(),
+            storyId: state.storyId || null };
+          try { _hideStagedComposingIndicator(); } catch (_) {}
+          try { showToast('The story changed while this scene was being written. Submit again to continue.'); } catch (_) {}
+          try { state.turnCount = Math.max(0, (sceneIndex | 0) - 1); } catch (_) {}
+          state._stagedSubmitting = false; state._isAdvancingScene = false;
+          return;
+        }
+        // ── REDUX REJECTION (Roman 2026-10-09) ────────────────────────────────────────────
+        // The gate returned __reduxRejected and NOTHING handled it: the caller branched on Fate,
+        // stale and planner rejections only, so a rejected duplicate fell through with the
+        // submission locks still held. It now takes the SAME recoverable contract as the Fate
+        // rejection above - rejected plan preserved for diagnosis (state._reduxRejectedScenes),
+        // locks released, the reader's Say/Do preserved in _cgResumable, the scene left
+        // recoverable at the same index, and the reader told only what any unfinished scene says.
+        // NO AUTOMATIC RETRY: a duplicate is not repaired by paying for another attempt
+        // unprompted; the reader submits again when they choose to.
+        if (plan && plan.__reduxRejected) {
+          try { console.warn('[CG:REDUX] scene ' + sceneIndex + ' not accepted ('
+            + plan.sharedBeats + '/' + plan.totalBeats + ' beats repeated) — stopping with '
+            + 'resumable state; no automatic retry'); } catch (_) {}
+          state._cgResumable = { sceneIndex: sceneIndex, action: playerAction || '',
+            dialogue: playerDialogue || '', reason: 'redux_rejected', at: Date.now(),
+            storyId: state.storyId || null };
+          try { _hideStagedComposingIndicator(); } catch (_) {}
+          try { showToast('The story changed while this scene was being written. Submit again to continue.'); } catch (_) {}
+          try { state.turnCount = Math.max(0, (sceneIndex | 0) - 1); } catch (_) {}
+          state._stagedSubmitting = false; state._isAdvancingScene = false;
+          return;
+        }
         if (plan && plan.__fateRejected) {
           var _rev = null;
           try {

@@ -1,0 +1,25 @@
+{
+  "stagedSubmitting": false,
+  "isAdvancingScene": false,
+  "resumable": {
+    "sceneIndex": 2,
+    "action": "I step close enough that the stone warms between us",
+    "dialogue": "",
+    "reason": "redux_rejected",
+    "at": 1791534394669,
+    "storyId": "ebcb17bf-bd14-4928-ac85-38a23b11f64a"
+  },
+  "reduxRejected": [
+    {
+      "sceneIndex": 2,
+      "sharedBeats": 21,
+      "totalBeats": 24,
+      "rawPlanBeats": 24
+    }
+  ],
+  "composingIndicatorVisible": false,
+  "turnCount": 1,
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

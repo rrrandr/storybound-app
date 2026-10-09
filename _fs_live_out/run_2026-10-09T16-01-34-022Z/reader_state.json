@@ -1,0 +1,18 @@
+{
+  "stagedSubmitting": false,
+  "isAdvancingScene": false,
+  "resumable": {
+    "sceneIndex": 1,
+    "action": "",
+    "dialogue": "",
+    "reason": "assigned_event_unplaced",
+    "at": 1791561818893,
+    "storyId": "a3daf584-bbce-4fbd-8131-79bf011accae"
+  },
+  "reduxRejected": [],
+  "composingIndicatorVisible": false,
+  "turnCount": 0,
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

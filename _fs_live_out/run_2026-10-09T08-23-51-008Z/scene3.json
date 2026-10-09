@@ -1,0 +1,201 @@
+{
+  "outcome": "no-generation",
+  "creating": 3,
+  "leaving": 2,
+  "before": {
+    "count": 1,
+    "lastUid": "cg:d7daf2ff-8908-4363-8a79-db7804f6e80a"
+  },
+  "snap": {
+    "label": "scene2",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:d7daf2ff-8908-4363-8a79-db7804f6e80a",
+        "text": "The clearing holds its breath after the Dohkar's nod.\n\nMy fingers close around The Answer.\n\nA murmur rises again, low and naming.\n\nJULIAN: \"The record alone stands; no living witness may speak beyond the rite's spoken words.\"\n\nThe voice lands from the ring, not from the Dohkar.\n\nThe boundary he left open is now sealed by another mouth.\n\nI feel the weight settle before I move.\n\nI lean closer.\n\nThe Answer's edge meets my palm.\n\nThe pulse answers back through the blade.\n\nJulian has not moved.\n\nJULIAN: \"Your hand knows what the record will not hold.\"\n\nThe voice from the ring has done what the Dohkar left undone.\n\nThe restriction now sits between every question and its answer.\n\nI feel the shape of the choice before it is named.\n\nAccept the line, or press against the hand that drew it.\n\nThe Answer warms once more.\n\nJulian's gaze does not leave me.\n\nThe realization lands without sound.\n\nSomeone else has already spoken for the boundary.\n\nThe choice is no longer between the Dohkar and me.\n\nIt is between the record and the voice that closed it.\n\nI stand still, palm against the blade.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:d7daf2ff-8908-4363-8a79-db7804f6e80a",
+        "quoted": [
+          "The restriction now sits between every question and its answer."
+        ],
+        "summary": [
+          "Lirael meets Julian's gaze while holding her words to the rite's record.",
+          "The player met his gaze and spoke only of the record.",
+          "Julian's jaw tightens visibly for the first time."
+        ],
+        "obligations": [
+          "choice"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me whose hands shaped it.",
+        "pcDoRaw": "I set The Answer down between us and do not let go",
+        "liDialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+        "liAction": "Julian's hand remained on the shaft as he waited.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+        "liAction": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+        "liAction": "Julian's hand remained on the shaft as his gaze held mine.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 2,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "1:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 0,
+          "temptation": {
+            "a": 51,
+            "d": 21
+          },
+          "boundary": {
+            "a": 45,
+            "d": 31
+          },
+          "confession": {
+            "a": 43,
+            "d": 44
+          },
+          "reversal": {
+            "a": 50,
+            "d": 29
+          },
+          "silence": {
+            "a": 48,
+            "d": 2
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 4,
+      "submitted": {
+        "action": "I step close enough that the stone warms between us",
+        "dialogue": "",
+        "source": "gn",
+        "cardId": "temptation",
+        "selectedIndex": 4,
+        "appKey": {
+          "turnCount": 1,
+          "sceneFateKey": "1:1",
+          "oasBeat": null
+        },
+        "cacheEntry": {
+          "action": "I step close enough that the stone warms between us",
+          "dialogue": "Ask me again, slower."
+        },
+        "gn": {
+          "a": 51,
+          "d": 0
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+      },
+      "provenance": {
+        "provenance": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+      }
+    }
+  ]
+}

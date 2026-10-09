@@ -454,6 +454,7 @@ function noteInfraFailure(text, resp, rec, url) {
     + ' in flight — RETAINED, not released.');
   return true;
 }
+let _replaySceneIdx = 0;
 let _replayAuthorIdx = 0, _replayCleanupIdx = 0;
 const _unmatched = new Set();
 const FIXTURES = process.env.SB_FIXTURES ? JSON.parse(fs.readFileSync(process.env.SB_FIXTURES, 'utf8')) : null;
@@ -707,7 +708,16 @@ await page.route('**/api/**', async (route) => {
     try {
       const sysR = String((body.messages || [])[0]?.content || '');
       const fn = callFunction(sysR);
-      if (fn === 'OAS' && Array.isArray(FIXTURES._authorSequence) && FIXTURES._authorSequence.length) {
+            if (fn === 'scene author' && Array.isArray(FIXTURES._sceneAuthorSequence)
+          && FIXTURES._sceneAuthorSequence.length) {
+        const c = FIXTURES._sceneAuthorSequence[_replaySceneIdx % FIXTURES._sceneAuthorSequence.length];
+        _replaySceneIdx++;
+        f = { body: JSON.stringify({ model: 'grok-4.3', choices: [{ message: { content: c } }],
+          usage: { prompt_tokens: 60000, completion_tokens: 4500, cached_tokens: 0,
+            cost_in_usd_ticks: 1000000 } }) };
+        console.log('  [replay] scene-author reply ' + _replaySceneIdx + ' of '
+          + FIXTURES._sceneAuthorSequence.length + ' from the paid capture');
+      } else if (fn === 'OAS' && Array.isArray(FIXTURES._authorSequence) && FIXTURES._authorSequence.length) {
         const c = FIXTURES._authorSequence[_replayAuthorIdx % FIXTURES._authorSequence.length];
         _replayAuthorIdx++;
         f = { body: JSON.stringify({ model: 'grok-4.3', choices: [{ message: { content: c } }],
@@ -3213,6 +3223,30 @@ try {
   write('error.txt', String(e && e.stack || e));
 }
 
+if (process.env.SB_DUMP_READER_STATE) {
+  try {
+    const rs = await page.evaluate(() => {
+      const st = window.state || {};
+      const vis = (id) => { const e = document.getElementById(id); return !!(e && e.getClientRects().length > 0); };
+      const en = (id) => { const e = document.getElementById(id); return !!(e && !e.disabled); };
+      return {
+        stagedSubmitting: st._stagedSubmitting === true,
+        isAdvancingScene: st._isAdvancingScene === true,
+        resumable: st._cgResumable || null,
+        reduxRejected: (st._reduxRejectedScenes || []).map((x) => ({
+          sceneIndex: x.sceneIndex, sharedBeats: x.sharedBeats, totalBeats: x.totalBeats,
+          rawPlanBeats: (x.rawPlan && x.rawPlan.beats && x.rawPlan.beats.length) || 0 })),
+        composingIndicatorVisible: vis('stagedComposingIndicator'),
+        turnCount: st.turnCount,
+        sayUsable: en('gnDialogueInput') || en('dialogueInput'),
+        doUsable: en('gnActionInput') || en('actionInput'),
+        submitUsable: en('gnSubmitBtn') || en('submitBtn')
+      };
+    });
+    write('reader_state.json', rs);
+    say('  [reader-state] ' + JSON.stringify(rs));
+  } catch (e) { say('  [reader-state] dump failed: ' + (e && e.message)); }
+}
 write('console.log', consoleLog.join('\n'));
 write('cards.json', cardLog);
 write('calls.json', calls);

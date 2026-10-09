@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791563055972,
+    "before": {
+      "pendingRequestId": "1791563055901-79u6i0",
+      "awaitingResponse": false,
+      "ageMs": 66
+    },
+    "afterPendingRequestId": "1791563055901-79u6i0",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261009i-redux-path:145250:26"
+    ]
+  }
+]
