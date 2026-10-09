@@ -1,0 +1,10 @@
+{
+  "calls": 22,
+  "receipted": 0.0007000000000000001,
+  "retainedUnresolved": 0.32426718,
+  "priorExposure": 0,
+  "totalExposure": 0.32496717999999997,
+  "ceiling": 5.05,
+  "halted": true,
+  "haltReason": "the requested ten-scene corpus was not generated: 2 generated records (expected 9), scene 3 projection accepted"
+}

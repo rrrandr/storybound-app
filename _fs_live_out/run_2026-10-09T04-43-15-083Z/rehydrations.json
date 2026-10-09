@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791521029753,
+    "before": {
+      "pendingRequestId": "1791521029675-11253f",
+      "awaitingResponse": false,
+      "ageMs": 74
+    },
+    "afterPendingRequestId": "1791521029675-11253f",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261009a-silence-pacing:145250:26"
+    ]
+  }
+]

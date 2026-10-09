@@ -2895,24 +2895,40 @@ try {
     let sIdx = nextPick(sDeck.count);
     if (process.env.SB_PREFER_CARD) {
       const want = String(process.env.SB_PREFER_CARD).toLowerCase();
+      // THE IDS EXIST. Cards carry data-card-index, which indexes state.fateOptions - the mapping
+      // fatecards.js itself uses (cardEl.dataset.cardIndex -> state.fateOptions[idx]). My earlier
+      // probe looked for data-card-id/data-card, found blank strings, and wrongly concluded the
+      // card was absent. Blank LABELS prove nothing about which cards are dealt.
       const found = await page.evaluate((w) => {
-        const host = document.getElementById('gnCardMount') || document.getElementById('cardMount')
-          || document;
-        const cards = [...host.querySelectorAll('.fate-card, [data-card]')];
-        const ids = cards.map((el, i) => ({
-          i,
-          id: String(el.getAttribute('data-card-id') || el.getAttribute('data-card')
-              || (el.dataset && (el.dataset.cardId || el.dataset.card)) || '').toLowerCase(),
-          text: String(el.innerText || '').toLowerCase().slice(0, 60)
-        }));
-        const hit = ids.find((x) => x.id === w) || ids.find((x) => x.text.indexOf(w) >= 0);
-        return { ids, idx: hit ? hit.i : -1 };
+        const host = document.getElementById('gnCardMount') || document.getElementById('cardMount');
+        const scope = (host && host.getClientRects().length > 0) ? host : document;
+        const cards = [...scope.querySelectorAll('.fate-card, [data-card-index]')];
+        const opts = (window.state && window.state.fateOptions) || [];
+        const rows = cards.map((el, pos) => {
+          const di = Number(el.dataset && el.dataset.cardIndex);
+          const opt = Number.isFinite(di) ? opts[di] : null;
+          return { pos, cardIndex: Number.isFinite(di) ? di : null,
+                   id: String((opt && opt.id) || '').toLowerCase(),
+                   title: String((opt && opt.title) || '') };
+        });
+        const hit = rows.find((r) => r.id === w);
+        return { rows, idx: hit ? hit.pos : -1, optionCount: opts.length };
       }, want);
-      say('      deck cards: ' + JSON.stringify(found.ids.map((x) => x.id || x.text.split('\n')[0])));
-      if (found.idx >= 0) { sIdx = found.idx; say('      SB_PREFER_CARD=' + want + ' -> index ' + sIdx); }
-      else say('      *** SB_PREFER_CARD=' + want + ' is NOT on offer in this deck - the arm cannot test it here ***');
-    }
-    await page.evaluate(() => {
+      say('      dealt cards (via data-card-index -> state.fateOptions): '
+        + JSON.stringify(found.rows.map((r) => r.id || ('#' + r.cardIndex))));
+      if (found.idx >= 0) {
+        sIdx = found.idx;
+        say('      SB_PREFER_CARD=' + want + ' resolved to deck position ' + sIdx);
+      } else {
+        // A MISSING CARD STOPS THE CASE. Continuing with a random card and reporting it as the
+        // same test is exactly the substitution that makes a result worthless.
+        halted = true;
+        haltReason = 'SB_PREFER_CARD=' + want + ' was not dealt at scene ' + scene
+          + ' (dealt: ' + JSON.stringify(found.rows.map((r) => r.id)) + ')';
+        say('  *** STOPPING - ' + haltReason + ' ***');
+        break;
+      }
+    }    await page.evaluate(() => {
       ['gnActionInput', 'gnDialogueInput', 'actionInput', 'dialogueInput'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -2926,6 +2942,27 @@ try {
       ? ('#' + sDeck.mountId + ' .fate-card:not(.locked)') : '.fate-card:not(.locked)';
     await page.locator(sSel).nth(sIdx).click({ timeout: 15000 })
       .catch(e => { sClickErr = (e && e.message) || 'click failed'; });
+    if ((process.env.SB_TYPE_DURING_DELAY || process.env.SB_CLEAR_DURING_DELAY)
+        && !global.__sbTypedOnce) {
+      global.__sbTypedOnce = true;
+      const typed = process.env.SB_TYPE_DURING_DELAY || '';
+      await page.evaluate(async (v) => {
+        const el = document.getElementById('gnDialogueInput')
+          || document.getElementById('dialogueInput');
+        if (!el) return;
+        el.focus();
+        el.value = v;                                   // '' for the deliberate-deletion case
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }, typed);
+      say('      typed into Say DURING the pre-preview delay: ' + JSON.stringify(typed));
+      await page.waitForTimeout(2500);                  // let the 600ms fill + preview land
+      const held = await page.evaluate(() => {
+        const el = document.getElementById('gnDialogueInput')
+          || document.getElementById('dialogueInput');
+        return el ? el.value : null;
+      });
+      say('      Say after the preview landed: ' + JSON.stringify(held));
+    }
     if (sClickErr) {
       halted = true;
       haltReason = 'scene ' + scene + ' card click FAILED: ' + sClickErr;

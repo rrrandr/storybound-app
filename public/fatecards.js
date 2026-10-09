@@ -3121,6 +3121,11 @@ function setSelectedState(mount, selectedCardEl){
                     if (window._recordDesireObs) window._recordDesireObs(_des, 'fate:' + String((data && data.id) || ''));
                 } catch (_) {}
 
+                // OWNERSHIP STARTS HERE - at the accepted selection, BEFORE the 600ms delay.
+                // Anything the reader types from this instant belongs to THIS selection, and a
+                // response carrying an older token is stale and must not write.
+                var _sbSelTok = (window._sbBeginSpeechLifecycle
+                  ? window._sbBeginSpeechLifecycle() : null);
                 clearPendingTimer();
 
                 // Cancel any prior sparkle cycle, then start new cycle
@@ -3159,15 +3164,15 @@ function setSelectedState(mount, selectedCardEl){
                     if (data && data._fateWishCandidate) {
                         if (actInput) actInput.value = data.action;
                         // Silence keeps its empty default; a reader edit is never overwritten.
-                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote, _sbSelTok);
                         else if (diaInput) diaInput.value = data.dialogue;
                     } else if (typeof window.generateFatePreview === 'function') {
                         // Use contextual preview if available, fallback to card defaults
-                        window.generateFatePreview(data);
+                        window.generateFatePreview(data, _sbSelTok);
                     } else {
                         if(actInput) actInput.value = data.action;
                         // Silence keeps its empty default; a reader edit is never overwritten.
-                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote, _sbSelTok);
                         else if (diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);
@@ -3415,14 +3420,14 @@ function setSelectedState(mount, selectedCardEl){
                     if (data && data._fateWishCandidate) {
                         if (actInput) actInput.value = data.action;
                         // Silence keeps its empty default; a reader edit is never overwritten.
-                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote, _sbSelTok);
                         else if (diaInput) diaInput.value = data.dialogue;
                     } else if (typeof window.generateFatePreview === 'function') {
                         window.generateFatePreview(data);
                     } else {
                         if (actInput) actInput.value = data.action;
                         // Silence keeps its empty default; a reader edit is never overwritten.
-                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote);
+                        if (window._sbApplyCardSpeech) window._sbApplyCardSpeech(diaInput, data.dialogue, data, data.dialogueNote, _sbSelTok);
                         else if (diaInput) diaInput.value = data.dialogue;
                     }
                 }, 600);

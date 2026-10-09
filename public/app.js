@@ -309792,10 +309792,11 @@ Condensed (under ${maxLength} chars):` }
   }
   window._stripDeckFromFateContext = _stripDeckFromFateContext;
 
-  window.generateFatePreview = async function(cardData) {
-    // This selection owns the field from here; a response that lands after the
-    // reader selects again or edits is stale and will be refused by the guard.
-    var _sbTok = window._sbBeginSpeechLifecycle();
+  window.generateFatePreview = async function(cardData, _sbTokIn) {
+    // The token comes FROM THE SELECTION. Minting one here would restart ownership 600ms after
+    // the click and silently discard an edit made during that window.
+    var _sbTok = (_sbTokIn != null) ? _sbTokIn
+      : (window._sbSpeechToken != null ? window._sbSpeechToken : 0);
 
       if (_fatePreviewInFlight) return;
       if (!cardData) return;
@@ -309912,7 +309913,8 @@ Condensed (under ${maxLength} chars):` }
           actInput.value = (hit.action || cardData.action || '').replace(/^["“]|["”]$/g, '');
           window._sbApplyCardSpeech(diaInput,
             (hit.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, ''),
-            cardData, (hit && hit.dialogueNote) || cardData.dialogueNote);
+            cardData, (hit && hit.dialogueNote) || cardData.dialogueNote,
+            (_sbTokIn != null ? _sbTokIn : window._sbSpeechToken));
           try { console.log('[FATE:CACHE] Cache hit for ' + cardData.id + ' (turn ' + _turnKey + ') — no regeneration'); } catch (_) {}
           return;
       }
