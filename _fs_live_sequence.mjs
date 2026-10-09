@@ -1365,6 +1365,15 @@ try {
               return { awaiting: !!d.awaitingResponse, id: d.pendingRequestId || null };
             });
             say('      in flight: ' + JSON.stringify(_live));
+            // Checked HERE: the entrance dispatches after the gate confirmation, so this report
+            // does not exist until the request is actually in flight.
+            const _disp = consoleLog.filter((l) => /submitting as the first turn/.test(l)).pop() || '';
+            const _dm = _disp.match(/say=(\d+)c do=(\d+)c/);
+            say('      entrance dispatch report: ' + JSON.stringify(_disp));
+            _sck('a nonempty SAY was supplied and read at submit', !!_dm && Number(_dm[1]) > 0,
+              'say length ' + (_dm ? _dm[1] : 'unreported'));
+            _sck('a nonempty DO was supplied and read at submit', !!_dm && Number(_dm[2]) > 0,
+              'do length ' + (_dm ? _dm[2] : 'unreported'));
             _sck('production reports awaitingResponse=true with a nonempty request id',
               _live.awaiting && !!_live.id && String(_live.id).trim() !== '',
               JSON.stringify(_live));
@@ -1624,7 +1633,12 @@ try {
         })();
       }
     }
-    const _entry = await enterOAS(page, { settleMs: 9000 });
+    const _ARM_SAY = 'I shaped nothing. Ask me properly.';
+    const _ARM_DO = 'I keep my hand open and do not look away.';
+    const _entry = _scenario
+      ? await enterOAS(page, { settleMs: 9000, say: _ARM_SAY, doText: _ARM_DO })
+      : await enterOAS(page, { settleMs: 9000 });
+
     say('  entered via ' + ((_entry && _entry.route) || '?'));
     // ENTRY FAILURE HALTS IMMEDIATELY. enterOAS now refuses rather than clicking a hidden
     // element, and a refusal means the reader never reached the OAS — so there is nothing to
@@ -1827,8 +1841,28 @@ try {
     // Through the same helper every other turn uses, counted at most once, and BEFORE the loop so
     // no later reply can be mistaken for it.
     if (!halted && _entry && _entry.firstTurnConsumed) {
-      const _post0 = await oasState();
-      const _ev0 = oasReplyRenderedFor('opening OAS', 1, _post0 && _post0.lastRendered);
+      // WAIT FOR THE ENTRANCE'S ACTUAL REPLY, NOT FOR ANY NEW TEXT. Bounded; the strict
+      // attribution chain (including the cleanup verdict when one applies) is untouched, and the
+      // player's own submission is never counted as a reply.
+      let _post0 = await oasState();
+      let _ev0 = oasReplyRenderedFor('opening OAS', 1, _post0 && _post0.lastRendered);
+      const _entranceDeadline = Date.now() + Number(process.env.SB_ENTRANCE_WAIT_MS || 90000);
+      while (!_ev0 && Date.now() < _entranceDeadline) {
+        await page.waitForTimeout(1000);
+        noteCleanupVerdict('opening OAS', 1, consoleLog, 0);
+        _post0 = await oasState();
+        _ev0 = oasReplyRenderedFor('opening OAS', 1, _post0 && _post0.lastRendered);
+      }
+      if (!_ev0) {
+        say('  *** the entrance reply did not arrive and attribute within '
+          + Math.round(Number(process.env.SB_ENTRANCE_WAIT_MS || 90000) / 1000) + 's ***');
+        say('      observed state: ' + JSON.stringify({
+          turns: _post0 && _post0.turns,
+          lastRendered: _post0 && _post0.lastRendered ? 'present' : null,
+          modelBackedReplies: modelBackedReplies }));
+        halted = true;
+        haltReason = 'the entrance reply never attributed (bounded wait exhausted)';
+      }
       if (_ev0) {
         _entryCounted = 1;
         modelBackedReplies++;

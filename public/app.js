@@ -191508,8 +191508,56 @@ No text, no watermark, no UI elements, share-ready.`;
     try { log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); }
     catch (_) { log.scrollTop = log.scrollHeight; }
   }
+  // Builds ONLY the chat panel + #oasHistoryLog, mirroring the header+log structure the
+  // rehydrate path creates inline, so the wide-screen CSS still binds. No stage rebuild and no
+  // encounter reinitialization; _ensureOASHistoryLog is scoped away from here.
+  function _ensureOASChatContainer() {
+    var existing = document.getElementById('oasHistoryLog');
+    if (existing) return existing;
+    var host = document.getElementById('gnPanelDisplay')
+      || document.getElementById('storyContent');
+    if (!host) return null;
+    var s2 = window.state || {};
+    var _liName = (s2.storybeau && s2.storybeau.name) || s2.loveInterestName || 'LI';
+    var _pcName = s2.playerName || 'You';
+    var chatPanel = document.getElementById('oasChatPanel');
+    if (!chatPanel) {
+      chatPanel = document.createElement('div');
+      chatPanel.id = 'oasChatPanel';
+      chatPanel.className = 'oas-chat-panel';
+      var header = document.createElement('div');
+      header.className = 'oas-chat-header';
+      header.innerHTML =
+        '<div class="oas-chat-header-li">' + _esc_chat(_liName) + '</div>' +
+        '<div class="oas-chat-header-pc">' + _esc_chat(_pcName) + '</div>';
+      chatPanel.appendChild(header);
+      host.appendChild(chatPanel);
+    }
+    var log2 = document.createElement('div');
+    log2.id = 'oasHistoryLog';
+    log2.style.cssText =
+      'flex:1;min-height:0;padding:10px 12px;' +
+      'box-sizing:border-box;overflow-y:auto;overflow-x:hidden;' +
+      'background:rgba(0,0,0,0.25);' +
+      'border:1px solid rgba(201,162,78,0.22);border-top:none;' +
+      'border-radius:0 0 6px 6px;' +
+      'font:14px/1.55 "Lora",serif;color:rgba(243,230,200,0.85);' +
+      'scrollbar-width:thin;scrollbar-color:rgba(201,162,78,0.4) transparent;';
+    chatPanel.appendChild(log2);
+    return log2;
+  }
+
   function _appendUserInputToHistory(userSay, userDo) {
-    var log = document.getElementById('oasHistoryLog');
+    // ENSURE THE CONTAINER RATHER THAN GIVING UP. A silent return here is what lost the
+    // entrance's submitted Say and Do: the entrance consumes its first turn before any OAS
+    // stage exists, so the reader's words were rendered nowhere while the reply was in flight.
+    var log = document.getElementById('oasHistoryLog') || _ensureOASChatContainer();
+    // The codebase had no way to tell whether this ran: a silent return looked identical to
+    // never being called. One line, permanent.
+    try {
+      console.log('[INTIMACY-DIALOGUE] append user input: container=' + (!!log)
+        + ' say=' + String(userSay || '').length + 'c do=' + String(userDo || '').length + 'c');
+    } catch (_) {}
     if (!log) return;
     var s = window.state || {};
     var pov = (s.picks && s.picks.pov) || 'First';
@@ -192021,6 +192069,20 @@ No text, no watermark, no UI elements, share-ready.`;
           '<span class="oas-quick-mute-icon" aria-hidden="true">' + _qmInitIconR + '</span>' +
         '</button>' +
       '</div>';
+    // CARRY THE PENDING SUBMISSION ACROSS THE REBUILD (Roman 2026-10-08). The rebuild below
+    // replaces the whole stage and the replay afterwards restores only COMPLETED turns, so a
+    // submission still awaiting its reply would simply vanish from the screen.
+    var _carriedPending = null;
+    try {
+      if (d.awaitingResponse && _oasRequestIsLive(d.pendingRequestId)) {
+        var _pendNode = document.querySelector('#oasHistoryLog .oas-pc-bubble-pending');
+        if (_pendNode) {
+          _carriedPending = _pendNode.cloneNode(true);
+          console.log('[INTIMACY-DIALOGUE] Rehydrate: carrying the pending player bubble across'
+            + ' the rebuild (request ' + d.pendingRequestId + ')');
+        }
+      }
+    } catch (_) {}
     panel.innerHTML =
       '<div class="intimacy-dialogue-stage" id="intimacyDialogueStage">' +
         '<div class="intimacy-mouth-wrap">' +
@@ -192115,6 +192177,21 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       });
     }
+    // RESTORE THE PENDING BUBBLE LAST, after the completed turns it followed, and only while the
+    // request is still live - a reply that already landed owns its own rendered turn. Completed
+    // history never contains this turn, so nothing is duplicated, and _swapPendingPCBubble still
+    // replaces this node when the reply arrives.
+    try {
+      if (_carriedPending && d.awaitingResponse && _oasRequestIsLive(d.pendingRequestId)) {
+        var _logNow = document.getElementById('oasHistoryLog');
+        if (_logNow && !_logNow.querySelector('.oas-pc-bubble-pending')) {
+          _logNow.appendChild(_carriedPending);
+          try { _scrollOASLogToBottom(); } catch (_) {}
+          console.log('[INTIMACY-DIALOGUE] Rehydrate: pending player bubble restored after the'
+            + ' rebuild - the reader keeps their submitted words while waiting');
+        }
+      }
+    } catch (_) {}
     // Re-start audio (idempotent — startOASAudio guards against re-entry)
     if (typeof window.startOASAudio === 'function') {
       try { window.startOASAudio(d.temperature || 'curious'); } catch (_) {}

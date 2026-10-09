@@ -1,0 +1,85 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance OAS request ARRIVED at the interceptor",
+      "ok": true,
+      "detail": "no entrance author request within 120s"
+    },
+    {
+      "label": "a nonempty SAY was supplied and read at submit",
+      "ok": true,
+      "detail": "say length 34"
+    },
+    {
+      "label": "a nonempty DO was supplied and read at submit",
+      "ok": true,
+      "detail": "do length 41"
+    },
+    {
+      "label": "production reports awaitingResponse=true with a nonempty request id",
+      "ok": true,
+      "detail": "{\"awaiting\":true,\"id\":\"1791507767355-gk6i8k\"}"
+    },
+    {
+      "label": "the automatic rehydration occurred while the reply was held",
+      "ok": true,
+      "detail": "no rehydration recorded within 25s"
+    },
+    {
+      "label": "it PRESERVED the live request rather than replacing it",
+      "ok": true,
+      "detail": "[{\"preserved\":true,\"replaced\":false}]"
+    },
+    {
+      "label": "#oasHistoryLog exists while the reply is held",
+      "ok": true,
+      "detail": "{\"tag\":\"while-held\",\"at\":1791507767808,\"logExists\":true,\"logParent\":\"oas-history-log-wrap oas-hb-active\",\"logVisible\":true,\"logChildren\":0,\"pendingBubbles\":0,\"youRows\":0,\"logText\":\"\"}"
+    },
+    {
+      "label": "the player bubble was rendered into #oasHistoryLog",
+      "ok": false,
+      "detail": "pending=0 you=0 children=0"
+    },
+    {
+      "label": "the submitted SAY is inside #oasHistoryLog",
+      "ok": false,
+      "detail": "log text: \"\""
+    },
+    {
+      "label": "the submitted DO is inside #oasHistoryLog",
+      "ok": false,
+      "detail": "log text: \"\""
+    },
+    {
+      "label": "#oasHistoryLog is mounted AND visible while the reply is held",
+      "ok": true,
+      "detail": "{\"exists\":true,\"visible\":true,\"parent\":\"oas-history-log-wrap oas-hb-active\"}"
+    },
+    {
+      "label": "the submitted SAY is present in the conversation while the reply is held",
+      "ok": false,
+      "detail": "absent from body(3091) + storyContent(10184) + panel(18)"
+    },
+    {
+      "label": "the submitted DO is present in the conversation while the reply is held",
+      "ok": false,
+      "detail": "absent from the same three containers"
+    },
+    {
+      "label": "exactly ONE reply rendered after the hold was released",
+      "ok": true,
+      "detail": "liTurnHistory length is 1"
+    },
+    {
+      "label": "AFTER the reply, the submitted SAY appears in the transcript",
+      "ok": false,
+      "detail": "still absent after the reply rendered - the transcript never shows it"
+    },
+    {
+      "label": "AFTER the reply, the submitted DO appears in the transcript",
+      "ok": false,
+      "detail": "still absent after the reply rendered"
+    }
+  ]
+}

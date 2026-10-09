@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791508135342,
+    "before": {
+      "pendingRequestId": "1791508135266-g2oi2i",
+      "awaitingResponse": true,
+      "ageMs": 71
+    },
+    "afterPendingRequestId": "1791508135266-g2oi2i",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": true,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261008i-carry-pending:145250:26"
+    ]
+  }
+]

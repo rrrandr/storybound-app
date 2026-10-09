@@ -1,0 +1,40 @@
+{
+  "turnsTaken": 0,
+  "resolved": false,
+  "oasFinal": {
+    "dialogue": true,
+    "archive": 0,
+    "interruptionPresent": false,
+    "interruptionSubmitted": false,
+    "interruptionDone": false,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": false,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": null,
+    "promptMounted": false,
+    "recorded": null
+  },
+  "scriptedExit": null,
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": false,
+  "submitToFirstReadableProseMs": 9210,
+  "modelBackedReplies": 0,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": null,
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": null
+  }
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791507065677,
+    "before": {
+      "pendingRequestId": "1791507065608-koehqp",
+      "awaitingResponse": true,
+      "ageMs": 66
+    },
+    "afterPendingRequestId": "1791507065608-koehqp",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": true,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261008h-chat-container:145250:26"
+    ]
+  }
+]
