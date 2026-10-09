@@ -34005,11 +34005,26 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       };
       var lines = ['\nCHARACTER MEMORY (per-character disclosure ledger — what the AUDIENCE already knows; use it to VARY reintroductions and NEVER repeat a reveal):'];
       var _icebergSurfaced = {};
+      // A revealed layer is a FACT about the character. When the extractor quotes the prose that
+      // established it, that phrasing travels back into the next scene as the character's house
+      // style - which is how "the air bends toward him" came back three times in one scene.
+      // Quoted fragments are removed; the surrounding statement of fact is kept.
+      var _stripQuotedPhrasing = function (x) {
+        var t = String(x == null ? '' : x);
+        try {
+          t = t.replace(/\([^()]*['‘’"“”][^()]*\)/g, '');       // parentheticals holding a quote
+          t = t.replace(/['‘][^'‘’]{3,}['’]/g, '');                 // single-quoted fragments
+          t = t.replace(/["“][^"“”]{3,}["”]/g, '');              // double-quoted fragments
+          t = t.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim();
+          t = t.replace(/[,;:]\s*$/, '');
+        } catch (_) {}
+        return t || String(x == null ? '' : x);
+      };
       surfaced.forEach(function(L){
         var since = (L.lastSeenScene != null) ? (turn - L.lastSeenScene) : null;
         var head = '"' + L.name + '"' + (L.relationshipToPC ? ' — ' + L.relationshipToPC : '');
         var bits = [];
-        if (L.revealedLayers && L.revealedLayers.length) bits.push('audience already knows: ' + L.revealedLayers.slice(-4).map(function(x){ return '“' + x + '”'; }).join('; '));
+        if (L.revealedLayers && L.revealedLayers.length) bits.push('audience already knows (FACTS, not wordings — do NOT reuse any phrasing from them): ' + L.revealedLayers.slice(-4).map(function(x){ return '“' + _stripQuotedPhrasing(x) + '”'; }).join('; '));
         else bits.push('audience knows little about them yet');
         if (L.lastVehicle) bits.push('last conveyed via ' + _charVehicleLabel(L.lastVehicle) + ' → REINTRODUCE via a DIFFERENT vehicle');
         if (since != null) {
@@ -235794,7 +235809,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // configured AND this is a continuation scene (sceneIndex > 0) — a genuine Scene 1 opener, or
     // any story with no LI configured, renders nothing here.
     if (liName && sceneIndex > 0) {
-      lines.push('LI PRESENCE FLOOR (HARD — Roman 2026-09-21): if ' + liName + ' is present in this scene, ' + liName + ' MUST have at least ONE meaningful moment that affects the scene — a line of dialogue, a visible/felt emotional reaction, a refusal, an intervention, a procedural move, or a charged silence the room reacts to. ' + liName + ' may remain restrained and let another party (family, an authority, an antagonist) be the scene\'s public engine — this is NOT a requirement that ' + liName + ' dominate the scene, rescue the protagonist, or speak more than once. It IS a requirement that ' + liName + ' never simply stand in the room doing nothing while everyone else acts — a bare "' + liName + ' has not moved" or "' + liName + ' says nothing" with no felt reaction underneath it is NOT enough on its own. If ' + liName + ' is not actually present in this scene, this requirement does not apply.');
+      lines.push('LI PRESENCE FLOOR (HARD — Roman 2026-09-21): if ' + liName + ' is present in this scene, ' + liName + ' MUST have at least ONE meaningful moment that affects the scene — a line of dialogue, a visible/felt emotional reaction, a refusal, an intervention, a procedural move, or a charged silence the room reacts to. ' + liName + ' may remain restrained and let another party (family, an authority, an antagonist) be the scene\'s public engine — this is NOT a requirement that ' + liName + ' dominate the scene, rescue the protagonist, or speak more than once. It IS a requirement that ' + liName + ' never simply stand in the room doing nothing while everyone else acts. A beat that only reports ' + liName + '\'s stillness or silence, with no consequence anyone in the room registers, does not satisfy this floor: the moment must change something — who speaks next, what the protagonist can still do, what the room believes. NO SPECIMEN SENTENCE IS GIVEN, because a quoted negative example still supplies the phrasing and one has already reached a reader.');
     }
     // ── LENGTH CEILING (Roman 2026-06-13) — Scene 1 was running 7600c+ ──
     // Generation-time upper bound for setup-pace short/fling/default tiers so the
@@ -237019,7 +237034,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       lines.push(
         'SCENE 3 MANDATED FRAME (HARD — overrides every other instruction about opening / closing beats):\n' +
         '- OPENING ARC (HARD — beats[0] through approximately beats[3-5]): the scene OPENS with the protagonist INVOKING PETITION FATE. The Petition mechanic emerged at the end of Scene 2 — she now uses it. Sequence within the opening beats:\n' +
-        '   • She makes a small, IN-CHARACTER WISH using Petition Fate. The wish should be something natural to her current situation — a relational or work-context desire that fits the prior scenes\' material (NOT cosmic / world-bending — those are Tempt territory). Examples: "I wish he\'d call me back" / "I wish the meeting went my way" / "I wish I could see him alone again." Tailor the specific wish to the actual A-plot pressure / LI dynamic / prior-scene microdecision the protagonist made.\n' +
+        '   • She uses Petition Fate to wish for something she actually wants right now, arising from this scene: a person, an outcome or a relief already at stake in it. The wish is MODEST in reach — it bends her immediate circumstances, never the world (world-bending is Tempt territory). Write it as HER words or HER thought, in her own register; never describe the wish as small, natural or in character, which is direction to a writer and has already been transcribed into a reader-facing scene verbatim. NO EXAMPLES ARE GIVEN HERE ON PURPOSE: an example wish from another story is the one thing this line must never supply. Tailor the specific wish to the actual A-plot pressure / LI dynamic / prior-scene microdecision the protagonist made.\n' +
         '   • AN OMEN APPEARS: Fate signals it heard. Something small in the environment responds — a flicker, a sound, a coincidence at the edge of perception. NOT explicit (no voices, no glowing cards) — the omen is something the protagonist NOTICES but could plausibly dismiss.\n' +
         '   • THE WISH IS GRANTED IN A "WAS THAT COINCIDENCE?" WAY: the thing she wished for happens — but in a form that could plausibly have happened anyway. He calls, or the meeting tilts her way, or the door is unlocked — but in a way that leaves room for skepticism. The protagonist\'s reaction is CURIOSITY + SKEPTICISM, not certainty. She doesn\'t say "Fate is real." She thinks "Was that…? No. Coincidence."\n' +
         '   • DO NOT have the protagonist mentally narrate the system mechanic ("I used the Petition Fate card") — show the WISH and the OMEN and the GRANT through behavior, not exposition.\n' +
@@ -316574,7 +316589,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
               'OPENING ARC (first ~25% of the scene) — the protagonist GIVES VOICE TO THE WISH THEY JUST MADE via Petition Fate:\n' +
               '  • ' + ((_petitionResolved && _petitionResolved.text)
                   ? 'The protagonist voices THE EXACT WISH THE PLAYER JUST PETITIONED — paraphrased into her own voice while preserving its specific desire: "' + _petitionResolved.text + '". This is the FIRST beat, before any omen. Do NOT invent a different wish; this is the wish the player chose, and the omen below is Fate answering THIS wish.'
-                  : 'She makes a small, IN-CHARACTER WISH using Petition Fate — something natural to her current situation (relational or work-context, NOT cosmic / world-bending). Examples: "I wish he\'d call me back" / "I wish the meeting went my way." Tailor it to the actual A-plot pressure / LI dynamic / prior-scene microdecision.') + '\n' +
+                  : 'She uses Petition Fate to wish for something she actually wants right now, arising from this scene: a person, an outcome or a relief already at stake in it. The wish is MODEST in reach — it bends her immediate circumstances, never the world (world-bending is Tempt territory). Write it as HER words or HER thought, in her own register; never describe the wish as small, natural or in character, which is direction to a writer and has already been transcribed into a reader-facing scene verbatim. NO EXAMPLES ARE GIVEN HERE ON PURPOSE: an example wish from another story is the one thing this line must never supply. Tailor it to the actual A-plot pressure / LI dynamic / prior-scene microdecision.') + '\n' +
               '  • AN OMEN APPEARS: Fate signals it heard. Something small in the environment responds — a flicker, a sound, a coincidence at the edge of perception. NOT explicit (no voices, no glowing cards) — the omen is something the protagonist NOTICES but could plausibly dismiss.\n' +
               '  • THE WISH IS GRANTED IN A "WAS THAT COINCIDENCE?" WAY: the thing she wished for happens — but in a form that could plausibly have happened anyway. He calls, or the meeting tilts her way, or the door is unlocked — but in a way that leaves room for skepticism. The protagonist\'s reaction is CURIOSITY + SKEPTICISM, not certainty. She doesn\'t say "Fate is real." She thinks "Was that…? No. Coincidence."\n' +
               '  • DO NOT have the protagonist mentally narrate the system mechanic ("I used the Petition Fate card") — show the WISH and the OMEN and the GRANT through behavior, not exposition.\n' +
