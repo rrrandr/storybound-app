@@ -1,0 +1,77 @@
+{
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "scenes": [
+    {
+      "sceneNumber": 2,
+      "createdBy": "opening branch \"run\"",
+      "uid": "cg:a81224bd-c006-4738-aa44-57eba8769455",
+      "accepted": true,
+      "chars": 1146,
+      "notesAfter": 1
+    },
+    {
+      "sceneNumber": 3,
+      "createdBy": "the ending card of scene 2",
+      "cardFrom": 2,
+      "cardIdx": 4,
+      "cardLabel": null,
+      "previewSource": "gn",
+      "previewOrigin": "UNKNOWN",
+      "accepted": true,
+      "notesAfter": 2,
+      "cgScenesAfter": 2
+    },
+    {
+      "sceneNumber": 4,
+      "createdBy": "the ending card of scene 3",
+      "cardFrom": 3,
+      "cardIdx": 3,
+      "cardLabel": null,
+      "previewSource": "gn",
+      "previewOrigin": "matched-response",
+      "accepted": true,
+      "notesAfter": 3,
+      "cgScenesAfter": 3
+    },
+    {
+      "sceneNumber": 5,
+      "createdBy": "the ending card of scene 4",
+      "cardFrom": 4,
+      "cardIdx": 3,
+      "cardLabel": null,
+      "previewSource": "gn",
+      "previewOrigin": "matched-cache",
+      "accepted": true,
+      "notesAfter": 4,
+      "cgScenesAfter": 4
+    },
+    {
+      "sceneNumber": 6,
+      "createdBy": "the ending card of scene 5",
+      "cardFrom": 5,
+      "cardIdx": 4,
+      "cardLabel": null,
+      "previewSource": "gn",
+      "previewOrigin": "UNKNOWN",
+      "accepted": true,
+      "notesAfter": 5,
+      "cgScenesAfter": 5
+    }
+  ],
+  "boundaryCheck": {
+    "sceneNumber": 6,
+    "accepted": true,
+    "chars": 1590,
+    "uid": "cg:b77ed6c8-db46-4b28-9a05-8b44096e0bd3",
+    "sceneInIssue": 5,
+    "scenesPerIssue": 10,
+    "turnCount": 5,
+    "corpusOk": false,
+    "boundaryOk": false,
+    "boundaryAgrees": false,
+    "expectedPosition": 10
+  }
+}

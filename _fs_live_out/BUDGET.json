@@ -1,6 +1,6 @@
 {
-  "receipted": 2.13662825,
-  "unresolved": 1.24135206,
+  "receipted": 3.0118457,
+  "unresolved": 1.2745190400000002,
   "outstanding": [],
   "runs": [
     {
@@ -54,8 +54,12 @@
       "receipted": 0.060468400000000005,
       "unresolved": 0,
       "outstandingAtExit": 0
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-09T02-40-02-296Z",
+      "receipted": 0.8752174500000001,
+      "unresolved": 0.03316698
     }
   ],
-  "authorization": null,
   "note": " RECONCILED 2026-10-05: $0.0210015 of outstanding reservations were dropped by a faulty final save and are restored here as unresolved exposure."
 }

@@ -2732,7 +2732,7 @@ try {
   // not contain. Scene 2 is already recorded above, by the step that created it, so the first
   // pass here leaves 2 and creates 3. The last pass leaves 9 and creates 10; there is no pass
   // that leaves 10, because the issue ends there.
-  const LAST_SCENE = 10;
+  const LAST_SCENE = Number(process.env.SB_LAST_SCENE || 10);
   for (let leaving = 2; leaving <= LAST_SCENE - 1 && !halted; leaving++) {
     const creating = leaving + 1;
     const scene = leaving;   // the surface being read: deck, beats and card all belong to it

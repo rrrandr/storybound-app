@@ -1,0 +1,169 @@
+{
+  "turnsTaken": 5,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "interruptionDone": true,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "oas_exit",
+      "at": 1791513834709,
+      "storyId": "3c0074b0-aefc-4a66-b0c0-20adf5d3a3ac"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": 9191,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:a81224bd-c006-4738-aa44-57eba8769455",
+        "text": "I turn. The grass parts under my feet.\n\nThe assembly makes room. No one reaches for me.\n\nSeren stays kneeling, her face the only steady thing.\n\nThe presiding Dohkar's voice carries over the parting bodies.\n\nTHE PRESIDING DOHKAR: \"Her flight is recorded.\"\n\nThe words land like a seal pressed into wax.\n\nTHE PRESIDING DOHKAR: \"It will stand as evidence before the inquiry.\"\n\nMy standing narrows with every syllable.\n\nI feel the weight of the Dohkar's gaze as a new pressure.\n\nJulian steps forward without hurry.\n\nJULIAN: \"I hear where she is aligned.\"\n\nThe room rearranges around his stillness.\n\nJULIAN: \"Everything in her points one way.\"\n\nHe does not move closer. The space between us holds the question.\n\nThe Dohkar's script flares flat with irritation.\n\nMy fingers tighten around the deck.\n\nThe choice sits between claiming the interference and letting the assumption stand.\n\nJulian's presence is the only thing that has not yet narrowed.\n\nThe Dohkar's words have already set the record.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:a81224bd-c006-4738-aa44-57eba8769455",
+        "quoted": [
+          "I turn. The grass parts under my feet.",
+          "I hear where she is aligned."
+        ],
+        "summary": [
+          "The presiding Dohkar named her flight as evidence of guilt to be recorded for the inquiry.",
+          "The player chose to run in shame, replacing the preliminary review with immediate public judgment.",
+          "Lirael's standing visibly narrows; the inquiry is now the only path forward.",
+          "The Dohkar publicly names the flight as guilt."
+        ],
+        "obligations": [
+          "claim_or_silence"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You shaped it with every glance you cast my way during the rite, every tilt of your head that pulled eyes from the circle to you. Did you call to me hoping the Provast would rescue you from the Dohkar's charge?",
+        "liAction": "Julian steps closer, his gaze fixed on mine.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "power"
+      },
+      {
+        "pcSay": "Let them witness how the question cuts.",
+        "pcDo": "I tilt my palm, letting the hooked blade graze his skin.",
+        "pcSayRaw": "Let them see how much this question stings.",
+        "pcDoRaw": "Tilt my palm, letting the blade graze his skin",
+        "liDialogue": "The blade answers before your tongue can lie.",
+        "liAction": "His fingers close around my wrist, halting the cut before it deepens.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I am no longer a piece upon your board.",
+        "pcDo": "I turn the blade toward him, claiming my ground.",
+        "pcSayRaw": "I'm not just a pawn in your game anymore.",
+        "pcDoRaw": "Turn the blade to face him, assert my stance",
+        "liDialogue": "The Answer knows its own master. Will you draw the Provast's blood before the Dohkar's eyes?",
+        "liAction": "His fingers close around my wrist, halting the blade before it finds him.",
+        "faceState": "big_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-BIGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "Let them see how much this question stings.",
+        "pcDo": "I tilt my palm, the hooked edge halting a breath from his skin.",
+        "pcSayRaw": "Let them see how much this question stings.",
+        "pcDoRaw": "Tilt my palm, letting the blade graze his skin",
+        "liDialogue": "The Answer is well aware of the contours of your desire.",
+        "liAction": "Julian's hand twists, the tip of the blade grazing the fabric of my sleeve instead.",
+        "faceState": "knowing_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-KNOWINGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "warming",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will not speak until the true cost is laid bare.",
+        "pcDo": "I step back, the double-ended shaft steady in my grasp.",
+        "pcSayRaw": "I won't answer until I know what’s really at stake.",
+        "pcDoRaw": "Step back, holding the blade firmly in my grip",
+        "liDialogue": "Your quiet only fuels the ritual's craving. What secret do you protect so tenaciously that it overshadows the crowd's scrutiny?",
+        "liAction": "Julian stands resolute, the electric tension surrounding us heavy with ancient vows.",
+        "faceState": "hard_exhale",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-hard-exhale.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "warming",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will not answer until the true stakes are laid bare.",
+        "pcDo": "I step back, the double-ended shaft steady in my grasp.",
+        "pcSayRaw": "I won't answer until I know what’s really at stake.",
+        "pcDoRaw": "Step back, holding the blade firmly in my grip",
+        "liDialogue": "The shaft already savors your stillness. Reveal the price you dread, or allow the gathering to savor it instead.",
+        "liAction": "Julian steps forward, the electric tension in the air heavy with ancient vows.",
+        "faceState": "knowing_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-KNOWINGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "warming",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}
