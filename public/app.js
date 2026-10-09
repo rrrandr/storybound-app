@@ -232878,7 +232878,7 @@ No text, no watermark, no UI elements, share-ready.`;
        '    I have not been told."\n' +
        '  The second is not better than the first. It is longer because the moment held more.\n' +
        '- ACROSS THE SCENE, connect action, perception and character voice so the prose reads as someone living it rather than a camera listing movements. NOT IN EVERY BEAT: plain physical action, sensory observation, dialogue and silence carry their own meaning and must be left to do it. Avoid BOTH failure modes — screenplay shorthand that only reports what moved, and a procession of explanatory observations where every detail is immediately interpreted for the reader.\n' +
-      '- COMPLETE SENTENCES (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. This rule governs GRAMMAR ONLY and says nothing about length — see TEXT RULES for that. Telegram/headline-ese that drops articles and the connecting verb is NOT acceptable — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
+      '- COMPLETE SENTENCES (HARD): beats are written in COMPLETE, readable sentences with their articles ("the"/"a") and verbs intact. A beat may run to one sentence or several; length is governed by TEXT RULES, not here. This rule governs GRAMMAR ONLY and says nothing about length — see TEXT RULES for that. Telegram/headline-ese that drops articles and the connecting verb is NOT acceptable — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
       '- The FINAL beat of the scene is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
       '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show: world texture, character tells, noticed detail, hesitation. A BEAT IS ONE COHERENT NARRATIVE MOMENT, and its length follows that moment — see TEXT RULES. Do not atomise a single moment into separate beats to raise a count, and do not weld unrelated moments together to lower one. Short beats are valid and often right; a moment that earns development may take a compact paragraph. TARGET ~28–45 beats for a standard scene, as a consequence of how many moments the scene actually contains, not a figure to hit. PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
       '- Alternate dialogue and narration freely; do not bunch dialogue.\n\n' +
@@ -236765,7 +236765,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           if (_axisLead > 0) {
             _biasLines.push('      – BEAT COUNT for this scene: aim for the LOWER end of the system prompt\'s beat range (fewer, denser beats). Goal-heavy rhythm is dense and forward-moving; the scene moves through its moments rather than holding them.');
             _biasLines.push('      – EXPRESSION PEAKS for this scene: cap at EXACTLY ONE non-neutral expression_target across the whole scene. (System prompt allows 1–2; goal-heavy narrows to 1.) Emotional restraint is the felt texture.');
-            _biasLines.push('      – BEAT-LENGTH preference: a goal-heavy scene leans COMPACT — most moments resolve quickly and the scene should feel driven rather than lingered-over. This is a density lean, NOT a sentence count: each beat runs as long as its moment needs.\'s a lingered register that contradicts the axis.');
+            _biasLines.push('      – BEAT-LENGTH preference: a goal-heavy scene leans COMPACT — most moments resolve quickly and the scene should feel driven rather than lingered-over. This is a density lean, NOT a sentence count: each beat runs as long as its moment needs.');
             _biasLines.push('      – AVOID silence-only beats: every narration beat carries forward motion (a noticed task, a moved object, a glanced clock). No beat exists ONLY to let a moment breathe.');
           } else {
             _biasLines.push('      – BEAT COUNT for this scene: aim for the UPPER end of the system prompt\'s beat range (more, richer beats). Connection-heavy rhythm leaves room for the small specifics of nearness; the scene EXPANDS into its moments.');
@@ -309677,29 +309677,47 @@ Condensed (under ${maxLength} chars):` }
       return id === 'silence';
     } catch (_) { return false; }
   };
-  window._sbApplyCardSpeech = function (diaInput, candidate, card, note) {
-    if (!diaInput) return;
+  // The current speech lifecycle. Advances on every new card selection / turn, so protection
+  // never leaks across turns and a late response can tell it has been superseded.
+  window._sbSpeechToken = 0;
+  window._sbBeginSpeechLifecycle = function () {
     try {
-      // A READER EDIT IS NEVER OVERWRITTEN by a late suggestion.
-      if (diaInput.dataset && diaInput.dataset.sbReaderEdited === '1') return;
+      window._sbSpeechToken = (window._sbSpeechToken || 0) + 1;
+      return window._sbSpeechToken;
+    } catch (_) { return 0; }
+  };
+  window._sbSpeechIsReaderOwned = function (el) {
+    try {
+      if (!el || !el.dataset) return false;
+      // Reader-owned only within THIS lifecycle. An empty value still counts: deliberately
+      // deleting your words is an edit, and refilling it would overrule the reader.
+      return String(el.dataset.sbEditedAt || '') === String(window._sbSpeechToken || 0);
+    } catch (_) { return false; }
+  };
+  window._sbApplyCardSpeech = function (diaInput, candidate, card, note, token) {
+    if (!diaInput) return false;
+    try {
+      // STALE RESPONSE: the reader has since made a newer selection. Drop it.
+      if (token != null && String(token) !== String(window._sbSpeechToken || 0)) return false;
+      // READER OWNS THE FIELD this lifecycle - never overwritten by any suggestion.
+      if (window._sbSpeechIsReaderOwned(diaInput)) return false;
       var suppress = window._sbCardSuppressesSpeech(card);
-      // For a speech-suppressing card the empty default STANDS - no truthy fallback may win.
       diaInput.value = suppress ? '' : String(candidate == null ? '' : candidate);
       var n = note || (card && (card.dialogueNote || card.altDialogueNote)) || '';
       if (suppress && n) diaInput.placeholder = String(n);   // display-only; never submitted
-    } catch (_) {}
+      return true;
+    } catch (_) { return false; }
   };
-  // Mark the field the moment the reader touches it, so the guard above can tell their words
-  // from a suggestion. Registered once, on the document, so it survives panel rebuilds.
   try {
     if (!window.__sbReaderEditWatch) {
       window.__sbReaderEditWatch = true;
       document.addEventListener('input', function (ev) {
         try {
           var t = ev && ev.target;
-          if (!t || !t.id) return;
+          if (!t || !t.id || !t.dataset) return;
           if (!/^(gnDialogueInput|dialogueInput|gnActionInput|actionInput|bakedOASSay|bakedOASDo)$/.test(t.id)) return;
-          if (t.dataset) t.dataset.sbReaderEdited = t.value ? '1' : '0';
+          // ANY input is an edit, including clearing the field to empty.
+          t.dataset.sbEditedAt = String(window._sbSpeechToken || 0);
         } catch (_) {}
       }, true);
     }
@@ -309775,6 +309793,10 @@ Condensed (under ${maxLength} chars):` }
   window._stripDeckFromFateContext = _stripDeckFromFateContext;
 
   window.generateFatePreview = async function(cardData) {
+    // This selection owns the field from here; a response that lands after the
+    // reader selects again or edits is stale and will be refused by the guard.
+    var _sbTok = window._sbBeginSpeechLifecycle();
+
       if (_fatePreviewInFlight) return;
       if (!cardData) return;
 
@@ -309900,7 +309922,7 @@ Condensed (under ${maxLength} chars):` }
           state._sceneFateCardBatchInFlight = true;
           // Soft loading indicator on the clicked card's inputs
           actInput.value = _fatePending; actInput.classList.add('fate-preview-loading');
-          diaInput.value = _fatePending; diaInput.classList.add('fate-preview-loading');
+          window._sbApplyCardSpeech(diaInput, _fatePending, cardData, (cardData && cardData.dialogueNote), _sbTok); diaInput.classList.add('fate-preview-loading');
           try {
               var batch = await window.generateFatePreviewsBatch();
               if (batch) {
@@ -309921,14 +309943,14 @@ Condensed (under ${maxLength} chars):` }
           if (fresh && fresh[cardData.id]) {
               var f = fresh[cardData.id];
               actInput.value = (f.action || cardData.action || '').replace(/^["“]|["”]$/g, '');
-              diaInput.value = (f.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, '');
+              window._sbApplyCardSpeech(diaInput, (f.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, ''), cardData, (cardData && cardData.dialogueNote), _sbTok);
               return;
           }
       } else if (state._sceneFateCardBatchInFlight) {
           // Another card click already triggered the batch; wait for it
           // (don't fire a second one). Poll briefly, then look up cache.
           actInput.value = _fatePending; actInput.classList.add('fate-preview-loading');
-          diaInput.value = _fatePending; diaInput.classList.add('fate-preview-loading');
+          window._sbApplyCardSpeech(diaInput, _fatePending, cardData, (cardData && cardData.dialogueNote), _sbTok); diaInput.classList.add('fate-preview-loading');
           var _waited = 0;
           while (state._sceneFateCardBatchInFlight && _waited < 10000) {
               await new Promise(function(r) { setTimeout(r, 200); });
@@ -309940,7 +309962,7 @@ Condensed (under ${maxLength} chars):` }
           if (afterWait && afterWait[cardData.id]) {
               var w = afterWait[cardData.id];
               actInput.value = (w.action || cardData.action || '').replace(/^["“]|["”]$/g, '');
-              diaInput.value = (w.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, '');
+              window._sbApplyCardSpeech(diaInput, (w.dialogue || cardData.dialogue || '').replace(/^["“]|["”]$/g, ''), cardData, (cardData && cardData.dialogueNote), _sbTok);
               return;
           }
       }
@@ -309966,7 +309988,7 @@ Condensed (under ${maxLength} chars):` }
       // Skip preview generation if no substantial story yet
       if (recentScene.length < 100) {
           actInput.value = cardData.action || '';
-          diaInput.value = cardData.dialogue || '';
+          window._sbApplyCardSpeech(diaInput, cardData.dialogue || '', cardData, (cardData && cardData.dialogueNote), _sbTok);
           return;
       }
 
@@ -309977,7 +309999,7 @@ Condensed (under ${maxLength} chars):` }
           _fatePreviewInFlight = true;
           actInput.value = _fatePending;
           actInput.classList.add('fate-preview-loading');
-          diaInput.value = _fatePending;
+          window._sbApplyCardSpeech(diaInput, _fatePending, cardData, (cardData && cardData.dialogueNote), _sbTok);
           diaInput.classList.add('fate-preview-loading');
 
           try {
@@ -309988,16 +310010,16 @@ Condensed (under ${maxLength} chars):` }
 
               if (_fatePreviewInFlight && intimateResult) {
                   actInput.value = intimateResult.action;
-                  diaInput.value = intimateResult.dialogue;
+                  window._sbApplyCardSpeech(diaInput, intimateResult.dialogue, cardData, (cardData && cardData.dialogueNote), _sbTok);
               } else {
                   // Fallback to template text (never ChatGPT)
                   actInput.value = cardData.action || '';
-                  diaInput.value = cardData.dialogue || '';
+                  window._sbApplyCardSpeech(diaInput, cardData.dialogue || '', cardData, (cardData && cardData.dialogueNote), _sbTok);
               }
           } catch (e) {
               console.log('[FATE:Preview] Intimate preview failed, using template:', e.message);
               actInput.value = cardData.action || '';
-              diaInput.value = cardData.dialogue || '';
+              window._sbApplyCardSpeech(diaInput, cardData.dialogue || '', cardData, (cardData && cardData.dialogueNote), _sbTok);
           } finally {
               _fatePreviewInFlight = false;
               actInput.classList.remove('fate-preview-loading');
@@ -310123,7 +310145,7 @@ Condensed (under ${maxLength} chars):` }
       // Show loading state
       actInput.value = _fatePending;
       actInput.classList.add('fate-preview-loading');
-      diaInput.value = _fatePending;
+      window._sbApplyCardSpeech(diaInput, _fatePending, cardData, (cardData && cardData.dialogueNote), _sbTok);
       diaInput.classList.add('fate-preview-loading');
 
       // ── Shared scene/plot context (v2 salience-ranked entities) ──
@@ -310293,12 +310315,12 @@ Respond in this EXACT format (no labels, just two lines):
               const dialoguePreview = lines[1]?.trim() || cardData.dialogue;
 
               actInput.value = actionPreview;
-              diaInput.value = dialoguePreview;
+              window._sbApplyCardSpeech(diaInput, dialoguePreview, cardData, (cardData && cardData.dialogueNote), _sbTok);
           }
       } catch (e) {
           console.log('[FATE:Preview] Generation failed, using defaults:', e.message);
           actInput.value = cardData.action || '';
-          diaInput.value = cardData.dialogue || '';
+          window._sbApplyCardSpeech(diaInput, cardData.dialogue || '', cardData, (cardData && cardData.dialogueNote), _sbTok);
       } finally {
           _fatePreviewInFlight = false;
           actInput.classList.remove('fate-preview-loading');

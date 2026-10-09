@@ -2889,7 +2889,29 @@ try {
       say('  *** STOPPING — ' + haltReason + ' ***');
       break;
     }
-    const sIdx = nextPick(sDeck.count);
+    // SB_PREFER_CARD lets a bounded arm exercise ONE specific card through the real control
+    // instead of whatever the rotation happens to offer. If that card is not on offer the arm says
+    // so rather than substituting another and reporting it as the same test.
+    let sIdx = nextPick(sDeck.count);
+    if (process.env.SB_PREFER_CARD) {
+      const want = String(process.env.SB_PREFER_CARD).toLowerCase();
+      const found = await page.evaluate((w) => {
+        const host = document.getElementById('gnCardMount') || document.getElementById('cardMount')
+          || document;
+        const cards = [...host.querySelectorAll('.fate-card, [data-card]')];
+        const ids = cards.map((el, i) => ({
+          i,
+          id: String(el.getAttribute('data-card-id') || el.getAttribute('data-card')
+              || (el.dataset && (el.dataset.cardId || el.dataset.card)) || '').toLowerCase(),
+          text: String(el.innerText || '').toLowerCase().slice(0, 60)
+        }));
+        const hit = ids.find((x) => x.id === w) || ids.find((x) => x.text.indexOf(w) >= 0);
+        return { ids, idx: hit ? hit.i : -1 };
+      }, want);
+      say('      deck cards: ' + JSON.stringify(found.ids.map((x) => x.id || x.text.split('\n')[0])));
+      if (found.idx >= 0) { sIdx = found.idx; say('      SB_PREFER_CARD=' + want + ' -> index ' + sIdx); }
+      else say('      *** SB_PREFER_CARD=' + want + ' is NOT on offer in this deck - the arm cannot test it here ***');
+    }
     await page.evaluate(() => {
       ['gnActionInput', 'gnDialogueInput', 'actionInput', 'dialogueInput'].forEach(id => {
         const el = document.getElementById(id);

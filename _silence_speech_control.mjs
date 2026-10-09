@@ -1,4 +1,8 @@
-// ── SILENCE SUBMITS NO SPEECH, BUT NEVER OVERRIDES THE READER (provider-free, $0) ───────────
+// ── HELPER-LEVEL TEST: THE SPEECH GUARD AND THE SILENCE DATA (provider-free, $0) ────────────
+// SCOPE, STATED HONESTLY: this is a HELPER-LEVEL test. It constructs inputs and calls the shipped
+// window._sbApplyCardSpeech directly. It does NOT select a real card, wait for a real preview, or
+// submit through the reader. The end-to-end card-fill/submission evidence is the SB_SCENARIO=silence
+// arm in _fs_live_sequence.mjs, which drives the real controls and captures what is submitted.
 // The Silence card used to carry a second-person description of NOT speaking in its `dialogue`
 // field, which is the Say slot — so it was submitted as the player's spoken line and rendered as
 // LIRAEL: "...". This exercises the SHIPPED guard (window._sbApplyCardSpeech) and the SHIPPED
@@ -12,7 +16,7 @@ const t = (label, ok, detail) => {
   else { fail++; console.log('  FAIL ' + label + (detail ? '  — ' + detail : '')); }
 };
 
-console.log('=== SILENCE / SPEECH OWNERSHIP (provider-free, $0) ===\n');
+console.log('=== SILENCE / SPEECH GUARD - HELPER LEVEL, constructed inputs (provider-free, $0) ===\n');
 
 // 1. SOURCE INVARIANT: every silence branch must default its spoken field to empty.
 const src = fs.readFileSync('public/fatecards.js', 'utf8');
@@ -82,6 +86,31 @@ const r = await page.evaluate(() => {
 
   out.suppresses = { silence: window._sbCardSuppressesSpeech(SILENCE),
                      tempt: window._sbCardSuppressesSpeech(TEMPT) };
+
+  // E: DELIBERATELY CLEARING Say is an edit. The old flag marked an empty field UNEDITED, so a
+  //    suggestion could refill words the reader had just deleted.
+  const c = mk('clearProbe');
+  c.id = 'dialogueInput';
+  window._sbBeginSpeechLifecycle();
+  c.value = 'something'; c.dispatchEvent(new Event('input', { bubbles: true }));
+  c.value = ''; c.dispatchEvent(new Event('input', { bubbles: true }));
+  window._sbApplyCardSpeech(c, 'a suggestion that must not land', TEMPT, null);
+  out.clearedStaysEmpty = { value: c.value };
+
+  // F: A STALE response - one whose selection has been superseded - must not write.
+  const tok = window._sbBeginSpeechLifecycle();
+  window._sbBeginSpeechLifecycle();           // the reader selects again
+  const d2 = mk('staleProbe'); d2.id = 'dialogueInput';
+  const wrote = window._sbApplyCardSpeech(d2, 'late arrival', TEMPT, null, tok);
+  out.stale = { wrote: wrote, value: d2.value };
+
+  // G: A NEW TURN must still receive its own suggestion - protection must not be sticky.
+  const e2 = mk('nextTurnProbe'); e2.id = 'dialogueInput';
+  window._sbBeginSpeechLifecycle();
+  e2.value = 'reader words'; e2.dispatchEvent(new Event('input', { bubbles: true }));
+  window._sbBeginSpeechLifecycle();           // next turn begins
+  window._sbApplyCardSpeech(e2, 'this turn\'s suggestion', TEMPT, null);
+  out.nextTurn = { value: e2.value };
   return out;
 });
 
@@ -110,6 +139,14 @@ const bite = await page.evaluate(() => {
   return el.value;
 });
 t('THE CHECK BITES: the old unguarded assignment does land speech', bite === '*mm*', bite);
+t('deliberately CLEARED speech stays empty - deletion is an edit',
+  r.clearedStaysEmpty.value === '', 'value is ' + JSON.stringify(r.clearedStaysEmpty.value));
+t('a STALE response from a superseded selection does not write',
+  r.stale.wrote === false && r.stale.value === '',
+  'wrote=' + r.stale.wrote + ' value=' + JSON.stringify(r.stale.value));
+t('a NEW turn still receives its own suggestion - protection is not sticky',
+  r.nextTurn.value === "this turn's suggestion",
+  'value is ' + JSON.stringify(r.nextTurn.value));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
