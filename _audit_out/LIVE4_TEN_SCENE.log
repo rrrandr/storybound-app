@@ -1,0 +1,266 @@
+=== FS SEQUENCE — ceiling $6.50 — LIVE ===
+Authorized by Roman with an explicit go, ceiling $6.50.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $4.809188
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9207ms
+  [policy] after the entrance submission, before any further input — 0 invocation(s) recorded
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=true age=66ms  1791527500002-rwvkzt -> 1791527500002-rwvkzt   (identity preserved)
+  call  1  grok-4-1-fast-reasoning        served=grok-4.3                       in= 46212 cached=  192 out=  299  $0.059931  18132ms
+  the entrance submission IS exchange 1 — author call 1 — the author pair, unedited
+  call  2  gpt-4o-mini                    served=?                              in=  2851 cached=    0 out=  135  NO RECEIPT (est $0.003781)  4439ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 2, requested under the SAME generation identity (turnCount=0 beat=1) — encounter=opening OAS turn=1 card="silence"
+      SAY "*A breath escapes me.*"
+      DO  "Stand still, letting the tension fill the air"
+  call  3  gpt-4o-mini                    served=?                              in=  1004 cached=    0 out=   77  NO RECEIPT (est $0.000623)  2897ms
+  call  4  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=   504 cached=  128 out=    5  $0.001621  8268ms
+  call  5  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46345 cached=32960 out=  303  $0.025651  17471ms
+  call  6  ministral-8b-2512              served=ministral-8b-2512              in=  3135 cached=    0 out= 1006  NO RECEIPT (est $0.000896)  17771ms
+  turn 1: replies 1 -> 2 (beats 1 -> 2)
+      model reply RECEIVED AND RENDERED for turn 2 — author call 5 — the author pair, unedited — exchange 2 of 6
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=2 card="boundary"
+      SAY "I won't answer your questions here, not like this."
+      DO  "Step back, pulling my hand away from his grip"
+  call  7  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46585 cached=38336 out=  288  $0.020841  16148ms
+  call  8  gpt-4o-mini                    served=?                              in=   168 cached=    0 out=   39  NO RECEIPT (est $0.000268)  2627ms
+  turn 2: replies 2 -> 3 (beats 2 -> 3)
+      model reply RECEIVED AND RENDERED for turn 3 — author call 7, cleanup call 8 (input verified) — the accepted cleanup of this turn's author pair — exchange 3 of 6
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=3 card="silence" — a stale record is not provenance for this submission
+      SAY "*A breath escapes me.*"
+      DO  "Stand still, letting the tension fill the air"
+  call  9  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 47229 cached=38336 out=  311  $0.021178  16886ms
+  call 10  gpt-4o-mini                    served=?                              in=   182 cached=    0 out=   54  NO RECEIPT (est $0.000270)  2586ms
+  turn 3: replies 3 -> 4 (beats 3 -> 4)
+      model reply RECEIVED AND RENDERED for turn 4 — author call 9, cleanup call 10 (input verified) — the accepted cleanup of this turn's author pair — exchange 4 of 6
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=4 card="silence" — a stale record is not provenance for this submission
+      SAY "*A breath escapes me.*"
+      DO  "Stand still, letting the tension fill the air"
+  call 11  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 47315 cached=38400 out=  261  $0.022609  20477ms
+  call 12  gpt-4o-mini                    served=?                              in=   166 cached=    0 out=   32  NO RECEIPT (est $0.000267)  2529ms
+  turn 4: replies 4 -> 5 (beats 4 -> 5)
+      model reply RECEIVED AND RENDERED for turn 5 — author call 11, cleanup call 12 (input verified) — the accepted cleanup of this turn's author pair — exchange 5 of 6
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-cache — the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=5 card="boundary"
+      SAY "I won't answer your questions here, not like this."
+      DO  "Step back, pulling my hand away from his grip"
+  call 13  grok-4.20-0309-non-reasoning   served=grok-4.3                       in= 46725 cached=38400 out=  302  $0.021414  18512ms
+  call 14  gpt-4o-mini                    served=?                              in=   169 cached=    0 out=   33  NO RECEIPT (est $0.000267)  2525ms
+  turn 5: replies 5 -> 6 (beats 5 -> 6)
+      model reply RECEIVED AND RENDERED for turn 6 — author call 13, cleanup call 14 (input verified) — the accepted cleanup of this turn's author pair — exchange 6 of 6
+  --- SCRIPTED READER EXIT after 6 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":6,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  interruption: {"present":true,"submitted":false,"pending":false}
+    submit attempt: submit disabled (trusted click) -> submitted=false
+  handoff (before the branch is serviced): {"resolved":true,"archive":1,"interruptionPresent":true,"interruptionDone":true,"decisionOnScreen":true,"decisionOpen":true,"branches":["sceneDecisionA","sceneDecisionB"]}
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":null}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"oas_exit"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  call 15  ministral-8b-2512              served=ministral-8b-2512              in=  6372 cached=    0 out= 1460  NO RECEIPT (est $0.001687)  18153ms
+  call 16  gpt-4o-mini                    served=?                              in=   352 cached=    0 out=   51  NO RECEIPT (est $0.000811)  2761ms
+  call 17  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  7603 cached=  192 out=  582  $0.013302  21894ms
+  call 18  grok-4-1-fast-reasoning        served=grok-4.3                       in= 60364 cached=  192 out= 4478  $0.088583  55185ms
+  SCENE 2 created by the opening branch: ACCEPTED · uid=cg:51d06981-9df9-4 · 1711 chars · cgScenes=1 · notes=1
+  turns 5 · resolved=true · archive=1 · interruptionDone=true · run/remain on screen=false · branches=[]
+  after the choice: recorded="run" · prompt removed by production=true · handoff had passed=true
+  exposure $5.094134
+
+── LEAVING SCENE 2 -> CREATING SCENE 3 (live) ──
+  scene 2 render state: {"cgScenes":1,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 19  ministral-8b-2512              served=ministral-8b-2512              in=  3348 cached=    0 out= 1070  NO RECEIPT (est $0.000944)  17500ms
+  call 20  ministral-8b-2512              served=ministral-8b-2512              in=  1976 cached=    0 out=  869  NO RECEIPT (est $0.000658)  13392ms
+  walked 18 beat(s) to the end of scene 2
+  call 21  gpt-4o-mini                    served=?                              in=  3064 cached=    0 out=  140  NO RECEIPT (est $0.003824)  3154ms
+  scene 2 plays card 4 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=1:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card="temptation"
+  call 22  ministral-8b-2512              served=ministral-8b-2512              in=  1725 cached=    0 out=  261  NO RECEIPT (est $0.000553)  5502ms
+  call 23  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  4697 cached=  192 out=  311  $0.009100  15896ms
+  call 24  grok-4-1-fast-reasoning        served=grok-4.3                       in= 66319 cached=  192 out= 4286  $0.094502  48828ms
+  SCENE 3 ACCEPTED (card played in scene 2) · cg scenes 1 -> 2 · notes 2 · exposure $5.203699
+  paged to gate: {"gateShown":true,"beat":17,"beats":18,"clicks":0}
+
+── LEAVING SCENE 3 -> CREATING SCENE 4 (live) ──
+  scene 3 render state: {"cgScenes":2,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 25  ministral-8b-2512              served=ministral-8b-2512              in=  3281 cached=    0 out=  928  NO RECEIPT (est $0.000929)  13773ms
+  call 26  ministral-8b-2512              served=ministral-8b-2512              in=  1973 cached=    0 out=  556  NO RECEIPT (est $0.000656)  8828ms
+  walked 24 beat(s) to the end of scene 3
+  call 27  gpt-4o-mini                    served=?                              in=  3052 cached=    0 out=  125  NO RECEIPT (est $0.003822)  4037ms
+  scene 3 plays card 3 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=2:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card="boundary"
+  call 28  ministral-8b-2512              served=ministral-8b-2512              in=  1606 cached=    0 out=  247  NO RECEIPT (est $0.000530)  5524ms
+  call 29  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5029 cached=  192 out=  366  $0.008212  10211ms
+  call 30  grok-4-1-fast-reasoning        served=grok-4.3                       in= 63725 cached=  192 out= 4612  $0.092355  40569ms
+  SCENE 4 ACCEPTED (card played in scene 3) · cg scenes 2 -> 3 · notes 3 · exposure $5.310183
+  paged to gate: {"gateShown":true,"beat":20,"beats":21,"clicks":0}
+
+── LEAVING SCENE 4 -> CREATING SCENE 5 (live) ──
+  scene 4 render state: {"cgScenes":3,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 31  ministral-8b-2512              served=ministral-8b-2512              in=  1923 cached=    0 out=  757  NO RECEIPT (est $0.000649)  10417ms
+  walked 20 beat(s) to the end of scene 4
+  call 32  gpt-4o-mini                    served=?                              in=  3063 cached=    0 out=  131  NO RECEIPT (est $0.003824)  3391ms
+  scene 4 plays card 3 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=3:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 4 end turn=4 card="reversal"
+  call 33  ministral-8b-2512              served=ministral-8b-2512              in=  3169 cached=    0 out= 1034  NO RECEIPT (est $0.000910)  30655ms
+  call 34  ministral-8b-2512              served=ministral-8b-2512              in=  1567 cached=    0 out=  635  NO RECEIPT (est $0.000523)  9763ms
+  call 35  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5119 cached=  192 out=  270  $0.008932  18838ms
+  call 36  grok-4-1-fast-reasoning        served=grok-4.3                       in= 62805 cached=  192 out= 5092  $0.092595  47275ms
+  SCENE 5 ACCEPTED (card played in scene 4) · cg scenes 3 -> 4 · notes 4 · exposure $5.417624
+  paged to gate: {"gateShown":true,"beat":19,"beats":20,"clicks":0}
+
+── LEAVING SCENE 5 -> CREATING SCENE 6 (live) ──
+  scene 5 render state: {"cgScenes":4,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 37  ministral-8b-2512              served=ministral-8b-2512              in=  1973 cached=    0 out=  578  NO RECEIPT (est $0.000660)  7477ms
+  call 38  ministral-8b-2512              served=ministral-8b-2512              in=  3214 cached= 1536 out=  950  NO RECEIPT (est $0.000919)  12167ms
+  walked 26 beat(s) to the end of scene 5
+  call 39  gpt-4o-mini                    served=?                              in=  3063 cached=    0 out=  137  NO RECEIPT (est $0.003824)  2779ms
+  scene 5 plays card 4 "?" from gnCardMount [preview: matched-response] (playable=5 locked=0 committed=false sel=-1 key=4:1) via gn
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 39, requested under the SAME generation identity (turnCount=4) — encounter=scene 5 end turn=5 card="silence"
+  call 40  ministral-8b-2512              served=ministral-8b-2512              in=  1535 cached=    0 out=  315  NO RECEIPT (est $0.000521)  7151ms
+  call 41  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5250 cached=  192 out=  284  $0.009148  14152ms
+  call 42  grok-4-1-fast-reasoning        served=grok-4.3                       in= 65836 cached= 1728 out= 4061  $0.091761  35430ms
+  SCENE 6 ACCEPTED (card played in scene 5) · cg scenes 4 -> 5 · notes 5 · exposure $5.524451
+  paged to gate: {"gateShown":true,"beat":25,"beats":26,"clicks":0}
+
+── LEAVING SCENE 6 -> CREATING SCENE 7 (live) ──
+  scene 6 render state: {"cgScenes":5,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 43  ministral-8b-2512              served=ministral-8b-2512              in=  2000 cached=    0 out=  525  NO RECEIPT (est $0.000665)  9201ms
+  call 44  ministral-8b-2512              served=ministral-8b-2512              in=  3186 cached=    0 out= 1048  NO RECEIPT (est $0.000913)  14308ms
+  walked 21 beat(s) to the end of scene 6
+  call 45  gpt-4o-mini                    served=?                              in=  3063 cached= 2944 out=  121  NO RECEIPT (est $0.003824)  2806ms
+  scene 6 plays card 2 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=5:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 6 end turn=6 card="boundary"
+  call 46  ministral-8b-2512              served=ministral-8b-2512              in=  1526 cached=    0 out=  326  NO RECEIPT (est $0.000518)  4609ms
+  call 47  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5089 cached=  192 out=  292  $0.010192  21640ms
+  call 48  grok-4-1-fast-reasoning        served=grok-4.3                       in= 61914 cached=  192 out= 4874  $0.090826  43823ms
+  SCENE 7 ACCEPTED (card played in scene 6) · cg scenes 5 -> 6 · notes 6 · exposure $5.631401
+  paged to gate: {"gateShown":true,"beat":20,"beats":21,"clicks":0}
+
+── LEAVING SCENE 7 -> CREATING SCENE 8 (live) ──
+  scene 7 render state: {"cgScenes":6,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 49  ministral-8b-2512              served=ministral-8b-2512              in=  2072 cached=    0 out=  541  NO RECEIPT (est $0.000681)  8509ms
+  call 50  ministral-8b-2512              served=ministral-8b-2512              in=  3241 cached=    0 out=  991  NO RECEIPT (est $0.000925)  14247ms
+  walked 25 beat(s) to the end of scene 7
+  call 51  gpt-4o-mini                    served=?                              in=  3063 cached= 2944 out=  155  NO RECEIPT (est $0.003824)  3621ms
+  scene 7 plays card 4 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=6:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 7 end turn=7 card="temptation"
+  call 52  ministral-8b-2512              served=ministral-8b-2512              in=  1562 cached=    0 out=  387  NO RECEIPT (est $0.000527)  5428ms
+  call 53  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5006 cached=  192 out=  299  $0.009288  15281ms
+  call 54  grok-4-1-fast-reasoning        served=grok-4.3                       in= 61997 cached=  192 out= 4606  $0.090285  47123ms
+  SCENE 8 ACCEPTED (card played in scene 7) · cg scenes 6 -> 7 · notes 7 · exposure $5.736926
+  paged to gate: {"gateShown":true,"beat":24,"beats":25,"clicks":0}
+
+── LEAVING SCENE 8 -> CREATING SCENE 9 (live) ──
+  scene 8 render state: {"cgScenes":7,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 55  ministral-8b-2512              served=ministral-8b-2512              in=  2087 cached=    0 out=  591  NO RECEIPT (est $0.000684)  7984ms
+  call 56  ministral-8b-2512              served=ministral-8b-2512              in=  3227 cached=    0 out=  969  NO RECEIPT (est $0.000921)  12645ms
+  walked 24 beat(s) to the end of scene 8
+  call 57  gpt-4o-mini                    served=?                              in=  3064 cached=    0 out=  132  NO RECEIPT (est $0.003824)  3470ms
+  scene 8 plays card 2 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=7:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 8 end turn=8 card="confession"
+  call 58  ministral-8b-2512              served=ministral-8b-2512              in=  1571 cached=    0 out=  296  NO RECEIPT (est $0.000529)  4035ms
+  call 59  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5031 cached= 1088 out=  279  $0.008331  14950ms
+  call 60  grok-4-1-fast-reasoning        served=grok-4.3                       in= 61880 cached= 2432 out= 5108  $0.088996  46648ms
+  SCENE 9 ACCEPTED (card played in scene 8) · cg scenes 7 -> 8 · notes 8 · exposure $5.840212
+  paged to gate: {"gateShown":true,"beat":23,"beats":24,"clicks":0}
+
+── LEAVING SCENE 9 -> CREATING SCENE 10 (live) ──
+  scene 9 render state: {"cgScenes":8,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 61  ministral-8b-2512              served=ministral-8b-2512              in=  3227 cached=    0 out= 1022  NO RECEIPT (est $0.000921)  11639ms
+  call 62  ministral-8b-2512              served=ministral-8b-2512              in=  2114 cached=  896 out=  586  NO RECEIPT (est $0.000690)  7359ms
+  walked 24 beat(s) to the end of scene 9
+  call 63  gpt-4o-mini                    served=?                              in=  3051 cached=    0 out=  150  NO RECEIPT (est $0.003821)  3057ms
+  scene 9 plays card 0 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=8:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 9 end turn=9 card="boundary"
+  call 64  ministral-8b-2512              served=ministral-8b-2512              in=  1559 cached= 1024 out=  210  NO RECEIPT (est $0.000522)  3457ms
+  call 65  grok-4-1-fast-non-reasoning    served=grok-4.3                       in=  5003 cached=  192 out=  254  $0.008417  10590ms
+  call 66  grok-4-1-fast-reasoning        served=grok-4.3                       in= 61967 cached= 2432 out= 4747  $0.087930  41578ms
+  SCENE 10 ACCEPTED (card played in scene 9) · cg scenes 8 -> 9 · notes 9 · exposure $5.942509
+  paged to gate: {"gateShown":true,"beat":23,"beats":24,"clicks":0}
+
+
+── ISSUE BOUNDARY ──
+  scene 10 accepted projection: true · 1037 chars · uid=cg:4fc24f74-986d-4
+  cg scenes: 9 · history notes: 9
+  production issue state: scene 9 of 10 (turnCount 9) · decisionNeeded=false · nextGateOpen=true
+  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): GENERATED  (9 generated records, scene 10 projection accepted)
+  CLAIM B — production recognizes issue completion: NO  (_isLastSceneOfIssue()=false; position 9 of 10 — production requires exactly 10)
+  *** FAILED — the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE COMPLETION: _isLastSceneOfIssue()=false at position 9 of 10. This is the counter defect, NOT grounds to generate an eleventh scene. ***
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  (boundary check: scene 10 projection accepted, 1037 chars, production position 9/10)
+  scene 2  accepted  <- opening branch "run"
+  scene 3  accepted  <- the ending card of scene 2  [preview: gn/UNKNOWN]
+  scene 4  accepted  <- the ending card of scene 3  [preview: gn/UNKNOWN]
+  scene 5  accepted  <- the ending card of scene 4  [preview: gn/UNKNOWN]
+  scene 6  accepted  <- the ending card of scene 5  [preview: gn/matched-response]
+  scene 7  accepted  <- the ending card of scene 6  [preview: gn/UNKNOWN]
+  scene 8  accepted  <- the ending card of scene 7  [preview: gn/UNKNOWN]
+  scene 9  accepted  <- the ending card of scene 8  [preview: gn/UNKNOWN]
+  scene 10  accepted  <- the ending card of scene 9  [preview: gn/UNKNOWN]
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 66
+  MEASURED (receipts)    : $1.076000
+  no receipt             : 41 call(s), estimated $0.056404 — NOT counted as measured
+  retained (no receipt)  : $0.056404 — kept as exposure, NOT forgiven
+  prior runs             : $4.809188
+  TOTAL EXPOSURE         : $5.942509
+  ceiling                : $6.50  [HALTED: the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE COMPLETION: _isLastSceneOfIssue()=false at position 9 of 10. This is the counter defect, NOT grounds to generate an eleventh scene.]
+  CACHED TOKENS          : 206464 of 989093 input (20.9%)
+  NOTE: $0.000917 of reservations were still outstanding at exit and
+        are carried as UNRESOLVED exposure, not forgiven.
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.json
+  receipted to date  $4.595285
+  unresolved to date $1.347225
+  TOTAL vs ceiling   $5.942509 of $6.50
+
+output: _fs_live_out/run_2026-10-09T06-31-11-009Z
+        NO RESPONSE from route.fetch: Request context disposed.
+Call log:
+[2m  - → POST http://localhost:3000/api/mistral-proxy[22m
+[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - content-type: application/json[22m
+[2m    - origin: http://localhost:3000[22m
+[2m    - referer: http://localhost:3000/[22m
+[2m    - sec-ch-ua: "HeadlessChrome";v="153", "Not_A Brand";v="8", "Chromium";v="153"[22m
+[2m    - sec-ch-ua-mobile: ?0[22m
+[2m    - sec-ch-ua-platform: "macOS"[22m
+[2m    - content-length: 12534[22m
+ (ministral-8b-2512) — the request was DISPATCHED, so this is UNMEASURED, estimated $0.000917 (NOT $0; total unmeasured $0.000917)
+  call 67  ministral-8b-2512  11977c  DISPATCHED, NO RESPONSE: route.fetch: Request context disposed.
+Call log:
+[2m  - → POST http://localhost:3000/api/mistral-proxy[22m
+[2m    - user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - content-type: application/json[22m
+[2m    - origin: http://localhost:3000[22m
+[2m    - referer: http://localhost:3000/[22m
+[2m    - sec-ch-ua: "HeadlessChrome";v="153", "Not_A Brand";v="8", "Chromium";v="153"[22m
+[2m    - sec-ch-ua-mobile: ?0[22m
+[2m    - sec-ch-ua-platform: "macOS"[22m
+[2m    - content-length: 12534[22m
+
