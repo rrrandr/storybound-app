@@ -1,0 +1,27 @@
+{
+  "stagedSubmitting": true,
+  "isAdvancingScene": false,
+  "resumable": null,
+  "reduxRejected": [],
+  "composingIndicatorVisible": false,
+  "turnCount": 3,
+  "assignedEventByScene": [
+    {
+      "key": "1",
+      "event": "Lirael refuses to continue answering in the open, and the assembly sees her end "
+    },
+    {
+      "key": "2",
+      "event": "Seren's family publicly demands remedy for the twisted wish, and the presiding D"
+    },
+    {
+      "key": "3",
+      "event": "Seren's family publicly demands remedy for the twisted wish, and the presiding D"
+    }
+  ],
+  "acceptedPlannerProposal": null,
+  "eventDeliveryDiagnostics": [],
+  "sayUsable": true,
+  "doUsable": true,
+  "submitUsable": true
+}

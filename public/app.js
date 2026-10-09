@@ -31956,6 +31956,36 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
               }).join('\n') + '\n\n';
         }
       } catch (_) { _admitRoster = ''; }
+      // ── ASSIGNED-EVENT DELIVERY (diagnostic only, Roman 2026-10-09) ──────────────────────
+      // Supplied ONLY when this scene has a recorded assignment, so ordinary scenes pay nothing.
+      // The model assesses the prose INDEPENDENTLY - it is never told where the author claimed
+      // the event lands, because that would invite agreement rather than judgement.
+      var _edBlock = '';
+      try {
+        var _edRec = null;
+        try {
+          // BY UID FIRST - unambiguous. The numeric key is a fallback only.
+          var _edScene = (window.state.scenes || []).filter(function (x) {
+            return x && sceneUid && x.uid === sceneUid; })[0];
+          _edRec = (_edScene && _edScene.plan && _edScene.plan.__assignedEvent) || null;
+        } catch (_) {}
+        if (!_edRec) _edRec = (window.state._assignedEventByScene || {})[sceneNum] || null;
+        if (_edRec && _edRec.state_change) {
+          _edBlock = 'ALSO assess ASSIGNED-EVENT DELIVERY. This scene was commissioned to land ONE'
+            + ' specific event:\n  ASSIGNED EVENT: "' + String(_edRec.state_change).slice(0, 220) + '"\n'
+            + (_edRec.precondition ? ('  NOT YET TRUE WHEN THE SCENE OPENED: "'
+                + String(_edRec.precondition).slice(0, 180) + '"\n') : '')
+            + 'Judge ONLY from the scene text you were given. eventDelivery.verdict is one of:\n'
+            + '  "occurred"        — it HAPPENS on the page in this scene;\n'
+            + '  "anticipated"     — the scene only looks forward to it, or recalls it as past;\n'
+            + '  "contradicted"    — the scene shows something incompatible with it;\n'
+            + '  "not_established" — the text does not let you decide.\n'
+            + 'eventDelivery.passages = 1-3 passages copied VERBATIM from the scene that support'
+            + ' your verdict (each <=160 chars; they are checked against the text, so copy exactly'
+            + ' and never paraphrase). eventDelivery.explanation = ONE short sentence saying why.\n'
+            + 'An event may span several beats; do NOT report a beat number.\n\n';
+        }
+      } catch (_) { _edBlock = ''; }
       var sys = 'You are the CHARACTER MEMORY EXTRACTOR for an interactive romance story engine. You read the latest scene plus the running character ledger and report what the AUDIENCE now knows about each NAMED, PERSISTENT supporting character — so the engine can vary how it reintroduces people and never repeat a reveal.\n\n' +
         'RULES:\n' +
         '- Report ONLY named or clearly-titled recurring characters. IGNORE the protagonist (the "I" / viewpoint character) and one-off background figures with no name and no recurring role (a waiter, a guard).\n' +
@@ -31987,9 +32017,12 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
         // given — never by inventing one, and never for anybody it was not offered. An incidental
         // character omits the field entirely and continues on the ordinary admission path.
         (_admitRoster ? _admitRoster : '') +
+        _edBlock +
         'Return ONLY JSON, no prose, no markdown:\n{ "characters": [ { "name": "", "present": true, "relationshipToPC": null, "newLayer": null, "vehicle": "none", "framing": null'
         + (_admitRoster ? ', "subject_ref": "<COPY one subject_ref from STAGED SUBJECTS above, exactly, for a character who IS that staged person; OMIT the field entirely for anyone not listed there>"' : '')
-        + ' } ], "scene": { "chargeTier": "low", "interpretiveDensity": "measured", "loadedSentenceRatio": 0.0 }, "sceneState": { "setting": null, "charactersPresent": [], "protagonistStatus": null, "decisiveChange": null, "activeInterlocutor": null, "protagonistAlone": false }, "relations": [ { "quote": "", "from": "", "to": "", "type": "", "basis": "asserted_on_page", "assertedBy": null, "addressedTo": null } ] }';
+        + ' } ], "scene": { "chargeTier": "low", "interpretiveDensity": "measured", "loadedSentenceRatio": 0.0 }, "sceneState": { "setting": null, "charactersPresent": [], "protagonistStatus": null, "decisiveChange": null, "activeInterlocutor": null, "protagonistAlone": false }, "relations": [ { "quote": "", "from": "", "to": "", "type": "", "basis": "asserted_on_page", "assertedBy": null, "addressedTo": null } ] '
+        + (_edBlock ? ', "eventDelivery": { "verdict": "occurred|anticipated|contradicted|not_established", "passages": ["<verbatim, <=160 chars>"], "explanation": "<one short sentence>" } ' : '')
+        + '}';
 
       // PLOT-CONTRACT fulfillment scoring (Roman 2026-06-27, GATED) — piggyback on THIS call (no
       // new LLM call). If active hard beats exist, also score whether the scene landed each.
@@ -32074,7 +32107,59 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       try {
         // THE SOLICITED HISTORY VERDICT, validated against what was actually asked.
         try {
-          if (parsed && Array.isArray(parsed.history_obligations_fulfilled)
+          // ── ASSIGNED-EVENT DELIVERY: RECORD, DO NOT GATE (Roman 2026-10-09) ──────────────────
+      // DIAGNOSTIC ONLY. This runs AFTER the scene is persisted and that lifecycle is unchanged:
+      // nothing is rolled back, nothing regenerates, no extra model call, no new blocking wait.
+      // The model's INTERPRETATION and the MECHANICAL citation check are kept separate on purpose -
+      // a cited passage existing proves only that the words are in the scene, never that the event
+      // happened. Beat numbers are deliberately not compared: an event can span beats, and two
+      // models agreeing on an index would say nothing about delivery.
+      try {
+        var _edRec2 = null;
+        try {
+          var _edScene2 = (window.state.scenes || []).filter(function (x) {
+            return x && sceneUid && x.uid === sceneUid; })[0];
+          _edRec2 = (_edScene2 && _edScene2.plan && _edScene2.plan.__assignedEvent) || null;
+        } catch (_) {}
+        if (!_edRec2) _edRec2 = (window.state._assignedEventByScene || {})[sceneNum] || null;
+        if (_edRec2 && parsed && parsed.eventDelivery) {
+          var _ed = parsed.eventDelivery;
+          var _edHay = String(sceneText || '').replace(/\s+/g, ' ').toLowerCase();
+          var _edCites = (Array.isArray(_ed.passages) ? _ed.passages : [])
+            .slice(0, 3).map(function (q) {
+              var t = String(q == null ? '' : q).replace(/\s+/g, ' ').trim();
+              return { passage: t.slice(0, 200),
+                       foundInScene: !!(t.length > 8 && _edHay.indexOf(t.toLowerCase()) !== -1) };
+            });
+          var _edVerdicts = { occurred: 1, anticipated: 1, contradicted: 1, not_established: 1 };
+          var _edVerdict = String(_ed.verdict || '').trim();
+          window.state._eventDeliveryDiagnostics = window.state._eventDeliveryDiagnostics || [];
+          window.state._eventDeliveryDiagnostics.push({
+            at: Date.now(),
+            sceneNum: sceneNum, sceneUid: sceneUid || null,
+            assignedEvent: _edRec2.state_change,          // the assignment this scene was given
+            verdict: _edVerdicts[_edVerdict] ? _edVerdict : 'malformed',
+            explanation: String(_ed.explanation || '').slice(0, 300),
+            citations: _edCites,                          // mechanical: do these words exist?
+            citationsAllFound: _edCites.length > 0 && _edCites.every(function (c) { return c.foundInScene; }),
+            authorClaimedBeat: (function () {
+              try {
+                var r = (window.state.scenes || []).filter(function (x) { return x && x.uid === sceneUid; })[0];
+                return r && r.plan && r.plan.state_change_beat != null ? r.plan.state_change_beat : null;
+              } catch (_) { return null; }
+            })()
+          });
+          if (window.state._eventDeliveryDiagnostics.length > 20) window.state._eventDeliveryDiagnostics.shift();
+          try {
+            console.log('[EVENT-DELIVERY] scene ' + sceneNum + ' verdict=' + _edVerdict
+              + ' citations=' + _edCites.length + ' allFoundInScene='
+              + (_edCites.length > 0 && _edCites.every(function (c) { return c.foundInScene; }))
+              + ' — DIAGNOSTIC ONLY, nothing is gated on this. ' + String(_ed.explanation || '').slice(0, 140));
+          } catch (_) {}
+        }
+      } catch (_) {}
+
+      if (parsed && Array.isArray(parsed.history_obligations_fulfilled)
               && typeof _settleHistoryObligation === 'function') {
             parsed.history_obligations_fulfilled.forEach(function (hv) {
               if (!hv || !hv.id) return;
@@ -240572,6 +240657,27 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
             } catch (_) {}
             return { __fateRejected: true, sceneIndex: sceneIndex,
                      failures: _fscGateVerdict.failures || [] }; }
+          // THE ASSIGNMENT, KEPT WITH ITS SCENE. Immutable once written: the diagnostic below
+          // must compare the event this scene was actually given, not whatever is current later.
+          try {
+            var _aeProp = state._acceptedPlannerProposal;
+            var _aeEvent = _aeProp && (_aeProp.state_change || (_aeProp.proposal && _aeProp.proposal.state_change));
+            if (_aeEvent) {
+              state._assignedEventByScene = state._assignedEventByScene || {};
+              var _aeEntry = { sceneIndex: sceneIndex, state_change: String(_aeEvent),
+                precondition: String((_aeProp && _aeProp.state_change_precondition) || ''),
+                at: Date.now() };
+              // Keyed under BOTH identifiers: the extractor is called with sceneNum, which is not
+              // guaranteed to equal the generation's sceneIndex.
+              if (!state._assignedEventByScene[sceneIndex]) state._assignedEventByScene[sceneIndex] = _aeEntry;
+              // Carried ON THE PLAN too, so the scene itself holds its assignment and the
+              // diagnostic can resolve it by UID instead of a derived scene number.
+              try { if (_normalized) _normalized.__assignedEvent = _aeEntry; } catch (_) {}
+              var _aeNum = (_aeProp && _aeProp.sceneNum != null) ? _aeProp.sceneNum : null;
+              if (_aeNum != null && !state._assignedEventByScene[_aeNum]) state._assignedEventByScene[_aeNum] = _aeEntry;
+            }
+          } catch (_) {}
+
           // ── ASSIGNED-EVENT GATE (Roman 2026-10-09) ───────────────────────────────────────
           // Scene 9's assigned event was absent from the output and acceptance never asked. The
           // author must now point at the beat where the event LANDS. This verifies the POINTER

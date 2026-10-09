@@ -3238,6 +3238,14 @@ if (process.env.SB_DUMP_READER_STATE) {
           rawPlanBeats: (x.rawPlan && x.rawPlan.beats && x.rawPlan.beats.length) || 0 })),
         composingIndicatorVisible: vis('stagedComposingIndicator'),
         turnCount: st.turnCount,
+        assignedEventByScene: Object.keys(st._assignedEventByScene || {}).map((k) => ({
+          key: k, event: String((st._assignedEventByScene[k] || {}).state_change || '').slice(0, 80) })),
+        acceptedPlannerProposal: st._acceptedPlannerProposal
+          ? { sceneNum: st._acceptedPlannerProposal.sceneNum,
+              state_change: String(st._acceptedPlannerProposal.state_change || '').slice(0, 80) }
+          : null,
+        eventDeliveryDiagnostics: (st._eventDeliveryDiagnostics || []).map((d) => ({
+          sceneNum: d.sceneNum, verdict: d.verdict, citationsAllFound: d.citationsAllFound })),
         sayUsable: en('gnDialogueInput') || en('dialogueInput'),
         doUsable: en('gnActionInput') || en('actionInput'),
         submitUsable: en('gnSubmitBtn') || en('submitBtn')
