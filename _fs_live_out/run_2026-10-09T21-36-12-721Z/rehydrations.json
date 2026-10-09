@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791581808001,
+    "before": {
+      "pendingRequestId": "1791581807925-z4z1sy",
+      "awaitingResponse": false,
+      "ageMs": 71
+    },
+    "afterPendingRequestId": "1791581807925-z4z1sy",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261009m-delivery-wired:145339:26"
+    ]
+  }
+]
