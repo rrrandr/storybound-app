@@ -1,0 +1,15 @@
+{
+  "receipted": 0.0007000000000000001,
+  "unresolved": 0.32559227999999996,
+  "outstanding": [],
+  "runs": [
+    {
+      "run": "_fs_live_out/run_2026-10-09T07-51-48-917Z",
+      "receipted": 0.0007000000000000001,
+      "unresolved": 0.32559227999999996,
+      "outstandingAtExit": 0
+    }
+  ],
+  "authorization": null,
+  "note": null
+}

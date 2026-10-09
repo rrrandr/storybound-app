@@ -197351,6 +197351,40 @@ No text, no watermark, no UI elements, share-ready.`;
       // short-circuit: convening a hearing needs no supernatural capability, so an ordinary
       // grounding is exactly how reserved content slips through. This is a scheduling violation,
       // not a capability one.
+      // (0a) THE SCENE REPEATS ITS PREDECESSOR. Added 2026-10-09 after a live Scene 9 reproduced
+      // Scene 8's 24 beat texts line for line, changing ONE speaker, and was accepted: this check
+      // tested reserved content and grounding but never asked whether the scene was new. Prompt
+      // directives alone did not stop it ("Do NOT replay the prior scene" was in the request).
+      // Deterministic, verbatim-beat comparison - no model, no similarity heuristic, no paid pass.
+      try {
+        var _priorProse = (typeof _sbLatestProseText === 'function')
+          ? String(_sbLatestProseText(window.state) || '') : '';
+        var _norm = function (x) { return String(x || '').trim().replace(/\s+/g, ' '); };
+        var _beatsOf = function (t) {
+          return String(t || '').split('\n').map(_norm).filter(function (x) { return x.length > 12; });
+        };
+        var _newBeats = ((proposal && proposal.beats) || []).map(function (b) {
+          return _norm(b && (b.text != null ? b.text : b));
+        }).filter(function (x) { return x.length > 12; });
+        var _priorBeats = _beatsOf(_priorProse);
+        if (_newBeats.length >= 4 && _priorBeats.length >= 4) {
+          var _priorSet = {};
+          _priorBeats.forEach(function (x) { _priorSet[x] = 1; });
+          var _shared = _newBeats.filter(function (x) { return _priorSet[x]; });
+          var _frac = _shared.length / _newBeats.length;
+          if (_frac >= 0.4) {
+            violations.push({ category: 'invalidated_objective',
+              claim: 'this scene reproduces the previous scene',
+              citedFactIds: [],
+              why: 'REDUX: ' + _shared.length + ' of ' + _newBeats.length + ' beats ('
+                + Math.round(_frac * 100) + '%) are VERBATIM repeats of the previous scene. The '
+                + 'previous scene is over; this one must advance the situation. Example repeated '
+                + 'beat: "' + String(_shared[0]).slice(0, 90) + '"' });
+            return { decided: true, violations: violations, source: 'deterministic' };
+          }
+        }
+      } catch (_) {}
+
       var _rb = _detectReservedContentBreach(proposal, window.state);
       if (_rb) {
         violations.push({ category: 'invalidated_objective',
@@ -236089,11 +236123,25 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       var _sbTailText = (typeof _sbLatestProseText === 'function') ? String(_sbLatestProseText(state) || '') : '';
       var lastScene = _sbTailText ? { text: _sbTailText } : null;
       if (lastScene && lastScene.text) {
-        // Expanded from 1200 → 2000 chars so the model sees the FULL end-of-
-        // scene wrap, not just the last 200 words. With anti-rerun directive
-        // below, this larger tail anchors continuity without inviting replay.
-        var tail = String(lastScene.text).slice(-2000);
-        lines.push('PRIOR SCENE TAIL (for continuity):\n"""\n' + tail + '\n"""');
+        // A CHARACTER CAP IS NOT A TAIL (Roman 2026-10-09). slice(-2000) was chosen so the model
+        // would see the full end-of-scene wrap, on the assumption that the anti-redux directive
+        // below would stop it being copied. Scenes run 900-1700 chars, so EVERY scene received its
+        // predecessor IN FULL, verbatim, in quotes, immediately before being asked to write the
+        // next one - and the directive did not stop it: a live Scene 9 reproduced Scene 8's 24 beat
+        // texts line for line, changing one speaker. The tail is now bounded by BEATS, so it is
+        // the closing moment to continue FROM rather than a complete, copyable scene. Continuity
+        // FACTS are untouched: committed world state, the scene ledger and the character blocks
+        // carry them, and none of that is stripped here.
+        var _tailBeats = String(lastScene.text).split('\n')
+          .map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+        var _keep = _tailBeats.slice(-4);
+        while (_keep.length > 1 && _keep.join('\n\n').length > 700) _keep.shift();
+        var tail = _keep.join('\n\n');
+        if (tail.length > 900) tail = tail.slice(-900);   // single oversized beat: last resort
+        lines.push('HOW THE PRIOR SCENE ENDED (the last few beats, so this scene can continue FROM '
+          + 'them — NOT a passage to extend, rewrite or reuse. The earlier scene is not reproduced '
+          + 'here because it is already over; its FACTS are in the committed state and ledger '
+          + 'above):\n"""\n' + tail + '\n"""');
       }
     }
     // ── Slice 4 scene-progression context (added 2026-05-17) ──
