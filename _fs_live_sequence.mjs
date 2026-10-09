@@ -29,6 +29,7 @@ import { findFSDef, launchFS, enterOAS, advanceExpectingGate, chooseBranch }
 // bounded and the hold is always released, including on failure.
 let _armWork = null;   // module scope, so teardown can actually wait for the concurrent arm
 let _holdArm = false, _holdArrived = null, _holdGate = null, _holdReleased = false;
+let _holdAtAuthorIdx = 1;   // which OAS author response to hold
 let _holdArrivedAt = null;
 function _armHold() {
   _holdArm = true; _holdReleased = false;
@@ -939,7 +940,8 @@ await page.route('**/api/**', async (route) => {
       return route.fulfill({ status: 503, contentType: 'application/json',
         body: JSON.stringify({ error: 'harness halted: infrastructure failure' }) });
     }
-    if (_holdArm && callFunction(sys0ForIdentity) === 'OAS' && _replayAuthorIdx === 1) {
+    if (_holdArm && callFunction(sys0ForIdentity) === 'OAS'
+        && _replayAuthorIdx === _holdAtAuthorIdx) {
       _holdArm = false;
       _holdArrivedAt = Date.now();
       console.log('  [hold] the entrance OAS author request ARRIVED — holding its response');
@@ -1815,6 +1817,101 @@ try {
 
     // SIX COMPLETED EXCHANGES, then the tested reader exit. Recorded as a scripted reader exit.
     await dumpPolicy('after the entrance submission, before any further input');
+    // ── PENDING BUBBLE WITH COMPLETED HISTORY PRESENT ───────────────────────────────────
+    // The replay marks every bubble it recreates as .oas-pc-bubble-pending, so with one turn
+    // already completed that marker belongs to the OLD turn. The restore then declined the
+    // genuinely pending submission, and a returning reply could swap the wrong bubble.
+    if (String(process.env.SB_SCENARIO || '').toLowerCase() === 'pending2') {
+      const _p2 = { scenario: 'pending2', checks: [] };
+      const _p2ck = (label, ok, detail) => {
+        _p2.checks.push({ label, ok: !!ok, detail: detail || null });
+        say('    ' + (ok ? 'ok   ' : 'FAIL ') + label + (ok || !detail ? '' : '  - ' + detail));
+      };
+      const SAY2 = 'Then ask it plainly, and I will answer plainly.';
+      const DO2 = 'I set the deck down between us.';
+      const _first = await page.evaluate(() => {
+        const log = document.getElementById('oasHistoryLog');
+        return { text: log ? String(log.innerText || log.textContent || '') : '',
+                 children: log ? log.children.length : 0,
+                 pending: document.querySelectorAll('.oas-pc-bubble-pending').length };
+      });
+      say('      after exchange 1: children=' + _first.children + ' pending=' + _first.pending);
+      _p2ck('one completed exchange is on the page before the second submission',
+        _first.children > 0, 'children=' + _first.children);
+      const _firstText = _first.text;
+
+      _holdAtAuthorIdx = _replayAuthorIdx + 1;
+      _armHold();
+      await page.evaluate((v) => {
+        try { window._intimacyDialogueConsumeInput(v.say, v.doText); }
+        catch (e) { window.__sbP2Err = String(e && e.message); }
+      }, { say: SAY2, doText: DO2 });
+      let _arr2 = false;
+      await Promise.race([_holdArrived.then(() => { _arr2 = true; }),
+                          new Promise((r) => setTimeout(r, 90000))]);
+      _p2ck('the SECOND response is held in flight', _arr2, 'no second author request arrived');
+
+      if (_arr2) {
+        // Force the rebuild that production defers automatically on entry.
+        await page.evaluate(() => { try { window._rehydrateOASUI(); } catch (_) {} });
+        await page.waitForTimeout(2500);
+        const _mid = await page.evaluate((v) => {
+          const log = document.getElementById('oasHistoryLog');
+          const txt = log ? String(log.innerText || log.textContent || '') : '';
+          const count = (h, n) => h.split(n).length - 1;
+          const pend = log ? log.querySelectorAll('.oas-pc-bubble-pending') : [];
+          return { text: txt, children: log ? log.children.length : 0,
+                   pendingCount: pend.length,
+                   pendingText: pend.length ? String(pend[pend.length - 1].innerText || '') : '',
+                   say2: count(txt, v.saySnip), do2: count(txt, v.doSnip),
+                   youRowsBefore: log ? log.querySelectorAll('.oas-chat-you').length : 0 };
+        }, { saySnip: 'ask it plainly', doSnip: 'set the deck down' });
+        say('      after rehydration: children=' + _mid.children
+          + ' pending=' + _mid.pendingCount + ' say2x' + _mid.say2 + ' do2x' + _mid.do2);
+        _p2ck('the completed exchange is still present and unchanged',
+          _firstText.length > 0 && _mid.text.indexOf(_firstText.slice(0, 40)) >= 0,
+          'the first exchange text no longer appears');
+        _p2ck('the second submitted SAY appears exactly once', _mid.say2 === 1,
+          'occurrences: ' + _mid.say2);
+        _p2ck('the second submitted DO appears exactly once', _mid.do2 === 1,
+          'occurrences: ' + _mid.do2);
+        _p2ck('exactly ONE bubble is pending', _mid.pendingCount === 1,
+          'pending bubbles: ' + _mid.pendingCount);
+        _p2ck('and the pending one is the SECOND submission',
+          String(_mid.pendingText).indexOf('ask it plainly') >= 0,
+          'pending bubble reads: ' + JSON.stringify(String(_mid.pendingText).slice(0, 80)));
+
+        _releaseHold();
+        await page.waitForTimeout(18000);
+        const _post = await page.evaluate((v) => {
+          const log = document.getElementById('oasHistoryLog');
+          const txt = log ? String(log.innerText || log.textContent || '') : '';
+          const count = (h, n) => h.split(n).length - 1;
+          return { pendingCount: log ? log.querySelectorAll('.oas-pc-bubble-pending').length : -1,
+                   text: txt, say2: count(txt, v.saySnip),
+                   youRows: log ? log.querySelectorAll('.oas-chat-you').length : 0 };
+        }, { saySnip: 'ask it plainly' });
+        say('      after release: pending=' + _post.pendingCount + ' say2x' + _post.say2);
+        _p2ck('releasing the response finalized the second bubble', _post.pendingCount === 0,
+          'pending bubbles still: ' + _post.pendingCount);
+        _p2ck('the first exchange was NOT modified by the arriving reply',
+          _post.text.indexOf(_firstText.slice(0, 40)) >= 0,
+          'the first exchange text changed or vanished');
+        _p2ck('the second turn is still exactly one player bubble, now finalized',
+          _post.youRows === _mid.youRowsBefore && _post.pendingCount === 0,
+          'you-rows ' + _mid.youRowsBefore + ' -> ' + _post.youRows
+          + ', pending ' + _post.pendingCount);
+        say('      (the literal phrase is gone by design: _swapPendingPCBubble replaces it with'
+          + ' the transmuted text - the existing post-response swap, preserved)');
+      }
+      _releaseHold();
+      write('scenario_pending2.json', _p2);
+      const _pb = _p2.checks.filter((c) => !c.ok).length;
+      say('    scenario "pending2": ' + (_p2.checks.length - _pb) + '/' + _p2.checks.length
+        + ' checks passed');
+      halted = true;
+      haltReason = 'SB_SCENARIO=pending2 - bounded case only, no story work';
+    }
     if (_armWork) {
       await Promise.race([_armWork, new Promise((r) => setTimeout(r, 180000))]);
       write('scenario_' + _scenario + '.json', _sres);
