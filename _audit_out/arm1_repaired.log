@@ -1,0 +1,82 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+    fixture ledger: _fs_live_out/BUDGET.arm_waiting.json
+    admission: exposure USD 0.000000 of ceiling USD 5.05 - headroom USD 5.050000
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  2ms
+  [hold] the entrance OAS author request ARRIVED — holding its response
+    ok   the entrance OAS request ARRIVED at the interceptor
+      in flight: {"awaiting":true,"id":"1791505678262-tcegok"}
+    ok   production reports awaitingResponse=true with a nonempty request id
+    ok   the automatic rehydration occurred while the reply was held
+    FAIL it PRESERVED the live request rather than replacing it  - [{"preserved":false,"replaced":false}]
+      _appendUserInputToHistory calls: 0
+        [before-rehydrate] logExists=false parent=null visible=false children=null pending=0 you=0
+        [after-rehydrate] logExists=true parent="oas-history-log-wrap oas-hb-active" visible=true children=0 pending=0 you=0
+        [while-held] logExists=true parent="oas-history-log-wrap oas-hb-active" visible=true children=2 pending=1 you=1
+    ok   #oasHistoryLog exists while the reply is held
+    ok   the player bubble was rendered into #oasHistoryLog
+    ok   the submitted SAY is inside #oasHistoryLog
+    FAIL the submitted DO is inside #oasHistoryLog  - log text: "“I shaped nothing. Ask me properly.”"
+    ok   #oasHistoryLog is mounted AND visible while the reply is held
+      visible text: body=2529 panel=50 story=10184
+      snippet: "Shape your story—or let it shape itself. Find a bug? Tell me from the Vault — bring me a real one and I’ll pay you a Fortune.\nConcierge\n×\n“Welcome back. You still have 9999 Fortunes on your shelf — spend them as you wish"
+    ok   the submitted SAY is present in the conversation while the reply is held
+    FAIL the submitted DO is present in the conversation while the reply is held  - absent from the same three containers
+  [hold] released after 7ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9227ms
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=268 attempts=["1:grok:ok"]
+    ok   exactly ONE reply rendered after the hold was released
+    ok   AFTER the reply, the submitted SAY appears in the transcript
+    FAIL AFTER the reply, the submitted DO appears in the transcript  - still absent after the reply rendered
+    scenario "waiting": 10/14 checks passed
+  [rehydrate] 2 rehydration(s) during the entrance
+    #1 awaiting=false age=nullms  null -> null
+    #2 awaiting=false age=72ms  1791505678262-tcegok -> 1791505678262-tcegok
+  interruption: {"present":false,"submitted":false,"pending":false}
+  handoff (before the branch is serviced): {"resolved":false,"archive":0,"interruptionPresent":false,"interruptionDone":false,"decisionOnScreen":false,"decisionOpen":true,"branches":[]}
+  turns 0 · resolved=false · archive=0 · interruptionDone=false · run/remain on screen=false · branches=[]
+  after the choice: recorded=null · prompt removed by production=true · handoff had passed=false
+
+*** STOPPING BEFORE SCENE GENERATION — OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false) ***
+    No further call will be labelled "scene 2".
+  exposure $0.000100
+
+
+── SCENE LEDGER (each scene against the step that created it) ──
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.000100
+  ceiling                : $5.05  [HALTED: OAS handoff incomplete (handoffOk=false, recordedChoice=null, promptRemoved=true, resolved=false, archive=0, interruptionDone=false)]
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.arm_waiting.json
+  receipted to date  $0.000100
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000100 of $5.05
+
+output: _fs_live_out/run_2026-10-09T00-27-22-449Z

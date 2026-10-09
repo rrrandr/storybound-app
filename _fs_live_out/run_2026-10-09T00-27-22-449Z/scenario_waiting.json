@@ -1,0 +1,75 @@
+{
+  "scenario": "waiting",
+  "checks": [
+    {
+      "label": "the entrance OAS request ARRIVED at the interceptor",
+      "ok": true,
+      "detail": "no entrance author request within 120s"
+    },
+    {
+      "label": "production reports awaitingResponse=true with a nonempty request id",
+      "ok": true,
+      "detail": "{\"awaiting\":true,\"id\":\"1791505678262-tcegok\"}"
+    },
+    {
+      "label": "the automatic rehydration occurred while the reply was held",
+      "ok": true,
+      "detail": "no rehydration recorded within 25s"
+    },
+    {
+      "label": "it PRESERVED the live request rather than replacing it",
+      "ok": false,
+      "detail": "[{\"preserved\":false,\"replaced\":false}]"
+    },
+    {
+      "label": "#oasHistoryLog exists while the reply is held",
+      "ok": true,
+      "detail": "{\"tag\":\"while-held\",\"at\":1791505678317,\"logExists\":true,\"logParent\":\"oas-history-log-wrap oas-hb-active\",\"logVisible\":true,\"logChildren\":2,\"pendingBubbles\":1,\"youRows\":1,\"logText\":\"“I shaped nothing. Ask me properly.”\"}"
+    },
+    {
+      "label": "the player bubble was rendered into #oasHistoryLog",
+      "ok": true,
+      "detail": "pending=1 you=1 children=2"
+    },
+    {
+      "label": "the submitted SAY is inside #oasHistoryLog",
+      "ok": true,
+      "detail": "log text: \"“I shaped nothing. Ask me properly.”\""
+    },
+    {
+      "label": "the submitted DO is inside #oasHistoryLog",
+      "ok": false,
+      "detail": "log text: \"“I shaped nothing. Ask me properly.”\""
+    },
+    {
+      "label": "#oasHistoryLog is mounted AND visible while the reply is held",
+      "ok": true,
+      "detail": "{\"exists\":true,\"visible\":true,\"parent\":\"oas-history-log-wrap oas-hb-active\"}"
+    },
+    {
+      "label": "the submitted SAY is present in the conversation while the reply is held",
+      "ok": true,
+      "detail": "absent from body(2529) + storyContent(10184) + panel(50)"
+    },
+    {
+      "label": "the submitted DO is present in the conversation while the reply is held",
+      "ok": false,
+      "detail": "absent from the same three containers"
+    },
+    {
+      "label": "exactly ONE reply rendered after the hold was released",
+      "ok": true,
+      "detail": "liTurnHistory length is 1"
+    },
+    {
+      "label": "AFTER the reply, the submitted SAY appears in the transcript",
+      "ok": true,
+      "detail": "still absent after the reply rendered - the transcript never shows it"
+    },
+    {
+      "label": "AFTER the reply, the submitted DO appears in the transcript",
+      "ok": false,
+      "detail": "still absent after the reply rendered"
+    }
+  ]
+}

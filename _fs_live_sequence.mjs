@@ -1079,6 +1079,49 @@ await page.addInitScript(() => {
   }
 });
 await page.addInitScript(() => {
+  window.__sbAppend = { calls: [], snapshots: [] };
+  const snap = (tag) => {
+    try {
+      const log = document.getElementById('oasHistoryLog');
+      window.__sbAppend.snapshots.push({ tag, at: Date.now(),
+        logExists: !!log,
+        logParent: log && log.parentElement ? (log.parentElement.id || log.parentElement.className || '?') : null,
+        logVisible: !!(log && log.getClientRects().length > 0),
+        logChildren: log ? log.children.length : null,
+        pendingBubbles: document.querySelectorAll('.oas-pc-bubble-pending').length,
+        youRows: document.querySelectorAll('.oas-chat-you').length,
+        logText: log ? String(log.innerText || log.textContent || '').slice(0, 300) : null });
+    } catch (_) {}
+  };
+  window.__sbAppendSnap = snap;
+  const installAppend = () => {
+    const orig = window._appendUserInputToHistory;
+    if (typeof orig !== 'function' || orig.__sbWrapped) return false;
+    const wrapped = function (userSay, userDo) {
+      const log = document.getElementById('oasHistoryLog');
+      const before = { logExists: !!log,
+        logChildren: log ? log.children.length : null,
+        say: String(userSay || '').slice(0, 60), do: String(userDo || '').slice(0, 60) };
+      let out;
+      try { out = orig.apply(this, arguments); }
+      finally {
+        const log2 = document.getElementById('oasHistoryLog');
+        window.__sbAppend.calls.push({ at: Date.now(), before,
+          after: { logExists: !!log2,
+                   logChildren: log2 ? log2.children.length : null,
+                   pendingBubbles: document.querySelectorAll('.oas-pc-bubble-pending').length,
+                   youRows: document.querySelectorAll('.oas-chat-you').length } });
+      }
+      return out;
+    };
+    wrapped.__sbWrapped = true;
+    window._appendUserInputToHistory = wrapped;
+    return true;
+  };
+  if (!installAppend()) {
+    const iv2 = setInterval(() => { if (installAppend()) clearInterval(iv2); }, 25);
+    setTimeout(() => clearInterval(iv2), 60000);
+  }
   window.__sbRace = { rehydrations: [] };
   const install = () => {
     const orig = window._rehydrateOASUI;
@@ -1090,9 +1133,11 @@ await page.addInitScript(() => {
         ageMs: d.lastRequestStartedAt ? (Date.now() - d.lastRequestStartedAt) : null };
       const stack = String((new Error('rehydrate-caller')).stack || '')
         .split('\n').slice(1, 10).map((l) => l.trim());
+      try { if (window.__sbAppendSnap) window.__sbAppendSnap('before-rehydrate'); } catch (_) {}
       let out;
       try { out = orig.apply(this, args); }
       finally {
+        try { if (window.__sbAppendSnap) window.__sbAppendSnap('after-rehydrate'); } catch (_) {}
         const d2 = (window.state && window.state.intimacyDialogue) || {};
         window.__sbRace.rehydrations.push({ at: Date.now(), before,
           afterPendingRequestId: d2.pendingRequestId || null,
@@ -1339,6 +1384,44 @@ try {
                 JSON.stringify(_rehyd.map((r) => ({ preserved: r.preservedALiveRequest, replaced: r.replacedALiveRequest }))));
               // Search the WHOLE document, not one panel: an 18-character sample from
               // gnPanelDisplay proved only that I was reading the wrong container.
+              // THE ACTUAL CONTAINER, INSPECTED DIRECTLY.
+              const _ap = await page.evaluate(() => {
+                try { if (window.__sbAppendSnap) window.__sbAppendSnap('while-held'); } catch (_) {}
+                return window.__sbAppend || { calls: [], snapshots: [] };
+              });
+              say('      _appendUserInputToHistory calls: ' + _ap.calls.length);
+              _ap.calls.forEach((c, i) => say('        #' + (i + 1)
+                + ' logExists(before)=' + c.before.logExists
+                + ' say=' + JSON.stringify(c.before.say)
+                + ' do=' + JSON.stringify(c.before.do)
+                + ' -> logExists=' + c.after.logExists
+                + ' children=' + c.after.logChildren
+                + ' pendingBubbles=' + c.after.pendingBubbles
+                + ' youRows=' + c.after.youRows));
+              _ap.snapshots.forEach((sn) => say('        [' + sn.tag + '] logExists=' + sn.logExists
+                + ' parent=' + JSON.stringify(sn.logParent) + ' visible=' + sn.logVisible
+                + ' children=' + sn.logChildren + ' pending=' + sn.pendingBubbles
+                + ' you=' + sn.youRows));
+              // Production calls the INTERNAL _appendUserInputToHistory, so a wrapper on the
+              // window property never sees it. The DOM it produces is the evidence.
+              const _held = _ap.snapshots.filter((x) => x.tag === 'while-held').pop() || {};
+              _sck('#oasHistoryLog exists while the reply is held', !!_held.logExists,
+                JSON.stringify(_held));
+              _sck('the player bubble was rendered into #oasHistoryLog',
+                (_held.pendingBubbles || 0) > 0 || (_held.youRows || 0) > 0,
+                'pending=' + _held.pendingBubbles + ' you=' + _held.youRows
+                + ' children=' + _held.logChildren);
+              _sck('the submitted SAY is inside #oasHistoryLog',
+                String(_held.logText || '').indexOf('I shaped nothing') >= 0,
+                'log text: ' + JSON.stringify(String(_held.logText || '').slice(0, 120)));
+              _sck('the submitted DO is inside #oasHistoryLog',
+                String(_held.logText || '').indexOf('keep my hand open') >= 0,
+                'log text: ' + JSON.stringify(String(_held.logText || '').slice(0, 120)));
+              const _lastSnap = _ap.snapshots[_ap.snapshots.length - 1] || {};
+              _sck('#oasHistoryLog is mounted AND visible while the reply is held',
+                !!_lastSnap.logExists && !!_lastSnap.logVisible,
+                JSON.stringify({ exists: _lastSnap.logExists, visible: _lastSnap.logVisible,
+                                 parent: _lastSnap.logParent }));
               const _visAll = await page.evaluate(() => {
                 const panel = document.getElementById('gnPanelDisplay');
                 const story = document.getElementById('storyContent');
@@ -1470,15 +1553,35 @@ try {
                            thinking: !!document.querySelector('.intimacy-thinking, #intimacyThinking') };
                 });
                 say('      after restoring the orphan and reloading: ' + JSON.stringify(_after));
+                // PREREQUISITE: the encounter must actually be restored. A default-empty state
+                // proves nothing about orphan handling.
+                const _restored = await page.evaluate(() => {
+                  const d = (window.state && window.state.intimacyDialogue) || null;
+                  return { hasEncounter: !!d, active: !!(d && d.active),
+                           storyId: (window.state && window.state.storyId) || null,
+                           beat: (d && d.beatCount) || null };
+                });
+                say('      restored encounter: ' + JSON.stringify(_restored));
+                const _setupMet = !!(_restored.hasEncounter && _restored.storyId);
+                _sck('SETUP MET: the fixture story and encounter were restored after the reload',
+                  _setupMet,
+                  'the encounter did not come back, so nothing below can be asserted: '
+                  + JSON.stringify(_restored));
+                if (!_setupMet) {
+                  say('      SETUP UNMET - orphan clearing is NOT tested by this run. The'
+                    + ' default-empty state is not evidence of cleanup.');
+                }
                 const _dropped = consoleLog.filter((l) =>
                   /Rehydrate: dropping stale in-flight request/.test(l)
                   && String(l).indexOf('FIXTURE-ORPHAN') >= 0);
                 _sck('production DROPPED the restored orphan on reload', _dropped.length > 0,
                   'no drop line naming the fixture orphan');
-                _sck('awaitingResponse was cleared', !_after.awaiting,
-                  'still awaiting after the reload');
-                _sck('the reader is not stuck behind a waiting indicator', !_after.thinking,
-                  'a thinking indicator is still showing');
+                if (_setupMet) {
+                  _sck('awaitingResponse was cleared', !_after.awaiting,
+                    'still awaiting after the reload');
+                  _sck('the reader is not stuck behind a waiting indicator', !_after.thinking,
+                    'a thinking indicator is still showing');
+                }
               }
             }
 

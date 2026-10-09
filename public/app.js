@@ -191981,10 +191981,11 @@ No text, no watermark, no UI elements, share-ready.`;
             var _d2 = state.intimacyDialogue;
             if (!_d2 || !_d2.awaitingResponse || !_oasRequestIsLive(_d2.pendingRequestId)) return;
             if (typeof _showIntimacyThinking === 'function') _showIntimacyThinking();
-            // The fields are left ALONE. Clearing them could wipe an unrelated draft, and it was
-            // never evidence that the pending submission had been preserved: the OAS transcript
-            // does not display the player's words at any point, pending or completed, so there was
-            // nothing for a rebuild to lose here.
+            // The fields are left ALONE: clearing them could wipe an unrelated draft, and it was
+            // never evidence that the pending submission had been preserved. (An earlier comment
+            // here claimed the transcript never displays the player's words. That was WRONG:
+            // _appendUserInputToHistory renders them into #oasHistoryLog, and the turn handler
+            // calls it before the provider request.)
             console.log('[INTIMACY-DIALOGUE] Rehydrate: waiting state restored for the live request');
           } catch (_) {}
         }, 0);

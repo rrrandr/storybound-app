@@ -1,0 +1,59 @@
+=== FS SEQUENCE — ceiling $5.05 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $5.05.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+    fixture ledger: _fs_live_out/BUDGET.arm_orphan.json
+    admission: exposure USD 0.000000 of ceiling USD 5.05 - headroom USD 5.050000
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  [replay] author reply 1 from the paid capture
+  [fixture] "intensely intimate mouth-closeup|Y"  <-  You are the LI (love interest) in an intensely intimate 
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  3ms
+  [hold] the entrance OAS author request ARRIVED — holding its response
+    ok   the entrance OAS request ARRIVED at the interceptor
+      in flight: {"awaiting":true,"id":"1791506401701-3dc0f4"}
+    ok   production reports awaitingResponse=true with a nonempty request id
+      OAS storage keys production is using: ["sb_intimacy_telemetry","sb_oas_efa5d0ec-307a-4c7c-adfa-a35d80f3c8ab"]
+    ok   production has an OAS snapshot key to restore from
+      fixture orphan written: {"ok":true,"key":"sb_intimacy_telemetry"}
+    ok   the labelled orphan snapshot was stored
+  [hold] released after 4ms
+
+*** RUN ERROR: page.evaluate: TypeError: Cannot read properties of undefined (reading '_bakedGenesisUnlocked')
+    at eval (eval at evaluate (:311:30), <anonymous>:2:36)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) ***
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 1
+  MEASURED (receipts)    : $0.000100
+  no receipt             : 0 call(s), estimated $0.000000 — NOT counted as measured
+  retained (no receipt)  : $0.000000 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.000100
+  ceiling                : $5.05
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.arm_orphan.json
+  receipted to date  $0.000100
+  unresolved to date $0.000000
+  TOTAL vs ceiling   $0.000100 of $5.05
+
+output: _fs_live_out/run_2026-10-09T00-39-26-279Z
+      after restoring the orphan and reloading: {"awaiting":false,"id":null,"inputUsable":true,"thinking":false}
+      restored encounter: {"hasEncounter":false,"active":false,"storyId":"efa5d0ec-307a-4c7c-adfa-a35d80f3c8ab","beat":null}
+    FAIL SETUP MET: the fixture story and encounter were restored after the reload  - the encounter did not come back, so nothing below can be asserted: {"hasEncounter":false,"active":false,"storyId":"efa5d0ec-307a-4c7c-adfa-a35d80f3c8ab","beat":null}
+      SETUP UNMET - orphan clearing is NOT tested by this run. The default-empty state is not evidence of cleanup.
+    FAIL production DROPPED the restored orphan on reload  - no drop line naming the fixture orphan

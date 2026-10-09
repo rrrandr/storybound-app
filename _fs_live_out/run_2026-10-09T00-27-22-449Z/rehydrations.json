@@ -1,0 +1,32 @@
+[
+  {
+    "at": 1791505678257,
+    "before": {
+      "pendingRequestId": null,
+      "awaitingResponse": false,
+      "ageMs": null
+    },
+    "afterPendingRequestId": null,
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261008g-entrance-log:143778:26"
+    ]
+  },
+  {
+    "at": 1791505678339,
+    "before": {
+      "pendingRequestId": "1791505678262-tcegok",
+      "awaitingResponse": false,
+      "ageMs": 72
+    },
+    "afterPendingRequestId": "1791505678262-tcegok",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261008g-entrance-log:145266:26"
+    ]
+  }
+]
