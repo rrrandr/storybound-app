@@ -1,0 +1,166 @@
+{
+  "turnsTaken": 5,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "interruptionDone": true,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "oas_exit",
+      "at": 1791578499527,
+      "storyId": "5daea448-ba38-48ef-b8ec-7b90c209d65a"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": null,
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": 9208,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:e061ac67-3b3c-4c1a-bc20-2501e2684fed",
+        "text": "My foot is already turned toward the trees when the voice cuts across the clearing.\n\nTHE PRESIDING DOHKAR: Sacrificiant. Remain.\n\nThe words land like a hand on my shoulder. I stop because the ground itself seems to expect it.\n\nSeren remains kneeling, her small hands folded, eyes lifted to the Dohkar as if the rite is still running.\n\nTHE PRESIDING DOHKAR: Your conduct falls under preliminary review. You will answer before the assembly.\n\nThe assembly's attention swings back to me. The words are already moving the matter into procedure, already beyond my reach.\n\nJulian's scarred wrist catches the last light as he steps forward one pace.\n\nJULIAN: If review is required, let it be recorded that I stand witness.\n\nThe Dohkar's head turns. The assembly's murmur shifts, and something in the air changes because Julian has named himself part of the record.\n\nI feel the pull of him then, not as rescue but as another authority the Dohkar must now answer to.\n\nTHE PRESIDING DOHKAR: The rite is mine to preside. The inquiry will proceed.\n\nSeren's small hands stay folded, but her eyes move between the two men as though she is already learning the shape of the choice I have not made.\n\nThe Dohkar's voice carries again, and the words land as procedure, not threat.\n\nTHE PRESIDING DOHKAR: You will remain until the assembly is satisfied.\n\nJulian does not speak again, yet the space between us holds the weight of what he has already placed on record.\n\nThe clearing feels smaller now, the ritual mirrors catching only fragments of hands and light.\n\nI stand between the Dohkar's declaration and Julian's witness, and the choice is already forming in the silence they have left me.\n\nClaim the interference or let them keep their assumption. Both paths are open, and both belong to me.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:e061ac67-3b3c-4c1a-bc20-2501e2684fed",
+        "quoted": [
+          "Your conduct falls under preliminary review. You will answer before the assembly.",
+          "If review is required, let it be recorded that I stand witness."
+        ],
+        "summary": [
+          "The reader chose to run in shame, deferring the review; the Dohkar now pursues by calling after her."
+        ],
+        "obligations": [
+          "review"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You shaped the rite with every glance you sent my way, Lirael. Did you call to me hoping the Provast would rescue you from the Dohkar's wrath?",
+        "liAction": "Julian's scarred wrist stays pressed against my palm, the weight of The Answer heavy between us.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I hold my breath, letting the moment stretch between us like a vow half-spoken.",
+        "pcDo": "",
+        "pcSayRaw": "",
+        "pcDoRaw": "Hold my breath, letting the moment stretch",
+        "liDialogue": "Your silence betrays the hunger you sent my way. Did you call to the Provast hoping rescue from the Dohkar's charge?",
+        "liAction": "Julian's scarred wrist stays pressed to my palm, The Answer heavy between us.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I hold my breath, letting the moment stretch between us like a vow half-formed.",
+        "pcDo": "",
+        "pcSayRaw": "",
+        "pcDoRaw": "Hold my breath, letting the moment stretch",
+        "liDialogue": "Each look you threw my way sculpted the ritual. Were you trying to evade the weight of your own choices?",
+        "liAction": "Julian's marked arm rests against my skin, the tension palpable in the air around us.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I hold my breath as the weight of The Answer presses against my palm, the silence stretching like roots seeking water.",
+        "pcDo": "",
+        "pcSayRaw": "",
+        "pcDoRaw": "Hold my breath, letting the moment stretch",
+        "liDialogue": "Each breath you held pulled the desire closer. Were you seeking my salvation to evade the wrath of the Dohkar?",
+        "liAction": "Julian inches nearer, the marked skin still resting against my hand.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I feel lost in this, but I trust you.",
+        "pcDo": "Meet his gaze, the weight of the moment heavy.",
+        "pcSayRaw": "I feel lost in this, but I trust you.",
+        "pcDoRaw": "Meet his gaze, the weight of the moment heavy",
+        "liDialogue": "Your gaze locked onto mine amid the ceremony. Were you yearning for my salvation from the wrath of the Dohkar?",
+        "liAction": "Julian inches nearer, the roughened skin of his arm resting firmly against my hand.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I won't answer until the truth is clearer.",
+        "pcDo": "I step back, releasing my grip on the blade.",
+        "pcSayRaw": "I won't answer until the truth is clearer.",
+        "pcDoRaw": "Step back, releasing the grip on the blade",
+        "liDialogue": "The Answer does not linger for a sharper revelation. It already savors the harmony coursing through your veins.",
+        "liAction": "Julian's weathered hand grips the descending blade just before it meets the ground.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "power"
+      }
+    ]
+  }
+}

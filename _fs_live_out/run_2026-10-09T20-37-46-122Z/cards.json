@@ -1,0 +1,934 @@
+[
+  {
+    "turn": 1,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Hold my breath, letting the moment stretch",
+      "dialogue": "",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "optionIds": [
+        "reversal",
+        "temptation",
+        "silence",
+        "confession",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 1
+      },
+      "cacheEntry": {
+        "action": "Hold my breath, letting the moment stretch",
+        "dialogue": ""
+      }
+    },
+    "provenance": {
+      "provenance": "matched-response",
+      "evidence": "the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 2, requested under the SAME generation identity (turnCount=0 beat=1) — encounter=opening OAS turn=1 card=\"silence\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 2,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Hold my breath, letting the moment stretch",
+      "dialogue": "",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "optionIds": [
+        "reversal",
+        "confession",
+        "silence",
+        "temptation",
+        "boundary"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 2
+      },
+      "cacheEntry": {
+        "action": "Hold my breath, letting the moment stretch",
+        "dialogue": ""
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=2 card=\"silence\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 3,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 4,
+    "slot": null,
+    "preview": {
+      "action": "Hold my breath, letting the moment stretch",
+      "dialogue": "",
+      "cardId": "silence",
+      "selectedIndex": 4,
+      "optionIds": [
+        "temptation",
+        "reversal",
+        "confession",
+        "boundary",
+        "silence"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 3
+      },
+      "cacheEntry": {
+        "action": "Hold my breath, letting the moment stretch",
+        "dialogue": ""
+      }
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter=\"opening OAS\" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=3 card=\"silence\" — a stale record is not provenance for this submission"
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 4,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Meet his gaze, the weight of the moment heavy",
+      "dialogue": "I feel lost in this, but I trust you.",
+      "cardId": "confession",
+      "selectedIndex": 2,
+      "optionIds": [
+        "temptation",
+        "silence",
+        "confession",
+        "boundary",
+        "reversal"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 4
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze, the weight of the moment heavy",
+        "dialogue": "I feel lost in this, but I trust you."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=4 card=\"confession\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "turn": 5,
+    "deck": {
+      "mounted": true,
+      "mountId": "gnCardMount",
+      "count": 5,
+      "revealed": 5,
+      "cacheFresh": false,
+      "cacheIds": [],
+      "slots": [
+        {
+          "idx": 0,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 1,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 2,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 3,
+          "slot": null,
+          "revealed": true
+        },
+        {
+          "idx": 4,
+          "slot": null,
+          "revealed": true
+        }
+      ]
+    },
+    "chosenIdx": 2,
+    "slot": null,
+    "preview": {
+      "action": "Step back, releasing the grip on the blade",
+      "dialogue": "I won't answer until the truth is clearer.",
+      "cardId": "boundary",
+      "selectedIndex": 2,
+      "optionIds": [
+        "confession",
+        "reversal",
+        "boundary",
+        "silence",
+        "temptation"
+      ],
+      "appKey": {
+        "turnCount": 0,
+        "sceneFateKey": "0:1",
+        "oasBeat": 5
+      },
+      "cacheEntry": {
+        "action": "Step back, releasing the grip on the blade",
+        "dialogue": "I won't answer until the truth is clearer."
+      }
+    },
+    "provenance": {
+      "provenance": "matched-cache",
+      "evidence": "the COMPLETE pair is identical to the app's cached preview for this card, but no reply served in THIS run matches it — the writing model is not established — encounter=opening OAS turn=5 card=\"boundary\""
+    },
+    "cacheFresh": false,
+    "cacheIds": []
+  },
+  {
+    "scene": 2,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "1:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 0,
+        "temptation": {
+          "a": 41,
+          "d": 48
+        },
+        "boundary": {
+          "a": 42,
+          "d": 42
+        },
+        "confession": {
+          "a": 45,
+          "d": 37
+        },
+        "reversal": {
+          "a": 38,
+          "d": 42
+        },
+        "silence": {
+          "a": 42,
+          "d": 0
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "Lean closer, brushing his arm with mine",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "temptation",
+      "selectedIndex": 4,
+      "appKey": {
+        "turnCount": 1,
+        "sceneFateKey": "1:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Lean closer, brushing his arm with mine",
+        "dialogue": "What if I let you decide the next question?"
+      },
+      "gn": {
+        "a": 39,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+    }
+  },
+  {
+    "scene": 3,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "2:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 1,
+        "temptation": {
+          "a": 39,
+          "d": 43
+        },
+        "boundary": {
+          "a": 41,
+          "d": 50
+        },
+        "confession": {
+          "a": 30,
+          "d": 53
+        },
+        "reversal": {
+          "a": 37,
+          "d": 49
+        },
+        "silence": {
+          "a": 48,
+          "d": 0
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 3,
+    "submitted": {
+      "action": "Step back, pulling my hand away from his",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "boundary",
+      "selectedIndex": 3,
+      "appKey": {
+        "turnCount": 2,
+        "sceneFateKey": "2:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Step back, pulling my hand away from his",
+        "dialogue": "I won’t answer that until I understand the stakes."
+      },
+      "gn": {
+        "a": 40,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card=\"boundary\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card=\"boundary\""
+    }
+  },
+  {
+    "scene": 4,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "3:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 2,
+        "temptation": {
+          "a": 40,
+          "d": 36
+        },
+        "boundary": {
+          "a": 40,
+          "d": 50
+        },
+        "confession": {
+          "a": 30,
+          "d": 37
+        },
+        "reversal": {
+          "a": 40,
+          "d": 49
+        },
+        "silence": {
+          "a": 35,
+          "d": 9
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 3,
+    "submitted": {
+      "action": "Meet his gaze, letting my voice tremble slightly",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "confession",
+      "selectedIndex": 3,
+      "appKey": {
+        "turnCount": 3,
+        "sceneFateKey": "3:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Meet his gaze, letting my voice tremble slightly",
+        "dialogue": "I fear what your questions might reveal about us."
+      },
+      "gn": {
+        "a": 48,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 4 end turn=4 card=\"confession\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 4 end turn=4 card=\"confession\""
+    }
+  },
+  {
+    "scene": 5,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "4:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 3,
+        "temptation": {
+          "a": 53,
+          "d": 48
+        },
+        "boundary": {
+          "a": 50,
+          "d": 50
+        },
+        "confession": {
+          "a": 48,
+          "d": 49
+        },
+        "reversal": {
+          "a": 47,
+          "d": 52
+        },
+        "silence": {
+          "a": 48,
+          "d": 0
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "Step back, creating space between us",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "boundary",
+      "selectedIndex": 4,
+      "appKey": {
+        "turnCount": 4,
+        "sceneFateKey": "4:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Step back, creating space between us",
+        "dialogue": "I won’t answer until I know the truth."
+      },
+      "gn": {
+        "a": 36,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 5 end turn=5 card=\"boundary\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 5 end turn=5 card=\"boundary\""
+    }
+  },
+  {
+    "scene": 6,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "5:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 4,
+        "temptation": {
+          "a": 48,
+          "d": 38
+        },
+        "boundary": {
+          "a": 36,
+          "d": 38
+        },
+        "confession": {
+          "a": 38,
+          "d": 47
+        },
+        "reversal": {
+          "a": 41,
+          "d": 45
+        },
+        "silence": {
+          "a": 48,
+          "d": 0
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 2,
+    "submitted": {
+      "action": "Lean closer, letting our hands linger together",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "temptation",
+      "selectedIndex": 2,
+      "appKey": {
+        "turnCount": 5,
+        "sceneFateKey": "5:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Lean closer, letting our hands linger together",
+        "dialogue": "What if we turned this into our secret?"
+      },
+      "gn": {
+        "a": 46,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 6 end turn=6 card=\"temptation\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 6 end turn=6 card=\"temptation\""
+    }
+  },
+  {
+    "scene": 7,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "6:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 5,
+        "temptation": {
+          "a": 46,
+          "d": 39
+        },
+        "boundary": {
+          "a": 42,
+          "d": 46
+        },
+        "confession": {
+          "a": 41,
+          "d": 51
+        },
+        "reversal": {
+          "a": 43,
+          "d": 45
+        },
+        "silence": {
+          "a": 48,
+          "d": 2
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 4,
+    "submitted": {
+      "action": "Step back, releasing his grip, breaking the tension",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "boundary",
+      "selectedIndex": 4,
+      "appKey": {
+        "turnCount": 6,
+        "sceneFateKey": "6:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Step back, releasing his grip, breaking the tension",
+        "dialogue": "This isn’t the time for games, Julian."
+      },
+      "gn": {
+        "a": 51,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 7 end turn=7 card=\"boundary\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 7 end turn=7 card=\"boundary\""
+    }
+  },
+  {
+    "scene": 8,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "7:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 6,
+        "temptation": {
+          "a": 49,
+          "d": 35
+        },
+        "boundary": {
+          "a": 51,
+          "d": 38
+        },
+        "confession": {
+          "a": 43,
+          "d": 45
+        },
+        "reversal": {
+          "a": 41,
+          "d": 31
+        },
+        "silence": {
+          "a": 49,
+          "d": 17
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 2,
+    "submitted": {
+      "action": "Hold my breath, the air thick with tension",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "silence",
+      "selectedIndex": 2,
+      "appKey": {
+        "turnCount": 7,
+        "sceneFateKey": "7:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Hold my breath, the air thick with tension",
+        "dialogue": "*mm*"
+      },
+      "gn": {
+        "a": 42,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 8 end turn=8 card=\"silence\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 8 end turn=8 card=\"silence\""
+    }
+  },
+  {
+    "scene": 9,
+    "deck": {
+      "count": 5,
+      "lockedOut": 0,
+      "mountId": "gnCardMount",
+      "inOAS": false,
+      "fateCommitted": false,
+      "fateSelectedIndex": -1,
+      "sceneKey": "8:1",
+      "fromOasHand": 0,
+      "previewCache": {
+        "_cacheKey": 7,
+        "temptation": {
+          "a": 55,
+          "d": 43
+        },
+        "boundary": {
+          "a": 41,
+          "d": 49
+        },
+        "confession": {
+          "a": 32,
+          "d": 44
+        },
+        "reversal": {
+          "a": 43,
+          "d": 42
+        },
+        "silence": {
+          "a": 42,
+          "d": 4
+        }
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "chosenIdx": 0,
+    "submitted": {
+      "action": "Grip the blade tighter, my resolve hardening",
+      "dialogue": "",
+      "source": "gn",
+      "cardId": "reversal",
+      "selectedIndex": 0,
+      "appKey": {
+        "turnCount": 8,
+        "sceneFateKey": "8:1",
+        "oasBeat": null
+      },
+      "cacheEntry": {
+        "action": "Grip the blade tighter, my resolve hardening",
+        "dialogue": "I’ll determine what happens next, and you’ll support my choice."
+      },
+      "gn": {
+        "a": 44,
+        "d": 0
+      },
+      "lit": {
+        "a": 0,
+        "d": 0
+      },
+      "origin": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 9 end turn=9 card=\"reversal\""
+    },
+    "provenance": {
+      "provenance": "UNKNOWN",
+      "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 9 end turn=9 card=\"reversal\""
+    }
+  }
+]
