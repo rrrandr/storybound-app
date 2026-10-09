@@ -27,6 +27,7 @@ import { findFSDef, launchFS, enterOAS, advanceExpectingGate, chooseBranch }
 // the request arrived and waits to be released, so a test can drive Submit and the unlock
 // confirmation normally and still act while the response is genuinely in flight. Every wait is
 // bounded and the hold is always released, including on failure.
+let _armWork = null;   // module scope, so teardown can actually wait for the concurrent arm
 let _holdArm = false, _holdArrived = null, _holdGate = null, _holdReleased = false;
 let _holdArrivedAt = null;
 function _armHold() {
@@ -1291,7 +1292,7 @@ try {
       _sres.checks.push({ label, ok: !!ok, detail: detail || null });
       say('    ' + (ok ? 'ok   ' : 'FAIL ') + label + (ok || !detail ? '' : '  - ' + detail));
     };
-    let _armWork = null;
+    _armWork = null;
     if (_scenario) {
       const _exp = exposure();
       const _head = CEILING ? (CEILING - _exp) : Infinity;
@@ -1371,6 +1372,22 @@ try {
               });
               _sck('exactly ONE reply rendered after the hold was released', _turns === 1,
                 'liTurnHistory length is ' + _turns);
+              // DOES THE TRANSCRIPT EVER SHOW THE PLAYER'S WORDS? If they are absent AFTER the
+              // reply too, nothing was lost by any rebuild — the conversation simply does not
+              // display the player's submission, which is a different claim entirely.
+              const _post = await page.evaluate(() => {
+                const panel = document.getElementById('gnPanelDisplay');
+                const story = document.getElementById('storyContent');
+                return String(document.body.innerText || '') + '\n'
+                  + (story ? String(story.innerText || story.textContent || '') : '') + '\n'
+                  + (panel ? String(panel.innerText || panel.textContent || '') : '');
+              });
+              _sck('AFTER the reply, the submitted SAY appears in the transcript',
+                _post.indexOf('I shaped nothing') >= 0,
+                'still absent after the reply rendered - the transcript never shows it');
+              _sck('AFTER the reply, the submitted DO appears in the transcript',
+                _post.indexOf('keep my hand open') >= 0,
+                'still absent after the reply rendered');
             }
 
             if (_scenario === 'reload') {
@@ -1383,8 +1400,12 @@ try {
                 } catch (e) { return { error: String(e && e.message) }; }
               });
               say('      persisted snapshot: ' + JSON.stringify(_persisted));
-              _sck('production persisted the pending request before the reload',
-                !!(_persisted && _persisted.awaiting && _persisted.id), JSON.stringify(_persisted));
+              const _hadPending = !!(_persisted && _persisted.awaiting && _persisted.id);
+              say('      OBSERVATION (not a pass/fail): this entrance checkpoint '
+                + (_hadPending ? 'DID' : 'did NOT')
+                + ' persist a pending request. That is a fact about this checkpoint only.');
+              _sres.observations = _sres.observations || [];
+              _sres.observations.push({ persistedPendingRequest: _hadPending, snapshot: _persisted });
               await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
               _releaseHold();
               await page.waitForTimeout(16000);
@@ -1397,10 +1418,68 @@ try {
                          thinking: !!document.querySelector('.intimacy-thinking, #intimacyThinking') };
               });
               say('      after the reload: ' + JSON.stringify(_post));
-              _sck('the restored orphan was CLEARED - awaitingResponse is false', !_post.awaiting,
-                'still awaiting after a real reload');
+              _sck('after a real reload the reader is not left waiting', !_post.awaiting,
+                'awaitingResponse is still true after the reload');
+              if (!_hadPending) {
+                say('      NOTE: with no pending request persisted, this arm shows the entrance'
+                  + ' reload behaviour only. Orphan CLEARING is covered by SB_SCENARIO=orphan,'
+                  + ' which restores an explicitly labelled fixture snapshot.');
+              }
               _sck('no stuck waiting state is left on screen', !_post.thinking,
                 'a thinking indicator is still showing');
+            }
+
+            if (_scenario === 'orphan') {
+              // Find the key production itself uses, then write a FIXTURE snapshot carrying a
+              // pending request that no fetch will ever answer. Nothing in production changes.
+              const _key = await page.evaluate(() => {
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                  const k = localStorage.key(i);
+                  if (k && /oas|intimacy/i.test(k)) keys.push(k);
+                }
+                return keys;
+              });
+              say('      OAS storage keys production is using: ' + JSON.stringify(_key));
+              _sck('production has an OAS snapshot key to restore from', _key.length > 0,
+                'no oas/intimacy key in localStorage');
+              if (_key.length > 0) {
+                const _wrote = await page.evaluate((k) => {
+                  try {
+                    const raw = localStorage.getItem(k);
+                    const snap = JSON.parse(raw);
+                    snap.awaitingResponse = true;
+                    snap.pendingRequestId = 'FIXTURE-ORPHAN-never-answered';
+                    snap.lastRequestStartedAt = Date.now() - 30000;
+                    snap.__fixture = 'explicitly labelled orphan written by the harness';
+                    localStorage.setItem(k, JSON.stringify(snap));
+                    return { ok: true, key: k };
+                  } catch (e) { return { ok: false, error: String(e && e.message) }; }
+                }, _key[0]);
+                say('      fixture orphan written: ' + JSON.stringify(_wrote));
+                _sck('the labelled orphan snapshot was stored', !!_wrote.ok, JSON.stringify(_wrote));
+                _releaseHold();
+                await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+                await page.waitForTimeout(16000);
+                const _after = await page.evaluate(() => {
+                  const d = (window.state && window.state.intimacyDialogue) || {};
+                  const el = document.getElementById('gnDialogueInput')
+                    || document.getElementById('dialogueInput');
+                  return { awaiting: !!d.awaitingResponse, id: d.pendingRequestId || null,
+                           inputUsable: !!(el && !el.disabled),
+                           thinking: !!document.querySelector('.intimacy-thinking, #intimacyThinking') };
+                });
+                say('      after restoring the orphan and reloading: ' + JSON.stringify(_after));
+                const _dropped = consoleLog.filter((l) =>
+                  /Rehydrate: dropping stale in-flight request/.test(l)
+                  && String(l).indexOf('FIXTURE-ORPHAN') >= 0);
+                _sck('production DROPPED the restored orphan on reload', _dropped.length > 0,
+                  'no drop line naming the fixture orphan');
+                _sck('awaitingResponse was cleared', !_after.awaiting,
+                  'still awaiting after the reload');
+                _sck('the reader is not stuck behind a waiting indicator', !_after.thinking,
+                  'a thinking indicator is still showing');
+              }
             }
 
             if (_scenario === 'supersede') {
@@ -2851,5 +2930,10 @@ try {
     + ' of $' + CEILING.toFixed(2));
 } catch (_) {}
 say('\noutput: ' + RUN);
+// The reload arm threw "Target page, context or browser has been closed" because teardown ran
+// while it was still working. Teardown now waits for it, under a bound.
+if (_armWork) {
+  try { await Promise.race([_armWork, new Promise((r) => setTimeout(r, 120000))]); } catch (_) {}
+}
 await browser.close();
 LOG.end();

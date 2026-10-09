@@ -191981,13 +191981,10 @@ No text, no watermark, no UI elements, share-ready.`;
             var _d2 = state.intimacyDialogue;
             if (!_d2 || !_d2.awaitingResponse || !_oasRequestIsLive(_d2.pendingRequestId)) return;
             if (typeof _showIntimacyThinking === 'function') _showIntimacyThinking();
-            // Clear only what the rebuild left behind. The fields are NOT disabled: nothing here
-            // re-enables them, and a reply that never lands must not strand the reader.
-            ['gnActionInput', 'gnDialogueInput', 'actionInput', 'dialogueInput']
-              .forEach(function (id) {
-                var el = document.getElementById(id);
-                if (el && el.value) el.value = '';
-              });
+            // The fields are left ALONE. Clearing them could wipe an unrelated draft, and it was
+            // never evidence that the pending submission had been preserved: the OAS transcript
+            // does not display the player's words at any point, pending or completed, so there was
+            // nothing for a rebuild to lose here.
             console.log('[INTIMACY-DIALOGUE] Rehydrate: waiting state restored for the live request');
           } catch (_) {}
         }, 0);
