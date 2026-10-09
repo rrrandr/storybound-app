@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791565872699,
+    "before": {
+      "pendingRequestId": "1791565872628-92ai36",
+      "awaitingResponse": false,
+      "ageMs": 66
+    },
+    "afterPendingRequestId": "1791565872628-92ai36",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261009j-event-gate:145250:26"
+    ]
+  }
+]

@@ -231812,7 +231812,6 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "expression_arc": {\n' +
       '      "baseline_family": "suppression | warmth | sharpness | mixed | neutral",\n' +
       '      "micro_drift": "<one phrase describing the subtle emotional trend across the whole scene. Examples: \\"guarded-then-cracking\\" / \\"warm-but-tightening\\" / \\"steady simmer\\" / \\"sharp opening, softening into vulnerability\\". Even when no peak fires, this is the direction the face is drifting.>",\n' +
-      '      "state_change_beat": <int — the beat index where THIS SCENE\'S ASSIGNED EVENT (the state_change you were given) actually LANDS on the page. Not where it is anticipated, referred to or recalled: the beat a reader could point at and say "it happened here". If you cannot name such a beat, you have not written the assigned event and the scene is not finished.>,\n' +
       '      "peak_a_beat": <int — beat index of the first NON-NEUTRAL expression peak; the beat where peak_a\'s expression_target lands. The arc commits to peaks BEFORE beats are written.>,\n' +
       '      "peak_b_beat": <int | null — beat index of the second peak, or null if the scene only carries one peak. Must be at least 4 beats after peak_a_beat.>,\n' +
       '      "decay_window": <int 2-4 — beats over which each peak fades back to baseline. The renderer holds the peak frame at full opacity through the peak\'s beat + 1, then eases the mutation overlay to 0 across the next (decay_window − 1) beats. Default 3 if unsure.>\n' +
@@ -231855,6 +231854,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "cast": [ { "name": "<protagonist | li | CharName>", "performance": { "pose": "<what they are physically DOING this panel>", "expression": "<their emotion this panel>", "looking_at": "<who/what they look at>", "action_tags": ["speaking|fighting|bleeding|holding|reaching|recoiling"] } } ],\n' +
       '    "wish": false, "sacrifice": false, "fateAnswer": false\n' +
       '  } ],\n' +
+            '  "state_change_beat": <int — TOP-LEVEL field. The index into THIS plan\'s beats array where the ASSIGNED EVENT (the state_change you were given) LANDS on the page. Not where it is anticipated, referred to or recalled: the beat a reader could point at and say it happened there. If you cannot name such a beat, you have not written the assigned event.>,\n' +
       '  "beats": [ {\n' +
       '    "idx": 0, "kind": "narration | exposition | dialogue",\n' +
       '    "text": "<see TEXT RULES below>",\n' +

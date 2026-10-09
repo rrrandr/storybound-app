@@ -1,0 +1,151 @@
+{
+  "turnsTaken": 5,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "interruptionDone": true,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "oas_exit",
+      "at": 1791566147447,
+      "storyId": "b770f5c3-326f-44fe-b5cf-a6c5b6cc3ff7"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": {
+    "wasContradiction": "the prompt permitted null while the gate rejected it unless a Tempt rupture was active",
+    "fixed": "the gate now receives the same seed-declared displacement decision the prompt uses (_recordedChoiceDisplacesFrame)",
+    "nowAnswering": "null, honestly — the frame was displaced by the recorded choice"
+  },
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": 9201,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 0,
+    "texts": [],
+    "notes": [],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+        "liAction": "Julian's hand remained on the shaft as he waited.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+        "liAction": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Not here. Not in front of them.",
+        "pcDoRaw": "I set the ledger flat and leave my hand on it",
+        "liDialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+        "liAction": "Julian's hand remained on the shaft as his gaze held mine.",
+        "faceState": "what",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}
