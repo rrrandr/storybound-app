@@ -1,0 +1,34 @@
+[
+  {
+    "at": 1791510822729,
+    "before": {
+      "pendingRequestId": "1791510822655-j8gumk",
+      "awaitingResponse": false,
+      "ageMs": 69
+    },
+    "afterPendingRequestId": "1791510822655-j8gumk",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261008k-finalize-visuals:145250:26"
+    ]
+  },
+  {
+    "at": 1791510828574,
+    "before": {
+      "pendingRequestId": "1791510828545-oorxu6",
+      "awaitingResponse": true,
+      "ageMs": 25
+    },
+    "afterPendingRequestId": "1791510828545-oorxu6",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": true,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at eval (eval at evaluate (:311:30), <anonymous>:1:22)",
+      "at UtilityScript.evaluate (<anonymous>:313:16)",
+      "at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    ]
+  }
+]

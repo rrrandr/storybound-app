@@ -1829,12 +1829,35 @@ try {
       };
       const SAY2 = 'Then ask it plainly, and I will answer plainly.';
       const DO2 = 'I set the deck down between us.';
-      const _first = await page.evaluate(() => {
+      // CAPTURE THE FIRST EXCHANGE AS ITS OWN ROWS, IN FULL. A 40-character prefix proved almost
+      // nothing: it would pass even if the rest of the exchange were rewritten.
+      const _rowSnap = () => page.evaluate(() => {
         const log = document.getElementById('oasHistoryLog');
-        return { text: log ? String(log.innerText || log.textContent || '') : '',
-                 children: log ? log.children.length : 0,
-                 pending: document.querySelectorAll('.oas-pc-bubble-pending').length };
+        if (!log) return { rows: [], pendingCount: 0 };
+        const rows = [...log.querySelectorAll('.oas-chat-you, .oas-chat-li')].map((el) => {
+          const bubble = el.querySelector('.oas-chat-bubble');
+          const cs = bubble ? getComputedStyle(bubble) : null;
+          return {
+            side: el.classList.contains('oas-chat-you') ? 'you' : 'li',
+            pending: el.classList.contains('oas-pc-bubble-pending'),
+            dots: !!el.querySelector('.oas-pc-polishing-dots'),
+            opacity: cs ? cs.opacity : null,
+            dialogue: String((el.querySelector('.oas-chat-dialogue') || {}).textContent || '').trim(),
+            narration: String((el.querySelector('.oas-chat-narration') || {}).textContent || '').trim(),
+            full: String(el.innerText || el.textContent || '').trim()
+          };
+        });
+        return { rows, pendingCount: log.querySelectorAll('.oas-pc-bubble-pending').length };
       });
+      const _snap1 = await _rowSnap();
+      const _first = { text: _snap1.rows.map((x) => x.full).join('\n'),
+                       children: _snap1.rows.length, pending: _snap1.pendingCount };
+      const _exch1Rows = JSON.stringify(_snap1.rows.map((x) =>
+        ({ side: x.side, dialogue: x.dialogue, narration: x.narration })));
+      say('      exchange 1 rows: ' + _exch1Rows.slice(0, 200));
+      _p2ck('every completed bubble has normal opacity and no polishing dots',
+        _snap1.rows.length > 0 && _snap1.rows.every((x) => !x.dots && Number(x.opacity) === 1),
+        JSON.stringify(_snap1.rows.map((x) => ({ side: x.side, dots: x.dots, opacity: x.opacity }))));
       say('      after exchange 1: children=' + _first.children + ' pending=' + _first.pending);
       _p2ck('one completed exchange is on the page before the second submission',
         _first.children > 0, 'children=' + _first.children);
@@ -1868,9 +1891,16 @@ try {
         }, { saySnip: 'ask it plainly', doSnip: 'set the deck down' });
         say('      after rehydration: children=' + _mid.children
           + ' pending=' + _mid.pendingCount + ' say2x' + _mid.say2 + ' do2x' + _mid.do2);
-        _p2ck('the completed exchange is still present and unchanged',
-          _firstText.length > 0 && _mid.text.indexOf(_firstText.slice(0, 40)) >= 0,
-          'the first exchange text no longer appears');
+        const _snap2 = await _rowSnap();
+        const _exch1After = JSON.stringify(_snap2.rows.slice(0, _snap1.rows.length).map((x) =>
+          ({ side: x.side, dialogue: x.dialogue, narration: x.narration })));
+        _p2ck('the first exchange rows are byte-identical after rehydration',
+          _exch1After === _exch1Rows,
+          'before: ' + _exch1Rows.slice(0, 160) + '  after: ' + _exch1After.slice(0, 160));
+        _p2ck('the completed bubbles still show no pending visuals after rehydration',
+          _snap2.rows.slice(0, _snap1.rows.length).every((x) => !x.dots && Number(x.opacity) === 1),
+          JSON.stringify(_snap2.rows.slice(0, _snap1.rows.length)
+            .map((x) => ({ side: x.side, dots: x.dots, opacity: x.opacity }))));
         _p2ck('the second submitted SAY appears exactly once', _mid.say2 === 1,
           'occurrences: ' + _mid.say2);
         _p2ck('the second submitted DO appears exactly once', _mid.do2 === 1,
@@ -1894,9 +1924,14 @@ try {
         say('      after release: pending=' + _post.pendingCount + ' say2x' + _post.say2);
         _p2ck('releasing the response finalized the second bubble', _post.pendingCount === 0,
           'pending bubbles still: ' + _post.pendingCount);
-        _p2ck('the first exchange was NOT modified by the arriving reply',
-          _post.text.indexOf(_firstText.slice(0, 40)) >= 0,
-          'the first exchange text changed or vanished');
+        const _snap3 = await _rowSnap();
+        const _exch1Final = JSON.stringify(_snap3.rows.slice(0, _snap1.rows.length).map((x) =>
+          ({ side: x.side, dialogue: x.dialogue, narration: x.narration })));
+        _p2ck('the first exchange rows are byte-identical after the second reply landed',
+          _exch1Final === _exch1Rows,
+          'before: ' + _exch1Rows.slice(0, 160) + '  after: ' + _exch1Final.slice(0, 160));
+        _p2ck('no bubble is left with polishing dots once the reply has landed',
+          _snap3.rows.every((x) => !x.dots), 'a polishing-dot node survives');
         _p2ck('the second turn is still exactly one player bubble, now finalized',
           _post.youRows === _mid.youRowsBefore && _post.pendingCount === 0,
           'you-rows ' + _mid.youRowsBefore + ' -> ' + _post.youRows

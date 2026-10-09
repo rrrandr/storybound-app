@@ -192170,6 +192170,9 @@ No text, no watermark, no UI elements, share-ready.`;
         if (slashIdx !== -1) { userSay = ui.slice(0, slashIdx); userDo = ui.slice(slashIdx + 3); }
         else { userSay = ui; userDo = ''; }
         try { _appendUserInputToHistory(userSay, userDo); } catch (_) {}
+        // This turn is COMPLETED by definition - it came out of history. Finalize it now, with
+        // production's own finalizer, so no replayed bubble keeps the pending visuals.
+        try { _finalizePendingPCBubbleNoSwap(); } catch (_) {}
         var liDialogue = entry.liDialogue || entry.liResponse || '';
         var liAction = entry.liAction || '';
         if (liDialogue) {
@@ -192183,21 +192186,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // replaces this node when the reply arrives.
     try {
       var _logNow = document.getElementById('oasHistoryLog');
-      // FINALIZE THE REPLAYED TURNS FIRST. The replay above goes through
-      // _appendUserInputToHistory, which marks every bubble it creates as
-      // .oas-pc-bubble-pending - so with any completed history present, that marker belongs to an
-      // OLD replayed turn, not to the request in flight. Left as-is it made the restore below
-      // decline the genuinely pending submission, and a returning reply would then swap the WRONG
-      // bubble. Replayed turns are completed by definition.
-      if (_logNow) {
-        var _replayed = _logNow.querySelectorAll('.oas-pc-bubble-pending');
-        if (_replayed.length) {
-          for (var _ri = 0; _ri < _replayed.length; _ri++) {
-            _replayed[_ri].classList.remove('oas-pc-bubble-pending');
-          }
-          console.log('[INTIMACY-DIALOGUE] Rehydrate: finalized ' + _replayed.length
-            + ' replayed player bubble(s) as completed before restoring the pending one');
-        }
+      // Replayed turns are finalized as they are appended (above), with production's own
+      // finalizer, so no stale pending marker or pending visuals survive to here. This guard
+      // only reports if one somehow does.
+      if (_logNow && _logNow.querySelector('.oas-pc-bubble-pending')) {
+        console.warn('[INTIMACY-DIALOGUE] Rehydrate: a replayed bubble is still marked pending'
+          + ' after replay - finalizing it before restoring the current submission');
+        try { _finalizePendingPCBubbleNoSwap(); } catch (_) {}
       }
       if (_carriedPending && d.awaitingResponse && _oasRequestIsLive(d.pendingRequestId)) {
         if (_logNow && !_logNow.querySelector('.oas-pc-bubble-pending')) {
