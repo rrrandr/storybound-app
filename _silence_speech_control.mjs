@@ -35,7 +35,7 @@ for (const fn of ['function getIntimateSilenceOptions', 'function getSilenceOpti
   const body = bounds(fn);
   const spoken = [...body.matchAll(/(alt)?[Dd]ialogue: ('[^']*'|`[^`]*`|"[^"]*")/g)].map((m) => m[2]);
   const nonEmpty = spoken.filter((v) => v.replace(/^['"`]|['"`]$/g, '').trim() !== '');
-  t(fn.replace('function ', '') + ': every spoken suggestion defaults to EMPTY',
+  t(fn.replace('function ', '') + ': no NARRATIVE DESCRIPTION sits in the spoken field',
     spoken.length > 0 && nonEmpty.length === 0,
     nonEmpty.length + ' still carry text, e.g. ' + JSON.stringify(nonEmpty.slice(0, 2)));
   t(fn.replace('function ', '') + ': the explanatory copy is retained on a note field',
@@ -84,6 +84,12 @@ const r = await page.evaluate(() => {
   window._sbApplyCardSpeech(b, TEMPT.dialogue, TEMPT, null);
   out.otherCard = { value: b.value };
 
+  // An EMPTY silence suggestion still shows the explanatory copy as a placeholder.
+  const z = mk('emptyProbe'); z.id = 'dialogueInput';
+  window._sbBeginSpeechLifecycle();
+  window._sbApplyCardSpeech(z, '', SILENCE, SILENCE.dialogueNote);
+  out.emptyCase = { value: z.value, placeholder: z.placeholder };
+
   out.suppresses = { silence: window._sbCardSuppressesSpeech(SILENCE),
                      tempt: window._sbCardSuppressesSpeech(TEMPT) };
 
@@ -115,11 +121,13 @@ const r = await page.evaluate(() => {
 });
 
 console.log('');
-t('an untouched Silence selection leaves the Say field EMPTY — no speech is submitted',
-  r.untouched.value === '', 'value is ' + JSON.stringify(r.untouched.value));
-t('and the explanatory copy appears as a placeholder, which is never submitted',
-  /folds back into your chest/.test(r.untouched.placeholder || ''),
-  'placeholder is ' + JSON.stringify(r.untouched.placeholder));
+t('a Silence suggestion lands AS GIVEN — voiced withholding is legitimate',
+  r.untouched.value === '*mm*',
+  'the suggestion was altered: ' + JSON.stringify(r.untouched.value));
+t('the explanatory copy is a PLACEHOLDER when nothing is spoken — never submitted',
+  r.emptyCase.value === '' && /folds back into your chest/.test(r.emptyCase.placeholder || ''),
+  'value=' + JSON.stringify(r.emptyCase.value)
+  + ' placeholder=' + JSON.stringify(r.emptyCase.placeholder));
 t('a reader edit survives a LATE suggestion verbatim',
   r.afterEdit.value === 'I will not be quiet about this.',
   'value is ' + JSON.stringify(r.afterEdit.value));
@@ -128,8 +136,8 @@ t('a DELIBERATE vocalization typed by the reader is preserved, not blanked',
   'value is ' + JSON.stringify(r.deliberateVocalization.value));
 t('a non-suppressing card still receives its suggestion',
   r.otherCard.value === 'Say it and mean it.', 'value is ' + JSON.stringify(r.otherCard.value));
-t('only the silence card suppresses speech',
-  r.suppresses.silence === true && r.suppresses.tempt === false, JSON.stringify(r.suppresses));
+t('NO card suppresses generated speech any more',
+  r.suppresses.silence === false && r.suppresses.tempt === false, JSON.stringify(r.suppresses));
 
 // THE CHECK MUST BITE: with the guard bypassed, the stale suggestion lands as speech.
 const bite = await page.evaluate(() => {

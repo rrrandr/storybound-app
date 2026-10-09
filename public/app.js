@@ -309671,12 +309671,11 @@ Condensed (under ${maxLength} chars):` }
   //  · the preview arrives on a deferred timer, so it could overwrite words the reader typed.
   // Silence is the card's DEFAULT, never an override: anything the reader types is preserved,
   // deliberate vocalizations included, and nothing is blanked at Submit.
-  window._sbCardSuppressesSpeech = function (card) {
-    try {
-      var id = String((card && (card.cardId || card.id)) || '').toLowerCase();
-      return id === 'silence';
-    } catch (_) { return false; }
-  };
+  // RETAINED FOR COMPATIBILITY, ALWAYS FALSE. No card suppresses generated speech any more:
+  // Silence is withholding the substantive answer, which may be voiced as a refusal, a
+  // deflection, a dismissal or a noncommittal sound. What must stay out of Say is NARRATIVE
+  // DESCRIPTION of not speaking - that lives in the action, or in display-only note text.
+  window._sbCardSuppressesSpeech = function () { return false; };
   // The current speech lifecycle. Advances on every new card selection / turn, so protection
   // never leaks across turns and a late response can tell it has been superseded.
   window._sbSpeechToken = 0;
@@ -309701,10 +309700,12 @@ Condensed (under ${maxLength} chars):` }
       if (token != null && String(token) !== String(window._sbSpeechToken || 0)) return false;
       // READER OWNS THE FIELD this lifecycle - never overwritten by any suggestion.
       if (window._sbSpeechIsReaderOwned(diaInput)) return false;
-      var suppress = window._sbCardSuppressesSpeech(card);
-      diaInput.value = suppress ? '' : String(candidate == null ? '' : candidate);
+      // The suggestion lands as given - empty, a refusal, a dismissal, a sound. Edit ownership
+      // and staleness are still enforced above; only the blanket blanking is gone.
+      diaInput.value = String(candidate == null ? '' : candidate);
       var n = note || (card && (card.dialogueNote || card.altDialogueNote)) || '';
-      if (suppress && n) diaInput.placeholder = String(n);   // display-only; never submitted
+      // Display-only copy, shown as a placeholder when nothing is spoken. Never submitted.
+      if (n && !diaInput.value) diaInput.placeholder = String(n);
       return true;
     } catch (_) { return false; }
   };
@@ -310255,9 +310256,21 @@ Condensed (under ${maxLength} chars):` }
               '- Silence is the protagonist refusing to fill the air, OR finding she cannot. Pick the register that fits the prior beat:\n' +
               '  • REFUSAL TO SPEAK (chosen withholding): she has the words and chooses not to give them. The action is deliberate stillness — eyes held steady, mouth closed, hands at rest, the answer she\'s NOT giving louder than any answer she could. She makes the OTHER person speak first by refusing to break the quiet.\n' +
               '  • UNABLE TO SPEAK (overwhelm): something has pulled the words out of her — emotional shock, the throat closing, a breath caught, a thought too true to voice. The action is involuntary stillness; she WOULD speak if she could. Body cues do all the work — a shake of the head, a hand pressed to the mouth, a swallow.\n' +
-              '- The dialogue is empty-string in the second line, OR a single non-committal sound (a breath, a hum, an "mm", an exhaled almost-laugh). NEVER a full sentence — Silence the card means no words landed.\n' +
+              '- WHAT SILENCE WITHHOLDS IS THE SUBSTANTIVE ANSWER, not sound. The dialogue line may be an'
+              + ' EMPTY STRING, or it may be voiced: a flat refusal, a deflection that answers'
+              + ' a different question, a dismissal, or a noncommittal sound. Keep it SHORT —'
+              + ' what makes it Silence is that the real answer is not given, not that no noise'
+              + ' is made.\n' +
+              '- THESE ILLUSTRATE THE MEANING AND ARE NOT LINES TO REUSE: a refusal ("I am not'
+              + ' answering that."), a dismissal (a curt obscenity), a noncommittal sound'
+              + ' ("Hrmm"). Write what THIS character would withhold with, in THIS moment, in'
+              + ' their own register. Never copy an example into the scene.\n' +
+              '- FORBIDDEN IN THE DIALOGUE FIELD: a NARRATIVE DESCRIPTION of not speaking. Lines'
+              + ' like "(You decide to say nothing.)" or "(The thing you almost said folds back'
+              + ' into your chest.)" are about the protagonist, not spoken BY her — put that in'
+              + ' the action, never in the line she says. The dialogue field is speech only.\n' +
               '- DISTINCTION FROM REVERSAL: silence here is PASSIVE on the protagonist\'s side — she does not stare-down to dominate the other person. Stare-downs that shut the other person up belong to REVERSAL (TAKE direction). Silence is what she does INSIDE herself, not what she imposes on someone else.\n' +
-              '- FORBIDDEN: any line of dialogue longer than a single sound. Any action that asserts dominance through gaze (that\'s Reversal). Any "I look away" that reads as deference (that\'s Boundary or Yield-Reversal).';
+              '- FORBIDDEN: a speech that gives the substantive answer anyway (that is Confession), or a narrative description of silence in the dialogue field. Any action that asserts dominance through gaze (that\'s Reversal). Any "I look away" that reads as deference (that\'s Boundary or Yield-Reversal).';
       }
 
       const previewPrompt = `You are generating contextual Say/Do previews for an interactive romance story.
