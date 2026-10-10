@@ -103027,7 +103027,7 @@ function _buildAuthorFloorDirective(s) {
             if (typeof _buildCanonPacket === 'function') {
               var _plPacket = _buildCanonPacket(s, {});
               if (_plPacket && Array.isArray(_plPacket.facts) && _plPacket.facts.length) {
-                _scUsr += '\n\nCANON YOU WILL BE JUDGED AGAINST (the same packet the auditor receives; an event that contradicts any of these is REFUSED BEFORE IT IS WRITTEN, so do not propose one \u2014 and read the EXCEPTIONS as carefully as the prohibitions):\n'
+                _scUsr += '\n\nCANON YOU WILL BE JUDGED AGAINST (from the SAME AUTHORITATIVE SOURCE the auditor uses; the auditor selection is ranked against the proposal it judges, so ids are not comparable between the two - the TEXT is what binds; an event that contradicts any of these is REFUSED BEFORE IT IS WRITTEN, so do not propose one \u2014 and read the EXCEPTIONS as carefully as the prohibitions):\n'
                   + _plPacket.facts.map(function (f) { return '  [' + f.id + '] ' + f.text; }).join('\n')
                   + (_plPacket.truncated ? ('\n  (' + _plPacket.omittedTotal + ' further entries were relevance-selected out; absence here does NOT mean a capability is unauthorised.)') : '');
               }
@@ -103040,17 +103040,20 @@ function _buildAuthorFloorDirective(s) {
           // back verbatim. A REFUSED proposal is not an unfinished valid intention. The existing
           // retry limit is untouched: no loop, no extra call.
           try {
-            var _blk = state._canonAuditBlocked;
-            if (_blk && _blk.proposal && _blk.verdict && _blk.verdict.reason
-                && !_blk.carried
-                && (!_blk.storyId || _blk.storyId === (s.storyId || null))) {
-              try { _blk.carried = true; } catch (_) {}
-              var _blkEvent = String(_blk.proposal.state_change || _blk.proposal.tactical_move || '');
+            // ATTEMPT-BOUND, not "whichever block exists". If the final retry is itself
+            // rejected, its feedback dies with that attempt instead of reaching a later submission.
+            var _blk = (state._cgGenAttempt && state._cgGenAttempt.rejectionFeedback) || null;
+            if (_blk && _blk.reason) {
+              var _blkEvent = String(_blk.refusedEvent || '');
               _scUsr += '\n\nYOUR PREVIOUS PROPOSAL FOR THIS SCENE WAS REFUSED \u2014 this is a REJECTION, not an unfinished intention. Do NOT restate it.\n'
                 + '  REFUSED EVENT: ' + _blkEvent + '\n'
-                + '  WHY: ' + String(_blk.verdict.reason) + '\n'
-                + (Array.isArray(_blk.packetIds) && _blk.packetIds.length
-                    ? ('  CANON IT CONTRADICTED: ' + _blk.packetIds.join(', ') + '\n') : '')
+                + '  WHY IT WAS REFUSED: ' + String(_blk.reason) + '\n'
+                + ((Array.isArray(_blk.citedFacts) && _blk.citedFacts.length)
+                    ? ('  THE CANON IT CONTRADICTED (quoted as the auditor received it):\n'
+                       + _blk.citedFacts.map(function (cf) {
+                           return '    \u2022 ' + String(cf.text);
+                         }).join('\n') + '\n')
+                    : '  (the verdict cited no specific fact)\n')
                 + '  Propose a DIFFERENT event that advances the same objective without contradicting that canon. Reproposing the refused event, or a restatement of it, is refused again and the scene is not written.';
               try { console.log('[PLANNER-PROMPT] carrying the canon-audit refusal into this retry: '
                 + JSON.stringify(_blkEvent).slice(0, 90)); } catch (_) {}
@@ -239764,7 +239767,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
 
   // Scene-number seam for staged generation: the index being generated (0-based) is authoritative for
   // _currentSceneNumber while this runs; cleared on every exit so a literary turn never inherits it.
-  async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue) {
+  async function _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue, rejectionFeedback) {
     // ── choice_pending LIVE GATE (Roman 2026-09-29) ────────────────────────────────────────
     // A renewed choice owed by a Tempt reality revision blocks EVERY continuation past it.
     // This is the single funnel for scene-0 bootstrap, the main advance and the retry path, so
@@ -239818,12 +239821,28 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // behind for this one.
     try {
       state._acceptedPlannerProposal = null;
+      // OWNERSHIP: the feedback belongs to THIS attempt, linked to the attempt it came from.
+      // A later submission mints its own attempt with no feedback, so a rejection cannot leak.
       state._cgGenAttempt = {
         id: (typeof _cpMintAttemptId === 'function') ? _cpMintAttemptId() : ('gen:' + Date.now() + ':' + Math.random().toString(36).slice(2, 10)),
         storyId: String(state.storyId || ''),
         sceneIndex: (typeof sceneIndex === 'number') ? sceneIndex : null,
         branch: (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null,
-        at: Date.now()
+        at: Date.now(),
+        // The rejection this generation is the designated retry FOR, accepted only when it belongs
+        // to this story, this scene and this branch. The rejected attempt id is recorded as a LINK,
+        // not required to match - a retry is a new attempt by definition.
+        rejectionFeedback: (function () {
+          try {
+            var f = rejectionFeedback;
+            if (!f || !f.reason) return null;
+            if (f.storyId && String(f.storyId) !== String(state.storyId || '')) return null;
+            if (f.sceneIndex != null && f.sceneIndex !== sceneIndex) return null;
+            var _bk = (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null;
+            if (f.branch && _bk && String(f.branch) !== String(_bk)) return null;
+            return f;
+          } catch (_) { return null; }
+        })()
       };
     } catch (_) {}
     // THIS TURN'S SAY/DO, where the prompt builders can reach it. _buildCGScreenplaySystemPrompt
@@ -239872,7 +239891,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       } else { delete state._cgRowCollectives; delete state._cgRowPresentGroups; }
     } catch (_) {}
     try {
-      var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue);
+      var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue, rejectionFeedback);
       // The replay reached prose. Every later continuation is now refused until the player
       // resolves the renewed choice.
       try {
@@ -240018,7 +240037,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   }
   window._cgMintDeliveredAssignments = _cgMintDeliveredAssignments; window._cgAcceptDelivered = _cgAcceptDelivered; window._renderCGDeliveredAssignments = _renderCGDeliveredAssignments; window._cgBranchKey = _cgBranchKey;
 
-  async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue) {
+  async function _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue, rejectionFeedback) {
     var _subProvOwned = null;   // this invocation's submission provenance, validated below
     // THIS INVOCATION'S IDENTITY, READ BEFORE ANY AWAIT. Reading it afterwards compared one
     // mutable global against another; captured here it cannot drift to a later invocation.
@@ -240334,14 +240353,45 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         } catch (_) {}
         if (!_caVerdict.allow) {
           // PRESERVE the proposal and the audit result for review before stopping.
+          var _citedFacts = [];
+          try {
+            var _citedIds = (_caVerdict && Array.isArray(_caVerdict.citedFactIds))
+              ? _caVerdict.citedFactIds : [];
+            var _packetFacts = (_caPacket && Array.isArray(_caPacket.facts)) ? _caPacket.facts : [];
+            _citedFacts = _citedIds.map(function (fid) {
+              var hit = null;
+              for (var _fi = 0; _fi < _packetFacts.length; _fi++) {
+                if (_packetFacts[_fi] && _packetFacts[_fi].id === fid) { hit = _packetFacts[_fi]; break; }
+              }
+              // The TEXT is what travels. An id with no text found is reported as such rather than
+              // silently dropped or re-resolved against another packet.
+              return { id: fid, text: hit ? String(hit.text) : null };
+            }).filter(function (x) { return x && x.text; });
+          } catch (_) { _citedFacts = []; }
           state._canonAuditBlocked = {
             at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
-            storyId: state.storyId || null, carried: false,
-            packetIds: _caPacket.ids, verdict: _caVerdict
+            storyId: state.storyId || null,
+            attemptId: (state._cgGenAttempt && state._cgGenAttempt.id) || null,
+            branch: (state._cgGenAttempt && state._cgGenAttempt.branch) || null,
+            citedFacts: _citedFacts,                 // ONLY what the verdict cited, with its text
+            packetIds: _caPacket.ids,                // kept for diagnosis; NOT presented as violated
+            verdict: _caVerdict
           };
           try { console.warn('[CANON-AUDIT] BLOCKED before author dispatch (' + _caVerdict.source + '): ' + _caVerdict.reason); } catch (_) {}
           return { __plannerFunctionRejected: true, __canonAuditBlocked: true, canonAuditSource: _caVerdict.source,
-                   reason: 'canon audit (' + _caVerdict.source + '): ' + _caVerdict.reason, sceneIndex: sceneIndex };
+                   reason: 'canon audit (' + _caVerdict.source + '): ' + _caVerdict.reason, sceneIndex: sceneIndex,
+                   // Handed to the DESIGNATED retry by the caller - not left in global state for
+                   // whichever generation runs next.
+                   rejectionFeedback: {
+                     storyId: state.storyId || null,
+                     sceneIndex: sceneIndex,
+                     rejectedAttemptId: (state._cgGenAttempt && state._cgGenAttempt.id) || null,
+                     branch: (state._cgGenAttempt && state._cgGenAttempt.branch) || null,
+                     refusedEvent: String((_caProposal && (_caProposal.state_change
+                       || _caProposal.tactical_move)) || ''),
+                     reason: String(_caVerdict.reason || ''),
+                     citedFacts: _citedFacts
+                   } };
         }
         try { console.log('[CANON-AUDIT] PASS (' + _caVerdict.source + ', paid=' + _caVerdict.paid + ') — author may be dispatched'); } catch (_) {}
       }
@@ -241621,7 +241671,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           // null-plan failure path (and the literary safety net behind it) is never entered from here.
           try { console.warn('[CG:STALE-REJECTED] retrying once with the current branch/attempt: ' + plan.reason); } catch (_) {}
           var _retry = null, _retryErr = null;
-          try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue); } catch (_re) { _retryErr = _re; }
+          // The rejected result's own feedback goes to ITS retry, explicitly.
+          try { _retry = await _runCGScreenplayGen(sceneIndex, playerAction, playerDialogue,
+            (plan && plan.rejectionFeedback) || null); } catch (_re) { _retryErr = _re; }
           var _retryOk = !!(_retry && !_retry.__staleRejected && !_retry.__plannerFunctionRejected && Array.isArray(_retry.beats) && _retry.beats.length);
           if (!_retryOk) {
             var _why = _retryErr ? ('retry threw: ' + (_retryErr && _retryErr.message)) : ((_retry && (_retry.__staleRejected || _retry.__plannerFunctionRejected)) ? ('retry stale: ' + _retry.reason) : 'retry returned no usable plan');

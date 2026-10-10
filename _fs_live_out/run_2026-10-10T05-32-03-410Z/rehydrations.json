@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791610353861,
+    "before": {
+      "pendingRequestId": "1791610353791-usagb3",
+      "awaitingResponse": false,
+      "ageMs": 66
+    },
+    "afterPendingRequestId": "1791610353791-usagb3",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261010a-planner-canon:145389:26"
+    ]
+  }
+]
