@@ -454,6 +454,7 @@ function noteInfraFailure(text, resp, rec, url) {
     + ' in flight — RETAINED, not released.');
   return true;
 }
+const _bodySeq = {};          // per-fixture-key cursor for ordered bodies
 let _replaySceneIdx = 0;
 let _replayAuthorIdx = 0, _replayCleanupIdx = 0;
 const _unmatched = new Set();
@@ -700,6 +701,14 @@ await page.route('**/api/**', async (route) => {
     const key = Object.keys(FIXTURES.byMatch || {}).find(k => new RegExp(k, 'i').test(
       (body.messages || []).map(m => m.content).join(' ').slice(0, 20000)));
     let f = (key && FIXTURES.byMatch[key]) || FIXTURES.default || { body: '{}' };
+    if (f && Array.isArray(f.bodies) && f.bodies.length) {
+      _bodySeq[key] = (_bodySeq[key] || 0);
+      const _bi = Math.min(_bodySeq[key], f.bodies.length - 1);
+      _bodySeq[key]++;
+      console.log('  [fixture] ordered body ' + (_bi + 1) + '/' + f.bodies.length + ' for "'
+        + String(key).slice(0, 34) + '"');
+      f = { body: f.bodies[_bi], delayMs: f.delayMs };
+    }
 
     // ── REPLAY MODE: serve the captured paid run's OWN author replies and cleanup edits in order,
     // so PRODUCTION does the parsing, the acceptance decision and the rendering. The runner never

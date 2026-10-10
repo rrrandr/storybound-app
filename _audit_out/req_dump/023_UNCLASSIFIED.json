@@ -1,5 +1,5 @@
 {
- "n": 25,
+ "n": 23,
  "fn": "UNCLASSIFIED",
  "messages": [
   {
@@ -8,7 +8,7 @@
   },
   {
    "role": "user",
-   "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"Seren's family step out of the assembly and publicly accuse Lirael, demanding remedy for what the wish cost Seren; the presiding Dohkar has to receive the demand in the open.\",\n  \"local_objective\": \"Convert the private interrogation into a public complaint with standing, and make Lirael answer who the remedy is owed to.\",\n  \"state_change\": \"The Answer draws the memory of the one Lirael lost into visible form between her hands.\",\n  \"state_change_precondition\": \"the memory of the one Lirael lost is not yet visible to the assembly\",\n  \"forces_choice\": \"Lirael must answer the family's demand for remedy herself, in the open, or let the Dohkar fold the complaint into the inquiry he has already named.\",\n  \"event_slots\": null,\n  \"mechanism_grounding\": \"ordinary\",\n  \"acceptedAt\": 1791637833912,\n  \"sceneNum\": 2,\n  \"owner\": {\n    \"id\": \"cpa:8fa8447c-a839-4015-acc0-6f165f2c328e\",\n    \"storyId\": \"abbb15fb-05b5-4873-97da-4901f48c3f75\",\n    \"sceneIndex\": 2,\n    \"branch\": \"run\"\n  }\n}"
+   "content": "PROPOSED SCENE PLAN:\n{\n  \"tactical_move\": \"Seren's family step out of the assembly and publicly accuse Lirael, demanding remedy for what the wish cost Seren; the presiding Dohkar has to receive the demand in the open.\",\n  \"local_objective\": \"Convert the private interrogation into a public complaint with standing, and make Lirael answer who the remedy is owed to.\",\n  \"state_change\": \"The Answer draws the memory of the one Lirael lost into visible form between her hands.\",\n  \"state_change_precondition\": \"the memory of the one Lirael lost is not yet visible to the assembly\",\n  \"forces_choice\": \"Lirael must answer the family's demand for remedy herself, in the open, or let the Dohkar fold the complaint into the inquiry he has already named.\",\n  \"event_slots\": null,\n  \"mechanism_grounding\": \"ordinary\",\n  \"acceptedAt\": 1791638847571,\n  \"sceneNum\": 2,\n  \"owner\": {\n    \"id\": \"cpa:d45fd980-9be6-49b5-b6ca-26f3be99b550\",\n    \"storyId\": \"e2790125-3ebc-4d50-ab24-2dcb0c95ab49\",\n    \"sceneIndex\": 2,\n    \"branch\": \"run\"\n  }\n}"
   }
  ]
 }

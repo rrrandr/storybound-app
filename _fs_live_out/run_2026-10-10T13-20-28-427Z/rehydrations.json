@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791638463411,
+    "before": {
+      "pendingRequestId": "1791638463347-2wgguf",
+      "awaitingResponse": true,
+      "ageMs": 60
+    },
+    "afterPendingRequestId": "1791638463347-2wgguf",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": true,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261010d-retry-chain:145390:26"
+    ]
+  }
+]

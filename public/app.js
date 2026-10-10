@@ -240056,6 +240056,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // THIS INVOCATION'S IDENTITY, READ BEFORE ANY AWAIT. Reading it afterwards compared one
     // mutable global against another; captured here it cannot drift to a later invocation.
     var _genAttemptId = null, _genStoryId = String(state.storyId || '');
+    // Captured in the same pre-await breath as the story and attempt ids, for the same reason.
+    var _genBranch = null;
+    try { _genBranch = (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null; } catch (_) { _genBranch = null; }
     try {
       if (state._cgGenAttempt && state._cgGenAttempt.id != null
           && String(state._cgGenAttempt.storyId || '') === _genStoryId) {
@@ -240401,9 +240404,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           } catch (_) { _citedFacts = []; }
           state._canonAuditBlocked = {
             at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
-            storyId: state.storyId || null,
-            attemptId: (state._cgGenAttempt && state._cgGenAttempt.id) || null,
-            branch: (state._cgGenAttempt && state._cgGenAttempt.branch) || null,
+            storyId: _genStoryId || null,
+            attemptId: _genAttemptId || null,
+            branch: _genBranch,
             citedFacts: _citedFacts,                 // ONLY what the verdict cited, with its text
             packetIds: _caPacket.ids,                // kept for diagnosis; NOT presented as violated
             verdict: _caVerdict
@@ -240414,10 +240417,11 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
                    // Handed to the DESIGNATED retry by the caller - not left in global state for
                    // whichever generation runs next.
                    rejectionFeedback: {
-                     storyId: state.storyId || null,
+                     // THE OWNING LOCALS, captured before the audit await - never state read back.
+                     storyId: _genStoryId || null,
                      sceneIndex: sceneIndex,
-                     rejectedAttemptId: (state._cgGenAttempt && state._cgGenAttempt.id) || null,
-                     branch: (state._cgGenAttempt && state._cgGenAttempt.branch) || null,
+                     rejectedAttemptId: _genAttemptId || null,
+                     branch: _genBranch,
                      refusedEvent: String((_caProposal && (_caProposal.state_change
                        || _caProposal.tactical_move)) || ''),
                      reason: String(_caVerdict.reason || ''),
