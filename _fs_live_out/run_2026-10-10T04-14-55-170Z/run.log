@@ -1,0 +1,150 @@
+=== FS SEQUENCE — ceiling $8.75 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $8.75.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $0.000000
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+  call  1  [fixture] grok-4-1-fast-reasoning      $0.000100  4ms
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  submit -> first NEW text on screen (NOT yet tied to an attributed reply): 9211ms
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=grok/grok-4-1-fast-reasoning textLen=268 attempts=["1:grok:ok"]
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=false age=67ms  1791605724601-k55sos -> 1791605724601-k55sos
+  the entrance submission IS exchange 1 — author call 1 — the author pair, unedited
+  call  2  [fixture] gpt-4o-mini                  no receipt  0ms
+  call  3  [fixture] ministral-8b-2512            no receipt  1ms
+  call  4  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call  5  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 1 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: matched-response — the COMPLETE action+dialogue pair is identical to the preview reply served for this card on call 2, requested under the SAME generation identity (turnCount=0 beat=1) — encounter=opening OAS turn=1 card="silence"
+      SAY "mm"
+      DO  "I go still and let the clearing finish its noise"
+  call  6  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  turn 1: replies 1 -> 2 (beats 1 -> 2)
+      model reply RECEIVED AND RENDERED for turn 2 — author call 6 — the author pair, unedited — exchange 2 of 6
+  turn 2 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=2 card="reversal" — a stale record is not provenance for this submission
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call  7  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  turn 2: replies 2 -> 3 (beats 2 -> 3)
+      model reply RECEIVED AND RENDERED for turn 3 — author call 7 — the author pair, unedited — exchange 3 of 6
+  turn 3 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=3 card="confession" — a stale record is not provenance for this submission
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  call  8  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call  9  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 3: replies 3 -> 4 (beats 3 -> 4)
+      model reply RECEIVED AND RENDERED for turn 4 — author call 8 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 4 of 6
+  turn 4 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=4 card="confession" — a stale record is not provenance for this submission
+      SAY "I held it when it twisted. I felt it choose."
+      DO  "I turn The Answer so the cut edge faces him"
+  call 10  [fixture] grok-4.20-0309-non-reasoning $0.000100  1ms
+  call 11  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 4: replies 4 -> 5 (beats 4 -> 5)
+      model reply RECEIVED AND RENDERED for turn 5 — author call 10 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 5 of 6
+  turn 5 plays OAS slot "null" from gnCardMount (trusted click ACCEPTED, preview populated)  grokCache=empty
+      provenance: UNKNOWN — the pair matches a preview reply REQUESTED under a DIFFERENT identity (encounter="opening OAS" turn=2 turnCount=0, call 2), not under encounter=opening OAS turn=5 card="reversal" — a stale record is not provenance for this submission
+      SAY "Ask me whose hands shaped it."
+      DO  "I set The Answer down between us and do not let go"
+  call 12  [fixture] grok-4.20-0309-non-reasoning $0.000100  2ms
+  call 13  [fixture] gpt-4o-mini                  no receipt  0ms
+  turn 5: replies 5 -> 6 (beats 5 -> 6)
+      model reply RECEIVED AND RENDERED for turn 6 — author call 12 — the author pair, unedited (cleanup ran and was rejected — original shipped) — exchange 6 of 6
+  --- SCRIPTED READER EXIT after 6 completed exchanges (rendered replies, opener excluded) ---
+      {"taken":true,"kind":"scripted reader text exit","afterReplies":6,"modalBox":{"w":1280,"h":720},"state":{"active":false,"archive":1,"interruptionPresent":false}}
+  interruption: {"present":true,"submitted":false,"pending":false}
+    submit attempt: submit disabled (trusted click) -> submitted=false
+  handoff (before the branch is serviced): {"resolved":true,"archive":1,"interruptionPresent":true,"interruptionDone":true,"decisionOnScreen":true,"decisionOpen":true,"branches":["sceneDecisionA","sceneDecisionB"]}
+  axis decision (before servicing): {"needed":true,"promptMounted":true,"recorded":null}
+  opening branch (SB_OPENING_BRANCH=run): "run in shame" (key=run)
+  recorded choice: {"choice":"run","label":"run in shame","source":"oas_exit"}  decisionNeeded=false
+  the choice matches an authored branch: prompt gone (keys unavailable)
+  call 14  [fixture] ministral-8b-2512            no receipt  1ms
+  call 15  [fixture] grok-4-1-fast-non-reasoning  no receipt  2ms
+  call 16  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  call 17  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 2 created by the opening branch: ACCEPTED · uid=cg:6c9c7591-3023-4 · 1711 chars · cgScenes=1 · notes=1
+  turns 5 · resolved=true · archive=1 · interruptionDone=true · run/remain on screen=false · branches=[]
+  after the choice: recorded="run" · prompt removed by production=true · handoff had passed=true
+  exposure $0.032782
+
+── LEAVING SCENE 2 -> CREATING SCENE 3 (live) ──
+  call 18  [fixture] (unspecified)                $0.000100  1ms
+  call 19  [fixture] ministral-8b-2512            $0.000100  0ms
+  scene 2 render state: {"cgScenes":1,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  walked 18 beat(s) to the end of scene 2
+      [probe] seeded a canon-audit refusal for the next planner call
+  call 20  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 2 plays card 4 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=1:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card="boundary"
+  call 21  [fixture] ministral-8b-2512            no receipt  1ms
+  call 22  [fixture] grok-4-1-fast-non-reasoning  no receipt  1ms
+  call 23  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  call 24  [fixture] ministral-8b-2512            no receipt  0ms
+  SCENE 3 ACCEPTED (card played in scene 2) · cg scenes 1 -> 2 · notes 2 · exposure $0.053988
+  paged to gate: {"gateShown":true,"beat":17,"beats":18,"clicks":0}
+
+── LEAVING SCENE 3 -> CREATING SCENE 4 (live) ──
+  scene 3 render state: {"cgScenes":2,"interruptionLive":true,"mounted":true,"hasProjection":true}
+  call 25  [fixture] (unspecified)                $0.000100  2ms
+  call 26  [fixture] ministral-8b-2512            $0.000100  1ms
+  walked 24 beat(s) to the end of scene 3
+      [probe] seeded a canon-audit refusal for the next planner call
+  call 27  [fixture] gpt-4o-mini                  no receipt  0ms
+  scene 3 plays card 3 "?" from gnCardMount [preview: UNKNOWN] (playable=5 locked=0 committed=false sel=-1 key=2:1) via gn
+      provenance: UNKNOWN — ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 3 end turn=3 card="temptation"
+  call 28  [fixture] ministral-8b-2512            no receipt  1ms
+  call 29  [fixture] grok-4-1-fast-non-reasoning  no receipt  0ms
+  call 30  [fixture] grok-4-1-fast-reasoning      $0.000100  1ms
+  call 31  [fixture] ministral-8b-2512            no receipt  1ms
+  SCENE 4 ACCEPTED (card played in scene 3) · cg scenes 2 -> 3 · notes 3 · exposure $0.075539
+  paged to gate: {"gateShown":true,"beat":20,"beats":21,"clicks":0}
+
+
+── ISSUE BOUNDARY ──
+  scene 10 accepted projection: true · 932 chars · uid=cg:f395c91b-24da-4
+  cg scenes: 3 · history notes: 3
+  production issue state: scene 3 of 10 (turnCount 3) · decisionNeeded=false · nextGateOpen=true
+  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): NOT GENERATED  (3 generated records, scene 4 projection accepted)
+  CLAIM B — production recognizes issue completion: NO  (_isLastSceneOfIssue()=false; position 3 of 10 — production requires exactly 10)
+  *** FAILED — the requested ten-scene corpus was not generated: 3 generated records (expected 9), scene 4 projection accepted ***
+
+── SCENE LEDGER (each scene against the step that created it) ──
+  (boundary check: scene 4 projection accepted, 932 chars, production position 3/10)
+  scene 2  accepted  <- opening branch "run"
+  scene 3  accepted  <- the ending card of scene 2  [preview: gn/UNKNOWN]
+  scene 4  accepted  <- the ending card of scene 3  [preview: gn/UNKNOWN]
+
+==============================================================================
+
+SPEND — from the runner's own per-call records (the only accounting fed by this run)
+
+PER-CALL ROLL-UP
+  model calls dispatched : 31
+  MEASURED (receipts)    : $0.001300
+  no receipt             : 18 call(s), estimated $0.074239 — NOT counted as measured
+  retained (no receipt)  : $0.074239 — kept as exposure, NOT forgiven
+  prior runs             : $0.000000
+  TOTAL EXPOSURE         : $0.075539
+  ceiling                : $8.75  [HALTED: the requested ten-scene corpus was not generated: 3 generated records (expected 9), scene 4 projection accepted]
+  CACHED TOKENS          : 0 of 2000 input (0.0%)
+
+BUDGET CARRIED FORWARD -> _fs_live_out/BUDGET.pc2.json
+  receipted to date  $0.001300
+  unresolved to date $0.074239
+  TOTAL vs ceiling   $0.075539 of $8.75
+
+output: _fs_live_out/run_2026-10-10T04-14-55-170Z

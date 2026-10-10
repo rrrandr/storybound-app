@@ -103015,6 +103015,47 @@ function _buildAuthorFloorDirective(s) {
               if (_wtr) _scSys += '\n\n' + _wtr;
             }
           } catch (_) {}
+          // ── THE PLANNER IS GIVEN THE CANON IT WILL BE JUDGED AGAINST (Roman 2026-10-09) ──
+          // A live run was blocked TWICE on [neg_0] (Fate leaves no new visible magical trace,
+          // WITH an explicit exception for the Answer's established physical forms). The AUDIT
+          // requests carried that rule; the PLANNER requests carried neither it nor the exception,
+          // so the planner proposed a visible manifestation it could not know was forbidden, and
+          // its retry proposed the same event again. Same authoritative source as the auditor
+          // (_buildCanonPacket), same rendering - so the exceptions travel with the prohibitions.
+          // Nothing here paraphrases canon, weakens it, or forbids visible events.
+          try {
+            if (typeof _buildCanonPacket === 'function') {
+              var _plPacket = _buildCanonPacket(s, {});
+              if (_plPacket && Array.isArray(_plPacket.facts) && _plPacket.facts.length) {
+                _scUsr += '\n\nCANON YOU WILL BE JUDGED AGAINST (the same packet the auditor receives; an event that contradicts any of these is REFUSED BEFORE IT IS WRITTEN, so do not propose one \u2014 and read the EXCEPTIONS as carefully as the prohibitions):\n'
+                  + _plPacket.facts.map(function (f) { return '  [' + f.id + '] ' + f.text; }).join('\n')
+                  + (_plPacket.truncated ? ('\n  (' + _plPacket.omittedTotal + ' further entries were relevance-selected out; absence here does NOT mean a capability is unauthorised.)') : '');
+              }
+            }
+          } catch (_) {}
+          // ── AND THE BOUNDED RETRY IS INFORMED ──────────────────────────────────────────
+          // state._canonAuditBlocked already held the rejected proposal, the packet ids and the
+          // verdict; the retry never read it. The rejected event was presented as PENDING INTENT
+          // and 'Prior proposed transition' with no rejection and no cited constraint, so it came
+          // back verbatim. A REFUSED proposal is not an unfinished valid intention. The existing
+          // retry limit is untouched: no loop, no extra call.
+          try {
+            var _blk = state._canonAuditBlocked;
+            if (_blk && _blk.proposal && _blk.verdict && _blk.verdict.reason
+                && !_blk.carried
+                && (!_blk.storyId || _blk.storyId === (s.storyId || null))) {
+              try { _blk.carried = true; } catch (_) {}
+              var _blkEvent = String(_blk.proposal.state_change || _blk.proposal.tactical_move || '');
+              _scUsr += '\n\nYOUR PREVIOUS PROPOSAL FOR THIS SCENE WAS REFUSED \u2014 this is a REJECTION, not an unfinished intention. Do NOT restate it.\n'
+                + '  REFUSED EVENT: ' + _blkEvent + '\n'
+                + '  WHY: ' + String(_blk.verdict.reason) + '\n'
+                + (Array.isArray(_blk.packetIds) && _blk.packetIds.length
+                    ? ('  CANON IT CONTRADICTED: ' + _blk.packetIds.join(', ') + '\n') : '')
+                + '  Propose a DIFFERENT event that advances the same objective without contradicting that canon. Reproposing the refused event, or a restatement of it, is refused again and the scene is not written.';
+              try { console.log('[PLANNER-PROMPT] carrying the canon-audit refusal into this retry: '
+                + JSON.stringify(_blkEvent).slice(0, 90)); } catch (_) {}
+            }
+          } catch (_) {}
           var _scMessages = [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }];
           var _scMinistralAdmission = (typeof _ministral8bGovernorAdmits === 'function') ? _ministral8bGovernorAdmits(_scMessages, _scMaxTok) : { admits: true };
           var _scTiers = [];
@@ -240295,6 +240336,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           // PRESERVE the proposal and the audit result for review before stopping.
           state._canonAuditBlocked = {
             at: Date.now(), sceneIndex: sceneIndex, proposal: _caProposal,
+            storyId: state.storyId || null, carried: false,
             packetIds: _caPacket.ids, verdict: _caVerdict
           };
           try { console.warn('[CANON-AUDIT] BLOCKED before author dispatch (' + _caVerdict.source + '): ' + _caVerdict.reason); } catch (_) {}

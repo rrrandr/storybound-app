@@ -2896,6 +2896,18 @@ try {
       await page.evaluate(() => { try { delete window.state.scenes; } catch (_) {} });
       say('      [probe] state.scenes REMOVED - the opening guard must see UNKNOWN history');
     }
+    if (process.env.SB_SEED_CANON_BLOCK) {
+      await page.evaluate(() => {
+        try {
+          window.state._canonAuditBlocked = {
+            at: Date.now(), sceneIndex: (window.state.turnCount || 0),
+            proposal: { state_change: 'The Answer draws the memory of the one Lirael lost into visible form between her hands.' },
+            packetIds: ['neg_0'],
+            verdict: { source: 'audit', reason: 'new_metaphysics [neg_0]: Fate interventions leave no new visible magical trace.' } };
+        } catch (_) {}
+      });
+      say('      [probe] seeded a canon-audit refusal for the next planner call');
+    }
     const sDeck = await waitForSceneDeck();
     if (!sDeck || !sDeck.count) {
       halted = true;

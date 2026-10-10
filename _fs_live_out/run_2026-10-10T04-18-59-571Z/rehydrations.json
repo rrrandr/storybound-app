@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791605974298,
+    "before": {
+      "pendingRequestId": "1791605974225-ulejgl",
+      "awaitingResponse": false,
+      "ageMs": 69
+    },
+    "afterPendingRequestId": "1791605974225-ulejgl",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261009r-opening-index:145386:26"
+    ]
+  }
+]
