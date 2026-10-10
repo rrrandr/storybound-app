@@ -1,0 +1,112 @@
+{
+  "label": "final",
+  "scenes": 1,
+  "texts": [
+    {
+      "uid": "cg:ce114797-81eb-441c-b2d3-47d0d9afc0e8",
+      "text": "The presiding Dohkar's voice cuts across the clearing like a blade through silk.\n\nHer flight confirms the interference. The rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars.\n\nThe assembly stirs, a low murmur of confirmation rising like mist from the spiralgrass.\n\nJulian's scarred wrist flexes once at his side, the only sign he has heard the shift in authority.\n\nThe words settle over me like a second band across my mouth.\n\nSeren remains kneeling, her small hands folded, her face the only calm thing left in the clearing.\n\nI feel the weight of every eye turning from the girl to me.\n\nJulian has not moved, yet the space between us feels narrower than before.\n\nThe Dohkar waits, the silence now his instrument.\n\nI could speak now. I could name the wish as mine and end the assumption before it hardens into record.\n\nOr I could let the silence do its work and keep what little standing remains to me.\n\nThe deck is still in my left hand, heavier than it should be.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+    }
+  ],
+  "notes": [
+    {
+      "ref": "cg:ce114797-81eb-441c-b2d3-47d0d9afc0e8",
+      "quoted": [
+        "Her flight confirms the interference."
+      ],
+      "summary": [
+        "Lirael chose to remain instead of fleeing, forcing the declaration into the open.",
+        "The accusation is now public and irreversible; formal review is the next step.",
+        "Julian's position as Provast shifts under the Dohkar's authority claim."
+      ],
+      "obligations": [
+        "claim_or_silence"
+      ]
+    }
+  ],
+  "oas": [
+    {
+      "pcSay": "I shaped nothing. Ask me properly.",
+      "pcDo": "",
+      "pcSayRaw": "I shaped nothing. Ask me properly.",
+      "pcDoRaw": "",
+      "liDialogue": "Your eyes sought mine through the rite as if the old gods themselves had promised the Provast would shield you from consequence.",
+      "liAction": "Julian steps closer, the weight of his presence pulling the assembly's attention with him.",
+      "faceState": "lip_bite",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    },
+    {
+      "pcSay": "I will not dance to your questions before their eyes.",
+      "pcDo": "I step back, drawing my hand from his grasp.",
+      "pcSayRaw": "I won’t play your game in front of them.",
+      "pcDoRaw": "Step back, pulling my hand away from his.",
+      "liDialogue": "You sought me with your eyes through the rite, Lirael, as if my favor alone could shield you from their judgment. Did you call to me hoping the Provast would rescue you from the Dohkar's charge?",
+      "liAction": "Julian steps forward, the weight of his presence pulling the assembly's attention with him.",
+      "faceState": "what",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    },
+    {
+      "pcSay": "Let us see what happens if I do not answer.",
+      "pcDo": "The Answer slips from my fingers and strikes the stone.",
+      "pcSayRaw": "Let’s see what happens if I don’t answer.",
+      "pcDoRaw": "Let the blade slip from my fingers onto the ground.",
+      "liDialogue": "The blade spares no mercy for a hand that relinquishes it.",
+      "liAction": "His focus tracks the descent that lies between us.",
+      "faceState": "lip_bite",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    },
+    {
+      "pcSay": "I feel trapped between what I want and what you demand.",
+      "pcDo": "I hold his gaze, my fingers trembling around the blade.",
+      "pcSayRaw": "I feel trapped between what I want and what you demand.",
+      "pcDoRaw": "Hold his gaze, fingers trembling around the blade.",
+      "liDialogue": "The steel senses when a hand is conflicted. Does it quiver for the Dohkar's decree or for the desire you conceal from me?",
+      "liAction": "His hand lingers near the blade, suspended in the heavy hush that envelops the room.",
+      "faceState": "thinking_intrigued",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-hmmm-3.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    },
+    {
+      "pcSay": "I stand still, my breath unsteady, my eyes fixed on the blade in my grasp.",
+      "pcDo": "",
+      "pcSayRaw": "",
+      "pcDoRaw": "Stand still, breath shaky, staring at the question in my hand.",
+      "liDialogue": "Our gazes locked amidst the ritual, as if my mere existence could sway their verdict. Was that the summons you desired to draw me near?",
+      "liAction": "Julian inches closer, the intensity of his focus compressing the distance between us.",
+      "faceState": "what",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-what.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "enemies"
+    },
+    {
+      "pcSay": "I will decide how this unfolds. Your questions, my answers.",
+      "pcDo": "I take a step forward, reclaiming the blade.",
+      "pcSayRaw": "I’ll decide how this unfolds — your questions, my answers.",
+      "pcDoRaw": "Take a step forward, reclaiming the blade.",
+      "liDialogue": "The Answer responds solely to the vow that ties it. Seize it if you’re bold enough, before the gathering perceives the desire you conceal.",
+      "liAction": "His battle-worn grip rests on the hilt as I advance, the stillness of the crowd pressing in on us.",
+      "faceState": "ohno",
+      "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+      "fateCardTag": null,
+      "fateChangeApplied": null,
+      "tempAtBeat": "curious",
+      "sceneTone": "power"
+    }
+  ]
+}
