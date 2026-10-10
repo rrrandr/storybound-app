@@ -1,0 +1,10 @@
+{
+  "calls": 69,
+  "receipted": 1.1011401000000003,
+  "retainedUnresolved": 0.05950367999999999,
+  "priorExposure": 7.581307939999999,
+  "totalExposure": 8.74285298,
+  "ceiling": 9.25,
+  "halted": true,
+  "haltReason": "the ten-scene corpus is complete but PRODUCTION DOES NOT RECOGNIZE ISSUE COMPLETION: _isLastSceneOfIssue()=false at position 9 of 10. This is the counter defect, NOT grounds to generate an eleventh scene."
+}
