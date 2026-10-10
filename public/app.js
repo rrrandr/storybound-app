@@ -239904,7 +239904,8 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       } else { delete state._cgRowCollectives; delete state._cgRowPresentGroups; }
     } catch (_) {}
     try {
-      var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue, rejectionFeedback);
+      var _cgPlan = await _runCGScreenplayGenInner(sceneIndex, playerAction, playerDialogue,
+        _ownedRejectionFeedback);
       // The replay reached prose. Every later continuation is now refused until the player
       // resolves the renewed choice.
       try {
@@ -240152,7 +240153,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         var _tfoCtxForPlanner = { invoked: _tfoWasInvokedAtStart, wishText: (_tfoWasInvokedAtStart && _tfoProposalEntry) ? (_tfoProposalEntry.wishText || '') : '' };
         var _provOut = {};
         await _generateLiteraryPlotContract(playerAction, playerDialogue, _tfoCtxForPlanner, _provOut,
-          _ownedRejectionFeedback);
+          rejectionFeedback);   // this function's OWN parameter - already validated by the caller
         // ── THIS INVOCATION'S OWN SNAPSHOT ────────────────────────────────────────────────────
         // Captured into a LOCAL and validated against THIS generation's attempt. A shared slot
         // copied "at acceptance" was NOT ownership: an active attempt B could hand off and consume
@@ -240173,7 +240174,16 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           }
         } catch (_) { _subProvOwned = null; }
       }
-    } catch (_pcCgErr) {}
+    } catch (_pcCgErr) {
+      // NEVER SILENT AGAIN. A swallowed error here means no planner ran and the scene cannot be
+      // written; the run must say so rather than stop with no reason recorded.
+      try {
+        console.error('[CG:PLANNER-CALL] FAILED before/within the planner — '
+          + ((_pcCgErr && _pcCgErr.message) || String(_pcCgErr))
+          + ' — no scene plan was produced for scene ' + sceneIndex);
+        if (_pcCgErr && _pcCgErr.stack) console.error(String(_pcCgErr.stack).split('\n').slice(0, 4).join('\n'));
+      } catch (_) {}
+    }
     // OPEN ROW GATE (2026-09-11): with no ACCEPTED local objective there is nothing to stage, assign or write. The caller
     // treats this exactly like a stale result — one bounded retry (a fresh planner reply), then STOP resumable. Never prose.
     try {
