@@ -1,0 +1,21 @@
+[
+  {
+    "at": 1791612087073,
+    "ms": 33,
+    "threw": null,
+    "provider": "grok",
+    "model": "grok-4-1-fast-reasoning",
+    "textLen": 268,
+    "textHead": "{\n  \"li_dialogue\": \"You angled your glances my way, hoping I would intervene.\",\n  \"li_acti",
+    "attempts": [
+      {
+        "tier": 1,
+        "provider": "grok",
+        "model": "grok-4-1-fast-reasoning",
+        "ok": true,
+        "status": 200,
+        "ms": 33
+      }
+    ]
+  }
+]

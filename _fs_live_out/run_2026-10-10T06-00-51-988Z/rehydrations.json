@@ -1,0 +1,17 @@
+[
+  {
+    "at": 1791612087126,
+    "before": {
+      "pendingRequestId": "1791612087056-0dxj0n",
+      "awaitingResponse": false,
+      "ageMs": 65
+    },
+    "afterPendingRequestId": "1791612087056-0dxj0n",
+    "replacedALiveRequest": false,
+    "preservedALiveRequest": false,
+    "stack": [
+      "at wrapped (<anonymous>:55:29)",
+      "at http://localhost:3000/app.js?v=20261010b-retry-ownership:145390:26"
+    ]
+  }
+]

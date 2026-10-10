@@ -1,0 +1,174 @@
+{
+  "turnsTaken": 5,
+  "resolved": true,
+  "oasFinal": {
+    "dialogue": false,
+    "archive": 1,
+    "interruptionPresent": true,
+    "interruptionSubmitted": false,
+    "interruptionDone": true,
+    "decisionOnScreen": false,
+    "decisionBranches": []
+  },
+  "interruption": {
+    "present": true,
+    "submitted": false,
+    "pending": false
+  },
+  "decision": {
+    "needed": false,
+    "promptMounted": false,
+    "a": null,
+    "b": null,
+    "recorded": {
+      "axis": "run in shame vs remain and see where Julian was taking it",
+      "choice": "run",
+      "label": "run in shame",
+      "source": "oas_exit",
+      "at": 1791611749711,
+      "storyId": "01337ff8-f45d-416e-b792-609ec6c08eee"
+    }
+  },
+  "scriptedExit": {
+    "taken": true,
+    "kind": "scripted reader text exit",
+    "afterReplies": 6,
+    "modalBox": {
+      "w": 1280,
+      "h": 720
+    },
+    "state": {
+      "active": false,
+      "archive": 1,
+      "interruptionPresent": false
+    }
+  },
+  "exitAfterExchanges": 6,
+  "laneContradiction": {
+    "wasContradiction": "the prompt permitted null while the gate rejected it unless a Tempt rupture was active",
+    "fixed": "the gate now receives the same seed-declared displacement decision the prompt uses (_recordedChoiceDisplacesFrame)",
+    "nowAnswering": "null, honestly — the frame was displaced by the recorded choice"
+  },
+  "entryRoute": "entrance submit (trusted click)",
+  "entryCountedAsExchange": true,
+  "submitToFirstReadableProseMs": 9206,
+  "modelBackedReplies": 6,
+  "fallbackCount": 0,
+  "infraFailure": null,
+  "exitKind": "SCRIPTED READER EXIT — not model resolution, not story timing",
+  "snap": {
+    "label": "after_oas",
+    "scenes": 1,
+    "texts": [
+      {
+        "uid": "cg:e908c599-ba5e-4af5-8091-eb0176319428",
+        "text": "The clearing has not emptied. The assembly lingers in uneven rings, their Weave-Script flickering with the weight of what they just witnessed.\n\nSeren remains kneeling at the center, composed, her aqua skin catching the last light. The presiding Dohkar steps forward.\n\nTHE PRESIDING DOHKAR: \"This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on.\"\n\nHis voice carries without effort. The assembly straightens around him.\n\nTHE PRESIDING DOHKAR: \"In a preliminary review, before this assembly.\"\n\nThe words land like a seal pressed into wax. My standing, the path my father walked, shifts visibly in the eyes of every witness.\n\nJulian has not moved from the edge, yet the assembly has already made room for him.\n\nHis stillness is the only thing that can make the Dohkar's gaze sharpen.\n\nTHE PRESIDING DOHKAR: \"The review will be recorded. The Sacrificiant will answer for her conduct.\"\n\nThe assembly's attention tightens around me. Seren's mother is still on her feet.\n\nJulian's gaze finds mine across the clearing. He does not speak, but the room has already adjusted to his presence.\n\nThe Dohkar's Weave-Script flares hard and flat.\n\nTHE PRESIDING DOHKAR: \"This will be settled before witnesses. The record will stand.\"\n\nMy standing fractures in the open air. The path I never imagined not walking narrows to a single recorded line.\n\nJulian's presence changes what the room believes is possible. The Dohkar notices.\n\nThe deck is still in my hand. The gold edges catch the failing light.\n\nOne of the heavy gold cards slips out.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:e908c599-ba5e-4af5-8091-eb0176319428",
+        "quoted": [
+          "a preliminary review, before this assembly"
+        ],
+        "summary": [
+          "The presiding Dohkar declares the preliminary review before the assembly.",
+          "Julian remains present, his stillness visibly altering the room's deference.",
+          "The player chose to run in shame; the review call lands anyway.",
+          "Lirael's standing visibly shifts before witnesses.",
+          "Julian's presence changes what the room believes is possible.",
+          "The Answer remains in Lirael's hand."
+        ],
+        "obligations": [
+          "review"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "You angled your glances my way, hoping I would intervene.",
+        "liAction": "",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "tender"
+      },
+      {
+        "pcSay": "A small, shaky breath escaped me.",
+        "pcDo": "I breathed deeply, the air thick with tension from the rite.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I tightened my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "I held it when it twisted. I felt it choose.",
+        "pcDoRaw": "I turn The Answer so the cut edge faces him",
+        "liDialogue": "Your eyes sought me through the rite like roots seeking water. Did you call to the Provast hoping I would rescue you from the wish you shaped?",
+        "liAction": "Julian's gaze held mine, the double-ended shaft steady between my hands.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "Ask me again, slower.",
+        "pcDoRaw": "I step close enough that the stone warms between us",
+        "liDialogue": "Your eyes found mine through the ceremony. Did you shape the wish hoping the Provast would intervene?",
+        "liAction": "Julian's hand remained on the shaft as he waited.",
+        "faceState": "parted",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "You watched the rite with eyes that lingered on the Provast, not the circle. Did you shape the wish hoping I would come to your aid?",
+        "liAction": "Julian's hand stayed on the shaft, his gaze fixed on me.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I will speak the truth, and you will hear it.",
+        "pcDo": "I asserted my grip on The Answer, holding it steady between my hands.",
+        "pcSayRaw": "mm",
+        "pcDoRaw": "I go still and let the clearing finish its noise",
+        "liDialogue": "Your gaze stayed on the Provast through the ceremony. Did you shape the wish hoping the Provast would come to your aid?",
+        "liAction": "Julian's hand remained on the shaft as his gaze held mine.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      }
+    ]
+  }
+}

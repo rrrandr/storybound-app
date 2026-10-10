@@ -101918,7 +101918,7 @@ function _buildAuthorFloorDirective(s) {
   // path, so contract-gen is a small dedicated gpt-4o-mini call (fires ONLY when the flag is on)
   // run before prompt-build for literary Scene 2+. Produces 1–3 concrete causal hard beats →
   // state._scenePlotContract, which _buildPlotContractDirective then injects at the two roots.
-  async function _generateLiteraryPlotContract(act, dia, temptCtx, provOut) {
+  async function _generateLiteraryPlotContract(act, dia, temptCtx, provOut, rejectionFeedback) {
     // CAPTURED ONCE, BEFORE ANY AWAIT, and held LOCALLY for the rest of this call. The payload
     // used to re-read state via _submissionProvenanceFor(s, null) — which disabled scene matching
     // and read a shared mutable slot after asynchronous work had run.
@@ -103042,7 +103042,8 @@ function _buildAuthorFloorDirective(s) {
           try {
             // ATTEMPT-BOUND, not "whichever block exists". If the final retry is itself
             // rejected, its feedback dies with that attempt instead of reaching a later submission.
-            var _blk = (state._cgGenAttempt && state._cgGenAttempt.rejectionFeedback) || null;
+            // The LOCAL argument - never re-read from state after an await.
+            var _blk = rejectionFeedback || null;
             if (_blk && _blk.reason) {
               var _blkEvent = String(_blk.refusedEvent || '');
               _scUsr += '\n\nYOUR PREVIOUS PROPOSAL FOR THIS SCENE WAS REFUSED \u2014 this is a REJECTION, not an unfinished intention. Do NOT restate it.\n'
@@ -239829,21 +239830,33 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         sceneIndex: (typeof sceneIndex === 'number') ? sceneIndex : null,
         branch: (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null,
         at: Date.now(),
-        // The rejection this generation is the designated retry FOR, accepted only when it belongs
-        // to this story, this scene and this branch. The rejected attempt id is recorded as a LINK,
-        // not required to match - a retry is a new attempt by definition.
-        rejectionFeedback: (function () {
-          try {
-            var f = rejectionFeedback;
-            if (!f || !f.reason) return null;
-            if (f.storyId && String(f.storyId) !== String(state.storyId || '')) return null;
-            if (f.sceneIndex != null && f.sceneIndex !== sceneIndex) return null;
-            var _bk = (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null;
-            if (f.branch && _bk && String(f.branch) !== String(_bk)) return null;
-            return f;
-          } catch (_) { return null; }
-        })()
       };
+
+      // ── THE REJECTION THIS GENERATION IS THE DESIGNATED RETRY FOR (invocation-local) ───────
+      // Validated ONCE here against the identity captured for THIS generation, then passed by
+      // argument. Absent identity is a REFUSAL, not a wildcard: a feedback that cannot say which
+      // story, scene and attempt it came from is not trusted. Branch is compared including
+      // absence on either side.
+      var _ownedRejectionFeedback = (function () {
+        try {
+          var f = rejectionFeedback;
+          if (!f || !f.reason) return null;
+          var _myStory = String(state.storyId || '');
+          var _myBranch = (typeof _cgBranchKey === 'function') ? _cgBranchKey() : null;
+          if (!f.storyId || String(f.storyId) !== _myStory) return null;
+          if (f.sceneIndex == null || f.sceneIndex !== sceneIndex) return null;
+          if (!f.rejectedAttemptId) return null;              // must name the attempt it came from
+          var _fb = (f.branch == null) ? null : String(f.branch);
+          var _mb = (_myBranch == null) ? null : String(_myBranch);
+          if (_fb !== _mb) return null;                        // consistent, absence included
+          return f;
+        } catch (_) { return null; }
+      })();
+      try {
+        if (rejectionFeedback && !_ownedRejectionFeedback) {
+          console.warn('[CG:RETRY-FEEDBACK] refused - identity did not match this generation');
+        }
+      } catch (_) {}
     } catch (_) {}
     // THIS TURN'S SAY/DO, where the prompt builders can reach it. _buildCGScreenplaySystemPrompt
     // takes no arguments, so the weak-turn contract has no other way to see what the player
@@ -240138,7 +240151,8 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // mid-flight could otherwise poison (Roman/Codex review, 2026-09-24).
         var _tfoCtxForPlanner = { invoked: _tfoWasInvokedAtStart, wishText: (_tfoWasInvokedAtStart && _tfoProposalEntry) ? (_tfoProposalEntry.wishText || '') : '' };
         var _provOut = {};
-        await _generateLiteraryPlotContract(playerAction, playerDialogue, _tfoCtxForPlanner, _provOut);
+        await _generateLiteraryPlotContract(playerAction, playerDialogue, _tfoCtxForPlanner, _provOut,
+          _ownedRejectionFeedback);
         // ── THIS INVOCATION'S OWN SNAPSHOT ────────────────────────────────────────────────────
         // Captured into a LOCAL and validated against THIS generation's attempt. A shared slot
         // copied "at acceptance" was NOT ownership: an active attempt B could hand off and consume
@@ -240355,8 +240369,15 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
           // PRESERVE the proposal and the audit result for review before stopping.
           var _citedFacts = [];
           try {
-            var _citedIds = (_caVerdict && Array.isArray(_caVerdict.citedFactIds))
-              ? _caVerdict.citedFactIds : [];
+            var _citedIds = [];
+            try {
+              var _vios = (_caVerdict && Array.isArray(_caVerdict.violations)) ? _caVerdict.violations : [];
+              _vios.forEach(function (v) {
+                (Array.isArray(v && v.citedFactIds) ? v.citedFactIds : []).forEach(function (fid) {
+                  if (fid != null && _citedIds.indexOf(fid) === -1) _citedIds.push(fid);
+                });
+              });
+            } catch (_) { _citedIds = []; }
             var _packetFacts = (_caPacket && Array.isArray(_caPacket.facts)) ? _caPacket.facts : [];
             _citedFacts = _citedIds.map(function (fid) {
               var hit = null;
