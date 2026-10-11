@@ -89,6 +89,26 @@ await page.route('**/api/**', async (route) => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._buildHistoryContinuityBlock === 'function'
   && typeof window._resolveIssueOutline === 'function', { timeout: 30000 });
+await page.evaluate(() => {
+  // A CONTROL HELPER that does what production does: the CURRENT page is recorded in the scene
+  // ledger as the one that rendered scene n, and the identity is then built for that scene.
+  window.__ctlResetLedger = function (s) { try { delete (s || window.state)._sceneLedger; } catch (_) {} };
+  // MOUNT the prose as its own page, record its ownership, and build the identity for scene n.
+  // Every _commitScene caller needs real ownership now: the gate refuses durable writes without
+  // it, which is the point of the gate.
+  window.__ctlMount = function (s, n, text) {
+    StoryPagination.addPage('<p>' + String(text) + '</p>', true);
+    var uid = StoryPagination.getCurrentPageUid();
+    window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: n, pageUid: uid, event: 'ctl scene ' + n });
+    return window.__buildCommitSceneIdentity(s, text, null, 'pagination', n);
+  };
+  window.__ctlOwn = function (s, n, text) {
+    var uid = StoryPagination.getCurrentPageUid();
+    window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: n, pageUid: uid, event: 'ctl scene ' + n });
+    return window.__buildCommitSceneIdentity(s, text, null, 'pagination', n);
+  };
+  window.__ctlPageText = function () {
+  return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); }; });
 
 // ═══ 3. THE FORMATTER LABELS BY SCENE IDENTITY, NOT LIST POSITION ════════════════════════════
 section('3. SCENE IDENTITY (the reviewer\'s reproduction: a scene-2 note labelled "scene 1")');
@@ -732,7 +752,7 @@ const committed = await page.evaluate(async () => {
     + 'convene, and he would convene it. "A formal inquiry," he said. "I will preside." Nobody contradicted him, '
     + 'and the assembly heard every word of it where they stood on the spiralgrass.';
   // THE REAL FUNCTION. prevSceneNum is the turn counter production passes (pendingIntent.sceneProposed).
-  await window._commitScene(PROSE, stateChange, 1);
+  await window._commitScene(PROSE, stateChange, 1, window.__ctlMount(window.state, (stateChange && stateChange.storyScene) || 1, PROSE));
   const cs = s._committedState;
   return JSON.parse(JSON.stringify({
     facts: cs.facts, log: cs.deliveryLog, through: cs._committedThroughScene,
@@ -866,7 +886,8 @@ const watchReq = await page.evaluate(async () => {
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._priorSceneStateChange = sc;
   s._committedState.pendingIntent = { milestone: 'row 3', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene('The Dohkar served her notice where the whole clearing could hear it, and then Julian said the thing nobody had asked him to say.', sc, 1);
+  await (async () => { const _p = 'The Dohkar served her notice where the whole clearing could hear it, and then Julian said the thing nobody had asked him to say.';
+    return window._commitScene(_p, sc, 1, window.__ctlMount(window.state, sc.storyScene || 1, _p)); })();
   return true;
 });
 t('the verifier request carries the WATCHED MILESTONES from later plan rows',
@@ -1078,7 +1099,8 @@ const evict = await page.evaluate(async () => {
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene('A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.', sc, 1);
+  await (async () => { const _p = 'A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.';
+    return window._commitScene(_p, sc, 1, window.__ctlMount(window.state, sc.storyScene || 1, _p)); })();
   const m = s._milestoneDeliveries, q = s._prereqInvalidations;
   return JSON.parse(JSON.stringify({
     mTotal: m.length, mAccepted: m.filter(r => r.accepted).length,
@@ -1112,7 +1134,8 @@ const unrequested = await page.evaluate(async () => {
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene('A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.', sc, 1);
+  await (async () => { const _p = 'A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.';
+    return window._commitScene(_p, sc, 1, window.__ctlMount(window.state, sc.storyScene || 1, _p)); })();
   return JSON.parse(JSON.stringify({ m: s._milestoneDeliveries, q: s._prereqInvalidations }));
 });
 fs.writeFileSync('_audit_out/history_chain/unrequested_ids.json', JSON.stringify(unrequested, null, 1));
@@ -1257,7 +1280,8 @@ const compact = await page.evaluate(async () => {
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 1);
+  await (async () => { const _p = 'A passage of prose long enough to be judged at all, with more than forty characters in it.';
+    return window._commitScene(_p, sc, 1, window.__ctlMount(window.state, sc.storyScene || 1, _p)); })();
   const m = s._milestoneDeliveries;
   const kept16 = m.filter(r => r.milestoneScene === 16 && r.accepted);
   return JSON.parse(JSON.stringify({ total: m.length, accepted: m.filter(r => r.accepted).length,
@@ -1284,7 +1308,8 @@ const unrep17 = await page.evaluate(async () => {
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 1);
+  await (async () => { const _p = 'A passage of prose long enough to be judged at all, with more than forty characters in it.';
+    return window._commitScene(_p, sc, 1, window.__ctlMount(window.state, sc.storyScene || 1, _p)); })();
   return JSON.parse(JSON.stringify({ m: s._milestoneDeliveries, p: s._prereqInvalidations,
     summary: window._issueOutlineSummary().assessments }));
 });
@@ -1309,17 +1334,6 @@ t('and the unrep17 records are surfaced as uncertainty in the summary',
   && unrep17.summary.milestoneDeliveries.some(x => x.status === 'unreported'),
   JSON.stringify(unrep17.summary.milestoneDeliveries && unrep17.summary.milestoneDeliveries.slice(0, 3)));
 
-await page.evaluate(() => {
-  // A CONTROL HELPER that does what production does: the CURRENT page is recorded in the scene
-  // ledger as the one that rendered scene n, and the identity is then built for that scene.
-  window.__ctlResetLedger = function (s) { try { delete (s || window.state)._sceneLedger; } catch (_) {} };
-  window.__ctlOwn = function (s, n, text) {
-    var uid = StoryPagination.getCurrentPageUid();
-    window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: n, pageUid: uid, event: 'ctl scene ' + n });
-    return window.__buildCommitSceneIdentity(s, text, null, 'pagination', n);
-  };
-  window.__ctlPageText = function () {
-  return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); }; });
 section('17c. THE REAL LITERARY CALLER: one named source, read the same way twice');
 // The identity is built by the SHIPPED builder the caller now uses (_buildCommitSceneIdentity),
 // with BOTH pagination and an older stored projection present — the exact configuration that made
@@ -1413,15 +1427,19 @@ const litDuring = await page.evaluate(async () => {
   };
   await window._commitScene(PAGE, sc, 1, ident);
   return JSON.parse(JSON.stringify({ rec: (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null,
+    refusal: (s._milestoneDeliveries || []).filter(r => r.status === 'unassessed')[0] || null,
+    lastRefusal: s._lastCommitRefusal || null,
     pageNow: String((window._commitUnitText(s, ident) || {}).text || '').slice(-60) }));
 });
 editDuringRequest = false;
 t('the identified page really was edited during the request, in place, via setPages',
   /without anybody saying anything further/.test(litDuring.pageNow), litDuring.pageNow);
-t('and the reply is REJECTED, naming the unit and the hash transition',
-  !!litDuring.rec && litDuring.rec.accepted === false
-  && /the page [^ ]+ changed — narrative prose was (ADDED to|REMOVED from) it \(\d+ -> \d+ characters\) \(narrative hash h[^ ]+ -> h[^ )]+\) while the assessment was in flight/.test(String(litDuring.rec.why)),
-  JSON.stringify(litDuring.rec && { acc: litDuring.rec.accepted, why: litDuring.rec.why }));
+t('the whole reply is REFUSED BEFORE ANY DURABLE WRITE, naming the unit and the hash transition',
+  !litDuring.rec && !!litDuring.refusal && litDuring.refusal.accepted === false
+  && litDuring.refusal.status === 'unassessed'
+  && /refused before any durable write — the page [^ ]+ changed — narrative prose was (ADDED to|REMOVED from) it \(\d+ -> \d+ characters\) \(narrative hash h[^ ]+ -> h[^ )]+\) while the assessment was in flight/
+       .test(String(litDuring.refusal.why)),
+  JSON.stringify({ rec: litDuring.rec, refusal: litDuring.refusal }));
 
 const litAfter = await page.evaluate(async () => {
   const s = window.state;
@@ -1500,7 +1518,7 @@ const supports = await page.evaluate(() => {
 });
 const supportsAfter = await page.evaluate(async (arg) => {
   const s = window.state;
-  await window._commitScene(arg.prose, arg.sc, 4, null);
+  await window._commitScene(arg.prose, arg.sc, 4, window.__ctlMount(window.state, arg.sc.storyScene || 4, arg.prose));
   const afterCompaction = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16 && r.accepted);
   // NOW REWRITE ONLY SCENE B, through the shipped hook.
   window._sbInvalidateDependentsOfScene('u:B', 'h:B', 1);
@@ -1540,7 +1558,8 @@ t('a SUPERSEDED newer record never displaces a valid older support for the same 
       scene: 1, storyScene: 8, milestoneScene: 8 });
     const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 8, milestoneScene: 8 };
     s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 6, storyScene: 8 };
-    await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 6, null);
+    await (async () => { const _p = 'A passage of prose long enough to be judged at all, with more than forty characters in it.';
+    return window._commitScene(_p, sc, 6, window.__ctlMount(window.state, sc.storyScene || 6, _p)); })();
     const kept = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 17 && r.accepted);
     return kept.length === 1 && kept[0].evidence === 'valid older' && kept[0].superseded === false;
   }), 'a superseded record displaced valid support');
@@ -1694,7 +1713,8 @@ const missing = await page.evaluate(async () => {
     scene: 1, storyScene: 11, milestoneScene: 11 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 11, milestoneScene: 11 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 10, storyScene: 11 };
-  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters.', sc, 10, null);
+  await (async () => { const _p = 'A passage of prose long enough to be judged at all, with more than forty characters.';
+    return window._commitScene(_p, sc, 10, window.__ctlMount(window.state, sc.storyScene || 10, _p)); })();
   return JSON.parse(JSON.stringify({ rec: s._milestoneDeliveries.filter(r => r.milestoneScene === 18)[0] }));
 });
 t('a unit whose text is no longer available is UNVERIFIABLE, left in force — not superseded',
@@ -1864,7 +1884,8 @@ const dedupe = await page.evaluate(async () => {
     scene: 1, storyScene: 12, milestoneScene: 12 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 12, milestoneScene: 12 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 11, storyScene: 12 };
-  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters.', sc, 11, null);
+  await (async () => { const _p = 'A passage of prose long enough to be judged at all, with more than forty characters.';
+    return window._commitScene(_p, sc, 11, window.__ctlMount(window.state, sc.storyScene || 11, _p)); })();
   // ACCEPTED SUPPORTS only: this pass also writes an `unreported` observation for row 16, which
   // is correct (the constructed reply names no entry for it) and is not a support.
   const after = s._milestoneDeliveries.filter(r => r.milestoneScene === 16 && r.accepted === true);
@@ -2005,6 +2026,175 @@ t('but a real prose change is still detected alongside them',
   whispers.prose !== whispers.base
   && /narrative prose was ADDED/.test(String(whispers.changed.prose)),
   JSON.stringify(whispers.changed.prose));
+
+// ═══ 22. THE STORY SCENE, NOT THE TURN COUNTER ══════════════════════════════════════════════
+section('22. sceneProposed 4 vs storyScene 6: ownership follows storyScene');
+// MEASURED DEFECT: the caller passed _prevNum, derived from `sceneProposed` — the TURN COUNTER.
+// The authoritative story-scene number is `storyScene`, which the seal preserves. My own earlier
+// test made both numbers 4 and could not see the mismatch.
+captureCommitProse = true;
+submittedProse = null;
+const twoNumbers = await page.evaluate(async () => {
+  const s = window.state;
+  s.renderMode = 'literary'; s.currentEngine = 'literary'; delete s._stagedAuthoringSceneIndex;
+  s.issueIndexInRun = 1; s.turnCount = 5; s.scenes = [];
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  window.__ctlResetLedger(s);
+  StoryPagination.clear();
+  // BOTH PAGES PRESENT. Scene 4's page carries one event, scene 6's carries another.
+  const P4 = 'The page that rendered STORY SCENE FOUR, in which the omen was read aloud and dismissed.';
+  const P6 = 'The page that rendered STORY SCENE SIX, in which Julian prevented the inquiry from looking further.';
+  StoryPagination.addPage('<p>' + P4 + '</p>', true);
+  const uid4 = StoryPagination.getCurrentPageUid();
+  window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: 4, pageUid: uid4, event: 'the omen' });
+  StoryPagination.addPage('<p>' + P6 + '</p>', true);
+  const uid6 = StoryPagination.getCurrentPageUid();
+  window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: 6, pageUid: uid6, event: 'the concealment' });
+  // THE READER IS LOOKING AT SCENE 4's PAGE, to prove navigation is irrelevant too.
+  StoryPagination.goToPage(0);
+  // A PRODUCTION-SHAPED PROPOSAL: the turn counter and the story scene DIFFER.
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'the concealment', milestone: 'm',
+    scene: 4, storyScene: 6, milestoneScene: 6 });
+  // THE HANDOFF CARRIES ONLY THE REFERENCE, so storyScene must be resolved FROM THE SEAL.
+  s._priorSceneStateChange = { event: sealed.fact, proposalRef: sealed.id, sceneProposed: 4 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 4, storyScene: 6 };
+  try { await window._generateLiteraryPlotContract('he says nothing', '', null, null, null); } catch (e) {}
+  const identByCounter = window.__buildCommitSceneIdentity(s, P6, null, 'pagination', 4);
+  const identByStory = window.__buildCommitSceneIdentity(s, P6, null, 'pagination', 6);
+  return JSON.parse(JSON.stringify({ uid4: uid4, uid6: uid6,
+    sealStoryScene: (window._resolveSealedProposal ? window._resolveSealedProposal(sealed.id) : {}).storyScene,
+    handoffHasStoryScene: s._priorSceneStateChange.storyScene,
+    viewed: StoryPagination.getCurrentPageUid(),
+    byCounter: identByCounter.pageUid, byStory: identByStory.pageUid,
+    lastSrc: s._lastCommitScenePrvSource || null }));
+});
+captureCommitProse = false;
+fs.writeFileSync('_audit_out/history_chain/two_numbers_request.txt',
+  String(submittedProse == null ? '(nothing captured)' : submittedProse));
+t('the fixture really is production-shaped: the handoff has NO storyScene, the seal has 6',
+  twoNumbers.handoffHasStoryScene === undefined && twoNumbers.sealStoryScene === 6,
+  JSON.stringify({ handoff: twoNumbers.handoffHasStoryScene, seal: twoNumbers.sealStoryScene }));
+t('the two numbers really do name DIFFERENT pages',
+  twoNumbers.byCounter === twoNumbers.uid4 && twoNumbers.byStory === twoNumbers.uid6
+  && twoNumbers.uid4 !== twoNumbers.uid6,
+  JSON.stringify({ byCounter: twoNumbers.byCounter, byStory: twoNumbers.byStory }));
+t('the reader is parked on scene 4\'s page, so navigation is not what decides it',
+  twoNumbers.viewed === twoNumbers.uid4, JSON.stringify(twoNumbers.viewed));
+t('the REAL caller submits SCENE 6\'s prose, resolved from the seal',
+  submittedProse !== null && /STORY SCENE SIX/.test(submittedProse)
+  && !/STORY SCENE FOUR/.test(submittedProse),
+  'submitted: ' + String(submittedProse).slice(0, 200));
+
+section('22b. A REFUSAL WRITES NOTHING DURABLE, EVEN WHEN THE REPLY SAYS DELIVERED');
+// The reply below says DELIVERED and carries a clean milestone and prerequisite verdict. Nothing
+// from it may be written when no unit owns the prose, or when the prose changed in flight.
+const beforeState = await page.evaluate(() => {
+  const s = window.state;
+  window.__ctlResetLedger(s);
+  StoryPagination.clear();
+  const PAGE = 'A page of prose long enough to be judged, in which the admission is made before the Chayr.';
+  StoryPagination.addPage('<p>' + PAGE + '</p>', true);
+  const uid = StoryPagination.getCurrentPageUid();
+  window._sceneLedgerCommit(s, { kind: 'scene', sceneNumber: 51, pageUid: uid, event: 'the admission' });
+  // A PRE-EXISTING fact, delivery and invalidation that must all survive untouched.
+  s._committedState = { facts: [{ scene: 50, event: 'an earlier committed fact', ref: 'prop:1:1' }],
+                        tableau: null, pendingIntent: null };
+  s._milestoneDeliveries = [{ milestoneScene: 12, atScene: 50, status: 'delivered_on_page',
+    accepted: true, why: 'accepted', evidence: 'e', participants: ['Julian'], scope: 'x',
+    unitKind: 'page', unitId: uid, unitHash: 'keep', unitChars: 10, superseded: false, at: 1 }];
+  s._prereqInvalidations = [{ prereqId: 'prereq:investigation_open', atScene: 50,
+    status: 'invalidated_on_page', accepted: true, why: 'accepted', evidence: 'e',
+    participants: ['Julian'], scope: 'x', unitKind: 'page', unitId: uid, unitHash: 'keep',
+    unitChars: 10, superseded: false, at: 1 }];
+  return JSON.parse(JSON.stringify({ uid: uid, page: PAGE,
+    facts: s._committedState.facts, md: s._milestoneDeliveries, pi: s._prereqInvalidations }));
+});
+pageVerifierResp = { delivery: 'DELIVERED',
+  actual_exit_state: 'the admission has been made',
+  slots_check: { actor_evidence: 'the admission is made', action_evidence: 'the admission is made',
+                 target_evidence: 'before the Chayr', exit_state_evidence: 'before the Chayr',
+                 precondition_evidence: 'a page of prose', occurred_this_scene: true },
+  milestone_watch: [{ n: 16, status: 'delivered_on_page', evidence: 'the admission is made before the Chayr',
+    participants: ['Julian'], scope: 'the Chayr' }],
+  prereq_watch: [{ id: 'prereq:julian_act_concealed', status: 'invalidated_on_page',
+    evidence: 'the admission is made before the Chayr', participants: ['Julian'], scope: 'the Chayr' }] };
+
+const unownedRefusal = await page.evaluate(async (arg) => {
+  const s = window.state;
+  s._sealedProposals = null;
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'the admission', milestone: 'm',
+    scene: 51, storyScene: 51, milestoneScene: 51 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, sceneProposed: 51, storyScene: 51 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 51, storyScene: 51 };
+  // NO OWNED UNIT: scene 99 has no ledger entry, so the identity is UNAVAILABLE.
+  const ident = window.__buildCommitSceneIdentity(s, arg.page, null, 'pagination', 99);
+  await window._commitScene(arg.page, sc, 51, ident);
+  return JSON.parse(JSON.stringify({ identSrc: ident.pageUidSource, bindable: !!ident.unitHash,
+    facts: s._committedState.facts, pendingIntent: s._committedState.pendingIntent,
+    through: s._committedState._committedThroughScene,
+    acceptedMd: s._milestoneDeliveries.filter(r => r.accepted === true),
+    acceptedPi: s._prereqInvalidations.filter(r => r.accepted === true),
+    refusal: s._lastCommitRefusal }));
+}, beforeState);
+t('UNOWNED: no fact was committed, and the pre-existing fact is untouched',
+  unownedRefusal.facts.length === 1 && unownedRefusal.facts[0].scene === 50,
+  JSON.stringify(unownedRefusal.facts));
+t('UNOWNED: the pending intent is PRESERVED for a later pass, not consumed',
+  !!unownedRefusal.pendingIntent && unownedRefusal.pendingIntent.sceneProposed === 51,
+  JSON.stringify(unownedRefusal.pendingIntent));
+t('UNOWNED: no milestone delivery or prerequisite invalidation was accepted',
+  unownedRefusal.acceptedMd.length === 1 && unownedRefusal.acceptedMd[0].milestoneScene === 12
+  && unownedRefusal.acceptedPi.length === 1 && unownedRefusal.acceptedPi[0].prereqId === 'prereq:investigation_open',
+  JSON.stringify({ md: unownedRefusal.acceptedMd.map(r => r.milestoneScene),
+                   pi: unownedRefusal.acceptedPi.map(r => r.prereqId) }));
+t('UNOWNED: the refusal is recorded as UNASSESSED and names why, with DELIVERED not treated as a verdict',
+  !!unownedRefusal.refusal && /no unit owns this prose \(UNAVAILABLE — the scene ledger records no page for scene 99\)/
+    .test(String(unownedRefusal.refusal.why)) && unownedRefusal.through == null,
+  JSON.stringify(unownedRefusal.refusal));
+
+editDuringRequest = true;
+const rewriteRefusal = await page.evaluate(async (arg) => {
+  const s = window.state;
+  s._committedState = { facts: [{ scene: 50, event: 'an earlier committed fact', ref: 'prop:1:1' }],
+                        tableau: null, pendingIntent: null };
+  s._sealedProposals = null;
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'the admission', milestone: 'm',
+    scene: 52, storyScene: 51, milestoneScene: 51 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, sceneProposed: 52, storyScene: 51 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 52, storyScene: 51 };
+  const ident = window.__buildCommitSceneIdentity(s, arg.page, null, 'pagination', 51);
+  // THE PAGE IS REWRITTEN IN PLACE WHILE THE REQUEST IS HELD.
+  window.__ctlEditPage = function () {
+    const uids = StoryPagination.getPageUids(), pages = StoryPagination.getPages();
+    pages[uids.indexOf(ident.unitId)] = '<p>A completely different page of prose in which nothing at all was admitted to anybody.</p>';
+    StoryPagination.setPages(pages, uids);
+  };
+  await window._commitScene(arg.page, sc, 52, ident);
+  return JSON.parse(JSON.stringify({ bindable: !!ident.unitHash,
+    facts: s._committedState.facts, pendingIntent: s._committedState.pendingIntent,
+    acceptedMd: s._milestoneDeliveries.filter(r => r.accepted === true),
+    acceptedPi: s._prereqInvalidations.filter(r => r.accepted === true),
+    refusal: s._lastCommitRefusal }));
+}, beforeState);
+editDuringRequest = false;
+pageVerifierResp = null;
+t('REWRITTEN IN FLIGHT: the identity WAS bindable, so this is a stale return and not an unowned one',
+  rewriteRefusal.bindable === true, String(rewriteRefusal.bindable));
+t('REWRITTEN IN FLIGHT: no fact was committed although the reply said DELIVERED',
+  rewriteRefusal.facts.length === 1 && rewriteRefusal.facts[0].scene === 50,
+  JSON.stringify(rewriteRefusal.facts));
+t('REWRITTEN IN FLIGHT: the pending intent is preserved',
+  !!rewriteRefusal.pendingIntent && rewriteRefusal.pendingIntent.sceneProposed === 52,
+  JSON.stringify(rewriteRefusal.pendingIntent));
+t('REWRITTEN IN FLIGHT: nothing new was accepted into either store',
+  rewriteRefusal.acceptedMd.length === 1 && rewriteRefusal.acceptedPi.length === 1,
+  JSON.stringify({ md: rewriteRefusal.acceptedMd.length, pi: rewriteRefusal.acceptedPi.length }));
+t('REWRITTEN IN FLIGHT: the refusal names the rewrite',
+  !!rewriteRefusal.refusal
+  && /changed — narrative prose was (ADDED to|REMOVED from) it|its narrative prose was rewritten/
+       .test(String(rewriteRefusal.refusal.why)),
+  JSON.stringify(rewriteRefusal.refusal));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

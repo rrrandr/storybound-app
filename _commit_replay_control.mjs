@@ -83,7 +83,14 @@ const commit = (sceneNum) => page.evaluate(async (v) => {
     event: v.plan.state_change, proposalRef: (sealed && sealed.id) || null,
     kind: 'state_change', slots: v.slots
   });
-  await window._commitScene(v.prose, proposal, v.sceneNum);
+  // OWNERSHIP, as production records it when the page mounts. _commitScene now refuses every
+  // durable write when no unit owns the prose, so a harness that drives it directly must supply
+  // the same association the render layer does.
+  StoryPagination.addPage('<p>' + String(v.prose) + '</p>', true);
+  window._sceneLedgerCommit(window.state, { kind: 'scene', sceneNumber: v.sceneNum,
+    pageUid: StoryPagination.getCurrentPageUid(), event: v.plan.state_change });
+  const _ident = window.__buildCommitSceneIdentity(window.state, v.prose, null, 'pagination', v.sceneNum);
+  await window._commitScene(v.prose, proposal, v.sceneNum, _ident);
   const out = window._ensureCommittedState();
   return {
     sealedRef: (sealed && sealed.id) || null,

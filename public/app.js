@@ -101910,6 +101910,42 @@ function _buildAuthorFloorDirective(s) {
   }
   try { window._revalidateAssessments = function (st, why) { return _revalidateAssessments(st || window.state, why || 'manual'); }; } catch (_) {}
 
+  // CAN ANYTHING DURABLE BE WRITTEN FROM A REPLY ABOUT THIS TARGET? Returns a reason when not.
+  // Called BEFORE adjudication (which commits facts) and again when the watch results are read,
+  // so one answer governs every durable result derived from the prose.
+  function _commitTargetUnusable(t) {
+    if (!t) return 'no assessment target was built for this scene';
+    try {
+      if (!t.bindable)
+        return 'no unit owns this prose (' + (t.pageUidSource || 'no projection hash and no narrative hash')
+          + '), so nothing could later supersede what is written from it';
+      if (t.storyId && window.state && window.state.storyId
+          && String(window.state.storyId) !== String(t.storyId))
+        return 'the story changed while the assessment was in flight';
+      // THE UNIT CHECK — the same named unit, re-read through the same helper. Only reached when
+      // there is no projection hash to compare (the literary case).
+      if (!t.projectionHash && t.unitHash && t.unitId) {
+        var ch = _commitUnitChanged(t, _commitUnitText(window.state, t));
+        if (ch) return ch + ' while the assessment was in flight';
+      }
+      if (t.sceneUid && typeof _sbSceneByUid === 'function') {
+        var rec = _sbSceneByUid(t.sceneUid, window.state);
+        var proj = (rec && rec.record && rec.record.projection) || null;
+        if (!rec) return 'the scene record ' + t.sceneUid + ' no longer exists';
+        if (t.projectionHash && proj && String(proj.hash) !== String(t.projectionHash))
+          return 'the scene was rewritten while the assessment was in flight (hash '
+            + t.projectionHash + ' -> ' + proj.hash + ')';
+        if (t.projectionRevision != null && proj && Number(proj.revision) !== Number(t.projectionRevision))
+          return 'the scene revision moved while the assessment was in flight ('
+            + t.projectionRevision + ' -> ' + proj.revision + ')';
+      }
+    } catch (e) {
+      return 'the target could not be validated (' + String(e && e.message).slice(0, 80) + ')';
+    }
+    return null;
+  }
+  try { window._commitTargetUnusable = _commitTargetUnusable; } catch (_) {}
+
   async function _commitScene(prevText, prevProposal, prevSceneNum, sceneIdentity) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
@@ -102229,6 +102265,40 @@ function _buildAuthorFloorDirective(s) {
           }
         }
       } catch (_) { /* a throw here must never upgrade a verdict — leave _delivery untouched */ }
+      // ══ OWNERSHIP AND STALENESS GATE — BEFORE ANY DURABLE MUTATION ════════════════════════
+      // Every durable result derived from this prose is behind this, not just the watch
+      // assessments: adjudication commits FACTS. If no unit owns the prose, or the prose changed
+      // while the reply was in flight, the reply describes text this engine cannot vouch for, so
+      // nothing is written from it. Facts and the pending intent are left exactly as they were,
+      // and this is NOT recorded as failed delivery — it is recorded as UNASSESSED.
+      var _asRefuse = _commitTargetUnusable(_asTarget);
+      if (_asRefuse) {
+        try {
+          console.warn('[COMMIT-SCENE:REFUSED] scene=' + prevSceneNum + ' — ' + _asRefuse
+            + '. NOTHING durable is written from this reply: no fact commits, no milestone or '
+            + 'prerequisite acceptance. The delivery label (' + _delivery + ') is NOT treated as a '
+            + 'verdict and the pending intent is preserved for a later pass.');
+        } catch (_) {}
+        try {
+          var _refStore = function (key) {
+            if (!Array.isArray(window.state[key])) window.state[key] = [];
+            return window.state[key];
+          };
+          var _refRec = {
+            storyId: (window.state && window.state.storyId) || null,
+            atScene: prevSceneNum, unitKind: _asTarget.unitKind, unitId: _asTarget.unitId,
+            pageUidSource: _asTarget.pageUidSource || null,
+            status: 'unassessed', accepted: false, superseded: false,
+            why: 'refused before any durable write — ' + _asRefuse,
+            reportedDelivery: _delivery, at: Date.now()
+          };
+          _refStore('_milestoneDeliveries').push(Object.assign({ milestoneScene: null }, _refRec));
+          _refStore('_prereqInvalidations').push(Object.assign({ prereqId: null }, _refRec));
+          window.state._lastCommitRefusal = { scene: prevSceneNum, why: _asRefuse, at: Date.now() };
+        } catch (_) {}
+        return;
+      }
+
       // ══ PER-PROPOSAL ADJUDICATION (Roman 2026-10-01) ══════════════════════════════════════
       // Each pending sealed proposal for this scene is judged on ITS OWN status and ITS OWN
       // anchors. A DELIVERED state_change can no longer carry a continuation into canon with it,
@@ -102315,34 +102385,9 @@ function _buildAuthorFloorDirective(s) {
           var _asExcerptHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_pt) : null;
           // ── STALE RETURN CHECK. A rewrite during the request leaves this reply describing text
           // that no longer exists, so nothing from it is accepted.
-          var _asStale = null;
-          try {
-            if (!_asTarget.bindable)
-              _asStale = 'no scene identity was available (no projection hash and no full-prose hash), '
-                + 'so nothing could later supersede this record — it is recorded as an observation only';
-            if (!_asStale && _asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
-              _asStale = 'the story changed while the assessment was in flight';
-            // THE UNIT STALE CHECK — THE SAME NAMED UNIT, re-read through the SAME helper. Only
-            // reached when there is no projection hash to compare (the literary case); a CG record
-            // is settled by its own projection above and never compared against anything else.
-            if (!_asStale && !_asTarget.projectionHash && _asTarget.unitHash && _asTarget.unitId) {
-              var _nowU = _commitUnitText(window.state, _asTarget);
-              var _ch = _commitUnitChanged(_asTarget, _nowU);
-              if (_ch) _asStale = _ch + ' while the assessment was in flight';
-            }
-            if (!_asStale && _asTarget.sceneUid && typeof _sbSceneByUid === 'function') {
-              var _nowRec = _sbSceneByUid(_asTarget.sceneUid, window.state);
-              var _nowProj = (_nowRec && _nowRec.record && _nowRec.record.projection) || null;
-              if (!_nowRec) _asStale = 'the scene record ' + _asTarget.sceneUid + ' no longer exists';
-              else if (_asTarget.projectionHash && _nowProj && String(_nowProj.hash) !== String(_asTarget.projectionHash))
-                _asStale = 'the scene was rewritten while the assessment was in flight (hash '
-                  + _asTarget.projectionHash + ' -> ' + _nowProj.hash + ')';
-              else if (_asTarget.projectionRevision != null && _nowProj
-                       && Number(_nowProj.revision) !== Number(_asTarget.projectionRevision))
-                _asStale = 'the scene revision moved while the assessment was in flight ('
-                  + _asTarget.projectionRevision + ' -> ' + _nowProj.revision + ')';
-            }
-          } catch (_) {}
+          // THE SAME ONE ANSWER that gated adjudication above. Reaching this point means it was
+          // usable then; it is asked again because the reply may have been in flight since.
+          var _asStale = _commitTargetUnusable(_asTarget);
           if (_asStale) { try { console.warn('[MILESTONE-WATCH] every assessment from this reply is REJECTED — ' + _asStale); } catch (__) {} }
           var _okEv = function (e) {
             try { return (typeof _hasUsableEvidence === 'function') ? _hasUsableEvidence(e) : false; } catch (_) { return false; }
@@ -103152,7 +103197,27 @@ function _buildAuthorFloorDirective(s) {
             // prose came from, and the identity's hash is of THAT source read through the shared
             // helper — so "has it changed?" compares like with like.
             var _csIdent = null;
-            try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc, _prevNum); } catch (_) { _csIdent = null; }
+            // THE STORY SCENE, which is what a page belongs to. _prevNum is the TURN COUNTER and
+            // is kept below for the bookkeeping that is keyed by it.
+            var _csStoryScene = null, _csSceneSrc = null;
+            try {
+              if (_prevProp && _prevProp.storyScene != null) {
+                _csStoryScene = Number(_prevProp.storyScene); _csSceneSrc = 'the handoff';
+              } else if (_prevProp && _prevProp.proposalRef && typeof _resolveSealedProposal === 'function') {
+                var _csSeal = _resolveSealedProposal(_prevProp.proposalRef);
+                if (_csSeal && _csSeal.storyScene != null) {
+                  _csStoryScene = Number(_csSeal.storyScene);
+                  _csSceneSrc = 'the sealed record ' + _csSeal.id;
+                }
+              }
+            } catch (_) {}
+            try {
+              console.log('[COMMIT-SCENE:SCENE] turnCounter=' + _prevNum + ' storyScene='
+                + (_csStoryScene == null ? 'UNRESOLVED' : _csStoryScene)
+                + (_csSceneSrc ? ' (' + _csSceneSrc + ')' : '')
+                + ' — page ownership is looked up by storyScene, never by the counter');
+            } catch (_) {}
+            try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc, _csStoryScene); } catch (_) { _csIdent = null; }
             try {
               if (_csIdent && !_csIdent.unitId)
                 console.warn('[COMMIT-SCENE:IDENTITY] scene=' + _prevNum + ' ' + _csIdent.pageUidSource
