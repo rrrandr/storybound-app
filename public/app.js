@@ -101206,8 +101206,9 @@ function _buildAuthorFloorDirective(s) {
     var o = opts || {};
     var why = [];
     if (!pend || !pend.id) return { ref: null, commit: false, status: 'unknown', why: ['no pending record'] };
-    if (!entry) return { ref: pend.id, commit: false, status: 'unreported',
-      why: ['the verifier returned no status for this reference'] };
+    if (!entry) return { ref: pend.id, commit: false, status: 'unreported', reason: 'unreported',
+      why: ['the verifier returned NO report for this reference — nothing is known about whether the '
+        + 'event happened; this is not a finding that it did not'] };
     var status = String((entry && entry.delivery) || '').toUpperCase();
     var reason = (entry && typeof entry.reason === 'string') ? entry.reason.trim() : '';
     if (status !== 'DELIVERED') {
@@ -101239,7 +101240,7 @@ function _buildAuthorFloorDirective(s) {
             + 'the event could not have happened, so delivery is DOWNGRADED and nothing is committed'] };
       }
       if (!_quoteIsInProse(preVal, prose)) {
-        return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'precondition_absent',
+        return { ref: pend.id, commit: false, status: 'DELIVERED', reason: 'precondition_unverifiable',
           downgraded: true, preconditionSource: preSource,
           why: ['DELIVERED but its precondition evidence (' + preSource + ') is not a verbatim quote '
             + 'from the prose — DOWNGRADED, nothing committed'] };
@@ -101272,6 +101273,12 @@ function _buildAuthorFloorDirective(s) {
           // Its other load-bearing citations must exist AND verify. A slot check that cannot cite
           // the actor or the action is the same check the aggregate path downgrades on.
           var _need = ['actor_evidence', 'action_evidence'];
+          // The proposal's OWN slots say whether this event has a target at all.
+          var _pslots = (pend && pend.slots) || (o.plannedSlots || null);
+          var _tgt = _pslots ? _pslots.target : undefined;
+          var _tgtRequired = (typeof _tgt === 'string')
+            && _tgt.trim() !== '' && _tgt.trim().toLowerCase() !== 'none';
+          if (_tgtRequired) _need.push('target_evidence');
           var _bad = _need.filter(function (k) {
             return !_hasUsableEvidence(_ss[k]) || !_quoteIsInProse(String(_ss[k]), prose);
           });
@@ -101365,6 +101372,7 @@ function _buildAuthorFloorDirective(s) {
         }
       } else {
         verdict = _adjudicateSealedProposal(pp, entry, prose, { sharedSlots: o.sharedSlots || null,
+          plannedSlots: o.plannedSlots || null,
           // the shared-quote fallback is only safe when there is nothing to confuse it with
           proposalCount: pend.length });
       }
@@ -101545,6 +101553,9 @@ function _buildAuthorFloorDirective(s) {
         sharedSlots: (typeof _vP !== 'undefined' && _vP && _vP.slots_check) ? _vP.slots_check : null,
         legacyDelivery: _delivery,
         legacyStateChangeRef: (prevProposal && prevProposal.proposalRef) || null,
+        // the PROPOSAL's own slots, so the shared-evidence fallback can tell a targetless event
+        // from one whose target must be cited
+        plannedSlots: _slots || null,
         scene: prevSceneNum
       });
       try {
@@ -102340,16 +102351,37 @@ function _buildAuthorFloorDirective(s) {
               })()
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
-            + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? (((_csGen.pendingIntent.lastReason === 'evidence_unverifiable')
-                ? ('\nPENDING INTENT — UNVERIFIED, NOT FAILED. A prior scene appears to have put this on '
-                   + 'the page, but its citation could not be verified, so it is NOT a committed fact and '
-                   + 'you must not rely on it. Do NOT simply stage it again as if it had never happened: '
-                   + 'read WHAT THE READER HAS ALREADY READ below, and if it is there, advance from its '
-                   + 'CONSEQUENCE. Only if the reader has genuinely not seen it should you deliver it: ')
-                : '\nPENDING INTENT — CHECKED AND NOT DELIVERED. A prior scene tried to advance toward the '
-                  + 'milestone and the attempt was verified as not delivered. Continue TOWARD the milestone, '
-                  + 'but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat '
-                  + 'the failed attempt: ') + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
+            + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? ((function () {
+                var _r = String(_csGen.pendingIntent.lastReason || '');
+                var _st = String(_csGen.pendingIntent.lastStatus || '').toUpperCase();
+                // UNVERIFIABLE CITATION — the event may well be on the page.
+                if (_r === 'evidence_unverifiable' || _r === 'precondition_unverifiable') {
+                  return '\nPENDING INTENT — UNVERIFIED, NOT FAILED. A prior scene appears to have put '
+                    + 'this on the page, but its citation could not be verified, so it is NOT a '
+                    + 'committed fact and you must not rely on it. Do NOT simply stage it again as if '
+                    + 'it had never happened: read WHAT THE READER HAS ALREADY READ below, and if it is '
+                    + 'there, advance from its CONSEQUENCE. Only if the reader has genuinely not seen '
+                    + 'it should you deliver it: ';
+                }
+                // NO ASSESSMENT AT ALL — absence of a report is not a finding.
+                if (_r === 'unreported' || _st === 'UNREPORTED' || _st === 'UNKNOWN' || !_st) {
+                  return '\nPENDING INTENT — NOT ASSESSED. No delivery report came back for this '
+                    + 'proposal, so NOTHING is known about whether it happened. This is not a finding '
+                    + 'that it failed. Check WHAT THE READER HAS ALREADY READ below before deciding '
+                    + 'whether it still needs delivering: ';
+                }
+                // BEGUN BUT NOT FINISHED.
+                if (_st === 'PARTIAL') {
+                  return '\nPENDING INTENT — PARTIALLY DELIVERED. A prior scene BEGAN this and did not '
+                    + 'complete it. Do not restart it from nothing: carry it from where it stopped, or '
+                    + 'complete it: ';
+                }
+                // VERIFIED NON-DELIVERY — the only branch that may say it did not happen.
+                return '\nPENDING INTENT — CHECKED AND NOT DELIVERED. A prior scene tried to advance '
+                  + 'toward the milestone and the attempt was verified as not delivered. Continue '
+                  + 'TOWARD the milestone, but choose the BEST reachable event NOW from the committed '
+                  + 'state; do NOT blindly repeat the failed attempt: ';
+              })() + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
             + ((function () {
                 // ── WHAT THE READER HAS ALREADY READ (2026-10-07) ────────────────────────────
