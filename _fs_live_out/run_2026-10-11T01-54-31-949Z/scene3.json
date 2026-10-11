@@ -1,0 +1,218 @@
+{
+  "outcome": "accepted",
+  "creating": 3,
+  "leaving": 2,
+  "before": {
+    "count": 1,
+    "lastUid": "cg:d6bcfac9-c6d7-4b03-bfa9-2f0977eb95de"
+  },
+  "snap": {
+    "label": "scene2",
+    "scenes": 2,
+    "texts": [
+      {
+        "uid": "cg:d6bcfac9-c6d7-4b03-bfa9-2f0977eb95de",
+        "text": "The Dohkar’s voice cuts across the clearing like a slow unraveling.\n\nI feel the weight settle in my ribs before the words finish.\n\nTHE PRESIDING DOHKAR: \"This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars.\"\n\nThe assembly’s silence presses against my skin.\n\nJulian does not move, yet the space around him holds me upright.\n\nJULIAN: \"A formal inquiry — I will convene it, and preside.\"\n\nHis stillness becomes the only thing keeping the room from swallowing me whole.\n\nThe blade in my hand feels heavier than it should.\n\nTHE PRESIDING DOHKAR: \"That is enough, Provast.\"\n\nThe Dohkar’s authority fractures the air between us.\n\nI feel every eye turn toward the blade I still hold.\n\nThe ritual’s wrongness is the room’s silence.\n\nTHE PRESIDING DOHKAR: \"Lirael must submit to preliminary review of her conduct before the assembly.\"\n\nThe words land like a weight I cannot shift.\n\nJulian’s stillness keeps me from breaking.\n\nI could claim the interference now, or let them keep their assumption.\n\nThe blade tastes the lie I weigh.\n\nSeren remains kneeling, composed, watching.\n\nThe deck is still in my hand, reassuringly solid.\n\nI realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it."
+      },
+      {
+        "uid": "cg:a559651f-d1a9-4a29-ac6c-4de13b304394",
+        "text": "I lean closer, my shoulder brushing his, the deck solid in my hands.\n\nThe card is already between my fingers. I speak the wish softly, the one thing I need right now.\n\nLIRAEL: \"I wish the memory would surface clear.\"\n\nA faint shift in the light across the grass, nothing more. The air holds still.\n\nJulian’s hand settles on the edge of The Answer, steadying it as if the motion was his own idea.\n\nThe wish lands like coincidence. Or something else.\n\nJULIAN: \"The memory of the one you lost is the price Fate demands.\"\n\nHis voice lands like a held breath. The weight settles in my ribs before the words finish.\n\nThe Dohkar’s authority still presses from the clearing behind us, but here at the threshold only Julian’s stillness keeps the moment from collapsing.\n\nI feel the choice form before I can name it.\n\nI realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…"
+      }
+    ],
+    "notes": [
+      {
+        "ref": "cg:d6bcfac9-c6d7-4b03-bfa9-2f0977eb95de",
+        "quoted": [
+          "This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars.",
+          "A formal inquiry — I will convene it, and preside."
+        ],
+        "summary": [
+          "Lirael chose to remain instead of fleeing, forcing the summons as consequence.",
+          "Julian’s stillness became the only counterweight keeping her from collapsing."
+        ],
+        "obligations": [
+          "review"
+        ]
+      },
+      {
+        "ref": "cg:a559651f-d1a9-4a29-ac6c-4de13b304394",
+        "quoted": [
+          "I lean closer, my shoulder brushing his",
+          "\"I wish the memory would surface clear.\"",
+          "The memory of the one you lost is the price Fate demands.",
+          "The memory of the one you lost is the price Fate demands."
+        ],
+        "summary": [],
+        "obligations": [
+          "price_choice"
+        ]
+      }
+    ],
+    "oas": [
+      {
+        "pcSay": "I shaped nothing. Ask me properly.",
+        "pcDo": "",
+        "pcSayRaw": "I shaped nothing. Ask me properly.",
+        "pcDoRaw": "",
+        "liDialogue": "Your gaze lingered on my hands when the wish twisted, not on Seren. You shaped it by wanting me to notice and step between you and the Dohkar.",
+        "liAction": "Julian steps closer, the scarred wrist brushing my palm as he holds The Answer steady.",
+        "faceState": "ohno",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-ohno.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I draw a long, weighted breath, holding the blade steady in my grip.",
+        "pcDo": "",
+        "pcSayRaw": "*A long, weighted breath.*",
+        "pcDoRaw": "Hold the blade still, breathing deeply",
+        "liDialogue": "That breath steadies nothing. The blade already feels where your want points.",
+        "liAction": "Julian's scarred wrist presses harder against my palm, pinning the blade between us.",
+        "faceState": "still",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite2.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "What if I tell the truth right now, Julian?",
+        "pcDo": "I twist the blade in my hand, the tension singing through the steel as I let him see it.",
+        "pcSayRaw": "What if I tell the truth right now, Julian?",
+        "pcDoRaw": "Twist the blade in my hand, letting him see the tension",
+        "liDialogue": "The blade already tastes the lie you weigh. Speak it, Lirael, and let the assembly judge where your hunger points.",
+        "liAction": "Julian's jaw sets as he holds his ground, the assembly's eyes fixed on the blade between us.",
+        "faceState": "you",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-you.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "power"
+      },
+      {
+        "pcSay": "I will not speak until you name the hunger you accuse me of shaping.",
+        "pcDo": "I draw my hand back, the double-ended shaft held steady between us.",
+        "pcSayRaw": "I won’t answer until you clarify what you mean.",
+        "pcDoRaw": "Pull my hand away, keeping the blade steady between us",
+        "liDialogue": "The length stands as a barrier now. Speak the truth; it lingers on your tongue.",
+        "liAction": "His gaze sharpens, fixated on the length that divides us.",
+        "faceState": "lip_bite",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-lip-bite.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "You believe the reins rest in your hands? I choose the path ahead.",
+        "pcDo": "I step forward, the distance between us narrowing to nothing.",
+        "pcSayRaw": "You think you control this? I decide my next move.",
+        "pcDoRaw": "Step forward, closing the distance between us",
+        "liDialogue": "The space you bridge whispers of the craving you suppress. Did you call me, anticipating my reply?",
+        "liAction": "Julian steps into the tightening gap, his breath caressing my temple.",
+        "faceState": "knowing_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-KNOWINGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "curious",
+        "sceneTone": "enemies"
+      },
+      {
+        "pcSay": "I can't lie to you, even if I wanted to.",
+        "pcDo": "I meet his gaze, unguarded and raw.",
+        "pcSayRaw": "I can't lie to you, even if I wanted to.",
+        "pcDoRaw": "Meet his gaze, unguarded and raw",
+        "liDialogue": "The desire you forged in Seren defines you. Each look you offer, every phrase you utter, pleads for salvation. Did you call for me, expecting a response?",
+        "liAction": "His shoulders tense as the crowd observes.",
+        "faceState": "big_smirk",
+        "mouthUrl": "/assets/test-mouths/MM-mouth-BIGsmirk.png",
+        "fateCardTag": null,
+        "fateChangeApplied": null,
+        "tempAtBeat": "warming",
+        "sceneTone": "enemies"
+      }
+    ]
+  },
+  "openingBranch": {
+    "requested": "run",
+    "control": "sceneDecisionA"
+  },
+  "cards": [
+    {
+      "scene": 2,
+      "deck": {
+        "count": 5,
+        "lockedOut": 0,
+        "mountId": "gnCardMount",
+        "inOAS": false,
+        "fateCommitted": false,
+        "fateSelectedIndex": -1,
+        "sceneKey": "1:1",
+        "fromOasHand": 0,
+        "previewCache": {
+          "_cacheKey": 0,
+          "temptation": {
+            "a": 55,
+            "d": 43
+          },
+          "boundary": {
+            "a": 54,
+            "d": 47
+          },
+          "confession": {
+            "a": 32,
+            "d": 40
+          },
+          "reversal": {
+            "a": 45,
+            "d": 50
+          },
+          "silence": {
+            "a": 38,
+            "d": 26
+          }
+        },
+        "labels": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      "chosenIdx": 4,
+      "submitted": {
+        "action": "Lean closer, brushing my shoulder against his",
+        "dialogue": "",
+        "source": "gn",
+        "cardId": "temptation",
+        "selectedIndex": 4,
+        "appKey": {
+          "turnCount": 1,
+          "sceneFateKey": "1:1",
+          "oasBeat": null
+        },
+        "cacheEntry": {
+          "action": "Lean closer, brushing my shoulder against his",
+          "dialogue": "What if I say something they won't expect?"
+        },
+        "gn": {
+          "a": 45,
+          "d": 0
+        },
+        "lit": {
+          "a": 0,
+          "d": 0
+        },
+        "origin": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+      },
+      "provenance": {
+        "provenance": "UNKNOWN",
+        "evidence": "ONE field matches a preview record and the other does not — a partial match does not establish authorship — encounter=scene 2 end turn=2 card=\"temptation\""
+      }
+    }
+  ]
+}

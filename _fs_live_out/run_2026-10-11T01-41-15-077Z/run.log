@@ -1,0 +1,25 @@
+*** 1 reservation(s) from an earlier run never settled — $0.250000 carried as unresolved exposure ***
+=== FS SEQUENCE — ceiling $3.00 — FIXTURES, no provider traffic ===
+Authorized by Roman with an explicit go, ceiling $3.00.
+ENTITLEMENT/PAYMENT RESPONSES SIMULATED — no purchase, no real account. IMAGES BLOCKED.
+Scene 1 is the FIXED hand-authored opening and generates nothing.
+
+app loaded
+
+── SETUP (live: bibles, plots, scaffold — the unpriced stage) ──
+  navigation: entrance on screen after 0 turns
+  at the entrance: {"onScreen":true,"locked":true,"setupComplete":false}
+  setup complete · exposure $5.272954
+
+── OAS (live) ──
+  entered via entrance submit (trusted click)
+  the gate asked for payment — confirming through its own control
+
+*** HALTED BEFORE DISPATCH — ceiling: exposure $5.272954 + next $0.077916 would exceed $3.00 (prior runs $5.272954) ***
+  after the confirmation: {"unlocked":true,"setupComplete":true,"dialogue":true}
+  [policy] after the entrance submission, before any further input — 1 invocation(s) recorded
+    #1 selected=null/null textLen=0 attempts=[]
+  [rehydrate] 1 rehydration(s) during the entrance
+    #1 awaiting=true age=70ms  1791682905791-n7jmyh -> 1791682905791-n7jmyh   (identity preserved)
+
+*** RUN ERROR: page.waitForTimeout: Target page, context or browser has been closed ***
