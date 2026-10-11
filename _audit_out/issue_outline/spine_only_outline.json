@@ -1,0 +1,87 @@
+{
+ "_key": "ctl-outline|1|10|2|-",
+ "issueIndex": 1,
+ "bounds": {
+  "issueIndex": 1,
+  "per": 10,
+  "pricingPer": 10,
+  "source": "ISSUE_PRICING",
+  "first": 1,
+  "last": 10
+ },
+ "sceneNow": 2,
+ "label": "Issue 1 — the audit",
+ "thesis": "Whether she will sign what she knows is false",
+ "branch": null,
+ "horizon": null,
+ "scenes": [
+  {
+   "n": 1,
+   "status": "delivered",
+   "conditional": false,
+   "conditionalOn": null,
+   "accomplishes": "The auditor arrives unannounced and asks for the ledger she keeps privately",
+   "accomplishesSource": "issue spine",
+   "follows_from": {
+    "text": "",
+    "link": null,
+    "source": "none"
+   },
+   "changes": "the private ledger is now known to exist",
+   "sets_up": "she has to decide what to hand over",
+   "openObjective": false,
+   "decision": null,
+   "withheld": [],
+   "source": "issue spine"
+  },
+  {
+   "n": 2,
+   "status": "current",
+   "conditional": false,
+   "conditionalOn": null,
+   "accomplishes": "She hands over a copy she has edited",
+   "accomplishesSource": "issue spine",
+   "follows_from": {
+    "text": "the ledger is now known to exist",
+    "link": "therefore",
+    "source": "issue spine"
+   },
+   "changes": "she has committed a falsification",
+   "sets_up": "the original still exists somewhere",
+   "openObjective": false,
+   "decision": null,
+   "withheld": [],
+   "source": "issue spine"
+  },
+  {
+   "n": 3,
+   "status": "planned",
+   "conditional": false,
+   "conditionalOn": null,
+   "accomplishes": "The auditor asks for the original",
+   "accomplishesSource": "issue spine",
+   "follows_from": {
+    "text": "she handed over an edited copy",
+    "link": "but",
+    "source": "issue spine"
+   },
+   "changes": "the falsification is now at risk of discovery",
+   "sets_up": "she needs someone to destroy the original",
+   "openObjective": false,
+   "decision": null,
+   "withheld": [],
+   "source": "issue spine"
+  }
+ ],
+ "cliffhanger": {
+  "scene": 3,
+  "source": "issue spine",
+  "decidedBy": null,
+  "decided": true,
+  "branches": null,
+  "event": "She asks him to burn the original, in the room where the auditor is still working",
+  "issue2Predicament": "She has made a second person into an accomplice, and he has not said yes. Issue 2 opens with her owing him something she cannot name and the auditor one room away."
+ },
+ "planPresent": false,
+ "spineOutlinePresent": true
+}

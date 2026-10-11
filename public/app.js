@@ -98736,11 +98736,33 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       // an identity, and two people can answer to it.
       var _issuedRefs = _cpIssuedRefs(state);
       var _stageContractBlock = _cpStageContractBlock(_issuedRefs);
+      var _skelIsCG = false;
+      try { _skelIsCG = (typeof _isCGRenderMode === 'function') ? !!_isCGRenderMode() : false; } catch (_) {}
+      var _skelBeatRangeText = _skelIsCG ? '20-24' : '10-14';
+      // THIS SCENE'S PURPOSE WITHIN THE ISSUE — the Issue Spine directive the causal outline must
+      // deliver. Without it the scaffold sequenced staging it had invented for itself, which is how
+      // a scene could be internally tidy and still accomplish nothing the issue needed.
+      var _skelPurposeBlock = '';
+      try {
+        var _por = (typeof _issueOutlineRowFor === 'function')
+          ? _issueOutlineRowFor(state, _optSceneNum || null) : null;
+        if (_por) {
+          var _pl = ['THIS SCENE\'S PURPOSE WITHIN THE ISSUE (the causal_outline must DELIVER this, not decorate it):'];
+          if (_por.accomplishes) _pl.push('  WHAT IT ACCOMPLISHES: ' + _por.accomplishes);
+          if (_por.follows_from && _por.follows_from.text) _pl.push('  WHY IT FOLLOWS WHAT CAME BEFORE'
+            + (_por.follows_from.link ? ' (' + _por.follows_from.link.toUpperCase() + ')' : '') + ': ' + _por.follows_from.text);
+          if (_por.changes) _pl.push('  WHAT MUST BE TRUE BY THE END: ' + _por.changes);
+          if (_por.sets_up) _pl.push('  WHAT IT SETS UP FOR THE NEXT SCENE: ' + _por.sets_up);
+          if (_por.decision) _pl.push('  THE PLAYER DECIDES AT THE END: ' + (_por.decision.axis || '(axis unstated)')
+            + ' — the outline STOPS at the decision being forced. Do NOT outline the protagonist answering it.');
+          _skelPurposeBlock = _pl.join('\n') + '\n';
+        }
+      } catch (_) { _skelPurposeBlock = ''; }
 
        const _skelMsgs = [
-          { role: 'system', content: _stageContractBlock + 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object — no markdown, no commentary. Required fields: environment_anchor, structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm, staged_characters, interlocutor_placement, li_texture_beat, pc_body_callback, li_body_callback, antagonist_body_callback, environment_plus, fusion, stage_contract. environment_anchor = a physical object/surface/sound/environmental phenomenon the scene should begin from (4-12 words, world-specific).\nDo NOT return `character_plus`, `facet_id`, `option_id` or any per-character psychological angle. Character psychology for this scene is resolved by the backend from canon and is not yours to assign. Stage who is present; that is the whole of your responsibility for people.\nENVIRONMENT_PLUS = {target, axis}. REQUIRED EVERY SCENE, no exceptions — a scene whose place means nothing has failed. `target` is a specific object or place already present (prefer the environment_anchor or a listed prop). `axis` is exactly one of: history · use · damage · ownership · repair · ritual · absence — what this thing has BECOME because of what happened to it. Never symbolism; a spoon is usually a spoon.\nFUSION = {character, target} or null. Roughly one scene in five, NOT every scene: one beat where a person and a thing reveal each other. Prefer null to a forced one.\nASSIGN, DO NOT WRITE. Every field is a target for the author to realise in their own words. If you write the prose yourself the author copies your phrasing and the scene reads assembled. structural_pacing / narrative_density / dialogue_ratio / beat_style / tension_rhythm = short phrases (3-8 words). staged_characters = an ARRAY of {name, presence_mode, role} objects covering every character who APPEARS or is NAMED in the upcoming scene (include the protagonist). presence_mode is exactly one of: IN_PERSON (physically present, can be looked at / touched / handed a physical object), ON_PHONE (audible only via call/voice channel — NOT physically present, CANNOT receive a physical handoff — the most common failure shape is a planner treating a phone-call interlocutor as IN_PERSON), OFFSTAGE_REFERENCED (named or discussed but not present in any form). Be STRICT about ON_PHONE vs IN_PERSON. If the player intent or prior staging implies a transition (the player leaves a location, takes a call, walks into a new room), reflect that in the new staging. interlocutor_placement = if any NAMED character APPEARS or is in active engagement with the protagonist this scene (IN_PERSON OR ON_PHONE), give NAME + RELATIONSHIP-TO-PROTAGONIST + one revealing TELL in 10-20 words. The TELL form depends on presence_mode: IN_PERSON → an OBSERVED physical/behavioral detail. ON_PHONE → a REMEMBERED, PROJECTED, or HEARD-THROUGH-LINE detail (e.g. "Lina — her direct contact at the foundation board, a woman whose long sigh always preceded the part of the meeting she had stopped pretending to negotiate"). Naming + job alone is NOT enough — phone interlocutors require their own kind of texture. Null only if no named character is engaging with the protagonist. li_texture_beat = if the love interest is OFFSTAGE_REFERENCED or ON_PHONE in this scene, a 15-30-word sketch of WHICH beat carries a textured memory of him + WHAT the memory shape is. Roman 2026-06-01 PHOTOGRAPH TEST (HARD): the memory MUST contain a VERB he performed (a behavior / decision / joke / deflection / kindness / contradiction), drawn from his Bible\'s behavioral fields (signature_behavior / deflection_pattern / attraction_manifestation / defining_anecdote). A PHYSICAL ANCHOR is REQUIRED too (Roman 2026-06-04 — the PHOTOGRAPH TEST is REVISED, not removed): the ideal beat carries ALL THREE — a VERB + an attractive PHYSICAL ANCHOR + a REVELATION about who he is. A feature is wallpaper ONLY when it reveals NOTHING (✗ "rolled sleeves / a scar / broad shoulders / dark hair"); a feature that reveals him is REQUIRED (✓ "the scar at the corner of his mouth deepening whenever he was about to say something cruel" / "hands that looked capable of breaking things, paired with impossible patience"). TEST: remove the feature — is it pure WALLPAPER (gives NEITHER attraction NOR character)? If it gives EITHER — ATTRACTION ALONE is sufficient — keep it (Roman 2026-06-04 correction: a pure attraction anchor like broad shoulders / strong jaw needs NO character reason; characterization is a bonus). No = wallpaper. SOURCE PRIORITY (Roman 2026-06-03 — measured: the memory keeps drawing from deflection_pattern / signature_behavior, so he is remembered as an intriguing STRATEGIST, not a man she WANTS). For a DESIRE-bearing memory (engine = SHARED_HISTORY or LOOMING_PRESENCE, or any LI she has wanted), draw the VERB FIRST from attraction_manifestation or desire_register_exemplars — a moment of WANTING (his desire/care-as-action toward her, or a charged moment between them). deflection_pattern / signature_behavior are the STRATEGIST register: use them ONLY when the engine is ADVERSARIAL (COLLISION, pre-bond) or as secondary color — NEVER the default for a desire-bearing scene. ENEMIES-TO-LOVERS / ANTAGONISTIC SHARED-HISTORY (Roman 2026-06-04 — she opposes, distrusts, or has insulted him, but they have HISTORY and a charge): this is NOT adversarial-equals-strategist. It is RELUCTANT DESIRE — her body wants him AGAINST HER WILL and she is FURIOUS at herself for it. She notices his shoulders / forearms / mouth / the way he fills a doorway, hates that she noticed, and reaches for an insult to COVER the wanting. Draw the VERB from attraction_manifestation / desire_register and let the antagonism COLOR it — NEVER let the hostility REPLACE the wanting with pure scheming-analysis or name-calling. The hatred and the wanting COEXIST; that friction IS the engine of enemies-to-lovers. Strategist-only (all intrigue, zero body, just calling him names) is the failure. A memory that turns on a strategist move ("he named what she would not say, then waited") reads as intrigue, not desire. Pull from defining_anecdote when in doubt. Format: "beat 2: she catches herself remembering [a specific thing he DID — verb-anchored] — and [her embodied response]." Null if the LI is IN_PERSON or genuinely absent from the scene\'s consciousness. MICRO-SCENE vs SUMMARY (HARD — Roman 2026-06-03; applies to ALL scenes where LI is offstage, not just Scene 1): the texture beat MUST be a MICRO-SCENE (specific small moment + specific body reaction in her), NEVER a SUMMARY (personality/relationship/plot/factual statement about him). ✗ "he always knew what to say" / "things between us had always been complicated" / "he had lied to me about X" / "he ran the kind of enclave that made governments nervous." ✓ a single remembered moment / expression / gesture / look / reaction / fragment of dialogue. PAIRED: ✗ "he lied convincingly" vs ✓ "' + (typeof window._rotLiPairedComparison === 'function' ? window._rotLiPairedComparison() : 'he lied while setting his pen down with both hands and not picking it back up, and I had spent the whole conversation watching his hand instead of the lie') + '." COGNITIVE INTERFERENCE TEST (HARD — Roman 2026-06-03; the ladder from biography to desire — sketch at LEVEL 4): ✗ L1 EXPOSITION ("he was attentive"); ⚠ L2 NEUTRAL MICRO-SCENE ("I remembered how kind he was to the waiter" — moment without desire); ✓ L3 ATTRACTION-PRESENT ("the way he\'d watched me while pretending to listen" — attraction visible); ✓✓ L4 COGNITIVE INTERFERENCE ("the question he hadn\'t answered because I\'d spent the whole conversation watching his hands" — attraction breaks her thinking). ✓✓ L4 STRANGER-COMPATIBLE VARIANT (Roman 2026-06-12 — for COLLISION / LOOMING_PRESENCE, when she has no past observation of him): present-tense interference from anticipation / reputation / projection — NEVER invent a prior interaction ("the one time at the gala" / "we exchanged a few words last spring" / "I had met him briefly") to license L4. That is the Level-4-by-fake-history failure mode. Anticipation-shape examples: "she had been listening to Sophie for ten minutes and only now realized she had been picturing the back of a stranger\'s hand on a glass — a man she had not met and could not stop assembling from third-hand stories"; "she was answering an email and had lost the thread of her own sentence — somewhere in the building was a man she had been hearing about for six months, and her body had decided he was already someone". Same cognitive failure, NO past memory required. PREFER L4: she missed / lost the thread / stopped tracking because she was watching him. The attraction is in the COGNITIVE FAILURE, not the noticing. Roman 2026-06-01 P3 ENGINE GATE (HARD): see the ROMANCE ENGINE block in the user context. If the engine is COLLISION and this scene predates the PC having any memory of him at all (early-arc, pre-meet), li_texture_beat MUST be null — forcing a textured memory of someone she has not met is an engine-betrayal failure. If LOOMING_PRESENCE pre-meet, the texture should be ANTICIPATION-shape (reputation, what she has heard, the version she has built from other people\'s stories) — NOT a remembered event between them. pc_body_callback = a LIGHT recurring touch from the PC Body Bible (see PC BODY BIBLE block in the system context) — name WHICH beat carries it + WHICH feature (signature_feature / second_celebrated_feature) OR WHICH tell (stress_tic / desire_tell / impatience_tell / confidence_tell / vulnerability_tell) is firing + a sketch that POINTS AT the firing motif (not a verbatim copy of the Bible text). ROTATE across scenes so a salient PHYSICAL feature (signature_feature / second_celebrated_feature — NOT only a tic/tell) surfaces at least once every ~2 scenes, ALTERNATING with the LI so both bodies stay visible across the arc, and tells fire WHEN their trigger fires. Roman 2026-06-12 SKETCH-AS-POINTER RULE: your job is to pick WHICH BEAT + WHICH BIBLE FIELD fires. The sketch is a POINTER, not a script. Preserve the anchor (which body part / site) and the mechanic (press / count / turn / twist / pull / hold / drop). The PROSE LAYER reads the Bible and renders the motif for the scene — varying wording, framing, emphasis, narrative distance, and sentence construction so the same character-signature recurs without the same sentence recurring. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Do NOT inline the Bible\'s literal field text in your sketch. Format examples: "beat 2 — signature_feature (the crooked front tooth)"; "beat 1 — stress_tic (the grandmother\'s ring)"; "decision — desire_tell (the breath before she admits anything)". Each example names the firing motif + anchor; the prose layer renders the surface. Required. If no Bible exists yet, return null and the directive will be skipped. li_body_callback = if the LI is IN_PERSON or ON_PHONE this scene, name WHICH beat carries the PC noticing ONE specific thing about him from the LI Body Bible (see LOVE INTEREST BODY BIBLE block) — pick from pc_keenly_notices basket OR a tell of his firing (focus_tell when his attention locks onto her, restraint_tell when he holds back, interest_tell when he treats her differently than the room, frustration_tell, desire_tell). ROTATE across scenes; never default to the same anchor. NEVER "jaw" / "jaw tightening" (banned, calcified). NEVER power-coded ("the room reorganized around him" — that\'s presence, not desire). NEVER generic-handsome (chiseled jaw, piercing eyes). Roman 2026-06-12 SKETCH-AS-POINTER RULE: when this scene\'s callback fires a tell of his (focus / restraint / interest / frustration / desire), the sketch is a POINTER — name the firing motif and the anchor (body part / mechanic). Do NOT inline the Bible\'s literal field text. The PROSE LAYER reads the LI Bible and renders the motif, varying wording and sentence construction scene to scene while preserving the anchor and mechanic so the reader recognizes the character. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Format: "beat 2 — restraint_tell (the pause he takes before answering)". Examples (using illustrative Bible values — your sketch uses THIS story\'s actual values): "beat 1 — pc_keenly_notices: she catches his hands on the glass — broad, the right one scarred at the knuckles"; "beat 2 — restraint_tell: his hand flattens slowly on the table — his version of pulling himself back"; "decision — interest_tell: he stands a foot closer to her than to anyone else in the room". MICRO-SCENE + COGNITIVE INTERFERENCE (HARD — Roman 2026-06-03; mirror of the offstage rules tuned for ON-STAGE LI noticing — every line he speaks is a chance for her cognition to break, so sketch the noticing as a moment in REAL TIME where her attention to him CAUSES HER TO MISS SOMETHING). The sketch must take a MICRO-MOMENT shape (a specific thing he does this scene + her body\'s specific response), NEVER a SUMMARY ("he was the kind of man whose hands gave him away" — biography). Climb to LEVEL 4: ✗ L1 EXPOSITION ("he had elegant hands"); ⚠ L2 NEUTRAL NOTICING ("she watched his hands while he poured the wine"); ✓ L3 ATTRACTION-PRESENT ("she watched his hands and felt the heat low in her sternum"); ✓✓ L4 COGNITIVE INTERFERENCE ("she watched his hands for the whole answer and had to ask him to repeat it"). PREFER L4: her noticing CAUSES her to miss / lose the thread / stop tracking / answer the wrong question. The attraction is in the COGNITIVE FAILURE, not the noticing. Null if LI is OFFSTAGE_REFERENCED — in that case li_texture_beat covers him. Required when LI is on-stage. antagonist_body_callback = if the ANTAGONIST is IN_PERSON in this scene AND the ANTAGONIST BODY BIBLE block exists in the system context, name WHICH beat carries the PC noticing ONE specific thing about them — pick from pc_keeps_noticing basket OR a tell firing (targeting_tell when his attention finds her; control_tell when he takes the room; pleasure_tell when he enjoys her discomfort; escalation_tell right before he pushes further). THREAT register — NOT desire register; never cross-wire with the LI noticing. ROTATE across scenes. The softness_seam — the ONE uncalculated tell that humanizes them — fires AT MOST ONCE in the whole arc; do NOT use it casually. NEVER generic-villain ("cold eyes", "cruel smile", "menacing presence"). Examples: "beat 2 — control_tell: he sits down before being invited; the room re-files itself around him"; "beat 1 — signature_feature: the smile arrives the half-second too late she has stopped pretending not to notice"; "decision — pleasure_tell: the corner of his mouth pulls a quarter-inch when she stumbles on the word". Null if the antagonist is OFFSTAGE_REFERENCED or ON_PHONE this scene, or if no Bible exists. Required only when antagonist is IN_PERSON.' },
+          { role: 'system', content: _stageContractBlock + 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object — no markdown, no commentary. Required fields: environment_anchor, structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm, staged_characters, interlocutor_placement, li_texture_beat, pc_body_callback, li_body_callback, antagonist_body_callback, environment_plus, fusion, stage_contract, causal_outline.\nCAUSAL_OUTLINE = the DRAMATIC SEQUENCE that delivers the scene purpose given in the user message under THIS SCENE PURPOSE WITHIN THE ISSUE. An ARRAY of ' + _skelBeatRangeText + ' objects, in order: { "beat": "<the development: who does what, to whom, and what it costs or produces. 5-25 words. Name people and acts.>", "link": "<therefore | but>", "from": "<which earlier beat number this one answers, 1-indexed; omit for the first>" }.\nTHE BUT/THEREFORE RULE (HARD): each development must OBSTRUCT ("but") or CAUSE ("therefore") the next. A sequence joined by "and then" is a list of observations, not a scene, and is a FAILED outline. Every entry after the first MUST carry link exactly "therefore" or "but". These are STRUCTURAL LABELS FOR THE PLANNER: the words but / therefore / and then must NEVER be instructed into the prose, and you are not writing prose here.\nA BEAT IS NOT A SENTENCE and not a caption. It is ONE development, which the author may write through in several sentences of action, dialogue and consequence. The scene is written to a 700-1000-word budget, so an outline of thin glances and held breaths produces a thin scene however many entries it has. At least HALF the entries must be someone DOING something to someone else, or SAYING something that changes what another person can do next. Stillness, noticing and atmosphere may fill the rest; they may not carry the sequence.\nSTOP AT A GENUINELY UNRESOLVED PLAYER DECISION. If the purpose says the player decides at the end of this scene, the outline ends ON the decision being forced and does NOT contain the protagonist answer.\nDO NOT WRITE THE PROSE. Each entry ASSIGNS a development; the author chooses the words. environment_anchor = a physical object/surface/sound/environmental phenomenon the scene should begin from (4-12 words, world-specific).\nDo NOT return `character_plus`, `facet_id`, `option_id` or any per-character psychological angle. Character psychology for this scene is resolved by the backend from canon and is not yours to assign. Stage who is present; that is the whole of your responsibility for people.\nENVIRONMENT_PLUS = {target, axis}. REQUIRED EVERY SCENE, no exceptions — a scene whose place means nothing has failed. `target` is a specific object or place already present (prefer the environment_anchor or a listed prop). `axis` is exactly one of: history · use · damage · ownership · repair · ritual · absence — what this thing has BECOME because of what happened to it. Never symbolism; a spoon is usually a spoon.\nFUSION = {character, target} or null. Roughly one scene in five, NOT every scene: one beat where a person and a thing reveal each other. Prefer null to a forced one.\nASSIGN, DO NOT WRITE. Every field is a target for the author to realise in their own words. If you write the prose yourself the author copies your phrasing and the scene reads assembled. structural_pacing / narrative_density / dialogue_ratio / beat_style / tension_rhythm = short phrases (3-8 words). staged_characters = an ARRAY of {name, presence_mode, role} objects covering every character who APPEARS or is NAMED in the upcoming scene (include the protagonist). presence_mode is exactly one of: IN_PERSON (physically present, can be looked at / touched / handed a physical object), ON_PHONE (audible only via call/voice channel — NOT physically present, CANNOT receive a physical handoff — the most common failure shape is a planner treating a phone-call interlocutor as IN_PERSON), OFFSTAGE_REFERENCED (named or discussed but not present in any form). Be STRICT about ON_PHONE vs IN_PERSON. If the player intent or prior staging implies a transition (the player leaves a location, takes a call, walks into a new room), reflect that in the new staging. interlocutor_placement = if any NAMED character APPEARS or is in active engagement with the protagonist this scene (IN_PERSON OR ON_PHONE), give NAME + RELATIONSHIP-TO-PROTAGONIST + one revealing TELL in 10-20 words. The TELL form depends on presence_mode: IN_PERSON → an OBSERVED physical/behavioral detail. ON_PHONE → a REMEMBERED, PROJECTED, or HEARD-THROUGH-LINE detail (e.g. "Lina — her direct contact at the foundation board, a woman whose long sigh always preceded the part of the meeting she had stopped pretending to negotiate"). Naming + job alone is NOT enough — phone interlocutors require their own kind of texture. Null only if no named character is engaging with the protagonist. li_texture_beat = if the love interest is OFFSTAGE_REFERENCED or ON_PHONE in this scene, a 15-30-word sketch of WHICH beat carries a textured memory of him + WHAT the memory shape is. Roman 2026-06-01 PHOTOGRAPH TEST (HARD): the memory MUST contain a VERB he performed (a behavior / decision / joke / deflection / kindness / contradiction), drawn from his Bible\'s behavioral fields (signature_behavior / deflection_pattern / attraction_manifestation / defining_anecdote). A PHYSICAL ANCHOR is REQUIRED too (Roman 2026-06-04 — the PHOTOGRAPH TEST is REVISED, not removed): the ideal beat carries ALL THREE — a VERB + an attractive PHYSICAL ANCHOR + a REVELATION about who he is. A feature is wallpaper ONLY when it reveals NOTHING (✗ "rolled sleeves / a scar / broad shoulders / dark hair"); a feature that reveals him is REQUIRED (✓ "the scar at the corner of his mouth deepening whenever he was about to say something cruel" / "hands that looked capable of breaking things, paired with impossible patience"). TEST: remove the feature — is it pure WALLPAPER (gives NEITHER attraction NOR character)? If it gives EITHER — ATTRACTION ALONE is sufficient — keep it (Roman 2026-06-04 correction: a pure attraction anchor like broad shoulders / strong jaw needs NO character reason; characterization is a bonus). No = wallpaper. SOURCE PRIORITY (Roman 2026-06-03 — measured: the memory keeps drawing from deflection_pattern / signature_behavior, so he is remembered as an intriguing STRATEGIST, not a man she WANTS). For a DESIRE-bearing memory (engine = SHARED_HISTORY or LOOMING_PRESENCE, or any LI she has wanted), draw the VERB FIRST from attraction_manifestation or desire_register_exemplars — a moment of WANTING (his desire/care-as-action toward her, or a charged moment between them). deflection_pattern / signature_behavior are the STRATEGIST register: use them ONLY when the engine is ADVERSARIAL (COLLISION, pre-bond) or as secondary color — NEVER the default for a desire-bearing scene. ENEMIES-TO-LOVERS / ANTAGONISTIC SHARED-HISTORY (Roman 2026-06-04 — she opposes, distrusts, or has insulted him, but they have HISTORY and a charge): this is NOT adversarial-equals-strategist. It is RELUCTANT DESIRE — her body wants him AGAINST HER WILL and she is FURIOUS at herself for it. She notices his shoulders / forearms / mouth / the way he fills a doorway, hates that she noticed, and reaches for an insult to COVER the wanting. Draw the VERB from attraction_manifestation / desire_register and let the antagonism COLOR it — NEVER let the hostility REPLACE the wanting with pure scheming-analysis or name-calling. The hatred and the wanting COEXIST; that friction IS the engine of enemies-to-lovers. Strategist-only (all intrigue, zero body, just calling him names) is the failure. A memory that turns on a strategist move ("he named what she would not say, then waited") reads as intrigue, not desire. Pull from defining_anecdote when in doubt. Format: "beat 2: she catches herself remembering [a specific thing he DID — verb-anchored] — and [her embodied response]." Null if the LI is IN_PERSON or genuinely absent from the scene\'s consciousness. MICRO-SCENE vs SUMMARY (HARD — Roman 2026-06-03; applies to ALL scenes where LI is offstage, not just Scene 1): the texture beat MUST be a MICRO-SCENE (specific small moment + specific body reaction in her), NEVER a SUMMARY (personality/relationship/plot/factual statement about him). ✗ "he always knew what to say" / "things between us had always been complicated" / "he had lied to me about X" / "he ran the kind of enclave that made governments nervous." ✓ a single remembered moment / expression / gesture / look / reaction / fragment of dialogue. PAIRED: ✗ "he lied convincingly" vs ✓ "' + (typeof window._rotLiPairedComparison === 'function' ? window._rotLiPairedComparison() : 'he lied while setting his pen down with both hands and not picking it back up, and I had spent the whole conversation watching his hand instead of the lie') + '." COGNITIVE INTERFERENCE TEST (HARD — Roman 2026-06-03; the ladder from biography to desire — sketch at LEVEL 4): ✗ L1 EXPOSITION ("he was attentive"); ⚠ L2 NEUTRAL MICRO-SCENE ("I remembered how kind he was to the waiter" — moment without desire); ✓ L3 ATTRACTION-PRESENT ("the way he\'d watched me while pretending to listen" — attraction visible); ✓✓ L4 COGNITIVE INTERFERENCE ("the question he hadn\'t answered because I\'d spent the whole conversation watching his hands" — attraction breaks her thinking). ✓✓ L4 STRANGER-COMPATIBLE VARIANT (Roman 2026-06-12 — for COLLISION / LOOMING_PRESENCE, when she has no past observation of him): present-tense interference from anticipation / reputation / projection — NEVER invent a prior interaction ("the one time at the gala" / "we exchanged a few words last spring" / "I had met him briefly") to license L4. That is the Level-4-by-fake-history failure mode. Anticipation-shape examples: "she had been listening to Sophie for ten minutes and only now realized she had been picturing the back of a stranger\'s hand on a glass — a man she had not met and could not stop assembling from third-hand stories"; "she was answering an email and had lost the thread of her own sentence — somewhere in the building was a man she had been hearing about for six months, and her body had decided he was already someone". Same cognitive failure, NO past memory required. PREFER L4: she missed / lost the thread / stopped tracking because she was watching him. The attraction is in the COGNITIVE FAILURE, not the noticing. Roman 2026-06-01 P3 ENGINE GATE (HARD): see the ROMANCE ENGINE block in the user context. If the engine is COLLISION and this scene predates the PC having any memory of him at all (early-arc, pre-meet), li_texture_beat MUST be null — forcing a textured memory of someone she has not met is an engine-betrayal failure. If LOOMING_PRESENCE pre-meet, the texture should be ANTICIPATION-shape (reputation, what she has heard, the version she has built from other people\'s stories) — NOT a remembered event between them. pc_body_callback = a LIGHT recurring touch from the PC Body Bible (see PC BODY BIBLE block in the system context) — name WHICH beat carries it + WHICH feature (signature_feature / second_celebrated_feature) OR WHICH tell (stress_tic / desire_tell / impatience_tell / confidence_tell / vulnerability_tell) is firing + a sketch that POINTS AT the firing motif (not a verbatim copy of the Bible text). ROTATE across scenes so a salient PHYSICAL feature (signature_feature / second_celebrated_feature — NOT only a tic/tell) surfaces at least once every ~2 scenes, ALTERNATING with the LI so both bodies stay visible across the arc, and tells fire WHEN their trigger fires. Roman 2026-06-12 SKETCH-AS-POINTER RULE: your job is to pick WHICH BEAT + WHICH BIBLE FIELD fires. The sketch is a POINTER, not a script. Preserve the anchor (which body part / site) and the mechanic (press / count / turn / twist / pull / hold / drop). The PROSE LAYER reads the Bible and renders the motif for the scene — varying wording, framing, emphasis, narrative distance, and sentence construction so the same character-signature recurs without the same sentence recurring. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Do NOT inline the Bible\'s literal field text in your sketch. Format examples: "beat 2 — signature_feature (the crooked front tooth)"; "beat 1 — stress_tic (the grandmother\'s ring)"; "decision — desire_tell (the breath before she admits anything)". Each example names the firing motif + anchor; the prose layer renders the surface. Required. If no Bible exists yet, return null and the directive will be skipped. li_body_callback = if the LI is IN_PERSON or ON_PHONE this scene, name WHICH beat carries the PC noticing ONE specific thing about him from the LI Body Bible (see LOVE INTEREST BODY BIBLE block) — pick from pc_keenly_notices basket OR a tell of his firing (focus_tell when his attention locks onto her, restraint_tell when he holds back, interest_tell when he treats her differently than the room, frustration_tell, desire_tell). ROTATE across scenes; never default to the same anchor. NEVER "jaw" / "jaw tightening" (banned, calcified). NEVER power-coded ("the room reorganized around him" — that\'s presence, not desire). NEVER generic-handsome (chiseled jaw, piercing eyes). Roman 2026-06-12 SKETCH-AS-POINTER RULE: when this scene\'s callback fires a tell of his (focus / restraint / interest / frustration / desire), the sketch is a POINTER — name the firing motif and the anchor (body part / mechanic). Do NOT inline the Bible\'s literal field text. The PROSE LAYER reads the LI Bible and renders the motif, varying wording and sentence construction scene to scene while preserving the anchor and mechanic so the reader recognizes the character. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Format: "beat 2 — restraint_tell (the pause he takes before answering)". Examples (using illustrative Bible values — your sketch uses THIS story\'s actual values): "beat 1 — pc_keenly_notices: she catches his hands on the glass — broad, the right one scarred at the knuckles"; "beat 2 — restraint_tell: his hand flattens slowly on the table — his version of pulling himself back"; "decision — interest_tell: he stands a foot closer to her than to anyone else in the room". MICRO-SCENE + COGNITIVE INTERFERENCE (HARD — Roman 2026-06-03; mirror of the offstage rules tuned for ON-STAGE LI noticing — every line he speaks is a chance for her cognition to break, so sketch the noticing as a moment in REAL TIME where her attention to him CAUSES HER TO MISS SOMETHING). The sketch must take a MICRO-MOMENT shape (a specific thing he does this scene + her body\'s specific response), NEVER a SUMMARY ("he was the kind of man whose hands gave him away" — biography). Climb to LEVEL 4: ✗ L1 EXPOSITION ("he had elegant hands"); ⚠ L2 NEUTRAL NOTICING ("she watched his hands while he poured the wine"); ✓ L3 ATTRACTION-PRESENT ("she watched his hands and felt the heat low in her sternum"); ✓✓ L4 COGNITIVE INTERFERENCE ("she watched his hands for the whole answer and had to ask him to repeat it"). PREFER L4: her noticing CAUSES her to miss / lose the thread / stop tracking / answer the wrong question. The attraction is in the COGNITIVE FAILURE, not the noticing. Null if LI is OFFSTAGE_REFERENCED — in that case li_texture_beat covers him. Required when LI is on-stage. antagonist_body_callback = if the ANTAGONIST is IN_PERSON in this scene AND the ANTAGONIST BODY BIBLE block exists in the system context, name WHICH beat carries the PC noticing ONE specific thing about them — pick from pc_keeps_noticing basket OR a tell firing (targeting_tell when his attention finds her; control_tell when he takes the room; pleasure_tell when he enjoys her discomfort; escalation_tell right before he pushes further). THREAT register — NOT desire register; never cross-wire with the LI noticing. ROTATE across scenes. The softness_seam — the ONE uncalculated tell that humanizes them — fires AT MOST ONCE in the whole arc; do NOT use it casually. NEVER generic-villain ("cold eyes", "cruel smile", "menacing presence"). Examples: "beat 2 — control_tell: he sits down before being invited; the room re-files itself around him"; "beat 1 — signature_feature: the smile arrives the half-second too late she has stopped pretending not to notice"; "decision — pleasure_tell: the corner of his mouth pulls a quarter-inch when she stumbles on the word". Null if the antagonist is OFFSTAGE_REFERENCED or ON_PHONE this scene, or if no Bible exists. Required only when antagonist is IN_PERSON.' },
           { role: 'user', content: `Define a narrative skeleton for the next scene:
-Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
+${_skelPurposeBlock}Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
 Tension: ${ni.active_tension || 'building'} | Trust: ${rt.trust || 'unknown'}
 ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
 Location: ${state.physicalState?.location || 'unknown'}
@@ -98798,7 +98820,9 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             // reasoning on. JSON mode because this returns a structured object, not prose.
             body: JSON.stringify({ role: 'PROMPT_PREPROCESSOR', model: 'mistral-small-latest',
               // 1400 → 2300: +900 for stage_contract, the allowance in __CP_STAGE_CONTRACT.
-              temperature: 0.4, max_tokens: 2300, reasoning_effort: 'none',
+              // 2300 → 3800: +1500 for causal_outline (20-24 entries × ~25 words, plus links).
+              // A truncated skeleton loses the whole object, so this is sized for the worst case.
+              temperature: 0.4, max_tokens: 3800, reasoning_effort: 'none',
               response_format: { type: 'json_object' }, messages: _skelMsgs }),
           });
           const _j = await _r.json();
@@ -98912,7 +98936,35 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                   console.log('[SPINE-STAGING] environment_anchor ← "' + _spineAnchor + '" (was: "' + String(anchor || '').slice(0, 60) + '")');
                 }
               } catch (_) {}
+              var _causalNorm = null, _causalWhy = 'absent from the response';
+              try {
+                var _cRaw = Array.isArray(parsed.causal_outline) ? parsed.causal_outline
+                  : (Array.isArray(parsed.causalOutline) ? parsed.causalOutline : null);
+                if (_cRaw) {
+                  var _cl = [];
+                  _cRaw.forEach(function (b, i) {
+                    var txt = String((b && (b.beat || b.text || b.development)) || (typeof b === 'string' ? b : '')).trim();
+                    if (!txt) return;
+                    var lk = String((b && b.link) || '').trim().toLowerCase();
+                    var frm = Number(b && b.from);
+                    _cl.push({ i: _cl.length + 1, beat: txt.slice(0, 300),
+                               link: (lk === 'but' || lk === 'therefore') ? lk : null,
+                               from: (frm > 0) ? frm : null });
+                  });
+                  if (_cl.length) {
+                    _causalNorm = _cl;
+                    var _unl = _cl.filter(function (b, i) { return i > 0 && !b.link; }).length;
+                    _causalWhy = _cl.length + ' developments, ' + (_cl.length - 1 - _unl) + ' of '
+                      + Math.max(0, _cl.length - 1) + ' causally linked';
+                    if (_unl) try { console.warn('[SKELETON:CAUSAL] ' + _unl + ' of ' + _cl.length
+                      + ' developments carry no therefore/but link — reported, not repaired'); } catch (_) {}
+                  } else _causalWhy = 'every entry was empty';
+                }
+              } catch (_eC) { _causalWhy = 'normalisation threw: ' + (_eC && _eC.message); }
+              try { console.log('[SKELETON:CAUSAL] ' + (_causalNorm ? ('OK — ' + _causalWhy) : ('ABSENT — ' + _causalWhy))); } catch (_) {}
               state.sceneSkeleton = {
+                  causal_outline: _causalNorm,
+                  causal_outline_note: _causalWhy,
                   environment_anchor: _spineAnchor || (anchorRepeated ? '' : anchor),
                   structural_pacing: parsed.structural_pacing || 'measured escalation',
                   narrative_density: parsed.narrative_density || 'moderate',
@@ -101794,6 +101846,35 @@ function _buildAuthorFloorDirective(s) {
     } catch (_epErr) { try { console.warn('[EDITORIAL-PASS] error:', _epErr && _epErr.message); } catch (_) {} return ''; }
   };
 
+  function _renderCausalOutlineDirective(st) {
+    try {
+      st = st || window.state; if (!st) return '';
+      var sk = st.sceneSkeleton || null;
+      var rows = (sk && Array.isArray(sk.causal_outline)) ? sk.causal_outline : null;
+      if (!rows || !rows.length) return '';
+      var L = ['\n  CAUSAL OUTLINE — THE DRAMATIC SEQUENCE OF THIS SCENE (HARD; this is HOW the scene'
+        + ' accomplishes its purpose above. Each line is ONE DEVELOPMENT, not one sentence and not a'
+        + ' caption: write it THROUGH — the act happens, the other person answers, the cost arrives.'
+        + ' You own every word, the pacing, the imagery, and any micro-beat you want to add. You may'
+        + ' NOT drop a development, reorder them so an effect precedes its cause, or replace the'
+        + ' sequence with atmosphere):'];
+      rows.forEach(function (b) {
+        var lk = b.link === 'but' ? 'BUT — this is OBSTRUCTED by what just happened: '
+          : b.link === 'therefore' ? 'THEREFORE — this happens BECAUSE of what just happened: ' : '';
+        L.push('    ' + b.i + '. ' + lk + b.beat);
+      });
+      L.push('    THE LINKS ARE STRUCTURE, NOT WORDING: "but" and "therefore" describe how these'
+        + ' developments are connected. Never write the words "but", "therefore" or "and then" as'
+        + ' connectives between beats to signal the link — the reader must FEEL the obstruction or'
+        + ' the consequence in what people do and say.');
+      L.push('    A development the scene merely MENTIONS has not been delivered. The scene\'s'
+        + ' 700-1000-word budget exists to write these through; if you are running short, the'
+        + ' developments are too THIN, not too few.');
+      return L.join('\n') + '\n';
+    } catch (_) { return ''; }
+  }
+  window._renderCausalOutlineDirective = _renderCausalOutlineDirective;
+
   function _buildPlotContractDirective() {
     try {
       if (!_plotContractActive()) return '';
@@ -101867,7 +101948,19 @@ function _buildAuthorFloorDirective(s) {
           }
         } catch (_) {}
         var _spineBlock = '';
-        if (_spineVerbatim && _authV2) {
+        // THE SCENE'S PURPOSE WITHIN THE ISSUE — the issue outline's own row for this scene.
+        var _issuePurposeBlock = '';
+        try {
+          var _ipn = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(state) : 0;
+          if (typeof _renderIssueOutlineDirective === 'function') _issuePurposeBlock = _renderIssueOutlineDirective(state, _ipn) || '';
+        } catch (_) { _issuePurposeBlock = ''; }
+        if (_issuePurposeBlock) {
+          // The purpose block SUPERSEDES the old milestone paragraph. It carries the same plan goal,
+          // states it as this scene's assignment rather than as background it must not accomplish,
+          // and adds the causal trajectory the milestone never had.
+          _spineBlock = _issuePurposeBlock
+            + '  THE EVENT BELOW IS HOW THAT PURPOSE LANDS, not a competing assignment: the purpose says what this scene is FOR, the event says what physically happens and who is in the room. Accomplish the purpose BY staging the event. Do NOT also try to accomplish a LATER scene\'s purpose here.\n';
+        } else if (_spineVerbatim && _authV2) {
           _spineBlock = '\n  ISSUE MILESTONE — NARRATIVE INTENT (context for WHY this scene matters to the arc; NOT staging authority, NOT the event to render):\n'
             + '  «' + _spineVerbatim + '»\n'
             + '  This tells you what this scene must MEAN for the issue. It does NOT tell you what physically happens, where it happens, or who is in the room — the SCENE SPINE below owns that. Do NOT restate this milestone as the scene\'s action, and do NOT try to accomplish the whole milestone in one scene.\n';
@@ -101880,7 +101973,7 @@ function _buildAuthorFloorDirective(s) {
         }
         // Assignment-supplied staging rides with EITHER authority (null in production today — the plan
         // authors only {n, goal} — but a seeded plan MAY supply it, and it must not be dropped when it does).
-        if (_spineVerbatim) {
+        if (_spineVerbatim || _issuePurposeBlock) {
           try {
             var _sd2 = [];
             if (_asg && _asg.setting) _sd2.push('SETTING: ' + _asg.setting);
@@ -101913,6 +102006,7 @@ function _buildAuthorFloorDirective(s) {
                  + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + (typeof _fscSeedProse === 'function' ? _fscSeedProse(_sc.slots.exitState, 'exitState') : _sc.slots.exitState) + '\n'
                  + '    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER\'s error to surface, NOT yours to fix by rerouting — stage it as written.\n')
               : '')
+          + _renderCausalOutlineDirective(state)
           + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
           + '  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters\' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene\'s organizing subject. The scene is about the event; the dynamic is how they live through it.\n'
           // DELIVERY-MANDATE A/B (Roman 2026-07-27): Arm A = the directive above ("stage the transition"). Arm B
@@ -101924,7 +102018,18 @@ function _buildAuthorFloorDirective(s) {
           + _bindingFactsBlock;
       }
       var beats = (pc && Array.isArray(pc.hardBeats)) ? pc.hardBeats.filter(function (b) { return b && b.description; }) : [];
-      if (!beats.length) return '';
+      if (!beats.length) {
+        // No planner contract this scene. The issue purpose and the causal outline are owned by
+        // different components and must still reach the author; returning '' here is what used to
+        // drop them both.
+        var _noContract = '';
+        try {
+          var _npn = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(state) : 0;
+          if (typeof _renderIssueOutlineDirective === 'function') _noContract += (_renderIssueOutlineDirective(state, _npn) || '');
+        } catch (_) {}
+        _noContract += _renderCausalOutlineDirective(state);
+        return _noContract;
+      }
       try { console.log('[PLOT-CONTRACT:DIRECTIVE] scene=' + (state.turnCount == null ? '?' : state.turnCount) + ' beats=' + beats.length); } catch (_) {}
       return '\n  PLOT CONTRACT (HARD — this scene MUST LAND these concrete causal beats. The prose may be beautiful, but the STORY does not advance unless these happen. Deliver each through ACTION / DIALOGUE / CONSEQUENCE — never as exposition, never as optional flavor, never skipped to spend words on atmosphere or attraction): '
         + beats.map(function (b) { return '«' + String(b.description) + '»'; }).join('; ')
@@ -102253,7 +102358,8 @@ function _buildAuthorFloorDirective(s) {
               try { _relObligation = (_posture && typeof _relationalObligationForPosture === 'function') ? _relationalObligationForPosture(s, _posture.action, _posture.dialogue) : null; } catch (_) { _relObligation = null; }
               var _prevObj = s._sceneObjectives && s._sceneObjectives[String(_planSceneNum)];
               if (_prevObj && _prevObj.status === 'accepted' && _posture && _prevObj.postureHash === _posture.hash && _prevObj.storyId === s.storyId) _openReuse = _prevObj;
-              else if (_prevObj && _prevObj.status === 'accepted') { try { console.log('[OBJECTIVE:SUPERSEDED] scene ' + _planSceneNum + ' posture changed (' + _prevObj.postureHash + ' → ' + (_posture && _posture.hash) + ') — the old objective is dropped'); } catch (_) {} s._sceneObjectives[String(_planSceneNum)] = Object.assign({}, _prevObj, { status: 'superseded', supersededAt: Date.now() }); _effSpine = _effectiveSceneRow(s, _planSceneNum); }
+              else if (_prevObj && _prevObj.status === 'accepted') { try { console.log('[OBJECTIVE:SUPERSEDED] scene ' + _planSceneNum + ' posture changed (' + _prevObj.postureHash + ' → ' + (_posture && _posture.hash) + ') — the old objective is dropped'); } catch (_) {} s._sceneObjectives[String(_planSceneNum)] = Object.assign({}, _prevObj, { status: 'superseded', supersededAt: Date.now() }); _effSpine = _effectiveSceneRow(s, _planSceneNum);
+                try { if (typeof _reviseIssueOutlineForMove === 'function') _reviseIssueOutlineForMove(s, 'scene ' + _planSceneNum + ' posture changed — objective superseded'); } catch (_) {} }
             }
             if (_effSpine) _planScene = Object.assign({}, _planScene, { goal: _effSpine.goal || (_openRow ? '' : (_effSpine.effectiveEvent || '')), requiredTruth: _effSpine.requiredTruth || null, exitState: _effSpine.exitState || null, participants: _effSpine.participants || (_openRow ? (_effSpine.roster || []).map(function (r) { return r.label; }) : null), presentGroups: _effSpine.presentGroups || null });
             if (_planScene) {
@@ -133368,6 +133474,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   const STARTER_PLANS = {
     starter_first_sacrifice: {
       issue: 1,
+      // THIS PLAN'S OWN ISSUE SPAN (Roman 2026-10-11). The 20 rows below ARE Issue 1 for outline
+      // purposes. ISSUE_PRICING.cg says 10 scenes per issue and ISSUE_PRICING.literary says 20 —
+      // those remain the billing, cover, numbering and _isLastSceneOfIssue contract and are not
+      // changed here. 20-24 is a THIRD, unrelated number: the beats inside one CG scene.
+      // _issueOutlineBounds reconciles plan-span vs pricing-span out loud on every build.
+      issueScenes: 20,
+      // ── THE ISSUE'S CLIFFHANGER (Roman 2026-10-11) ──
+      // Not an "ending shape". A specific event, with the predicament it leaves for Issue 2.
+      // It is DECIDED BY the player at scene 19, so both branches are declared and NEITHER is
+      // selected until the reader chooses — the outline stops at the decision rather than
+      // authoring it. Every clause below restates what rows 14-19 already state (the inquiry
+      // turned toward Julian; the intervention broke one of the oldest taboos; Julian admitted
+      // the act; he did it to save both the youth and her). No new lore, no new named character.
+      cliffhanger: {
+        scene: 20, provenance: 'authored_seed_spine',
+        decidedBy: { scene: 19, axis: 'expose what Julian did vs let the inquiry\'s judgement stand' },
+        branches: [
+          { choice: 'expose',
+            event: 'Lirael puts Julian\'s act on the inquiry\'s record. The judgement against her does not hold — and the panel now has a taboo-breaking of its own to answer for, committed by the caretaker of The Answer.',
+            issue2Predicament: 'Lirael is cleared, and alone with what clearing her cost: the man who saved her is the one she handed over, and the Institution is now prosecuting a broken taboo rather than a misaligned wish. Issue 2 opens on her answering for that — to him, and to them.' },
+          { choice: 'conceal',
+            event: 'Lirael lets the record stand. The inquiry closes against her on a judgement she knows is false, Julian is untouched, and the only other person who knows it is sitting in the room.',
+            issue2Predicament: 'Lirael carries a condemnation she could lift with one sentence, bound to Julian by a concealment either of them can end at any moment. Issue 2 opens on living under that judgement and under that leverage.' },
+        ],
+      },
       // SEALED FUTURE REVEALS (Roman 2026-09-11): structured ids only. Sent to every continuation planner as reserved
       // ids with a mandatory "untouched" status until the unsealing scene; the sealed TEXT (seed.truths) is never rendered.
       sealedEvents: [
@@ -133424,6 +133555,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // any, none, or the reader's own — never a menu. `stage.participants` is the ROSTER of who CAN be present; the
     // accepted objective says who IS. No goal text lives here, per branch or otherwise.
     { n: 2, objective: 'reader', aftermathSource: 'baked_emitted',
+      causalLink: 'therefore',
+      followsFrom: 'The wish has already twisted in front of the assembly, and scene 1 ended on Lirael\'s decision about whether to break protocol for Seren.',
+      setsUp: 'Lirael\'s standing is at risk and the cost of the wish is still uncounted.',
       constraints: ['NO new mystery', 'NO new named character', 'NO new lore'],
       vectors: [
         'Lirael goes on the offensive against Julian for what his accusation called her',
@@ -133658,7 +133792,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       },
       defaultEventFrame: { laneId: 'dohkar_preliminary_review', eventFrame: 'The presiding Dohkar puts Lirael\'s conduct formally in question before the assembly — he calls for a preliminary review and says she will answer for her conduct, moving the confrontation off the ritual floor and into procedure. He does NOT name who will convene it, does NOT give a date or timeframe, and does NOT name The Open, a Chayr, or \"two Dohkars\" — the seed reserves the constituted inquiry for LATE Issue 1, and naming its conveners or its date IS constituting it. The pressure is the event; the proceeding is not. This is also NOT another round of asking whether she shaped the wish.' },
     },
-    { n: 3, goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
+    { n: 3, causalLink: 'therefore',
+      followsFrom: 'Lirael\'s standing is at risk after the aftermath of scene 2, and the cost of Seren\'s wish has still not been counted.',
+      setsUp: 'The price has landed, a new irreversible pressure is in play, Julian\'s position has shifted, and the player stands at a threshold Lirael does not cross for them.',
+      goal: 'THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // MIGRATED B: same room, same people; the beats are contingent on the Scene-1 choice and
       // on the price the rite exacts, so no act is authorable as a fact here either.
@@ -133708,7 +133845,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // WHAT CHANGES: the beat is NOTICE AND RESTRICTION, not a hearing. The inquiry Chayr is gone; he
     // belongs to the convened panel, which is now row 14's business. Beat 1 deliberately WITHHOLDS
     // who will hear the matter, turning the old attractor into an explicit refusal.
-    { n: 4, goal: 'NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.',
+    { n: 4, causalLink: 'but',
+      changes: 'Lirael is formally under investigation, bound by named restrictions, and has not been allowed to explain herself.',
+      followsFrom: 'The price has landed and a new irreversible pressure arrived — but Lirael still cannot explain herself.',
+      setsUp: 'Lirael is formally under investigation and supervised, and Julian, who demanded the review, has not faced her.',
+      goal: 'NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.',
       participants: ['Lirael', 'the presiding Dohkar'],
       presentGroups: ['the assembly (unnamed, no dialogue)'],
       stage: {
@@ -133739,7 +133880,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                            { ref: 'pc:self', role: 'target', label: 'Lirael' }] },
         ],
       } },
-        { n: 5, goal: 'Julian quietly prevents the investigation from uncovering the truth.',
+        { n: 5, causalLink: 'therefore',
+          changes: 'The investigation can no longer reach the truth, and the reason it cannot is Julian.',
+          followsFrom: 'Lirael is formally under investigation at Julian\'s own demand.',
+          setsUp: 'The investigation is being steered away from the truth, and nobody yet knows it is being steered.',
+          goal: 'Julian quietly prevents the investigation from uncovering the truth.',
         // MIGRATED A (2026-09-01): the goal names ONE actor performing attributable acts, and it does
         // not branch on the player. Julian acts; the inquiry is the thing acted upon.
           stage: { v: 1, provenance: 'authored_seed_spine',
@@ -133756,10 +133901,25 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             ],
           },
         },
-        { n: 6, goal: 'The PC discovers the wish succeeded in a way that should have been impossible.' },
-        { n: 7, goal: 'Rumors spread through the city; the PC’s reputation collapses.' },
-        { n: 8, goal: 'The PC realizes someone else may have intervened.' },
-        { n: 9, goal: 'She begins suspecting Julian.', requiredTruth: 'Julian is still innocent in the reader’s eyes.', exitState: 'Suspicion established; evidence incomplete.', cliffhanger: 'The PC finds contradictory evidence.',
+        { n: 6, causalLink: 'but',
+          changes: 'Lirael knows the wish succeeded in a way that should not have been possible.',
+          followsFrom: 'The investigation has been steered away from the truth — but the wish itself is still there to be looked at.',
+          setsUp: 'The wish\'s impossible success is a fact Lirael now holds and cannot account for.',
+          goal: 'The PC discovers the wish succeeded in a way that should have been impossible.' },
+        { n: 7, causalLink: 'therefore',
+          changes: 'Lirael\'s standing in the Veilwood is gone; she is the story people tell rather than a person they ask.',
+          followsFrom: 'Lirael cannot account for how the wish succeeded, and she is the one under investigation for it.',
+          setsUp: 'Her reputation is gone, so anything she says from here is heard as self-defence.',
+          goal: 'Rumors spread through the city; the PC’s reputation collapses.' },
+        { n: 8, causalLink: 'therefore',
+          changes: 'Lirael is now looking for a person who intervened, not for an accident in the rite.',
+          followsFrom: 'Her own word is worthless now, so the only explanation left to her is that someone else acted.',
+          setsUp: 'Lirael is looking for a person, not an accident.',
+          goal: 'The PC realizes someone else may have intervened.' },
+        { n: 9, causalLink: 'therefore',
+          followsFrom: 'Lirael is looking for whoever intervened, and Julian is the one who demanded the review and steered it.',
+          setsUp: 'Suspicion of Julian is established; the evidence for it is not.',
+          goal: 'She begins suspecting Julian.', requiredTruth: 'Julian is still innocent in the reader’s eyes.', exitState: 'Suspicion established; evidence incomplete.', cliffhanger: 'The PC finds contradictory evidence.',
         // MIGRATED B: presence is knowable and Julian is explicitly NOT in the room — this is the
         // protagonist's interior turn. NO eventFact is authored because there is no attributable NPC
         // ACT here, and manufacturing one so C+ has something to work with is precisely what this
@@ -133771,7 +133931,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             ],
           },
         },
-        { n: 10, goal: 'Julian denies involvement — but not convincingly.',
+        { n: 10, causalLink: 'therefore',
+          changes: 'Julian has denied it to her face, and she does not believe him.',
+          followsFrom: 'Lirael suspects Julian and has nothing to put against him, so she asks him directly.',
+          setsUp: 'His denial was unconvincing, which is not the same as proof.',
+          goal: 'Julian denies involvement — but not convincingly.',
         // MIGRATED A: one named actor, one speech act, no player branch.
           stage: { v: 1, provenance: 'authored_seed_spine',
             participants: [
@@ -133784,9 +133948,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             ],
           },
         },
-        { n: 11, goal: 'The consequences of the hidden sacrifice begin manifesting.' },
-        { n: 12, goal: 'The PC discovers every miracle has a sacrifice — but cannot determine whose.' },
-        { n: 13, goal: 'Someone else is endangered by the hidden bargain.' },
+        { n: 11, causalLink: 'but',
+          changes: 'The hidden sacrifice is visibly costing something, and no one can say what or whose.',
+          followsFrom: 'Julian denied it unconvincingly and nothing is proven — but the sacrifice behind the wish goes on being paid for.',
+          setsUp: 'The hidden sacrifice is producing consequences nobody can attribute to anyone.',
+          goal: 'The consequences of the hidden sacrifice begin manifesting.' },
+        { n: 12, causalLink: 'therefore',
+          changes: 'Lirael knows the law that every miracle is paid for, and cannot find the payer.',
+          followsFrom: 'Consequences of the hidden sacrifice are manifesting where Lirael can see them.',
+          setsUp: 'Lirael knows every miracle is paid for, and cannot determine whose payment this was.',
+          goal: 'The PC discovers every miracle has a sacrifice — but cannot determine whose.' },
+        { n: 13, causalLink: 'but',
+          changes: 'Another person is now at risk from the bargain, and Lirael is the only one who knows why.',
+          followsFrom: 'Lirael cannot determine whose sacrifice paid for the wish — but the bargain does not wait for her to find out.',
+          setsUp: 'Someone else is in danger from the bargain, which makes the unanswered question urgent instead of academic.',
+          goal: 'Someone else is endangered by the hidden bargain.' },
         // ROW 14 — THE DUE ROW FOR inquiry_opened (Roman 2026-09-25). The date was NOT chosen by
         // taste; the seed's own staging fixes it. This is the FIRST row in the spine that seats the
         // panel in person — `role:first_sacrifice_inquiry_chayr` is IN_PERSON here and its officers
@@ -133803,7 +133979,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // Chayr is REPORTED not present in row 5. 14 of 20 is late Issue 1.
         // The event's id, text and markers are UNCHANGED, so every consumer keyed to them — and the
         // lexical link from the world-truth group — still resolves, only to a later scene.
-        { n: 14, goal: 'THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The panel is constituted HERE for the first time; nothing earlier may have convened it.',
+        { n: 14, causalLink: 'therefore',
+          changes: 'A Chayr and two Dohkars are seated and the inquiry is open, and its attention has moved from Lirael to Julian.',
+          followsFrom: 'Someone else is now endangered by the hidden bargain, on top of the procedural pressure that has been accumulating since the notice in scene 4.',
+          setsUp: 'The panel is constituted for the first time, and the investigation has turned toward Julian.',
+          goal: 'THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The panel is constituted HERE for the first time; nothing earlier may have convened it.',
           reservedEvents: [{ id: 'inquiry_opened', text: 'A Chayr and two Dohkars formally open an inquiry into the PC', markers: ['open an inquiry', 'opens an inquiry', 'formal inquiry', 'the inquiry'] }],
         // MIGRATED A: the actors are the inquiry officers; Julian is the OBJECT, present but not
         // acting. Naming him a TARGET is what stops him grounding on their behaviour.
@@ -133819,8 +133999,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             ],
           },
         },
-        { n: 15, goal: 'The PC learns the intervention violated one of the oldest taboos.' },
-        { n: 16, goal: 'Julian finally admits he acted.',
+        { n: 15, causalLink: 'therefore',
+          changes: 'Lirael knows the intervention broke one of the oldest taboos, which makes it ruinous rather than irregular.',
+          followsFrom: 'The inquiry has turned toward Julian, so what he actually did starts to come into view.',
+          setsUp: 'What was done was not merely irregular: it broke one of the oldest taboos, so exposing it would destroy whoever did it.',
+          goal: 'The PC learns the intervention violated one of the oldest taboos.' },
+        { n: 16, causalLink: 'therefore',
+          changes: 'Julian has admitted to her that he acted, and has given her no reason to hold alongside it.',
+          followsFrom: 'Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.',
+          setsUp: 'Julian has admitted the act and offered no reason with it.',
+          goal: 'Julian finally admits he acted.',
         // MIGRATED A: one actor, one admission, deterministic.
           stage: { v: 1, provenance: 'authored_seed_spine',
             participants: [
@@ -133833,10 +134021,33 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             ],
           },
         },
-        { n: 17, goal: 'The PC learns what he sacrificed.' },
-        { n: 18, goal: 'She realizes he did it to save both the youth and her.' },
-        { n: 19, goal: 'She must decide whether to expose the truth or let history condemn her.' },
-        { n: 20, goal: 'She chooses — and the consequences launch the next issue.' }
+        { n: 17, causalLink: 'therefore',
+          changes: 'Lirael knows what Julian gave up, and cannot unknow the size of it.',
+          followsFrom: 'Julian admitted the act without giving a reason for it, which leaves only its cost to read him by.',
+          setsUp: 'Lirael knows what he gave up.',
+          goal: 'The PC learns what he sacrificed.' },
+        { n: 18, causalLink: 'therefore',
+          changes: 'Lirael knows he did it to save both the youth and her, so his ruin and her exoneration are the same act.',
+          followsFrom: 'Lirael knows what Julian sacrificed, and what it was for is legible in what it cost him.',
+          setsUp: 'Exposure is now a betrayal of the man who saved her, and silence is now a lie she lives inside.',
+          goal: 'She realizes he did it to save both the youth and her.' },
+        // THE ISSUE'S GENUINE PLAYER DECISION (Roman 2026-10-11). The outline STOPS here: scene 20
+        // and the issue cliffhanger are conditional on this answer, and neither is authored for the
+        // reader. decision_axis / decision_consequence use the same field names as rows 1-3.
+        { n: 19, causalLink: 'but',
+          changes: 'The choice is fully specified, fully costed, and still unmade.',
+          followsFrom: 'Exposure would destroy the man who saved her — but silence leaves the inquiry\'s judgement standing against her.',
+          setsUp: 'The decision is the player\'s, and it has not been made.',
+          player_decision_required: true,
+          decision_axis: 'expose what Julian did vs let the inquiry\'s judgement stand',
+          decision_consequence: 'The choice MUST change whose ruin the next scene is: Julian answering for a broken taboo, or Lirael living under a judgement she knows is false with him untouched. A scene that reads the same either way has made the choice decorative.',
+          goal: 'She must decide whether to expose the truth or let history condemn her.' },
+        { n: 20, causalLink: 'therefore',
+          changes: 'The choice is made and acted on, and the issue ends inside its consequence — see this plan\'s cliffhanger.',
+          followsFrom: 'The player has decided whether to expose Julian or let the record condemn her.',
+          setsUp: 'The predicament Issue 2 opens inside — see this plan\'s cliffhanger, whose branch is selected by the scene-19 decision.',
+          branchDependent: true,
+          goal: 'She chooses — and the consequences launch the next issue.' }
       ]
     }
   };
@@ -136817,6 +137028,352 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     return a;
   }
   try { window._currentSceneNumber = _currentSceneNumber; window._selectSceneAssignment = _selectSceneAssignment; } catch (_) {}
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // ISSUE OUTLINE — FATE'S PLOT ACROSS THE WHOLE ISSUE (Roman 2026-10-11)
+  //
+  // OWNERSHIP BEFORE THIS. Four planning authorities already existed; none of them owned a
+  // scene-by-scene issue outline:
+  //   · ISSUE SPINE (state.cgScaffold, _buildCGScaffold ~229810) — per-issue GRAVITY only:
+  //     thesis / ambiguityTargets / pressureVectors / endingShape / regimePhase / cliffShape.
+  //     Its own doctrine reads "GRAVITATIONAL guidance, never a fixed outline. No mandatory
+  //     beats, no exact events." So it never said what any SCENE accomplishes, and endingShape
+  //     is a shape ("quiet rupture"), not a cliffhanger whose consequences set up Issue 2.
+  //   · ISSUE PLAN (STARTER_PLANS[id].scenes, _activePlan ~136827) — hand-authored per-scene
+  //     rows. Nothing in a row stated WHY it follows the one before it or WHAT it sets up.
+  //   · SCENE ASSIGNMENT (_selectSceneAssignment, above) — collapses every source to ONE event.
+  //   · SCENE SCAFFOLD (state.sceneSkeleton, _generateSceneSkeleton ~98668) — staging, cast,
+  //     environment, tone. No dramatic sequence of any kind.
+  //
+  // THIS IS NOT A FIFTH PLANNER. It reads the two authorities that already plan (the authored
+  // plan row, then the generated spine outline) in a fixed precedence and produces ONE outline
+  // that the Scene Scaffold and the Author both consume. It generates nothing, calls no
+  // provider, and never invents a scene that neither authority supplied.
+  //
+  // PER-ROW RESOLUTION IS DELEGATED, NOT REIMPLEMENTED. Every row goes through the shipped
+  // _effectiveSceneRow, so branch withholding, open (reader-owned) rows, accepted local
+  // objectives and "NEW PROBLEM" extraction behave here exactly as they do everywhere else.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+
+  // SCENE IDENTITY AND ISSUE BOUNDARIES, RECONCILED OUT LOUD — never silently changed.
+  // The shipped contract is ISSUE_PRICING: literary 20 scenes per issue, CG 10. That is the
+  // ISSUE LENGTH. The 20-24 figure belongs to a different axis entirely — it is the BEAT count
+  // inside ONE CG scene — and the two must never be conflated.
+  // A hand-authored plan may span a different number of scenes than the pricing row (First
+  // Sacrifice authors 20 rows and declares them its Issue 1). When a plan declares its own span
+  // it wins FOR OUTLINE PURPOSES ONLY, the outline's issue index is derived from that same span
+  // so the rows cannot fall out of bounds, and the disagreement is logged every time. Billing,
+  // covers, numbering and _isLastSceneOfIssue keep reading ISSUE_PRICING untouched.
+  function _issueOutlineBounds(s, issueIndex) {
+    s = s || window.state;
+    var pricingPer = 0;
+    try { pricingPer = ((typeof _getActiveIssuePricing === 'function' ? _getActiveIssuePricing() : null) || {}).scenesPerIssue || 0; } catch (_) {}
+    if (!pricingPer) pricingPer = 20;
+    var per = pricingPer, source = 'ISSUE_PRICING';
+    var plan = null;
+    try { plan = (typeof _activePlan === 'function') ? _activePlan(s) : null; } catch (_) {}
+    var declared = Number((plan && plan.issueScenes) || 0);
+    if (plan && declared > 0) {
+      per = declared; source = 'plan.issueScenes';
+      if (declared !== pricingPer) {
+        try { console.log('[ISSUE-OUTLINE:RECONCILE] the active plan declares ' + declared
+          + ' scenes for its issue; ISSUE_PRICING says ' + pricingPer + ' per issue. The OUTLINE spans '
+          + declared + '; billing, covers, numbering and _isLastSceneOfIssue still use ' + pricingPer
+          + '. Neither counter is changed.'); } catch (_) {}
+      }
+    }
+    var ii;
+    if (typeof issueIndex === 'number' && issueIndex > 0) ii = issueIndex;
+    else if (source === 'plan.issueScenes') {
+      // Derived from the PLAN's span: a CG billing index of 2 at scene 11 would otherwise place
+      // the plan's issue-1 rows at scenes 21-40, where no row exists.
+      var sn = 1;
+      try { sn = (typeof _currentSceneNumber === 'function') ? (_currentSceneNumber(s) || 1) : 1; } catch (_) {}
+      ii = Math.floor(Math.max(0, sn - 1) / per) + 1;
+    } else {
+      try { ii = (typeof currentNarrativeIssueIndex === 'function') ? currentNarrativeIssueIndex() : 1; } catch (_) { ii = 1; }
+      if (!(ii > 0)) ii = 1;
+    }
+    return { issueIndex: ii, per: per, pricingPer: pricingPer, source: source,
+             first: ((ii - 1) * per) + 1, last: ii * per };
+  }
+
+  // A player decision is RESOLVED when the reader has actually made it, or when the scene that
+  // posed it has already been played. Unresolved means the outline STOPS: later rows stay
+  // conditional and are never delivered as settled plot.
+  function _outlineDecisionResolved(s, n, sceneNow) {
+    try {
+      if (Number(n) < Number(sceneNow)) return true;        // already played
+      if (typeof _sceneDecision === 'function' && _sceneDecision(Number(n))) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  // Where a row's own causal statement comes from. NEVER inferred from prose and never guessed
+  // from connective words: either an authority stated it, or the link is left null and labelled.
+  function _outlineCausalFor(row, prevEff, spineRow) {
+    var text = '', link = null, src = 'none';
+    if (row && row.followsFrom) { text = String(row.followsFrom); link = row.causalLink || null; src = 'plan row'; }
+    else if (spineRow && spineRow.follows_from) { text = String(spineRow.follows_from); link = spineRow.link || null; src = 'issue spine'; }
+    else if (prevEff) {
+      var np = String((prevEff.exitState || '').match(/NEW PROBLEM:\s*(.+)$/i) ? (prevEff.exitState.match(/NEW PROBLEM:\s*(.+)$/i) || [])[1] : '') || '';
+      if (np) { text = np; src = "the previous row's own exitState NEW PROBLEM"; }
+      else if (prevEff.goal) { text = String(prevEff.goal).slice(0, 220); src = "the previous row's own goal"; }
+    }
+    if (link !== 'but' && link !== 'therefore') link = null;
+    return { text: text, link: link, source: src };
+  }
+
+  // ONE OUTLINE. Cached per (storyId, issueIndex, scene, recorded branch) so repeated builders in
+  // the same turn agree; nothing persists that a changed player posture does not invalidate.
+  function _resolveIssueOutline(s, opts) {
+    s = s || window.state; if (!s) return null;
+    opts = opts || {};
+    var bounds = _issueOutlineBounds(s, opts.issueIndex);
+    var sceneNow = 1;
+    try { sceneNow = (typeof _currentSceneNumber === 'function') ? (_currentSceneNumber(s) || 1) : 1; } catch (_) {}
+    if (typeof opts.sceneNumber === 'number' && opts.sceneNumber > 0) sceneNow = opts.sceneNumber;
+    var branch = null;
+    try { var _d = (typeof _sceneDecision === 'function') ? _sceneDecision(1) : null; branch = (_d && _d.choice) || null; } catch (_) {}
+    var key = [s.storyId || '', bounds.issueIndex, bounds.per, sceneNow, branch || '-'].join('|');
+    if (s._issueOutline && s._issueOutline._key === key && !opts.force) return s._issueOutline;
+
+    var plan = null; try { plan = (typeof _activePlan === 'function') ? _activePlan(s) : null; } catch (_) {}
+    var spine = null, arc = null, spineOutline = [];
+    try {
+      spine = s.cgScaffold || null;
+      if (spine && Array.isArray(spine.issueArcs) && spine.issueArcs.length) {
+        arc = spine.issueArcs[bounds.issueIndex - 1] || spine.issueArcs[spine.issueArcs.length - 1] || null;
+        if (arc && Array.isArray(arc.sceneOutline)) spineOutline = arc.sceneOutline;
+      }
+    } catch (_) {}
+    var _spineRowFor = function (n) {
+      for (var i = 0; i < spineOutline.length; i++) {
+        var r = spineOutline[i];
+        if (r && Number(r.n) === Number(n)) return r;
+      }
+      return null;
+    };
+
+    // The first unresolved player decision at or after the current scene is the outline's HORIZON.
+    // Everything past it is conditional on an answer the reader has not given.
+    var horizon = null;
+    var rows = [], prevEff = null, planRow = null;
+    for (var n = bounds.first; n <= bounds.last; n++) {
+      var eff = null;
+      try { eff = (typeof _effectiveSceneRow === 'function') ? _effectiveSceneRow(s, n) : null; } catch (_) { eff = null; }
+      planRow = null;
+      try { planRow = (plan && Array.isArray(plan.scenes)) ? plan.scenes.filter(function (q) { return q && Number(q.n) === n; })[0] : null; } catch (_) {}
+      var spineRow = _spineRowFor(n);
+      if (!eff && !spineRow) { prevEff = eff || prevEff; continue; }
+
+      var causal = _outlineCausalFor(planRow, prevEff, spineRow);
+      var accomplishes = '', aSrc = 'none';
+      if (eff && eff.openObjective) {
+        accomplishes = eff.goal || '';
+        aSrc = eff.goal ? 'reader-owned row: accepted local objective' : 'reader-owned row: objective not yet accepted';
+      } else if (eff && eff.goal) { accomplishes = eff.goal; aSrc = 'plan row goal'; }
+      else if (spineRow && spineRow.accomplishes) { accomplishes = String(spineRow.accomplishes); aSrc = 'issue spine'; }
+      else if (eff && eff._reconciliation && eff._reconciliation.withheld.indexOf('goal') !== -1) {
+        accomplishes = ''; aSrc = 'withheld: branch-dependent, no text approved for the recorded branch';
+      }
+      // ONE PRECEDENCE RULE: a row's exitState is authoritative wherever it exists, because every
+      // other consumer already reads it. `changes` is the outline's own delta for a row that declares
+      // no exitState. The spine supplies it only for a scene no plan row covers.
+      var changes = (eff && eff.exitState) ? String(eff.exitState)
+        : ((planRow && planRow.changes) ? String(planRow.changes)
+          : (spineRow && spineRow.changes ? String(spineRow.changes) : ''));
+      var setsUp = '';
+      if (planRow && planRow.setsUp) setsUp = String(planRow.setsUp);
+      else if (spineRow && spineRow.sets_up) setsUp = String(spineRow.sets_up);
+      else {
+        var m = String(changes).match(/NEW PROBLEM:\s*(.+)$/i);
+        if (m) setsUp = m[1];
+      }
+
+      var conditional = (horizon != null && n > horizon);
+      var status = conditional ? 'conditional'
+        : (n < sceneNow ? 'delivered' : (n === sceneNow ? 'current' : 'planned'));
+      rows.push({
+        n: n, status: status, conditional: conditional, conditionalOn: conditional ? horizon : null,
+        accomplishes: accomplishes,
+        accomplishesSource: aSrc + (conditional ? " — CONDITIONAL on the unresolved player decision at scene " + horizon + "; Fate's intention, revisable" : ''),
+        follows_from: causal, changes: changes, sets_up: setsUp,
+        openObjective: !!(eff && eff.openObjective),
+        decision: (eff && eff.player_decision_required)
+          ? { axis: eff.decision_axis || null, consequence: eff.decision_consequence || null,
+              resolved: _outlineDecisionResolved(s, n, sceneNow) } : null,
+        withheld: (eff && eff._reconciliation && eff._reconciliation.withheld) ? eff._reconciliation.withheld.slice() : [],
+        source: (eff ? (eff.openObjective ? 'plan row (reader-owned)' : 'plan row') : 'issue spine')
+      });
+      if (horizon == null && eff && eff.player_decision_required && !_outlineDecisionResolved(s, n, sceneNow)) horizon = n;
+      prevEff = eff || prevEff;
+    }
+
+    // ── THE CLIFFHANGER. Not an "ending shape": a specific event whose consequences state the
+    // predicament Issue 2 opens inside. When it is decided by a player choice the reader has not
+    // made, BOTH branches are reported and NEITHER is chosen — authoring that choice for them is
+    // exactly what this must not do.
+    var cliff = null;
+    var cliffSrc = 'none';
+    var declared = (plan && plan.cliffhanger) || (arc && arc.cliffhanger) || null;
+    if (declared) {
+      cliffSrc = (plan && plan.cliffhanger) ? 'plan' : 'issue spine';
+      var decidedAt = Number((declared.decidedBy && declared.decidedBy.scene) || 0);
+      var decided = decidedAt ? _outlineDecisionResolved(s, decidedAt, sceneNow) : true;
+      cliff = { scene: Number(declared.scene || bounds.last), source: cliffSrc,
+                decidedBy: declared.decidedBy || null, decided: decided,
+                branches: Array.isArray(declared.branches) ? declared.branches.slice() : null,
+                event: declared.event || null, issue2Predicament: declared.issue2Predicament || null };
+      if (cliff.branches && !decided) cliff.selected = null;
+    }
+
+    var out = { _key: key, issueIndex: bounds.issueIndex, bounds: bounds, sceneNow: sceneNow,
+                label: (arc && arc.issueLabel) || ('Issue ' + bounds.issueIndex),
+                thesis: (arc && arc.thesis) || null, branch: branch,
+                horizon: horizon, scenes: rows, cliffhanger: cliff,
+                planPresent: !!plan, spineOutlinePresent: spineOutline.length > 0 };
+    try { s._issueOutline = out; } catch (_) {}
+    try { console.log('[ISSUE-OUTLINE] issue=' + out.issueIndex + ' scenes=' + rows.length
+      + ' (' + bounds.first + '-' + bounds.last + ', ' + bounds.source + ')'
+      + ' delivered=' + rows.filter(function (r) { return r.status === 'delivered'; }).length
+      + ' planned=' + rows.filter(function (r) { return r.status === 'planned'; }).length
+      + ' conditional=' + rows.filter(function (r) { return r.conditional; }).length
+      + ' horizon=' + (horizon == null ? 'none' : horizon)
+      + ' cliffhanger=' + (cliff ? (cliff.source + (cliff.branches ? ('/' + cliff.branches.length + ' branches, decided=' + cliff.decided) : '')) : 'ABSENT')); } catch (_) {}
+    return out;
+  }
+
+  function _issueOutlineRowFor(s, sceneNum) {
+    s = s || window.state;
+    var n = Number(sceneNum);
+    if (!(n > 0)) { try { n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : 0; } catch (_) { n = 0; } }
+    var o = _resolveIssueOutline(s, { sceneNumber: n });
+    if (!o) return null;
+    for (var i = 0; i < o.scenes.length; i++) if (o.scenes[i].n === n) return o.scenes[i];
+    return null;
+  }
+
+  // A CONSEQUENTIAL PLAYER MOVE REVISES THE REMAINING TRAJECTORY. It never revises history, and
+  // it never returns to a superseded plan: the recorded move changes the posture hash and the
+  // recorded branch, which _effectiveSceneRow already honours per row, and the outline is rebuilt
+  // from those. Rows already delivered keep their text; unplayed rows whose branch text was not
+  // approved for the recorded choice come back WITHHELD rather than stale.
+  function _reviseIssueOutlineForMove(s, reason) {
+    s = s || window.state; if (!s) return null;
+    var before = s._issueOutline || null;
+    var o = _resolveIssueOutline(s, { force: true });
+    try {
+      var movedRows = [];
+      if (before && o) {
+        before.scenes.forEach(function (b) {
+          var a = o.scenes.filter(function (x) { return x.n === b.n; })[0];
+          if (!a) return;
+          if (a.status === 'delivered' && b.status === 'delivered' && a.accomplishes !== b.accomplishes)
+            movedRows.push('!! DELIVERED ROW ' + b.n + ' CHANGED — history must not be revised');
+          else if (a.accomplishes !== b.accomplishes || a.conditional !== b.conditional)
+            movedRows.push(b.n + ':' + b.status + '→' + a.status);
+        });
+      }
+      console.log('[ISSUE-OUTLINE:REVISE] ' + (reason || 'player move')
+        + ' — revised rows: ' + (movedRows.length ? movedRows.join(', ') : 'none')
+        + '; horizon=' + (o && o.horizon == null ? 'none' : (o && o.horizon)));
+    } catch (_) {}
+    return o;
+  }
+
+  // THE AUTHOR'S COPY. Renders the scene's PURPOSE WITHIN THE ISSUE plus the surrounding causal
+  // trajectory. The causal OUTLINE of the scene itself is the Scene Scaffold's (see
+  // _renderCausalOutlineDirective). Delivered rows are stated as already-delivered so the author
+  // cannot assign them again as a new revelation; conditional rows are stated as not-yet-decided.
+  function _renderIssueOutlineDirective(s, sceneNum) {
+    try {
+      s = s || window.state; if (!s) return '';
+      var n = Number(sceneNum);
+      if (!(n > 0)) { try { n = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : 0; } catch (_) { n = 0; } }
+      var o = _resolveIssueOutline(s, { sceneNumber: n });
+      if (!o) return '';
+      var row = null;
+      for (var i = 0; i < o.scenes.length; i++) if (o.scenes[i].n === n) row = o.scenes[i];
+      if (!row) return '';
+      var L = ['\n  THIS SCENE\'S PURPOSE WITHIN ' + String(o.label).toUpperCase()
+        + ' (scene ' + n + ' of ' + o.bounds.last + '; HARD — this is the scene\'s ASSIGNMENT, not background):'];
+      if (o.thesis) L.push('    ISSUE THESIS: ' + o.thesis);
+      if (row.accomplishes) L.push('    WHAT THIS SCENE ACCOMPLISHES: ' + row.accomplishes);
+      else L.push('    WHAT THIS SCENE ACCOMPLISHES: owned by the scene objective below — this row carries no fixed goal.');
+      if (row.follows_from && row.follows_from.text) {
+        L.push('    WHY IT FOLLOWS WHAT CAME BEFORE'
+          + (row.follows_from.link === 'but' ? ' (OBSTRUCTION — the previous development got in the way)'
+            : row.follows_from.link === 'therefore' ? ' (CONSEQUENCE — the previous development caused this)' : '')
+          + ': ' + row.follows_from.text);
+      }
+      if (row.changes) L.push('    WHAT CHANGES BY THE END: ' + row.changes);
+      if (row.sets_up) L.push('    WHAT IT SETS UP: ' + row.sets_up);
+      if (row.decision) {
+        L.push('    THE PLAYER DECIDES AT THE END OF THIS SCENE: ' + (row.decision.axis || '(axis unstated)'));
+        if (row.decision.consequence) L.push('      and that choice must change: ' + row.decision.consequence);
+        L.push('      Do NOT decide it for them, and do NOT resolve the scene\'s central pressure before it.');
+      }
+      var done = o.scenes.filter(function (r) { return r.status === 'delivered' && r.accomplishes; });
+      if (done.length) {
+        L.push('    ALREADY DELIVERED EARLIER IN THIS ISSUE (established; do NOT stage any of these again as a new'
+          + ' event or a new revelation — a character may refer back to one, which is not the same as delivering it):');
+        done.slice(-6).forEach(function (r) { L.push('      – scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220)); });
+      }
+      var ahead = o.scenes.filter(function (r) { return r.n > n && r.accomplishes; }).slice(0, 2);
+      if (ahead.length) {
+        L.push('    COMING NEXT, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):');
+        ahead.forEach(function (r) {
+          L.push('      – scene ' + r.n + (r.conditional ? " [CONDITIONAL — Fate's intention, revisable; it is NOT yet what happens]" : '')
+            + ': ' + String(r.accomplishes).slice(0, 180));
+        });
+      }
+      if (o.horizon != null && o.horizon >= n) {
+        L.push('    THE ISSUE\'S PLAN IS SETTLED ONLY AS FAR AS SCENE ' + o.horizon + ', which ends on a player decision'
+          + ' that has not been made. Everything after it is Fate\'s INTENTION, not a fact: it may be pursued by another'
+          + ' route, countered, or lost. Nothing in THIS scene may assume an answer to that decision, write the'
+          + ' protagonist as having already given one, or deliver a development that depends on one.');
+      }
+      if (o.cliffhanger && o.cliffhanger.scene === n) {
+        if (o.cliffhanger.branches && !o.cliffhanger.decided) {
+          L.push('    THIS IS THE ISSUE\'S CLIFFHANGER SCENE, and WHICH cliffhanger it is depends on a player decision'
+            + ' that has NOT been made. Stage the consequences of the choice the player actually makes; do not pick for'
+            + ' them, and do not blend the two. The two possibilities:');
+          o.cliffhanger.branches.forEach(function (b) {
+            L.push('      – if "' + (b.choice || '?') + '": ' + String(b.event || '')
+              + (b.issue2Predicament ? ('  →  and it must leave the story inside this predicament: ' + b.issue2Predicament) : ''));
+          });
+        } else if (o.cliffhanger.event) {
+          L.push('    THIS IS THE ISSUE\'S CLIFFHANGER: ' + o.cliffhanger.event);
+          if (o.cliffhanger.issue2Predicament) L.push('      Its consequences must leave the story inside this predicament: '
+            + o.cliffhanger.issue2Predicament);
+        }
+      }
+      return L.join('\n') + '\n';
+    } catch (_) { return ''; }
+  }
+
+  // Devtools introspection — window._issueOutlineSummary()
+  function _issueOutlineSummary() {
+    var o = _resolveIssueOutline(window.state, { force: true });
+    if (!o) return { present: false };
+    return { present: true, issue: o.label, bounds: o.bounds, branch: o.branch, horizon: o.horizon,
+             planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
+             cliffhanger: o.cliffhanger,
+             scenes: o.scenes.map(function (r) {
+               return r.n + ' [' + r.status + '] ' + (r.follows_from.link ? ('(' + r.follows_from.link + ') ') : '')
+                 + String(r.accomplishes || '(no goal)').slice(0, 120);
+             }) };
+  }
+  try {
+    window._issueOutlineBounds = _issueOutlineBounds;
+    window._resolveIssueOutline = _resolveIssueOutline;
+    window._issueOutlineRowFor = _issueOutlineRowFor;
+    window._reviseIssueOutlineForMove = _reviseIssueOutlineForMove;
+    window._renderIssueOutlineDirective = _renderIssueOutlineDirective;
+    window._issueOutlineSummary = _issueOutlineSummary;
+  } catch (_) {}
+
   try { window._dedupeCastNames = _dedupeCastNames; window._sceneEligibleCast = _sceneEligibleCast; } catch (_) {}
   // exposed for the FREE static acceptance harness (_assignment_live.mjs case C); no production caller
   try { window.__generateSceneSkeleton = function (a, d, o) { return _generateSceneSkeleton(a, d, o); }; } catch (_) {}
@@ -209524,6 +210081,7 @@ No text, no watermark, no UI elements, share-ready.`;
     state._sceneDecisions[String(n || 1)] = { axis: ax ? ax.axis : null, choice: String(choice), label: String(label || choice), source: source || 'oas_exit', at: Date.now(), storyId: state.storyId };
     try { console.log('[SCENE-DECISION] scene ' + (n || 1) + ' → ' + choice + ' (' + (source || 'oas_exit') + ')'); } catch (_) {}
     try { _reconcileSeededMilestones(); } catch (_) {}
+    try { if (typeof _reviseIssueOutlineForMove === 'function') _reviseIssueOutlineForMove(state, 'scene ' + (n || 1) + ' decision → ' + choice); } catch (_) {}
     try { if (typeof saveStorySnapshot === 'function') saveStorySnapshot(); } catch (_) {}
   }
   function _mountSceneDecisionPrompt(onChosen) {
@@ -229856,16 +230414,23 @@ No text, no watermark, no UI elements, share-ready.`;
     // the no-subject instruction from the request while the budget still expanded for a portfolio
     // the model was never asked for. Built from `s`, not window.state, so a story change
     // mid-flight cannot retarget it.
+    // ── ISSUE LENGTH FOR THE OUTLINE (Roman 2026-10-11) ──
+    // From ISSUE_PRICING, the one shipped issue-length contract: literary 20 scenes per issue,
+    // CG 10. Deliberately NOT the 20-24 figure, which is the BEAT count inside one CG scene.
+    var _outlineModeKey = _modeKey === 'cg' ? 'CG: 10 scenes per issue' : 'literary: 20 scenes per issue';
+    var _outlineScenesPerIssue = 20;
+    try { _outlineScenesPerIssue = (ISSUE_PRICING[_modeKey] || {}).scenesPerIssue || 20; } catch (_) {}
+    var _outlineFirstScene = 1, _outlineLastScene = _outlineScenesPerIssue;
     var _pfRoster = window._capturePortfolioRoster(s);
     var sysPrompt =
       'You are a CONTINUITY ARCHITECT for a serialized ' + _genre.label + ' visual novel.\n' +
       'Your job is NOT to write prose. Your job is to define the GRAVITATIONAL STRUCTURE that downstream scene-writers operate inside.\n' +
       '\n' +
       'CORE DOCTRINE:\n' +
-      '- Output is GRAVITATIONAL guidance, never a fixed outline. No mandatory beats, no exact events.\n' +
-      '- The scaffold survives player redirection and reactive deformation. It shapes WHICH truths stay open, WHICH motifs recur, WHICH pressures accumulate — not which scenes happen.\n' +
-      '- The scene-writer is reactive. The scaffold is the gravity, not the plot.\n' +
-      '- Storybound players can spam Tempt Fate, redirect scenes mid-arc, and rupture expected progression. The scaffold must remain useful even under that pressure — bias and gravity, never demands.\n' +
+      '- You own TWO different things and must not confuse them. (1) GRAVITY: which truths stay open, which motifs recur, which pressures accumulate, how the imagery evolves. (2) THE PLOT: a scene-by-scene outline of what each scene of each issue accomplishes, why it follows what came before, what it changes, and what it sets up — building to a SPECIFIC cliffhanger whose consequences state the predicament the NEXT issue opens inside.\n' +
+      '- THE PLOT IS NOT OPTIONAL AND NOT INSPIRATIONAL. A scene-writer who receives only gravity writes atmosphere. Name the events.\n' +
+      '- Storybound players can redirect scenes mid-arc, spam Tempt Fate, and rupture expected progression. Your outline must be REVISABLE under that pressure, not immune to it: Fate pursues its intention by another route, counters the player, or loses ground. So write each scene as a development that can be obstructed — never as a beat the player is required to walk into, and never as a response the player is required to give.\n' +
+      '- A scene whose outcome genuinely rests on a player decision STOPS there. Say what the decision is and what it changes; do NOT author the answer, and do NOT write the following scenes as though one answer were already given.\n' +
       '\n' +
       (typeof _twoEngineProportionCompact === 'function' ? _twoEngineProportionCompact('spine') + '\n\n' : '') +
       (typeof _castRolloutCompact === 'function' ? _castRolloutCompact('spine') + '\n\n' : '') +
@@ -229891,6 +230456,24 @@ No text, no watermark, no UI elements, share-ready.`;
       '      "ambiguityTargets": ["<thing to keep unresolved>", ...],\n' +
       '      "pressureVectors": ["<what should accumulate over this issue>", ...],\n' +
       '      "endingShape": "<voluntary surrender | quiet rupture | rupture-and-pursuit | quiet reset | unresolved gravity>",\n' +
+      // ── THE PLOT (Roman 2026-10-11) ── The scene-by-scene outline. "endingShape" above is a
+      // SHAPE and several downstream consumers read it; it stays, and it is now subordinate to the
+      // specific cliffhanger below.
+      '      "sceneOutline": [\n' +
+      '        { "n": <GLOBAL scene number, from ' + _outlineFirstScene + ' to ' + _outlineLastScene + ' for this issue, every scene, in order>,\n' +
+      '          "accomplishes": "<one or two sentences — the CONCRETE thing this scene does: who acts, on whom, and what lands. Name events, not themes.>",\n' +
+      '          "follows_from": "<one sentence — the development in the PREVIOUS scene that this one answers>",\n' +
+      '          "link": "<therefore | but — \'therefore\' when the previous development CAUSED this one, \'but\' when it OBSTRUCTS it. Every scene after the first must be one or the other. A chain of \'and then\' is a FAILURE. These are structural labels for the planner, NEVER words to appear in the prose.>",\n' +
+      '          "changes": "<one sentence — what is TRUE at the end of this scene that was not true at its start>",\n' +
+      '          "sets_up": "<one sentence — the pressure or question this hands to the next scene>",\n' +
+      '          "player_decision": "<OMIT unless this scene genuinely ends on a decision only the player can make. If present: the two options, in the player\'s terms. The scenes after it then stay CONDITIONAL — outline them as what Fate will attempt, never as what the player will have chosen.>" }\n' +
+      '      ],\n' +
+      '      "cliffhanger": {\n' +
+      '        "scene": <the GLOBAL scene number of this issue\'s LAST scene>,\n' +
+      '        "event": "<the specific thing that happens — an event with actors, not an \'ending shape\' and not a mood>",\n' +
+      '        "why_unresolved": "<one sentence — what the reader is left not knowing, or what is left owed>",\n' +
+      '        "issue2Predicament": "<one or two sentences — the PREDICAMENT the next issue opens inside BECAUSE of this event. For the final issue, the predicament the story leaves the reader holding. Not a theme: a situation the characters are now stuck in.>"\n' +
+      '      },\n' +
       '      "regimePhase": "<the narrative-arch phase THIS issue occupies: apparent | instability | pressure_accumulation | completion — early issues stay apparent/instability; the goal resolves around completion. Schedule it to the ACTUAL arc, not a fixed issue-number map>",\n' +
       '      "cliffShape": {\n' +
       '        "preferredFamilies": ["<2-3 cliffhanger families that FIT this issue\'s arc, from: pre_completion_charged_interrupt, a_plot_reversal, external_shock, revelation, irrevocable_choice, identity_rupture, threshold_of_consequence, forced_separation, loyalty_test, proximity, emotional_inversion, countdown, temptation_cliff, almost_confession>"],\n' +
@@ -229959,6 +230542,10 @@ No text, no watermark, no UI elements, share-ready.`;
       'CONSTRAINTS:\n' +
       '- "issueArcs": EXACTLY ' + _expectedIssueCount + ' entries. Not more, not fewer. Issues are the player-facing purchase unit; the count is fixed per tier+mode (CG ' + _tierKey + ' = ' + _expectedIssueCount + ' issues).\n' +
       '- "motifBank": 3-5 SPARSE anchor images only. NEVER prescriptive ("a glass of water tipping" is good; "Issue 3 Scene 4 mentions the glass" is forbidden).\n' +
+      '- "sceneOutline" per issue: EXACTLY ' + _outlineScenesPerIssue + ' entries, one per scene of that issue, numbered with GLOBAL scene numbers in ascending order. This is the ISSUE LENGTH (' + _outlineModeKey + '). It is NOT a beat count: the number of BEATS inside one scene is decided elsewhere and is a different, larger number.\n' +
+      '- Every "sceneOutline" entry after an issue\'s first MUST carry "link": "therefore" or "but". If you cannot say which, the two scenes are not causally connected and the outline is wrong.\n' +
+      '- "cliffhanger" per issue: REQUIRED. A specific event plus the predicament it leaves for the next issue. "A quiet rupture" is not a cliffhanger; "she signs the thing he asked her not to sign, in front of the person it ruins" is.\n' +
+      '- Do NOT author a player decision\'s outcome. Where a scene ends on one, mark it and outline the scenes after it as Fate\'s INTENTION, revisable.\n' +
       '- "ambiguityTargets" per issue: 2-3 items. Things the scene-writer must KEEP OPEN, not resolve.\n' +
       '- "pressureVectors" per issue: 2-3 items. Things that should accumulate as the issue progresses.\n' +
       '- "forbiddenDefaults": 3-5 items specific to THIS configuration (not generic).\n' +
@@ -230440,6 +231027,45 @@ No text, no watermark, no UI elements, share-ready.`;
     // helpers were called directly. It runs here, once, for all three branches, before
     // persistence, and always scrubs the subsection whatever the outcome.
     _handleScaffoldPortfolios(parsed, _pfRoster);
+    // ── SCENE OUTLINE + CLIFFHANGER NORMALISATION (Roman 2026-10-11) ──
+    // Reject-only. An entry without an n, or a link that is not exactly 'therefore'/'but', loses
+    // that field rather than reaching a consumer as a string nobody validated. A cliffhanger
+    // without an event is dropped whole — a half cliffhanger would render as an ending shape
+    // again, which is the thing this replaces.
+    try {
+      (Array.isArray(parsed.issueArcs) ? parsed.issueArcs : []).forEach(function (arc, ai) {
+        if (!arc || typeof arc !== 'object') return;
+        var rows = Array.isArray(arc.sceneOutline) ? arc.sceneOutline : null;
+        if (rows) {
+          var clean = [];
+          rows.forEach(function (r) {
+            if (!r || typeof r !== 'object') return;
+            var n = Number(r.n);
+            if (!(n > 0)) return;
+            var link = String(r.link || '').trim().toLowerCase();
+            clean.push({ n: n,
+              accomplishes: String(r.accomplishes || '').trim(),
+              follows_from: String(r.follows_from || '').trim(),
+              link: (link === 'but' || link === 'therefore') ? link : null,
+              changes: String(r.changes || '').trim(),
+              sets_up: String(r.sets_up || '').trim(),
+              player_decision: r.player_decision ? String(r.player_decision).trim() : null });
+          });
+          clean.sort(function (a, b) { return a.n - b.n; });
+          arc.sceneOutline = clean.length ? clean : null;
+          var _unlinked = clean.filter(function (r, i) { return i > 0 && !r.link; }).length;
+          if (_unlinked) try { console.warn('[CG:SCAFFOLD] issue ' + (ai + 1) + ' sceneOutline: '
+            + _unlinked + ' of ' + clean.length + ' rows carry no therefore/but link — reported, not repaired'); } catch (_) {}
+        } else { arc.sceneOutline = null; }
+        var c = arc.cliffhanger;
+        if (c && typeof c === 'object' && String(c.event || '').trim()) {
+          arc.cliffhanger = { scene: Number(c.scene) > 0 ? Number(c.scene) : null,
+            event: String(c.event).trim(),
+            why_unresolved: String(c.why_unresolved || '').trim() || null,
+            issue2Predicament: String(c.issue2Predicament || c.issue_2_predicament || '').trim() || null };
+        } else { if (c) try { console.warn('[CG:SCAFFOLD] issue ' + (ai + 1) + ' cliffhanger dropped — no event'); } catch (_) {} arc.cliffhanger = null; }
+      });
+    } catch (_eOut) { try { console.warn('[CG:SCAFFOLD] outline normalisation threw:', _eOut && _eOut.message); } catch (__) {} }
     parsed._version = 1;
     parsed._generatedAt = new Date().toISOString();
     parsed.storyId = s.storyId || null;
@@ -231014,7 +231640,9 @@ No text, no watermark, no UI elements, share-ready.`;
   function _renderCGScaffoldBlock(scaffold) {
     if (!scaffold) return '';
     var lines = [];
-    lines.push('═══ STORY SCAFFOLD (gravitational guidance — NOT an outline) ═══');
+    // The header said "NOT an outline" while the scaffold now carries one. Replaced at source:
+    // the gravity still is gravity, and the plot is now named as plot.
+    lines.push('═══ STORY SCAFFOLD (the run\'s gravity, plus the per-issue plot it builds) ═══');
     if (scaffold.runThesis) lines.push('RUN THESIS: ' + scaffold.runThesis);
     if (scaffold.thematicDirection) lines.push('THEMATIC DIRECTION: ' + scaffold.thematicDirection);
     if (scaffold.visualThesis) lines.push('VISUAL THESIS (how the imagery evolves across the run — gravity for the visual planner, not blocking): ' + scaffold.visualThesis);
@@ -231042,6 +231670,13 @@ No text, no watermark, no UI elements, share-ready.`;
           lines.push('  · Pressure to accumulate: ' + arc.pressureVectors.join(' | '));
         }
         if (arc.endingShape) lines.push('  · Ending shape: ' + arc.endingShape);
+        // THE SPECIFIC CLIFFHANGER, not the shape. One line per issue so the whole-run trajectory
+        // is legible; the ACTIVE scene's own purpose is delivered separately by
+        // _renderIssueOutlineDirective, which is the author's assignment, not this context.
+        if (arc.cliffhanger && arc.cliffhanger.event) {
+          lines.push('  · Cliffhanger this issue builds to: ' + arc.cliffhanger.event);
+          if (arc.cliffhanger.issue2Predicament) lines.push('    and the predicament it leaves: ' + arc.cliffhanger.issue2Predicament);
+        }
       });
       // CURRENT-ISSUE VISUAL GRAVITY — the active issue's visualArc (sparse
       // cinematic tendencies / escalation / withholds). Re-homed so the CG
@@ -240922,7 +241557,10 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       } else {
         try { console.log('[CG:SCREENPLAY] flavor "' + _sceneFlavorKey + '" → full-scene-author policy (Grok primary, every scene)'); } catch (_) {}
         try {
-          var _policyResult = await _authorFullScenePolicy(_sharedSys, userPrompt, { maxTokens: 8000, temperature: 0.85, roleTag: 'scene', grokModel: 'grok-4-1-fast-reasoning' });
+          // COMPARISON ARM (off unless a harness sets it): the scene author becomes
+          // single-provider, so a measured "Grok arm" cannot be answered by Ministral or GPT.
+          var _armNoFallback = (typeof window !== 'undefined' && window._sbAuthorArmNoFallback === true);
+          var _policyResult = await _authorFullScenePolicy(_sharedSys, userPrompt, { maxTokens: 8000, temperature: 0.85, roleTag: 'scene', grokModel: 'grok-4-1-fast-reasoning', noFallback: _armNoFallback });
           response = _policyResult.text; _winningProvider = _policyResult.provider; _winningModelSlug = _policyResult.model;
           // AUTHOR ATTRIBUTION (A3-F8): persist which provider actually authored this scene so
           // author-mix COGS is auditable from state. _authorPrevWasPremium now reflects the ACTUAL

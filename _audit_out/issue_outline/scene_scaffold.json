@@ -1,0 +1,79 @@
+{
+ "causal_outline": [
+  {
+   "i": 1,
+   "beat": "The presiding Dohkar stops Lirael in the doorway and will not let her pass",
+   "link": null,
+   "from": null
+  },
+  {
+   "i": 2,
+   "beat": "He reads her the formal notice: her conduct at the rite is under investigation",
+   "link": "therefore",
+   "from": 1
+  },
+  {
+   "i": 3,
+   "beat": "Lirael asks who will hear it; he declines to say, and the refusal is the answer",
+   "link": "but",
+   "from": 2
+  },
+  {
+   "i": 4,
+   "beat": "He names the restrictions: she may supervise no rite, and she may not leave the Veilwood",
+   "link": "therefore",
+   "from": 3
+  },
+  {
+   "i": 5,
+   "beat": "Lirael begins to explain what she saw the wish do; he tells her to stop",
+   "link": "but",
+   "from": 4
+  },
+  {
+   "i": 6,
+   "beat": "He tells her Julian demanded the review, and did not come to say it himself",
+   "link": "therefore",
+   "from": 5
+  },
+  {
+   "i": 7,
+   "beat": "Lirael looks for Julian in the emptying hall and does not find him",
+   "link": "therefore",
+   "from": 6
+  },
+  {
+   "i": 8,
+   "beat": "She signs the acknowledgement because refusing it would be its own offence",
+   "link": "but",
+   "from": 7
+  },
+  {
+   "i": 9,
+   "beat": "The Dohkar takes the page and leaves her standing supervised in her own hall",
+   "link": "therefore",
+   "from": 8
+  }
+ ],
+ "note": "9 developments, 8 of 8 causally linked",
+ "anchor": "the rite-hall doors still standing open behind her",
+ "staged": [
+  {
+   "name": "Lirael",
+   "presence_mode": "IN_PERSON",
+   "role": "the subject of the notice"
+  },
+  {
+   "name": "the presiding Dohkar",
+   "presence_mode": "IN_PERSON",
+   "role": "serves the notice"
+  },
+  {
+   "name": "Julian",
+   "presence_mode": "OFFSTAGE_REFERENCED",
+   "role": "named as demanding the review"
+  }
+ ],
+ "pacing": "measured escalation",
+ "env": null
+}
