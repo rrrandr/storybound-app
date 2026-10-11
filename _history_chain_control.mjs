@@ -252,7 +252,7 @@ const early = await page.evaluate(() => {
   s.turnCount = 14; s._issueOutline = null;
   const block16 = window._renderIssueOutlineDirective(s, 16) || '';
   // And the scaffold must be told too, before it outlines anything.
-  return JSON.parse(JSON.stringify({ r16, block16, summary: window._issueOutlineSummary().alreadyWritten }));
+  return JSON.parse(JSON.stringify({ r16, block16, summary: window._issueOutlineSummary().alreadyWrittenWarnings }));
 });
 fs.writeFileSync('_audit_out/history_chain/already_written.txt', early.block16);
 t('the future row is FLAGGED from quote-backed prose in an earlier scene',
@@ -269,8 +269,9 @@ t('...and told the flag is lexical, so an incidental match does not suppress a r
   /This is a lexical flag, not a verdict/.test(early.block16)
   && /If the match is incidental and the development has NOT actually occurred, deliver it as assigned/.test(early.block16),
   'the caveat is missing');
-t('the pending flags are listed in the devtools summary',
-  Array.isArray(early.summary) && early.summary.some(x => x.scene === 16), JSON.stringify(early.summary));
+t('the lexical warnings are listed in the devtools summary, labelled as warnings',
+  Array.isArray(early.summary) && early.summary.some(x => x.scene === 16 && x.tier === 'lexical warning'),
+  JSON.stringify(early.summary));
 t('a quotation from the SAME or a LATER scene does not flag the row',
   await page.evaluate(() => {
     const s = window.state;
@@ -299,6 +300,202 @@ t('with no history at all, nothing is flagged',
     const o = window._resolveIssueOutline(s, { force: true });
     return o.scenes.every(r => !r.alreadyWritten);
   }), 'something was flagged with no history');
+
+// ═══ 5. THE OUTLINE REFRESHES ITSELF — NO MANUAL CACHE CLEARING ANYWHERE BELOW ══════════════
+section('5. AUTOMATIC REFRESH: history and delivery changes are noticed without forcing a rebuild');
+// Every call in this section goes through the ORDINARY read path: _resolveIssueOutline(s) with no
+// `force`, and NOTHING sets s._issueOutline = null. That is the reviewer's reproduction: the old
+// cache key held no history or revision fingerprint, so the warning appeared only after a forced
+// rebuild and then survived the quotation being superseded.
+const refresh = await page.evaluate(async () => {
+  const s = window.state;
+  const PROSE = 'I bent the wish, Julian said, and did not look away when he said it.';
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 14;      // scene 16
+  s._committedState = null; s._temptFateDurableConsequences = []; s._fpcActiveCompiled = null;
+  s._sceneDecisions = { '1': { choice: 'run', label: 'x', at: Date.now(), storyId: s.storyId } };
+  s._historyNotes = []; s.scenes = []; s._temptOutcomePending = {};
+  delete s._issueOutline; delete s._issueOutlineHistory;      // one setup, then hands off
+
+  const read = () => {
+    const o = window._resolveIssueOutline(s);                 // ORDINARY read: no force
+    const r = o.scenes.filter(x => x.n === 16)[0];
+    return { warned: !!r.alreadyWritten, delivered: !!r.alreadyDelivered, key: o._key.length };
+  };
+  const step1 = read();                                       // no history yet
+
+  // ATTACH through the shipped function, against a real scene record.
+  const uid = window._sbMintSceneUid('ctl');
+  s.scenes.push({ uid: uid, text: PROSE,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(PROSE), revision: 0,
+      provenance: 'api_built', builtAt: Date.now() } });
+  window._attachHistoryNote(uid, { events: [{ text: 'he admitted it', quote: PROSE }] },
+    PROSE, { sceneNumber: 3, sceneNumberSource: 'ctl' });
+  const step2 = read();                                       // must NOTICE the new note
+
+  // INVALIDATE through the shipped revision hook.
+  window._sbInvalidateDependentsOfScene(uid, s.scenes[0].projection.hash, 1);
+  const step3 = read();                                       // must NOTICE the supersession
+  return JSON.parse(JSON.stringify({ step1, step2, step3 }));
+});
+console.log('      ' + JSON.stringify(refresh));
+t('with no history, the ordinary read reports no warning',
+  refresh.step1.warned === false, JSON.stringify(refresh.step1));
+t('attaching a note makes the ORDINARY read report the warning — no force, no manual clearing',
+  refresh.step2.warned === true, JSON.stringify(refresh.step2));
+t('superseding that quotation makes the ORDINARY read DROP the warning again',
+  refresh.step3.warned === false, JSON.stringify(refresh.step3));
+
+// ═══ 6. SCENE IDENTITY ACROSS NOTE, PROPOSAL, VERDICT AND SPINE ROW ═════════════════════════
+section('6. ONE SCENE IDENTITY: the note, the seal, the verdict and the spine row agree');
+const sealed = await page.evaluate(() => {
+  const s = window.state;
+  s.turnCount = 1;                                   // story scene 2 is being planned
+  s._sealedProposals = null;
+  // The SHIPPED seal, called the way the planner now calls it: turn counter for the id, and the
+  // authoritative story scene stated separately.
+  const rec = window._sealProposal
+    ? window._sealProposal({ kind: 'state_change', fact: 'Julian publicly claims authority to convene the inquiry',
+        milestone: 'm', scene: (s.turnCount || 0), storyScene: 2 })
+    : null;
+  return rec ? JSON.parse(JSON.stringify({ id: rec.id, turn: rec.scene, storyScene: rec.storyScene,
+    prov: rec.storySceneProvenance })) : null;
+});
+t('the sealed id still mints from the turn counter (prop:1:*) — existing references keep resolving',
+  !!sealed && /^prop:1:/.test(sealed.id) && sealed.turn === 1, JSON.stringify(sealed));
+t('...while the record states the STORY scene separately, as 2',
+  !!sealed && sealed.storyScene === 2 && sealed.prov === 'caller', JSON.stringify(sealed));
+const bound = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 4;        // scene 6
+  s._historyNotes = []; s.scenes = []; s._temptOutcomePending = {};
+  // A committed fact in the shape _commitTransition now writes: the id carries the TURN (1) and
+  // the record carries the STORY scene (2). The reviewer's exact live case.
+  s._committedState = {
+    facts: [{ fact: 'Julian publicly claims authority to convene the inquiry', proposalRef: 'prop:1:1',
+              provenanceLink: 'sealed', committedAtScene: 1, storyScene: 2,
+              storySceneProvenance: 'caller', provenance: 'delivered' }],
+    _committedThroughScene: 2,
+    deliveryLog: { '2': { scene: 2, storyScene: 2, turnScene: 1, keyProvenance: 'storyScene',
+                          verifierReported: true, aggregateDelivery: 'DELIVERED',
+                          committed: [{ ref: 'prop:1:1' }], pending: {} } },
+    pendingIntent: null, tableau: null
+  };
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const o = window._resolveIssueOutline(s);
+  return JSON.parse(JSON.stringify({ r1: o.scenes.filter(r => r.n === 1)[0],
+    r2: o.scenes.filter(r => r.n === 2)[0] }));
+});
+t('the fact sealed prop:1:1 is attributed to STORY SCENE 2, not scene 1',
+  bound.r2.delivery === 'committed' && bound.r1.delivery !== 'committed',
+  JSON.stringify([bound.r1.delivery, bound.r2.delivery, bound.r2.deliveryEvidence]));
+t('and the verdict keyed by the story scene is the one that confirms it',
+  /verdict recorded the planned event DELIVERED/.test(bound.r2.deliveryEvidence),
+  bound.r2.deliveryEvidence);
+t('a LEGACY fact with no storyScene is still placed, and SAYS the scene was inferred',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._committedState.facts = [{ fact: 'x', proposalRef: 'prop:1:9', provenanceLink: 'sealed',
+      committedAtScene: 1, provenance: 'delivered' }];
+    s._committedState.deliveryLog = {};
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 1)[0];
+    return /scene INFERRED from the reference for a legacy fact carrying no storyScene/.test(r.deliveryEvidence);
+  }), 'legacy inference not reported');
+
+// ═══ 7. THE VERDICT DEFAULT, AND THE DELIVERY LOG'S FIELD NAMES ═════════════════════════════
+section('7. "NOBODY LOOKED" IS NOT "IT DID NOT HAPPEN"');
+const unreported = await page.evaluate(() => {
+  const s = window.state;
+  s._committedState = {
+    facts: [], _committedThroughScene: 3, pendingIntent: null, tableau: null,
+    // _delivery is INITIALISED to 'MISSED', so a scene whose verifier never reported used to be
+    // logged as checked-and-not-delivered. The log now records verifierReported.
+    deliveryLog: { '3': { scene: 3, storyScene: 3, verifierReported: false,
+                          aggregateDelivery: null, committed: [], pending: {} } }
+  };
+  s._historyNotes = [];
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const o = window._resolveIssueOutline(s);
+  return JSON.parse(JSON.stringify(o.scenes.filter(r => r.n === 3)[0]));
+});
+t('a scene whose verifier never reported is UNVERIFIED, not assessed_not_delivered',
+  unreported.delivery === 'unverified' && /NO verifier verdict was reported/.test(unreported.deliveryEvidence),
+  JSON.stringify([unreported.delivery, unreported.deliveryEvidence]));
+t('the delivery log records per-proposal statuses under the id the adjudicator actually emits',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._committedState.deliveryLog = { '3': { scene: 3, verifierReported: true, aggregateDelivery: 'MISSED',
+      committed: [], pending: { 'prop:1:4': { status: 'MISSED', reason: 'verified_not_delivered' } } } };
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 3)[0];
+    return r.delivery === 'assessed_not_delivered' && /per-proposal MISSED\/verified_not_delivered/.test(r.deliveryEvidence);
+  }), 'per-proposal status not read');
+
+// ═══ 8. REPLANNING, NOT A WARNING: A DELIVERED EVENT BECOMES A NEW ASSIGNMENT ═══════════════
+section('8. TIER 2: committed canon REPLACES the assignment (this is the replanning test)');
+const replan = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 14;       // scene 16
+  s._historyNotes = []; s.scenes = []; s._temptOutcomePending = {};
+  // A COMMITTED FACT from story scene 3 whose text carries row 16's own seed marker. This is the
+  // engine's own verified record, not a quotation the author chose for its note.
+  s._committedState = {
+    facts: [{ fact: 'Julian says I bent the wish, and does not offer a reason with it',
+              proposalRef: 'prop:2:1', provenanceLink: 'sealed', committedAtScene: 2, storyScene: 3,
+              storySceneProvenance: 'caller', provenance: 'delivered' }],
+    _committedThroughScene: 3,
+    deliveryLog: { '3': { scene: 3, storyScene: 3, verifierReported: true, aggregateDelivery: 'DELIVERED',
+                          committed: [{ ref: 'prop:2:1' }], pending: {} } },
+    pendingIntent: null, tableau: null
+  };
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const withheld = { r: window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0],
+                     block: window._renderIssueOutlineDirective(s, 16) || '' };
+  // CONSTRUCTED approval of the drafted replacement, to show the replanning the draft enables.
+  const plan = window.STARTER_PLANS.starter_first_sacrifice;
+  const row = plan.scenes.filter(r => r.n === 16)[0];
+  const saved = row.onAlreadyDelivered;
+  row.onAlreadyDelivered = Object.assign({}, saved, { provenance: 'approved_by_roman' });
+  delete s._issueOutline;
+  const approved = { r: window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0],
+                     block: window._renderIssueOutlineDirective(s, 16) || '',
+                     summary: window._issueOutlineSummary() };
+  row.onAlreadyDelivered = saved;
+  return JSON.parse(JSON.stringify({ withheld, approved }));
+});
+fs.writeFileSync('_audit_out/history_chain/replanned_scene16.txt',
+  '--- DRAFT WITHHELD (default) ---\n' + replan.withheld.block
+  + '\n\n--- REPLACEMENT APPROVED ---\n' + replan.approved.block);
+t('committed canon from an earlier scene is detected as ALREADY DELIVERED, not merely warned',
+  !!replan.withheld.r.alreadyDelivered && replan.withheld.r.alreadyDelivered[0].atScene === 3
+  && replan.withheld.r.alreadyDelivered[0].ref === 'prop:2:1'
+  && !replan.withheld.r.alreadyWritten,
+  JSON.stringify(replan.withheld.r.alreadyDelivered));
+t('the obsolete assignment is GONE from the directive — not printed beside a warning',
+  !/Julian finally admits he acted/.test(replan.withheld.block)
+  && !/Julian finally admits he acted/.test(replan.approved.block),
+  (replan.withheld.block.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,160}/) || ['(absent)'])[0]);
+t('the author is shown the COMMITTED FACT as the reason, stated as not a warning',
+  /HAS ALREADY BEEN DELIVERED AND COMMITTED/.test(replan.withheld.block)
+  && /This is not a warning and not a guess/.test(replan.withheld.block)
+  && /committed as prop:2:1/.test(replan.withheld.block),
+  (replan.withheld.block.match(/ALREADY BEEN DELIVERED[\s\S]{0,500}/) || [''])[0]);
+t('by default the drafted replacement is WITHHELD and the row carries no fixed goal',
+  replan.withheld.r.accomplishes === ''
+  && /DRAFTED BUT NOT APPROVED, so it is withheld/.test(replan.withheld.block),
+  JSON.stringify(replan.withheld.r.accomplishes));
+t('APPROVED, the delivered event becomes a CONSEQUENTIAL NEW ASSIGNMENT',
+  /what it has cost him since he made it/.test(replan.approved.r.accomplishes || '')
+  && /The confession stops being news and becomes a debt between them/.test(replan.approved.r.changes || '')
+  && /A replacement assignment IS authored/.test(replan.approved.block),
+  JSON.stringify({ a: replan.approved.r.accomplishes, c: replan.approved.r.changes }));
+t('the two tiers are reported separately in the summary',
+  Array.isArray(replan.approved.summary.alreadyDelivered)
+  && replan.approved.summary.alreadyDelivered.some(x => x.scene === 16 && x.tier === 'committed canon'),
+  JSON.stringify(replan.approved.summary.alreadyDelivered));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

@@ -98776,8 +98776,14 @@ Return ONLY numbered beats. No prose. No dialogue.` }
                    : ' and the replacement below stands in its place.')
               + ' Build the causal sequence from what is NOW true, and do not sequence the void plan.');
           }
-          if (_por.alreadyWritten) {
-            _pl.push('  POSSIBLY ALREADY WRITTEN (a lexical flag, not a verdict): earlier prose quoted from the'
+          if (_por.alreadyDelivered) {
+            _pl.push('  ALREADY DELIVERED AND COMMITTED: this scene\'s event is already in the engine\'s committed'
+              + ' record from scene ' + _por.alreadyDelivered[0].atScene + ' ("'
+              + String(_por.alreadyDelivered[0].fact).slice(0, 120) + '"). Its original assignment is VOID.'
+              + ' Outline the CONSEQUENCES of that having already happened; do NOT sequence the event itself.');
+          }
+          if (_por.alreadyWritten && !_por.alreadyDelivered) {
+            _pl.push('  POSSIBLY ALREADY WRITTEN (a lexical warning, not a verdict): earlier prose quoted from the'
               + ' scenes themselves appears to contain this development ('
               + _por.alreadyWritten.map(function (h) { return '"' + String(h.quote).slice(0, 90) + '"'; }).join(' · ')
               + '). If it genuinely did happen, outline the CONSEQUENCES rather than sequencing it again. If the'
@@ -100376,6 +100382,11 @@ function _buildAuthorFloorDirective(s) {
       if (!fact.trim()) return null;
       var st = _sealedProposalStore(true); if (!st) return null;
       var scene = (typeof spec.scene === 'number') ? spec.scene : (s.turnCount || 0);
+      // THE STORY SCENE, stated rather than derived from the id. Where a caller knows it (the
+      // planner knows _planSceneNum), it is authoritative. Where it does not, the field records
+      // that it is an inference from the turn counter, so no consumer can mistake one for the other.
+      var storyScene = (typeof spec.storyScene === 'number' && spec.storyScene > 0) ? spec.storyScene : null;
+      var storySceneProvenance = storyScene ? 'caller' : 'absent';
       var ph = null;
       try { var p = s._scenePosture && s._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
       var kind = (spec.kind === 'continuation') ? 'continuation' : 'state_change';
@@ -100383,6 +100394,8 @@ function _buildAuthorFloorDirective(s) {
       var prior = st.byInvocation[invocationId];
       if (prior && st.byId[prior]) return st.byId[prior];
       var id = 'prop:' + scene + ':' + (++st.seq);
+      // RECORDED ON THE SEAL so every downstream reader gets the same number.
+      var _ssForRec = storyScene, _ssProv = storySceneProvenance;
       // REQUIRED DELIVERY ANCHORS — the concrete participants whose presence in rendered prose is
       // necessary for the fact to have happened. Each `ref` names an entity in the register; the
       // permitted wording comes from that record's controlled alias set at check time, never from
@@ -100403,6 +100416,11 @@ function _buildAuthorFloorDirective(s) {
           aliases: Object.freeze((Array.isArray(e.aliases) ? e.aliases : []).slice()) });
       }) : [];
       var rec = { id: id, scene: scene,
+        // THE STORY SCENE, stated. `scene` above is the TURN counter the id is minted from and is
+        // NOT a story-scene number (turnCount is completed turns, so story scene 2 mints prop:1:*).
+        // Every downstream reader must use storyScene, and storySceneProvenance says whether a
+        // caller supplied it or it is absent.
+        storyScene: _ssForRec, storySceneProvenance: _ssProv,
         kind: kind,                                   // 'state_change' | 'continuation' — never collide
         fact: fact,                                   // EXACT, untruncated — the committed text
         anchors: Object.freeze(anchors),
@@ -100414,7 +100432,8 @@ function _buildAuthorFloorDirective(s) {
         sealed: true };
       Object.freeze(rec);                             // immutable through generation/retry/verify
       st.byId[id] = rec; st.byInvocation[invocationId] = id;
-      try { console.log('[SEAL] ' + id + ' scene=' + scene + ' posture=' + (ph || 'none') + ' fact="' + fact.slice(0, 70) + '"'); } catch (_) {}
+      try { console.log('[SEAL] ' + id + ' turn=' + scene + ' storyScene=' + (_ssForRec == null ? 'ABSENT' : _ssForRec)
+        + '(' + _ssProv + ') posture=' + (ph || 'none') + ' fact="' + fact.slice(0, 70) + '"'); } catch (_) {}
       return rec;
     } catch (_) { return null; }
   }
@@ -100495,6 +100514,11 @@ function _buildAuthorFloorDirective(s) {
       var entry = { fact: rec.fact, proposalRef: rec.id, provenanceLink: 'sealed',
         sourceEvent: String(sourceEvent || '').slice(0, 60),
         committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)),
+        // THE STORY SCENE, copied from the seal. `committedAtScene` is the turn counter and is NOT
+        // a story-scene number; consumers that need to line this fact up with a history note or a
+        // spine row read storyScene.
+        storyScene: (rec.storyScene != null) ? rec.storyScene : null,
+        storySceneProvenance: rec.storySceneProvenance || 'absent',
         provenance: 'delivered' };
       cs.facts.push(entry);
       if (cs.facts.length > 40) cs.facts = cs.facts.slice(-40); // bound
@@ -101801,17 +101825,34 @@ function _buildAuthorFloorDirective(s) {
           verdicts: (_ppRes && _ppRes.verdicts) || {}, unknownRefs: (_ppRes && _ppRes.unknownRefs) || [] };
         // ── PER-SCENE DELIVERY LOG (Roman 2026-10-11) ──
         if (!cs.deliveryLog || typeof cs.deliveryLog !== 'object') cs.deliveryLog = {};
+        // (a) THE FIELD IS `id`, NOT `ref` — _adjudicateSceneProposals pushes { id, kind, ... }.
+        // Reading .ref recorded nothing and silently lost every per-proposal status.
         var _dlPend = {};
         try { (_ppRes && _ppRes.pending ? _ppRes.pending : []).forEach(function (pnd) {
-          if (pnd && pnd.ref) _dlPend[pnd.ref] = { status: pnd.status || null, reason: pnd.reason || null, kind: pnd.kind || null };
+          var k = pnd && (pnd.id || pnd.ref);
+          if (k) _dlPend[k] = { status: pnd.status || null, reason: pnd.reason || null, kind: pnd.kind || null };
         }); } catch (_) {}
         var _dlComm = [];
         try { (_ppRes && _ppRes.committed ? _ppRes.committed : []).forEach(function (c) {
-          if (c && c.ref) _dlComm.push({ ref: c.ref, kind: c.kind || null });
+          var k = c && (c.id || c.ref);
+          if (k) _dlComm.push({ ref: k, kind: c.kind || null });
         }); } catch (_) {}
-        cs.deliveryLog[String(prevSceneNum)] = {
-          scene: prevSceneNum, at: Date.now(),
-          aggregateDelivery: _delivery || null,
+        // (b) _delivery is INITIALISED to 'MISSED'. If the verifier never reported, the scene was
+        // not checked — recording MISSED there turns "nobody looked" into "it did not happen".
+        var _dlReported = (typeof _vP !== 'undefined' && !!_vP);
+        // (c) KEYED BY THE STORY SCENE where the proposal carried one, so this log, the history
+        // note and the spine row all answer to the same number. prevSceneNum is the TURN counter.
+        var _dlStory = (prevProposal && typeof prevProposal.storyScene === 'number' && prevProposal.storyScene > 0)
+          ? prevProposal.storyScene : null;
+        var _dlKey = String(_dlStory != null ? _dlStory : prevSceneNum);
+        try { window.state._issueOutline = null; } catch (_) {}
+        cs.deliveryLog[_dlKey] = {
+          scene: _dlStory != null ? _dlStory : prevSceneNum,
+          storyScene: _dlStory, turnScene: prevSceneNum,
+          keyProvenance: _dlStory != null ? 'storyScene' : 'turn counter (no storyScene on the proposal)',
+          at: Date.now(),
+          verifierReported: _dlReported,
+          aggregateDelivery: _dlReported ? (_delivery || null) : null,
           committed: _dlComm, pending: _dlPend,
           unknownRefs: (_ppRes && _ppRes.unknownRefs) || []
         };
@@ -103710,7 +103751,12 @@ function _buildAuthorFloorDirective(s) {
           // record rather than minting a second.
           try {
             var _sealedProp = (typeof _sealProposal === 'function')
-              ? _sealProposal({ kind: 'state_change', fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '', scene: (s.turnCount || 0) })
+              ? _sealProposal({ kind: 'state_change', fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '',
+                  scene: (s.turnCount || 0),
+                  // THE AUTHORITATIVE STORY SCENE. _planSceneNum is the row this planner is
+                  // planning and the key _sceneObjectives is written under, so it is the one
+                  // number the note, the proposal, the verdict and the spine row can all share.
+                  storyScene: _planSceneNum })
               : null;
             if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
           } catch (_sealErr) { try { console.warn('[SEAL] failed: ' + (_sealErr && _sealErr.message)); } catch (_) {} }
@@ -103764,7 +103810,11 @@ function _buildAuthorFloorDirective(s) {
           // COMMITTED-STATE v0: record the PROPOSED transition as pendingIntent (planner memory). It becomes a
           // committed fact ONLY if the post-gen scorer verifies delivery (see the commit hook ~29335); on a miss
           // it stays pending and the planner replans toward the same milestone from the unchanged committed state.
-          try { _csGen.pendingIntent = { milestone: (_curMs && _curMs.event) || '', proposed: _stateChange.event, sceneProposed: (s.turnCount || 0) }; _csGen.tableau = s._sceneStateCard || _csGen.tableau; } catch (_) {}
+          try { _csGen.pendingIntent = { milestone: (_curMs && _curMs.event) || '', proposed: _stateChange.event,
+            sceneProposed: (s.turnCount || 0),
+            // The STORY scene this intent belongs to, so the delivery log and the outline agree
+            // with the history note instead of being a turn behind it.
+            storyScene: _planSceneNum }; _csGen.tableau = s._sceneStateCard || _csGen.tableau; } catch (_) {}
           try {
             console.log('[PLOT-CONTRACT:ENABLED] true');
             console.log('[COMMITTED-STATE] scene=' + (s.turnCount || 0) + ' facts=' + ((_csGen.facts || []).length) + ' proposed="' + _stateChange.event.slice(0, 60) + '" (pending until delivery)');
@@ -134120,6 +134170,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         },
         { n: 6, kind: 'convergence', causalLink: 'but',
           eventMarkers: ['should have been impossible', 'could not have worked', 'no wish could have'],
+          onAlreadyDelivered: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'The impossibility is already on the record, so this scene is what the Institution does with a fact it cannot explain and she cannot own.',
+            changes: 'The question moves from what happened to who is answerable for it.',
+            sets_up: 'She is being asked to account for something she did not do.' },
           changes: 'Lirael knows the wish succeeded in a way that should not have been possible.',
           followsFrom: 'The investigation has been steered away from the truth — but the wish itself is still there to be looked at.',
           setsUp: 'The wish\'s impossible success is a fact Lirael now holds and cannot account for.',
@@ -134141,6 +134195,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           goal: 'The PC realizes someone else may have intervened.' },
         { n: 9, kind: 'convergence', dependsOn: ['prereq:julian_act_concealed', 'prereq:investigation_open'], causalLink: 'therefore',
           eventMarkers: ['it was julian who', 'julian is the one who', 'julian had done it'],
+          onAlreadyDelivered: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'Suspicion is spent; this scene is what she does with a certainty she reached earlier than anyone wanted her to.',
+            changes: 'She is acting on it rather than arriving at it.',
+            sets_up: 'Acting on it is now visible to people who would rather she had not.' },
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'Suspicion is beside the point; she must choose how to stand toward a man who is already accused, in front of people watching which way she goes.',
             changes: 'Her position on Julian becomes a public fact about her rather than a private suspicion.',
@@ -134243,12 +134301,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         },
         { n: 15, kind: 'convergence', causalLink: 'therefore',
           eventMarkers: ['one of the oldest taboos', 'the oldest taboo'],
+          onAlreadyDelivered: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'The taboo is already named aloud, so this scene is the Institution beginning to behave like an institution with a broken taboo on its hands.',
+            changes: 'The matter stops being about her conduct and becomes about their own.',
+            sets_up: 'She is no longer the subject of the proceeding she is standing in.' },
           changes: 'Lirael knows the intervention broke one of the oldest taboos, which makes it ruinous rather than irregular.',
           followsFrom: 'The inquiry has turned toward Julian, so what he actually did starts to come into view.',
           setsUp: 'What was done was not merely irregular: it broke one of the oldest taboos, so exposing it would destroy whoever did it.',
           goal: 'The PC learns the intervention violated one of the oldest taboos.' },
         { n: 16, kind: 'conditional', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
           eventMarkers: ['i bent the wish', 'it was my wish', 'i was the one who turned it'],
+          onAlreadyDelivered: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'The admission is spent. This scene is what it has cost him since he made it, and what he now asks of her because he made it.',
+            changes: 'The confession stops being news and becomes a debt between them.',
+            sets_up: 'She is holding a request she has not answered.' },
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'The admission is already public, so the scene is what he tells HER that he has not told the panel.',
             changes: 'She knows something about his act that the inquiry does not.',
@@ -135254,6 +135320,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (s._historyNotes[_i] && String(s._historyNotes[_i].ref) === String(sceneUid)) { _prev = _i; break; }
       }
       if (_prev >= 0) s._historyNotes[_prev] = _hn; else s._historyNotes.push(_hn);
+      // The issue outline reconciles against history, so a new note invalidates it. The cache key
+      // already fingerprints the note list; dropping it here makes the refresh immediate.
+      try { s._issueOutline = null; } catch (_) {}
       if (rec) rec.historyNote = _hn;          // mirrored where a scene record exists
       try {
         if (sealedDrops) console.warn('[HISTORY-NOTE] dropped ' + sealedDrops
@@ -137465,9 +137534,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // records when the commit was written. v2 keyed on committedAtScene, so ANY fact committed
   // during scene n marked scene n's whole planned accomplishment established: an unrelated
   // "a bird lands on a branch" certified "Julian finally admits he acted". It does not.
-  function _refScene(ref) {
+  // The number inside 'prop:<n>:<seq>' is the TURN counter the id was minted from, NOT a story
+  // scene. It is read ONLY as a last resort for a legacy fact that carries no storyScene, and the
+  // resulting classification says so.
+  function _refTurn(ref) {
     var m = String(ref || '').match(/^prop:(\d+):/);
     return m ? Number(m[1]) : null;
+  }
+  function _factStoryScene(f) {
+    if (!f) return { n: null, inferred: false };
+    if (typeof f.storyScene === 'number' && f.storyScene > 0) return { n: f.storyScene, inferred: false };
+    var t = _refTurn(f.proposalRef);
+    return (t == null) ? { n: null, inferred: false } : { n: t, inferred: true };
   }
   // One scene-identified, revision-aware history source for every consumer of this resolver.
   // `quoted` is the only part that is the scene's own words, and a revised scene's quotations are
@@ -137498,9 +137576,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var byProposalScene = {}, byCommitScene = {}, unbound = [];
     facts.forEach(function (f) {
       if (!f) return;
-      var rs = _refScene(f.proposalRef);
-      if (rs != null) (byProposalScene[rs] = byProposalScene[rs] || []).push(f);
-      else unbound.push(f);
+      var ss = _factStoryScene(f);
+      if (ss.n != null) {
+        (byProposalScene[ss.n] = byProposalScene[ss.n] || []).push(
+          ss.inferred ? Object.assign({}, f, { _sceneInferred: true }) : f);
+      } else unbound.push(f);
       var cn = Number(f.committedAtScene);
       if (cn >= 0) (byCommitScene[cn] = byCommitScene[cn] || []).push(f);
     });
@@ -137530,16 +137610,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     if (own.length) {
       var _vf = own.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; });
       var _lg = ev.deliveryLog && ev.deliveryLog[String(n)];
-      var _aggDelivered = !!(_lg && String(_lg.aggregateDelivery || '').toUpperCase() === 'DELIVERED');
+      var _aggDelivered = !!(_lg && _lg.verifierReported !== false
+        && String(_lg.aggregateDelivery || '').toUpperCase() === 'DELIVERED');
+      var _inferredScene = own.some(function (f) { return f._sceneInferred; });
       if (_aggDelivered) {
         return { status: 'committed', verifiedFacts: _vf,
-                 evidence: own.length + ' committed fact(s) sealed for scene ' + n + ' ('
+                 evidence: own.length + ' committed fact(s) for scene ' + n + ' ('
                    + own.map(function (f) { return f.proposalRef; }).join(', ')
+                   + (_inferredScene ? '; scene INFERRED from the reference for a legacy fact carrying no storyScene' : '')
                    + ') AND this scene\'s own verdict recorded the planned event DELIVERED' };
       }
       return { status: 'partially_verified', verifiedFacts: _vf,
-               evidence: own.length + ' committed fact(s) sealed for scene ' + n + ' ('
+               evidence: own.length + ' committed fact(s) for scene ' + n + ' ('
                  + own.map(function (f) { return f.proposalRef; }).join(', ')
+                 + (_inferredScene ? '; scene INFERRED from the reference for a legacy fact carrying no storyScene' : '')
                  + ') — but this scene\'s own verdict did NOT record the planned event delivered'
                  + (_lg ? ' (aggregate ' + (_lg.aggregateDelivery || 'unstated') + ')' : ' (no verdict retained)')
                  + ', so those facts are established and the ROW\'S ASSIGNMENT is not' };
@@ -137547,7 +137631,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     if (n >= Number(sceneNow)) return { status: 'planned', evidence: 'not yet generated' };
     // A fact COMMITTED DURING this scene but sealed for another scene (or legacy, with no
     // reference at all) says nothing about THIS scene's assignment. Reported, never promoted.
-    var foreign = (ev.byCommitScene[n] || []).filter(function (f) { return _refScene(f.proposalRef) !== n; });
+    var foreign = (ev.byCommitScene[n] || []).filter(function (f) { return _factStoryScene(f).n !== n; });
     var foreignNote = foreign.length
       ? ' (a fact was committed during this scene but sealed elsewhere — ' + foreign.map(function (f) {
           return (f.proposalRef || 'no reference') + ': "' + String(f.fact || '').slice(0, 60) + '"'; }).join('; ')
@@ -137555,6 +137639,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       : '';
     // ── THIS SCENE'S OWN VERDICT, never the latest one applied backwards. ──
     var log = ev.deliveryLog && ev.deliveryLog[String(n)];
+    if (log && log.verifierReported === false && !Object.keys(log.pending || {}).length) {
+      // The commit pass ran but no verifier verdict arrived. "Nobody looked" is not "it did not
+      // happen", and the aggregate field is deliberately null in that case.
+      return { status: 'unverified',
+               evidence: 'the commit pass ran for scene ' + n + ' but NO verifier verdict was reported, so'
+                 + ' whether its event landed is UNKNOWN' + foreignNote };
+    }
     if (log) {
       var agg = String(log.aggregateDelivery || '').toUpperCase();
       var pend = log.pending || {};
@@ -137721,10 +137812,38 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (o && o.status === 'accepted') postureKey.push(k + '@' + String(o.postureHash || '?'));
       });
     } catch (_) {}
+    // HISTORY FINGERPRINT. Per note: its scene number, whether its quotations are superseded,
+    // the hash of the prose they were checked against, and how many it carries. Any attach,
+    // revision or invalidation changes this string, so the outline rebuilds on its own.
+    var histKey = [];
+    try {
+      var _hrecs = (typeof _historyNoteList === 'function') ? _historyNoteList(s) : (s._historyNotes || []);
+      (Array.isArray(_hrecs) ? _hrecs : []).forEach(function (hn) {
+        if (!hn) return;
+        histKey.push(String(hn.ref || '?') + '@' + (hn.sceneNumber == null ? '-' : hn.sceneNumber)
+          + (hn.quotesStale ? '!stale' : '') + ':' + String(hn.proseHash || '-')
+          + 'q' + ((hn.quoted || []).length) + 'o' + ((hn.obligations || []).length));
+      });
+      histKey.sort();
+    } catch (_) {}
+    // DELIVERY FINGERPRINT. The high-water mark and the fact count missed a per-scene verdict
+    // landing, and missed a fact's text changing without the count changing.
+    var delKey = [];
+    try {
+      Object.keys(ev.deliveryLog || {}).sort().forEach(function (k) {
+        var d = ev.deliveryLog[k];
+        delKey.push(k + '=' + (d && d.verifierReported === false ? 'unreported' : String((d && d.aggregateDelivery) || '-'))
+          + '/' + Object.keys((d && d.pending) || {}).length + '/' + (((d && d.committed) || []).length));
+      });
+      (((s._committedState || {}).facts) || []).forEach(function (f) {
+        if (f) delKey.push('f' + String(f.proposalRef || '-') + '@' + (f.storyScene == null ? '-' : f.storyScene));
+      });
+    } catch (_) {}
     var key = [s.storyId || '', bounds.issueIndex, bounds.per, bounds.last, sceneNow,
                decisionKey.join(','), postureKey.join(','),
                'ct' + (ev.through == null ? '-' : ev.through), 'cf' + ev.count,
-               'ov' + overturned.join('+')].join('|');
+               'ov' + overturned.join('+'),
+               'h' + histKey.join(','), 'd' + delKey.join(',')].join('|');
     if (s._issueOutline && s._issueOutline._key === key && !opts.force) return s._issueOutline;
 
     // The first unresolved player decision at or after the current scene. It does NOT stop the
@@ -137874,8 +137993,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                : 'no replacement is authored');
         }
       }
-      // ALREADY-WRITTEN CHECK. Quote-backed history only; stale quotations are excluded upstream.
-      var alreadyWritten = null;
+      // ALREADY-WRITTEN CHECK — TWO TIERS, and only one of them replans.
+      // TIER 1, LEXICAL WARNING: a phrase match against quotations the AUTHOR chose to put in its
+      //   own note. It cannot see an early event the note omitted or the same revelation in
+      //   different words, and a match is not proof anything happened. It WARNS and leaves the
+      //   assignment in place. Calling this "the repetition route closed" was wrong.
+      // TIER 2, COMMITTED CANON: the same markers against a COMMITTED FACT from an EARLIER story
+      //   scene — sealed pre-prose, verified delivered. That is the engine's own record of what
+      //   happened rather than the author's account of it, so the row's assignment IS replaced by
+      //   its consequences. The matching is still lexical; the EVIDENCE is not.
+      var alreadyWritten = null, alreadyDelivered = null;
       try {
         var _mk = [].concat(Array.isArray(planRow && planRow.eventMarkers) ? planRow.eventMarkers : [],
           (Array.isArray(planRow && planRow.reservedEvents) ? planRow.reservedEvents : [])
@@ -137899,11 +138026,49 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             });
           });
           if (_hits.length) alreadyWritten = _hits.slice(0, 4);
+          var _cHits = [];
+          Object.keys(ev.byProposalScene || {}).forEach(function (k) {
+            var sn = Number(k);
+            if (!(sn > 0) || sn >= n) return;
+            (ev.byProposalScene[k] || []).forEach(function (f) {
+              var fh = String(f.fact || '').toLowerCase();
+              _mk.forEach(function (m) {
+                var mm = m.toLowerCase().trim();
+                if (mm && fh.indexOf(mm) !== -1)
+                  _cHits.push({ marker: m, fact: String(f.fact || ''), atScene: sn, ref: f.proposalRef });
+              });
+            });
+          });
+          if (_cHits.length) alreadyDelivered = _cHits.slice(0, 4);
         }
       } catch (_) {}
+      // A CONFIRMED EARLY DELIVERY REPLACES THE ASSIGNMENT, quarantined the same way as every
+      // other authored replacement: a draft awaiting sign-off is withheld and the row then
+      // carries no fixed goal.
+      var alreadyDeliveredBy = null;
+      if (alreadyDelivered && kind !== 'overturned') {
+        var _adRepl = (planRow && planRow.onAlreadyDelivered) || (spineRow && spineRow.on_already_delivered) || null;
+        var _adPending = !!(_adRepl && String(_adRepl.provenance || '') === 'authored_proposal_pending_review');
+        alreadyDeliveredBy = { hits: alreadyDelivered,
+                               replacement: _adRepl ? (_adPending ? 'authored_but_awaiting_review' : 'authored') : 'none' };
+        if (_adRepl && !_adPending) {
+          accomplishes = String(_adRepl.accomplishes || '');
+          aSrc = 'plan row onAlreadyDelivered (the original assignment was already delivered at scene '
+            + alreadyDelivered[0].atScene + ')';
+          changes = String(_adRepl.changes || '');
+          setsUp = String(_adRepl.sets_up || _adRepl.setsUp || '');
+        } else {
+          accomplishes = ''; changes = ''; setsUp = '';
+          aSrc = 'WITHHELD: this row\'s event was already delivered at scene ' + alreadyDelivered[0].atScene
+            + ' (committed fact ' + alreadyDelivered[0].ref + ') and '
+            + (_adRepl ? 'the drafted replacement has NOT been approved, so it is withheld too'
+                       : 'no replacement is authored');
+        }
+      }
       var row = {
         n: n, kind: kind,
         alreadyWritten: alreadyWritten,
+        alreadyDelivered: alreadyDelivered, alreadyDeliveredBy: alreadyDeliveredBy,
         delivery: del.status, deliveryEvidence: del.evidence,
         verifiedFacts: del.verifiedFacts || null,
         overturnedBy: overturnedBy,
@@ -137924,8 +138089,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       rows.push(row);
       if (del.status === 'committed') { try { s._issueOutlineHistory[String(n)] = row; } catch (_) {} }
       if (horizon == null && hasDecision && !decisionHere.resolved) { horizon = n; horizonAxis = decisionHere.axis; }
-      if (alreadyWritten) {
-        try { console.warn('[ISSUE-OUTLINE:ALREADY-WRITTEN] scene ' + n + ' is still scheduled, but earlier'
+      if (alreadyDelivered) {
+        try { console.warn('[ISSUE-OUTLINE:ALREADY-DELIVERED] scene ' + n + ' event is already COMMITTED canon'
+          + ' from scene ' + alreadyDelivered[0].atScene + ' (' + alreadyDelivered[0].ref + ') — its assignment is '
+          + (alreadyDeliveredBy.replacement === 'authored' ? 'REPLACED by its consequences' : 'WITHHELD')); } catch (_) {}
+      }
+      if (alreadyWritten && !alreadyDelivered) {
+        try { console.warn('[ISSUE-OUTLINE:ALREADY-WRITTEN:WARNING] scene ' + n + ' is still scheduled, but earlier'
           + ' quoted prose already shows it: ' + alreadyWritten.map(function (h) {
             return '"' + h.marker + '" at scene ' + (h.atScene == null ? '?' : h.atScene); }).join(', ')); } catch (_) {}
       }
@@ -138116,9 +138286,28 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             : row.follows_from.link === 'therefore' ? ' (CONSEQUENCE — the previous development caused this)' : '')
           + ': ' + row.follows_from.text);
       }
-      if (row.alreadyWritten) {
-        L.push('    ⚠ THIS DEVELOPMENT MAY ALREADY HAVE BEEN WRITTEN. Earlier prose, quoted from the scenes'
-          + ' themselves, already contains it:');
+      if (row.alreadyDelivered) {
+        L.push('    THIS SCENE\'S EVENT HAS ALREADY BEEN DELIVERED AND COMMITTED. This is not a warning and not'
+          + ' a guess: the engine\'s own committed record carries it from an earlier scene —');
+        row.alreadyDelivered.forEach(function (h) {
+          L.push('      – scene ' + h.atScene + ', committed as ' + h.ref + ': "' + String(h.fact).slice(0, 200) + '"');
+        });
+        L.push('      So this scene\'s original assignment is VOID and is not stated below. Do NOT deliver that'
+          + ' event again, and do NOT invent an equivalent revelation to replace it.'
+          + ((row.alreadyDeliveredBy && row.alreadyDeliveredBy.replacement === 'authored')
+            ? ' A replacement assignment IS authored and is the one stated below: write the CONSEQUENCES of the'
+              + ' event having already happened.'
+            : (row.alreadyDeliveredBy && row.alreadyDeliveredBy.replacement === 'authored_but_awaiting_review')
+              ? ' A replacement is DRAFTED BUT NOT APPROVED, so it is withheld: this scene has no fixed goal, and'
+                + ' you must build it from the consequences of that already-committed event.'
+              : ' NO replacement is authored, so this scene has no fixed goal: build it from the consequences of'
+                + ' that already-committed event.'));
+      }
+      if (row.alreadyWritten && !row.alreadyDelivered) {
+        L.push('    ⚠ WARNING, NOT A VERDICT — THIS DEVELOPMENT MAY ALREADY HAVE BEEN WRITTEN. A phrase from the'
+          + ' assignment appears in prose the previous author quoted in its own note. That is a diagnostic'
+          + ' signal only: it cannot see an early event the note left out, or the same revelation in different'
+          + ' words, and a phrase match does not establish that anything happened:');
         row.alreadyWritten.forEach(function (h) {
           L.push('      – scene ' + (h.atScene == null ? '?' : h.atScene) + ' says: "' + String(h.quote).slice(0, 180) + '"');
         });
@@ -138212,11 +138401,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
              decisions: o.decisions, overturned: o.overturned, commitEvidence: o.commitEvidence,
              planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
              cliffhanger: o.cliffhanger, lastRevision: o.lastRevision || null,
-             alreadyWritten: o.scenes.filter(function (r) { return r.alreadyWritten; })
-               .map(function (r) { return { scene: r.n, hits: r.alreadyWritten }; }),
+             alreadyWrittenWarnings: o.scenes.filter(function (r) { return r.alreadyWritten && !r.alreadyDelivered; })
+               .map(function (r) { return { scene: r.n, hits: r.alreadyWritten, tier: 'lexical warning' }; }),
+             alreadyDelivered: o.scenes.filter(function (r) { return r.alreadyDelivered; })
+               .map(function (r) { return { scene: r.n, hits: r.alreadyDelivered, tier: 'committed canon',
+                 assignment: r.alreadyDeliveredBy && r.alreadyDeliveredBy.replacement }; }),
              scenes: o.scenes.map(function (r) {
                return r.n + ' [' + r.kind + '/' + r.delivery + (r.conditional ? '/conditional' : '')
-                 + (r.alreadyWritten ? '/ALREADY-WRITTEN' : '') + '] '
+                 + (r.alreadyDelivered ? '/ALREADY-DELIVERED' : (r.alreadyWritten ? '/already-written?' : '')) + '] '
                  + (r.follows_from.link ? ('(' + r.follows_from.link + ') ') : '')
                  + String(r.accomplishes || '(no goal)').slice(0, 110);
              }) };
@@ -329920,6 +330112,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         hn.staleReason = 'the scene was revised: hash ' + String(prevHash) + ' -> revision ' + newRevision;
         hn.staleAt = Date.now();
         out.push('historyNote:' + String(hn.ref));
+        try { s._issueOutline = null; } catch (_) {}
       });
     } catch (_) {}
     return out;
