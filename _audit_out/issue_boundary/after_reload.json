@@ -1,0 +1,96 @@
+{
+ "decisions": {
+  "1": {
+   "choice": "run",
+   "label": "run in shame",
+   "at": 1,
+   "storyId": "ctl-boundary"
+  }
+ },
+ "notes": [
+  [
+   2,
+   "p:i1s2",
+   false
+  ],
+  [
+   7,
+   "p:i1s7",
+   false
+  ],
+  [
+   11,
+   "p:i2s11",
+   false
+  ]
+ ],
+ "facts": [
+  {
+   "fact": "Lirael left the clearing before the notice was served",
+   "proposalRef": "prop:0:1",
+   "provenanceLink": "sealed",
+   "committedAtScene": 0,
+   "storyScene": 2,
+   "storySceneProvenance": "caller",
+   "milestoneScene": 2,
+   "provenance": "delivered"
+  }
+ ],
+ "log": {
+  "2": {
+   "scene": 2,
+   "storyScene": 2,
+   "turnScene": 1,
+   "keyProvenance": "storyScene via the proposal object",
+   "verifierReported": true,
+   "aggregateSupplied": true,
+   "aggregateDelivery": "DELIVERED",
+   "committed": [
+    {
+     "ref": "prop:0:1"
+    }
+   ],
+   "pending": {}
+  }
+ },
+ "fate": [
+  {
+   "requestedRupture": "let the Veilwood know who bent the wish",
+   "sceneIdx": 5,
+   "changed": [
+    {
+     "subject": "the assembly",
+     "whatChanged": "knows an outside hand touched the rite"
+    }
+   ],
+   "establishedEvidence": [
+    "the Chayr read the finding aloud"
+   ],
+   "invalidatesPrereqs": [
+    "prereq:julian_act_concealed"
+   ]
+  }
+ ],
+ "assessments": [
+  {
+   "milestoneScene": 16,
+   "atScene": 6,
+   "turnScene": 5,
+   "status": "delivered_on_page",
+   "accepted": true,
+   "why": "accepted",
+   "evidence": "\"I bent the wish,\" Julian said",
+   "participants": [
+    "Julian"
+   ],
+   "scope": "the Chayr and the assembly",
+   "proseHash": "h3",
+   "superseded": false,
+   "at": 1,
+   "source": "runtime commit verifier"
+  }
+ ],
+ "overturned": [
+  "prereq:julian_act_concealed"
+ ]
+}

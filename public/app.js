@@ -101720,6 +101720,100 @@ function _buildAuthorFloorDirective(s) {
       // STRUCTURED EVENT HANDOFF: when the proposal carries load-bearing slots, verify them SLOT-BY-SLOT. A slot
       // mismatch (e.g. TARGET=Julian but Julian absent) is NOT "close enough" — it forces MISSED. This is the
       // determinism gate: the planned event must appear with its essential slots intact, or be rejected.
+      // ── WHAT TO WATCH FOR, BESIDES THIS SCENE'S OWN PROPOSALS ──────────────────────────────
+      // MILESTONE WATCH: the plan rows AFTER this scene, each with its own text. A scene is not
+      // supposed to deliver these; when one does anyway, that is the early-delivery event nothing
+      // used to record.
+      // PREREQ WATCH: the named world conditions later rows depend on, plus the accepted Fate
+      // outcome in force, so an adjudicated rupture that genuinely removes one can be recorded.
+      var _mWatch = [], _pWatch = [], _fateCtx = '';
+      try {
+        var _wPlan = (typeof _activePlan === 'function') ? _activePlan(window.state) : null;
+        var _wScene = (prevProposal && Number(prevProposal.storyScene) > 0) ? Number(prevProposal.storyScene)
+          : (Number(prevSceneNum) + 1);
+        if (_wPlan && Array.isArray(_wPlan.scenes)) {
+          // WHICH LATER ROWS TO WATCH, and why it is not simply "the next eight". The nearest rows
+          // are the least likely to be delivered early; the rows a story actually risks revealing
+          // ahead of time are the ones it has bothered to declare markers or reserved events for.
+          // So declared rows come FIRST, then the nearest ones fill the remaining slots. The cap
+          // bounds the request; eight entries at 180 chars is ~1.5k of prompt.
+          var _later = _wPlan.scenes.filter(function (r) {
+            return r && Number(r.n) > _wScene && String(r.goal || '').trim();
+          });
+          var _declared = _later.filter(function (r) {
+            return (Array.isArray(r.eventMarkers) && r.eventMarkers.length)
+              || (Array.isArray(r.reservedEvents) && r.reservedEvents.length);
+          });
+          var _rest = _later.filter(function (r) { return _declared.indexOf(r) === -1; });
+          _declared.concat(_rest).forEach(function (r) {
+            if (_mWatch.length >= 8) return;
+            _mWatch.push({ n: Number(r.n), text: String(r.goal).trim().slice(0, 180) });
+          });
+          _mWatch.sort(function (a, b) { return a.n - b.n; });
+        }
+        if (_wPlan && Array.isArray(_wPlan.prerequisites)) {
+          _wPlan.prerequisites.forEach(function (pq) {
+            if (pq && pq.id && _pWatch.length < 6) _pWatch.push({ id: String(pq.id), text: String(pq.text || '').slice(0, 180) });
+          });
+        }
+        var _fl = [];
+        (Array.isArray(window.state._temptFateDurableConsequences) ? window.state._temptFateDurableConsequences : [])
+          .forEach(function (c) {
+            if (!c) return;
+            (Array.isArray(c.changed) ? c.changed : []).forEach(function (x) {
+              if (x && x.whatChanged) _fl.push(String(x.subject || '') + ': ' + String(x.whatChanged));
+            });
+          });
+        try {
+          var _fp = window.state._fpcActiveCompiled;
+          (Array.isArray(_fp && _fp.changed) ? _fp.changed : []).forEach(function (x) {
+            if (x && x.whatChanged) _fl.push(String(x.subject || '') + ': ' + String(x.whatChanged));
+          });
+        } catch (_) {}
+        if (_fl.length) _fateCtx = _fl.slice(0, 6).join(' | ');
+      } catch (_) {}
+      if (_mWatch.length || _pWatch.length) {
+        _vSys += '\n\nTWO ADDITIONAL QUESTIONS, judged ONLY against the SCENE PROSE above. Both are'
+          + ' SEPARATE from the proposals: answer them about the prose itself.\n'
+          + (_mWatch.length ? ('MILESTONE WATCH. For each watched milestone listed below, return'
+            + ' "milestone_watch": [ { "n": <the number given>, "status": "delivered_on_page" | "mentioned" |'
+            + ' "denied" | "hypothetical" | "private_only" | "not_present" | "cannot_determine",'
+            + ' "evidence": "<a VERBATIM substring of the SCENE PROSE, or an ARRAY of up to 4 such'
+            + ' substrings, or \"\" if none>", "participants": ["<the named people who performed it, as the'
+            + ' prose names them>"], "scope": "<who in the scene witnessed or learned it: a short phrase>" } ].\n'
+            + '"delivered_on_page" means the milestone\'s own event CONCRETELY HAPPENED in this prose, in'
+            + ' front of the people the prose says were there. Use the OTHER statuses otherwise, and they are'
+            + ' NOT delivery: "mentioned" = referred to, recalled or predicted but not performed; "denied" ='
+            + ' someone states it did not or will not happen; "hypothetical" = conditional, imagined, feared'
+            + ' or proposed; "private_only" = it happened where only the point-of-view character could know'
+            + ' and nobody else in the scene learned it; "not_present" = absent from this prose;'
+            + ' "cannot_determine" = you cannot tell. A watched milestone you are unsure about is'
+            + ' "cannot_determine" — never "delivered_on_page".\n') : '')
+          + (_pWatch.length ? ('PREREQUISITE WATCH. For each watched prerequisite listed below, return'
+            + ' "prereq_watch": [ { "id": "<the id given, copied verbatim>", "status":'
+            + ' "invalidated_on_page" | "still_holds" | "mentioned" | "denied" | "hypothetical" |'
+            + ' "requested_not_delivered" | "cannot_determine", "evidence": "<a VERBATIM substring of the'
+            + ' SCENE PROSE, or an ARRAY of up to 4 such substrings, or \"\" if none>",'
+            + ' "participants": ["<the named people involved>"], "scope": "<how widely it now fails to'
+            + ' hold: a short phrase>" } ].\n'
+            + '"invalidated_on_page" means the condition DEMONSTRABLY STOPPED HOLDING in this prose. A wish'
+            + ' or petition that was ASKED FOR but whose effect is not on the page is'
+            + ' "requested_not_delivered", which is NOT invalidation. Everything else uses the matching'
+            + ' status above, and uncertainty is "cannot_determine".\n') : '')
+          + 'HARD, for both: every "evidence" value must be VERBATIM text from the SCENE PROSE. A status of'
+          + ' "delivered_on_page" or "invalidated_on_page" with no verbatim evidence is DISCARDED by the'
+          + ' engine, and so is one whose quotation is not found in the prose. Do NOT infer, do NOT'
+          + ' paraphrase, and do NOT reason from outside this prose.';
+        if (_mWatch.length) {
+          _vUsr += '\n\nWATCHED MILESTONES (these belong to LATER scenes and are NOT this scene\'s job — report whether this prose delivered any of them anyway):';
+          _mWatch.forEach(function (m) { _vUsr += '\n  n ' + m.n + ' :: ' + m.text; });
+        }
+        if (_pWatch.length) {
+          _vUsr += '\n\nWATCHED PREREQUISITES (named world conditions later scenes depend on):';
+          _pWatch.forEach(function (q) { _vUsr += '\n  id ' + q.id + ' :: ' + q.text; });
+          if (_fateCtx) _vUsr += '\n  ACCEPTED FATE OUTCOME IN FORCE (context only — judge the PROSE): ' + _fateCtx;
+        }
+      }
       var _slots = (typeof window !== 'undefined' && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false) && prevProposal && prevProposal.slots && prevProposal.slots.exitState) ? prevProposal.slots : null;
       if (_slots) {
         _vSys += '\nEVIDENCE-GROUNDED SLOT CHECK (HARD — GROUND every judgment in the SCENE PROSE above, NOT in this planned event and NOT in outside context or "what seems consistent"). For each slot, return the LITERAL verbatim quote FROM THE SCENE PROSE that supports it. Return "slots_check": {"precondition_evidence":"<verbatim quote showing the required actor/target is PRESENT in the scene so the event was possible — they count as present even if the event then changes them; else empty>","actor_evidence":"<verbatim quote showing the actor performs the action — or an ARRAY of such quotes when they are separated — else empty>","action_evidence":"<verbatim quote showing the action occurs, else empty>","target_evidence":"<verbatim quote showing the target is present and receiving it, else empty>","exit_state_evidence":"<verbatim quote showing the exit state became TRUE on the page, else empty>","occurred_this_scene":true|false}. (Empty precondition_evidence means the event was IMPOSSIBLE — the required condition was not present.) HARD RULES: (1) every evidence value MUST be verbatim text FROM THE SCENE PROSE — if you cannot find any, return "" (do NOT paraphrase, do NOT infer, do NOT write "the scene implies"). A value is EITHER one quotation copied contiguously from a single place, OR — when the support is spread across separated passages — an ARRAY of up to 4 such short quotations, e.g. "actor_evidence": ["<span>", "<span>"]. Each span is checked on its own and every one must be found. Do NOT join separated passages into one string with newlines or ellipses: that joined text does not appear in the prose and WILL fail. (2) if the named actor or target does not literally appear and act in the prose, its evidence is "". (3) occurred_this_scene = did it happen DURING this prose, not merely set up. A slot with EMPTY evidence is FALSE; if any load-bearing slot is FALSE, delivery MUST be "MISSED". Also return "actual_exit_state": a short phrase for what actually became TRUE this scene, or "".';
@@ -101886,6 +101980,77 @@ function _buildAuthorFloorDirective(s) {
           } catch (_) {}
         }
         var _dlKey = String(_dlStory != null ? _dlStory : prevSceneNum);
+        // ══ MILESTONE + PREREQUISITE ASSESSMENT, STORED ═══════════════════════════════════
+        // Every accepted record must satisfy ALL of: the closed status that means COMPLETED, at
+        // least one piece of evidence that verifies VERBATIM against this scene's prose, named
+        // participants, and a scope. Anything else is stored as an UNCERTAIN observation and is
+        // never read as delivery or invalidation. Revision-aware: the prose hash is recorded, and
+        // _sbInvalidateDependentsOfScene marks the record superseded when the scene is rewritten.
+        try {
+          var _asScene = (_dlStory != null) ? _dlStory : (Number(prevSceneNum) + 1);
+          var _asHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_pt) : null;
+          var _okEv = function (e) {
+            try { return (typeof _hasUsableEvidence === 'function') ? _hasUsableEvidence(e) : false; } catch (_) { return false; }
+          };
+          var _evOk = function (e) {
+            if (!_okEv(e)) return false;
+            try { return (typeof _evidenceVerifies === 'function') ? _evidenceVerifies(e, _pt) : false; } catch (_) { return false; }
+          };
+          var _store = function (key) {
+            if (!Array.isArray(window.state[key])) window.state[key] = [];
+            return window.state[key];
+          };
+          var _mw = (_vP && Array.isArray(_vP.milestone_watch)) ? _vP.milestone_watch : [];
+          _mw.forEach(function (m) {
+            if (!m) return;
+            var tgt = Number(m.n);
+            if (!(tgt > 0) || tgt <= _asScene) return;            // only a LATER row can be delivered early
+            var st = String(m.status || '').toLowerCase();
+            var parts = Array.isArray(m.participants) ? m.participants.map(String).filter(Boolean) : [];
+            var scope = String(m.scope || '').trim();
+            var evOk = _evOk(m.evidence);
+            var accepted = (st === 'delivered_on_page') && evOk && parts.length > 0 && !!scope;
+            var why = accepted ? 'accepted'
+              : (st !== 'delivered_on_page' ? ('status "' + (st || 'unstated') + '" is not completion')
+                : (!evOk ? 'no evidence verifies verbatim against this scene\'s prose'
+                  : (!parts.length ? 'no participants named' : 'no scope stated')));
+            _store('_milestoneDeliveries').push({
+              milestoneScene: tgt, atScene: _asScene, turnScene: prevSceneNum,
+              status: st || 'unstated', accepted: accepted, why: why,
+              evidence: m.evidence || null, participants: parts, scope: scope || null,
+              proseHash: _asHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
+            });
+            try { console.log('[MILESTONE-WATCH] scene ' + _asScene + ' vs row ' + tgt + ': status=' + (st || 'unstated')
+              + ' accepted=' + accepted + ' (' + why + ')'); } catch (_) {}
+          });
+          var _pw = (_vP && Array.isArray(_vP.prereq_watch)) ? _vP.prereq_watch : [];
+          _pw.forEach(function (q) {
+            if (!q || !q.id) return;
+            var st2 = String(q.status || '').toLowerCase();
+            var parts2 = Array.isArray(q.participants) ? q.participants.map(String).filter(Boolean) : [];
+            var scope2 = String(q.scope || '').trim();
+            var evOk2 = _evOk(q.evidence);
+            var acc2 = (st2 === 'invalidated_on_page') && evOk2 && parts2.length > 0 && !!scope2;
+            var why2 = acc2 ? 'accepted'
+              : (st2 !== 'invalidated_on_page' ? ('status "' + (st2 || 'unstated') + '" is not invalidation')
+                : (!evOk2 ? 'no evidence verifies verbatim against this scene\'s prose'
+                  : (!parts2.length ? 'no participants named' : 'no scope stated')));
+            _store('_prereqInvalidations').push({
+              prereqId: String(q.id), atScene: _asScene, turnScene: prevSceneNum,
+              status: st2 || 'unstated', accepted: acc2, why: why2,
+              evidence: q.evidence || null, participants: parts2, scope: scope2 || null,
+              proseHash: _asHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
+            });
+            try { console.log('[PREREQ-WATCH] scene ' + _asScene + ' vs ' + q.id + ': status=' + (st2 || 'unstated')
+              + ' accepted=' + acc2 + ' (' + why2 + ')'); } catch (_) {}
+          });
+          try {
+            if (Array.isArray(window.state._milestoneDeliveries) && window.state._milestoneDeliveries.length > 40)
+              window.state._milestoneDeliveries = window.state._milestoneDeliveries.slice(-40);
+            if (Array.isArray(window.state._prereqInvalidations) && window.state._prereqInvalidations.length > 40)
+              window.state._prereqInvalidations = window.state._prereqInvalidations.slice(-40);
+          } catch (_) {}
+        } catch (_wErr) { try { console.warn('[MILESTONE-WATCH] assessment store threw: ' + (_wErr && _wErr.message)); } catch (__) {} }
         try { window.state._issueOutline = null; } catch (_) {}
         cs.deliveryLog[_dlKey] = {
           scene: _dlStory != null ? _dlStory : prevSceneNum,
@@ -118553,6 +118718,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     delete cleanState._proseDensityLog;
     delete cleanState._charLedgerLastFp;
     delete cleanState._sceneStateCard;  // re-extracted on scene mount; not worth persisting
+    // THE ISSUE OUTLINE IS A DERIVED CACHE, not state. Persisting it would restore a plan computed
+    // under a previous build and a previous set of history/delivery records; it is rebuilt on the
+    // first read from the records that ARE persisted (_issueOutlineHistory, _historyNotes,
+    // _committedState, _sceneDecisions, _milestoneDeliveries, _prereqInvalidations), all of which
+    // stay. Its cache key fingerprints those, so the rebuild is immediate and correct.
+    delete cleanState._issueOutline;
     // Remove DOM references that can't be serialized
     delete cleanState.activeParagraphElement;
 
@@ -118737,6 +118908,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // payload after the first schema-cache miss. Populated lazily from Supabase error messages.
   // Exposed on window for smoke-test observability.
   window._supabaseSnapshotMissingCols = window._supabaseSnapshotMissingCols || null;
+
+  // Dev handle so a FREE provider-free control can drive the REAL snapshot writer — including its
+  // own deletion list — rather than replicating it. No production caller.
+  try { window.__saveStorySnapshot = function () { return saveStorySnapshot(); }; } catch (_) {}
 
   async function saveStorySnapshotToSupabase(profileId, storyId, snapshot) {
     var basePayload = {
@@ -137793,6 +137968,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // which planned prerequisites it invalidated (_temptFateDurableConsequences[].invalidatesPrereqs).
   // Absent that field nothing is overturned — the plan stands. Guessing from a rupture's prose
   // would be a renderer deciding plot, which is exactly what this layer must not do.
+  // ACCEPTED POST-PROSE ASSESSMENTS. Produced by the runtime commit verifier (see the milestone
+  // and prerequisite watch in _commitScene), already checked there against the prose verbatim and
+  // for named participants and scope, and dropped here if the scene has since been rewritten.
+  function _outlineAcceptedAssessments(s, key) {
+    var out = [];
+    try {
+      (Array.isArray(s && s[key]) ? s[key] : []).forEach(function (r) {
+        if (r && r.accepted === true && r.superseded !== true) out.push(r);
+      });
+    } catch (_) {}
+    return out;
+  }
   function _outlineAdjudicatedRecords(s) {
     var recs = [];
     try {
@@ -137834,6 +138021,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (out.indexOf(id) !== -1) return;               // already overturned outright
       if (atRisk.indexOf(id) === -1) { atRisk.push(id); atRiskWhy[id] = reason; }
     };
+    // (0) AN ACCEPTED POST-PROSE ASSESSMENT. The producer for Fate-driven replanning: the verifier
+    // read this scene's prose, judged the condition DEMONSTRABLY stopped holding, named the
+    // participants and the scope, and quoted the evidence — and _commitScene accepted it only on
+    // all of those. A requested-but-undelivered wish reports requested_not_delivered and is not
+    // accepted, so it never reaches here.
+    _outlineAcceptedAssessments(s, '_prereqInvalidations').forEach(function (r) {
+      add(String(r.prereqId), 'post-prose assessment of scene ' + r.atScene
+        + ': invalidated on the page (participants: ' + (r.participants || []).join(', ')
+        + '; scope: ' + (r.scope || 'unstated') + ')');
+    });
     _outlineAdjudicatedRecords(s).forEach(function (w) {
       var c = w.rec;
       // (a) THE ONLY THING THAT OVERTURNS: an explicit declaration by the adjudication itself.
@@ -137957,7 +138154,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                decisionKey.join(','), postureKey.join(','),
                'ct' + (ev.through == null ? '-' : ev.through), 'cf' + ev.count,
                'ov' + overturned.join('+'), 'ar' + ((overturned._atRisk || []).join('+')),
-               'h' + histKey.join(','), 'd' + delKey.join(',')].join('|');
+               'h' + histKey.join(','), 'd' + delKey.join(','),
+               // ASSESSMENTS. A new accepted record, or one superseded by a rewrite, changes the plan.
+               'as' + ((Array.isArray(s._milestoneDeliveries) ? s._milestoneDeliveries : []).map(function (r) {
+                 return (r && r.milestoneScene) + '@' + (r && r.atScene) + (r && r.accepted ? 'A' : '-') + (r && r.superseded ? 'S' : ''); }).join(',')),
+               'ps' + ((Array.isArray(s._prereqInvalidations) ? s._prereqInvalidations : []).map(function (r) {
+                 return (r && r.prereqId) + '@' + (r && r.atScene) + (r && r.accepted ? 'A' : '-') + (r && r.superseded ? 'S' : ''); }).join(','))].join('|');
     if (s._issueOutline && s._issueOutline._key === key && !opts.force) return s._issueOutline;
 
     // The first unresolved player decision at or after the current scene. It does NOT stop the
@@ -138125,6 +138327,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // inspected, so no speaker and no denial can be misread.
       try {
         var _mlHits = [];
+        // (a) THE PLANNER'S OWN SEAL — a proposal accepted against this row's milestone.
         Object.keys(ev.byProposalScene || {}).forEach(function (k) {
           var sn = Number(k);
           if (!(sn > 0) || sn >= n) return;
@@ -138133,6 +138336,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               _mlHits.push({ fact: String(f.fact || ''), atScene: sn, ref: f.proposalRef,
                              link: 'the planner sealed this proposal against row ' + n + "'s milestone" });
           });
+        });
+        // (b) THE POST-PROSE ASSESSMENT — a scene that delivered THIS row's milestone early. This
+        // is the producer that was missing: the verifier read the prose, named the participants and
+        // the scope, and quoted the evidence, and _commitScene accepted it only on all of those.
+        _outlineAcceptedAssessments(s, '_milestoneDeliveries').forEach(function (r) {
+          if (Number(r.milestoneScene) !== n) return;
+          if (!(Number(r.atScene) > 0) || Number(r.atScene) >= n) return;
+          _mlHits.push({ fact: (Array.isArray(r.evidence) ? r.evidence.join(' … ') : String(r.evidence || '')),
+                         atScene: Number(r.atScene), ref: 'assessment@scene' + r.atScene,
+                         participants: r.participants || null, scope: r.scope || null,
+                         link: 'the post-prose assessment of scene ' + r.atScene + ' found row ' + n
+                           + "'s milestone delivered on the page (participants: "
+                           + (r.participants || []).join(', ') + '; scope: ' + (r.scope || 'unstated') + ')' });
         });
         if (_mlHits.length) alreadyDelivered = _mlHits.slice(0, 4);
       } catch (_) {}
@@ -138557,6 +138773,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
              decisions: o.decisions, overturned: o.overturned, commitEvidence: o.commitEvidence,
              planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
              cliffhanger: o.cliffhanger, lastRevision: o.lastRevision || null,
+             assessments: {
+               milestoneDeliveries: (Array.isArray(window.state._milestoneDeliveries) ? window.state._milestoneDeliveries : [])
+                 .map(function (r) { return { row: r.milestoneScene, atScene: r.atScene, status: r.status,
+                   accepted: r.accepted, why: r.why, superseded: !!r.superseded }; }),
+               prereqInvalidations: (Array.isArray(window.state._prereqInvalidations) ? window.state._prereqInvalidations : [])
+                 .map(function (r) { return { prereq: r.prereqId, atScene: r.atScene, status: r.status,
+                   accepted: r.accepted, why: r.why, superseded: !!r.superseded }; })
+             },
              prereqsAtRiskWarnings: o.scenes.filter(function (r) { return r.prereqsAtRisk; })
                .map(function (r) { return { scene: r.n, prereqs: r.prereqsAtRisk, tier: 'lexical warning' }; }),
              alreadyWrittenWarnings: o.scenes.filter(function (r) { return r.alreadyWritten && !r.alreadyDelivered; })
@@ -330258,6 +330482,25 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         r.invalidatedReason = 'cited text superseded: hash ' + String(prevHash) + ' -> revision ' + newRevision;
         r.invalidatedAt = Date.now();
         out.push(k);
+      });
+    } catch (_) {}
+    // THE POST-PROSE ASSESSMENTS ARE DEPENDENTS TOO. Their evidence was verified against the
+    // superseded text, so an accepted milestone delivery or prerequisite invalidation stops
+    // counting the moment the scene it was read from is rewritten.
+    try {
+      ['_milestoneDeliveries', '_prereqInvalidations'].forEach(function (k) {
+        (Array.isArray(s[k]) ? s[k] : []).forEach(function (rec) {
+          if (!rec || rec.superseded) return;
+          // Keyed on the PROSE HASH the evidence was verified against — the thing that actually
+          // changed — not on a scene uid the record does not carry.
+          if (String(rec.proseHash || '') !== String(prevHash)) return;
+          rec.superseded = true;
+          rec.supersededReason = 'the prose its evidence was verified against was revised: hash '
+            + String(prevHash) + ' -> revision ' + newRevision;
+          rec.supersededAt = Date.now();
+          out.push(k + ':' + (rec.milestoneScene != null ? ('row ' + rec.milestoneScene) : rec.prereqId));
+          try { s._issueOutline = null; } catch (_) {}
+        });
       });
     } catch (_) {}
     // THE HISTORY NOTE IS A DEPENDENT TOO. Its quotations were checked against the superseded

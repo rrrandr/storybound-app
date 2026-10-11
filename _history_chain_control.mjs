@@ -40,6 +40,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 const calls = [];
 let verifierSeen = null;
+let pageVerifierResp = null;
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
@@ -57,7 +58,8 @@ await page.route('**/api/**', async (route) => {
   // copied from the request so nothing is invented.
   if (/RUNTIME COMMIT verifier/i.test(joined)) {
     const ref = (joined.match(/prop:\d+:\d+/) || [null])[0];
-    verifierSeen = { ref: ref, bytes: joined.length };
+    verifierSeen = { ref: ref, bytes: joined.length, joined: joined };
+    if (pageVerifierResp) return reply(JSON.stringify(pageVerifierResp), 'constructed-verifier');
     return reply(JSON.stringify({
       delivery: 'DELIVERED',
       actual_exit_state: 'Julian has publicly claimed authority to convene the inquiry',
@@ -835,6 +837,191 @@ t('an EXPLICIT invalidatesPrereqs declaration still overturns, as the only thing
   JSON.stringify({ ov: fate.declared.overturned, kind: fate.declared.kind }));
 t('with no adjudicated record, nothing is overturned and nothing is at risk',
   fate.none.overturned.length === 0 && fate.none.atRisk.length === 0, JSON.stringify(fate.none.overturned));
+
+// ═══ 15. THE MISSING PRODUCERS, BUILT ON THE EXISTING POST-PROSE ASSESSMENT ═════════════════
+// No dedicated paid call: the runtime commit verifier already receives this scene's prose and
+// already returns verbatim-quoted judgements, so it is asked two more questions. Every model
+// response below is CONSTRUCTED in this file and labelled as such.
+section('15a. THE REQUEST: the existing verifier is asked about later milestones and prerequisites');
+const watchReq = await page.evaluate(async () => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  s._starterId = 'starter_first_sacrifice';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 2;
+  s._sealedProposals = null; s._historyNotes = []; s.scenes = [];
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  s._temptFateDurableConsequences = [{ requestedRupture: 'let the truth out', sceneIdx: 2,
+    changed: [{ subject: 'the assembly', whatChanged: 'heard a name it was not meant to hear' }] }];
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'The Dohkar serves Lirael notice',
+    milestone: 'row 3', scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._priorSceneStateChange = sc;
+  s._committedState.pendingIntent = { milestone: 'row 3', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene('The Dohkar served her notice where the whole clearing could hear it, and then Julian said the thing nobody had asked him to say.', sc, 1);
+  return true;
+});
+t('the verifier request carries the WATCHED MILESTONES from later plan rows',
+  !!verifierSeen && /WATCHED MILESTONES \(these belong to LATER scenes/.test(verifierSeen.joined)
+  && /n 16 :: Julian finally admits he acted/.test(verifierSeen.joined),
+  verifierSeen && (verifierSeen.joined.match(/WATCHED MILESTONES[\s\S]{0,400}/) || ['(absent)'])[0]);
+t('...and the WATCHED PREREQUISITES, with the accepted Fate outcome as context only',
+  !!verifierSeen && /WATCHED PREREQUISITES/.test(verifierSeen.joined)
+  && /id prereq:julian_act_concealed/.test(verifierSeen.joined)
+  && /ACCEPTED FATE OUTCOME IN FORCE \(context only — judge the PROSE\)/.test(verifierSeen.joined),
+  verifierSeen && (verifierSeen.joined.match(/WATCHED PREREQUISITES[\s\S]{0,400}/) || ['(absent)'])[0]);
+t('the contract names the statuses that are NOT completion',
+  !!verifierSeen && /"mentioned" = referred to, recalled or predicted but not performed/.test(verifierSeen.joined)
+  && /"denied" = someone states it did not or will not happen/.test(verifierSeen.joined)
+  && /"hypothetical" = conditional, imagined, feared/.test(verifierSeen.joined)
+  && /"private_only" = it happened where only the point-of-view character could know/.test(verifierSeen.joined)
+  && /"requested_not_delivered", which is NOT invalidation/.test(verifierSeen.joined),
+  'the status vocabulary is incomplete');
+t('and that an unevidenced claim is DISCARDED by the engine',
+  !!verifierSeen && /with no verbatim evidence is DISCARDED by the engine/.test(verifierSeen.joined),
+  'the discard rule is missing');
+
+section('15b. ACCEPTANCE: a mention, denial, hypothetical, private or unevidenced claim does NOT count');
+const PROSE15 = 'Seren asked whether Julian could have bent the wish, and nobody answered her. '
+  + '"I bent the wish," Julian said, in front of the Chayr and the two Dohkars and everyone else still standing on the spiralgrass. '
+  + 'The record was moved out of the order the inquiry would have read it in, and the Chayr saw it happen.';
+const accept = await page.evaluate(async (prose) => {
+  const s = window.state;
+  const run = async () => {
+    s._sealedProposals = null; s._milestoneDeliveries = []; s._prereqInvalidations = [];
+    s._committedState = { facts: [], tableau: null, pendingIntent: null };
+    const sealed = window._sealProposal({ kind: 'state_change', fact: 'The Dohkar serves Lirael notice',
+      milestone: 'row 3', scene: 1, storyScene: 3, milestoneScene: 3 });
+    const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+    s._priorSceneStateChange = sc;
+    s._committedState.pendingIntent = { milestone: 'row 3', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+    await window._commitScene(prose, sc, 1);
+    return { m: (s._milestoneDeliveries || []).slice(), p: (s._prereqInvalidations || []).slice() };
+  };
+  window.__ctlRun = run;
+  return true;
+}, PROSE15);
+const cases = [
+  ['mentioned', { n: 16, status: 'mentioned', evidence: 'Seren asked whether Julian could have bent the wish', participants: ['Seren'], scope: 'the clearing' }, false, 'is not completion'],
+  ['denied', { n: 16, status: 'denied', evidence: 'nobody answered her', participants: ['Julian'], scope: 'the clearing' }, false, 'is not completion'],
+  ['hypothetical', { n: 16, status: 'hypothetical', evidence: 'whether Julian could have bent the wish', participants: ['Julian'], scope: 'the clearing' }, false, 'is not completion'],
+  ['private_only', { n: 16, status: 'private_only', evidence: 'nobody answered her', participants: ['Lirael'], scope: 'only Lirael' }, false, 'is not completion'],
+  ['no evidence', { n: 16, status: 'delivered_on_page', evidence: '', participants: ['Julian'], scope: 'the clearing' }, false, 'verifies verbatim'],
+  ['invented quote', { n: 16, status: 'delivered_on_page', evidence: 'Julian confessed everything to the panel', participants: ['Julian'], scope: 'the clearing' }, false, 'verifies verbatim'],
+  ['no participants', { n: 16, status: 'delivered_on_page', evidence: '"I bent the wish," Julian said', participants: [], scope: 'the clearing' }, false, 'participants'],
+  ['no scope', { n: 16, status: 'delivered_on_page', evidence: '"I bent the wish," Julian said', participants: ['Julian'], scope: '' }, false, 'scope'],
+  ['own or earlier row', { n: 3, status: 'delivered_on_page', evidence: '"I bent the wish," Julian said', participants: ['Julian'], scope: 'the clearing' }, null, 'not recorded at all'],
+  ['GENUINE', { n: 16, status: 'delivered_on_page', evidence: '"I bent the wish," Julian said', participants: ['Julian'], scope: 'the Chayr, two Dohkars and the assembly' }, true, 'accepted']
+];
+for (const [label, mw, expect, needle] of cases) {
+  pageVerifierResp = { delivery: 'MISSED', milestone_watch: [mw], prereq_watch: [] };
+  const got = await page.evaluate(() => window.__ctlRun());
+  if (expect === null) {
+    t('a milestone for THIS row or earlier is ' + needle,
+      got.m.length === 0, JSON.stringify(got.m));
+  } else {
+    const rec = got.m[0];
+    t('"' + label + '" -> accepted=' + expect + ' (' + needle + ')',
+      !!rec && rec.accepted === expect && (expect || new RegExp(needle).test(rec.why)),
+      JSON.stringify(rec));
+  }
+}
+const prereqCases = [
+  ['requested_not_delivered', { id: 'prereq:julian_act_concealed', status: 'requested_not_delivered', evidence: 'nobody answered her', participants: ['Lirael'], scope: 'nothing changed' }, false],
+  ['still_holds', { id: 'prereq:julian_act_concealed', status: 'still_holds', evidence: 'nobody answered her', participants: ['Lirael'], scope: 'unchanged' }, false],
+  ['GENUINE', { id: 'prereq:julian_act_concealed', status: 'invalidated_on_page', evidence: '"I bent the wish," Julian said', participants: ['Julian'], scope: 'the Chayr, two Dohkars and the assembly' }, true]
+];
+for (const [label, pw, expect] of prereqCases) {
+  pageVerifierResp = { delivery: 'MISSED', milestone_watch: [], prereq_watch: [pw] };
+  const got = await page.evaluate(() => window.__ctlRun());
+  const rec = got.p[0];
+  t('prereq "' + label + '" -> accepted=' + expect,
+    !!rec && rec.accepted === expect, JSON.stringify(rec));
+}
+
+section('15c. PRODUCER -> STORED ASSESSMENT -> REVISED PLAN -> OUTGOING REQUESTS');
+calls.length = 0;
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [{ n: 16, status: 'delivered_on_page', evidence: '"I bent the wish," Julian said',
+    participants: ['Julian'], scope: 'the Chayr, two Dohkars and the assembly' }],
+  prereq_watch: [{ id: 'prereq:julian_act_concealed', status: 'invalidated_on_page',
+    evidence: '"I bent the wish," Julian said', participants: ['Julian'],
+    scope: 'the Chayr, two Dohkars and the assembly' }] };
+const endToEnd = await page.evaluate(async (prose) => {
+  const s = window.state;
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  await window.__ctlRun();
+  // NOTHING IS CLEARED HERE. The resolver must notice the new assessments by itself.
+  s.turnCount = 14;                                     // scene 16
+  const o = window._resolveIssueOutline(s);
+  const r16 = o.scenes.filter(x => x.n === 16)[0];
+  const block16 = window._renderIssueOutlineDirective(s, 16) || '';
+  // AND THE SCAFFOLD, which must receive the same revised purpose before it outlines anything.
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  s.currentEngine = 'graphic'; s.renderMode = 'cg'; s._stagedAuthoringSceneIndex = 15;
+  s.issueIndexInRun = 2;                                // CG issue 2 = rows 11-20
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 16 });
+  s.currentEngine = 'literary'; s.renderMode = 'literary'; delete s._stagedAuthoringSceneIndex;
+  s.issueIndexInRun = 1;
+  return JSON.parse(JSON.stringify({ stored: { m: s._milestoneDeliveries, p: s._prereqInvalidations },
+    overturned: o.overturned.slice(), overturnedWhy: o.overturnedWhy, r16: r16, block16: block16,
+    summary: window._issueOutlineSummary().assessments }));
+}, PROSE15);
+const skelReq15 = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined)).pop();
+fs.writeFileSync('_audit_out/history_chain/producer_end_to_end.json', JSON.stringify(endToEnd, null, 1));
+fs.writeFileSync('_audit_out/history_chain/producer_scaffold_request.txt', (skelReq15 && skelReq15.joined) || '(none)');
+t('PRODUCER: the assessment is stored as accepted, with its evidence, participants and scope',
+  endToEnd.stored.m.length === 1 && endToEnd.stored.m[0].accepted === true
+  && endToEnd.stored.m[0].milestoneScene === 16 && endToEnd.stored.m[0].atScene === 3
+  && (endToEnd.stored.m[0].participants || []).join() === 'Julian' && !!endToEnd.stored.m[0].scope,
+  JSON.stringify(endToEnd.stored.m));
+t('REVISED PLAN: row 16 is ALREADY DELIVERED from that assessment, not from a phrase',
+  !!endToEnd.r16.alreadyDelivered
+  && /post-prose assessment of scene 3 found row 16's milestone delivered on the page/.test(endToEnd.r16.alreadyDelivered[0].link),
+  JSON.stringify(endToEnd.r16.alreadyDelivered));
+t('...and the row\'s obsolete assignment is gone',
+  endToEnd.r16.accomplishes === '' && !/Julian finally admits he acted/.test(endToEnd.block16),
+  endToEnd.r16.accomplishes);
+t('FATE: the prerequisite is OVERTURNED from the assessment, with its scope recorded',
+  endToEnd.overturned.indexOf('prereq:julian_act_concealed') !== -1
+  && /post-prose assessment of scene 3: invalidated on the page \(participants: Julian; scope: the Chayr/.test(JSON.stringify(endToEnd.overturnedWhy)),
+  JSON.stringify(endToEnd.overturnedWhy));
+t('OUTGOING AUTHOR REQUEST: the directive cites the assessment, naming participants and scope',
+  /HAS ALREADY BEEN DELIVERED AND COMMITTED/.test(endToEnd.block16)
+  && /participants: Julian; scope: the Chayr, two Dohkars and the assembly/.test(endToEnd.block16),
+  (endToEnd.block16.match(/ALREADY BEEN DELIVERED[\s\S]{0,500}/) || [''])[0]);
+t('OUTGOING SCAFFOLD REQUEST: the scaffold is told the event is already delivered, before it outlines',
+  !!skelReq15 && /ALREADY DELIVERED AND COMMITTED/.test(skelReq15.joined)
+  && !/WHAT IT ACCOMPLISHES: Julian finally admits he acted/.test(skelReq15.joined),
+  skelReq15 && (skelReq15.joined.match(/ALREADY DELIVERED AND COMMITTED[\s\S]{0,300}/) || ['(absent)'])[0]);
+t('the resolver noticed the new assessments WITHOUT the cache being cleared',
+  !!endToEnd.r16.alreadyDelivered, 'the cache was stale');
+t('rejected observations are surfaced as uncertainty rather than silently dropped',
+  Array.isArray(endToEnd.summary.milestoneDeliveries)
+  && endToEnd.summary.milestoneDeliveries.some(x => x.accepted === true),
+  JSON.stringify(endToEnd.summary));
+
+section('15d. A REWRITE SUPERSEDES THE ASSESSMENT');
+const supersede = await page.evaluate((prose) => {
+  const s = window.state;
+  const hash = window._sbTextHash(prose);
+  const inv = window._sbInvalidateDependentsOfScene('ctl:none', hash, 1);
+  s.turnCount = 14;
+  const o = window._resolveIssueOutline(s);
+  const r16 = o.scenes.filter(x => x.n === 16)[0];
+  return JSON.parse(JSON.stringify({ inv: inv, stored: s._milestoneDeliveries,
+    overturned: o.overturned.slice(), delivered: !!r16.alreadyDelivered,
+    accomplishes: r16.accomplishes }));
+}, PROSE15);
+t('revising the prose the evidence came from supersedes the assessment',
+  supersede.stored[0].superseded === true && /was revised: hash/.test(supersede.stored[0].supersededReason)
+  && (supersede.inv || []).some(x => /_milestoneDeliveries/.test(String(x))),
+  JSON.stringify(supersede.stored[0]));
+t('...and the plan stops treating the event as delivered, WITHOUT the cache being cleared',
+  supersede.delivered === false && /Julian finally admits he acted/.test(supersede.accomplishes),
+  JSON.stringify([supersede.delivered, supersede.accomplishes]));
+t('...and the prerequisite stops being overturned',
+  supersede.overturned.indexOf('prereq:julian_act_concealed') === -1, JSON.stringify(supersede.overturned));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
