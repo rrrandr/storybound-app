@@ -1,0 +1,53 @@
+{
+ "proseLen": 5690,
+ "rec": {
+  "milestoneScene": 16,
+  "atScene": 3,
+  "turnScene": 1,
+  "storyId": "ctl-hist",
+  "sceneUid": "ctl:96f5ac51-8eae-4cf2-8722-747ff17ff948",
+  "projectionHash": "h37d3ca71-5690",
+  "projectionRevision": 0,
+  "status": "delivered_on_page",
+  "accepted": true,
+  "why": "accepted",
+  "evidence": "\"I bent the wish,\" Julian said, where the Chayr could hear him.",
+  "participants": [
+   "Julian"
+  ],
+  "scope": "the Chayr",
+  "excerptHash": "h8a243e9d-5000",
+  "superseded": true,
+  "at": 1791748583425,
+  "source": "runtime commit verifier",
+  "supersededReason": "the prose its evidence was verified against was revised: hash h37d3ca71-5690 -> revision 1",
+  "supersededAt": 1791748583425
+ },
+ "boundToFull": true,
+ "inv": [
+  "_milestoneDeliveries:row 16"
+ ],
+ "after": {
+  "milestoneScene": 16,
+  "atScene": 3,
+  "turnScene": 1,
+  "storyId": "ctl-hist",
+  "sceneUid": "ctl:96f5ac51-8eae-4cf2-8722-747ff17ff948",
+  "projectionHash": "h37d3ca71-5690",
+  "projectionRevision": 0,
+  "status": "delivered_on_page",
+  "accepted": true,
+  "why": "accepted",
+  "evidence": "\"I bent the wish,\" Julian said, where the Chayr could hear him.",
+  "participants": [
+   "Julian"
+  ],
+  "scope": "the Chayr",
+  "excerptHash": "h8a243e9d-5000",
+  "superseded": true,
+  "at": 1791748583425,
+  "source": "runtime commit verifier",
+  "supersededReason": "the prose its evidence was verified against was revised: hash h37d3ca71-5690 -> revision 1",
+  "supersededAt": 1791748583425
+ }
+}

@@ -41,6 +41,7 @@ const page = await browser.newPage();
 const calls = [];
 let verifierSeen = null;
 let pageVerifierResp = null;
+let rewriteDuringRequest = false;
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
@@ -59,6 +60,7 @@ await page.route('**/api/**', async (route) => {
   if (/RUNTIME COMMIT verifier/i.test(joined)) {
     const ref = (joined.match(/prop:\d+:\d+/) || [null])[0];
     verifierSeen = { ref: ref, bytes: joined.length, joined: joined };
+    if (rewriteDuringRequest) { try { await page.evaluate(() => window.__ctlRewriteDuring && window.__ctlRewriteDuring()); } catch (_) {} }
     if (pageVerifierResp) return reply(JSON.stringify(pageVerifierResp), 'constructed-verifier');
     return reply(JSON.stringify({
       delivery: 'DELIVERED',
@@ -890,12 +892,21 @@ const accept = await page.evaluate(async (prose) => {
   const run = async () => {
     s._sealedProposals = null; s._milestoneDeliveries = []; s._prereqInvalidations = [];
     s._committedState = { facts: [], tableau: null, pendingIntent: null };
+    // A REAL scene record, so the assessment binds to a projection a rewrite can change.
+    s.scenes = [];
+    const uid = window._sbMintSceneUid('ctl');
+    s.scenes.push({ uid: uid, text: prose,
+      projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(prose), revision: 0,
+        provenance: 'api_built', builtAt: Date.now() } });
+    window.__ctlIdent = { storyId: s.storyId, sceneUid: uid,
+      projectionHash: s.scenes[0].projection.hash, projectionRevision: 0,
+      fullTextChars: prose.length, excerptChars: prose.length };
     const sealed = window._sealProposal({ kind: 'state_change', fact: 'The Dohkar serves Lirael notice',
       milestone: 'row 3', scene: 1, storyScene: 3, milestoneScene: 3 });
     const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
     s._priorSceneStateChange = sc;
     s._committedState.pendingIntent = { milestone: 'row 3', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-    await window._commitScene(prose, sc, 1);
+    await window._commitScene(prose, sc, 1, window.__ctlIdent);
     return { m: (s._milestoneDeliveries || []).slice(), p: (s._prereqInvalidations || []).slice() };
   };
   window.__ctlRun = run;
@@ -1001,27 +1012,214 @@ t('rejected observations are surfaced as uncertainty rather than silently droppe
   && endToEnd.summary.milestoneDeliveries.some(x => x.accepted === true),
   JSON.stringify(endToEnd.summary));
 
-section('15d. A REWRITE SUPERSEDES THE ASSESSMENT');
-const supersede = await page.evaluate((prose) => {
+section('15d. A REWRITE SUPERSEDES THE ASSESSMENT (same-length scene; the long-scene case is 16c)');
+const supersede = await page.evaluate(() => {
   const s = window.state;
-  const hash = window._sbTextHash(prose);
-  const inv = window._sbInvalidateDependentsOfScene('ctl:none', hash, 1);
-  s.turnCount = 14;
+  const uid = s.scenes[0] && s.scenes[0].uid;
+  const hash = s.scenes[0] && s.scenes[0].projection.hash;
+  const inv = window._sbInvalidateDependentsOfScene(uid, hash, 1);
+  s.turnCount = 14; delete s._issueOutline; delete s._issueOutlineHistory;
   const o = window._resolveIssueOutline(s);
   const r16 = o.scenes.filter(x => x.n === 16)[0];
   return JSON.parse(JSON.stringify({ inv: inv, stored: s._milestoneDeliveries,
     overturned: o.overturned.slice(), delivered: !!r16.alreadyDelivered,
     accomplishes: r16.accomplishes }));
-}, PROSE15);
+});
 t('revising the prose the evidence came from supersedes the assessment',
-  supersede.stored[0].superseded === true && /was revised: hash/.test(supersede.stored[0].supersededReason)
+  (supersede.stored || []).length > 0 && supersede.stored[0].superseded === true
+  && /was revised: hash/.test(String(supersede.stored[0].supersededReason))
   && (supersede.inv || []).some(x => /_milestoneDeliveries/.test(String(x))),
-  JSON.stringify(supersede.stored[0]));
+  JSON.stringify(supersede.stored && supersede.stored[0]));
 t('...and the plan stops treating the event as delivered, WITHOUT the cache being cleared',
   supersede.delivered === false && /Julian finally admits he acted/.test(supersede.accomplishes),
   JSON.stringify([supersede.delivered, supersede.accomplishes]));
 t('...and the prerequisite stops being overturned',
   supersede.overturned.indexOf('prereq:julian_act_concealed') === -1, JSON.stringify(supersede.overturned));
+
+// ═══ 16. THE THREE STORAGE AND BINDING DEFECTS ══════════════════════════════════════════════
+section('16a. EVICTION: negative observations must not erase an accepted conclusion');
+// The reviewer's reproduction: one accepted record, then five rounds of eight negative
+// observations, left 40 records and ZERO accepted. Durable conclusions are now bounded separately
+// from diagnostic observations.
+const evict = await page.evaluate(async () => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  s._starterId = 'starter_first_sacrifice';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 2;
+  s._milestoneDeliveries = [{ milestoneScene: 16, atScene: 3, status: 'delivered_on_page',
+    accepted: true, why: 'accepted', evidence: 'x', participants: ['Julian'], scope: 'the clearing',
+    sceneUid: 'u:keep', projectionHash: 'hk', projectionRevision: 0, superseded: false, at: 1 }];
+  s._prereqInvalidations = [{ prereqId: 'prereq:julian_act_concealed', atScene: 3,
+    status: 'invalidated_on_page', accepted: true, why: 'accepted', evidence: 'x',
+    participants: ['Julian'], scope: 'the clearing', sceneUid: 'u:keep', projectionHash: 'hk',
+    projectionRevision: 0, superseded: false, at: 1 }];
+  // FIFTY negative observations each — more than the reviewer's forty — pushed through the same
+  // store the production trim runs on.
+  for (let i = 0; i < 50; i++) {
+    s._milestoneDeliveries.push({ milestoneScene: 17 + (i % 3), atScene: 4, status: 'not_present',
+      accepted: false, why: 'status "not_present" is not completion', evidence: null,
+      participants: [], scope: null, superseded: false, at: 100 + i });
+    s._prereqInvalidations.push({ prereqId: 'prereq:investigation_open', atScene: 4,
+      status: 'still_holds', accepted: false, why: 'status "still_holds" is not invalidation',
+      evidence: null, participants: [], scope: null, superseded: false, at: 100 + i });
+  }
+  // THE PRODUCTION TRIM, reached by running a real commit pass.
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'x happens', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene('A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.', sc, 1);
+  const m = s._milestoneDeliveries, q = s._prereqInvalidations;
+  return JSON.parse(JSON.stringify({
+    mTotal: m.length, mAccepted: m.filter(r => r.accepted).length,
+    qTotal: q.length, qAccepted: q.filter(r => r.accepted).length }));
+});
+t('the accepted milestone conclusion SURVIVES 50 negative observations',
+  evict.mAccepted >= 1, JSON.stringify(evict));
+t('the accepted prerequisite conclusion SURVIVES them too',
+  evict.qAccepted >= 1, JSON.stringify(evict));
+t('and the diagnostic observations are still bounded, so the store does not grow forever',
+  evict.mTotal <= 245 && evict.qTotal <= 245, JSON.stringify(evict));
+
+section('16b. UNREQUESTED IDENTIFIERS: only what the watch list asked about is accepted');
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [
+    { n: 999, status: 'delivered_on_page', evidence: 'A long enough passage of prose',
+      participants: ['Julian'], scope: 'everyone' },
+    { n: 16, status: 'delivered_on_page', evidence: 'A long enough passage of prose',
+      participants: ['Julian'], scope: 'everyone' }],
+  prereq_watch: [
+    { id: 'prereq:never_asked_about', status: 'invalidated_on_page', evidence: 'A long enough passage of prose',
+      participants: ['Julian'], scope: 'everyone' },
+    { id: 'prereq:julian_act_concealed', status: 'invalidated_on_page', evidence: 'A long enough passage of prose',
+      participants: ['Julian'], scope: 'everyone' }] };
+const unrequested = await page.evaluate(async () => {
+  const s = window.state;
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'y happens', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene('A long enough passage of prose for the verifier to be asked about it at all, with more than forty characters.', sc, 1);
+  return JSON.parse(JSON.stringify({ m: s._milestoneDeliveries, q: s._prereqInvalidations }));
+});
+fs.writeFileSync('_audit_out/history_chain/unrequested_ids.json', JSON.stringify(unrequested, null, 1));
+t('an UNREQUESTED milestone number is discarded, not stored at all',
+  !unrequested.m.some(r => r.milestoneScene === 999), JSON.stringify(unrequested.m.map(r => r.milestoneScene)));
+t('an UNREQUESTED prerequisite id is discarded, not stored at all',
+  !unrequested.q.some(r => r.prereqId === 'prereq:never_asked_about'),
+  JSON.stringify(unrequested.q.map(r => r.prereqId)));
+t('the one that WAS on the watch list is still assessed normally',
+  unrequested.m.some(r => r.milestoneScene === 16) && unrequested.q.some(r => r.prereqId === 'prereq:julian_act_concealed'),
+  JSON.stringify([unrequested.m.map(r => r.milestoneScene), unrequested.q.map(r => r.prereqId)]));
+pageVerifierResp = null;
+
+section('16c. REWRITE PROTECTION ON A SCENE LONGER THAN THE 5,000-CHAR EXCERPT');
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [{ n: 16, status: 'delivered_on_page',
+    evidence: '"I bent the wish," Julian said, where the Chayr could hear him.',
+    participants: ['Julian'], scope: 'the Chayr' }], prereq_watch: [] };
+// The caller hands the verifier only the last 5,000 characters. The assessment used to hash THAT,
+// while a rewrite invalidates against the hash of the COMPLETE projection — so for any longer
+// scene the hashes never matched and the assessment survived the rewrite.
+const longScene = await page.evaluate(async () => {
+  const s = window.state;
+  const FILLER = 'The clearing emptied by degrees, and the spiralgrass held the shape of where everyone had stood. ';
+  const PROSE = FILLER.repeat(58) + ' "I bent the wish," Julian said, where the Chayr could hear him.';
+  if (PROSE.length <= 5000) return { fatal: 'fixture prose is not longer than the excerpt: ' + PROSE.length };
+  s.scenes = []; s._historyNotes = []; s._temptOutcomePending = {};
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  // A REAL scene record and projection, so the rewrite path has something to revise.
+  const uid = window._sbMintSceneUid('ctl');
+  s.scenes.push({ uid: uid, text: PROSE,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(PROSE), revision: 0,
+      provenance: 'api_built', builtAt: Date.now() } });
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'z happens', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  // THE IDENTITY THE CALLER PASSES, exactly as production builds it from the projection.
+  const ident = { storyId: s.storyId, sceneUid: uid,
+    projectionHash: s.scenes[0].projection.hash, projectionRevision: 0,
+    fullTextChars: PROSE.length, excerptChars: 5000 };
+  await window._commitScene(PROSE.slice(-5000), sc, 1, ident);
+  const rec = (s._milestoneDeliveries || [])[0] || null;
+  const boundToFull = !!rec && rec.projectionHash === s.scenes[0].projection.hash
+    && rec.excerptHash !== s.scenes[0].projection.hash;
+  // NOW THE REWRITE, through the shipped hook, against the FULL projection hash.
+  const inv = window._sbInvalidateDependentsOfScene(uid, s.scenes[0].projection.hash, 1);
+  const after = (s._milestoneDeliveries || [])[0] || null;
+  return JSON.parse(JSON.stringify({ proseLen: PROSE.length, rec: rec, boundToFull: boundToFull,
+    inv: inv, after: after }));
+});
+pageVerifierResp = null;
+fs.writeFileSync('_audit_out/history_chain/long_scene_rewrite.json', JSON.stringify(longScene, null, 1));
+t('the fixture scene really is longer than the 5,000-character excerpt',
+  !longScene.fatal && longScene.proseLen > 5000, longScene.fatal || String(longScene.proseLen));
+t('the assessment is bound to the FULL projection hash, not to the excerpt it was shown',
+  longScene.boundToFull === true
+  && longScene.rec.excerptHash !== longScene.rec.projectionHash,
+  JSON.stringify({ proj: longScene.rec && longScene.rec.projectionHash, exc: longScene.rec && longScene.rec.excerptHash }));
+t('...and it carries the scene uid, the revision and the story',
+  !!longScene.rec && !!longScene.rec.sceneUid && longScene.rec.projectionRevision === 0
+  && !!longScene.rec.storyId, JSON.stringify(longScene.rec && { uid: longScene.rec.sceneUid, rev: longScene.rec.projectionRevision }));
+t('the REAL rewrite path now supersedes it',
+  longScene.after && longScene.after.superseded === true
+  && (longScene.inv || []).some(x => /_milestoneDeliveries/.test(String(x))),
+  JSON.stringify({ sup: longScene.after && longScene.after.superseded, inv: longScene.inv }));
+
+section('16d. A REWRITE WHILE THE ASSESSMENT IS PENDING');
+rewriteDuringRequest = true;
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [{ n: 16, status: 'delivered_on_page', evidence: 'a line Julian says aloud',
+    participants: ['Julian'], scope: 'the clearing' }], prereq_watch: [] };
+const pending = await page.evaluate(async () => {
+  const s = window.state;
+  const PROSE = 'A passage long enough to be judged at all, with more than forty characters in it, and a line Julian says aloud.';
+  s.scenes = []; s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  const uid = window._sbMintSceneUid('ctl');
+  s.scenes.push({ uid: uid, text: PROSE,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(PROSE), revision: 0,
+      provenance: 'api_built', builtAt: Date.now() } });
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'w happens', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  const ident = { storyId: s.storyId, sceneUid: uid, projectionHash: s.scenes[0].projection.hash,
+    projectionRevision: 0, fullTextChars: PROSE.length, excerptChars: PROSE.length };
+  // THE REWRITE HAPPENS WHILE THE REQUEST IS IN FLIGHT. The route handler below rewrites the
+  // record before it answers, which is what a real concurrent revision does.
+  window.__ctlRewriteDuring = function () {
+    const rec = s.scenes[0];
+    rec.text = PROSE + ' And then it was all different.';
+    rec.projection = { v: 1, kind: 'ctl', hash: window._sbTextHash(rec.text), revision: 1,
+      provenance: 'api_built', builtAt: Date.now(), previousHash: ident.projectionHash };
+  };
+  await window._commitScene(PROSE, sc, 1, ident);
+  const rec = (s._milestoneDeliveries || [])[0] || null;
+  return JSON.parse(JSON.stringify({ rec: rec,
+    revisionNow: s.scenes[0].projection.revision }));
+});
+t('a rewrite DURING the request leaves the record rejected, not accepted',
+  pending.revisionNow === 1 && !!pending.rec && pending.rec.accepted === false
+  && /rewritten while the assessment was in flight/.test(String(pending.rec.why)),
+  JSON.stringify(pending.rec && { accepted: pending.rec.accepted, why: pending.rec.why }));
+rewriteDuringRequest = false; pageVerifierResp = null;
+t('...and the plan does not treat it as delivered',
+  await page.evaluate(() => {
+    const s = window.state;
+    s.turnCount = 14; delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
+    return !r.alreadyDelivered;
+  }), 'a stale assessment was consumed');
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

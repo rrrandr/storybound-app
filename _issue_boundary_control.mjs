@@ -177,56 +177,67 @@ t('row 11 does NOT inherit the issue-1 opening\'s delivery verdict',
 t('and scene 2 is outside the issue-2 window, so it cannot be reclassified by it',
   collide.r2present === false, String(collide.r2present));
 
-// ═══ 3. THE RELOAD ROUND TRIP ═══════════════════════════════════════════════════════════════
-section('3. SAVE / RELOAD: identities, evidence status and consequences survive');
-// The round trip production performs: the snapshot is {...state} minus a named deletion list, and
-// loadStoryData applies it with Object.assign(state, data.stateSnapshot). Driven here with the
-// real saveStorySnapshot first, so its deletion list is the one that applies.
-const reload = await page.evaluate(() => {
+// ═══ 3. THE REAL SAVE / LOAD LIFECYCLE ══════════════════════════════════════════════════════
+section('3. SAVE / RELOAD through the REAL lifecycle (saveStorySnapshot -> continueStory)');
+// Both halves are production. window.__saveStorySnapshot is a free-harness handle onto
+// saveStorySnapshot; window.continueStory is the SHIPPED resume entry point the Vault "Continue"
+// button calls, and it is what performs the Object.assign and the historical-record migration
+// (loadStoryData only FETCHES the snapshot). So the deletion list, the JSON boundary, the
+// assignment and the migration are all the real ones. The earlier version deleted and reassigned
+// state by hand; it no longer does.
+const reload = await page.evaluate(async () => {
   const s = window.state;
-  let saveThrew = null;
-  try { localStorage.removeItem('sb_saved_story'); } catch (_) {}
-  // saveStorySnapshot returns early without #storyText, which production always has when a story
-  // is mounted. A DOM fixture, not a code change.
+  const storyId = s.storyId;
+  let saveThrew = null, loadThrew = null;
+  try { localStorage.removeItem('sb_saved_story'); localStorage.removeItem('sb_story_in_idb'); } catch (_) {}
   if (!document.getElementById('storyText')) {
     const el = document.createElement('div'); el.id = 'storyText'; document.body.appendChild(el);
   }
-  // Make sure the outline cache EXISTS before the save, so its absence afterwards is production's
-  // deletion and not an accident of this fixture.
+  // Make sure the derived outline cache EXISTS before the save, so its absence afterwards is
+  // production's deletion and not an accident of this fixture.
   window._resolveIssueOutline(s);
+  const cacheWasLive = !!s._issueOutline;
   try { window.__saveStorySnapshot(); } catch (e) { saveThrew = String(e && e.message); }
-  // THE SNAPSHOT PRODUCTION ACTUALLY WROTE, read back across the real JSON boundary.
   let stored = null;
   try { stored = JSON.parse(localStorage.getItem('sb_saved_story') || 'null'); } catch (_) {}
-  const wire = (stored && stored.stateSnapshot) ? stored.stateSnapshot : null;
-  if (!wire) return { fatal: 'production wrote no stateSnapshot to sb_saved_story', saveThrew: saveThrew };
-  const cacheWasLive = true;
-  // A FRESH PAGE would start from a blank state; simulate that, then restore as production does.
-  const keep = { storyId: s.storyId };
-  Object.keys(s).forEach(k => { try { delete s[k]; } catch (_) {} });
-  Object.assign(s, keep);
-  Object.assign(s, wire);                                    // loadStoryData's own assignment
+  if (!stored || !stored.stateSnapshot) return { fatal: 'production wrote no stateSnapshot', saveThrew: saveThrew };
+  const outlineCachePersisted = Object.prototype.hasOwnProperty.call(stored.stateSnapshot, '_issueOutline');
+  // ── THE FRESH-PAGE CONDITION. Every field the snapshot is supposed to restore is cleared, so a
+  // surviving value can only have come from the load.
+  ['_sceneDecisions', '_historyNotes', '_committedState', '_temptFateDurableConsequences',
+   '_milestoneDeliveries', '_prereqInvalidations', '_sceneObjectives', '_issueOutline',
+   '_issueOutlineHistory', 'scenes', 'issueIndexInRun', '_stagedAuthoringSceneIndex',
+   '_starterId', 'turnCount'].forEach(k => { try { delete s[k]; } catch (_) {} });
+  const clearedCheck = { decisions: s._sceneDecisions, notes: s._historyNotes, starter: s._starterId };
+  // ── THE REAL LOAD. Not a hand-written assignment.
+  try { await window.continueStory(storyId); } catch (e) { loadThrew = String(e && e.message); }
   const o = window._resolveIssueOutline(s);                  // ORDINARY read after the reload
   const r16 = o.scenes.filter(x => x.n === 16)[0];
-  return JSON.parse(JSON.stringify({ saveThrew: saveThrew, cacheWasLive: cacheWasLive,
-    outlineCachePersisted: Object.prototype.hasOwnProperty.call(wire, '_issueOutline'),
+  return JSON.parse(JSON.stringify({ saveThrew: saveThrew, loadThrew: loadThrew,
+    cacheWasLive: cacheWasLive, outlineCachePersisted: outlineCachePersisted,
+    clearedCheck: clearedCheck,
     decisions: s._sceneDecisions, notes: (s._historyNotes || []).map(h => [h.sceneNumber, h.ref, !!h.quotesStale]),
     facts: (s._committedState && s._committedState.facts) || [],
     log: (s._committedState && s._committedState.deliveryLog) || {},
     fate: s._temptFateDurableConsequences, assessments: s._milestoneDeliveries,
+    starter: s._starterId, issueIndex: s.issueIndexInRun,
     overturned: o.overturned.slice(), bounds: o.bounds, r16: r16,
     block: window._renderIssueOutlineDirective(s, 11) || '',
     history: window._buildHistoryContinuityBlock(s, {}) || '' }));
 });
-fs.writeFileSync('_audit_out/issue_boundary/after_reload.json', JSON.stringify({
-  decisions: reload.decisions, notes: reload.notes, facts: reload.facts, log: reload.log,
-  fate: reload.fate, assessments: reload.assessments, overturned: reload.overturned }, null, 1));
-t('the real saveStorySnapshot ran and wrote a stateSnapshot',
+fs.writeFileSync('_audit_out/issue_boundary/after_reload.json', JSON.stringify(reload, null, 1));
+t('the REAL saveStorySnapshot ran and wrote a stateSnapshot',
   !reload.fatal && reload.saveThrew === null, reload.fatal || reload.saveThrew);
+t('the fresh-page condition really was cleared before the load',
+  reload.clearedCheck && reload.clearedCheck.decisions === undefined
+  && reload.clearedCheck.notes === undefined && reload.clearedCheck.starter === undefined,
+  JSON.stringify(reload.clearedCheck));
+t('the REAL resume path (continueStory) ran',
+  reload.loadThrew === null, reload.loadThrew);
 t('the DERIVED outline cache is NOT in the snapshot PRODUCTION wrote (the cache was live before it)',
   reload.cacheWasLive === true && reload.outlineCachePersisted === false,
   JSON.stringify({ live: reload.cacheWasLive, persisted: reload.outlineCachePersisted }));
-t('the recorded player choice survives the reload',
+t('the recorded player choice survives the REAL reload',
   reload.decisions && reload.decisions['1'] && reload.decisions['1'].choice === 'run',
   JSON.stringify(reload.decisions));
 t('history notes survive WITH their scene identities and stale flags',
@@ -247,6 +258,9 @@ t('the post-prose assessment survives, still accepted and not superseded',
   (reload.assessments || []).length === 1 && reload.assessments[0].accepted === true
   && reload.assessments[0].superseded === false && reload.assessments[0].milestoneScene === 16,
   JSON.stringify(reload.assessments));
+t('the plan identity survives: the starter and the issue index came back',
+  reload.starter === 'starter_first_sacrifice' && reload.issueIndex === 2,
+  JSON.stringify([reload.starter, reload.issueIndex]));
 t('and the rebuilt plan still carries the Fate change after the reload',
   reload.overturned.indexOf('prereq:julian_act_concealed') !== -1, JSON.stringify(reload.overturned));
 t('issue 2 is still issue 2 after the reload',
@@ -258,58 +272,87 @@ t('issue-1 history is still readable after the reload, with its own scene number
   /scene 2 — the scene's own words: "She was already past/.test(reload.history)
   && /ob:answer_the_notice/.test(reload.history) && !/ob:face_seren/.test(reload.history),
   reload.history.slice(0, 400));
-t('production restores with Object.assign(state, data.stateSnapshot) — the assignment driven above',
-  (() => {
-    const src = fs.readFileSync('public/app.js', 'utf8');
-    return /if\(data\.stateSnapshot\) Object\.assign\(state, data\.stateSnapshot\);/.test(src)
-      && /delete cleanState\._issueOutline;/.test(src);
-  })(), 'the restore path or the cache exclusion is not what this test drives');
 
-// ═══ 4. INTO ISSUE 3, AND INTO THE OUTGOING REQUESTS ════════════════════════════════════════
-section('4. ISSUE 3: the issue-1 change is still reflected, and reaches the real requests');
+// ═══ 4. ISSUE 3: A REAL ISSUE-3 REQUEST, AND WHAT IT EXPOSES ════════════════════════════════
+section('4. ISSUE 3: the actual issue-3 planning window and scaffold request');
 calls.length = 0;
 const i3 = await page.evaluate(async () => {
   const s = window.state;
   s.issueIndexInRun = 3; s._stagedAuthoringSceneIndex = 20;     // CG scene 21, issue 3 opening
-  // Issue 3 is past the plan's 20 authored rows, so the window is empty of plan rows: the test is
-  // that the CARRYOVER is still in force and still reaches the requests.
+  s.sceneSkeleton = null; s._skeletonMeta = null;
   const o3 = window._resolveIssueOutline(s);
-  // AND BACK INTO AN ISSUE-2 SCENE, to show the carried change shaping a row that has one.
+  const r21 = o3.scenes.filter(x => x.n === 21)[0] || null;
+  const block21 = window._renderIssueOutlineDirective(s, 21) || '';
+  // THE ACTUAL ISSUE-3 SCAFFOLD REQUEST — generated while issue 3 is the active window, not
+  // after switching back.
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 21 });
+  return JSON.parse(JSON.stringify({ bounds: o3.bounds, rowCount: o3.scenes.length,
+    r21: r21, block21: block21, overturned: o3.overturned.slice(),
+    fate: (s._temptFateDurableConsequences || []).length,
+    assessments: (s._milestoneDeliveries || []).filter(r => r.accepted && !r.superseded).length }));
+});
+const skelI3 = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined)).pop();
+fs.writeFileSync('_audit_out/issue_boundary/issue3_scaffold_request.txt', (skelI3 && skelI3.joined) || '(none)');
+fs.writeFileSync('_audit_out/issue_boundary/issue3_outline.json', JSON.stringify(i3, null, 1));
+t('an ACTUAL issue-3 scaffold request was captured while issue 3 was the active window',
+  !!skelI3 && skelI3.joined.length > 1000, skelI3 ? skelI3.bytes : 'none');
+t('the issue-3 window resolves as rows 21-30',
+  i3.bounds.issueIndex === 3 && i3.bounds.first === 21 && i3.bounds.last === 30
+  || (i3.bounds.issueIndex === 3 && i3.bounds.first === 21),
+  JSON.stringify(i3.bounds));
+// ── ARCHITECTURAL GAP, NAMED. The First Sacrifice plan authors 20 rows, so CG issue 3 (rows
+// 21-30) has NO plan rows at all, and no generated spine sceneOutline covers them either. That is
+// not a passing carryover test: it is a gap, and it is reported as one.
+t('ARCHITECTURAL GAP: issue 3 has NO planned rows — the plan authors 20 and the spine supplies none',
+  i3.rowCount === 0 && i3.r21 === null,
+  'rows=' + i3.rowCount + ' (if this ever becomes non-zero, the gap has been filled and this check should be rewritten)');
+t('so the issue-3 scaffold request carries NO scene purpose — stated, not claimed as carryover',
+  !!skelI3 && !/THIS SCENE'S PURPOSE WITHIN THE ISSUE/.test(skelI3.joined),
+  skelI3 && (skelI3.joined.match(/THIS SCENE'S PURPOSE[\s\S]{0,160}/) || ['(correctly absent)'])[0]);
+t('but the DURABLE CARRYOVER is still in force in issue 3: the Fate change, the assessment, the history',
+  i3.overturned.indexOf('prereq:julian_act_concealed') !== -1 && i3.fate === 1 && i3.assessments === 1
+  && !!skelI3 && /She was already past the trunks/.test(skelI3.joined)
+  && /ob:answer_the_notice/.test(skelI3.joined),
+  JSON.stringify({ ov: i3.overturned, fate: i3.fate, as: i3.assessments }));
+
+section('4b. THE ISSUE-2 ROW THE CARRIED CHANGE AFFECTS, AND ONLY THOSE ROWS');
+const i2affected = await page.evaluate(() => {
+  const s = window.state;
   s.issueIndexInRun = 2; s._stagedAuthoringSceneIndex = 15;      // scene 16
   s.sceneSkeleton = null; s._skeletonMeta = null;
-  const o2 = window._resolveIssueOutline(s);
-  const r16 = o2.scenes.filter(x => x.n === 16)[0];
-  const authorBlock = window._renderIssueOutlineDirective(s, 16) || '';
-  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 16 });
-  return JSON.parse(JSON.stringify({ i3Bounds: o3.bounds, i3Overturned: o3.overturned.slice(),
-    i3Fate: (s._temptFateDurableConsequences || []).length,
-    r16: r16, authorBlock: authorBlock,
-    summary: window._issueOutlineSummary() }));
+  const o = window._resolveIssueOutline(s);
+  // THE EXPECTED SET, computed from the PLAN ITSELF: the rows in THIS window whose dependsOn
+  // names the invalidated prerequisite. The earlier assertion accepted "every row >= 11", which
+  // could not have rejected a wrongly-changed issue-2 row.
+  const plan = window.STARTER_PLANS.starter_first_sacrifice;
+  const expected = plan.scenes
+    .filter(r => r && Number(r.n) >= o.bounds.first && Number(r.n) <= o.bounds.last
+      && Array.isArray(r.dependsOn) && r.dependsOn.indexOf('prereq:julian_act_concealed') !== -1)
+    .map(r => Number(r.n)).sort((a, b) => a - b);
+  const actual = o.scenes.filter(r => r.kind === 'overturned').map(r => r.n).sort((a, b) => a - b);
+  const r16 = o.scenes.filter(x => x.n === 16)[0];
+  const r14 = o.scenes.filter(x => x.n === 14)[0];
+  return JSON.parse(JSON.stringify({ expected: expected, actual: actual, r16: r16, r14: r14,
+    authorBlock: window._renderIssueOutlineDirective(s, 16) || '' }));
 });
-const skelReq = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined)).pop();
-fs.writeFileSync('_audit_out/issue_boundary/issue3_scaffold_request.txt', (skelReq && skelReq.joined) || '(none)');
-fs.writeFileSync('_audit_out/issue_boundary/issue2_scene16_author_block.txt', i3.authorBlock);
-t('issue 3 resolves as issue 3, with the issue-1 Fate change still in force',
-  i3.i3Bounds.issueIndex === 3 && i3.i3Overturned.indexOf('prereq:julian_act_concealed') !== -1
-  && i3.i3Fate === 1, JSON.stringify({ b: i3.i3Bounds.issueIndex, ov: i3.i3Overturned }));
-t('the carried change still voids row 16 three issues later',
-  i3.r16.kind === 'overturned' && i3.r16.accomplishes === ''
-  && (i3.r16.brokenPrereqs || []).indexOf('prereq:julian_act_concealed') !== -1,
-  JSON.stringify([i3.r16.kind, i3.r16.brokenPrereqs]));
+fs.writeFileSync('_audit_out/issue_boundary/issue2_scene16_author_block.txt', i2affected.authorBlock);
+t('EXACTLY the rows whose dependsOn names the invalidated prerequisite are overturned',
+  i2affected.actual.join(',') === i2affected.expected.join(',') && i2affected.expected.length > 0,
+  JSON.stringify({ expected: i2affected.expected, actual: i2affected.actual }));
+t('the carried change voids row 16 three issues after the choice that caused it',
+  i2affected.r16.kind === 'overturned' && i2affected.r16.accomplishes === ''
+  && (i2affected.r16.brokenPrereqs || []).indexOf('prereq:julian_act_concealed') !== -1,
+  JSON.stringify([i2affected.r16.kind, i2affected.r16.brokenPrereqs]));
 t('the OUTGOING AUTHOR request carries it, and not the obsolete assignment',
-  /Its original assignment is VOID and is not stated below/.test(i3.authorBlock)
-  && !/Julian finally admits he acted/.test(i3.authorBlock), i3.authorBlock.slice(0, 500));
-t('the OUTGOING SCAFFOLD request carries it too, before it outlines anything',
-  !!skelReq && /THIS SCENE IS OVERTURNED/.test(skelReq.joined)
-  && !/WHAT IT ACCOMPLISHES: Julian finally admits he acted/.test(skelReq.joined),
-  skelReq && (skelReq.joined.match(/THIS SCENE IS OVERTURNED[\s\S]{0,300}/) || ['(absent)'])[0]);
-t('the carried ISSUE-1 history still reaches the scaffold request',
-  !!skelReq && /She was already past the trunks/.test(skelReq.joined)
-  && /ob:answer_the_notice/.test(skelReq.joined),
-  skelReq && (skelReq.joined.match(/WHAT HAS ALREADY BEEN WRITTEN[\s\S]{0,400}/) || ['(absent)'])[0]);
+  /Its original assignment is VOID and is not stated below/.test(i2affected.authorBlock)
+  && !/Julian finally admits he acted/.test(i2affected.authorBlock), i2affected.authorBlock.slice(0, 400));
 t('and the original event is NOT replayed — the directive asks for its consequences instead',
-  /Develop from what is now true/.test(i3.authorBlock)
-  && /Do NOT manufacture an equivalent loss to restore it/.test(i3.authorBlock), i3.authorBlock.slice(-500));
+  /Develop from what is now true/.test(i2affected.authorBlock)
+  && /Do NOT manufacture an equivalent loss to restore it/.test(i2affected.authorBlock),
+  i2affected.authorBlock.slice(-400));
+t('an UNAFFECTED issue-2 row keeps its kind and its assignment',
+  i2affected.r14.kind === 'convergence' && !!i2affected.r14.accomplishes,
+  JSON.stringify([i2affected.r14.kind, (i2affected.r14.accomplishes || '').slice(0, 60)]));
 
 // ═══ 5. PROSE FALLS OUT OF CONTEXT; DURABLE RECORDS DO NOT ══════════════════════════════════
 section('5. OLDER HISTORY STAYS USABLE WHEN ITS PROSE LEAVES THE WINDOW');

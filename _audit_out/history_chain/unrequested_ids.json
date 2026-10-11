@@ -1,0 +1,48 @@
+{
+ "m": [
+  {
+   "milestoneScene": 16,
+   "atScene": 3,
+   "turnScene": 1,
+   "storyId": "ctl-hist",
+   "sceneUid": null,
+   "projectionHash": null,
+   "projectionRevision": null,
+   "status": "delivered_on_page",
+   "accepted": true,
+   "why": "accepted",
+   "evidence": "A long enough passage of prose",
+   "participants": [
+    "Julian"
+   ],
+   "scope": "everyone",
+   "excerptHash": "hf25c1b6e-109",
+   "superseded": false,
+   "at": 1791748583045,
+   "source": "runtime commit verifier"
+  }
+ ],
+ "q": [
+  {
+   "prereqId": "prereq:julian_act_concealed",
+   "atScene": 3,
+   "turnScene": 1,
+   "storyId": "ctl-hist",
+   "sceneUid": null,
+   "projectionHash": null,
+   "projectionRevision": null,
+   "status": "invalidated_on_page",
+   "accepted": true,
+   "why": "accepted",
+   "evidence": "A long enough passage of prose",
+   "participants": [
+    "Julian"
+   ],
+   "scope": "everyone",
+   "excerptHash": "hf25c1b6e-109",
+   "superseded": false,
+   "at": 1791748583045,
+   "source": "runtime commit verifier"
+  }
+ ]
+}

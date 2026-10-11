@@ -35,10 +35,6 @@ VEILWOOD GEOGRAPHY (canon, and this scene is in the Veilwood — HARD):
   · A clearing's own white weeping-willow veil-canopy hangs OVERHEAD from the mated-pair trees. That is the trees' foliage. It is not an entrance covering and it covers no opening.
   · To stop someone leaving a clearing you use its real geography: step into the gap between the trunks, stand in the seam, put a hand on a trunk, let the assembly close between them and the passage. Nothing is shut, barred, filled or leaned in.
   This rules out FIGURATIVE architecture in a Veilwood scene as well: no door closing on anyone, no doorway she fills, no room with one exit. There is no room. (A professional or a decision "threshold", meaning a milestone or a choice, is not architecture and is fine.)
-THIS SCENE'S PURPOSE WITHIN THE ISSUE (the causal_outline must DELIVER this, not decorate it):
-  THIS SCENE IS OVERTURNED: a condition it needed is gone (prereq:julian_act_concealed), so its original assignment is VOID and the drafted replacement is not approved, so it is withheld too. Build the causal sequence from what is NOW true, and do not sequence the void plan.
-  ALREADY DELIVERED AND COMMITTED: this scene's event is already in the engine's committed record from scene 6 (""I bent the wish," Julian said"). Its original assignment is VOID. Outline the CONSEQUENCES of that having already happened; do NOT sequence the event itself.
-  WHY IT FOLLOWS WHAT CAME BEFORE (THEREFORE): Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.
 WHAT HAS ALREADY BEEN WRITTEN (the same account the scene planner and the author receive — the QUOTED section is the scenes' own words; everything under the summary heading is the previous author's UNVERIFIED claim about its own scene; an obligation is a proposal, not a fact).
 DO NOT OUTLINE A DEVELOPMENT THE QUOTED TEXT SHOWS ALREADY HAPPENED. Outline the CONSEQUENCES of what is below, not a repeat of it. A character may refer back to something already written; that is
 not the same as delivering it again.
@@ -62,10 +58,7 @@ World: Modern
 Protagonist: Lirael | Love interest: Julian — last scene staging: NOT IN_PERSON
 Prior scene's staging (most recent): (no prior staging captured)
 Player intent: wait / 
-ASSIGNED EVENT (this scene MUST make this physically executable): Julian finally admits he acted.
-SETTING: not specified — choose a continuity-valid place where this event CAN happen.
-MUST BE PRESENT: Julian
-You may decide unspecified staging (crowd, weather, arrangement, concealment). You may NOT substitute a different location, cast, or action for the assigned event.
+
 
 
 

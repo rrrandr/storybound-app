@@ -5,6 +5,10 @@
     "milestoneScene": 16,
     "atScene": 3,
     "turnScene": 1,
+    "storyId": "ctl-hist",
+    "sceneUid": "ctl:617a8c64-8761-4e68-a5a1-601eae1db225",
+    "projectionHash": "ha70c21e7-306",
+    "projectionRevision": 0,
     "status": "delivered_on_page",
     "accepted": true,
     "why": "accepted",
@@ -13,9 +17,9 @@
      "Julian"
     ],
     "scope": "the Chayr, two Dohkars and the assembly",
-    "proseHash": "ha70c21e7-306",
+    "excerptHash": "ha70c21e7-306",
     "superseded": false,
-    "at": 1791746222652,
+    "at": 1791748582311,
     "source": "runtime commit verifier"
    }
   ],
@@ -24,6 +28,10 @@
     "prereqId": "prereq:julian_act_concealed",
     "atScene": 3,
     "turnScene": 1,
+    "storyId": "ctl-hist",
+    "sceneUid": "ctl:617a8c64-8761-4e68-a5a1-601eae1db225",
+    "projectionHash": "ha70c21e7-306",
+    "projectionRevision": 0,
     "status": "invalidated_on_page",
     "accepted": true,
     "why": "accepted",
@@ -32,9 +40,9 @@
      "Julian"
     ],
     "scope": "the Chayr, two Dohkars and the assembly",
-    "proseHash": "ha70c21e7-306",
+    "excerptHash": "ha70c21e7-306",
     "superseded": false,
-    "at": 1791746222652,
+    "at": 1791748582311,
     "source": "runtime commit verifier"
    }
   ]

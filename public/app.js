@@ -101657,7 +101657,7 @@ function _buildAuthorFloorDirective(s) {
   }
   window._adjudicateSceneProposals = _adjudicateSceneProposals;
 
-  async function _commitScene(prevText, prevProposal, prevSceneNum) {
+  async function _commitScene(prevText, prevProposal, prevSceneNum, sceneIdentity) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
       if (!prevProposal || !prevProposal.event) return;
@@ -101772,6 +101772,22 @@ function _buildAuthorFloorDirective(s) {
         } catch (_) {}
         if (_fl.length) _fateCtx = _fl.slice(0, 6).join(' | ');
       } catch (_) {}
+      // ── THE ASSESSMENT TARGET, CAPTURED BEFORE THE AWAIT ──────────────────────────────────
+      // Three things the consumer must check on return and could not before: WHICH story and
+      // scene this prose belongs to, WHICH projection revision it was, and EXACTLY which
+      // milestones and prerequisites were asked about. A reply naming anything else is answering
+      // a question nobody put, and a reply arriving after a rewrite is answering about text that
+      // no longer exists.
+      var _asTarget = {
+        storyId: (sceneIdentity && sceneIdentity.storyId) || (window.state && window.state.storyId) || null,
+        sceneUid: (sceneIdentity && sceneIdentity.sceneUid) || null,
+        projectionHash: (sceneIdentity && sceneIdentity.projectionHash) || null,
+        projectionRevision: (sceneIdentity && typeof sceneIdentity.projectionRevision === 'number')
+          ? sceneIdentity.projectionRevision : null,
+        fullTextChars: (sceneIdentity && sceneIdentity.fullTextChars) || null,
+        watchMilestones: _mWatch.map(function (m) { return Number(m.n); }),
+        watchPrereqs: _pWatch.map(function (q) { return String(q.id); })
+      };
       if (_mWatch.length || _pWatch.length) {
         _vSys += '\n\nTWO ADDITIONAL QUESTIONS, judged ONLY against the SCENE PROSE above. Both are'
           + ' SEPARATE from the proposals: answer them about the prose itself.\n'
@@ -101800,6 +101816,18 @@ function _buildAuthorFloorDirective(s) {
             + ' or petition that was ASKED FOR but whose effect is not on the page is'
             + ' "requested_not_delivered", which is NOT invalidation. Everything else uses the matching'
             + ' status above, and uncertainty is "cannot_determine".\n') : '')
+          + 'BOUND THE REPLY. Return AT MOST 4 entries in "milestone_watch" and AT MOST 3 in'
+          + ' "prereq_watch" — the ones you are most confident about. Everything you leave out is'
+          + ' understood as absent.\n'
+          + 'KEEP EACH WATCH ENTRY SHORT. "evidence" here is ONE quotation copied contiguously from the'
+          + ' prose, at most 160 characters — never an array, never several spans. "participants" is bare'
+          + ' names. "scope" is at most 80 characters. These answers are secondary to the delivery verdict'
+          + ' above: if you are running out of room, finish the delivery verdict and per_proposal fields'
+          + ' FIRST and return [] for both watch arrays.\n'
+          + 'OMIT THE ORDINARY CASE. Do NOT return an entry whose status would be "not_present" — leave it'
+          + ' out entirely. A watched item you do not mention is understood as absent from this prose. Report'
+          + ' an entry ONLY when you have something to say about it, and in the common case both arrays are'
+          + ' empty: [].\n'
           + 'HARD, for both: every "evidence" value must be VERBATIM text from the SCENE PROSE. A status of'
           + ' "delivered_on_page" or "invalidated_on_page" with no verbatim evidence is DISCARDED by the'
           + ' engine, and so is one whose quotation is not found in the prose. Do NOT infer, do NOT'
@@ -101832,7 +101860,20 @@ function _buildAuthorFloorDirective(s) {
         var _vData = await _callTieredProvider('runtimeCommitVerifier', [
           { role: 'system', content: _vSys },
           { role: 'user', content: _vUsr }
-        ], { max_tokens: 900, temperature: 0.1 });
+        // 900 → 1750 (Roman 2026-10-11). The contract now also asks about up to 8 watched
+        // milestones and 6 watched prerequisites, but BOUNDS THE REPLY to 4 and 3 entries — the
+        // request is cheap and the reply is what risks truncation. "not_present" entries are omitted, so the
+        // ORDINARY reply is unchanged in size and both arrays come back empty; the raise covers the
+        // pessimistic case where several watched items genuinely need reporting. Measured against
+        // the EXPANDED contract in _verifier_contract_preflight.mjs, which fails if a worst-case
+        // reply would not fit — at the 25% headroom that preflight requires (worst case ~1,512).
+        // The commit verdict must survive first: a truncated reply loses the whole JSON, which is
+        // why this is raised rather than left to chance, and why the contract tells the verifier to
+        // finish the delivery verdict before the watch arrays if it runs short.
+        // COST: the ordinary reply is unchanged (both watch arrays empty). The REQUEST grows by the
+        // contract text plus the watch lists, ~950 tokens; on ministral-8b at $0.15/M that is
+        // ~$0.00014 per scene, and a pessimistic reply adds ~$0.00009 of output. ~0.02c per scene.
+        ], { max_tokens: 1750, temperature: 0.1 });
         // 280 was set BEFORE per_proposal existed. Run 15 measured finish_reason "length" at
         // exactly 280 completion tokens with the reply cut mid-'"tableau": {', so a correct
         // per-proposal verdict became unparseable JSON.
@@ -101988,7 +102029,29 @@ function _buildAuthorFloorDirective(s) {
         // _sbInvalidateDependentsOfScene marks the record superseded when the scene is rewritten.
         try {
           var _asScene = (_dlStory != null) ? _dlStory : (Number(prevSceneNum) + 1);
-          var _asHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_pt) : null;
+          // THE EXCERPT'S hash is kept for diagnosis only. The record is bound to the SCENE's own
+          // projection hash and revision, which is what a rewrite changes.
+          var _asExcerptHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_pt) : null;
+          // ── STALE RETURN CHECK. A rewrite during the request leaves this reply describing text
+          // that no longer exists, so nothing from it is accepted.
+          var _asStale = null;
+          try {
+            if (_asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
+              _asStale = 'the story changed while the assessment was in flight';
+            if (!_asStale && _asTarget.sceneUid && typeof _sbSceneByUid === 'function') {
+              var _nowRec = _sbSceneByUid(_asTarget.sceneUid, window.state);
+              var _nowProj = (_nowRec && _nowRec.record && _nowRec.record.projection) || null;
+              if (!_nowRec) _asStale = 'the scene record ' + _asTarget.sceneUid + ' no longer exists';
+              else if (_asTarget.projectionHash && _nowProj && String(_nowProj.hash) !== String(_asTarget.projectionHash))
+                _asStale = 'the scene was rewritten while the assessment was in flight (hash '
+                  + _asTarget.projectionHash + ' -> ' + _nowProj.hash + ')';
+              else if (_asTarget.projectionRevision != null && _nowProj
+                       && Number(_nowProj.revision) !== Number(_asTarget.projectionRevision))
+                _asStale = 'the scene revision moved while the assessment was in flight ('
+                  + _asTarget.projectionRevision + ' -> ' + _nowProj.revision + ')';
+            }
+          } catch (_) {}
+          if (_asStale) { try { console.warn('[MILESTONE-WATCH] every assessment from this reply is REJECTED — ' + _asStale); } catch (__) {} }
           var _okEv = function (e) {
             try { return (typeof _hasUsableEvidence === 'function') ? _hasUsableEvidence(e) : false; } catch (_) { return false; }
           };
@@ -102005,20 +102068,30 @@ function _buildAuthorFloorDirective(s) {
             if (!m) return;
             var tgt = Number(m.n);
             if (!(tgt > 0) || tgt <= _asScene) return;            // only a LATER row can be delivered early
+            // ONLY WHAT WAS ASKED. Verbatim evidence shows that words exist; it says nothing about
+            // which assignment those words satisfy, so a row nobody asked about is discarded.
+            if (_asTarget.watchMilestones.indexOf(tgt) === -1) {
+              try { console.warn('[MILESTONE-WATCH] DISCARDED row ' + tgt + ' — it was not on the watch list sent with this request ('
+                + _asTarget.watchMilestones.join(',') + ')'); } catch (_) {}
+              return;
+            }
             var st = String(m.status || '').toLowerCase();
             var parts = Array.isArray(m.participants) ? m.participants.map(String).filter(Boolean) : [];
             var scope = String(m.scope || '').trim();
             var evOk = _evOk(m.evidence);
-            var accepted = (st === 'delivered_on_page') && evOk && parts.length > 0 && !!scope;
+            var accepted = !_asStale && (st === 'delivered_on_page') && evOk && parts.length > 0 && !!scope;
             var why = accepted ? 'accepted'
-              : (st !== 'delivered_on_page' ? ('status "' + (st || 'unstated') + '" is not completion')
-                : (!evOk ? 'no evidence verifies verbatim against this scene\'s prose'
-                  : (!parts.length ? 'no participants named' : 'no scope stated')));
+              : (_asStale ? ('rejected: ' + _asStale)
+                : (st !== 'delivered_on_page' ? ('status "' + (st || 'unstated') + '" is not completion')
+                  : (!evOk ? 'no evidence verifies verbatim against this scene\'s prose'
+                    : (!parts.length ? 'no participants named' : 'no scope stated'))));
             _store('_milestoneDeliveries').push({
               milestoneScene: tgt, atScene: _asScene, turnScene: prevSceneNum,
+              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid,
+              projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
               status: st || 'unstated', accepted: accepted, why: why,
               evidence: m.evidence || null, participants: parts, scope: scope || null,
-              proseHash: _asHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
+              excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
             });
             try { console.log('[MILESTONE-WATCH] scene ' + _asScene + ' vs row ' + tgt + ': status=' + (st || 'unstated')
               + ' accepted=' + accepted + ' (' + why + ')'); } catch (_) {}
@@ -102026,29 +102099,55 @@ function _buildAuthorFloorDirective(s) {
           var _pw = (_vP && Array.isArray(_vP.prereq_watch)) ? _vP.prereq_watch : [];
           _pw.forEach(function (q) {
             if (!q || !q.id) return;
+            if (_asTarget.watchPrereqs.indexOf(String(q.id)) === -1) {
+              try { console.warn('[PREREQ-WATCH] DISCARDED ' + q.id + ' — it was not on the watch list sent with this request ('
+                + _asTarget.watchPrereqs.join(',') + ')'); } catch (_) {}
+              return;
+            }
             var st2 = String(q.status || '').toLowerCase();
             var parts2 = Array.isArray(q.participants) ? q.participants.map(String).filter(Boolean) : [];
             var scope2 = String(q.scope || '').trim();
             var evOk2 = _evOk(q.evidence);
-            var acc2 = (st2 === 'invalidated_on_page') && evOk2 && parts2.length > 0 && !!scope2;
+            var acc2 = !_asStale && (st2 === 'invalidated_on_page') && evOk2 && parts2.length > 0 && !!scope2;
             var why2 = acc2 ? 'accepted'
-              : (st2 !== 'invalidated_on_page' ? ('status "' + (st2 || 'unstated') + '" is not invalidation')
-                : (!evOk2 ? 'no evidence verifies verbatim against this scene\'s prose'
-                  : (!parts2.length ? 'no participants named' : 'no scope stated')));
+              : (_asStale ? ('rejected: ' + _asStale)
+                : (st2 !== 'invalidated_on_page' ? ('status "' + (st2 || 'unstated') + '" is not invalidation')
+                  : (!evOk2 ? 'no evidence verifies verbatim against this scene\'s prose'
+                    : (!parts2.length ? 'no participants named' : 'no scope stated'))));
             _store('_prereqInvalidations').push({
               prereqId: String(q.id), atScene: _asScene, turnScene: prevSceneNum,
+              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid,
+              projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
               status: st2 || 'unstated', accepted: acc2, why: why2,
               evidence: q.evidence || null, participants: parts2, scope: scope2 || null,
-              proseHash: _asHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
+              excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
             });
             try { console.log('[PREREQ-WATCH] scene ' + _asScene + ' vs ' + q.id + ': status=' + (st2 || 'unstated')
               + ' accepted=' + acc2 + ' (' + why2 + ')'); } catch (_) {}
           });
+          // ── TWO BOUNDS, NOT ONE ────────────────────────────────────────────────────────────
+          // MEASURED DEFECT: one 40-entry window held both. Five rounds of eight negative
+          // observations ("not present" for every watched row) evicted the single ACCEPTED record,
+          // and the planner could then assign the already-delivered event again. A conclusion is
+          // durable; an observation is diagnostic. They are bounded separately, and an accepted
+          // record is never evicted by a negative one.
           try {
-            if (Array.isArray(window.state._milestoneDeliveries) && window.state._milestoneDeliveries.length > 40)
-              window.state._milestoneDeliveries = window.state._milestoneDeliveries.slice(-40);
-            if (Array.isArray(window.state._prereqInvalidations) && window.state._prereqInvalidations.length > 40)
-              window.state._prereqInvalidations = window.state._prereqInvalidations.slice(-40);
+            var _trim = function (key) {
+              var arr = Array.isArray(window.state[key]) ? window.state[key] : null;
+              if (!arr) return;
+              var keepAcc = arr.filter(function (r) { return r && r.accepted === true; });
+              var keepObs = arr.filter(function (r) { return !(r && r.accepted === true); });
+              if (keepAcc.length > 200) keepAcc = keepAcc.slice(-200);   // a hard ceiling, not a window
+              if (keepObs.length > 40) keepObs = keepObs.slice(-40);
+              if (keepAcc.length + keepObs.length === arr.length) return;
+              // Chronological order is preserved so the stores still read as a history.
+              var keep = keepAcc.concat(keepObs).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+              try { console.log('[ASSESSMENT-STORE] ' + key + ' trimmed ' + arr.length + ' -> ' + keep.length
+                + ' (accepted kept: ' + keepAcc.length + ', observations kept: ' + keepObs.length + ')'); } catch (_) {}
+              window.state[key] = keep;
+            };
+            _trim('_milestoneDeliveries');
+            _trim('_prereqInvalidations');
           } catch (_) {}
         } catch (_wErr) { try { console.warn('[MILESTONE-WATCH] assessment store threw: ' + (_wErr && _wErr.message)); } catch (__) {} }
         try { window.state._issueOutline = null; } catch (_) {}
@@ -102659,7 +102758,19 @@ function _buildAuthorFloorDirective(s) {
           }
           try { s._lastCommitScenePrvSource = { scene: _prevNum, source: _prevSrc, uid: _prevUid, chars: _prevText.length }; } catch (_) {}
           if (_prevText && _prevText.length >= 40) {
-            await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum); // last ~scene worth for the delivery verifier
+            // THE SCENE'S OWN IDENTITY, read off the projection the excerpt came from. Without
+            // it the assessment can only hash the fragment it was given, which is not what a
+            // rewrite changes.
+            var _csIdent = null;
+            try {
+              var _idRec = (_prevUid && typeof _sbSceneByUid === 'function') ? _sbSceneByUid(_prevUid, s) : null;
+              var _idProj = (_idRec && _idRec.record && _idRec.record.projection) || null;
+              _csIdent = { storyId: s.storyId || null, sceneUid: _prevUid || null,
+                           projectionHash: _idProj ? (_idProj.hash || null) : null,
+                           projectionRevision: _idProj ? (typeof _idProj.revision === 'number' ? _idProj.revision : null) : null,
+                           fullTextChars: _prevText.length, excerptChars: Math.min(5000, _prevText.length) };
+            } catch (_) { _csIdent = null; }
+            await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum, _csIdent); // last ~scene worth for the delivery verifier
             var _csI = _ensureCommittedState();
             if (_csI._committedThroughScene != null && _csI._committedThroughScene < _prevNum) console.error('[COMMIT-SCENE:INVARIANT-BROKEN] planning after Commit-Scene(' + _prevNum + ') but committedThrough=' + _csI._committedThroughScene);
             // INVARIANT RUNTIME v0 (Roman 2026-07-29): the ONE gating evaluation. Reads the
@@ -119017,6 +119128,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     } catch (_) {}
   }
+
+  // Dev handle so a FREE provider-free control can drive the REAL load lifecycle — the same
+  // function the resume path calls, including its Object.assign and the historical-record
+  // migration that follows it. No production caller.
+  try { window.__loadStoryData = function (id) { return loadStoryData(id); }; } catch (_) {}
 
   async function loadStoryData(targetStoryId) {
       // Per-story load path — when a specific storyId is requested, the
@@ -330491,9 +330607,12 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       ['_milestoneDeliveries', '_prereqInvalidations'].forEach(function (k) {
         (Array.isArray(s[k]) ? s[k] : []).forEach(function (rec) {
           if (!rec || rec.superseded) return;
-          // Keyed on the PROSE HASH the evidence was verified against — the thing that actually
-          // changed — not on a scene uid the record does not carry.
-          if (String(rec.proseHash || '') !== String(prevHash)) return;
+          // Keyed on the SCENE's own identity. The earlier version keyed on a hash of the 5,000-
+          // character excerpt the verifier was given, which for any longer scene never equals the
+          // hash of the complete projection a rewrite changes — so the record survived the rewrite.
+          var _matchUid = rec.sceneUid && String(rec.sceneUid) === String(uid);
+          var _matchHash = rec.projectionHash && String(rec.projectionHash) === String(prevHash);
+          if (!_matchUid && !_matchHash) return;
           rec.superseded = true;
           rec.supersededReason = 'the prose its evidence was verified against was revised: hash '
             + String(prevHash) + ' -> revision ' + newRevision;

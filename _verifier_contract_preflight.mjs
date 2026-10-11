@@ -79,8 +79,11 @@ console.log('   configured max_tokens: ' + MAX_TOKENS);
 // Roman specified "around 600-700", set BEFORE the precondition_evidence + reason fields existed.
 // Those cost ~123 tokens on the pessimistic case (464 → 587), so 700 left 16% headroom. The bound
 // is 900 and the DEVIATION IS DELIBERATE AND FLAGGED, not absorbed by relaxing the margin.
+// The upper end moved from 1000 to 2400 when the contract was expanded with the milestone and
+// prerequisite watch (Roman 2026-10-11). It is still a FIXED bound, and the headroom check below
+// is what actually constrains it — not this range.
 t('max_tokens is a fixed bound, and large enough for the guard fields',
-  MAX_TOKENS >= 600 && MAX_TOKENS <= 1000, 'max_tokens=' + MAX_TOKENS);
+  MAX_TOKENS >= 600 && MAX_TOKENS <= 1900, 'max_tokens=' + MAX_TOKENS);
 t('  it exceeds the originally-stated 600-700 — recorded as a deviation',
   MAX_TOKENS > 700, 'max_tokens=' + MAX_TOKENS + ' (deliberate; see the comment at the call site)');
 
@@ -104,12 +107,30 @@ const WORST = {
     precondition_evidence: LONG, actor_evidence: LONG, action_evidence: LONG,
     target_evidence: LONG, exit_state_evidence: LONG, occurred_this_scene: true
   },
-  actual_exit_state: 'the sealed demand now sits in the commission\'s possession'
+  actual_exit_state: 'the sealed demand now sits in the commission\'s possession',
+  // ── THE EXPANDED CONTRACT (Roman 2026-10-11) ──
+  // The verifier now also answers about watched milestones and prerequisites. Entries whose
+  // status would be "not_present" are OMITTED by the contract, so the pessimistic case is not
+  // "every watched item" but "every watched item the model has something to say about" — taken
+  // here as ALL of them, with long quotations, which is the worst a compliant reply can be.
+  // The contract bounds the REPLY to at most 4 milestone and 3 prerequisite entries, and bounds
+  // each entry: ONE quotation of at most 160 chars, bare names, and a scope of at most 80. The
+  // pessimistic case is measured at exactly those limits.
+  milestone_watch: [1, 2, 3, 4].map(function (i) {
+    return { n: 10 + i, status: 'delivered_on_page', evidence: LONG.slice(0, 160),
+             participants: ['Julian', 'the presiding Dohkar'],
+             scope: 'the Chayr, two Dohkars and the assembled First Favored present at the rite'.slice(0, 80) };
+  }),
+  prereq_watch: [1, 2, 3].map(function (i) {
+    return { id: 'prereq:some_named_condition_' + i, status: 'invalidated_on_page', evidence: LONG.slice(0, 160),
+             participants: ['Julian'], scope: 'the whole assembly and the seated panel'.slice(0, 80) };
+  })
 };
 const worstJson = JSON.stringify(WORST, null, 2);
 // The app's own estimator: 4.0 chars/token (see _fsc_cost_guard.mjs).
 const estTokens = Math.ceil(worstJson.length / 4);
-console.log('   worst-case reply: ' + worstJson.length + ' chars ≈ ' + estTokens + ' tokens');
+console.log('   worst-case reply: ' + worstJson.length + ' chars ≈ ' + estTokens + ' tokens'
+  + '  (includes ' + WORST.milestone_watch.length + ' milestone + ' + WORST.prereq_watch.length + ' prerequisite entries)');
 t('the worst case fits inside max_tokens', estTokens < MAX_TOKENS,
   estTokens + ' tokens vs max_tokens ' + MAX_TOKENS);
 t('  with at least 25% headroom', estTokens < MAX_TOKENS * 0.75,

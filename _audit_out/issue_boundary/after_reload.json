@@ -1,4 +1,9 @@
 {
+ "saveThrew": null,
+ "loadThrew": null,
+ "cacheWasLive": true,
+ "outlineCachePersisted": false,
+ "clearedCheck": {},
  "decisions": {
   "1": {
    "choice": "run",
@@ -90,7 +95,85 @@
    "source": "runtime commit verifier"
   }
  ],
+ "starter": "starter_first_sacrifice",
+ "issueIndex": 2,
  "overturned": [
   "prereq:julian_act_concealed"
- ]
+ ],
+ "bounds": {
+  "issueIndex": 2,
+  "per": 10,
+  "pricingPer": 10,
+  "mode": "cg",
+  "source": "ISSUE_PRICING",
+  "rowSupply": 20,
+  "mapping": {
+   "rowSupply": 20,
+   "nativeMode": "literary",
+   "mode": "cg",
+   "per": 10,
+   "issuesSpanned": 2,
+   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s); this issue is rows 11-20"
+  },
+  "first": 11,
+  "last": 20
+ },
+ "r16": {
+  "n": 16,
+  "kind": "overturned",
+  "alreadyWritten": null,
+  "alreadyDelivered": [
+   {
+    "fact": "\"I bent the wish,\" Julian said",
+    "atScene": 6,
+    "ref": "assessment@scene6",
+    "participants": [
+     "Julian"
+    ],
+    "scope": "the Chayr and the assembly",
+    "link": "the post-prose assessment of scene 6 found row 16's milestone delivered on the page (participants: Julian; scope: the Chayr and the assembly)"
+   }
+  ],
+  "alreadyDeliveredBy": null,
+  "delivery": "planned",
+  "deliveryEvidence": "not yet generated",
+  "verifiedFacts": null,
+  "overturnedBy": {
+   "prereqs": [
+    "prereq:julian_act_concealed"
+   ],
+   "replacement": "authored_but_awaiting_review"
+  },
+  "status": "planned",
+  "conditional": false,
+  "conditionalOn": null,
+  "pendingDecision": false,
+  "accomplishes": "",
+  "accomplishesSource": "WITHHELD: this row's assignment is void (prereq:julian_act_concealed) and the drafted replacement has NOT been approved, so it is withheld too",
+  "follows_from": {
+   "text": "Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.",
+   "link": "therefore",
+   "source": "plan row"
+  },
+  "changes": "",
+  "sets_up": "",
+  "openObjective": false,
+  "decision": null,
+  "dependsOn": [
+   "prereq:julian_act_concealed"
+  ],
+  "brokenPrereqs": [
+   "prereq:julian_act_concealed"
+  ],
+  "prereqsAtRisk": null,
+  "prereqsAtRiskWhy": null,
+  "routes": null,
+  "activeRoute": null,
+  "withheld": [
+   "stage"
+  ],
+  "source": "plan row"
+ },
+ "block": "\n  THIS SCENE'S PURPOSE WITHIN ISSUE 2 (scene 11 of 20; HARD — this is the scene's ASSIGNMENT, not background):\n    WHAT KIND OF DEVELOPMENT THIS IS: INDEPENDENT — it happens because the world is already moving toward it, whatever the protagonist does. She can be present for it, resist it, or arrive late; she cannot make it not happen by choosing otherwise.\n    WHAT THIS SCENE ACCOMPLISHES: The consequences of the hidden sacrifice begin manifesting.\n    WHY IT FOLLOWS WHAT CAME BEFORE (OBSTRUCTION — the previous development got in the way): Julian denied it unconvincingly and nothing is proven — but the sacrifice behind the wish goes on being paid for.\n    WHAT CHANGES BY THE END: The hidden sacrifice is visibly costing something, and no one can say what or whose.\n    WHAT IT SETS UP: The hidden sacrifice is producing consequences nobody can attribute to anyone.\n    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):\n      – scene 12 [CONVERGENCE]: The PC discovers every miracle has a sacrifice — but cannot determine whose.\n      – scene 13 [INDEPENDENT]: Someone else is endangered by the hidden bargain.\n      – scene 14 [CONVERGENCE]: THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The\n    THE PLAYER HAS AN UNANSWERED DECISION AT SCENE 19 (expose what Julian did vs let the inquiry's judgement stand). The issue is still planned past it: independent events still happen and the convergence points above still stand. What you may NOT do is assert which answer she gave, write her as having already given one, or deliver a development that only makes sense under one answer.\n",
+ "history": "[WHAT THE SCENES THEMSELVES SAY — quoted verbatim]\n  scene 2 — the scene's own words: \"She was already past the trunks when the Dohkar called her name.\"\n  scene 7 — the scene's own words: \"The rumour reached the Veilwood before she did, and it had her name in it.\"\n  scene 11 — the scene's own words: \"The second issue opened on a room she had never been asked into.\"\n\n[THE AUTHOR'S SUMMARY OF PRIOR SCENES — UNVERIFIED, NOT CANON. These are the previous author's own words about its own scene. They have NOT been checked for truth: treat them as a reading aid for continuity, never as settled fact, and never contradict the quoted text above on their authority.]\n  scene 2 [events, author's gloss on the above]: she left\n  scene 7 [events, author's gloss on the above]: her name spread\n  scene 11 [events, author's gloss on the above]: a new room\n\n[PROPOSED OBLIGATIONS STILL OPEN — commitments a prior scene set up and nothing has resolved yet. They do NOT expire with the recent-scene window. They are proposals, not established facts.]\n  - [ob:answer_the_notice] Lirael still owes the panel an answer"
 }
