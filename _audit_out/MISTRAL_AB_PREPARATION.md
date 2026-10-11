@@ -146,3 +146,80 @@ reader-facing word count (prose only, never reasoning or metadata), whether inte
 through action → response → consequence, repetition and replay of the completed opening, continuity,
 speaker attribution, schema validity, latency, and total billed cost including reasoning — with
 requested and returned model identities recorded and automatic fallback disabled for both arms.
+
+---
+
+# REVISED SCOPE (2026-10-11): THREE AUTHORS, ONE FROZEN REQUEST
+
+Medium is **out** of this experiment and I have stopped waiting for its limits. The earlier
+exclusion of Ministral is **withdrawn**. Three arms, one identical assignment:
+
+| arm | model | source of the response |
+|---|---|---|
+| A/B/C | Grok 4.3 | the fresh run's **own** Scene 2 response — not paid for twice |
+| | `ministral-8b-2512` | one call on the frozen request |
+| | `ministral-3b-2512` | one call on the frozen request |
+
+## Admission verified against the real governor, before spending
+
+Frozen Scene 2 request, 266,623 UTF-8 bytes; reservation = bytes + `max_tokens`.
+
+```
+max_tokens=8000  -> reservation 274,623
+  ministral-8b-2512   tpm=  625000  rps= 3.13  bucket=ministral-8b-2512  ADMISSIBLE
+  ministral-3b-2512   tpm= 1300000  rps=12.50  bucket=ministral-3b-2512  ADMISSIBLE
+max_tokens=12000 -> reservation 278,623   both still ADMISSIBLE
+```
+
+Both limits are **already recorded account facts** —
+`source=https://admin.mistral.ai/plateforme/limits`, `readOn=2026-09-04` — so nothing is invented.
+The two arms sit in **separate buckets**, so they cannot contend with each other.
+
+**One minimum provider-interface change is required:** `ministral-3b-2512` is in `MODEL_LIMITS` but
+not in the proxy allowlist (`api/mistral-proxy.js`), so it would be rejected before the governor saw
+it. Adding it is the only change; production routing is untouched.
+
+## Model facts, from this project's verified routing matrix (not inferred from names)
+
+| model | ctx | structured outputs | `reasoning_effort` | price /M |
+|---|---|---|---|---|
+| `ministral-8b-2512` | 256k | yes | **no** | $0.15 |
+| `ministral-3b-2512` | 256k | yes | **no** | $0.10 |
+
+**Neither Ministral accepts `reasoning_effort`** — it exists only on Small and Medium. So "reasoning
+where applicable" is **not applicable** to either arm, which also avoids the recorded trap where a
+prompt omitting the field is silently served as ordinary non-reasoning Mistral. 256k context
+comfortably holds the ~83–86k tokens this request is estimated at.
+
+Fallback is disabled per call via `extra.noFallback` → `_gBody._noFallback`, and the response's
+`upstreamAttempts` must come back as exactly 1 — so which model wrote each result is verifiable from
+the response, not assumed.
+
+## One total estimate
+
+| component | cost |
+|---|---|
+| fresh opening through Scene 2 committed (22 calls, **measured**) | $0.4455 |
+| 700–1000-word target delta on the Grok author call | $0.0158 |
+| `ministral-8b-2512` arm (83–86k in + 3,750 out @ $0.15/M) | $0.0135 |
+| `ministral-3b-2512` arm (83–86k in + 3,750 out @ $0.10/M) | $0.0090 |
+| retained-unresolved allowance | $0.0146 |
+| **total, upper end** | **$0.4983** |
+
+Input tokens are **estimated** from the byte count and anchored on this project's measured Mistral
+author-leg `prompt_tokens` (85,978 / 92,123) — **not** on Grok's 59,195. No cache savings assumed.
+Output allowance covers prose (~1,350) plus beat metadata (~2,400); only the prose will be counted
+as writing.
+
+Committed to date **$9.3054242**. With 15% contingency that is **$9.8785**, so the ask is a
+cumulative ceiling of **$9.90**. The current $9.50 leaves $0.1945758, which is not enough. This is a
+scope change, not an open-ended increase.
+
+## What will be reported
+
+Three complete passages, labelled A/B/C with identities revealed afterwards, judged on: substantial
+development through interaction and consequence; continuity and whether the completed opening is
+replayed; character-specific dialogue, attribution and repetition; reader-facing word count and
+schema validity; actual tokens, cost and latency. An invalid or truncated response is a reported
+result, not permission to repair it. No winner declared from length alone, and no generalisation
+from one sample.
