@@ -635,6 +635,63 @@ t('the OUTGOING scaffold request carries the revised route wording',
   !!skReq && /she is served on suspicion she cannot answer/.test(skReq.joined),
   skReq ? 'route text absent from the request' : 'no scaffold request captured');
 
+// ═══ 4h. THE SCAFFOLD IS TOLD THE ROUTE THE PLAYER ACTUALLY TOOK ════════════════════════════
+section('4h. activeRoute: the scaffold must not say "not yet taken" after a recorded choice');
+// MEASURED DEFECT: the resolver emits `activeRoute`; the scaffold block read `routeTaken`, which
+// nothing supplies. With a RECORDED route the scaffold was told the player had not yet chosen,
+// while the author was told which route she was on.
+calls.length = 0;
+const routeStates = await page.evaluate(async () => {
+  const s = window.state;
+  s.issueIndexInRun = 3; s._stagedAuthoringSceneIndex = 20; s.renderMode = 'staged_story_mode';
+  const row = s.cgScaffold.issueArcs[2].sceneOutline[2];            // scene 23
+  row.kind = 'convergence';
+  // (this row already carries routes from section 4f; the fields set here only make the choice
+  //  resolvable, and _sceneDecisions is restored below)
+  row.routes = [{ choice: 'intervene', how: 'she is already on record', carries: 'no deniability left' },
+                { choice: 'remain_bound', how: 'she is served on suspicion', carries: 'the private cost of obeying' }];
+  row.routes_decided_by = 19;
+  // (a) NO CHOICE RECORDED YET. The prior decisions are RESTORED at the end of this section —
+  // later sections depend on the issue-1 choice being recorded.
+  const _savedDecisions = s._sceneDecisions;
+  s._sceneDecisions = {};
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const unresolvedRow = window._issueOutlineRowFor(s, 23) || {};
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 23 });
+  // (b) THE PLAYER CHOOSES, recorded the way production records it (_sceneDecisions, storyId-scoped).
+  s._sceneDecisions = { '19': { choice: 'remain_bound', storyId: s.storyId, at: Date.now() } };
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const resolvedRow = window._issueOutlineRowFor(s, 23) || {};
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 23 });
+  s._sceneDecisions = _savedDecisions;
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  return JSON.parse(JSON.stringify({ unresolvedActive: unresolvedRow.activeRoute || null,
+    resolvedActive: resolvedRow.activeRoute || null }));
+});
+const rq = calls.filter(c => /mistral-proxy/.test(c.url) && /causal_outline/.test(c.joined));
+fs.writeFileSync('_audit_out/issue_boundary/scaffold_route_unresolved.txt', (rq[0] && rq[0].joined) || '(none)');
+fs.writeFileSync('_audit_out/issue_boundary/scaffold_route_recorded.txt', (rq[1] && rq[1].joined) || '(none)');
+t('two outgoing scaffold requests were captured', rq.length === 2, String(rq.length));
+t('the resolver supplies NO activeRoute before a choice, and the RECORDED one after',
+  routeStates.unresolvedActive === null
+  && !!routeStates.resolvedActive && routeStates.resolvedActive.choice === 'remain_bound'
+  && /served on suspicion/.test(String(routeStates.resolvedActive.how)),
+  JSON.stringify(routeStates));
+t('UNRESOLVED: the scaffold request offers both routes and says neither was taken',
+  !!rq[0] && /ROUTES TO THIS POINT \(the player has not yet taken one/.test(rq[0].joined)
+  && /if "intervene"/.test(rq[0].joined) && /if "remain_bound"/.test(rq[0].joined),
+  'the unresolved request does not present both routes');
+t('RECORDED: the scaffold request NAMES the taken route and its retained consequence',
+  !!rq[1] && /THE ROUTE THE PLAYER PUT HER ON \("remain_bound"\): she is served on suspicion/.test(rq[1].joined)
+  && /SHE ARRIVES CARRYING: the private cost of obeying, which the sequence must keep true/.test(rq[1].joined),
+  'the recorded route is absent from the request');
+t('RECORDED: and it no longer says the player has yet to choose, nor offers the route not taken',
+  !!rq[1] && !/has not yet taken one/.test(rq[1].joined)
+  && !/if "intervene"/.test(rq[1].joined),
+  'the recorded request still presents the choice as open');
+
 // ═══ 5. PROSE FALLS OUT OF CONTEXT; DURABLE RECORDS DO NOT ══════════════════════════════════
 section('5. OLDER HISTORY STAYS USABLE WHEN ITS PROSE LEAVES THE WINDOW');
 const windowed = await page.evaluate(() => {

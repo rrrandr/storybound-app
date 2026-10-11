@@ -43,6 +43,7 @@ let verifierSeen = null;
 let pageVerifierResp = null;
 let rewriteDuringRequest = false;
 let editDuringRequest = false;
+let captureCommitProse = false;
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
@@ -61,6 +62,9 @@ await page.route('**/api/**', async (route) => {
   if (/RUNTIME COMMIT verifier/i.test(joined)) {
     const ref = (joined.match(/prop:\d+:\d+/) || [null])[0];
     verifierSeen = { ref: ref, bytes: joined.length, joined: joined };
+    // THE WHOLE OUTGOING REQUEST. Asserting on the entire body rather than on an extracted prose
+    // block is the stronger check: page A's text must appear NOWHERE in what the verifier is sent.
+    if (captureCommitProse) submittedProse = joined;
     if (rewriteDuringRequest) { try { await page.evaluate(() => window.__ctlRewriteDuring && window.__ctlRewriteDuring()); } catch (_) {} }
     if (editDuringRequest) { try { await page.evaluate(() => window.__ctlEditPage && window.__ctlEditPage()); } catch (_) {} }
     if (pageVerifierResp) return reply(JSON.stringify(pageVerifierResp), 'constructed-verifier');
@@ -1405,7 +1409,7 @@ t('the identified page really was edited during the request, in place, via setPa
   /without anybody saying anything further/.test(litDuring.pageNow), litDuring.pageNow);
 t('and the reply is REJECTED, naming the unit and the hash transition',
   !!litDuring.rec && litDuring.rec.accepted === false
-  && /the page [^ ]+ was rewritten \(hash of its first \d+ characters h[^ ]+ -> h[^ )]+\) while the assessment was in flight/.test(String(litDuring.rec.why)),
+  && /the page [^ ]+ changed — narrative prose was (ADDED to|REMOVED from) it \(\d+ -> \d+ characters\) \(narrative hash h[^ ]+ -> h[^ )]+\) while the assessment was in flight/.test(String(litDuring.rec.why)),
   JSON.stringify(litDuring.rec && { acc: litDuring.rec.accepted, why: litDuring.rec.why }));
 
 const litAfter = await page.evaluate(async () => {
@@ -1449,7 +1453,7 @@ t('StoryPagination\'s setter has NO invalidation hook of its own — stated, not
   JSON.stringify([litAfter.beforeEdit, litAfter.straightAfterEdit]));
 t('the NEXT COMMIT PASS revalidates and supersedes the record whose page was edited',
   !!litAfter.rec && litAfter.rec.superseded === true
-  && /page [^ ]+ was rewritten \(hash of its first \d+ characters/.test(String(litAfter.rec.supersededReason))
+  && /page [^ ]+ changed — narrative prose was (ADDED to|REMOVED from) it/.test(String(litAfter.rec.supersededReason))
   && /detected by the commit pass/.test(String(litAfter.rec.supersededReason)),
   JSON.stringify(litAfter.rec && { sup: litAfter.rec.superseded, why: litAfter.rec.supersededReason }));
 t('...and the plan stops treating the milestone as delivered',
@@ -1650,9 +1654,10 @@ const rewriteA = await page.evaluate(async () => {
   return JSON.parse(JSON.stringify({ recs: recs, iA: iA, delivered: !!r16.alreadyDelivered,
     cited: (r16.alreadyDelivered || []).map(h => h.atScene) }));
 });
-t('rewriting page A supersedes ONLY A\'s support, naming the rewrite',
+t('rewriting page A supersedes ONLY A\'s support, naming what changed',
   rewriteA.recs.filter(r => r.atScene === 3).every(r => r.superseded === true
-    && /rewritten|edited/.test(String(r.supersededReason))),
+    && /changed — narrative prose was (ADDED to|REMOVED from) it|its narrative prose was rewritten/
+         .test(String(r.supersededReason))),
   JSON.stringify(rewriteA.recs.map(r => [r.atScene, r.superseded])));
 t('page C\'s independent support is untouched',
   rewriteA.recs.filter(r => r.atScene === 7).every(r => r.superseded !== true),
@@ -1681,6 +1686,175 @@ const missing = await page.evaluate(async () => {
 t('a unit whose text is no longer available is UNVERIFIABLE, left in force — not superseded',
   !!missing.rec && missing.rec.superseded !== true,
   JSON.stringify(missing.rec && { sup: missing.rec.superseded, why: missing.rec.supersededReason }));
+
+// ═══ 20. THE REAL CALLER SUBMITS ONLY THE UNIT IT BINDS TO ══════════════════════════════════
+section('20. _generateLiteraryPlotContract: two pages, different events, one bound unit');
+// THE PRODUCTION CALLER, not a helper. The literary branch sent the tail of getAllContent (every
+// page joined) while binding the result to ONE page, so a quotation from page A could verify and
+// become evidence owned by page B.
+let submittedProse = null;
+captureCommitProse = true;
+const realCaller = await page.evaluate(async () => {
+  const s = window.state;
+  s.renderMode = 'literary'; s.currentEngine = 'literary'; delete s._stagedAuthoringSceneIndex;
+  s.issueIndexInRun = 1; s.turnCount = 5; s.scenes = [];
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  // TWO PAGES WITH DIFFERENT EVENTS. Page A contains the admission; page B does not.
+  const A = 'Page A. "I bent the wish," Julian said in the clearing, where the Chayr could hear him say it.';
+  const B = 'Page B. They walked the long way back along the seam, and neither of them mentioned the rite at all.';
+  StoryPagination.clear();
+  StoryPagination.addPage('<p>' + A + '</p>', true);
+  StoryPagination.addPage('<p>' + B + '</p>', true);
+  const uidB = StoryPagination.getCurrentPageUid();
+  const joined = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'the walk back', milestone: 'm',
+    scene: 4, storyScene: 4, milestoneScene: 4 });
+  s._priorSceneStateChange = { event: sealed.fact, proposalRef: sealed.id, sceneProposed: 4,
+    storyScene: 4, milestoneScene: 4 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 4, storyScene: 4 };
+  // THE REAL CALLER.
+  try { await window._generateLiteraryPlotContract('they walk back', '', null, null, null); } catch (e) {}
+  return JSON.parse(JSON.stringify({ uidB: uidB, joined: joined,
+    pageA: A, pageB: B,
+    lastSrc: s._lastCommitScenePrvSource || null,
+    rec: (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null }));
+});
+captureCommitProse = false;
+fs.writeFileSync('_audit_out/history_chain/real_caller_commit_request.txt',
+  String(submittedProse == null ? '(nothing captured)' : submittedProse));
+t('the real caller reached the commit verifier', submittedProse !== null,
+  'no verifier request was captured from _generateLiteraryPlotContract');
+t('the joined pages really do contain page A\'s admission',
+  /I bent the wish/.test(realCaller.joined) && /walked the long way back/.test(realCaller.joined), '');
+t('the OUTGOING REQUEST carries page B and page A\'s admission appears NOWHERE in it',
+  submittedProse !== null && /walked the long way back/.test(submittedProse)
+  && !/I bent the wish/.test(submittedProse),
+  'submitted: ' + String(submittedProse).slice(0, 160));
+t('...and the caller logged the narrowing to the bound unit',
+  !!realCaller.lastSrc && realCaller.lastSrc.source === 'pagination',
+  JSON.stringify(realCaller.lastSrc));
+t('so a quotation from page A cannot become evidence owned by page B',
+  !realCaller.rec || realCaller.rec.accepted !== true
+  || !/I bent the wish/.test(String(realCaller.rec.evidence || '')),
+  JSON.stringify(realCaller.rec && { acc: realCaller.rec.accepted, ev: realCaller.rec.evidence }));
+
+section('20b. SUPPLEMENTARY MATERIAL IS NOT A REWRITE; ADDED NARRATIVE IS');
+const suppVsProse = await page.evaluate(() => {
+  const s = window.state;
+  StoryPagination.clear();
+  const PROSE = '<p>The clearing emptied. "I bent the wish," Julian said, where the Chayr could hear him.</p>';
+  StoryPagination.addPage(PROSE, true);
+  const uid = StoryPagination.getCurrentPageUid();
+  const ident = window.__buildCommitSceneIdentity(s, '', null, 'pagination');
+  const base = window._commitUnitText(s, ident).text;
+  const setPage = (html) => {
+    const uids = StoryPagination.getPageUids(), pages = StoryPagination.getPages();
+    pages[uids.indexOf(uid)] = html;
+    StoryPagination.setPages(pages, uids);
+    return window._commitUnitText(s, ident).text;
+  };
+  // (a) AN ILLUSTRATION, exactly as app.js appends one.
+  const withImg = setPage(PROSE + '<img src="x.png" class="story-image" alt="Vision" data-sb-supp="1">');
+  // (b) A CHECKPOINT CARD, with its nested markup.
+  const withBox = setPage(PROSE + '<div class="box" data-sb-supp="1" id="flingCheckpointBox">'
+    + '<h3>This issue is complete.</h3><p>The story does not have to end here.</p>'
+    + '<div><button>Continue this issue</button></div></div>');
+  // (c) A TEMPT WHISPER.
+  const withWhisper = setPage(PROSE + '<p class="tempt-whisper-line" data-sb-supp="1" data-force="dread">'
+    + '<span class="tempt-whisper">Something is listening.</span></p>');
+  // (d) NARRATIVE PROSE THAT CHANGES WHAT HAPPENED.
+  const withNarrative = setPage(PROSE + '<p>Then he took it back, in front of all of them, '
+    + 'and said he had never touched the wish at all.</p>');
+  return JSON.parse(JSON.stringify({ base: base,
+    img: withImg, box: withBox, whisper: withWhisper, narrative: withNarrative,
+    identHash: ident.unitHash,
+    changedByImg: window._commitUnitChangedForTest(ident, { found: true, text: withImg }),
+    changedByBox: window._commitUnitChangedForTest(ident, { found: true, text: withBox }),
+    changedByWhisper: window._commitUnitChangedForTest(ident, { found: true, text: withWhisper }),
+    changedByNarrative: window._commitUnitChangedForTest(ident, { found: true, text: withNarrative }) }));
+});
+t('an ILLUSTRATION leaves the narrative text identical, so nothing is invalidated',
+  suppVsProse.img === suppVsProse.base && suppVsProse.changedByImg === null,
+  JSON.stringify({ changed: suppVsProse.changedByImg, text: suppVsProse.img.slice(-50) }));
+t('a CHECKPOINT CARD, nested markup and all, leaves it identical too',
+  suppVsProse.box === suppVsProse.base && suppVsProse.changedByBox === null,
+  JSON.stringify({ changed: suppVsProse.changedByBox, text: suppVsProse.box.slice(-60) }));
+t('a TEMPT WHISPER leaves it identical too',
+  suppVsProse.whisper === suppVsProse.base && suppVsProse.changedByWhisper === null,
+  JSON.stringify({ changed: suppVsProse.changedByWhisper }));
+t('but ADDED NARRATIVE changes it and INVALIDATES, saying prose was added',
+  suppVsProse.narrative !== suppVsProse.base
+  && /narrative prose was ADDED to it \(\d+ -> \d+ characters\)/.test(String(suppVsProse.changedByNarrative)),
+  JSON.stringify({ changed: suppVsProse.changedByNarrative }));
+
+const narrInvalidates = await page.evaluate(async () => {
+  const s = window.state;
+  StoryPagination.clear();
+  const PROSE = '<p>The clearing emptied. "I bent the wish," Julian said, where the Chayr could hear him.</p>';
+  StoryPagination.addPage(PROSE, true);
+  const uidA = StoryPagination.getCurrentPageUid();
+  const identA = window.__buildCommitSceneIdentity(s, '', null, 'pagination');
+  // A SECOND, INDEPENDENT support on another page, which must survive.
+  StoryPagination.addPage('<p>Another page where the same admission is made before a different witness.</p>', true);
+  const identC = window.__buildCommitSceneIdentity(s, '', null, 'pagination');
+  s._milestoneDeliveries = [
+    Object.assign({ milestoneScene: 16, atScene: 3, status: 'delivered_on_page', accepted: true,
+      why: 'accepted', evidence: 'I bent the wish', participants: ['Julian'], scope: 'the Chayr',
+      superseded: false, at: 10 }, identA),
+    Object.assign({ milestoneScene: 16, atScene: 7, status: 'delivered_on_page', accepted: true,
+      why: 'accepted', evidence: 'before a different witness', participants: ['Julian'], scope: 'the Chayr',
+      superseded: false, at: 20 }, identC)
+  ];
+  s._prereqInvalidations = [];
+  // ADD NARRATIVE to page A only.
+  const uids = StoryPagination.getPageUids(), pages = StoryPagination.getPages();
+  pages[uids.indexOf(uidA)] = PROSE + '<p>Then he took it back, and said he had never touched it.</p>';
+  StoryPagination.setPages(pages, uids);
+  // THE PRODUCTION REVALIDATION PATH.
+  const superseded = window._revalidateAssessments(s, 'the control');
+  const recs = s._milestoneDeliveries.filter(r => r.milestoneScene === 16);
+  s.turnCount = 14; s.issueIndexInRun = 1;
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const r16 = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0] || {};
+  return JSON.parse(JSON.stringify({ superseded: superseded, recs: recs,
+    delivered: !!r16.alreadyDelivered, cited: (r16.alreadyDelivered || []).map(h => h.atScene) }));
+});
+t('added narrative supersedes that page\'s support through the production revalidation',
+  narrInvalidates.recs.filter(r => r.atScene === 3).every(r => r.superseded === true
+    && /narrative prose was ADDED/.test(String(r.supersededReason))),
+  JSON.stringify(narrInvalidates.recs.map(r => [r.atScene, r.superseded, r.supersededReason])));
+t('...the OTHER unchanged unit\'s support is preserved',
+  narrInvalidates.recs.filter(r => r.atScene === 7).every(r => r.superseded !== true),
+  JSON.stringify(narrInvalidates.recs.map(r => [r.atScene, r.superseded])));
+t('...and the conclusion stands on that surviving support',
+  narrInvalidates.delivered === true && narrInvalidates.cited.join() === '7',
+  JSON.stringify({ delivered: narrInvalidates.delivered, cited: narrInvalidates.cited }));
+
+section('20c. TWO INDEPENDENT PAGE SUPPORTS NO LONGER FOLD INTO ONE');
+// _sourceOf read fullTextHash, which this path no longer writes, so every literary record hashed
+// to the same '?' source and compaction collapsed two independent supports.
+const dedupe = await page.evaluate(async () => {
+  const s = window.state;
+  const before = s._milestoneDeliveries.filter(r => r.milestoneScene === 16).length;
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'dd', milestone: 'm',
+    scene: 1, storyScene: 12, milestoneScene: 12 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 12, milestoneScene: 12 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 11, storyScene: 12 };
+  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters.', sc, 11, null);
+  // ACCEPTED SUPPORTS only: this pass also writes an `unreported` observation for row 16, which
+  // is correct (the constructed reply names no entry for it) and is not a support.
+  const after = s._milestoneDeliveries.filter(r => r.milestoneScene === 16 && r.accepted === true);
+  return JSON.parse(JSON.stringify({ before: before,
+    afterCount: after.length, scenes: after.map(r => r.atScene).sort(),
+    sources: after.map(r => r.unitId || r.sceneUid || '?') }));
+});
+t('production compaction keeps BOTH page supports distinct (different unitIds)',
+  dedupe.afterCount === 2 && dedupe.scenes.join() === '3,7'
+  && dedupe.sources[0] !== dedupe.sources[1],
+  JSON.stringify(dedupe));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

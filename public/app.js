@@ -7442,7 +7442,7 @@ ${_pcInteriorLock}`;
       try { console.log('[TEMPT-WHISPER] Rendered (' + (mode || '?') + '):', _force.type, '| count:', _twState.count, '/', 3); } catch (_) {}
 
       const _twHtml =
-          '<p class="tempt-whisper-line" data-force="' +
+          '<p class="tempt-whisper-line" data-sb-supp="1" data-force="' +
           _force.type + '" data-turn="' + _twTurn + '" data-mode="' + (mode || '') + '">' +
           '<span class="tempt-whisper" data-action="tempt" role="button" tabindex="0">' +
           _twText + '</span></p>';
@@ -98807,9 +98807,15 @@ Return ONLY numbered beats. No prose. No dialogue.` }
             _pl.push('  THIS SCENE DEPENDS ON: ' + _pdep
               + ' — if that is no longer true, the sequence below cannot stand as written.');
           if (Array.isArray(_por.routes) && _por.routes.length) {
-            if (_por.routeTaken)
-              _pl.push('  THE ROUTE THE PLAYER ACTUALLY TOOK ("' + _por.routeTaken.choice + '"): '
-                + _por.routeTaken.how + (_por.routeTaken.carries ? ' — ARRIVING WITH: ' + _por.routeTaken.carries : ''));
+            if (_por.activeRoute && _por.activeRoute.how)
+              _pl.push('  THE ROUTE THE PLAYER PUT HER ON ("' + _por.activeRoute.choice + '"): '
+                + _por.activeRoute.how
+                + (_por.activeRoute.carries ? ' — SHE ARRIVES CARRYING: ' + _por.activeRoute.carries
+                   + ', which the sequence must keep true' : '')
+                + '. Sequence THIS route; the alternatives did not happen.');
+            else if (_por.activeRoute && _por.activeRoute._unmatched)
+              _pl.push('  THE PLAYER CHOSE "' + _por.activeRoute.choice + '", for which this row names no route.'
+                + ' Sequence the arrival from what is actually true now; do NOT present the choice as still open.');
             else
               _pl.push('  ROUTES TO THIS POINT (the player has not yet taken one — do not assume either):'
                 + _por.routes.map(function (rt) {
@@ -101680,8 +101686,15 @@ function _buildAuthorFloorDirective(s) {
   }
   window._adjudicateSceneProposals = _adjudicateSceneProposals;
 
-  // ONE PAGE'S OWN TEXT, by its stable uid. getAllContent() joins every page and therefore moves
-  // whenever the story continues; a page uid does not.
+  // SUPPLEMENTARY DISPLAY MATERIAL — everything appendToCurrentPage puts onto a page that is not
+  // the scene's prose. New supplementary material should carry data-sb-supp="1"; the selectors
+  // after it recognise what is already rendered in saved stories.
+  var _SB_SUPP_SELECTOR = '[data-sb-supp], .box, img, .story-image, .tempt-whisper-line, .tempt-whisper';
+
+  // ONE PAGE'S NARRATIVE TEXT, by its stable uid. Two separate things are excluded here:
+  // getAllContent() joins every page and so moves whenever the story continues (a page uid does
+  // not), and a page accumulates display material after its prose is written (which must not read
+  // as the prose changing).
   function _pageTextByUid(uid) {
     try {
       if (!uid || typeof StoryPagination === 'undefined'
@@ -101691,9 +101704,25 @@ function _buildAuthorFloorDirective(s) {
       if (i < 0) return null;
       var pages = StoryPagination.getPages() || [];
       if (i >= pages.length) return null;
-      return String(pages[i] || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      var html = String(pages[i] || '');
+      // DOM-PARSED, not regex-stripped: a checkpoint card is nested markup and a regex cannot
+      // remove it without eating the prose around it.
+      try {
+        var box = document.createElement('div');
+        box.innerHTML = html;
+        // The checkpoint card's own class is 'box', which is also used for other chrome; the
+        // attribute is the reliable marker and the classes cover already-saved stories.
+        var supp = box.querySelectorAll(_SB_SUPP_SELECTOR);
+        for (var k = 0; k < supp.length; k++) {
+          if (supp[k] && supp[k].parentNode) supp[k].parentNode.removeChild(supp[k]);
+        }
+        return String(box.textContent || '').replace(/\s+/g, ' ').trim();
+      } catch (_) {
+        return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
     } catch (_) { return null; }
   }
+  try { window._pageTextByUid = _pageTextByUid; } catch (_) {}
 
   // THE TEXT OF ONE IDENTIFIED HISTORICAL UNIT, with the only normalisation applied to it.
   // `found: false` means the unit's text is NOT AVAILABLE — which is not evidence that it changed.
@@ -101727,23 +101756,24 @@ function _buildAuthorFloorDirective(s) {
   }
   try { window._commitUnitText = function (st, ident) { return _commitUnitText(st || window.state, ident); }; } catch (_) {}
 
-  // THE PREFIX COMPARISON. A unit's text may legitimately GROW — an illustration, a traveller's-
-  // guide insert and other appendToCurrentPage material land on the same page after the fact. So
-  // what is compared is the FIRST unitChars characters, which a rewrite changes and an append does
-  // not. Text shorter than unitChars IS a change.
+  // THE COMPARISON IS OF THE UNIT'S WHOLE NARRATIVE TEXT. The earlier version compared only the
+  // first unitChars characters so that appended display material would not read as a rewrite — but
+  // that exempted EVERY append, including narrative prose that changes what the assessed event
+  // means. Display material is excluded by KIND instead (see _pageTextByUid), so the whole
+  // narrative text can be compared: ADDED NARRATIVE INVALIDATES, an illustration does not.
   function _commitUnitChanged(ident, now) {
-    if (!ident || !ident.unitHash || !ident.unitChars) return null;
+    if (!ident || !ident.unitHash) return null;
     if (!now || !now.found) return null;
-    var n = Number(ident.unitChars) || 0;
-    if (now.text.length < n)
-      return 'the ' + (ident.unitKind || 'unit') + ' was rewritten — its text is now shorter ('
-        + now.text.length + ' < ' + n + ' characters)';
-    var h = (typeof _sbTextHash === 'function') ? _sbTextHash(now.text.slice(0, n)) : null;
-    if (h && String(h) !== String(ident.unitHash))
-      return 'the ' + (ident.unitKind || 'unit') + ' ' + ident.unitId + ' was rewritten (hash of its first '
-        + n + ' characters ' + ident.unitHash + ' -> ' + h + ')';
-    return null;
+    var h = (typeof _sbTextHash === 'function') ? _sbTextHash(now.text) : null;
+    if (!h || String(h) === String(ident.unitHash)) return null;
+    var was = Number(ident.unitChars) || 0, is = now.text.length;
+    var how = (was && is > was) ? 'narrative prose was ADDED to it (' + was + ' -> ' + is + ' characters)'
+      : (was && is < was) ? 'narrative prose was REMOVED from it (' + was + ' -> ' + is + ' characters)'
+      : 'its narrative prose was rewritten';
+    return 'the ' + (ident.unitKind || 'unit') + ' ' + ident.unitId + ' changed — ' + how
+      + ' (narrative hash ' + ident.unitHash + ' -> ' + h + ')';
   }
+  try { window._commitUnitChangedForTest = _commitUnitChanged; } catch (_) {}
 
   // THE COMMIT IDENTITY, built in ONE place by both production and the free harness. It records
   // WHICH source the hash came from, so the post-dispatch check rereads that same source.
@@ -102394,8 +102424,8 @@ function _buildAuthorFloorDirective(s) {
             // supports and neither may absorb the other.
             var _sourceOf = function (r) {
               if (!r) return 'src:unknown';
-              return 'src:' + String(r.sceneUid || r.pageUid || '?')
-                + '@' + String(r.projectionHash || r.fullTextHash || '?')
+              return 'src:' + String(r.unitId || r.sceneUid || r.pageUid || '?')
+                + '@' + String(r.projectionHash || r.unitHash || '?')
                 + '#' + String(r.projectionRevision == null ? '-' : r.projectionRevision)
                 + '/s' + String(r.atScene == null ? '-' : r.atScene);
             };
@@ -103082,7 +103112,31 @@ function _buildAuthorFloorDirective(s) {
             // helper — so "has it changed?" compares like with like.
             var _csIdent = null;
             try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc); } catch (_) { _csIdent = null; }
-            await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum, _csIdent); // last ~scene worth for the delivery verifier
+            // THE VERIFIER READS THE UNIT THE RESULT IS BOUND TO. Submitting a tail of every page
+            // joined while binding to one page let an earlier page's quotation verify and become
+            // evidence owned by the later page.
+            var _csProse = _prevText;
+            try {
+              if (_csIdent && _csIdent.unitId) {
+                var _csU = _commitUnitText(s, _csIdent);
+                if (_csU && _csU.found && _csU.text.length >= 40) {
+                  if (_csU.text !== _csProse)
+                    console.log('[COMMIT-SCENE:PROSE] narrowed to the bound unit ' + _csIdent.unitKind
+                      + ' ' + _csIdent.unitId + ': ' + _csProse.length + ' -> ' + _csU.text.length + ' chars');
+                  _csProse = _csU.text;
+                } else {
+                  console.warn('[COMMIT-SCENE:PROSE] the bound unit ' + _csIdent.unitId
+                    + ' yields ' + ((_csU && _csU.text) ? _csU.text.length : 0)
+                    + ' chars of narrative — submitting it anyway rather than prose it does not own');
+                  _csProse = (_csU && _csU.found) ? _csU.text : '';
+                }
+              }
+            } catch (_) {}
+            if (!_csProse || _csProse.length < 40) {
+              console.error('[COMMIT-SCENE:ABORT] scene=' + _prevNum + ' the bound unit has no judgeable '
+                + 'narrative prose; refusing to judge it against prose belonging to another unit');
+            } else
+            await _commitScene(_csProse.slice(-5000), _prevProp, _prevNum, _csIdent); // last ~scene worth for the delivery verifier
             var _csI = _ensureCommittedState();
             if (_csI._committedThroughScene != null && _csI._committedThroughScene < _prevNum) console.error('[COMMIT-SCENE:INVARIANT-BROKEN] planning after Commit-Scene(' + _prevNum + ') but committedThrough=' + _csI._committedThroughScene);
             // INVARIANT RUNTIME v0 (Roman 2026-07-29): the ONE gating evaluation. Reads the
@@ -109291,6 +109345,8 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           document.getElementById('submitBtn').disabled = true;
           const div = document.createElement('div');
           div.className = 'box';
+          // SUPPLEMENTARY DISPLAY MATERIAL, not scene prose: excluded from a page's narrative text.
+          div.setAttribute('data-sb-supp', '1');
           div.style.textAlign = 'center';
           div.style.border = '1px solid var(--gold)';
           div.innerHTML = `<p style="font-style:italic; color:var(--gold)">The moment hangs, unresolved.</p>`;
@@ -117467,6 +117523,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const div = document.createElement('div');
       div.className = 'box';
       div.id = 'flingCheckpointBox';
+      div.setAttribute('data-sb-supp', '1');   // display material, not scene prose
       div.style.cssText = 'text-align:center; border:1px solid var(--pink); padding:20px; margin:20px 0;';
       // Issue-id strings: current (the one ending) vs next (Book II target).
       // _formatIssueIdString defined earlier in the same IIFE; safe to call.
@@ -117518,6 +117575,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const div = document.createElement('div');
       div.className = 'box';
       div.id = 'affairCheckpointBox';
+      div.setAttribute('data-sb-supp', '1');   // display material, not scene prose
       div.style.cssText = 'text-align:center; border:1px solid var(--gold); padding:20px; margin:20px 0;';
       div.innerHTML = `
         <h3 style="color:var(--gold); margin:0 0 8px;">The story has reached its end.</h3>
@@ -315219,7 +315277,7 @@ _pcFrictionBlock +
           setTimeout(() => block.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
       } else {
           // Fallback: append to page (legacy behavior)
-          const imgHtml = `<img src="${img.src}" class="story-image" alt="Vision">`;
+          const imgHtml = `<img src="${img.src}" class="story-image" alt="Vision" data-sb-supp="1">`;
           StoryPagination.appendToCurrentPage(imgHtml);
       }
 
