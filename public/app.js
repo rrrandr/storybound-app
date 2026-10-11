@@ -4511,7 +4511,7 @@ ${_pcInteriorLock}`;
       try { console.log('[FATE-WHISPER] Rendered (' + (mode || '?') + '):', _state._frictionDetected, '| shown:', _fwState.shown, '/', 5); } catch (_) {}
 
       const _fwHtml =
-          '<p class="petition-whisper-line" data-friction="' +
+          '<p class="petition-whisper-line" data-sb-supp="1" data-friction="' +
           _state._frictionDetected + '" data-turn="' + _fwTurn + '" data-mode="' + (mode || '') + '">' +
           '<span class="petition-whisper" data-action="petition" role="button" tabindex="0">' +
           _fwText + '</span></p>';
@@ -101689,7 +101689,11 @@ function _buildAuthorFloorDirective(s) {
   // SUPPLEMENTARY DISPLAY MATERIAL — everything appendToCurrentPage puts onto a page that is not
   // the scene's prose. New supplementary material should carry data-sb-supp="1"; the selectors
   // after it recognise what is already rendered in saved stories.
-  var _SB_SUPP_SELECTOR = '[data-sb-supp], .box, img, .story-image, .tempt-whisper-line, .tempt-whisper';
+  // BOTH whisper writers: _maybeRenderTemptWhisper and _maybeRenderFateWhisper. The second was
+  // missed on the first pass, which made the claim "all appendToCurrentPage additions are
+  // excluded" false for petition whispers already saved in existing stories.
+  var _SB_SUPP_SELECTOR = '[data-sb-supp], .box, img, .story-image,'
+    + ' .tempt-whisper-line, .tempt-whisper, .petition-whisper-line, .petition-whisper';
 
   // ONE PAGE'S NARRATIVE TEXT, by its stable uid. Two separate things are excluded here:
   // getAllContent() joins every page and so moves whenever the story continues (a page uid does
@@ -101775,13 +101779,39 @@ function _buildAuthorFloorDirective(s) {
   }
   try { window._commitUnitChangedForTest = _commitUnitChanged; } catch (_) {}
 
-  // THE COMMIT IDENTITY, built in ONE place by both production and the free harness. It records
-  // WHICH source the hash came from, so the post-dispatch check rereads that same source.
-  function _buildCommitSceneIdentity(s, prevText, prevUid, prevSrc) {
+  // WHICH PAGE RENDERED SCENE N — from the scene ledger, which records it at the moment the page
+  // is created (both narrative addPage sites call _sceneLedgerCommit with the fresh pageUid).
+  // Returns null when no entry owns that scene; the caller reports UNAVAILABLE rather than
+  // substituting whatever page the reader happens to be looking at.
+  function _sceneLedgerPageUidFor(s, sceneNum) {
+    try {
+      s = s || window.state;
+      if (sceneNum == null) return null;
+      var L = (typeof _sceneLedgerGet === 'function') ? _sceneLedgerGet(s, false) : null;
+      var entries = (L && Array.isArray(L.entries)) ? L.entries : [];
+      var want = Number(sceneNum);
+      var issue = (Number.isInteger(s && s.issueIndexInRun) && s.issueIndexInRun > 0) ? s.issueIndexInRun : 1;
+      var sameIssue = null, anyIssue = null;
+      for (var i = entries.length - 1; i >= 0; i--) {
+        var e = entries[i];
+        if (!e || e.kind !== 'scene' || Number(e.sceneNumber) !== want || !e.pageUid) continue;
+        if (!anyIssue) anyIssue = e;
+        if (Number(e.issue) === issue) { sameIssue = e; break; }
+      }
+      var hit = sameIssue || anyIssue;
+      return hit ? String(hit.pageUid) : null;
+    } catch (_) { return null; }
+  }
+  try { window._sceneLedgerPageUidFor = function (st, n) { return _sceneLedgerPageUidFor(st || window.state, n); }; } catch (_) {}
+
+  // THE COMMIT IDENTITY, built in ONE place by both production and the free harness. The unit it
+  // names is the one that RENDERED the scene being judged, never the one on screen.
+  function _buildCommitSceneIdentity(s, prevText, prevUid, prevSrc, sceneNum) {
     s = s || window.state;
     var ident = { storyId: (s && s.storyId) || null, sceneUid: prevUid || null, pageUid: null,
                   projectionHash: null, projectionRevision: null,
                   unitKind: null, unitId: null, unitHash: null, unitChars: null,
+                  sceneNum: null, pageUidSource: null,
                   fullTextChars: String(prevText || '').length,
                   excerptChars: Math.min(5000, String(prevText || '').length) };
     try {
@@ -101792,10 +101822,20 @@ function _buildAuthorFloorDirective(s) {
         ident.projectionRevision = (typeof proj.revision === 'number') ? proj.revision : null;
       }
     } catch (_) {}
+    // OWNERSHIP, NOT NAVIGATION. getCurrentPageUid() is the page being VIEWED: mount scene B, page
+    // back to A, and the identity became A while the proposal was still B's. The scene ledger
+    // records which page rendered which scene, so ownership is asked of it.
+    ident.sceneNum = (sceneNum == null) ? null : Number(sceneNum);
     try {
-      if (typeof StoryPagination !== 'undefined' && StoryPagination.getCurrentPageUid)
-        ident.pageUid = StoryPagination.getCurrentPageUid() || null;
-    } catch (_) {}
+      var _owned = _sceneLedgerPageUidFor(s, ident.sceneNum);
+      if (_owned) { ident.pageUid = _owned; ident.pageUidSource = 'scene_ledger:scene ' + ident.sceneNum; }
+      else {
+        ident.pageUid = null;
+        ident.pageUidSource = (ident.sceneNum == null)
+          ? 'UNAVAILABLE — the caller named no scene, so no page can be said to own this prose'
+          : 'UNAVAILABLE — the scene ledger records no page for scene ' + ident.sceneNum;
+      }
+    } catch (_) { ident.pageUid = null; ident.pageUidSource = 'UNAVAILABLE — ownership lookup failed'; }
     // THE UNIT IS NAMED: the scene record this prose belongs to, or the page it was written onto.
     // Not "the latest projection" and not "all the pages joined" — both of those move when the
     // story simply continues.
@@ -101813,8 +101853,8 @@ function _buildAuthorFloorDirective(s) {
     } catch (_) {}
     return ident;
   }
-  try { window.__buildCommitSceneIdentity = function (st, txt, uid, src) {
-    return _buildCommitSceneIdentity(st || window.state, txt, uid, src); }; } catch (_) {}
+  try { window.__buildCommitSceneIdentity = function (st, txt, uid, src, n) {
+    return _buildCommitSceneIdentity(st || window.state, txt, uid, src, n); }; } catch (_) {}
 
   function _revalidateAssessments(s, reason) {
     s = s || window.state;
@@ -102016,6 +102056,7 @@ function _buildAuthorFloorDirective(s) {
         projectionHash: (sceneIdentity && sceneIdentity.projectionHash) || null,
         projectionRevision: (sceneIdentity && typeof sceneIdentity.projectionRevision === 'number')
           ? sceneIdentity.projectionRevision : null,
+        pageUidSource: (sceneIdentity && sceneIdentity.pageUidSource) || null,
         unitKind: (sceneIdentity && sceneIdentity.unitKind) || null,
         unitId: (sceneIdentity && sceneIdentity.unitId) || null,
         unitHash: (sceneIdentity && sceneIdentity.unitHash) || null,
@@ -103111,7 +103152,13 @@ function _buildAuthorFloorDirective(s) {
             // prose came from, and the identity's hash is of THAT source read through the shared
             // helper — so "has it changed?" compares like with like.
             var _csIdent = null;
-            try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc); } catch (_) { _csIdent = null; }
+            try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc, _prevNum); } catch (_) { _csIdent = null; }
+            try {
+              if (_csIdent && !_csIdent.unitId)
+                console.warn('[COMMIT-SCENE:IDENTITY] scene=' + _prevNum + ' ' + _csIdent.pageUidSource
+                  + ' — the delivery verdict still runs, but nothing is durably accepted against prose'
+                  + ' no unit owns, and the displayed page is NOT substituted');
+            } catch (_) {}
             // THE VERIFIER READS THE UNIT THE RESULT IS BOUND TO. Submitting a tail of every page
             // joined while binding to one page let an earlier page's quotation verify and become
             // evidence owned by the later page.
