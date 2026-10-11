@@ -74,10 +74,9 @@ const commit = (sceneNum) => page.evaluate(async (v) => {
     var _seq = Math.max(0, Number(String(v.ref).split(':')[2] || 1) - 1);
     window.state._sealedProposals = { seq: _seq, byId: {}, byInvocation: {} };
   } catch (_) {}
-  const anchors = [v.slots.actor, v.slots.action, v.slots.target]
-    .filter(x => typeof x === 'string' && x.trim());
+  // Exactly production's call for a state_change: no anchors are supplied there.
   const sealed = window._sealProposal({ kind: 'state_change', fact: v.plan.state_change,
-    scene: v.sceneNum, anchors: anchors });
+    milestone: '', scene: v.sceneNum });
   const proposal = Object.assign({}, v.plan, {
     event: v.plan.state_change, proposalRef: (sealed && sealed.id) || null,
     kind: 'state_change', slots: v.slots
@@ -86,6 +85,8 @@ const commit = (sceneNum) => page.evaluate(async (v) => {
   const out = window._ensureCommittedState();
   return {
     sealedRef: (sealed && sealed.id) || null,
+    sealedAnchors: (sealed && Array.isArray(sealed.anchors)) ? sealed.anchors.length : null,
+    sealedKeys: sealed ? Object.keys(sealed).sort().join(',') : null,
     facts: (out.facts || []).map(f => (typeof f === 'string' ? f : (f && (f.text || f.fact || '')))),
     pending: out.pendingIntent ? { lastStatus: out.pendingIntent.lastStatus || null,
       lastReason: out.pendingIntent.lastReason || null } : null
@@ -99,6 +100,9 @@ console.log('  sealed ref: ' + real.sealedRef + ' (captured ref: ' + REF + ')');
 console.log('  facts: ' + JSON.stringify(real.facts) + '  pending: ' + JSON.stringify(real.pending));
 t('the sealed ref matches the ref the captured verifier reported',
   real.sealedRef === REF, real.sealedRef + ' vs ' + REF);
+console.log('  sealed record: anchors=' + real.sealedAnchors + ' fields=' + real.sealedKeys);
+t('the sealed record has NO anchors, as production seals a state_change',
+  real.sealedAnchors === 0, 'anchors=' + real.sealedAnchors);
 // The citations stitch two NON-ADJACENT passages, dropping "The words land like a hand on my
 // shoulder." between them. That is genuinely not verbatim, so the honest outcome is a refusal.
 t('the ACTUAL captured case does NOT commit — its citations are not verbatim',
@@ -141,6 +145,37 @@ console.log('  ' + line);
 t('the EXACT intended fact text appears IN the COMMITTED WORLD STATE line of the next planner request',
   exact.length >= 1, 'captured ' + plannerRequests.length + ' request(s); line: ' + line);
 
+// ── 2b. A COMPLIANT MULTI-SPAN RESPONSE (CONSTRUCTED) COMMITS ───────────────────────────────
+// The captured 037 citation joined two separated passages. Under the corrected contract the same
+// support is supplied as an ARRAY of contiguous spans. Each is checked on its own; nothing here
+// splits the captured string.
+const spans = JSON.parse(JSON.stringify(VERIF));
+spans.per_proposal[0].evidence = [
+  'THE PRESIDING DOHKAR: "Lirael, your conduct at this rite is under investigation."',
+  'THE PRESIDING DOHKAR: "The Provast has demanded a review of your actions."'
+];
+spans.slots_check.actor_evidence = spans.per_proposal[0].evidence;
+spans.slots_check.action_evidence = spans.per_proposal[0].evidence;
+spans.slots_check.target_evidence = 'The words land like a hand on my shoulder.';
+reply = spans;
+const multi = await commit(3);
+console.log('\n  [constructed COMPLIANT multi-span response]');
+console.log('  facts: ' + JSON.stringify(multi.facts));
+t('a multi-span response whose every span verifies COMMITS the intended fact',
+  multi.facts.length === 1 && multi.facts[0] === PLAN.state_change, JSON.stringify(multi.facts));
+
+// 2c. AND A STITCHED STRING IS STILL REFUSED - nothing splits it to make it fit.
+const stitched = JSON.parse(JSON.stringify(spans));
+const joined = spans.per_proposal[0].evidence.join('\\n\\n');
+stitched.per_proposal[0].evidence = joined;
+stitched.slots_check.actor_evidence = joined;
+stitched.slots_check.action_evidence = joined;
+stitched.slots_check.exit_state_evidence = joined;
+reply = stitched;
+const stitchRes = await commit(3);
+t('the same support JOINED into one string is still refused everywhere',
+  stitchRes.facts.length === 0, JSON.stringify(stitchRes.facts));
+
 // ── 3. A REQUIRED TARGET THAT IS NOT CITED MUST BLOCK THE SHARED FALLBACK ───────────────────
 const noTarget = JSON.parse(JSON.stringify(contiguous));
 noTarget.per_proposal[0].evidence = 'a paraphrase that appears nowhere in this scene at all';
@@ -162,6 +197,18 @@ t('an absent per-proposal report is recorded as unreported, not as verified non-
   unrep.facts.length === 0
   && !!(unrep.pending && String(unrep.pending.lastReason) === 'unreported'),
   JSON.stringify(unrep.pending));
+
+// ── 5. AN UNEXPECTED STATUS IS INDETERMINATE, NOT NON-DELIVERY ──────────────────────────────
+const weird = JSON.parse(JSON.stringify(spans));
+weird.per_proposal[0].delivery = 'SOMETHING_ELSE';
+reply = weird;
+const odd = await commit(3);
+console.log('  [unexpected status] pending: ' + JSON.stringify(odd.pending));
+t('an unexpected delivery status commits nothing and is not called non-delivery',
+  odd.facts.length === 0
+  && !!(odd.pending && String(odd.pending.lastStatus).toUpperCase() !== 'MISSED'
+        && String(odd.pending.lastReason || '') !== 'verified_not_delivered'),
+  JSON.stringify(odd.pending));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

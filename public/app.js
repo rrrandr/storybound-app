@@ -100488,7 +100488,8 @@ function _buildAuthorFloorDirective(s) {
     });
     // The verifier's own verbatim rule, enforced deterministically.
     var bad = (Array.isArray(evidenceValues) ? evidenceValues : []).filter(function (q) {
-      return typeof q === 'string' && q.trim() && p.indexOf(q) === -1;
+      if (!_hasUsableEvidence(q)) return false;
+      return !_evidenceVerifies(q, p);   // the SAME rule the adjudicator applies
     });
     if (bad.length) why.push(bad.length + ' verifier evidence quote(s) are not verbatim substrings of the accepted prose');
     // Evidence failure always downgrades, even when no participant was anchorable.
@@ -101188,7 +101189,30 @@ function _buildAuthorFloorDirective(s) {
   // committed content comes from the sealed record by reference, and the only thing taken from the
   // verifier is a verdict plus a citation that is itself checked against the prose.
   // Is a verbatim-evidence value usable? Same threshold the slot check uses.
-  function _hasUsableEvidence(x) { return typeof x === 'string' && x.trim().length > 3; }
+  function _hasUsableEvidence(x) {
+    if (typeof x === 'string') return x.trim().length > 3;
+    // An array of spans is usable when it has at least one and every entry is a real quotation.
+    if (Array.isArray(x)) {
+      return x.length > 0 && x.length <= 4
+        && x.every(function (q) { return typeof q === 'string' && q.trim().length > 3; });
+    }
+    return false;
+  }
+  // EVERY span must verify, independently, against the assessed prose. One span is the old rule.
+  function _evidenceVerifies(x, prose) {
+    if (typeof x === 'string') return _quoteIsInProse(x, prose);
+    if (Array.isArray(x)) {
+      return x.length > 0 && x.length <= 4
+        && x.every(function (q) { return _quoteIsInProse(q, prose); });
+    }
+    return false;
+  }
+  // The spans of an evidence value, for logging and for the anchor check's shared rule.
+  function _evidenceSpans(x) {
+    if (typeof x === 'string') return x.trim() ? [x] : [];
+    if (Array.isArray(x)) return x.filter(function (q) { return typeof q === 'string' && q.trim(); });
+    return [];
+  }
   // ONE implementation of "is this quote actually in the prose", shared by the evidence check and
   // the precondition guard. Whitespace-normalised on both sides; a verifier cannot cite what it
   // cannot find, and surrounding quote marks are tolerated because models add them.
@@ -101226,11 +101250,13 @@ function _buildAuthorFloorDirective(s) {
     // or unusable precondition can refuse a commit, never permit one. A proposal that supplies its
     // own precondition_evidence is judged on that; one that omits it falls back to the scene's
     // shared slots_check, so the legacy discipline still reaches this path.
-    var ownPre = (entry && typeof entry.precondition_evidence === 'string')
+    var ownPre = (entry && (typeof entry.precondition_evidence === 'string'
+        || Array.isArray(entry.precondition_evidence)))
       ? entry.precondition_evidence : null;
     var preSource = (ownPre !== null) ? 'per_proposal' : 'shared_slots_check';
     var preVal = (ownPre !== null) ? ownPre
-      : ((o.sharedSlots && typeof o.sharedSlots.precondition_evidence === 'string')
+      : ((o.sharedSlots && (typeof o.sharedSlots.precondition_evidence === 'string'
+          || Array.isArray(o.sharedSlots.precondition_evidence)))
         ? o.sharedSlots.precondition_evidence : null);
     if (preVal !== null) {
       if (!_hasUsableEvidence(preVal)) {
@@ -101239,7 +101265,7 @@ function _buildAuthorFloorDirective(s) {
           why: ['DELIVERED but its precondition evidence (' + preSource + ') is empty or unusable — '
             + 'the event could not have happened, so delivery is DOWNGRADED and nothing is committed'] };
       }
-      if (!_quoteIsInProse(preVal, prose)) {
+      if (!_evidenceVerifies(preVal, prose)) {
         return { ref: pend.id, commit: false, status: 'DELIVERED', reason: 'precondition_unverifiable',
           downgraded: true, preconditionSource: preSource,
           why: ['DELIVERED but its precondition evidence (' + preSource + ') is not a verbatim quote '
@@ -101252,13 +101278,16 @@ function _buildAuthorFloorDirective(s) {
     }
     // The citation must be VERBATIM prose, mechanically checked. A verifier cannot fabricate a
     // quote it cannot find; this is the same discipline the slot check uses.
-    var ev = (entry && typeof entry.evidence === 'string') ? entry.evidence.trim() : '';
+    var ev = (entry && typeof entry.evidence === 'string') ? entry.evidence.trim()
+      : ((entry && Array.isArray(entry.evidence)) ? entry.evidence : '');
     var evSource = 'per_proposal';
-    if (!_hasUsableEvidence(ev) || !_quoteIsInProse(ev, prose)) {
+    if (!_hasUsableEvidence(ev) || !_evidenceVerifies(ev, prose)) {
       // The verifier's own slot check for THIS scene, used only when it cannot be misread as
       // belonging to another proposal.
       var _sharedExit = (o.sharedSlots && typeof o.sharedSlots.exit_state_evidence === 'string')
-        ? o.sharedSlots.exit_state_evidence.trim() : '';
+        ? o.sharedSlots.exit_state_evidence.trim()
+        : ((o.sharedSlots && Array.isArray(o.sharedSlots.exit_state_evidence))
+            ? o.sharedSlots.exit_state_evidence : '');
       var _soleProposal = (Number(o.proposalCount || 0) === 1);
       var _sharedOk = false, _sharedWhyNot = 'no shared exit quote';
       if (_hasUsableEvidence(_sharedExit)) {
@@ -101267,7 +101296,7 @@ function _buildAuthorFloorDirective(s) {
           _sharedWhyNot = 'the shared slot check says the event did NOT occur this scene';
         } else if (_ss.occurred_this_scene !== true) {
           _sharedWhyNot = 'the shared slot check does not affirm the event occurred this scene';
-        } else if (!_quoteIsInProse(_sharedExit, prose)) {
+        } else if (!_evidenceVerifies(_sharedExit, prose)) {
           _sharedWhyNot = 'the shared exit quote is not verbatim in the prose';
         } else {
           // Its other load-bearing citations must exist AND verify. A slot check that cannot cite
@@ -101280,7 +101309,7 @@ function _buildAuthorFloorDirective(s) {
             && _tgt.trim() !== '' && _tgt.trim().toLowerCase() !== 'none';
           if (_tgtRequired) _need.push('target_evidence');
           var _bad = _need.filter(function (k) {
-            return !_hasUsableEvidence(_ss[k]) || !_quoteIsInProse(String(_ss[k]), prose);
+            return !_hasUsableEvidence(_ss[k]) || !_evidenceVerifies(_ss[k], prose);
           });
           if (_bad.length) _sharedWhyNot = 'the shared slot check cannot cite ' + _bad.join(' and ');
           else _sharedOk = true;
@@ -101430,14 +101459,20 @@ function _buildAuthorFloorDirective(s) {
         _vSys += '\n\nPER-PROPOSAL DELIVERY (judge EACH listed proposal INDEPENDENTLY — a verdict on one says'
           + ' NOTHING about another). Return "per_proposal": [ { "ref": "<the exact ref string given below,'
           + ' copied verbatim>", "delivery": "DELIVERED" | "PARTIAL" | "MISSED", "evidence": "<a VERBATIM'
-          + ' substring of the SCENE PROSE showing it concretely happened on the page, or \"\" if you cannot'
+          + ' substring of the SCENE PROSE showing it concretely happened on the page — or an ARRAY of such'
+          + ' substrings when the support is spread across separated passages — or \"\" if you cannot'
           + ' find one>", "precondition_evidence": "<a VERBATIM substring of the SCENE PROSE showing the'
           + ' participants/state THIS proposal required were PRESENT so it was possible at all, or \"\" if'
           + ' absent>", "reason": "delivered" | "precondition_absent" | "incomplete_rendering" |'
           + ' "inconsistent" } ] with ONE entry per ref.\n'
           + 'HARD RULES: copy each ref EXACTLY — an unrecognised ref is discarded and commits nothing;'
           + ' "evidence" and "precondition_evidence" must each be a verbatim quote from the prose, never a'
-          + ' paraphrase and never an inference; a DELIVERED with no verbatim quote is treated as NOT'
+          + ' paraphrase and never an inference. IF THE SUPPORT IS NOT CONTIGUOUS — the sentences that show'
+          + ' it are separated by other prose — give an ARRAY of up to 4 SHORT quotations, each copied'
+          + ' contiguously from one place in the prose: ["<span>", "<span>"]. Do NOT join separated'
+          + ' passages into one string with newlines or ellipses: a joined string is checked as a single'
+          + ' quotation and WILL fail, because that text does not appear in the prose. Each span is checked'
+          + ' on its own and every one must be found; a DELIVERED with no verbatim quote is treated as NOT'
           + ' delivered; and a DELIVERED whose "precondition_evidence" is empty is DOWNGRADED, because an'
           + ' event whose required participants were never on the page cannot have happened.\n'
           + '"reason" names WHY you judged as you did, so a non-delivery can be told apart:'
@@ -102376,11 +102411,26 @@ function _buildAuthorFloorDirective(s) {
                     + 'complete it. Do not restart it from nothing: carry it from where it stopped, or '
                     + 'complete it: ';
                 }
-                // VERIFIED NON-DELIVERY — the only branch that may say it did not happen.
-                return '\nPENDING INTENT — CHECKED AND NOT DELIVERED. A prior scene tried to advance '
-                  + 'toward the milestone and the attempt was verified as not delivered. Continue '
-                  + 'TOWARD the milestone, but choose the BEST reachable event NOW from the committed '
-                  + 'state; do NOT blindly repeat the failed attempt: ';
+                // VERIFIED NON-DELIVERY — only for an EXPLICIT supported outcome. The verifier
+                // said MISSED, or the slot check affirmed the event did not occur. Nothing else may
+                // be turned into "it did not happen".
+                if (_st === 'MISSED' || _r === 'verified_not_delivered') {
+                  return '\nPENDING INTENT — CHECKED AND NOT DELIVERED. A prior scene tried to advance '
+                    + 'toward the milestone and the attempt was verified as not delivered. Continue '
+                    + 'TOWARD the milestone, but choose the BEST reachable event NOW from the committed '
+                    + 'state; do NOT blindly repeat the failed attempt: ';
+                }
+                // EVERYTHING ELSE: an unexpected status, or a validation outcome nothing above
+                // claims. Report the uncertainty rather than inventing a finding.
+                try {
+                  console.warn('[PENDING-INTENT] unclassified outcome status="' + _st + '" reason="'
+                    + _r + '" — reported to the planner as INDETERMINATE, not as non-delivery');
+                } catch (_) {}
+                return '\nPENDING INTENT — INDETERMINATE. A prior scene proposed this and the outcome '
+                  + 'could not be classified (status "' + (_st || 'none') + '", reason "'
+                  + (_r || 'none') + '"), so it is NOT a committed fact and NOT established as having '
+                  + 'failed. Read WHAT THE READER HAS ALREADY READ below and decide from the page, not '
+                  + 'from this line: ';
               })() + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
             + ((function () {
