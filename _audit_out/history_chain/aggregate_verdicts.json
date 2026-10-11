@@ -1,0 +1,18 @@
+{
+ "perPropOnly": {
+  "delivery": "unverified",
+  "evidence": "this scene's own verdict: NO aggregate verdict was supplied (the commit pass initialiser read \"MISSED\", which is not a verdict); per-proposal prop:2:1:DELIVERED/evidence_unverifiable — none of these establishes non-delivery, so whether the event landed is UNKNOWN"
+ },
+ "explicitMissed": {
+  "delivery": "assessed_not_delivered",
+  "evidence": "this scene's own verdict: an explicitly supplied aggregate MISSED, with no per-proposal statuses and nothing committed"
+ },
+ "propMissed": {
+  "delivery": "assessed_not_delivered",
+  "evidence": "this scene's own verdict: NO aggregate verdict was supplied (the commit pass initialiser read \"MISSED\", which is not a verdict); 1 proposal(s) explicitly NOT delivered (prop:2:1:MISSED/verified_not_delivered); nothing committed"
+ },
+ "noResponse": {
+  "delivery": "unverified",
+  "evidence": "the commit pass ran for scene 3 but NO verifier verdict was reported, so whether its event landed is UNKNOWN"
+ }
+}

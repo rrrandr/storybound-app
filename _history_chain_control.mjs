@@ -208,7 +208,10 @@ const partial = await page.evaluate(() => {
               provenanceLink: 'sealed', committedAtScene: 1, provenance: 'delivered' }],
     _committedThroughScene: 1,
     // This scene's OWN verdict did NOT record the planned event delivered.
-    deliveryLog: { '1': { scene: 1, aggregateDelivery: 'MISSED', committed: [{ ref: 'prop:1:1' }], pending: {} } },
+    // Checked, nothing about this ROW'S milestone established: the fact carries no milestoneScene
+    // and no DELIVERED aggregate was supplied.
+    deliveryLog: { '1': { scene: 1, verifierReported: true, aggregateSupplied: true,
+                          aggregateDelivery: 'MISSED', committed: [{ ref: 'prop:1:1' }], pending: {} } },
     pendingIntent: null, tableau: null
   };
   s._issueOutline = null; s._issueOutlineHistory = {};
@@ -217,6 +220,7 @@ const partial = await page.evaluate(() => {
   const r1 = o.scenes.filter(r => r.n === 1)[0];
   const block = window._renderIssueOutlineDirective(s, 6) || '';
   // Now the same facts WITH a delivered verdict.
+  s._committedState.deliveryLog['1'].aggregateSupplied = true;
   s._committedState.deliveryLog['1'].aggregateDelivery = 'DELIVERED';
   s._issueOutline = null; s._issueOutlineHistory = {};
   const r1b = window._resolveIssueOutline(s, { force: true }).scenes.filter(r => r.n === 1)[0];
@@ -430,72 +434,198 @@ t('the delivery log records per-proposal statuses under the id the adjudicator a
       committed: [], pending: { 'prop:1:4': { status: 'MISSED', reason: 'verified_not_delivered' } } } };
     delete s._issueOutline; delete s._issueOutlineHistory;
     const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 3)[0];
-    return r.delivery === 'assessed_not_delivered' && /per-proposal MISSED\/verified_not_delivered/.test(r.deliveryEvidence);
+    return r.delivery === 'assessed_not_delivered'
+      && /prop:1:4:MISSED\/verified_not_delivered/.test(r.deliveryEvidence)
+      && /explicitly NOT delivered/.test(r.deliveryEvidence);
   }), 'per-proposal status not read');
 
-// ═══ 8. REPLANNING, NOT A WARNING: A DELIVERED EVENT BECOMES A NEW ASSIGNMENT ═══════════════
-section('8. TIER 2: committed canon REPLACES the assignment (this is the replanning test)');
-const replan = await page.evaluate(() => {
+// ═══ 8. A PHRASE INSIDE A COMMITTED FACT NEVER DELETES PLOT ═════════════════════════════════
+section('8. LEXICAL MATCHING CANNOT VOID AN ASSIGNMENT (the reviewer\'s three constructed facts)');
+// A committed fact is trustworthy AS THAT FACT. A phrase inside it is not evidence that a
+// different event happened - not with the wrong speaker, and not inside a denial.
+const lexical = await page.evaluate(() => {
   const s = window.state;
   s.currentEngine = 'literary'; s.renderMode = 'literary';
   delete s._stagedAuthoringSceneIndex; s.turnCount = 14;       // scene 16
   s._historyNotes = []; s.scenes = []; s._temptOutcomePending = {};
-  // A COMMITTED FACT from story scene 3 whose text carries row 16's own seed marker. This is the
-  // engine's own verified record, not a quotation the author chose for its note.
-  s._committedState = {
-    facts: [{ fact: 'Julian says I bent the wish, and does not offer a reason with it',
-              proposalRef: 'prop:2:1', provenanceLink: 'sealed', committedAtScene: 2, storyScene: 3,
-              storySceneProvenance: 'caller', provenance: 'delivered' }],
-    _committedThroughScene: 3,
-    deliveryLog: { '3': { scene: 3, storyScene: 3, verifierReported: true, aggregateDelivery: 'DELIVERED',
-                          committed: [{ ref: 'prop:2:1' }], pending: {} } },
-    pendingIntent: null, tableau: null
+  const run = (fact, milestoneScene) => {
+    s._committedState = {
+      facts: [{ fact: fact, proposalRef: 'prop:2:1', provenanceLink: 'sealed', committedAtScene: 2,
+                storyScene: 3, storySceneProvenance: 'caller',
+                milestoneScene: (milestoneScene === undefined ? null : milestoneScene),
+                provenance: 'delivered' }],
+      _committedThroughScene: 3,
+      deliveryLog: { '3': { scene: 3, storyScene: 3, verifierReported: true, aggregateSupplied: true,
+                            aggregateDelivery: 'DELIVERED', committed: [{ ref: 'prop:2:1' }], pending: {} } },
+      pendingIntent: null, tableau: null
+    };
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
+    return { delivered: !!r.alreadyDelivered, warned: !!r.alreadyWritten,
+             accomplishes: r.accomplishes, src: r.accomplishesSource };
   };
-  delete s._issueOutline; delete s._issueOutlineHistory;
-  const withheld = { r: window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0],
-                     block: window._renderIssueOutlineDirective(s, 16) || '' };
-  // CONSTRUCTED approval of the drafted replacement, to show the replanning the draft enables.
+  return JSON.parse(JSON.stringify({
+    denial: run('Julian refuses to say "I bent the wish" and denies intervening at all.'),
+    wrongSpeaker: run('Seren says "I bent the wish"; Julian makes no admission of any kind.'),
+    genuineNoLink: run('Julian says "I bent the wish" and admits intervening.'),
+    linked: run('Julian says he did it, and does not offer a reason with it', 16)
+  }));
+});
+fs.writeFileSync('_audit_out/history_chain/lexical_cannot_delete.json', JSON.stringify(lexical, null, 1));
+t('a DENIAL containing the phrase does NOT void the assignment',
+  lexical.denial.delivered === false && /Julian finally admits he acted/.test(lexical.denial.accomplishes),
+  JSON.stringify(lexical.denial));
+t('the WRONG SPEAKER saying the phrase does NOT void the assignment',
+  lexical.wrongSpeaker.delivered === false && /Julian finally admits he acted/.test(lexical.wrongSpeaker.accomplishes),
+  JSON.stringify(lexical.wrongSpeaker));
+t('even a GENUINE-LOOKING match with no milestone link does NOT void it — it only warns',
+  lexical.genuineNoLink.delivered === false && lexical.genuineNoLink.warned === true
+  && /Julian finally admits he acted/.test(lexical.genuineNoLink.accomplishes),
+  JSON.stringify(lexical.genuineNoLink));
+t('all three are surfaced as WARNINGS, so the signal is not lost',
+  lexical.denial.warned === true && lexical.wrongSpeaker.warned === true,
+  JSON.stringify([lexical.denial.warned, lexical.wrongSpeaker.warned]));
+
+// ═══ 9. THE STRUCTURAL LINK IS WHAT REPLANS ═════════════════════════════════════════════════
+section('9. ONLY AN EXPLICIT MILESTONE LINK VOIDS AN ASSIGNMENT (and that is the replanning test)');
+t('a committed fact SEALED AGAINST ROW 16\'S MILESTONE voids its assignment',
+  lexical.linked.delivered === true && lexical.linked.accomplishes === ''
+  && /already delivered at scene 3/.test(lexical.linked.src),
+  JSON.stringify(lexical.linked));
+const structural = await page.evaluate(() => {
+  const s = window.state;
+  const block = window._renderIssueOutlineDirective(s, 16) || '';
+  // CONSTRUCTED approval of the drafted replacement, to show the replanning the link enables.
   const plan = window.STARTER_PLANS.starter_first_sacrifice;
   const row = plan.scenes.filter(r => r.n === 16)[0];
   const saved = row.onAlreadyDelivered;
   row.onAlreadyDelivered = Object.assign({}, saved, { provenance: 'approved_by_roman' });
   delete s._issueOutline;
-  const approved = { r: window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0],
-                     block: window._renderIssueOutlineDirective(s, 16) || '',
-                     summary: window._issueOutlineSummary() };
+  const o = window._resolveIssueOutline(s);
+  const out = { withheld: block, approvedBlock: window._renderIssueOutlineDirective(s, 16) || '',
+                approvedRow: o.scenes.filter(x => x.n === 16)[0] };
   row.onAlreadyDelivered = saved;
-  return JSON.parse(JSON.stringify({ withheld, approved }));
+  return JSON.parse(JSON.stringify(out));
 });
 fs.writeFileSync('_audit_out/history_chain/replanned_scene16.txt',
-  '--- DRAFT WITHHELD (default) ---\n' + replan.withheld.block
-  + '\n\n--- REPLACEMENT APPROVED ---\n' + replan.approved.block);
-t('committed canon from an earlier scene is detected as ALREADY DELIVERED, not merely warned',
-  !!replan.withheld.r.alreadyDelivered && replan.withheld.r.alreadyDelivered[0].atScene === 3
-  && replan.withheld.r.alreadyDelivered[0].ref === 'prop:2:1'
-  && !replan.withheld.r.alreadyWritten,
-  JSON.stringify(replan.withheld.r.alreadyDelivered));
-t('the obsolete assignment is GONE from the directive — not printed beside a warning',
-  !/Julian finally admits he acted/.test(replan.withheld.block)
-  && !/Julian finally admits he acted/.test(replan.approved.block),
-  (replan.withheld.block.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,160}/) || ['(absent)'])[0]);
-t('the author is shown the COMMITTED FACT as the reason, stated as not a warning',
-  /HAS ALREADY BEEN DELIVERED AND COMMITTED/.test(replan.withheld.block)
-  && /This is not a warning and not a guess/.test(replan.withheld.block)
-  && /committed as prop:2:1/.test(replan.withheld.block),
-  (replan.withheld.block.match(/ALREADY BEEN DELIVERED[\s\S]{0,500}/) || [''])[0]);
-t('by default the drafted replacement is WITHHELD and the row carries no fixed goal',
-  replan.withheld.r.accomplishes === ''
-  && /DRAFTED BUT NOT APPROVED, so it is withheld/.test(replan.withheld.block),
-  JSON.stringify(replan.withheld.r.accomplishes));
+  '--- DRAFT WITHHELD (default) ---\n' + structural.withheld
+  + '\n\n--- REPLACEMENT APPROVED ---\n' + structural.approvedBlock);
+t('the directive names the STRUCTURAL LINK, not a phrase',
+  /the planner sealed this proposal against row 16's milestone/.test(structural.withheld)
+  && /This is not a warning and not a guess/.test(structural.withheld), structural.withheld.slice(0, 600));
+t('the obsolete assignment is GONE from the directive',
+  !/Julian finally admits he acted/.test(structural.withheld)
+  && !/Julian finally admits he acted/.test(structural.approvedBlock),
+  (structural.withheld.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,160}/) || ['(absent)'])[0]);
+t('by default the drafted replacement is WITHHELD',
+  /DRAFTED BUT NOT APPROVED, so it is withheld/.test(structural.withheld), 'quarantine missing');
 t('APPROVED, the delivered event becomes a CONSEQUENTIAL NEW ASSIGNMENT',
-  /what it has cost him since he made it/.test(replan.approved.r.accomplishes || '')
-  && /The confession stops being news and becomes a debt between them/.test(replan.approved.r.changes || '')
-  && /A replacement assignment IS authored/.test(replan.approved.block),
-  JSON.stringify({ a: replan.approved.r.accomplishes, c: replan.approved.r.changes }));
-t('the two tiers are reported separately in the summary',
-  Array.isArray(replan.approved.summary.alreadyDelivered)
-  && replan.approved.summary.alreadyDelivered.some(x => x.scene === 16 && x.tier === 'committed canon'),
-  JSON.stringify(replan.approved.summary.alreadyDelivered));
+  /what it has cost him since he made it/.test(structural.approvedRow.accomplishes || '')
+  && /A replacement assignment IS authored/.test(structural.approvedBlock),
+  JSON.stringify(structural.approvedRow.accomplishes));
+
+// ═══ 10. SCENE IDENTITY THROUGH THE REAL PLANNER-TO-COMMIT HANDOFF ══════════════════════════
+section('10. THE HANDOFF: the object the logger actually receives carries the identity');
+const handoff = await page.evaluate(() => {
+  const s = window.state;
+  s.turnCount = 1;                       // story scene 2 is being planned
+  s._sealedProposals = null;
+  // The SHIPPED seal, as the planner now calls it.
+  const sealed = window._sealProposal({ kind: 'state_change',
+    fact: 'Julian publicly claims authority to convene the inquiry', milestone: 'row 2',
+    scene: (s.turnCount || 0), storyScene: 2, milestoneScene: 2 });
+  // THE HANDOFF, exactly as production performs it at the seal site: the reference AND the two
+  // identity fields are written onto the object that becomes _priorSceneStateChange.
+  const stateChange = { event: sealed.fact, proposalRef: sealed.id,
+    storyScene: sealed.storyScene, milestoneScene: sealed.milestoneScene };
+  s._priorSceneStateChange = stateChange;
+  // AND the degraded case: an object carrying ONLY the reference, which is what broke before.
+  const refOnly = { event: sealed.fact, proposalRef: sealed.id };
+  const resolved = window._resolveSealedProposal ? window._resolveSealedProposal(refOnly.proposalRef) : null;
+  return JSON.parse(JSON.stringify({ sealed: { id: sealed.id, turn: sealed.scene,
+      storyScene: sealed.storyScene, milestoneScene: sealed.milestoneScene },
+    handoff: { storyScene: stateChange.storyScene, milestoneScene: stateChange.milestoneScene },
+    resolvedFromRefOnly: resolved ? { storyScene: resolved.storyScene, milestoneScene: resolved.milestoneScene } : null }));
+});
+t('the seal records the turn in its id and the STORY scene separately',
+  /^prop:1:/.test(handoff.sealed.id) && handoff.sealed.turn === 1 && handoff.sealed.storyScene === 2,
+  JSON.stringify(handoff.sealed));
+t('the object the logger receives now CARRIES storyScene and milestoneScene',
+  handoff.handoff.storyScene === 2 && handoff.handoff.milestoneScene === 2, JSON.stringify(handoff.handoff));
+t('and a reference-only object still RESOLVES to the same identity from its seal',
+  handoff.resolvedFromRefOnly && handoff.resolvedFromRefOnly.storyScene === 2
+  && handoff.resolvedFromRefOnly.milestoneScene === 2, JSON.stringify(handoff.resolvedFromRefOnly));
+t('production writes both fields onto the handoff object at the seal site',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /_stateChange\.proposalRef = _sealedProp\.id;[\s\S]{0,900}_stateChange\.storyScene = _sealedProp\.storyScene;[\s\S]{0,200}_stateChange\.milestoneScene = _sealedProp\.milestoneScene;/.test(src)
+      && /state\._priorSceneStateChange = _stateChange;/.test(src);
+  })(), 'the seal site does not write the identity onto the handoff object');
+t('and the logger falls back to resolving the seal, not to the turn counter',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /RESOLVE FROM THE REFERENCED SEAL[\s\S]{0,600}_resolveSealedProposal\(prevProposal && prevProposal\.proposalRef\)/.test(src);
+  })(), 'the logger has no seal-resolution fallback');
+
+// ═══ 11. RECEIVING JSON IS NOT AN AGGREGATE VERDICT ═════════════════════════════════════════
+section('11. A RESPONSE WITHOUT AN AGGREGATE VERDICT IS NOT AN EXPLICIT "MISSED"');
+const agg = await page.evaluate(() => {
+  const s = window.state;
+  s._historyNotes = []; s.scenes = [];
+  // Section 10 left turnCount at 1 (scene 3 being planned); scene 3 must be BEHIND us for its
+  // delivery to be classified at all.
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 4;        // scene 6
+  const run = (log) => {
+    s._committedState = { facts: [], _committedThroughScene: 3, pendingIntent: null, tableau: null,
+      deliveryLog: { '3': log } };
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 3)[0];
+    return { delivery: r.delivery, evidence: r.deliveryEvidence };
+  };
+  return JSON.parse(JSON.stringify({
+    // THE REVIEWER'S CASE: a per-proposal-only response. The commit pass initialiser read MISSED;
+    // nothing supplied an aggregate.
+    perPropOnly: run({ scene: 3, verifierReported: true, aggregateSupplied: false,
+      aggregateDelivery: null, aggregateDefaulted: 'MISSED', committed: [],
+      pending: { 'prop:2:1': { status: 'DELIVERED', reason: 'evidence_unverifiable' } } }),
+    // An EXPLICIT aggregate MISSED, with no per-proposal statuses.
+    explicitMissed: run({ scene: 3, verifierReported: true, aggregateSupplied: true,
+      aggregateDelivery: 'MISSED', committed: [], pending: {} }),
+    // A proposal explicitly NOT delivered.
+    propMissed: run({ scene: 3, verifierReported: true, aggregateSupplied: false, aggregateDelivery: null,
+      aggregateDefaulted: 'MISSED', committed: [],
+      pending: { 'prop:2:1': { status: 'MISSED', reason: 'verified_not_delivered' } } }),
+    // No verifier response at all.
+    noResponse: run({ scene: 3, verifierReported: false, aggregateSupplied: false,
+      aggregateDelivery: null, committed: [], pending: {} })
+  }));
+});
+fs.writeFileSync('_audit_out/history_chain/aggregate_verdicts.json', JSON.stringify(agg, null, 1));
+t('a per-proposal-only response with unverifiable evidence is UNVERIFIED, not not-delivered',
+  agg.perPropOnly.delivery === 'unverified'
+  && /NO aggregate verdict was supplied/.test(agg.perPropOnly.evidence)
+  && /which is not a verdict/.test(agg.perPropOnly.evidence),
+  JSON.stringify(agg.perPropOnly));
+t('...and each proposal\'s own result is preserved in the evidence',
+  /prop:2:1:DELIVERED\/evidence_unverifiable/.test(agg.perPropOnly.evidence), agg.perPropOnly.evidence);
+t('an EXPLICITLY supplied aggregate MISSED still means not delivered',
+  agg.explicitMissed.delivery === 'assessed_not_delivered'
+  && /explicitly supplied aggregate MISSED/.test(agg.explicitMissed.evidence),
+  JSON.stringify(agg.explicitMissed));
+t('a proposal explicitly MISSED still means not delivered, aggregate or no aggregate',
+  agg.propMissed.delivery === 'assessed_not_delivered'
+  && /explicitly NOT delivered/.test(agg.propMissed.evidence), JSON.stringify(agg.propMissed));
+t('no verifier response at all is UNVERIFIED',
+  agg.noResponse.delivery === 'unverified' && /NO verifier verdict was reported/.test(agg.noResponse.evidence),
+  JSON.stringify(agg.noResponse));
+t('the commit pass records whether the aggregate was SUPPLIED, not just present',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /_dlAggSupplied = !!\(typeof _vP !== 'undefined' && _vP && _vP\.delivery != null/.test(src)
+      && /aggregateSupplied: _dlAggSupplied,/.test(src)
+      && /aggregateDelivery: _dlAggSupplied \? \(_delivery \|\| null\) : null,/.test(src);
+  })(), 'the commit pass does not record aggregateSupplied');
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

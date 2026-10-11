@@ -1,0 +1,26 @@
+{
+ "denial": {
+  "delivered": false,
+  "warned": true,
+  "accomplishes": "Julian finally admits he acted.",
+  "src": "plan row goal"
+ },
+ "wrongSpeaker": {
+  "delivered": false,
+  "warned": true,
+  "accomplishes": "Julian finally admits he acted.",
+  "src": "plan row goal"
+ },
+ "genuineNoLink": {
+  "delivered": false,
+  "warned": true,
+  "accomplishes": "Julian finally admits he acted.",
+  "src": "plan row goal"
+ },
+ "linked": {
+  "delivered": true,
+  "warned": false,
+  "accomplishes": "",
+  "src": "WITHHELD: this row's event was already delivered at scene 3 (committed fact prop:2:1) and the drafted replacement has NOT been approved, so it is withheld too"
+ }
+}

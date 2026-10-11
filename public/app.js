@@ -100387,6 +100387,10 @@ function _buildAuthorFloorDirective(s) {
       // that it is an inference from the turn counter, so no consumer can mistake one for the other.
       var storyScene = (typeof spec.storyScene === 'number' && spec.storyScene > 0) ? spec.storyScene : null;
       var storySceneProvenance = storyScene ? 'caller' : 'absent';
+      // THE MILESTONE THIS PROPOSAL IS REALISING, as the PLANNER declared it — the plan row's own
+      // number, not an inference. This is the only link that may later void that row's assignment.
+      var milestoneScene = (typeof spec.milestoneScene === 'number' && spec.milestoneScene > 0)
+        ? spec.milestoneScene : null;
       var ph = null;
       try { var p = s._scenePosture && s._scenePosture[String(scene)]; ph = (p && p.hash) || null; } catch (_) {}
       var kind = (spec.kind === 'continuation') ? 'continuation' : 'state_change';
@@ -100421,6 +100425,9 @@ function _buildAuthorFloorDirective(s) {
         // Every downstream reader must use storyScene, and storySceneProvenance says whether a
         // caller supplied it or it is absent.
         storyScene: _ssForRec, storySceneProvenance: _ssProv,
+        // WHICH PLAN ROW'S MILESTONE this proposal was accepted against. Absent means no row
+        // declared it, and nothing downstream may guess one.
+        milestoneScene: milestoneScene,
         kind: kind,                                   // 'state_change' | 'continuation' — never collide
         fact: fact,                                   // EXACT, untruncated — the committed text
         anchors: Object.freeze(anchors),
@@ -100519,6 +100526,8 @@ function _buildAuthorFloorDirective(s) {
         // spine row read storyScene.
         storyScene: (rec.storyScene != null) ? rec.storyScene : null,
         storySceneProvenance: rec.storySceneProvenance || 'absent',
+        // THE EXPLICIT MILESTONE LINK. Only this may void a plan row's assignment.
+        milestoneScene: (rec.milestoneScene != null) ? rec.milestoneScene : null,
         provenance: 'delivered' };
       cs.facts.push(entry);
       if (cs.facts.length > 40) cs.facts = cs.facts.slice(-40); // bound
@@ -101840,19 +101849,40 @@ function _buildAuthorFloorDirective(s) {
         // (b) _delivery is INITIALISED to 'MISSED'. If the verifier never reported, the scene was
         // not checked — recording MISSED there turns "nobody looked" into "it did not happen".
         var _dlReported = (typeof _vP !== 'undefined' && !!_vP);
+        var _dlAggSupplied = !!(typeof _vP !== 'undefined' && _vP && _vP.delivery != null
+          && String(_vP.delivery).trim() !== '');
         // (c) KEYED BY THE STORY SCENE where the proposal carried one, so this log, the history
         // note and the spine row all answer to the same number. prevSceneNum is the TURN counter.
         var _dlStory = (prevProposal && typeof prevProposal.storyScene === 'number' && prevProposal.storyScene > 0)
           ? prevProposal.storyScene : null;
+        var _dlStorySrc = _dlStory != null ? 'the proposal object' : null;
+        if (_dlStory == null) {
+          // RESOLVE FROM THE REFERENCED SEAL. The object the caller passes is
+          // _priorSceneStateChange, which historically carried only proposalRef — so reading
+          // .storyScene off it silently fell back to the turn counter and keyed a scene-2 record
+          // under "1". The seal is the authority and is reachable from the reference.
+          try {
+            var _sr = (typeof _resolveSealedProposal === 'function')
+              ? _resolveSealedProposal(prevProposal && prevProposal.proposalRef) : null;
+            if (_sr && typeof _sr.storyScene === 'number' && _sr.storyScene > 0) {
+              _dlStory = _sr.storyScene; _dlStorySrc = 'resolved from the sealed record ' + _sr.id;
+            }
+          } catch (_) {}
+        }
         var _dlKey = String(_dlStory != null ? _dlStory : prevSceneNum);
         try { window.state._issueOutline = null; } catch (_) {}
         cs.deliveryLog[_dlKey] = {
           scene: _dlStory != null ? _dlStory : prevSceneNum,
           storyScene: _dlStory, turnScene: prevSceneNum,
-          keyProvenance: _dlStory != null ? 'storyScene' : 'turn counter (no storyScene on the proposal)',
+          keyProvenance: _dlStory != null ? ('storyScene via ' + _dlStorySrc)
+            : 'turn counter (no storyScene on the proposal and none resolvable from its reference)',
           at: Date.now(),
           verifierReported: _dlReported,
-          aggregateDelivery: _dlReported ? (_delivery || null) : null,
+          // SUPPLIED, not defaulted. When the response carried no `delivery` field the aggregate is
+          // null here and no reader may treat the initialiser's 'MISSED' as a verdict.
+          aggregateSupplied: _dlAggSupplied,
+          aggregateDelivery: _dlAggSupplied ? (_delivery || null) : null,
+          aggregateDefaulted: _dlReported && !_dlAggSupplied ? (_delivery || null) : null,
           committed: _dlComm, pending: _dlPend,
           unknownRefs: (_ppRes && _ppRes.unknownRefs) || []
         };
@@ -103756,9 +103786,23 @@ function _buildAuthorFloorDirective(s) {
                   // THE AUTHORITATIVE STORY SCENE. _planSceneNum is the row this planner is
                   // planning and the key _sceneObjectives is written under, so it is the one
                   // number the note, the proposal, the verdict and the spine row can all share.
-                  storyScene: _planSceneNum })
+                  storyScene: _planSceneNum,
+                  // THE ROW THIS EVENT REALISES, declared by the planner (_curMs.atScene is the
+                  // plan row's own n). Carried so a later outline can know, structurally, that
+                  // this row's milestone was delivered — instead of matching phrases.
+                  milestoneScene: (_curMs && typeof _curMs.atScene === 'number' && _curMs.atScene > 0)
+                    ? _curMs.atScene : null })
               : null;
-            if (_sealedProp) _stateChange.proposalRef = _sealedProp.id;
+            if (_sealedProp) {
+              _stateChange.proposalRef = _sealedProp.id;
+              // ── IDENTITY ON THE OBJECT THAT IS ACTUALLY PASSED (fix 2) ──
+              // The commit logger receives _priorSceneStateChange, which is this object. It was
+              // given only proposalRef, so the logger's prevProposal.storyScene read undefined and
+              // fell back to the turn counter. Both fields now ride with it; the logger ALSO
+              // resolves them from the referenced seal, so either route works.
+              _stateChange.storyScene = _sealedProp.storyScene;
+              _stateChange.milestoneScene = _sealedProp.milestoneScene;
+            }
           } catch (_sealErr) { try { console.warn('[SEAL] failed: ' + (_sealErr && _sealErr.message)); } catch (_) {} }
           state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
           // ═══ CONTINUATION HANDLER — THE WIRE THAT WAS MISSING (Roman 2026-10-01) ═══
@@ -137610,8 +137654,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     if (own.length) {
       var _vf = own.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; });
       var _lg = ev.deliveryLog && ev.deliveryLog[String(n)];
+      var _lgAggSupplied = !!(_lg && ((_lg.aggregateSupplied === true)
+        || (_lg.aggregateSupplied === undefined && _lg.aggregateDelivery != null)));
       var _aggDelivered = !!(_lg && _lg.verifierReported !== false
-        && String(_lg.aggregateDelivery || '').toUpperCase() === 'DELIVERED');
+        && ((_lgAggSupplied && String(_lg.aggregateDelivery || '').toUpperCase() === 'DELIVERED')
+            // OR a committed fact for this scene was SEALED AGAINST THIS ROW'S MILESTONE — the
+            // same structural link that voids a later row. A committed SIDE fact proves that
+            // proposal was delivered, never that this row's assignment was.
+            || own.some(function (f) { return Number(f.milestoneScene) === n; })));
       var _inferredScene = own.some(function (f) { return f._sceneInferred; });
       if (_aggDelivered) {
         return { status: 'committed', verifiedFacts: _vf,
@@ -137639,7 +137689,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       : '';
     // ── THIS SCENE'S OWN VERDICT, never the latest one applied backwards. ──
     var log = ev.deliveryLog && ev.deliveryLog[String(n)];
-    if (log && log.verifierReported === false && !Object.keys(log.pending || {}).length) {
+    if (log && log.verifierReported === false && !Object.keys(log.pending || {}).length
+        && !(Array.isArray(log.committed) && log.committed.length)) {
       // The commit pass ran but no verifier verdict arrived. "Nobody looked" is not "it did not
       // happen", and the aggregate field is deliberately null in that case.
       return { status: 'unverified',
@@ -137647,18 +137698,40 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                  + ' whether its event landed is UNKNOWN' + foreignNote };
     }
     if (log) {
-      var agg = String(log.aggregateDelivery || '').toUpperCase();
+      // EACH PROPOSAL'S OWN RESULT FIRST. An aggregate is used only when the response actually
+      // supplied one: the commit pass initialises _delivery to 'MISSED', so a per-proposal-only
+      // response used to be read as an explicit "it did not happen".
       var pend = log.pending || {};
-      var reasons = Object.keys(pend).map(function (k) { return (pend[k].status || '?') + '/' + (pend[k].reason || '?'); });
-      var anyNotDelivered = agg === 'MISSED' || reasons.some(function (r) { return /MISSED|verified_not_delivered/i.test(r); });
-      if (anyNotDelivered)
+      var perProp = Object.keys(pend).map(function (k) {
+        return { ref: k, status: String(pend[k].status || '').toUpperCase(), reason: String(pend[k].reason || '') };
+      });
+      var perStr = perProp.map(function (x) { return x.ref + ':' + (x.status || '?') + '/' + (x.reason || '?'); });
+      var aggSupplied = (log.aggregateSupplied === true)
+        || (log.aggregateSupplied === undefined && log.aggregateDelivery != null);  // pre-field logs
+      var agg = aggSupplied ? String(log.aggregateDelivery || '').toUpperCase() : null;
+      var aggNote = aggSupplied ? ('aggregate ' + (agg || 'unstated'))
+        : ('NO aggregate verdict was supplied'
+           + (log.aggregateDefaulted ? ' (the commit pass initialiser read "' + log.aggregateDefaulted + '", which is not a verdict)' : ''));
+      // EXPLICIT NON-DELIVERY, from a proposal's own status or a SUPPLIED aggregate.
+      var propNotDelivered = perProp.filter(function (x) {
+        return x.status === 'MISSED' || /verified_not_delivered/i.test(x.reason); });
+      if (propNotDelivered.length)
         return { status: 'assessed_not_delivered',
-                 evidence: 'this scene\'s own verdict: aggregate ' + (agg || 'unstated')
-                   + (reasons.length ? ', per-proposal ' + reasons.join(', ') : '') + ', nothing committed' + foreignNote };
+                 evidence: 'this scene\'s own verdict: ' + aggNote + '; ' + propNotDelivered.length
+                   + ' proposal(s) explicitly NOT delivered (' + perStr.join(', ') + '); nothing committed' + foreignNote };
+      if (perProp.length)
+        // Checked per proposal, and none of them was established as undelivered — most often
+        // evidence that could not be verified either way. That is NOT "it did not happen".
+        return { status: 'unverified',
+                 evidence: 'this scene\'s own verdict: ' + aggNote + '; per-proposal ' + perStr.join(', ')
+                   + ' — none of these establishes non-delivery, so whether the event landed is UNKNOWN' + foreignNote };
+      if (aggSupplied && agg === 'MISSED')
+        return { status: 'assessed_not_delivered',
+                 evidence: 'this scene\'s own verdict: an explicitly supplied aggregate MISSED, with no'
+                   + ' per-proposal statuses and nothing committed' + foreignNote };
       return { status: 'unverified',
-               evidence: 'this scene\'s own verdict: aggregate ' + (agg || 'unstated')
-                 + (reasons.length ? ', per-proposal ' + reasons.join(', ') : '')
-                 + ' — checked, nothing committed, and not established as undelivered either' + foreignNote };
+               evidence: 'this scene\'s own verdict: ' + aggNote + ', no per-proposal statuses and nothing'
+                 + ' committed — so whether the event landed is UNKNOWN' + foreignNote };
     }
     // Assessed, but no verdict was retained FOR THIS SCENE. v2 filled that gap with
     // pendingIntent.lastStatus — the newest verdict, applied retrospectively. It no longer does.
@@ -138002,7 +138075,23 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       //   scene — sealed pre-prose, verified delivered. That is the engine's own record of what
       //   happened rather than the author's account of it, so the row's assignment IS replaced by
       //   its consequences. The matching is still lexical; the EVIDENCE is not.
-      var alreadyWritten = null, alreadyDelivered = null;
+      var alreadyWritten = null, alreadyWrittenInCanon = null, alreadyDelivered = null;
+      // ── THE STRUCTURAL LINK. A committed fact whose SEALED RECORD declares it was proposed
+      // against THIS row's milestone, and which committed at an EARLIER story scene. No text is
+      // inspected, so no speaker and no denial can be misread.
+      try {
+        var _mlHits = [];
+        Object.keys(ev.byProposalScene || {}).forEach(function (k) {
+          var sn = Number(k);
+          if (!(sn > 0) || sn >= n) return;
+          (ev.byProposalScene[k] || []).forEach(function (f) {
+            if (f && Number(f.milestoneScene) === n)
+              _mlHits.push({ fact: String(f.fact || ''), atScene: sn, ref: f.proposalRef,
+                             link: 'the planner sealed this proposal against row ' + n + "'s milestone" });
+          });
+        });
+        if (_mlHits.length) alreadyDelivered = _mlHits.slice(0, 4);
+      } catch (_) {}
       try {
         var _mk = [].concat(Array.isArray(planRow && planRow.eventMarkers) ? planRow.eventMarkers : [],
           (Array.isArray(planRow && planRow.reservedEvents) ? planRow.reservedEvents : [])
@@ -138039,9 +138128,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               });
             });
           });
-          if (_cHits.length) alreadyDelivered = _cHits.slice(0, 4);
+          // These are TIER 1 WARNINGS ONLY. Kept separate from the structural link below, and
+          // they NEVER void an assignment: a phrase inside a committed fact does not establish
+          // that this row's event happened, whoever is speaking and whether they confirm or deny.
+          if (_cHits.length) alreadyWrittenInCanon = _cHits.slice(0, 4);
         }
       } catch (_) {}
+      // The canon-phrase hits are WARNINGS. Merged into the warning list rather than dropped, so
+      // the signal survives without being allowed to delete anything.
+      if (alreadyWrittenInCanon) {
+        alreadyWritten = (alreadyWritten || []).concat(alreadyWrittenInCanon.map(function (h) {
+          return { marker: h.marker, quote: h.fact, atScene: h.atScene, ref: h.ref, source: 'committed fact text' };
+        })).slice(0, 6);
+      }
       // A CONFIRMED EARLY DELIVERY REPLACES THE ASSIGNMENT, quarantined the same way as every
       // other authored replacement: a draft awaiting sign-off is withheld and the row then
       // carries no fixed goal.
@@ -138290,7 +138389,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         L.push('    THIS SCENE\'S EVENT HAS ALREADY BEEN DELIVERED AND COMMITTED. This is not a warning and not'
           + ' a guess: the engine\'s own committed record carries it from an earlier scene —');
         row.alreadyDelivered.forEach(function (h) {
-          L.push('      – scene ' + h.atScene + ', committed as ' + h.ref + ': "' + String(h.fact).slice(0, 200) + '"');
+          L.push('      – scene ' + h.atScene + ', committed as ' + h.ref + ' — ' + (h.link || 'linked to this row')
+            + ': "' + String(h.fact).slice(0, 200) + '"');
         });
         L.push('      So this scene\'s original assignment is VOID and is not stated below. Do NOT deliver that'
           + ' event again, and do NOT invent an equivalent revelation to replace it.'
