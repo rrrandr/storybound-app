@@ -101252,11 +101252,32 @@ function _buildAuthorFloorDirective(s) {
     // The citation must be VERBATIM prose, mechanically checked. A verifier cannot fabricate a
     // quote it cannot find; this is the same discipline the slot check uses.
     var ev = (entry && typeof entry.evidence === 'string') ? entry.evidence.trim() : '';
+    var evSource = 'per_proposal';
     if (!_hasUsableEvidence(ev) || !_quoteIsInProse(ev, prose)) {
-      return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'inconsistent',
-        downgraded: true,
-        why: ['DELIVERED but its evidence is not a verbatim quote from the prose — not committed'] };
+      // The verifier's own slot check for THIS scene, used only when it cannot be misread as
+      // belonging to another proposal.
+      var _sharedExit = (o.sharedSlots && typeof o.sharedSlots.exit_state_evidence === 'string')
+        ? o.sharedSlots.exit_state_evidence.trim() : '';
+      var _soleProposal = (Number(o.proposalCount || 0) === 1);
+      if (_soleProposal && _hasUsableEvidence(_sharedExit) && _quoteIsInProse(_sharedExit, prose)) {
+        ev = _sharedExit;
+        evSource = 'shared_slots_check';
+        why.push('evidence=shared_slots_check (the per_proposal quote did not verify)');
+      } else {
+        // NOT the same finding as "the event did not happen": the verifier asserted DELIVERED and
+        // supplied no quote that verifies. Recorded as unverifiable so the two are distinguishable
+        // downstream, and still committing nothing.
+        return { ref: pend.id, commit: false, status: 'DELIVERED',
+          reason: 'evidence_unverifiable',
+          verifierReason: reason || null, downgraded: true, evidenceSource: 'none',
+          why: ['DELIVERED but NO verbatim quote verifies it — neither the per_proposal evidence nor '
+            + (_soleProposal ? 'the scene slots_check exit evidence' : 'a shared quote (multiple '
+              + 'proposals, so a shared quote cannot be attributed)')
+            + '. This is UNVERIFIED DELIVERY, not a finding that the event did not happen; nothing '
+            + 'is committed either way.'] };
+      }
     }
+    if (evSource === 'per_proposal') why.push('evidence=per_proposal');
     // Its OWN anchors, not the other proposal's.
     try {
       if (typeof _checkDeliveryAnchors === 'function') {
@@ -101317,7 +101338,9 @@ function _buildAuthorFloorDirective(s) {
             + ' the legacy verdict does not apply to it — stays pending'); } catch (_) {}
         }
       } else {
-        verdict = _adjudicateSealedProposal(pp, entry, prose, { sharedSlots: o.sharedSlots || null });
+        verdict = _adjudicateSealedProposal(pp, entry, prose, { sharedSlots: o.sharedSlots || null,
+          // the shared-quote fallback is only safe when there is nothing to confuse it with
+          proposalCount: pend.length });
       }
       verdict.kind = pp.kind;
       verdicts[pp.id] = verdict;

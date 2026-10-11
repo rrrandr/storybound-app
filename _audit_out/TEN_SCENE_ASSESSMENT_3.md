@@ -1,115 +1,135 @@
 # Ten-scene writing evaluation — run_2026-10-10T13-32-11-777Z
 
-Read in full before any change was made. Nine CG scenes plus the OAS entrance = the ten-scene
-corpus; the runner halted deliberately at the known counter defect
-(`_isLastSceneOfIssue()=false at position 9 of 10`) and did **not** generate an eleventh scene.
+**Labelling corrected:** the nine generated passages are story **Scenes 2–10**. The OAS entrance is
+Scene 1. An earlier version of this file numbered them 1–9, which made every comparison against the
+previous run misleading.
+
+The runner halted deliberately at `_isLastSceneOfIssue()=false at position 9 of 10` and generated
+**no** eleventh scene.
 
 ## Spend
 
-| | |
-|---|---|
-| receipted this run | $1.1011401 |
-| retained unresolved | $0.0604049 |
-| **run total** | **$1.1615450** |
-| prior exposure | $7.5813079 |
-| **cumulative** | **$8.7428530 of $9.25** |
-| available | $0.5071470 |
+receipted $1.1011401 + retained unresolved $0.0604049 = **$1.1615450** this run, 69 calls.
+Cumulative **$8.7428530 of $9.25**; available **$0.5071470**. Several `ministral-8b` calls ended
+DISPATCHED-NO-RESPONSE and are retained as unmeasured exposure, not written off.
 
-69 calls. Several `ministral-8b` calls ended DISPATCHED-NO-RESPONSE (`Request context disposed`)
-and are retained as unmeasured exposure at ~$0.0009 each, not written off.
+## THE ROOT CAUSE: delivered events never become committed facts
 
-## 1. Does developed prose persist beyond Scene 2? — NO. It oscillates.
+Every later planner request carries `COMMITTED WORLD STATE: []`. The console says why, once per
+scene, for all nine:
 
-Narration paragraphs only (speaker lines excluded):
+```
+[SLOT-CHECK]        scene=3 PASS evidence[pre=Y actor=Y action=Y target=Y exit=Y]
+[SLOT-EVIDENCE]     scene=3 exit_ev=""While the inquiry proceeds you will remain under supervision.""
+[STATE-TRANSITION]  PLANNED_EXIT="Lirael is now under formal investigation with stated restrictions"
+                    ACTUAL_EXIT="Lirael is under formal investigation with restrictions and supervision"
+                    MATCH=FAIL
+[PENDING] state_change prop:3:3 status=DELIVERED :: DELIVERED but its evidence is not a verbatim
+                    quote from the prose — not committed
+[ROLLBACK] transition=rejected scene=3 delivery=MISSED → replan from unchanged CommittedState
+                    (pendingIntent kept)
+```
 
-| scene | words | narration mean | developed |
+The verifier says DELIVERED. The slot check PASSES on all five slots with a quote that **is**
+verbatim in the prose. The per-proposal `evidence` string is a paraphrase, so the commit is refused,
+the transition rolls back, and the event is forwarded as *pending intent* — in a world state that
+never changes. That is the stall engine, and it explains the repetition far better than word count:
+the planner is repeatedly told its prior events are still undelivered, so it keeps proposing them.
+
+**The quote check is not the defect and has not been weakened.** The verifier prompt already demands
+a verbatim substring twice over — "never a paraphrase and never an inference", "a DELIVERED with no
+verbatim quote is treated as NOT delivered" — and `ministral-8b-2512` does not comply. No prompt gap
+to close.
+
+### The repair, and its limits
+
+The same verifier reply already contains a quote that verifies: the scene's `slots_check`
+`exit_state_evidence`. The per-proposal path now falls back to it — exactly as
+`precondition_evidence` has always fallen back to the shared slots check — still mechanically
+verified verbatim against the prose, and **only when the scene has a single proposal**, so a shared
+quote can never be mis-attributed between competing ones. Nothing is fabricated and nothing is
+promoted on a paraphrase.
+
+A refusal with no verbatim quote anywhere is now reported as **`evidence_unverifiable`** —
+"UNVERIFIED DELIVERY, not a finding that the event did not happen" — so the two are distinguishable
+downstream instead of both arriving as "missed".
+
+`_evidence_path_control.mjs`: 9/9, including the measured Scene 3 case committing, a two-proposal
+scene refusing the shared quote, a fabricated quote still refused, and a verbatim per-proposal quote
+still committing on its own.
+
+## The repeated denial is the same root cause
+
+```
+[MILESTONE-TRANSITION] scene=9 transition=YES prev="She begins suspecting Julian."
+                       current="Julian denies involvement — but not convincin"
+[PLAN-SPINE] scene=10 OBJECTIVE from authored spine: "Julian denies involvement — but not convincingly."
+[EVENT-SLOTS] scene=9 actor="Julian" action="denies involvement" target="the murmur about the wish"
+```
+
+The denial is scheduled for story Scene 10 while story Scene 9 has already put it on the page —
+`JULIAN: "I had no part in its turning."` appears in both. Because nothing commits, the milestone
+scheduler has no record that the denial was delivered, so it assigns a *first* denial again. The
+next scene needs the **consequence** of the denial already given. More words would only enlarge the
+repetition.
+
+## Prose: what the sentence statistics do and do not show
+
+| story scene | words | narration mean | clause-level |
 |---|---|---|---|
-| 1 | 181 | 19.6 | 100% |
-| 2 | 171 | 13.6 | 33% |
-| 3 | 134 | 10.1 | 22% |
-| 4 | 189 | 17.7 | 90% |
-| 5 | 96 | 9.1 | 50% |
-| 6 | 151 | 12.0 | 50% |
-| 7 | 208 | 20.8 | 90% |
-| 8 | 99 | 8.1 | 11% |
-| 9 | 118 | 11.0 | 30% |
+| 2 | 181 | 19.6 | 100% |
+| 3 | 171 | 13.6 | 33% |
+| 4 | 134 | 10.1 | 22% |
+| 5 | 189 | 17.7 | 90% |
+| 6 | 96 | 9.1 | 50% |
+| 7 | 151 | 12.0 | 50% |
+| 8 | 208 | 20.8 | 90% |
+| 9 | 99 | 8.1 | 11% |
+| 10 | 118 | 11.0 | 30% |
 
-Three scenes are genuinely written — 1, 4 and 7. Scene 1 carries real observation ("the gesture of
-a man finishing a task he never wanted"); Scene 7 sustains it for ten paragraphs. Scenes 3, 5, 8
-and 9 are captions. Scene 8 is the floor: 99 words, 11% developed, nine of twelve paragraphs a
-single clause ("The words land too quickly." / "Julian's grip has not eased." / "The Dohkar's gaze
-has not moved.").
+**Correction to the length claim.** The mean fell from roughly **224 to 150 words** across the two
+full runs — not from 1000 to 150. The ~1000-word figure is a **ceiling, a maximum, not a target**,
+and `SCENE COVERAGE` remained in the prompt throughout, so coverage pressure was not absent.
+"Underwritten by a factor of six" treated a maximum as an obligation and is withdrawn. **No beat
+floor and no word minimum should be added on the strength of this report.**
 
-This is better than the previous run, where 8 of 9 scenes were captioned. It is not persistence.
+**And the statistics are not a literary verdict.** Scenes 2, 5 and 8 score well because their
+sentences carry clauses — but they suspend the same moment rather than developing it: Julian's
+stillness, his "unmoving gravity", the witnesses departing, and a choice left unmade recur through
+all three. Scene 8 is the clearest case: 208 words, 90% clause-level, and its content is the
+clearing emptying while nobody decides anything. Longer sentences did not produce development.
 
-## 2. THE DOMINANT DEFECT — scene length collapsed
-
-Every scene is between **10% and 21% of the ~1000-word ceiling**; the mean is **150 words**.
-
-The pacing rewrite removed the beat-count floor and every "target" formulation, which was correct
-for the contradiction it fixed — but nothing replaced the pressure to cover the scene's ground. The
-author now stops at roughly a sixth of its budget. The ceiling is being honoured; the scene is not
-being written. This is the single highest-value thing to address, and it is a direct and
-foreseeable consequence of the previous repair.
-
-## 3. Is dialogue correctly attributed? — YES, in this run.
-
-Speaker lines render properly throughout: `THE PRESIDING DOHKAR:`, `JULIAN:`. The
-`kind="narration", speaker=null` failure that swallowed the Dohkar's speech **did not recur**. One
-qualification, stated rather than scored: Scene 7 contains no dialogue at all, and its drifting
-murmur ("the wish found its own path without her price") is unattributed by design — "No one claims
-them." That is a choice, not a misclassification.
-
-The defect stays open as a known failure mode; one clean run is not a fix.
-
-## 4. Do progression and continuity hold? — NO.
-
-**Every scene ends on an unmade choice, in nearly the same sentence.**
+Closing formulae, story scenes 8 and 9:
 
 ```
-3: The choice between accepting the restrictions or challenging his named role presses...
-4: The witnesses wait. The choice between accepting his shielding contact or breaking it...
-5: Accept the success the wish granted, or reject the source that made it possible.
-6: The choice settles like a sealed scroll I am not permitted to open.
-7: I stand between the path the witnesses took and the spellbinder's unmoving gravity.
-8: I stand between the path the witnesses took and Julian's unmoving gravity.
-9: Accept the denial or challenge the inconsistency in his hold.
+8: I stand between the path the witnesses took and the spellbinder's unmoving gravity.
+9: I stand between the path the witnesses took and Julian's unmoving gravity.
 ```
 
-Scenes 7 and 8 close on the same sentence with one noun swapped.
+**Concrete continuity error:** Seren **rises** in story Scene 7 ("Seren rises, her small face
+unreadable.") and in Scene 8 "Seren remains kneeling, small and composed."
 
-**Verbatim dialogue reuse across scenes** (exact paragraph matches — 2):
-- `JULIAN: "This matter concerns me as well."` — scenes 3 and 6 (and Scene 1, as
-  `This matter concerns me as well.` without quotes: three occurrences in nine scenes)
-- `JULIAN: "I had no part in its turning."` — scenes 8 and 9
+Verbatim dialogue reuse: `JULIAN: "This matter concerns me as well."` in story scenes 4 and 7 (and
+unquoted in Scene 2 — three times in nine passages); `JULIAN: "I had no part in its turning."` in
+scenes 9 and 10. Story Scene 10 restates Scene 9 in substance, though exact-paragraph overlap is
+only 9%.
 
-**Scene 9 restates Scene 8.** Beyond the verbatim line, both carry "The words land too quickly",
-"Julian's grip has not eased", "The Dohkar's gaze has not moved" and the same closing dilemma. Only
-9% of Scene 9's paragraphs match Scene 8 exactly, so this is near-duplication rather than copying —
-the overlap is in substance, not characters.
-
-**A continuity regression.** Scene 2 reveals the name outright — `JULIAN: "The one you lost was
-your sister."` Scene 5 then re-reveals it as new: "A name rises from the blade, the one I lost. /
-The sister I thought gone speaks through the pulse." The story discovers the same fact twice.
-
-**Recurring furniture.** "Seren remains kneeling, composed" appears in scenes 1, 5, 6, 7 and 9;
-"the clearing holds its breath" in 3 and 5; "presses against my ribs" in 4, 7 and 8.
-
-**Nothing resolves.** The inquiry is announced (3), supervision imposed (3–4), the witnesses leave
-carrying rumour (6–7), Julian denies involvement (8–9). Nine scenes in, no choice the reader made
-has produced a consequence that closes.
+Dialogue attribution was **correct** throughout: speaker lines render properly and the
+`kind="narration", speaker=null` failure did not recur. That defect stays open; one clean run is
+not a fix.
 
 ## Verdict
 
-**Ten accepted records, not a good ten-scene story.** The machinery held — no canon halt, no silent
-planner failure, correct attribution, a complete corpus inside budget. The writing did not: the
-author underwrites by a factor of six, developed prose appears in three scenes of nine, and the last
-third of the story circles one unmade decision in recycled phrasing.
+**Ten accepted records, not a coherent ten-scene story.** The machinery held. The story did not
+advance because the world never changed: nine scenes of delivered events, nothing committed.
 
-Highest-value next work, in order, **not started**:
-1. Scene length — restore coverage pressure without reinstating a beat quota.
-2. The closing-choice formula and the repetition in scenes 8–9.
-3. Scene 5's re-revelation of Scene 2's fact.
+Next work, grounded in the above and **not started**:
+1. Confirm, on the next authorized run, that committed facts are now non-empty — the repair above
+   is proven at the adjudicator, not yet end to end.
+2. The milestone scheduler re-assigning an event already on the page.
+3. The closing-choice formula and the suspended-moment repetition — a craft problem, not a length
+   problem.
 
 Separate, preserved, not folded in: `[LEDGER:CLIPPED]` (315 characters removed from a committed
-record) and the issue-boundary counter defect.
+record) and the issue-boundary counter defect. The remaining $0.5071470 is **not** being spent on a
+partial run.
