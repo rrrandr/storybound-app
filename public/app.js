@@ -5219,6 +5219,9 @@ ${_pcInteriorLock}`;
     var convId = opts.convId || ((typeof _grokConvId === 'function') ? _grokConvId() : null);
 
     var cacheEligible = _fullSceneCacheEligible(messages);
+    // COMPARISON ARMS ONLY. When set: the Grok request carries _noFallback so the proxy makes no
+    // upstream retry, and tiers 2 and 3 are not entered at all.
+    var noFallback = !!opts.noFallback;
     var attempts = [];
 
     // ── TIER 1: Grok — unconditional, every scene, no admission gate (the xAI proxy carries no
@@ -5227,7 +5230,8 @@ ${_pcInteriorLock}`;
       var gT0 = Date.now();
       var gResp = await fetch('/api/proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: grokModel, messages: messages, max_tokens: maxTokens, temperature: temperature, convId: convId })
+        body: JSON.stringify({ role: 'STRUCTURE_GENERATOR', preferredModel: grokModel, messages: messages, max_tokens: maxTokens, temperature: temperature,
+          _noFallback: noFallback || undefined, convId: convId })
       });
       attempts.push({ tier: 1, provider: 'grok', model: grokModel, ok: gResp.ok, status: gResp.status, ms: Date.now() - gT0 });
       if (gResp.ok) {
@@ -5244,6 +5248,17 @@ ${_pcInteriorLock}`;
 
     // ── TIER 2: ministral-8b-2512 — ONLY if the static admission check passes for this exact
     // prompt. Never Mistral Small. ──
+    if (noFallback) {
+      attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false,
+        skipped: true, reason: 'noFallback: single-provider comparison arm' });
+      attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: false,
+        skipped: true, reason: 'noFallback: single-provider comparison arm' });
+      var _nfErr = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] the Grok arm produced no text and '
+        + 'fallback is disabled for this comparison arm — reported as a FAILED ARM, not substituted');
+      _nfErr._attempts = attempts;
+      _nfErr._noFallbackArm = true;
+      throw _nfErr;
+    }
     var admission = _ministral8bGovernorAdmits(messages, maxTokens);
     if (admission.admits) {
       try {
