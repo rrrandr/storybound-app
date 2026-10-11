@@ -236065,7 +236065,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     switch (_currentST) {
       case 'ST1':
       case 'ST2':
-        _stDensityLine = 'SCENE DENSITY (' + _currentST + ' — SETUP PACE): establishing register. The scene\'s job is character-in-context, not plot velocity. Behavior over action. Density: moderate beat count, more establishing/observation than reaction. Do NOT race toward intimacy; you are not there yet.';
+        _stDensityLine = 'SCENE DENSITY (' + _currentST + ' — SETUP PACE): establishing register. The scene\'s job is character-in-context, not plot velocity. Behavior over action — what she DOES under pressure, not how much plot moves. Register: establishing rather than headlong, observation carried INSIDE the interaction rather than instead of it. This sets register, NOT length: see SCENE BRIEF for what a finished scene is. Do NOT race toward intimacy; you are not there yet.';
         break;
       case 'ST3':
       case 'ST4':
@@ -236081,7 +236081,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
         // arguments over authority, a new forward choice), not an arc winding down. No length
         // ceiling applies to this branch (see the LENGTH CEILING gate below, unchanged — it only
         // fires for ST1/ST2).
-        _stDensityLine = 'SCENE DENSITY (CONTINUATION — AFTERMATH/CONSEQUENCE PACE): this scene follows a planner-committed event with real consequences still to land — it is NOT an opening/establishing beat and NOT an arc winding down. Give it FULL scene weight: real aftermath (who reacts, and how — family, witnesses, authority), institutional or social process where the story calls for it (a ruling, a summons, a date set, an argument over what happens next), enough DIALOGUE and INTERIORITY to carry it (this is not a declarative-only wrap-up — characters think, argue, and are changed by what just happened), and PLOT DIRECTION that moves the story somewhere new. End on a genuine NEW pressure point or choice the protagonist must now face — never on suspended mood alone ("waits", "holds its breath", "remains half-raised") with nothing concrete underneath it. No word-count ceiling applies to this scene — use the room a full scene actually needs.';
+        _stDensityLine = 'SCENE DENSITY (CONTINUATION — AFTERMATH/CONSEQUENCE PACE): this scene follows a planner-committed event with real consequences still to land — it is NOT an opening/establishing beat and NOT an arc winding down. Give it FULL scene weight: real aftermath (who reacts, and how — family, witnesses, authority), institutional or social process where the story calls for it (a ruling, a summons, a date set, an argument over what happens next), enough DIALOGUE and INTERIORITY to carry it (this is not a declarative-only wrap-up — characters think, argue, and are changed by what just happened), and PLOT DIRECTION that moves the story somewhere new. End on a genuine NEW pressure point or choice the protagonist must now face — never on suspended mood alone ("waits", "holds its breath", "remains half-raised") with nothing concrete underneath it. Use the room a full scene actually needs — see SCENE BRIEF for what that is.';
         break;
       default:
         _stDensityLine = '';
@@ -236109,22 +236109,29 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // the [PROSE:LENGTH-CAP] compression repair at mount. Not truncation.
     try {
       var _lcTier = String((window.state && window.state.storyLength) || 'fling').toLowerCase();
-      if ((_currentST === 'ST1' || _currentST === 'ST2') && ['fling', 'taste', 'starter', 'default', ''].indexOf(_lcTier) !== -1) {
-        lines.push('LENGTH CEILING (HARD — Roman 2026-06-13): keep this scene UNDER ~1000 words / ~6000 characters. This is a WORD ceiling, NOT a beat ceiling — it coexists with SCENE COVERAGE: a scene that covers its ground fits under 1000 words without being cut into fragments, so meet BOTH. Beat LENGTH is governed by TEXT RULES, never by this ceiling. "Restraint" means each beat is LEAN, not that the scene is short on beats: do NOT pad WITHIN a beat with stacked interiority, enumerated desire ("the way X… the way Y… the way Z"), "Because… Because… Because" ladders, or machine-gun Q&A dialogue — but DO give the scene its full span of real, causally-linked movement — the whole situation traversed, not a sketch of it. When a single beat wants more words, spend them where the moment earns it and TAKE THEM BACK ELSEWHERE — trim a beat that is only marking time, not the moment that is doing the work. The ceiling is a budget across the whole scene, not a per-beat cap: a scene may hold two or three developed passages and many lean ones. Do NOT fragment a moment into separate beats to protect a count. A scene that skips its grounding and arrives as stacked ultimatums has FAILED. The reader should leave wanting, not exhausted — and not shortchanged.');
-        // The TARGET inside that ceiling. The ceiling says when to stop; this says what a finished
-        // scene is, so "short" is not the default outcome of having no floor.
-        lines.push('SCENE BUDGET (what a FINISHED scene is): a normal scene runs 700-1000 words. '
-          + 'That is a WRITING BUDGET for the whole scene, not a beat count, not a sentence minimum, '
-          + 'and not a reason to add beats — the number of moments is still however many the scene '
-          + 'contains. Spend the budget on CONSEQUENTIAL INTERACTION: what one person does to '
-          + 'another and what it costs them, what is said and what the saying changes, a decision '
-          + 'taken and acted on inside this scene. Do NOT spend it on further description of '
-          + 'stillness, of someone watching, of a room emptying, or of a choice being felt but not '
-          + 'made — a scene can be 1000 words of that and still contain nothing. If you reach the '
-          + 'end of the scene well under this budget, the scene is UNDERDEVELOPED: the moments you '
-          + 'have are too thin, not too few, so develop what is already there rather than adding '
-          + 'new material.');
+      var _ceilingActive = (_currentST === 'ST1' || _currentST === 'ST2')
+        && ['fling', 'taste', 'starter', 'default', ''].indexOf(_lcTier) !== -1;
+      if (_ceilingActive) {
+        lines.push('LENGTH CEILING (HARD — Roman 2026-06-13): keep this scene UNDER ~1000 words / '
+          + '~6000 characters. This is a WORD ceiling, NOT a beat ceiling.');
       }
+      // THE SCENE BRIEF — stated once, for every generated scene, whatever the density branch says.
+      // It is the SIZE AND PURPOSE of the scene; SCENE DENSITY governs its REGISTER.
+      lines.push('SCENE BRIEF (what a FINISHED scene is — this governs SIZE and PURPOSE; SCENE '
+        + 'DENSITY governs register only, and never licenses a thinner scene): a normal scene runs '
+        + '700-1000 words'
+        + (_ceilingActive ? ', and never above the LENGTH CEILING above' : '')
+        + '. That is a writing budget for the whole scene — not a beat count, not a sentence '
+        + 'minimum, and not a reason to add beats; the number of moments is still however many the '
+        + 'scene contains. WHAT THE BUDGET IS FOR: the scene develops a CONSEQUENTIAL INTERACTION — '
+        + 'what one person does to another and what it costs them, what is said and what the saying '
+        + 'changes, a decision taken and acted on while the reader watches. A moment that is '
+        + 'load-bearing gets written THROUGH: the exchange continues, the other person answers, the '
+        + 'cost arrives. What the budget is NOT for: a glance, a held breath, a line of stillness, '
+        + 'someone watching, a room emptying, or a choice felt but not made — a scene can be 1000 '
+        + 'words of those and contain nothing. If you reach the end well under the budget the scene '
+        + 'is UNDERDEVELOPED: its moments are too THIN, not too few, so develop what is already '
+        + 'there rather than adding new material.');
     } catch (_) {}
     // ── SCENE-1 LOAD CONTROL (Roman 2026-06-13) — one crisis, tiny cast ──────
     // The opening was piling up 2 catastrophe families + 5 named actors (brother /
