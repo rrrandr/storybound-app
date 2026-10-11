@@ -27,6 +27,39 @@ const CONSTRUCTED_SCAFFOLD = {
   stage_contract: { present: ['Lirael'] }
 };
 
+// CONSTRUCTED ISSUE SPINE — three arcs, with issue 3's rows numbered GLOBALLY for scenes 21-30.
+const CONSTRUCTED_SPINE = {
+  runThesis: 'Can she live with what clearing her cost?',
+  thematicDirection: 'debt as intimacy',
+  issueArcs: [
+    { issueLabel: 'Issue 1', thesis: 'the rite goes wrong', ambiguityTargets: ['who intervened'],
+      pressureVectors: ['institutional attention'], endingShape: 'quiet rupture', regimePhase: 'apparent',
+      sceneOutline: null, cliffhanger: { scene: 10, event: 'a denial nobody believes', why_unresolved: 'proof', issue2Predicament: 'certainty without evidence' } },
+    { issueLabel: 'Issue 2', thesis: 'the inquiry turns', ambiguityTargets: ['what he gave up'],
+      pressureVectors: ['procedure'], endingShape: 'irrevocable choice', regimePhase: 'instability',
+      sceneOutline: null, cliffhanger: { scene: 20, event: 'she chooses', why_unresolved: 'the cost', issue2Predicament: 'living with it' } },
+    { issueLabel: 'Issue 3 — the reckoning', thesis: 'whether she can live with what clearing her cost',
+      ambiguityTargets: ['what he wants now'], pressureVectors: ['the debt between them'],
+      endingShape: 'unresolved gravity', regimePhase: 'pressure_accumulation',
+      sceneOutline: Array.from({ length: 10 }, (_, i) => {
+        const n = 21 + i;
+        return { n: n, accomplishes: 'Issue-3 development number ' + (i + 1) + ', stated concretely.',
+          follows_from: i === 0 ? '' : 'the development in scene ' + (n - 1),
+          link: i === 0 ? null : (n % 2 ? 'but' : 'therefore'),
+          changes: 'something is true at the end of scene ' + n + ' that was not true at its start',
+          sets_up: 'the pressure handed to scene ' + (n + 1),
+          kind: (n % 3 === 0) ? 'convergence' : (n % 3 === 1 ? 'independent' : 'conditional'),
+          depends_on: null, routes: null, routes_decided_by: null, player_decision: null };
+      }),
+      cliffhanger: { scene: 30, event: 'The panel calls her back to answer for the thing she did not do.',
+        why_unresolved: 'whether she answers',
+        issue2Predicament: 'She is summoned on a charge she could end with one sentence.' } }
+  ],
+  motifBank: ['a page held out and not taken'],
+  voiceAnchors: { li_register: 'spare', pc_register: 'watchful' },
+  characterIcebergs: {}, forbiddenDefaults: ['glowing wards']
+};
+
 console.log('=== ISSUE BOUNDARY + RELOAD CARRYOVER (provider-free, $0) ===');
 console.log('Every record and every model response here is a CONSTRUCTED FIXTURE.\n');
 
@@ -44,6 +77,9 @@ await page.route('**/api/**', async (route) => {
       choices: [{ message: { content: c }, finish_reason: 'stop' }],
       usage: { prompt_tokens: 10, completion_tokens: 10, cost_in_usd_ticks: 0 } }) });
   if (/mistral-proxy/.test(url) && /narrative skeletons/i.test(joined)) return reply(JSON.stringify(CONSTRUCTED_SCAFFOLD));
+  // THE ISSUE SPINE. A CONSTRUCTED scaffold whose issue-3 arc carries ten globally-numbered rows
+  // for scenes 21-30, answered to whatever provider _ensureCGScaffold reaches for.
+  if (/CONTINUITY ARCHITECT|GRAVITATIONAL|sceneOutline/i.test(joined)) return reply(JSON.stringify(CONSTRUCTED_SPINE));
   return reply('{}');
 });
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -455,6 +491,73 @@ t('and the generated spine is retained across a save (it rides state.cgScaffold)
     s.cgScaffold = null;
     return kept;
   }), 'the spine outline is not retained in the snapshot');
+
+// ═══ 4d. A SPINE ARRIVING THROUGH PRODUCTION REACHES ITS CONSUMERS, NO CACHE CLEARING ═══════
+section('4d. THE CACHE NOTICES A SPINE: ordinary reads only, nothing cleared by hand');
+// The reviewer's reproduction: resolve issue 3 with no spine (0 rows), add ten spine rows, read
+// again — the SAME cached object came back, still 0 rows. Nothing below clears a cache.
+const spineArrives = await page.evaluate(async () => {
+  const s = window.state;
+  s.issueIndexInRun = 3; s._stagedAuthoringSceneIndex = 20;      // CG scene 21
+  // _shouldGenerateCGScaffold admits STAGED mode or literary; 'cg' alone is neither
+  // (_isStagedMode tests renderMode === 'staged_story_mode'). This is the real CG render mode.
+  s.renderMode = 'staged_story_mode';
+  s.cgScaffold = null;
+  delete s._issueOutline; delete s._issueOutlineHistory;          // ONE setup, then hands off
+  const before = window._resolveIssueOutline(s);                  // ORDINARY read: no force
+  const beforeRows = before.scenes.length;
+  const beforeKey = before._key;
+  // PUBLISH THROUGH PRODUCTION. _ensureCGScaffold is the shipped function that assigns
+  // state.cgScaffold; its provider call is intercepted and answered with a CONSTRUCTED scaffold.
+  let ensureThrew = null;
+  try { await window._ensureCGScaffold(s); } catch (e) { ensureThrew = String(e && e.message); }
+  const publishedByProduction = !!(s.cgScaffold && Array.isArray(s.cgScaffold.issueArcs));
+  const after = window._resolveIssueOutline(s);                   // ORDINARY read again
+  const r21 = after.scenes.filter(x => x.n === 21)[0] || null;
+  return JSON.parse(JSON.stringify({ ensureThrew: ensureThrew, publishedByProduction: publishedByProduction,
+    renderMode: s.renderMode,
+    beforeRows: beforeRows, beforeKey: beforeKey, afterRows: after.scenes.length, afterKey: after._key,
+    r21: r21, coverage: after.outlineCoverage }));
+});
+t('production published the spine itself (_ensureCGScaffold assigned state.cgScaffold)',
+  spineArrives.publishedByProduction === true && spineArrives.ensureThrew === null,
+  spineArrives.ensureThrew || String(spineArrives.publishedByProduction));
+t('before the spine, an ordinary read resolves ZERO issue-3 rows',
+  spineArrives.beforeRows === 0, String(spineArrives.beforeRows));
+t('AFTER it, the SAME ordinary read resolves the spine rows — no cache was cleared',
+  spineArrives.afterRows === 10 && !!spineArrives.r21
+  && spineArrives.beforeKey !== spineArrives.afterKey,
+  JSON.stringify({ before: spineArrives.beforeRows, after: spineArrives.afterRows,
+    keyChanged: spineArrives.beforeKey !== spineArrives.afterKey }));
+t('and the coverage flips from ABSENT to covered',
+  spineArrives.coverage.status === 'covered' && spineArrives.coverage.spineRowsInWindow === 10,
+  JSON.stringify(spineArrives.coverage));
+
+section('4e. A CHANGED SCENE PURPOSE CHANGES THE OUTGOING SCAFFOLD REQUEST');
+calls.length = 0;
+const changed = await page.evaluate(async () => {
+  const s = window.state;
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 21 });
+  const firstPurpose = (window._issueOutlineRowFor(s, 21) || {}).accomplishes;
+  // CHANGE ONE ROW'S PURPOSE in place, the way a regenerated spine would. NOTHING is cleared.
+  s.cgScaffold.issueArcs[2].sceneOutline[0].accomplishes =
+    'REVISED: she is called back to answer for the thing she did not do.';
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 21 });
+  const secondPurpose = (window._issueOutlineRowFor(s, 21) || {}).accomplishes;
+  return JSON.parse(JSON.stringify({ firstPurpose: firstPurpose, secondPurpose: secondPurpose }));
+});
+const skReqs = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined));
+fs.writeFileSync('_audit_out/issue_boundary/scaffold_request_before_change.txt', (skReqs[0] && skReqs[0].joined) || '(none)');
+fs.writeFileSync('_audit_out/issue_boundary/scaffold_request_after_change.txt', (skReqs[1] && skReqs[1].joined) || '(none)');
+t('the resolver sees the changed purpose without the cache being cleared',
+  changed.firstPurpose !== changed.secondPurpose && /^REVISED:/.test(String(changed.secondPurpose)),
+  JSON.stringify([String(changed.firstPurpose).slice(0, 50), String(changed.secondPurpose).slice(0, 50)]));
+t('two OUTGOING scaffold requests were captured, and only the second carries the revised purpose',
+  skReqs.length === 2 && !/REVISED: she is called back/.test(skReqs[0].joined)
+  && /REVISED: she is called back/.test(skReqs[1].joined),
+  JSON.stringify({ n: skReqs.length }));
 
 // ═══ 5. PROSE FALLS OUT OF CONTEXT; DURABLE RECORDS DO NOT ══════════════════════════════════
 section('5. OLDER HISTORY STAYS USABLE WHEN ITS PROSE LEAVES THE WINDOW');

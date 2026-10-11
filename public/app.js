@@ -101657,6 +101657,121 @@ function _buildAuthorFloorDirective(s) {
   }
   window._adjudicateSceneProposals = _adjudicateSceneProposals;
 
+  // THE NAMED SOURCES a commit assessment can be read from, and the ONLY normalisation applied to
+  // each. 'pagination' strips tags and collapses whitespace exactly as the caller's own branch
+  // does; 'projection' returns the latest projection text as-is. Called before dispatch to build
+  // the identity and again after it to check for a rewrite — same source, same normalisation.
+  function _commitProseForSource(s, tag) {
+    s = s || window.state;
+    try {
+      var t = String(tag || '');
+      if (t === 'pagination') {
+        if (typeof StoryPagination === 'undefined' || !StoryPagination.getAllContent) return '';
+        return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      if (t.indexOf('projection') === 0) {
+        return (typeof _sbLatestProseText === 'function') ? String(_sbLatestProseText(s) || '') : '';
+      }
+    } catch (_) {}
+    return '';
+  }
+  try { window._commitProseForSource = _commitProseForSource; } catch (_) {}
+
+  // THE COMMIT IDENTITY, built in ONE place by both production and the free harness. It records
+  // WHICH source the hash came from, so the post-dispatch check rereads that same source.
+  function _buildCommitSceneIdentity(s, prevText, prevUid, prevSrc) {
+    s = s || window.state;
+    var ident = { storyId: (s && s.storyId) || null, sceneUid: prevUid || null, pageUid: null,
+                  projectionHash: null, projectionRevision: null,
+                  fullTextHash: null, fullTextSource: null,
+                  fullTextChars: String(prevText || '').length,
+                  excerptChars: Math.min(5000, String(prevText || '').length) };
+    try {
+      var rec = (prevUid && typeof _sbSceneByUid === 'function') ? _sbSceneByUid(prevUid, s) : null;
+      var proj = (rec && rec.record && rec.record.projection) || null;
+      if (proj) {
+        ident.projectionHash = proj.hash || null;
+        ident.projectionRevision = (typeof proj.revision === 'number') ? proj.revision : null;
+      }
+    } catch (_) {}
+    try {
+      if (typeof StoryPagination !== 'undefined' && StoryPagination.getCurrentPageUid)
+        ident.pageUid = StoryPagination.getCurrentPageUid() || null;
+    } catch (_) {}
+    // THE SOURCE IS NAMED, and the hash is of THAT source reread through the shared helper — not
+    // of whatever string the caller happens to be holding. That is what makes the post-dispatch
+    // comparison meaningful.
+    try {
+      var tag = (String(prevSrc || '').indexOf('projection') === 0) ? 'projection' : 'pagination';
+      var txt = _commitProseForSource(s, tag);
+      if (!txt && tag === 'pagination') { tag = 'projection'; txt = _commitProseForSource(s, tag); }
+      if (!txt && tag === 'projection') { tag = 'pagination'; txt = _commitProseForSource(s, tag); }
+      if (txt && typeof _sbTextHash === 'function') {
+        ident.fullTextHash = _sbTextHash(txt);
+        ident.fullTextSource = tag;
+        ident.fullTextChars = txt.length;
+      }
+    } catch (_) {}
+    return ident;
+  }
+  try { window.__buildCommitSceneIdentity = function (st, txt, uid, src) {
+    return _buildCommitSceneIdentity(st || window.state, txt, uid, src); }; } catch (_) {}
+
+  function _revalidateAssessments(s, reason) {
+    s = s || window.state;
+    var out = [];
+    try {
+      ['_milestoneDeliveries', '_prereqInvalidations'].forEach(function (key) {
+        (Array.isArray(s[key]) ? s[key] : []).forEach(function (r) {
+          if (!r || r.accepted !== true || r.superseded === true) return;
+          var changed = null;
+          // (a) A CG projection: compare the record's hash against the record's own scene.
+          try {
+            if (r.sceneUid && r.projectionHash && typeof _sbSceneByUid === 'function') {
+              var rec = _sbSceneByUid(r.sceneUid, s);
+              var proj = (rec && rec.record && rec.record.projection) || null;
+              // ONLY A HASH MISMATCH SUPERSEDES. A record that is no longer in state.scenes is NOT
+              // evidence that its prose changed: literary continuations create no scene record at
+              // all, and the array is bounded and spliced by the OAS archive. Treating "not found"
+              // as a rewrite wiped every assessment on a story whose records had rolled off —
+              // found by _history_chain_control section 18, where two valid supports both died.
+              if (!rec) {
+                try { console.log('[ASSESSMENT-REVALIDATE] ' + (r.milestoneScene != null ? ('row ' + r.milestoneScene) : r.prereqId)
+                  + ': scene record ' + r.sceneUid + ' is not in state.scenes — UNVERIFIABLE, left in force'); } catch (_) {}
+              } else if (proj && String(proj.hash) !== String(r.projectionHash))
+                changed = 'the scene was rewritten (projection hash ' + r.projectionHash + ' -> ' + proj.hash + ')';
+            }
+          } catch (_) {}
+          // (b) A LITERARY source: reread THE SAME named source through the shared helper.
+          try {
+            if (!changed && r.fullTextSource && r.fullTextHash) {
+              var txt = _commitProseForSource(s, r.fullTextSource);
+              if (txt && typeof _sbTextHash === 'function') {
+                var h = _sbTextHash(txt);
+                if (String(h) !== String(r.fullTextHash))
+                  changed = 'the prose was edited (source ' + r.fullTextSource + ', full-text hash '
+                    + r.fullTextHash + ' -> ' + h + ')';
+              }
+            }
+          } catch (_) {}
+          if (changed) {
+            r.superseded = true;
+            r.supersededReason = changed + (reason ? ' [detected by ' + reason + ']' : '');
+            r.supersededAt = Date.now();
+            out.push(key + ':' + (r.milestoneScene != null ? ('row ' + r.milestoneScene) : r.prereqId));
+          }
+        });
+      });
+      if (out.length) {
+        try { s._issueOutline = null; } catch (_) {}
+        try { console.warn('[ASSESSMENT-REVALIDATE] superseded ' + out.length + ' accepted record(s) whose source changed: '
+          + out.join(', ')); } catch (_) {}
+      }
+    } catch (_) {}
+    return out;
+  }
+  try { window._revalidateAssessments = function (st, why) { return _revalidateAssessments(st || window.state, why || 'manual'); }; } catch (_) {}
+
   async function _commitScene(prevText, prevProposal, prevSceneNum, sceneIdentity) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
@@ -101666,6 +101781,10 @@ function _buildAuthorFloorDirective(s) {
       // VERIFIER-INPUT instrumentation (Roman): log the EXACT prose the verifier judges, so analysis can always align
       // the check to its scene (a naive index-align once produced a false "false-pass" alarm — this closes that gap).
       try { console.log('[VERIFIER-INPUT] scene=' + prevSceneNum + ' prose_len=' + _pt.length + ' head="' + _pt.slice(0, 70).replace(/\s+/g, ' ') + '" tail="' + _pt.slice(-70).replace(/\s+/g, ' ') + '"'); } catch (_) {}
+      // EVERY COMMIT PASS REVALIDATES WHAT IS ALREADY HELD. This is the production path that
+      // catches a literary page edit, which StoryPagination performs with no invalidation hook of
+      // its own.
+      try { _revalidateAssessments(window.state, 'the commit pass for scene ' + prevSceneNum); } catch (_) {}
       var cs = _ensureCommittedState();
       if (cs._committedThroughScene != null && cs._committedThroughScene >= prevSceneNum) return; // already committed
       var _factsBefore = cs.facts.length;
@@ -101800,6 +101919,7 @@ function _buildAuthorFloorDirective(s) {
         projectionRevision: (sceneIdentity && typeof sceneIdentity.projectionRevision === 'number')
           ? sceneIdentity.projectionRevision : null,
         fullTextHash: (sceneIdentity && sceneIdentity.fullTextHash) || null,
+        fullTextSource: (sceneIdentity && sceneIdentity.fullTextSource) || null,
         fullTextChars: (sceneIdentity && sceneIdentity.fullTextChars) || null,
         watchMilestones: _mWatch.map(function (m) { return Number(m.n); }),
         watchPrereqs: _pWatch.map(function (q) { return String(q.id); })
@@ -102061,20 +102181,17 @@ function _buildAuthorFloorDirective(s) {
                 + 'so nothing could later supersede this record — it is recorded as an observation only';
             if (!_asStale && _asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
               _asStale = 'the story changed while the assessment was in flight';
-            // THE LITERARY STALE CHECK. No projection record exists, so the current prose is
-            // re-read and re-hashed: if it no longer matches what was sent, the reply describes
-            // text that has been rewritten.
-            if (!_asStale && !_asTarget.sceneUid && _asTarget.fullTextHash) {
-              var _nowProse = '';
-              try {
-                if (typeof _sbLatestProseText === 'function') _nowProse = String(_sbLatestProseText(window.state) || '');
-                if ((!_nowProse || _nowProse.length < 40) && typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
-                  _nowProse = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-              } catch (_) {}
+            // THE LITERARY STALE CHECK — THE SAME NAMED SOURCE, re-read through the SAME helper.
+            // The first version preferred the latest projection here while the caller had preferred
+            // pagination, so unchanged pagination beside an older stored projection reported a
+            // rewrite that had not happened.
+            if (!_asStale && !_asTarget.sceneUid && _asTarget.fullTextHash && _asTarget.fullTextSource) {
+              var _nowProse = _commitProseForSource(window.state, _asTarget.fullTextSource);
               if (_nowProse && typeof _sbTextHash === 'function') {
                 var _nowHash = _sbTextHash(_nowProse);
                 if (String(_nowHash) !== String(_asTarget.fullTextHash))
-                  _asStale = 'the prose was rewritten while the assessment was in flight (full-text hash '
+                  _asStale = 'the prose was rewritten while the assessment was in flight (source '
+                    + _asTarget.fullTextSource + ', full-text hash '
                     + _asTarget.fullTextHash + ' -> ' + _nowHash + ')';
               }
             }
@@ -102129,7 +102246,7 @@ function _buildAuthorFloorDirective(s) {
               milestoneScene: tgt, atScene: _asScene, turnScene: prevSceneNum,
               storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-              fullTextHash: _asTarget.fullTextHash,
+              fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
               status: st || 'unstated', accepted: accepted, why: why,
               evidence: m.evidence || null, participants: parts, scope: scope || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102159,7 +102276,7 @@ function _buildAuthorFloorDirective(s) {
               prereqId: String(q.id), atScene: _asScene, turnScene: prevSceneNum,
               storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-              fullTextHash: _asTarget.fullTextHash,
+              fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
               status: st2 || 'unstated', accepted: acc2, why: why2,
               evidence: q.evidence || null, participants: parts2, scope: scope2 || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102184,7 +102301,7 @@ function _buildAuthorFloorDirective(s) {
                 atScene: _asScene, turnScene: prevSceneNum,
                 storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
                 projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-                fullTextHash: _asTarget.fullTextHash,
+                fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
                 status: 'unreported', accepted: false,
                 why: 'the verifier returned no entry for this watched item — NOT ASSESSED, which is not absence',
                 evidence: null, participants: [], scope: null,
@@ -102205,32 +102322,71 @@ function _buildAuthorFloorDirective(s) {
               return (r && r.milestoneScene != null) ? ('m:' + r.milestoneScene)
                 : (r && r.prereqId != null) ? ('p:' + r.prereqId) : null;
             };
+            // THE SOURCE that supports a conclusion: the scene (or page) its evidence was read
+            // from, at the revision it was read at. Two different sources are two INDEPENDENT
+            // supports and neither may absorb the other.
+            var _sourceOf = function (r) {
+              if (!r) return 'src:unknown';
+              return 'src:' + String(r.sceneUid || r.pageUid || '?')
+                + '@' + String(r.projectionHash || r.fullTextHash || '?')
+                + '#' + String(r.projectionRevision == null ? '-' : r.projectionRevision)
+                + '/s' + String(r.atScene == null ? '-' : r.atScene);
+            };
+            var _MAX_SUPPORTS = 8;
             var _trim = function (key) {
               var arr = Array.isArray(window.state[key]) ? window.state[key] : null;
               if (!arr) return;
               var acc = arr.filter(function (r) { return r && r.accepted === true; });
               var obs = arr.filter(function (r) { return !(r && r.accepted === true); });
-              // COMPACT the accepted set by TARGET, never by count. slice(-200) still deleted the
-              // first conclusion at record 201, and repeated assessments of ONE event consumed that
-              // allowance — 200 records need not be 200 distinct events. The newest accepted record
-              // for a target stands and earlier accepted records for the SAME target fold into it,
-              // so accepted storage is bounded by the number of distinct targets (which the plan
-              // bounds) and no conclusion is dropped for being old. Only explicit supersession
-              // takes one out of force.
-              var byTarget = {};
+              // COMPACT the accepted set by TARGET **AND SOURCE**, never by count. Keeping only the
+              // newest record per target destroyed independent supporting evidence: two scenes can
+              // establish one milestone, and rewriting the later one must not remove the earlier
+              // one's support. So records fold ONLY when they share both the target and the source
+              // they were read from — and for one key a NON-SUPERSEDED record always beats a
+              // superseded one, whichever is newer.
+              var byKey = {};
               acc.forEach(function (r) {
-                var k = _targetOf(r);
-                if (!k) { byTarget['_' + (r.at || Math.random())] = r; return; }
-                var prev = byTarget[k];
-                if (!prev) { byTarget[k] = r; return; }
-                var keepNewer = (Number(r.at || 0) >= Number(prev.at || 0)) ? r : prev;
-                var folded = (keepNewer === r) ? prev : r;
-                keepNewer.occurrences = (Number(keepNewer.occurrences) || 1) + (Number(folded.occurrences) || 1);
-                keepNewer.firstAssessedAt = Math.min(Number(keepNewer.firstAssessedAt || keepNewer.at || 0),
-                                                     Number(folded.firstAssessedAt || folded.at || 0)) || keepNewer.at;
-                byTarget[k] = keepNewer;
+                var tk = _targetOf(r);
+                var key = (tk ? tk : ('_' + (r.at || Math.random()))) + '|' + _sourceOf(r);
+                var prev = byKey[key];
+                if (!prev) { byKey[key] = r; return; }
+                var prevLive = !prev.superseded, rLive = !r.superseded;
+                var keep, folded;
+                if (prevLive !== rLive) { keep = prevLive ? prev : r; folded = prevLive ? r : prev; }
+                else { keep = (Number(r.at || 0) >= Number(prev.at || 0)) ? r : prev;
+                       folded = (keep === r) ? prev : r; }
+                keep.occurrences = (Number(keep.occurrences) || 1) + (Number(folded.occurrences) || 1);
+                keep.firstAssessedAt = Math.min(Number(keep.firstAssessedAt || keep.at || 0),
+                                                Number(folded.firstAssessedAt || folded.at || 0)) || keep.at;
+                byKey[key] = keep;
               });
-              var keepAcc = Object.keys(byTarget).map(function (k) { return byTarget[k]; });
+              var keepAcc = Object.keys(byKey).map(function (k) { return byKey[k]; });
+              // A BOUND ON SUPPORTS PER TARGET that cannot remove the conclusion. Per target: keep
+              // the live supports first (newest first), then superseded ones only if room remains.
+              // If a target has more live supports than the bound, they ALL stay — a conclusion is
+              // never weakened to satisfy a storage limit.
+              (function () {
+                var groups = {};
+                keepAcc.forEach(function (r) {
+                  var tk = _targetOf(r) || ('_' + (r.at || 0));
+                  (groups[tk] = groups[tk] || []).push(r);
+                });
+                var out = [];
+                Object.keys(groups).forEach(function (tk) {
+                  var g = groups[tk];
+                  var live = g.filter(function (r) { return !r.superseded; })
+                    .sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+                  var dead = g.filter(function (r) { return !!r.superseded; })
+                    .sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+                  var room = Math.max(0, _MAX_SUPPORTS - live.length);
+                  out = out.concat(live, dead.slice(0, room));
+                  if (dead.length > room) {
+                    try { console.log('[ASSESSMENT-STORE] ' + tk + ': dropped ' + (dead.length - room)
+                      + ' superseded support(s); ' + live.length + ' live support(s) retained'); } catch (_) {}
+                  }
+                });
+                keepAcc = out;
+              })();
               var keepObs = (obs.length > 40) ? obs.slice(-40) : obs;   // DIAGNOSTIC: may expire
               if (keepAcc.length === acc.length && keepObs.length === obs.length) return;
               var keep = keepAcc.concat(keepObs).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
@@ -102854,30 +103010,11 @@ function _buildAuthorFloorDirective(s) {
             // THE SCENE'S OWN IDENTITY, read off the projection the excerpt came from. Without
             // it the assessment can only hash the fragment it was given, which is not what a
             // rewrite changes.
+            // ONE BUILDER, shared with the post-dispatch check. _prevSrc names the source the
+            // prose came from, and the identity's hash is of THAT source read through the shared
+            // helper — so "has it changed?" compares like with like.
             var _csIdent = null;
-            try {
-              var _idRec = (_prevUid && typeof _sbSceneByUid === 'function') ? _sbSceneByUid(_prevUid, s) : null;
-              var _idProj = (_idRec && _idRec.record && _idRec.record.projection) || null;
-              // THE PAGE UID — the literary path's own unit identity. Ordinary literary
-              // continuation paginates and creates no scene projection record (the same fact
-              // _attachHistoryNote accommodates), so the page uid is what identifies the unit.
-              var _idPage = null;
-              try {
-                if (typeof StoryPagination !== 'undefined' && StoryPagination.getCurrentPageUid)
-                  _idPage = StoryPagination.getCurrentPageUid() || null;
-              } catch (_) {}
-              // A HASH OF THE COMPLETE PROSE, not of the 5,000-character excerpt the verifier is
-              // shown. This is the literary equivalent of a projection hash and is what a later
-              // rewrite changes.
-              var _idFullHash = null;
-              try { _idFullHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_prevText) : null; } catch (_) {}
-              _csIdent = { storyId: s.storyId || null, sceneUid: _prevUid || null,
-                           pageUid: _idPage,
-                           projectionHash: _idProj ? (_idProj.hash || null) : null,
-                           projectionRevision: _idProj ? (typeof _idProj.revision === 'number' ? _idProj.revision : null) : null,
-                           fullTextHash: _idFullHash,
-                           fullTextChars: _prevText.length, excerptChars: Math.min(5000, _prevText.length) };
-            } catch (_) { _csIdent = null; }
+            try { _csIdent = _buildCommitSceneIdentity(s, _prevText, _prevUid, _prevSrc); } catch (_) { _csIdent = null; }
             await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum, _csIdent); // last ~scene worth for the delivery verifier
             var _csI = _ensureCommittedState();
             if (_csI._committedThroughScene != null && _csI._committedThroughScene < _prevNum) console.error('[COMMIT-SCENE:INVARIANT-BROKEN] planning after Commit-Scene(' + _prevNum + ') but committedThrough=' + _csI._committedThroughScene);
@@ -138386,6 +138523,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                'ov' + overturned.join('+'), 'ar' + ((overturned._atRisk || []).join('+')),
                'h' + histKey.join(','), 'd' + delKey.join(','),
                // ASSESSMENTS. A new accepted record, or one superseded by a rewrite, changes the plan.
+               // SPINE FINGERPRINT: which arcs exist, how many outline rows each carries, their
+               // scene numbers, and a cheap digest of what they say — so a spine that arrives, is
+               // regenerated, or has one row's purpose changed all invalidate the plan.
+               'sp' + (function () {
+                 try {
+                   var sc = s.cgScaffold;
+                   if (!sc) return 'none';
+                   var arcs = Array.isArray(sc.issueArcs) ? sc.issueArcs : [];
+                   return String(sc._generatedAt || '-') + ':' + String(sc.storyId || '-') + ':'
+                     + arcs.map(function (a, i) {
+                         var rows = (a && Array.isArray(a.sceneOutline)) ? a.sceneOutline : [];
+                         var digest = 0;
+                         rows.forEach(function (r) {
+                           var t = String((r && r.n) || '') + '|' + String((r && r.accomplishes) || '')
+                             + '|' + String((r && r.link) || '') + '|' + String((r && r.kind) || '')
+                             + '|' + String((r && r.changes) || '') + '|' + String((r && r.sets_up) || '');
+                           for (var ci = 0; ci < t.length; ci++) { digest = (digest * 31 + t.charCodeAt(ci)) >>> 0; }
+                         });
+                         return i + 'x' + rows.length + 'd' + digest.toString(36)
+                           + (a && a.cliffhanger ? 'C' : '');
+                       }).join(',');
+                 } catch (_) { return 'err'; }
+               })(),
                'as' + ((Array.isArray(s._milestoneDeliveries) ? s._milestoneDeliveries : []).map(function (r) {
                  return (r && r.milestoneScene) + '@' + (r && r.atScene) + (r && r.accepted ? 'A' : '-') + (r && r.superseded ? 'S' : ''); }).join(',')),
                'ps' + ((Array.isArray(s._prereqInvalidations) ? s._prereqInvalidations : []).map(function (r) {
@@ -233318,6 +233478,10 @@ No text, no watermark, no UI elements, share-ready.`;
       } catch (_eP2) { try { console.warn('[CG:SCAFFOLD] P2 awaiter threw:', _eP2 && _eP2.message); } catch (__) {} }
       var scaffold = await _buildCGScaffold(s);
       s.cgScaffold = scaffold;
+      // The issue outline is derived from this. Dropping the cached object here makes a newly
+      // generated or regenerated spine visible immediately; the cache key's spine fingerprint is
+      // what guarantees it even if some other path assigns the scaffold.
+      try { s._issueOutline = null; } catch (_) {}
       try {
         console.log('[CG:SCAFFOLD:GEN] ' + (Date.now() - t0) + 'ms, model=' + (scaffold._sourceModel || 'gpt-4o'));
         console.log('[CG:SCAFFOLD] thesis="' + scaffold.runThesis + '"');

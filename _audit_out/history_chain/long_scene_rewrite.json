@@ -5,11 +5,12 @@
   "atScene": 3,
   "turnScene": 1,
   "storyId": "ctl-hist",
-  "sceneUid": "ctl:7424e476-aca4-4395-89af-3158811fe549",
+  "sceneUid": "ctl:1620827d-dd03-4ac0-976a-6b2d8409c4cc",
   "pageUid": null,
   "projectionHash": "h37d3ca71-5690",
   "projectionRevision": 0,
   "fullTextHash": null,
+  "fullTextSource": null,
   "status": "delivered_on_page",
   "accepted": true,
   "why": "accepted",
@@ -20,10 +21,10 @@
   "scope": "the Chayr",
   "excerptHash": "h8a243e9d-5000",
   "superseded": true,
-  "at": 1791750288484,
+  "at": 1791751684203,
   "source": "runtime commit verifier",
   "supersededReason": "the prose its evidence was verified against was revised: hash h37d3ca71-5690 -> revision 1",
-  "supersededAt": 1791750288484
+  "supersededAt": 1791751684203
  },
  "boundToFull": true,
  "inv": [
@@ -47,11 +48,12 @@
   "atScene": 3,
   "turnScene": 1,
   "storyId": "ctl-hist",
-  "sceneUid": "ctl:7424e476-aca4-4395-89af-3158811fe549",
+  "sceneUid": "ctl:1620827d-dd03-4ac0-976a-6b2d8409c4cc",
   "pageUid": null,
   "projectionHash": "h37d3ca71-5690",
   "projectionRevision": 0,
   "fullTextHash": null,
+  "fullTextSource": null,
   "status": "delivered_on_page",
   "accepted": true,
   "why": "accepted",
@@ -62,9 +64,9 @@
   "scope": "the Chayr",
   "excerptHash": "h8a243e9d-5000",
   "superseded": true,
-  "at": 1791750288484,
+  "at": 1791751684203,
   "source": "runtime commit verifier",
   "supersededReason": "the prose its evidence was verified against was revised: hash h37d3ca71-5690 -> revision 1",
-  "supersededAt": 1791750288484
+  "supersededAt": 1791751684203
  }
 }

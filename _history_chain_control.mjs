@@ -42,6 +42,7 @@ const calls = [];
 let verifierSeen = null;
 let pageVerifierResp = null;
 let rewriteDuringRequest = false;
+let editDuringRequest = false;
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
@@ -61,6 +62,7 @@ await page.route('**/api/**', async (route) => {
     const ref = (joined.match(/prop:\d+:\d+/) || [null])[0];
     verifierSeen = { ref: ref, bytes: joined.length, joined: joined };
     if (rewriteDuringRequest) { try { await page.evaluate(() => window.__ctlRewriteDuring && window.__ctlRewriteDuring()); } catch (_) {} }
+    if (editDuringRequest) { try { await page.evaluate(() => window.__ctlEditPage && window.__ctlEditPage()); } catch (_) {} }
     if (pageVerifierResp) return reply(JSON.stringify(pageVerifierResp), 'constructed-verifier');
     return reply(JSON.stringify({
       delivery: 'DELIVERED',
@@ -1303,100 +1305,206 @@ t('and the unrep17 records are surfaced as uncertainty in the summary',
   && unrep17.summary.milestoneDeliveries.some(x => x.status === 'unreported'),
   JSON.stringify(unrep17.summary.milestoneDeliveries && unrep17.summary.milestoneDeliveries.slice(0, 3)));
 
-section('17c. LITERARY GETS SCENE IDENTITY, AND A MISSING ONE BLOCKS ACCEPTANCE');
+section('17c. THE REAL LITERARY CALLER: one named source, read the same way twice');
+// The identity is built by the SHIPPED builder the caller now uses (_buildCommitSceneIdentity),
+// with BOTH pagination and an older stored projection present — the exact configuration that made
+// the first version report a rewrite that had not happened.
+const litCaller = await page.evaluate(() => {
+  const s = window.state;
+  const PAGE = 'The clearing emptied by degrees. "I bent the wish," Julian said, where the Chayr could hear him, and nobody contradicted it.';
+  const OLDER = 'An older projection text that is NOT what pagination currently holds.';
+  // REAL pagination content, set through StoryPagination's own public setter.
+  StoryPagination.setAllContent('<p>' + PAGE + '</p>');
+  // AND an older scene projection sitting beside it, which _sbLatestProseText would prefer.
+  s.scenes = [{ uid: window._sbMintSceneUid('ctl'), text: OLDER,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(OLDER), revision: 0, provenance: 'api_built' } }];
+  // THE SHIPPED BUILDER, called the way the caller calls it on the literary branch (prevSrc
+  // 'pagination', no prevUid).
+  const ident = window.__buildCommitSceneIdentity(s, PAGE, null, 'pagination');
+  const paginationNow = window._commitProseForSource(s, 'pagination');
+  const projectionNow = window._commitProseForSource(s, 'projection');
+  return JSON.parse(JSON.stringify({ ident: ident,
+    paginationHash: window._sbTextHash(paginationNow),
+    projectionHash: window._sbTextHash(projectionNow),
+    sourcesDiffer: paginationNow !== projectionNow }));
+});
+t('the two prose sources really are different in this configuration',
+  litCaller.sourcesDiffer === true && litCaller.paginationHash !== litCaller.projectionHash,
+  JSON.stringify([litCaller.paginationHash, litCaller.projectionHash]));
+t('the shipped builder NAMES the source it hashed, and it is pagination',
+  litCaller.ident.fullTextSource === 'pagination'
+  && litCaller.ident.fullTextHash === litCaller.paginationHash,
+  JSON.stringify({ src: litCaller.ident.fullTextSource, h: litCaller.ident.fullTextHash }));
+t('...and it carries the page uid, with no projection hash for an unrecorded literary unit',
+  litCaller.ident.projectionHash === null && litCaller.ident.sceneUid === null,
+  JSON.stringify(litCaller.ident));
+
 pageVerifierResp = { delivery: 'MISSED',
   milestone_watch: [{ n: 16, status: 'delivered_on_page',
     evidence: '"I bent the wish," Julian said, where the Chayr could hear him',
     participants: ['Julian'], scope: 'the Chayr' }], prereq_watch: [] };
-const litIdent = await page.evaluate(async () => {
+const litNoFalse = await page.evaluate(async () => {
   const s = window.state;
-  const PROSE = 'The clearing emptied by degrees. "I bent the wish," Julian said, where the Chayr could hear him, and nobody contradicted it.';
-  s._milestoneDeliveries = []; s._prereqInvalidations = [];
-  s._sealedProposals = null; s.scenes = [];
+  const PAGE = window._commitProseForSource(s, 'pagination');
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
   s._committedState = { facts: [], tableau: null, pendingIntent: null };
   const sealed = window._sealProposal({ kind: 'state_change', fact: 'z', milestone: 'm',
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  // THE LITERARY IDENTITY the caller now builds: a page uid and a hash of the COMPLETE prose,
-  // with NO scene projection record (which is what literary continuation produces).
-  const litId = { storyId: s.storyId, sceneUid: null, pageUid: 'page:lit1',
-    projectionHash: null, projectionRevision: null,
-    fullTextHash: window._sbTextHash(PROSE), fullTextChars: PROSE.length, excerptChars: PROSE.length };
-  await window._commitScene(PROSE, sc, 1, litId);
-  const withId = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
-  // NOW WITH NO IDENTITY AT ALL — the state before this fix.
+  const ident = window.__buildCommitSceneIdentity(s, PAGE, null, 'pagination');
+  await window._commitScene(PAGE, sc, 1, ident);
+  return JSON.parse(JSON.stringify({ rec: (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null }));
+});
+t('NO FALSE REWRITE: unchanged pagination beside an older projection is accepted',
+  !!litNoFalse.rec && litNoFalse.rec.accepted === true
+  && litNoFalse.rec.fullTextSource === 'pagination',
+  JSON.stringify(litNoFalse.rec && { acc: litNoFalse.rec.accepted, why: litNoFalse.rec.why }));
+
+section('17d. A REAL EDIT DURING THE HELD REQUEST, AND A REAL EDIT AFTERWARDS');
+// The edit is performed by the route handler WHILE the verifier request is in flight, through
+// StoryPagination's own setter — not by pre-mismatching a hash.
+editDuringRequest = true;
+const litDuring = await page.evaluate(async () => {
+  const s = window.state;
+  const PAGE = window._commitProseForSource(s, 'pagination');
   s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
   s._committedState = { facts: [], tableau: null, pendingIntent: null };
-  const sealed2 = window._sealProposal({ kind: 'state_change', fact: 'z2', milestone: 'm',
-    scene: 1, storyScene: 3, milestoneScene: 3 });
-  const sc2 = { event: sealed2.fact, proposalRef: sealed2.id, storyScene: 3, milestoneScene: 3 };
-  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed2.fact, sceneProposed: 1, storyScene: 3 };
-  await window._commitScene(PROSE, sc2, 1, null);
-  const noId = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
-  return JSON.parse(JSON.stringify({ withId: withId, noId: noId, prose: PROSE }));
-});
-t('a literary assessment carries a page uid and a FULL-PROSE hash',
-  !!litIdent.withId && litIdent.withId.pageUid === 'page:lit1' && !!litIdent.withId.fullTextHash
-  && litIdent.withId.projectionHash === null,
-  JSON.stringify(litIdent.withId && { page: litIdent.withId.pageUid, full: litIdent.withId.fullTextHash }));
-t('...and is accepted on that identity',
-  !!litIdent.withId && litIdent.withId.accepted === true, JSON.stringify(litIdent.withId && litIdent.withId.why));
-t('with NO identity at all it is stored as an OBSERVATION and never accepted',
-  !!litIdent.noId && litIdent.noId.accepted === false
-  && /no scene identity was available/.test(String(litIdent.noId.why)),
-  JSON.stringify(litIdent.noId && { acc: litIdent.noId.accepted, why: litIdent.noId.why }));
-pageVerifierResp = null;
-t('a literary rewrite supersedes it, keyed on the page uid',
-  await page.evaluate(() => {
-    const s = window.state;
-    const PROSE = 'The clearing emptied by degrees. "I bent the wish," Julian said, where the Chayr could hear him, and nobody contradicted it.';
-    s._milestoneDeliveries = [{ milestoneScene: 16, atScene: 3, status: 'delivered_on_page',
-      accepted: true, why: 'accepted', evidence: 'x', participants: ['Julian'], scope: 'the clearing',
-      pageUid: 'page:lit1', fullTextHash: window._sbTextHash(PROSE), superseded: false, at: 1 }];
-    const inv = window._sbInvalidateDependentsOfScene('page:lit1', window._sbTextHash(PROSE), 1);
-    return s._milestoneDeliveries[0].superseded === true
-      && (inv || []).some(x => /_milestoneDeliveries/.test(String(x)));
-  }), 'a literary rewrite did not supersede the assessment');
-
-section('17d. A REWRITE DURING A LITERARY REQUEST IS CAUGHT BY RE-HASHING THE PROSE');
-pageVerifierResp = { delivery: 'MISSED',
-  milestone_watch: [{ n: 16, status: 'delivered_on_page',
-    evidence: 'the Chayr stayed where she could be seen by everyone there',
-    participants: ['Julian'], scope: 'everyone there' }], prereq_watch: [] };
-t('the literary stale check re-reads and re-hashes the current prose',
-  (() => {
-    const src = fs.readFileSync('public/app.js', 'utf8');
-    return /THE LITERARY STALE CHECK[\s\S]{0,900}_sbTextHash\(_nowProse\)/.test(src)
-      && /the prose was rewritten while the assessment was in flight \(full-text hash/.test(src);
-  })(), 'no literary in-flight check');
-const litStale = await page.evaluate(async () => {
-  const s = window.state;
-  const PROSE = 'The clearing emptied by degrees, and the Chayr stayed where she could be seen by everyone there.';
-  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null; s.scenes = [];
-  s._committedState = { facts: [], tableau: null, pendingIntent: null };
-  const sealed = window._sealProposal({ kind: 'state_change', fact: 'q', milestone: 'm',
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'z2', milestone: 'm',
     scene: 1, storyScene: 3, milestoneScene: 3 });
   const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
   s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
-  // A LITERARY identity whose full-prose hash will not match what _sbLatestProseText now returns,
-  // which is exactly the shape of a rewrite that landed during the request.
-  const litId = { storyId: s.storyId, sceneUid: null, pageUid: 'page:lit2',
-    projectionHash: null, projectionRevision: null,
-    fullTextHash: window._sbTextHash(PROSE + ' AND THEN IT WAS ALL DIFFERENT.'),
-    fullTextChars: PROSE.length, excerptChars: PROSE.length };
-  // Make the "current" prose resolvable and DIFFERENT from the hash above.
-  s.scenes = [{ uid: window._sbMintSceneUid('ctl'), text: PROSE,
-    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(PROSE), revision: 0, provenance: 'api_built' } }];
-  await window._commitScene(PROSE, sc, 1, litId);
-  const rec = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
-  return JSON.parse(JSON.stringify({ rec: rec }));
+  const ident = window.__buildCommitSceneIdentity(s, PAGE, null, 'pagination');
+  window.__ctlEditPage = function () {
+    StoryPagination.setAllContent('<p>' + PAGE + ' AND THEN THE CHAYR LEFT THE CLEARING ENTIRELY.</p>');
+  };
+  await window._commitScene(PAGE, sc, 1, ident);
+  return JSON.parse(JSON.stringify({ rec: (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null,
+    pageNow: window._commitProseForSource(s, 'pagination').slice(-60) }));
 });
+editDuringRequest = false;
+t('the page really was edited during the request, through StoryPagination\'s own setter',
+  /AND THEN THE CHAYR LEFT THE CLEARING ENTIRELY/.test(litDuring.pageNow), litDuring.pageNow);
+t('and the reply is REJECTED, naming the source and the hash transition',
+  !!litDuring.rec && litDuring.rec.accepted === false
+  && /rewritten while the assessment was in flight \(source pagination, full-text hash/.test(String(litDuring.rec.why)),
+  JSON.stringify(litDuring.rec && { acc: litDuring.rec.accepted, why: litDuring.rec.why }));
+
+const litAfter = await page.evaluate(async () => {
+  const s = window.state;
+  // A CLEAN accepted record first, against the current page.
+  StoryPagination.setAllContent('<p>The clearing emptied. "I bent the wish," Julian said, where the Chayr could hear him.</p>');
+  const PAGE = window._commitProseForSource(s, 'pagination');
+  s._milestoneDeliveries = [{ milestoneScene: 16, atScene: 3, status: 'delivered_on_page',
+    accepted: true, why: 'accepted', evidence: '"I bent the wish," Julian said',
+    participants: ['Julian'], scope: 'the Chayr', pageUid: 'page:x',
+    fullTextSource: 'pagination', fullTextHash: window._sbTextHash(PAGE),
+    superseded: false, at: 1 }];
+  const beforeEdit = !!s._milestoneDeliveries[0].superseded;
+  // THE REAL POST-ASSESSMENT EDIT PATH: StoryPagination's public setter, which has no
+  // invalidation hook of its own.
+  StoryPagination.setAllContent('<p>The clearing emptied. Julian said nothing at all, and the Chayr waited.</p>');
+  const straightAfterEdit = !!s._milestoneDeliveries[0].superseded;
+  // THE PRODUCTION PATH THAT CATCHES IT: the next commit pass revalidates what is held.
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'z3', milestone: 'm',
+    scene: 1, storyScene: 4, milestoneScene: 4 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 4, milestoneScene: 4 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 2, storyScene: 4 };
+  const nowPage = window._commitProseForSource(s, 'pagination');
+  const ident = window.__buildCommitSceneIdentity(s, nowPage, null, 'pagination');
+  await window._commitScene(nowPage, sc, 2, ident);
+  const rec = s._milestoneDeliveries.filter(r => r.milestoneScene === 16)[0];
+  s.turnCount = 14; delete s._issueOutline; delete s._issueOutlineHistory;
+  const r16 = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
+  return JSON.parse(JSON.stringify({ beforeEdit: beforeEdit, straightAfterEdit: straightAfterEdit,
+    rec: rec, delivered: !!r16.alreadyDelivered, accomplishes: r16.accomplishes }));
+});
+t('StoryPagination\'s setter has NO invalidation hook of its own — stated, not papered over',
+  litAfter.beforeEdit === false && litAfter.straightAfterEdit === false,
+  JSON.stringify([litAfter.beforeEdit, litAfter.straightAfterEdit]));
+t('the NEXT COMMIT PASS revalidates and supersedes the record whose page was edited',
+  !!litAfter.rec && litAfter.rec.superseded === true
+  && /the prose was edited \(source pagination, full-text hash/.test(String(litAfter.rec.supersededReason))
+  && /detected by the commit pass/.test(String(litAfter.rec.supersededReason)),
+  JSON.stringify(litAfter.rec && { sup: litAfter.rec.superseded, why: litAfter.rec.supersededReason }));
+t('...and the plan stops treating the milestone as delivered',
+  litAfter.delivered === false && /Julian finally admits he acted/.test(litAfter.accomplishes),
+  JSON.stringify([litAfter.delivered, String(litAfter.accomplishes).slice(0, 50)]));
 pageVerifierResp = null;
-t('a literary reply describing superseded prose is rejected with the hash transition named',
-  !!litStale.rec && litStale.rec.accepted === false
-  && /rewritten while the assessment was in flight \(full-text hash/.test(String(litStale.rec.why)),
-  JSON.stringify(litStale.rec && { acc: litStale.rec.accepted, why: litStale.rec.why }));
+
+// ═══ 18. COMPACTION KEEPS INDEPENDENT SUPPORTS ══════════════════════════════════════════════
+section('18. TWO SCENES SUPPORT ONE MILESTONE; REWRITING ONE LEAVES THE OTHER');
+const supports = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 14;
+  // TWO INDEPENDENT supports for row 16, read from two different scenes at two different hashes.
+  s._milestoneDeliveries = [
+    { milestoneScene: 16, atScene: 3, status: 'delivered_on_page', accepted: true, why: 'accepted',
+      evidence: 'scene A evidence', participants: ['Julian'], scope: 'the clearing',
+      sceneUid: 'u:A', projectionHash: 'h:A', projectionRevision: 0, superseded: false, at: 10 },
+    { milestoneScene: 16, atScene: 5, status: 'delivered_on_page', accepted: true, why: 'accepted',
+      evidence: 'scene B evidence', participants: ['Julian'], scope: 'the clearing',
+      sceneUid: 'u:B', projectionHash: 'h:B', projectionRevision: 0, superseded: false, at: 20 }
+  ];
+  // THE PRODUCTION COMPACTION, reached by a real commit pass.
+  s._prereqInvalidations = []; s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  s.scenes = [];
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'c1', milestone: 'm',
+    scene: 1, storyScene: 6, milestoneScene: 6 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 6, milestoneScene: 6 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 4, storyScene: 6 };
+  return { sc: sc, prose: 'A passage of prose long enough to be judged at all, with more than forty characters in it.' };
+});
+const supportsAfter = await page.evaluate(async (arg) => {
+  const s = window.state;
+  await window._commitScene(arg.prose, arg.sc, 4, null);
+  const afterCompaction = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16 && r.accepted);
+  // NOW REWRITE ONLY SCENE B, through the shipped hook.
+  window._sbInvalidateDependentsOfScene('u:B', 'h:B', 1);
+  const live = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16 && r.accepted && !r.superseded);
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const r16 = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
+  return JSON.parse(JSON.stringify({ afterCompaction: afterCompaction, live: live,
+    delivered: !!r16.alreadyDelivered,
+    citedScenes: (r16.alreadyDelivered || []).map(h => h.atScene) }));
+}, supports);
+t('compaction keeps BOTH independent supports, with their own scenes and evidence',
+  supportsAfter.afterCompaction.length === 2
+  && supportsAfter.afterCompaction.map(r => r.atScene).sort().join(',') === '3,5'
+  && supportsAfter.afterCompaction.some(r => r.evidence === 'scene A evidence'),
+  JSON.stringify(supportsAfter.afterCompaction.map(r => [r.atScene, r.evidence])));
+t('rewriting scene B supersedes ONLY B — scene A remains live',
+  supportsAfter.live.length === 1 && supportsAfter.live[0].atScene === 3
+  && supportsAfter.live[0].evidence === 'scene A evidence',
+  JSON.stringify(supportsAfter.live.map(r => [r.atScene, r.superseded])));
+t('the conclusion REMAINS established on the surviving support',
+  supportsAfter.delivered === true && supportsAfter.citedScenes.join() === '3',
+  JSON.stringify({ delivered: supportsAfter.delivered, cited: supportsAfter.citedScenes }));
+t('a SUPERSEDED newer record never displaces a valid older support for the same source',
+  await page.evaluate(async () => {
+    const s = window.state;
+    s._milestoneDeliveries = [
+      { milestoneScene: 17, atScene: 7, status: 'delivered_on_page', accepted: true, why: 'accepted',
+        evidence: 'valid older', participants: ['Julian'], scope: 'x',
+        sceneUid: 'u:S', projectionHash: 'h:S', projectionRevision: 0, superseded: false, at: 10 },
+      { milestoneScene: 17, atScene: 7, status: 'delivered_on_page', accepted: true, why: 'accepted',
+        evidence: 'superseded newer', participants: ['Julian'], scope: 'x',
+        sceneUid: 'u:S', projectionHash: 'h:S', projectionRevision: 0, superseded: true, at: 99 }
+    ];
+    s._sealedProposals = null;
+    s._committedState = { facts: [], tableau: null, pendingIntent: null };
+    const sealed = window._sealProposal({ kind: 'state_change', fact: 'c2', milestone: 'm',
+      scene: 1, storyScene: 8, milestoneScene: 8 });
+    const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 8, milestoneScene: 8 };
+    s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 6, storyScene: 8 };
+    await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 6, null);
+    const kept = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 17 && r.accepted);
+    return kept.length === 1 && kept[0].evidence === 'valid older' && kept[0].superseded === false;
+  }), 'a superseded record displaced valid support');
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
