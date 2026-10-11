@@ -1,25 +1,45 @@
 {
- "_key": "ctl-outline|1|20|4|-",
+ "_key": "ctl-outline|1|10|10|4|||ct-|cf0|ov",
  "issueIndex": 1,
  "bounds": {
   "issueIndex": 1,
-  "per": 20,
+  "per": 10,
   "pricingPer": 10,
-  "source": "plan.issueScenes",
+  "mode": "cg",
+  "source": "ISSUE_PRICING",
+  "rowSupply": 20,
+  "mapping": {
+   "rowSupply": 20,
+   "nativeMode": "literary",
+   "mode": "cg",
+   "per": 10,
+   "issuesSpanned": 2,
+   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s); this issue is rows 1-10"
+  },
   "first": 1,
-  "last": 20
+  "last": 10
  },
  "sceneNow": 4,
  "label": "Issue 1",
  "thesis": null,
- "branch": null,
- "horizon": 19,
+ "horizon": 1,
+ "horizonAxis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
+ "decisions": [],
+ "overturned": [],
+ "commitEvidence": {
+  "through": null,
+  "facts": 0
+ },
  "scenes": [
   {
    "n": 1,
-   "status": "delivered",
+   "kind": "independent",
+   "delivery": "not_written",
+   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": false,
    "accomplishes": "THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must make. The twist does NOT land here. IN THIS ORDER: (A) The presiding Dohkar calls for the cost first. (B) Seren names her offering ALOUD as dialogue — her earliest memory — and the assembly settles, because this is correct. (C) She looks at Lirael and abandons the practiced wish, SPOKEN: \"so that Lirael may find the one she lost.\" She knows the rule; she wants the assembly to see her compassion; she blurs the wording to avoid naming Lirael's wound. (D) Individual reactions ripple — a Weave-Script stutters, one hand stops mid-gesture, the Dohkar goes still. NEVER \"everyone felt it\". (E) An OMEN occurs: atmospheric, dread or curiosity, NO information. Someone may misread it or dismiss it; nobody explains it. (F) Lirael understands what this costs her and what intervening will look like, because the wish is about her. END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -33,16 +53,26 @@
    "decision": {
     "axis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
     "consequence": "The choice MUST alter who witnesses the twist, how Lirael is judged when it lands, and what she is able to learn afterwards. A scene may NOT resolve the central crisis before the player decides.",
-    "resolved": true
+    "source": "plan row",
+    "resolved": false,
+    "choice": null
    },
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 2,
-   "status": "delivered",
-   "conditional": false,
-   "conditionalOn": null,
+   "kind": "conditional",
+   "delivery": "not_written",
+   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "status": "not_written",
+   "conditional": true,
+   "conditionalOn": 1,
+   "pendingDecision": true,
    "accomplishes": "",
    "accomplishesSource": "reader-owned row: objective not yet accepted",
    "follows_from": {
@@ -56,16 +86,26 @@
    "decision": {
     "axis": "claim the interference openly vs let the assembly keep its assumption",
     "consequence": "Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.",
-    "resolved": true
+    "source": "plan row",
+    "resolved": false,
+    "choice": null
    },
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row (reader-owned)"
   },
   {
    "n": 3,
-   "status": "delivered",
+   "kind": "independent",
+   "delivery": "not_written",
+   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2's accusation. (C) Julian's position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The deck surfaces and the temptation sharpens. (E) STOP at the threshold. Lirael does NOT choose. The player does.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -79,16 +119,26 @@
    "decision": {
     "axis": "player-facing Tempt Fate threshold — offered, never taken by a character",
     "consequence": "The scene builds the temptation and STOPS. Lirael does not resolve it.",
-    "resolved": true
+    "source": "plan row",
+    "resolved": false,
+    "choice": null
    },
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 4,
-   "status": "current",
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
+   "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -100,14 +150,33 @@
    "sets_up": "Lirael is formally under investigation and supervised, and Julian, who demanded the review, has not faced her.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": [
+    {
+     "choice": "intervene",
+     "how": "She broke witness protocol in front of everyone, so the notice lands on conduct the whole assembly saw. She is served as someone who has already admitted the act by doing it.",
+     "carries": "the assembly's eyewitness memory of her tearing the band away, Seren's knowledge that she came, and no deniability left about the interference"
+    },
+    {
+     "choice": "remain_bound",
+     "how": "She held the line, so the notice lands on conduct nobody can describe. She is served on suspicion, and cannot answer it without claiming an interference she did not commit.",
+     "carries": "a formal record still intact, Seren's knowledge that she did not come, and the private cost of having obeyed"
+    }
+   ],
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 5,
+   "kind": "independent",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "Julian quietly prevents the investigation from uncovering the truth.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -119,14 +188,24 @@
    "sets_up": "The investigation is being steered away from the truth, and nobody yet knows it is being steered.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": [
+    "prereq:investigation_open"
+   ],
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 6,
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "The PC discovers the wish succeeded in a way that should have been impossible.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -138,14 +217,22 @@
    "sets_up": "The wish's impossible success is a fact Lirael now holds and cannot account for.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 7,
+   "kind": "independent",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "Rumors spread through the city; the PC’s reputation collapses.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -157,14 +244,22 @@
    "sets_up": "Her reputation is gone, so anything she says from here is heard as self-defence.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 8,
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "The PC realizes someone else may have intervened.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -176,14 +271,24 @@
    "sets_up": "Lirael is looking for a person, not an accident.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": [
+    "prereq:julian_act_concealed"
+   ],
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 9,
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": true,
    "accomplishes": "She begins suspecting Julian.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -195,14 +300,25 @@
    "sets_up": "Suspicion of Julian is established; the evidence for it is not.",
    "openObjective": false,
    "decision": null,
+   "dependsOn": [
+    "prereq:julian_act_concealed",
+    "prereq:investigation_open"
+   ],
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   },
   {
    "n": 10,
+   "kind": "conditional",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
+   "conditional": true,
+   "conditionalOn": 1,
+   "pendingDecision": true,
    "accomplishes": "Julian denies involvement — but not convincingly.",
    "accomplishesSource": "plan row goal",
    "follows_from": {
@@ -214,226 +330,27 @@
    "sets_up": "His denial was unconvincing, which is not the same as proof.",
    "openObjective": false,
    "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 11,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "The consequences of the hidden sacrifice begin manifesting.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Julian denied it unconvincingly and nothing is proven — but the sacrifice behind the wish goes on being paid for.",
-    "link": "but",
-    "source": "plan row"
-   },
-   "changes": "The hidden sacrifice is visibly costing something, and no one can say what or whose.",
-   "sets_up": "The hidden sacrifice is producing consequences nobody can attribute to anyone.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 12,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "The PC discovers every miracle has a sacrifice — but cannot determine whose.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Consequences of the hidden sacrifice are manifesting where Lirael can see them.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "Lirael knows the law that every miracle is paid for, and cannot find the payer.",
-   "sets_up": "Lirael knows every miracle is paid for, and cannot determine whose payment this was.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 13,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "Someone else is endangered by the hidden bargain.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Lirael cannot determine whose sacrifice paid for the wish — but the bargain does not wait for her to find out.",
-    "link": "but",
-    "source": "plan row"
-   },
-   "changes": "Another person is now at risk from the bargain, and Lirael is the only one who knows why.",
-   "sets_up": "Someone else is in danger from the bargain, which makes the unanswered question urgent instead of academic.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 14,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "THE INQUIRY CONVENES, AND CLOSES IN ON JULIAN — a Chayr and two Dohkars formally open the inquiry into Lirael, held at The Open; under it the investigation turns toward Julian. The panel is constituted HERE for the first time; nothing earlier may have convened it.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Someone else is now endangered by the hidden bargain, on top of the procedural pressure that has been accumulating since the notice in scene 4.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "A Chayr and two Dohkars are seated and the inquiry is open, and its attention has moved from Lirael to Julian.",
-   "sets_up": "The panel is constituted for the first time, and the investigation has turned toward Julian.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 15,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "The PC learns the intervention violated one of the oldest taboos.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "The inquiry has turned toward Julian, so what he actually did starts to come into view.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "Lirael knows the intervention broke one of the oldest taboos, which makes it ruinous rather than irregular.",
-   "sets_up": "What was done was not merely irregular: it broke one of the oldest taboos, so exposing it would destroy whoever did it.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 16,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "Julian finally admits he acted.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "Julian has admitted to her that he acted, and has given her no reason to hold alongside it.",
-   "sets_up": "Julian has admitted the act and offered no reason with it.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 17,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "The PC learns what he sacrificed.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Julian admitted the act without giving a reason for it, which leaves only its cost to read him by.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "Lirael knows what Julian gave up, and cannot unknow the size of it.",
-   "sets_up": "Lirael knows what he gave up.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 18,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "She realizes he did it to save both the youth and her.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Lirael knows what Julian sacrificed, and what it was for is legible in what it cost him.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "Lirael knows he did it to save both the youth and her, so his ruin and her exoneration are the same act.",
-   "sets_up": "Exposure is now a betrayal of the man who saved her, and silence is now a lie she lives inside.",
-   "openObjective": false,
-   "decision": null,
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 19,
-   "status": "planned",
-   "conditional": false,
-   "conditionalOn": null,
-   "accomplishes": "She must decide whether to expose the truth or let history condemn her.",
-   "accomplishesSource": "plan row goal",
-   "follows_from": {
-    "text": "Exposure would destroy the man who saved her — but silence leaves the inquiry's judgement standing against her.",
-    "link": "but",
-    "source": "plan row"
-   },
-   "changes": "The choice is fully specified, fully costed, and still unmade.",
-   "sets_up": "The decision is the player's, and it has not been made.",
-   "openObjective": false,
-   "decision": {
-    "axis": "expose what Julian did vs let the inquiry's judgement stand",
-    "consequence": "The choice MUST change whose ruin the next scene is: Julian answering for a broken taboo, or Lirael living under a judgement she knows is false with him untouched. A scene that reads the same either way has made the choice decorative.",
-    "resolved": false
-   },
-   "withheld": [],
-   "source": "plan row"
-  },
-  {
-   "n": 20,
-   "status": "conditional",
-   "conditional": true,
-   "conditionalOn": 19,
-   "accomplishes": "She chooses — and the consequences launch the next issue.",
-   "accomplishesSource": "plan row goal — CONDITIONAL on the unresolved player decision at scene 19; Fate's intention, revisable",
-   "follows_from": {
-    "text": "The player has decided whether to expose Julian or let the record condemn her.",
-    "link": "therefore",
-    "source": "plan row"
-   },
-   "changes": "The choice is made and acted on, and the issue ends inside its consequence — see this plan's cliffhanger.",
-   "sets_up": "The predicament Issue 2 opens inside — see this plan's cliffhanger, whose branch is selected by the scene-19 decision.",
-   "openObjective": false,
-   "decision": null,
+   "dependsOn": [
+    "prereq:julian_act_concealed"
+   ],
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "plan row"
   }
  ],
  "cliffhanger": {
-  "scene": 20,
-  "source": "plan",
-  "decidedBy": {
-   "scene": 19,
-   "axis": "expose what Julian did vs let the inquiry's judgement stand"
-  },
-  "decided": false,
-  "branches": [
-   {
-    "choice": "expose",
-    "event": "Lirael puts Julian's act on the inquiry's record. The judgement against her does not hold — and the panel now has a taboo-breaking of its own to answer for, committed by the caretaker of The Answer.",
-    "issue2Predicament": "Lirael is cleared, and alone with what clearing her cost: the man who saved her is the one she handed over, and the Institution is now prosecuting a broken taboo rather than a misaligned wish. Issue 2 opens on her answering for that — to him, and to them."
-   },
-   {
-    "choice": "conceal",
-    "event": "Lirael lets the record stand. The inquiry closes against her on a judgement she knows is false, Julian is untouched, and the only other person who knows it is sitting in the room.",
-    "issue2Predicament": "Lirael carries a condemnation she could lift with one sentence, bound to Julian by a concealment either of them can end at any moment. Issue 2 opens on living under that judgement and under that leverage."
-   }
-  ],
-  "event": null,
-  "issue2Predicament": null,
+  "scene": 10,
+  "source": "plan (issue boundary row 10)",
+  "provenance": "authored_proposal_pending_review",
+  "decidedBy": null,
+  "decided": true,
+  "choice": null,
+  "branches": null,
+  "event": "Julian denies it to her face, and denies it so badly that she knows — and he knows she knows. Neither of them says so, and he leaves her holding a certainty she cannot prove to anyone.",
+  "why_unresolved": "whether anything she finds will stand up, and what he does now that she has asked him outright",
+  "issue2Predicament": "Lirael is certain Julian intervened and holds nothing anyone would accept as evidence, while he now knows she suspects him. The next issue opens with both of them acting on that, and with the hidden sacrifice starting to cost someone else.",
   "selected": null
  },
  "planPresent": true,

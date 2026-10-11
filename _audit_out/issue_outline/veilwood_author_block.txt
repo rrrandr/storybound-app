@@ -1,17 +1,20 @@
 
-  THIS SCENE'S PURPOSE WITHIN ISSUE 1 — THE AUDIT (scene 4 of 20; HARD — this is the scene's ASSIGNMENT, not background):
-    ISSUE THESIS: Whether she will sign what she knows is false
+  THIS SCENE'S PURPOSE WITHIN ISSUE 1 (scene 4 of 10; HARD — this is the scene's ASSIGNMENT, not background):
+    WHAT KIND OF DEVELOPMENT THIS IS: A CONVERGENCE POINT — Fate is steering the story here, and HOW it is reached is adaptable. Find the route from where she actually is now; do not reach it by moving her for the plot's convenience.
     WHAT THIS SCENE ACCOMPLISHES: NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.
     WHY IT FOLLOWS WHAT CAME BEFORE (OBSTRUCTION — the previous development got in the way): The price has landed and a new irreversible pressure arrived — but Lirael still cannot explain herself.
     WHAT CHANGES BY THE END: Lirael is formally under investigation, bound by named restrictions, and has not been allowed to explain herself.
     WHAT IT SETS UP: Lirael is formally under investigation and supervised, and Julian, who demanded the review, has not faced her.
-    ALREADY DELIVERED EARLIER IN THIS ISSUE (established; do NOT stage any of these again as a new event or a new revelation — a character may refer back to one, which is not the same as delivering it):
+    ROUTES TO THIS POINT (the player has not yet taken one; do not assume either):
+      – if "intervene": She broke witness protocol in front of everyone, so the notice lands on conduct the whole assembly saw. She is served as someone who has already admitted the act by doing it.  → arriving with: the assembly's eyewitness memory of her tearing the band away, Seren's knowledge that she came, and no deniability left about the interference
+      – if "remain_bound": She held the line, so the notice lands on conduct nobody can describe. She is served on suspicion, and cannot answer it without claiming an interference she did not commit.  → arriving with: a formal record still intact, Seren's knowledge that she did not come, and the private cost of having obeyed
+    EARLIER IN THIS ISSUE — NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history:
       – scene 1: THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must ma
       – scene 3: THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands onl
-    COMING NEXT, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):
-      – scene 5: Julian quietly prevents the investigation from uncovering the truth.
-      – scene 6: The PC discovers the wish succeeded in a way that should have been impossible.
-    THE ISSUE'S PLAN IS SETTLED ONLY AS FAR AS SCENE 19, which ends on a player decision that has not been made. Everything after it is Fate's INTENTION, not a fact: it may be pursued by another route, countered, or lost. Nothing in THIS scene may assume an answer to that decision, write the protagonist as having already given one, or deliver a development that depends on one.
+    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):
+      – scene 5 [INDEPENDENT]: Julian quietly prevents the investigation from uncovering the truth.
+      – scene 6 [CONVERGENCE]: The PC discovers the wish succeeded in a way that should have been impossible.
+      – scene 7 [INDEPENDENT]: Rumors spread through the city; the PC’s reputation collapses.
   THE EVENT BELOW IS HOW THAT PURPOSE LANDS, not a competing assignment: the purpose says what this scene is FOR, the event says what physically happens and who is in the room. Accomplish the purpose BY staging the event. Do NOT also try to accomplish a LATER scene's purpose here.
   STAGING (supplied by the scene assignment — treat as given, not as suggestion): SETTING: room · PRESENT: Lirael, the presiding Dohkar
 

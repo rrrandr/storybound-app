@@ -1,0 +1,53 @@
+
+
+Narrative skeleton for this scene:
+
+SCENE ENVIRONMENT ANCHOR:
+The scene must begin from this physical object or phenomenon: the room
+The first sentence must originate from this anchor before introducing character movement or dialogue.
+• pacing: measured escalation
+• dialogue ratio: dialogue-led
+• emotional density: moderate
+• beat rhythm: procedure then reaction
+• tension rhythm: rising with pauses
+Preserve this structural rhythm unless the scene requires deviation.
+
+STAGED CHARACTERS (HARD — be STRICT about presence mode; the most common failure shape is writing a phone-call interlocutor as if they were physically present in the room):
+  • IN_PERSON (physically present — can be looked at / touched / handed a thing): Lirael (the subject of the notice), the presiding Dohkar (serves the notice), Seren (pulled away from her)
+  • OFFSTAGE_REFERENCED (named or thought of but not actually present): Julian (named as demanding the review)
+  Any prose that puts an ON_PHONE character in physical proximity (leaning over, reaching across, the touch of a hand, the lean of a shoulder, sharing a screen) is a STAGING FAILURE — re-stage them on the phone, or move them IN_PERSON only if they explicitly walk in.
+
+INTERLOCUTOR ON FIRST MENTION (HARD): realize this on the FIRST time the named character speaks or acts: the presiding Dohkar — the authority who ruled on the rite, who reads from a page he does not look up from
+  ↳ IN_PERSON interlocutor — FUSED COMBO-DESCRIPTOR (HARD, Roman 2026-06-08): NAME + RELATIONSHIP + one descriptor that FUSES a VISUALIZABLE PHYSICAL FEATURE to a trait in a single stroke, so the reader can SEE the person. A pure behavioral tell with no visual anchor FAILS — "his mouth set in that way that meant he'd decided" gives the reader no face. ✓ "His perpetually squinting eyes refused to meet mine." / "She had the apologetic stoop of someone used to being the tallest in the room." / "His knuckles were scarred white and he kept them flat on the table like he was holding it down." The feature must be concrete and picturable (squinting eyes / stoop / scarred knuckles / heavy jaw / a hairline in retreat / a wrestler's neck / sun-cracked hands), with the trait riding ON it. PRIORITIZE THE FACE (HARD, Roman 2026-06-09): the descriptor MUST include at least one FACE/HEAD anchor — eyes, brow, the hairline or hair, the line of the jaw or mouth, skin/complexion, or apparent age. Posture, build, or clothing ALONE (a stoop, a blazer, broad shoulders, tapping nails) is a SILHOUETTE, not a FACE — the reader must be able to picture this person's face, not just their outline. ANY character who SUSTAINS a multi-beat conversation (not just first mention) must carry at least this ONE combo-descriptor — it is not optional for a real scene participant. (This is separate from the MAX-ONE-NAME cap: role-noun the INCIDENTAL names; a sustained interlocutor is a kept role and earns the descriptor.)
+  ↳ ON_PHONE interlocutor: the protagonist cannot see her, but the SAME texture obligation applies in a different form — render her through a REMEMBERED detail (a habit / tell the PC has learned to read: "the quiet inhalation Lina always took right before she said the part nobody wanted to hear"), a HEARD-THROUGH-LINE cue (the click of a heel on marble bleeding into the audio), or a PROJECTED behavioral inference (the careful pause where she rehearsed the sentence before saying it). Naming + job WITHOUT sensory or behavioral coloration is the same failure as bare "she said."
+
+LI TEXTURE BEAT (when it fits — the love interest is off-stage or on-phone; his presence in the protagonist's MIND is the scene's romantic spine): beat 16: she catches herself remembering Julian setting The Answer down with both hands and not letting go of it
+  ↳ Apply the LI-TEXTURE DOCTRINE in the system prompt (photograph test / micro-scene vs summary / cognitive-interference ladder → LEVEL 4 / desire register / SOURCE PRIORITY / attraction vector). PREFER a VERB Julian performed over a static portrait; an embodied response in her is welcome but NOT required, and never as an anatomical location checklist.
+
+PC BODY CALLBACK (REQUIRED — see PC BODY BIBLE block in the system prompt for the protagonist's per-story stable features + tells). Pepper ONE light touch from the Bible into the scene per the planner's pick: beat 3 — stress_tic (the gossamer band she has nothing to do with now)
+  ↳ Apply the PC-BODY-CALLBACK DOCTRINE in the system prompt (surface ONE feature/tell in passing; never a portrait).
+
+  CAUSAL OUTLINE — THE DRAMATIC SEQUENCE OF THIS SCENE (HARD; this is HOW the scene accomplishes its purpose above. Each line is ONE DEVELOPMENT, not one sentence and not a caption: write it THROUGH — the act happens, the other person answers, the cost arrives. You own every word, the pacing, the imagery, and any micro-beat you want to add. You may NOT drop a development, reorder them so an effect precedes its cause, or replace the sequence with atmosphere):
+    1. The presiding Dohkar steps into the gap between the trunks and will not let Lirael pass
+    2. THEREFORE — this happens BECAUSE of what just happened: He tells her to stand where the assembly can still see her
+    3. THEREFORE — this happens BECAUSE of what just happened: Lirael asks what this is; he unfolds a page instead of answering
+    4. THEREFORE — this happens BECAUSE of what just happened: He reads the notice aloud: her conduct at the rite is under investigation
+    5. BUT — this is OBSTRUCTED by what just happened: Lirael says the wish twisted before she moved; he does not look up from the page
+    6. BUT — this is OBSTRUCTED by what just happened: She asks who will hear the matter; he declines to say
+    7. THEREFORE — this happens BECAUSE of what just happened: The refusal tells her it has not been decided, which is worse
+    8. THEREFORE — this happens BECAUSE of what just happened: He names the first restriction: she may supervise no rite
+    9. BUT — this is OBSTRUCTED by what just happened: Lirael says Seren is her ward and asks who will take her; he does not answer that either
+    10. THEREFORE — this happens BECAUSE of what just happened: He names the second restriction: she may not leave the Veilwood
+    11. THEREFORE — this happens BECAUSE of what just happened: Seren starts toward her across the spiralgrass and her mother pulls her back
+    12. BUT — this is OBSTRUCTED by what just happened: Lirael tries to speak to Seren and the Dohkar moves to block the line of sight
+    13. THEREFORE — this happens BECAUSE of what just happened: He tells her that speaking to the Graduant is now also a breach
+    14. THEREFORE — this happens BECAUSE of what just happened: Lirael asks who demanded the review
+    15. THEREFORE — this happens BECAUSE of what just happened: He says Julian did, and says it as though it settles something
+    16. THEREFORE — this happens BECAUSE of what just happened: Lirael looks for Julian among the dispersing assembly and does not find him
+    17. THEREFORE — this happens BECAUSE of what just happened: She understands he did not come to say it to her himself
+    18. THEREFORE — this happens BECAUSE of what just happened: An older Dohkar she has worked under for two years looks away from her
+    19. THEREFORE — this happens BECAUSE of what just happened: The presiding Dohkar holds out the page and a stylus for her acknowledgement
+    20. BUT — this is OBSTRUCTED by what just happened: He tells her refusing to sign is itself recorded
+    21. THEREFORE — this happens BECAUSE of what just happened: The page stays between them, and the assembly stops pretending not to watch
+    THE LINKS ARE STRUCTURE, NOT WORDING: "but" and "therefore" describe how these developments are connected. Never write the words "but", "therefore" or "and then" as connectives between beats to signal the link — the reader must FEEL the obstruction or the consequence in what people do and say.
+    A development the scene merely MENTIONS has not been delivered. The scene's 700-1000-word budget exists to write these through; if you are running short, the developments are too THIN, not too few.

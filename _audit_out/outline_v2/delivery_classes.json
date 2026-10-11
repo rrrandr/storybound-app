@@ -1,0 +1,35 @@
+{
+ "rows": [
+  [
+   1,
+   "committed",
+   "committed fact at scene 1 (proposalRef prop:1:1)"
+  ],
+  [
+   2,
+   "assessed_not_delivered",
+   "commit-scene assessed through 3, status MISSED, no committed fact"
+  ],
+  [
+   3,
+   "assessed_not_delivered",
+   "commit-scene assessed through 3, status MISSED, no committed fact"
+  ],
+  [
+   4,
+   "written_unassessed",
+   "prose exists for this ordinal; commit-scene has not assessed it (through=3)"
+  ],
+  [
+   5,
+   "not_written",
+   "no committed fact, no assessment, and no record this scene was produced"
+  ],
+  [
+   6,
+   "planned",
+   "not yet generated"
+  ]
+ ],
+ "block": "\n  THIS SCENE'S PURPOSE WITHIN ISSUE 1 (scene 6 of 10; HARD — this is the scene's ASSIGNMENT, not background):\n    WHAT KIND OF DEVELOPMENT THIS IS: A CONVERGENCE POINT — Fate is steering the story here, and HOW it is reached is adaptable. Find the route from where she actually is now; do not reach it by moving her for the plot's convenience.\n    WHAT THIS SCENE ACCOMPLISHES: The PC discovers the wish succeeded in a way that should have been impossible.\n    WHY IT FOLLOWS WHAT CAME BEFORE (OBSTRUCTION — the previous development got in the way): The investigation has been steered away from the truth — but the wish itself is still there to be looked at.\n    WHAT CHANGES BY THE END: Lirael knows the wish succeeded in a way that should not have been possible.\n    WHAT IT SETS UP: The wish's impossible success is a fact Lirael now holds and cannot account for.\n    EARLIER IN THIS ISSUE — ESTABLISHED AND VERIFIED — already delivered on the page; do NOT stage it again as a new event or a new revelation (a character may refer back to it, which is not the same as delivering it):\n      – scene 1: THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must ma\n    EARLIER IN THIS ISSUE — CHECKED AND NOT DELIVERED — this was planned, the scene was written, and the event did NOT land. It is STILL OWED. Do not treat it as history, and do not assume the reader knows it:\n      – scene 3: THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands onl\n    EARLIER IN THIS ISSUE — WRITTEN BUT UNCHECKED — prose exists for these scenes and nothing has verified what landed. Do not assert them as established facts:\n      – scene 4: NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she mu\n    EARLIER IN THIS ISSUE — NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history:\n      – scene 5: Julian quietly prevents the investigation from uncovering the truth.\n    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):\n      – scene 7 [INDEPENDENT]: Rumors spread through the city; the PC’s reputation collapses.\n      – scene 8 [CONVERGENCE]: The PC realizes someone else may have intervened.\n      – scene 9 [CONVERGENCE]: She begins suspecting Julian.\n"
+}

@@ -1,0 +1,26 @@
+[
+ {
+  "url": "http://localhost:3000/api/proxy",
+  "role": "STRUCTURE_GENERATOR",
+  "model": "grok-4-1-fast-non-reasoning",
+  "bytes": 16444
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "mistral-small-latest",
+  "bytes": 21857
+ },
+ {
+  "url": "http://localhost:3000/api/proxy",
+  "role": "STRUCTURE_GENERATOR",
+  "model": "grok-4-1-fast-reasoning",
+  "bytes": 250192
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "mistral-small-latest",
+  "bytes": 22059
+ }
+]

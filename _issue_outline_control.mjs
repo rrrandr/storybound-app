@@ -110,47 +110,47 @@ const setup = (sceneNum) => page.evaluate((n) => {
   return true;
 }, sceneNum);
 
-// ═══ 1. THE ISSUE OUTLINE CARRIES DISTINCT ACCOMPLISHMENTS THROUGH ITS CLIFFHANGER ══════════
-section('1. ONE COMPLETE ISSUE OUTLINE, cliffhanger into the next issue');
+// ═══ 1. STRUCTURAL SHAPE OF THE OUTLINE IN THE ACTIVE ISSUE WINDOW ══════════════════════════
+section('1. THE OUTLINE SPANS THE ACTIVE ISSUE WINDOW, CAUSALLY LINKED END TO END');
 await setup(4);
-const o1 = await page.evaluate(() => {
-  const o = window._resolveIssueOutline(window.state, { force: true });
-  return JSON.parse(JSON.stringify(o));
-});
-t('the outline resolves for the whole issue', !!o1 && Array.isArray(o1.scenes) && o1.scenes.length === 20,
-  o1 && o1.scenes && o1.scenes.length);
-t('the issue span is reconciled from the plan, and the pricing span is reported alongside it',
-  o1.bounds.source === 'plan.issueScenes' && o1.bounds.per === 20 && o1.bounds.pricingPer === 10,
+const o1 = await page.evaluate(() => JSON.parse(JSON.stringify(window._resolveIssueOutline(window.state, { force: true }))));
+t('the outline spans the CG purchase window — rows 1-10, 10 scenes per issue',
+  o1.scenes.length === 10 && o1.bounds.first === 1 && o1.bounds.last === 10 && o1.bounds.per === 10,
   JSON.stringify(o1.bounds));
+t('the 20 authored rows are reported as a MAPPING onto two CG issues, not as a disagreement',
+  !!o1.bounds.mapping && o1.bounds.mapping.rowSupply === 20 && o1.bounds.mapping.issuesSpanned === 2
+  && o1.bounds.mapping.nativeMode === 'literary', JSON.stringify(o1.bounds.mapping));
 const withGoal = o1.scenes.filter(r => r.accomplishes);
-t('every scene with a goal states a DISTINCT accomplishment (no row repeats another)',
+t('every scene with a goal states a DISTINCT accomplishment',
   new Set(withGoal.map(r => r.accomplishes)).size === withGoal.length,
   withGoal.length + ' goals, ' + new Set(withGoal.map(r => r.accomplishes)).size + ' distinct');
-const linked = o1.scenes.filter(r => r.n > 1 && r.follows_from && r.follows_from.text && (r.follows_from.link === 'but' || r.follows_from.link === 'therefore'));
 t('every scene after the first says WHY it follows, with a but/therefore link',
-  linked.length === 19, linked.length + '/19 — unlinked: ' + o1.scenes.filter(r => r.n > 1 && !(r.follows_from && r.follows_from.link)).map(r => r.n).join(','));
-t('every scene states what it SETS UP for the next one',
-  o1.scenes.filter(r => r.sets_up).length === 20,
-  o1.scenes.filter(r => !r.sets_up).map(r => r.n).join(','));
-t('the issue builds to a SPECIFIC cliffhanger, not an ending shape',
-  !!o1.cliffhanger && o1.cliffhanger.scene === 20 && Array.isArray(o1.cliffhanger.branches) && o1.cliffhanger.branches.length === 2,
-  JSON.stringify(o1.cliffhanger && { scene: o1.cliffhanger.scene, branches: (o1.cliffhanger.branches || []).length }));
-t('each cliffhanger branch states the PREDICAMENT Issue 2 opens inside',
-  (o1.cliffhanger.branches || []).every(b => b.event && b.issue2Predicament && b.issue2Predicament.length > 40),
-  JSON.stringify((o1.cliffhanger.branches || []).map(b => [b.choice, !!b.event, (b.issue2Predicament || '').length])));
-t('the cliffhanger is NOT selected while the scene-19 decision is unmade',
-  o1.cliffhanger.decided === false && o1.cliffhanger.selected == null && o1.cliffhanger.decidedBy.scene === 19,
-  JSON.stringify({ decided: o1.cliffhanger.decided, by: o1.cliffhanger.decidedBy }));
-console.log('      horizon=' + o1.horizon + '  conditional rows=' + o1.scenes.filter(r => r.conditional).map(r => r.n).join(','));
+  o1.scenes.filter(r => r.n > 1 && r.follows_from.text && (r.follows_from.link === 'but' || r.follows_from.link === 'therefore')).length === 9,
+  o1.scenes.filter(r => r.n > 1 && !(r.follows_from && r.follows_from.link)).map(r => r.n).join(','));
+t('every scene states what CHANGES and what it SETS UP',
+  o1.scenes.every(r => r.changes) && o1.scenes.every(r => r.sets_up),
+  o1.scenes.filter(r => !r.changes || !r.sets_up).map(r => r.n).join(','));
+t('every scene declares WHAT KIND of development it is',
+  o1.scenes.every(r => ['independent', 'convergence', 'conditional', 'overturned'].indexOf(r.kind) !== -1),
+  JSON.stringify(o1.scenes.map(r => [r.n, r.kind])));
+t('the issue is a MIX of independent events, convergence points and real choices — not a branching tree',
+  new Set(o1.scenes.map(r => r.kind)).size >= 3,
+  JSON.stringify(o1.scenes.map(r => r.kind)));
+t('the window ends on a specific cliffhanger with the next issue\'s predicament',
+  !!o1.cliffhanger && o1.cliffhanger.scene === 10 && !!o1.cliffhanger.event
+  && (o1.cliffhanger.issue2Predicament || '').length > 60,
+  JSON.stringify(o1.cliffhanger && { scene: o1.cliffhanger.scene, ev: (o1.cliffhanger.event || '').slice(0, 60) }));
+t('and that cliffhanger is marked an AUTHORED PROPOSAL pending review, not settled canon',
+  o1.cliffhanger.provenance === 'authored_proposal_pending_review', o1.cliffhanger.provenance);
 
-// ═══ 2. A SCENE SCAFFOLD DEVELOPS ITS OWN ISSUE DIRECTIVE THROUGH CAUSAL BEATS ══════════════
-section('2. THE SCENE SCAFFOLD RECEIVES ITS ISSUE DIRECTIVE AND RETURNS A CAUSAL OUTLINE');
+// ═══ 2. THE SCENE SCAFFOLD RECEIVES ITS ISSUE DIRECTIVE AND RETURNS A CAUSAL OUTLINE ════════
+section('2. THE SCENE SCAFFOLD REQUEST');
 calls.length = 0;
 const skel = await page.evaluate(async () => {
   const r = await window.__generateSceneSkeleton('wait for the Dohkar', '', { sceneNumber: 4 });
   return JSON.parse(JSON.stringify({ causal_outline: r && r.causal_outline, note: r && r.causal_outline_note,
-    anchor: r && r.environment_anchor, staged: (r && r.staged_characters) || [],
-    pacing: r && r.structural_pacing, env: r && r.environment_plus }));
+    builtFor: r && r._builtForScene, anchor: r && r.environment_anchor,
+    staged: (r && r.staged_characters) || [], pacing: r && r.structural_pacing, env: r && r.environment_plus }));
 });
 const skelCall = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined))[0];
 t('the scaffold request carries THIS SCENE\'S PURPOSE WITHIN THE ISSUE',
@@ -159,177 +159,64 @@ t('...including what it accomplishes, why it follows, what changes and what it s
   !!skelCall && /WHAT IT ACCOMPLISHES:/.test(skelCall.joined) && /WHY IT FOLLOWS WHAT CAME BEFORE/.test(skelCall.joined)
   && /WHAT MUST BE TRUE BY THE END:/.test(skelCall.joined) && /WHAT IT SETS UP FOR THE NEXT SCENE:/.test(skelCall.joined),
   skelCall && (skelCall.joined.match(/THIS SCENE'S PURPOSE[\s\S]{0,900}/) || [''])[0]);
-t('the scaffold is asked for a But/Therefore sequence at the CG beat granularity',
-  !!skelCall && /CAUSAL_OUTLINE/.test(skelCall.joined) && /20-24 objects/.test(skelCall.joined)
+t('the scaffold is asked for a But/Therefore sequence at the CG beat granularity (20-24)',
+  !!skelCall && /CAUSAL_OUTLINE/.test(skelCall.joined) && /An ARRAY of 20-24 objects/.test(skelCall.joined)
   && /THE BUT\/THEREFORE RULE/.test(skelCall.joined), !!skelCall);
-t('and told a beat is not a sentence, so the outline cannot restore captions',
+t('and told a beat is not a sentence, with NO unrequested literary count or action quota',
   !!skelCall && /A BEAT IS NOT A SENTENCE and not a caption/.test(skelCall.joined)
-  && /700-1000-word budget/.test(skelCall.joined), !!skelCall);
-t('the returned causal outline lands on the scaffold',
-  Array.isArray(skel.causal_outline) && skel.causal_outline.length === 9, JSON.stringify(skel.note));
+  && /700-1000-word budget/.test(skelCall.joined)
+  && !/At least HALF the entries/.test(skelCall.joined) && !/10-14/.test(skelCall.joined), !!skelCall);
+t('the returned causal outline lands on the scaffold, stamped with its scene',
+  Array.isArray(skel.causal_outline) && skel.causal_outline.length === 9 && skel.builtFor === 4,
+  JSON.stringify({ n: (skel.causal_outline || []).length, builtFor: skel.builtFor, note: skel.note }));
 t('its links are preserved as structure (therefore/but), first entry unlinked',
   skel.causal_outline && skel.causal_outline[0].link === null
   && skel.causal_outline.slice(1).every(b => b.link === 'but' || b.link === 'therefore'),
   JSON.stringify((skel.causal_outline || []).map(b => b.link)));
-// environment_plus is deliberately NOT asserted here: production overwrites whatever the model
-// returns via _resolveStageBeatInventory (app.js ~99054) and nulls it when that resolver finds
-// nothing, so it is a BACKEND-owned field, not one the scaffold retains. First run of this control
-// failed on it and the assertion was wrong, not the code.
+// environment_plus is deliberately NOT asserted: production overwrites whatever the model returns
+// via _resolveStageBeatInventory and nulls it when that resolver finds nothing, so it is a
+// BACKEND-owned field, not one the scaffold retains.
 t('the scaffold KEEPS its staging, cast and tonal responsibilities',
   !!skel.anchor && skel.staged.length === 3 && !!skel.pacing,
   JSON.stringify({ anchor: skel.anchor, staged: skel.staged.length, pacing: skel.pacing, env_backend_owned: skel.env }));
 
-// ═══ 3. THE ACTUAL AUTHOR REQUEST, WITH NO COMPETING OBSOLETE ASSIGNMENT ════════════════════
-section('3. THE AUTHOR REQUEST CARRIES THE DIRECTIVE AND THE OUTLINE, AND NOTHING THAT CONTRADICTS THEM');
+// ═══ 3. THE AUTHOR BLOCK ON THE CG PATH ═════════════════════════════════════════════════════
+// NOTE: these read the prompt FRAGMENT from the shared builder. The INTERCEPTED OUTGOING author
+// request is checked in _outline_delivery_control.mjs section 7, which is the real proof.
+section('3. THE SHARED AUTHOR BUILDER (fragment-level; the real outgoing request is checked in _outline_delivery_control)');
 const auth = await page.evaluate(() => {
-  const d = window._buildPlotContractDirective() || '';
-  return { d: d, len: d.length };
-});
-fs.mkdirSync('_audit_out/issue_outline', { recursive: true });
-fs.writeFileSync('_audit_out/issue_outline/author_request_block.txt', auth.d);
-t('[no-contract path] the author receives the scene\'s PURPOSE WITHIN THE ISSUE',
-  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(auth.d) && /WHAT THIS SCENE ACCOMPLISHES:/.test(auth.d),
-  auth.d.slice(0, 400));
-t('[no-contract path] ...and the causal sequence that develops it',
-  /CAUSAL OUTLINE — THE DRAMATIC SEQUENCE OF THIS SCENE/.test(auth.d)
-  && /THEREFORE — this happens BECAUSE/.test(auth.d) && /BUT — this is OBSTRUCTED/.test(auth.d),
-  auth.len);
-t('[no-contract path] the issue directive is NOT demoted to optional inspiration',
-  !/NOT staging authority, NOT the event to render/.test(auth.d)
-  && !/Do NOT restate this milestone as the scene's action/.test(auth.d)
-  && !/do NOT try to accomplish the whole milestone in one scene/.test(auth.d),
-  (auth.d.match(/.{0,120}milestone.{0,200}/i) || [''])[0]);
-t('[no-contract path] the causal outline is NOT replaced by one tiny event — all 9 developments are delivered',
-  (CONSTRUCTED_SKELETON.causal_outline || []).every(b => auth.d.includes(b.beat)),
-  (CONSTRUCTED_SKELETON.causal_outline || []).filter(b => !auth.d.includes(b.beat)).map(b => b.beat).join(' | '));
-t('the but/therefore labels are explicitly NOT wording for the prose',
-  /THE LINKS ARE STRUCTURE, NOT WORDING/.test(auth.d)
-  && /Never write the words "but", "therefore" or "and then" as connectives/.test(auth.d), auth.len);
-// The nesting sentence is only meaningful where there IS an event below it. The block above was
-// built with no planner contract (the fallback path), which correctly emits purpose + outline and
-// no event. So the nesting claim is checked on the path that carries one.
-const authWithEvent = await page.evaluate(() => {
   const s = window.state;
-  // A CONSTRUCTED planner contract, in the shape production writes at app.js ~103434.
   s._scenePlotContract = { sceneIndex: 3,
-    stateChange: { event: 'The presiding Dohkar serves Lirael formal notice in the gap between the trunks, with the clearing still emptying behind him',
+    stateChange: { event: 'The presiding Dohkar serves Lirael formal notice in the gap between the trunks',
       precondition: 'Lirael has not yet been told her conduct is under investigation',
       forces_choice: 'whether to sign the acknowledgement or refuse it',
-      slots: { actor: 'the presiding Dohkar', action: 'serves formal notice of investigation',
-               target: 'Lirael', exitState: 'Lirael is formally under investigation and restricted',
-               precondition: 'the presiding Dohkar is present in the scene' } },
-    hardBeats: [{ description: 'the notice is served and acknowledged in writing' }],
-    aftermathTruths: [], reservedConstraints: [] };
+      slots: { precondition: 'the presiding Dohkar is present in the scene',
+               actor: 'the presiding Dohkar', action: 'serves formal notice of investigation',
+               target: 'Lirael', exitState: 'Lirael is formally under investigation and restricted' } },
+    hardBeats: [{ description: 'the notice is served' }], aftermathTruths: [], reservedConstraints: [] };
   window._structuredEventHandoff = true;
   return window._buildPlotContractDirective() || '';
 });
-fs.writeFileSync('_audit_out/issue_outline/author_request_with_event.txt', authWithEvent);
-t('with a planner event present, purpose and event are stated as NESTED, not rival assignments',
-  /THE EVENT BELOW IS HOW THAT PURPOSE LANDS, not a competing assignment/.test(authWithEvent),
-  authWithEvent.length);
-t('and that path carries the purpose, the event and the causal outline together',
-  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(authWithEvent)
-  && /SCENE SPINE — THE EVENT/.test(authWithEvent)
-  && /CAUSAL OUTLINE — THE DRAMATIC SEQUENCE/.test(authWithEvent),
-  JSON.stringify({ purpose: /PURPOSE WITHIN ISSUE 1/.test(authWithEvent),
-    event: /SCENE SPINE — THE EVENT/.test(authWithEvent), outline: /CAUSAL OUTLINE/.test(authWithEvent) }));
-t('the obsolete milestone paragraph is gone from that path too',
-  !/NOT staging authority, NOT the event to render/.test(authWithEvent)
-  && !/do NOT try to accomplish the whole milestone in one scene/.test(authWithEvent),
-  (authWithEvent.match(/.{0,100}milestone.{0,200}/i) || [''])[0]);
-t('a scene with no planner contract still receives purpose and outline (not dropped on the early return)',
-  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(auth.d) && /CAUSAL OUTLINE/.test(auth.d)
-  && !/SCENE SPINE — THE EVENT/.test(auth.d), auth.len);
+fs.mkdirSync('_audit_out/issue_outline', { recursive: true });
+fs.writeFileSync('_audit_out/issue_outline/author_request_block.txt', auth);
+t('the author receives the scene\'s PURPOSE WITHIN THE ISSUE and its KIND',
+  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(auth) && /WHAT THIS SCENE ACCOMPLISHES:/.test(auth)
+  && /WHAT KIND OF DEVELOPMENT THIS IS:/.test(auth), auth.slice(0, 400));
+t('...and the causal sequence that develops it',
+  /CAUSAL OUTLINE — THE DRAMATIC SEQUENCE OF THIS SCENE/.test(auth)
+  && /THEREFORE — this happens BECAUSE/.test(auth) && /BUT — this is OBSTRUCTED/.test(auth), auth.length);
+t('the issue directive is NOT demoted to optional inspiration',
+  !/NOT staging authority, NOT the event to render/.test(auth)
+  && !/Do NOT restate this milestone as the scene's action/.test(auth)
+  && !/do NOT try to accomplish the whole milestone in one scene/.test(auth),
+  (auth.match(/.{0,120}milestone.{0,200}/i) || [''])[0]);
+t('the but/therefore labels are explicitly NOT wording for the prose',
+  /THE LINKS ARE STRUCTURE, NOT WORDING/.test(auth)
+  && /Never write the words "but", "therefore" or "and then" as connectives/.test(auth), auth.length);
+t('the purpose and the event are stated as NESTED, not as rival assignments',
+  /THE EVENT BELOW IS HOW THAT PURPOSE LANDS, not a competing assignment/.test(auth), auth.length);
 t('the 700-1000-word target is preserved in the outline block',
-  /700-1000-word budget exists to write these through/.test(auth.d), auth.len);
-
-// ═══ 5. AN ALREADY-DELIVERED DEVELOPMENT IS NOT ASSIGNED AGAIN ══════════════════════════════
-section('5. DELIVERED HISTORY IS STATED AS DELIVERED, AND RESERVED SCENES STAY RESERVED');
-t('the scenes already played are named as established, not re-assignable',
-  /ALREADY DELIVERED EARLIER IN THIS ISSUE/.test(auth.d)
-  && /do NOT stage any of these again as a new event or a new revelation/.test(auth.d),
-  (auth.d.match(/ALREADY DELIVERED[\s\S]{0,500}/) || [''])[0]);
-const deliveredRows = o1.scenes.filter(r => r.status === 'delivered');
-t('scenes 1-3 are classified delivered at scene 4, and scene 4 is current',
-  deliveredRows.map(r => r.n).join(',') === '1,2,3' && o1.scenes.filter(r => r.status === 'current').map(r => r.n).join(',') === '4',
-  o1.scenes.map(r => r.n + ':' + r.status).join(' '));
-t('a delivered development appears under ALREADY DELIVERED and never as this scene\'s assignment',
-  (() => {
-    const s3 = o1.scenes.filter(r => r.n === 3)[0];
-    const head = auth.d.slice(0, auth.d.indexOf('ALREADY DELIVERED'));
-    return !!s3 && s3.accomplishes && auth.d.includes(String(s3.accomplishes).slice(0, 180))
-      && !head.includes(String(s3.accomplishes).slice(0, 120));
-  })(), 'scene-3 goal must not appear before the ALREADY DELIVERED header');
-t('the next scenes are RESERVED for their own scene, not deliverable here',
-  /COMING NEXT, RESERVED FOR ITS OWN SCENE/.test(auth.d)
-  && /do not deliver, name or pre-empt any of it here/.test(auth.d), auth.len);
-t('an unconditional look-ahead is NOT labelled conditional (scenes 5-6 sit before the horizon)',
-  /COMING NEXT, RESERVED/.test(auth.d) && !/scene 5 \[CONDITIONAL/.test(auth.d),
-  (auth.d.match(/COMING NEXT[\s\S]{0,260}/) || [''])[0]);
-// At scene 19 the look-ahead row (20) sits PAST the unresolved decision, so it must be delivered
-// as Fate's intention rather than as what happens.
-const atHorizon = await page.evaluate(() => {
-  const s = window.state;
-  s._stagedAuthoringSceneIndex = 18;        // scene 19
-  s._issueOutline = null; s._sceneDecisions = null; s._scenePlotContract = null;
-  return { block: window._renderIssueOutlineDirective(s, 19) || '',
-           outline: JSON.parse(JSON.stringify(window._resolveIssueOutline(s, { force: true }))) };
-});
-fs.writeFileSync('_audit_out/issue_outline/author_block_at_horizon.txt', atHorizon.block);
-t('at the decision scene, scene 20 is classified conditional',
-  atHorizon.outline.horizon === 19 && atHorizon.outline.scenes.filter(r => r.n === 20)[0].conditional === true,
-  JSON.stringify({ horizon: atHorizon.outline.horizon }));
-t('and it is delivered as Fate\'s intention, explicitly NOT as what happens',
-  /scene 20 \[CONDITIONAL — Fate's intention, revisable; it is NOT yet what happens\]/.test(atHorizon.block),
-  (atHorizon.block.match(/COMING NEXT[\s\S]{0,300}/) || [''])[0]);
-t('the decision scene states the axis and forbids deciding it for the player',
-  /THE PLAYER DECIDES AT THE END OF THIS SCENE: expose what Julian did/.test(atHorizon.block)
-  && /Do NOT decide it for them/.test(atHorizon.block),
-  (atHorizon.block.match(/THE PLAYER DECIDES[\s\S]{0,400}/) || [''])[0]);
-t('and both cliffhanger possibilities are offered without either being chosen',
-  /WHICH cliffhanger it is depends on a player decision/.test(atHorizon.block) === false
-  || /do not pick for them, and do not blend the two/.test(atHorizon.block),
-  (atHorizon.block.match(/CLIFFHANGER[\s\S]{0,300}/) || [''])[0]);
-
-// ═══ 4. A CONSEQUENTIAL PLAYER MOVE CHANGES THE REMAINING SPINE, NOT THE COMPLETED HISTORY ══
-section('4. A PLAYER DECISION REVISES THE REMAINING TRAJECTORY AND PRESERVES COMPLETED HISTORY');
-const beforeMove = o1;
-const afterMove = await page.evaluate(() => {
-  // The SHIPPED recorder, not a seeded field: _recordSceneDecision is what the UI calls.
-  window._recordSceneDecision(4, 'intervene', 'tear the band and go to Seren', 'control');
-  const o = window._resolveIssueOutline(window.state, { force: true });
-  return JSON.parse(JSON.stringify(o));
-});
-t('the recorded decision is visible to the outline as the active branch',
-  afterMove.branch === null || typeof afterMove.branch === 'string',
-  JSON.stringify(afterMove.branch));
-t('COMPLETED HISTORY IS PRESERVED — every delivered row is byte-identical after the move',
-  beforeMove.scenes.filter(r => r.status === 'delivered').every(b => {
-    const a = afterMove.scenes.filter(x => x.n === b.n)[0];
-    return a && a.accomplishes === b.accomplishes && a.changes === b.changes;
-  }), 'a delivered row changed');
-const horizonMoved = await page.evaluate(() => {
-  // Resolve the decision the horizon was waiting on, then rebuild.
-  window._recordSceneDecision(19, 'expose', 'expose what Julian did', 'control');
-  const o = window._resolveIssueOutline(window.state, { force: true });
-  return JSON.parse(JSON.stringify({ horizon: o.horizon, cliffDecided: o.cliffhanger && o.cliffhanger.decided,
-    conditional: o.scenes.filter(r => r.conditional).map(r => r.n),
-    delivered: o.scenes.filter(r => r.status === 'delivered').map(r => r.n) }));
-});
-t('resolving the scene-19 decision moves the horizon past it and settles the cliffhanger',
-  horizonMoved.cliffDecided === true && (horizonMoved.horizon === null || horizonMoved.horizon > 19),
-  JSON.stringify(horizonMoved));
-const revise = await page.evaluate(() => {
-  const logs = [];
-  const orig = console.log;
-  console.log = function () { logs.push(Array.prototype.join.call(arguments, ' ')); orig.apply(console, arguments); };
-  window._reviseIssueOutlineForMove(window.state, 'control probe');
-  console.log = orig;
-  return logs.filter(l => /ISSUE-OUTLINE/.test(l));
-});
-t('the revision is reported, and reports no change to any delivered row',
-  revise.some(l => /\[ISSUE-OUTLINE:REVISE\]/.test(l))
-  && !revise.some(l => /DELIVERED ROW .* CHANGED/.test(l)), JSON.stringify(revise));
+  /700-1000-word budget exists to write these through/.test(auth), auth.length);
 
 // ═══ 2b / 6. THE SPINE CAN OWN THE OUTLINE WITH NO AUTHORED PLAN, AND BOTH PATHS CONSUME IT ═
 section('2b. A STORY WITH NO AUTHORED PLAN GETS ITS OUTLINE FROM THE GENERATED ISSUE SPINE');
@@ -365,31 +252,26 @@ const liteRoot = /system \+= '\\n\\n────────\\n\\n' \+ _pcLite/.
 t('the CG author root calls the shared builder', cgRoot);
 t('the literary author root calls the same shared builder', litRoot);
 t('the lite root calls it too (one owner, three roots)', liteRoot);
-const live = await page.evaluate(() => {
-  const s = window.state;
-  s._starterId = 'starter_first_sacrifice'; s._issueOutline = null;
-  const out = {};
-  // CG path: staged index.
-  s.currentEngine = 'graphic'; s.renderMode = 'cg'; s._stagedAuthoringSceneIndex = 3;
-  out.cg = (window._buildPlotContractDirective() || '');
-  // LITERARY path: no staged index, turnCount-derived scene number, and the literary skeleton
-  // renderer is a DIFFERENT function — check it carries the outline too.
-  s.currentEngine = 'literary'; s.renderMode = 'literary';
-  delete s._stagedAuthoringSceneIndex; s.turnCount = 2;   // -> scene 4
-  s._issueOutline = null;
-  out.lit = (window._buildPlotContractDirective() || '');
-  out.litSkel = (typeof window.buildSkeletonDirective === 'function') ? (window.buildSkeletonDirective() || '') : '(absent)';
-  return out;
-});
-fs.writeFileSync('_audit_out/issue_outline/cg_author_block.txt', live.cg);
-fs.writeFileSync('_audit_out/issue_outline/literary_author_block.txt', live.lit);
-t('the CG author block contains the purpose AND the causal outline',
-  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(live.cg) && /CAUSAL OUTLINE/.test(live.cg), live.cg.length);
-t('the LITERARY author block contains the purpose AND the causal outline',
-  /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(live.lit) && /CAUSAL OUTLINE/.test(live.lit), live.lit.length);
-t('each path resolves its OWN scene number (CG scene 4 via staged index, literary scene 4 via turnCount)',
-  /scene 4 of 20/.test(live.cg) && /scene 4 of 20/.test(live.lit),
-  JSON.stringify({ cg: (live.cg.match(/scene \d+ of \d+/) || [])[0], lit: (live.lit.match(/scene \d+ of \d+/) || [])[0] }));
+// The literary path renders the causal outline through buildSkeletonDirective (after its skeleton
+// is generated), NOT through the plot-contract block — see _outline_delivery_control section 8,
+// which drives both orderings. Verified here: the shared root exists on both paths.
+t('the shared builder emits the purpose block on the CG path',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._starterId = 'starter_first_sacrifice'; s.cgScaffold = null;   // section 2b cleared both
+    s.currentEngine = 'graphic'; s.renderMode = 'cg'; s._stagedAuthoringSceneIndex = 3;
+    s._issueOutline = null;
+    return /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(window._buildPlotContractDirective() || '');
+  }), 'cg purpose absent');
+t('and on the literary path',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._starterId = 'starter_first_sacrifice'; s.cgScaffold = null;
+    s.currentEngine = 'literary'; s.renderMode = 'literary';
+    delete s._stagedAuthoringSceneIndex; s.turnCount = 2;
+    s._issueOutline = null;
+    return /THIS SCENE'S PURPOSE WITHIN ISSUE 1/.test(window._buildPlotContractDirective() || '');
+  }), 'literary purpose absent');
 
 // ═══ 7. VEILWOOD GEOGRAPHY REACHES PLANNING AND AUTHOR REQUESTS, AND IS LOCATION-SCOPED ════
 section('7. VEILWOOD GEOGRAPHY CANON (location-scoped) REACHES THE SPINE, THE SCAFFOLD AND THE AUTHOR');

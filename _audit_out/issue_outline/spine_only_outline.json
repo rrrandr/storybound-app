@@ -1,25 +1,38 @@
 {
- "_key": "ctl-outline|1|10|2|-",
+ "_key": "ctl-outline|1|10|10|2|||ct-|cf0|ov",
  "issueIndex": 1,
  "bounds": {
   "issueIndex": 1,
   "per": 10,
   "pricingPer": 10,
+  "mode": "cg",
   "source": "ISSUE_PRICING",
+  "rowSupply": null,
+  "mapping": null,
   "first": 1,
   "last": 10
  },
  "sceneNow": 2,
  "label": "Issue 1 — the audit",
  "thesis": "Whether she will sign what she knows is false",
- "branch": null,
  "horizon": null,
+ "horizonAxis": null,
+ "decisions": [],
+ "overturned": [],
+ "commitEvidence": {
+  "through": null,
+  "facts": 0
+ },
  "scenes": [
   {
    "n": 1,
-   "status": "delivered",
+   "kind": "convergence",
+   "delivery": "not_written",
+   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": false,
    "accomplishes": "The auditor arrives unannounced and asks for the ledger she keeps privately",
    "accomplishesSource": "issue spine",
    "follows_from": {
@@ -31,14 +44,22 @@
    "sets_up": "she has to decide what to hand over",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "issue spine"
   },
   {
    "n": 2,
-   "status": "current",
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
+   "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": false,
    "accomplishes": "She hands over a copy she has edited",
    "accomplishesSource": "issue spine",
    "follows_from": {
@@ -50,14 +71,22 @@
    "sets_up": "the original still exists somewhere",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "issue spine"
   },
   {
    "n": 3,
+   "kind": "convergence",
+   "delivery": "planned",
+   "deliveryEvidence": "not yet generated",
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
+   "pendingDecision": false,
    "accomplishes": "The auditor asks for the original",
    "accomplishesSource": "issue spine",
    "follows_from": {
@@ -69,6 +98,10 @@
    "sets_up": "she needs someone to destroy the original",
    "openObjective": false,
    "decision": null,
+   "dependsOn": null,
+   "brokenPrereqs": null,
+   "routes": null,
+   "activeRoute": null,
    "withheld": [],
    "source": "issue spine"
   }
@@ -76,11 +109,15 @@
  "cliffhanger": {
   "scene": 3,
   "source": "issue spine",
+  "provenance": null,
   "decidedBy": null,
   "decided": true,
+  "choice": null,
   "branches": null,
   "event": "She asks him to burn the original, in the room where the auditor is still working",
-  "issue2Predicament": "She has made a second person into an accomplice, and he has not said yes. Issue 2 opens with her owing him something she cannot name and the auditor one room away."
+  "why_unresolved": "whether he does it",
+  "issue2Predicament": "She has made a second person into an accomplice, and he has not said yes. Issue 2 opens with her owing him something she cannot name and the auditor one room away.",
+  "selected": null
  },
  "planPresent": false,
  "spineOutlinePresent": true

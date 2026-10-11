@@ -1,16 +1,48 @@
 
-  THIS SCENE'S PURPOSE WITHIN ISSUE 1 (scene 4 of 20; HARD — this is the scene's ASSIGNMENT, not background):
+  THIS SCENE'S PURPOSE WITHIN ISSUE 1 (scene 4 of 10; HARD — this is the scene's ASSIGNMENT, not background):
+    WHAT KIND OF DEVELOPMENT THIS IS: A CONVERGENCE POINT — Fate is steering the story here, and HOW it is reached is adaptable. Find the route from where she actually is now; do not reach it by moving her for the plot's convenience.
     WHAT THIS SCENE ACCOMPLISHES: NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she must keep while it runs. Julian is named aloud as having demanded a review; he is NOT in the room. Do NOT name who will hear the matter, do NOT name a venue, do NOT give a date or a timeframe, and do NOT constitute a panel — the formal inquiry is LATE-Issue-1 content and belongs to row 14. END with Lirael formally under investigation, supervised, and still unable to explain herself.
     WHY IT FOLLOWS WHAT CAME BEFORE (OBSTRUCTION — the previous development got in the way): The price has landed and a new irreversible pressure arrived — but Lirael still cannot explain herself.
     WHAT CHANGES BY THE END: Lirael is formally under investigation, bound by named restrictions, and has not been allowed to explain herself.
     WHAT IT SETS UP: Lirael is formally under investigation and supervised, and Julian, who demanded the review, has not faced her.
-    ALREADY DELIVERED EARLIER IN THIS ISSUE (established; do NOT stage any of these again as a new event or a new revelation — a character may refer back to one, which is not the same as delivering it):
+    ROUTES TO THIS POINT (the player has not yet taken one; do not assume either):
+      – if "intervene": She broke witness protocol in front of everyone, so the notice lands on conduct the whole assembly saw. She is served as someone who has already admitted the act by doing it.  → arriving with: the assembly's eyewitness memory of her tearing the band away, Seren's knowledge that she came, and no deniability left about the interference
+      – if "remain_bound": She held the line, so the notice lands on conduct nobody can describe. She is served on suspicion, and cannot answer it without claiming an interference she did not commit.  → arriving with: a formal record still intact, Seren's knowledge that she did not come, and the private cost of having obeyed
+    EARLIER IN THIS ISSUE — NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history:
       – scene 1: THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must ma
       – scene 3: THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands onl
-    COMING NEXT, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):
-      – scene 5: Julian quietly prevents the investigation from uncovering the truth.
-      – scene 6: The PC discovers the wish succeeded in a way that should have been impossible.
-    THE ISSUE'S PLAN IS SETTLED ONLY AS FAR AS SCENE 19, which ends on a player decision that has not been made. Everything after it is Fate's INTENTION, not a fact: it may be pursued by another route, countered, or lost. Nothing in THIS scene may assume an answer to that decision, write the protagonist as having already given one, or deliver a development that depends on one.
+    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):
+      – scene 5 [INDEPENDENT]: Julian quietly prevents the investigation from uncovering the truth.
+      – scene 6 [CONVERGENCE]: The PC discovers the wish succeeded in a way that should have been impossible.
+      – scene 7 [INDEPENDENT]: Rumors spread through the city; the PC’s reputation collapses.
+  THE EVENT BELOW IS HOW THAT PURPOSE LANDS, not a competing assignment: the purpose says what this scene is FOR, the event says what physically happens and who is in the room. Accomplish the purpose BY staging the event. Do NOT also try to accomplish a LATER scene's purpose here.
+  STAGING (supplied by the scene assignment — treat as given, not as suggestion): SETTING: room · PRESENT: Lirael, the presiding Dohkar
+
+  SCENE POSITION — WHERE THIS STORY ALREADY IS (HARD):
+  These beats have ALREADY HAPPENED on the page in earlier scenes. They are spent.
+    ✓ the wish spoken aloud, as dialogue
+    ✓ sensitive observers registering the misalignment
+    ✓ the omen
+    ✓ the omen read, dismissed, or misread
+    ✓ the price taken or identified
+  Do NOT replay, re-stage, or re-narrate them. The reader has seen them. Referring
+  back is fine; performing them again resets the story.
+
+  SCENE SPINE — THE EVENT (HIGHEST AUTHORITY on WHAT PHYSICALLY HAPPENS, WHERE, and WHO IS PRESENT — this IS the scene):
+  This owns the scene's SETTING, named PROPS, ARRIVALS and DEPARTURES, and the specific ACTION. If it names a place, the scene HAPPENS IN THAT PLACE. If it names an object, that object is PHYSICALLY PRESENT. If it names a threat (a patrol, a watcher, a pursuer), that threat is ACTIVE ON THE PAGE — not remembered, not feared in the abstract.
+  ROLLING CONTEXT IS CONTINUITY, NOT STAGING AUTHORITY (HARD): the previous scene tells you what is already TRUE — who knows what, what was said, what was decided. It does NOT tell you where this scene takes place or who is in the room. Do NOT keep the prior scene's location, cast, or props merely because they are the ones you were last given.
+  PRECEDENCE (HARD): where rolling context conflicts with this event's setting, cast, props, or action — preserve established canon, but ADVANCE INTO THIS EVENT. Move the characters there; let time pass; open in the new place if that is what it takes. Silently restaging this event inside the previous scene's tableau is a FAILURE, even if the prose is good.
+  • BEFORE (still FALSE at the first line — OPEN with this unresolved and establish it as not-yet-true): Lirael has not yet been told her conduct is under investigation
+  • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a sound, a movement, a body reacting, an object changing). SHOW what physically HAPPENS; NEVER render it as a flat summary or an abstract label that announces its meaning. FORBIDDEN shapes: "a sudden shift reveals a hidden thread…", "the fracture becomes visible, revealing a deeper truth…", "a change in the atmosphere…". The event to stage: The presiding Dohkar serves Lirael formal notice in the gap between the trunks
+  • AFTER: by the scene's end the BEFORE fact is now TRUE — the world has changed, and it cannot be undone.
+  • THE UNRESOLVED PRESSURE this unlocks (the CLOSING beat, reached through the event's aftermath; it exists ONLY because the event happened). Land it in ONE of two diegetic shapes — whichever the scene has earned: (a) a choice the POV character is now cornered into and has not yet made, or (b) a LINE OR ACT FROM ANOTHER CHARACTER — most often the love interest — that DEMANDS a response she has not given by the last sentence. Shape (b) does not require her to deliberate; it requires that the reader feel the answer is owed. NEVER address the player, never end on a bare imperative or question to the reader ('Decide.' / 'What will you do?'), and never name the choice as a choice. The pressure: whether to sign the acknowledgement or refuse it
+  EVENT CONTRACT (HARD — you own DRAMATIZATION, the planner owns the EVENT. Choose location, imagery, pacing, phrasing freely, and you MAY invent additional micro-beats — hesitation, a lie, an escalation, a reversal. But the SEMANTIC event below is FIXED (meaning, not wording): do NOT change who acts, the core action, whom it targets, or the exit state):
+    – PRECONDITION (must already be true when the scene opens for this to be possible): the presiding Dohkar is present in the scene
+    – ACTOR: the presiding Dohkar — this character performs it.
+    – ACTION: serves formal notice of investigation
+    – TARGET: Lirael — done TO / BEFORE / WITH this; if a character, that character MUST be physically present in THIS scene for it to count.
+    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): Lirael is formally under investigation and restricted
+    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER's error to surface, NOT yours to fix by rerouting — stage it as written.
 
   VEILWOOD GEOGRAPHY (canon, and this scene is in the Veilwood — HARD):
     · Nothing in the Veilwood is built. There are no doors, doorways, doorframes, gates, arches, porches, vestibules or halls anywhere in it.
@@ -32,3 +64,5 @@
     9. THEREFORE — this happens BECAUSE of what just happened: The Dohkar takes the page and leaves her standing supervised in the middle of her own clearing
     THE LINKS ARE STRUCTURE, NOT WORDING: "but" and "therefore" describe how these developments are connected. Never write the words "but", "therefore" or "and then" as connectives between beats to signal the link — the reader must FEEL the obstruction or the consequence in what people do and say.
     A development the scene merely MENTIONS has not been delivered. The scene's 700-1000-word budget exists to write these through; if you are running short, the developments are too THIN, not too few.
+  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.
+  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene's organizing subject. The scene is about the event; the dynamic is how they live through it.
