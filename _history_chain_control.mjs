@@ -929,7 +929,8 @@ for (const [label, mw, expect, needle] of cases) {
   const got = await page.evaluate(() => window.__ctlRun());
   if (expect === null) {
     t('a milestone for THIS row or earlier is ' + needle,
-      got.m.length === 0, JSON.stringify(got.m));
+      got.m.filter(r => r.milestoneScene === 3).length === 0,
+      JSON.stringify(got.m.map(r => [r.milestoneScene, r.status])));
   } else {
     const rec = got.m[0];
     t('"' + label + '" -> accepted=' + expect + ' (' + needle + ')',
@@ -982,10 +983,11 @@ const skelReq15 = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative sk
 fs.writeFileSync('_audit_out/history_chain/producer_end_to_end.json', JSON.stringify(endToEnd, null, 1));
 fs.writeFileSync('_audit_out/history_chain/producer_scaffold_request.txt', (skelReq15 && skelReq15.joined) || '(none)');
 t('PRODUCER: the assessment is stored as accepted, with its evidence, participants and scope',
-  endToEnd.stored.m.length === 1 && endToEnd.stored.m[0].accepted === true
-  && endToEnd.stored.m[0].milestoneScene === 16 && endToEnd.stored.m[0].atScene === 3
-  && (endToEnd.stored.m[0].participants || []).join() === 'Julian' && !!endToEnd.stored.m[0].scope,
-  JSON.stringify(endToEnd.stored.m));
+  (() => {
+    const acc = endToEnd.stored.m.filter(r => r.accepted === true);
+    return acc.length === 1 && acc[0].milestoneScene === 16 && acc[0].atScene === 3
+      && (acc[0].participants || []).join() === 'Julian' && !!acc[0].scope;
+  })(), JSON.stringify(endToEnd.stored.m.filter(r => r.accepted === true)));
 t('REVISED PLAN: row 16 is ALREADY DELIVERED from that assessment, not from a phrase',
   !!endToEnd.r16.alreadyDelivered
   && /post-prose assessment of scene 3 found row 16's milestone delivered on the page/.test(endToEnd.r16.alreadyDelivered[0].link),
@@ -1220,6 +1222,181 @@ t('...and the plan does not treat it as delivered',
     const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
     return !r.alreadyDelivered;
   }), 'a stale assessment was consumed');
+
+// ═══ 17. THE FOUR CORRECTIONS ═══════════════════════════════════════════════════════════════
+section('17a. DURABLE CONCLUSIONS ARE COMPACTED BY TARGET, NEVER EVICTED BY COUNT');
+// slice(-200) still deleted the first conclusion at record 201, and repeated assessments of ONE
+// event consumed that allowance. Accepted records are now compacted by target instead.
+const compact = await page.evaluate(async () => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  s._starterId = 'starter_first_sacrifice';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 2;
+  const FIRST = { milestoneScene: 16, atScene: 3, status: 'delivered_on_page', accepted: true,
+    why: 'accepted', evidence: 'the first one', participants: ['Julian'], scope: 'the clearing',
+    sceneUid: 'u:first', projectionHash: 'h:first', projectionRevision: 0, superseded: false, at: 1 };
+  s._milestoneDeliveries = [FIRST];
+  // 260 MORE accepted records — past the old 200 ceiling — of which most are REPEAT assessments of
+  // the same two targets, which is the case the reviewer named.
+  for (let i = 0; i < 260; i++) {
+    s._milestoneDeliveries.push({ milestoneScene: (i % 2) ? 17 : 18, atScene: 4,
+      status: 'delivered_on_page', accepted: true, why: 'accepted', evidence: 'repeat ' + i,
+      participants: ['Julian'], scope: 'the clearing', sceneUid: 'u:r', projectionHash: 'h:r',
+      projectionRevision: 0, superseded: false, at: 100 + i });
+  }
+  s._prereqInvalidations = [];
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'x', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 1);
+  const m = s._milestoneDeliveries;
+  const kept16 = m.filter(r => r.milestoneScene === 16 && r.accepted);
+  return JSON.parse(JSON.stringify({ total: m.length, accepted: m.filter(r => r.accepted).length,
+    kept16: kept16, distinctTargets: Array.from(new Set(m.filter(r => r.accepted).map(r => r.milestoneScene))).sort(),
+    occ17: (m.filter(r => r.milestoneScene === 17 && r.accepted)[0] || {}).occurrences }));
+});
+t('the FIRST accepted conclusion survives 260 newer accepted records',
+  compact.kept16.length === 1 && compact.kept16[0].evidence === 'the first one',
+  JSON.stringify({ kept: compact.kept16.length, total: compact.total }));
+t('accepted storage is bounded by DISTINCT TARGETS, not by a count',
+  compact.accepted === compact.distinctTargets.length && compact.accepted <= 5,
+  JSON.stringify({ accepted: compact.accepted, targets: compact.distinctTargets }));
+t('repeat assessments of one event fold into an occurrence count instead of consuming slots',
+  Number(compact.occ17) >= 100, JSON.stringify(compact.occ17));
+
+section('17b. OMITTED MEANS NOT ASSESSED, NEVER ABSENT');
+pageVerifierResp = { delivery: 'MISSED', milestone_watch: [], prereq_watch: [] };
+const unrep17 = await page.evaluate(async () => {
+  const s = window.state;
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'y', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene('A passage of prose long enough to be judged at all, with more than forty characters in it.', sc, 1);
+  return JSON.parse(JSON.stringify({ m: s._milestoneDeliveries, p: s._prereqInvalidations,
+    summary: window._issueOutlineSummary().assessments }));
+});
+pageVerifierResp = null;
+fs.writeFileSync('_audit_out/history_chain/unrep17_watch.json', JSON.stringify(unrep17, null, 1));
+t('a watched milestone the verifier did not mention is recorded as UNREPORTED, not absent',
+  unrep17.m.length > 0 && unrep17.m.every(r => r.status === 'unreported' && r.accepted === false)
+  && /NOT ASSESSED, which is not absence/.test(unrep17.m[0].why),
+  JSON.stringify(unrep17.m.map(r => [r.milestoneScene, r.status])));
+t('...and so is a watched prerequisite',
+  unrep17.p.length > 0 && unrep17.p.every(r => r.status === 'unreported' && r.accepted === false),
+  JSON.stringify(unrep17.p.map(r => [r.prereqId, r.status])));
+t('row 16 is among the watched rows — every DECLARED row is covered, not the first eight',
+  unrep17.m.some(r => r.milestoneScene === 16) && unrep17.m.some(r => r.milestoneScene === 18),
+  JSON.stringify(unrep17.m.map(r => r.milestoneScene).sort((a, b) => a - b)));
+t('the contract no longer says an omitted item is "absent"',
+  !!verifierSeen && /ANYTHING YOU LEAVE OUT IS TREATED AS NOT ASSESSED/.test(verifierSeen.joined)
+  && !/understood as absent/.test(verifierSeen.joined),
+  verifierSeen && (verifierSeen.joined.match(/BOUND THE REPLY[\s\S]{0,420}/) || ['(absent)'])[0]);
+t('and the unrep17 records are surfaced as uncertainty in the summary',
+  Array.isArray(unrep17.summary.milestoneDeliveries)
+  && unrep17.summary.milestoneDeliveries.some(x => x.status === 'unreported'),
+  JSON.stringify(unrep17.summary.milestoneDeliveries && unrep17.summary.milestoneDeliveries.slice(0, 3)));
+
+section('17c. LITERARY GETS SCENE IDENTITY, AND A MISSING ONE BLOCKS ACCEPTANCE');
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [{ n: 16, status: 'delivered_on_page',
+    evidence: '"I bent the wish," Julian said, where the Chayr could hear him',
+    participants: ['Julian'], scope: 'the Chayr' }], prereq_watch: [] };
+const litIdent = await page.evaluate(async () => {
+  const s = window.state;
+  const PROSE = 'The clearing emptied by degrees. "I bent the wish," Julian said, where the Chayr could hear him, and nobody contradicted it.';
+  s._milestoneDeliveries = []; s._prereqInvalidations = [];
+  s._sealedProposals = null; s.scenes = [];
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'z', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  // THE LITERARY IDENTITY the caller now builds: a page uid and a hash of the COMPLETE prose,
+  // with NO scene projection record (which is what literary continuation produces).
+  const litId = { storyId: s.storyId, sceneUid: null, pageUid: 'page:lit1',
+    projectionHash: null, projectionRevision: null,
+    fullTextHash: window._sbTextHash(PROSE), fullTextChars: PROSE.length, excerptChars: PROSE.length };
+  await window._commitScene(PROSE, sc, 1, litId);
+  const withId = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
+  // NOW WITH NO IDENTITY AT ALL — the state before this fix.
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed2 = window._sealProposal({ kind: 'state_change', fact: 'z2', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc2 = { event: sealed2.fact, proposalRef: sealed2.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed2.fact, sceneProposed: 1, storyScene: 3 };
+  await window._commitScene(PROSE, sc2, 1, null);
+  const noId = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
+  return JSON.parse(JSON.stringify({ withId: withId, noId: noId, prose: PROSE }));
+});
+t('a literary assessment carries a page uid and a FULL-PROSE hash',
+  !!litIdent.withId && litIdent.withId.pageUid === 'page:lit1' && !!litIdent.withId.fullTextHash
+  && litIdent.withId.projectionHash === null,
+  JSON.stringify(litIdent.withId && { page: litIdent.withId.pageUid, full: litIdent.withId.fullTextHash }));
+t('...and is accepted on that identity',
+  !!litIdent.withId && litIdent.withId.accepted === true, JSON.stringify(litIdent.withId && litIdent.withId.why));
+t('with NO identity at all it is stored as an OBSERVATION and never accepted',
+  !!litIdent.noId && litIdent.noId.accepted === false
+  && /no scene identity was available/.test(String(litIdent.noId.why)),
+  JSON.stringify(litIdent.noId && { acc: litIdent.noId.accepted, why: litIdent.noId.why }));
+pageVerifierResp = null;
+t('a literary rewrite supersedes it, keyed on the page uid',
+  await page.evaluate(() => {
+    const s = window.state;
+    const PROSE = 'The clearing emptied by degrees. "I bent the wish," Julian said, where the Chayr could hear him, and nobody contradicted it.';
+    s._milestoneDeliveries = [{ milestoneScene: 16, atScene: 3, status: 'delivered_on_page',
+      accepted: true, why: 'accepted', evidence: 'x', participants: ['Julian'], scope: 'the clearing',
+      pageUid: 'page:lit1', fullTextHash: window._sbTextHash(PROSE), superseded: false, at: 1 }];
+    const inv = window._sbInvalidateDependentsOfScene('page:lit1', window._sbTextHash(PROSE), 1);
+    return s._milestoneDeliveries[0].superseded === true
+      && (inv || []).some(x => /_milestoneDeliveries/.test(String(x)));
+  }), 'a literary rewrite did not supersede the assessment');
+
+section('17d. A REWRITE DURING A LITERARY REQUEST IS CAUGHT BY RE-HASHING THE PROSE');
+pageVerifierResp = { delivery: 'MISSED',
+  milestone_watch: [{ n: 16, status: 'delivered_on_page',
+    evidence: 'the Chayr stayed where she could be seen by everyone there',
+    participants: ['Julian'], scope: 'everyone there' }], prereq_watch: [] };
+t('the literary stale check re-reads and re-hashes the current prose',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /THE LITERARY STALE CHECK[\s\S]{0,900}_sbTextHash\(_nowProse\)/.test(src)
+      && /the prose was rewritten while the assessment was in flight \(full-text hash/.test(src);
+  })(), 'no literary in-flight check');
+const litStale = await page.evaluate(async () => {
+  const s = window.state;
+  const PROSE = 'The clearing emptied by degrees, and the Chayr stayed where she could be seen by everyone there.';
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null; s.scenes = [];
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'q', milestone: 'm',
+    scene: 1, storyScene: 3, milestoneScene: 3 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, storyScene: 3, milestoneScene: 3 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 1, storyScene: 3 };
+  // A LITERARY identity whose full-prose hash will not match what _sbLatestProseText now returns,
+  // which is exactly the shape of a rewrite that landed during the request.
+  const litId = { storyId: s.storyId, sceneUid: null, pageUid: 'page:lit2',
+    projectionHash: null, projectionRevision: null,
+    fullTextHash: window._sbTextHash(PROSE + ' AND THEN IT WAS ALL DIFFERENT.'),
+    fullTextChars: PROSE.length, excerptChars: PROSE.length };
+  // Make the "current" prose resolvable and DIFFERENT from the hash above.
+  s.scenes = [{ uid: window._sbMintSceneUid('ctl'), text: PROSE,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(PROSE), revision: 0, provenance: 'api_built' } }];
+  await window._commitScene(PROSE, sc, 1, litId);
+  const rec = (s._milestoneDeliveries || []).filter(r => r.milestoneScene === 16)[0] || null;
+  return JSON.parse(JSON.stringify({ rec: rec }));
+});
+pageVerifierResp = null;
+t('a literary reply describing superseded prose is rejected with the hash transition named',
+  !!litStale.rec && litStale.rec.accepted === false
+  && /rewritten while the assessment was in flight \(full-text hash/.test(String(litStale.rec.why)),
+  JSON.stringify(litStale.rec && { acc: litStale.rec.accepted, why: litStale.rec.why }));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

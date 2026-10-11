@@ -287,6 +287,7 @@ const i3 = await page.evaluate(async () => {
   // after switching back.
   await window.__generateSceneSkeleton('wait', '', { sceneNumber: 21 });
   return JSON.parse(JSON.stringify({ bounds: o3.bounds, rowCount: o3.scenes.length,
+    coverage: o3.outlineCoverage,
     r21: r21, block21: block21, overturned: o3.overturned.slice(),
     fate: (s._temptFateDurableConsequences || []).length,
     assessments: (s._milestoneDeliveries || []).filter(r => r.accepted && !r.superseded).length }));
@@ -303,9 +304,13 @@ t('the issue-3 window resolves as rows 21-30',
 // ── ARCHITECTURAL GAP, NAMED. The First Sacrifice plan authors 20 rows, so CG issue 3 (rows
 // 21-30) has NO plan rows at all, and no generated spine sceneOutline covers them either. That is
 // not a passing carryover test: it is a gap, and it is reported as one.
-t('ARCHITECTURAL GAP: issue 3 has NO planned rows — the plan authors 20 and the spine supplies none',
-  i3.rowCount === 0 && i3.r21 === null,
-  'rows=' + i3.rowCount + ' (if this ever becomes non-zero, the gap has been filled and this check should be rewritten)');
+t('the window is NOT shortened by the plan\'s 20 authored rows — it is scenes 21-30',
+  i3.bounds.first === 21 && i3.bounds.last === 30 && i3.bounds.authoredThrough === 20,
+  JSON.stringify(i3.bounds));
+t('with no authored rows AND no spine rows, the coverage is reported as ABSENT, not as truncation',
+  i3.rowCount === 0 && i3.r21 === null
+  && /^ABSENT — no authored rows and no spine sceneOutline rows cover scenes 21-30/.test(String(i3.coverage && i3.coverage.status)),
+  JSON.stringify(i3.coverage));
 t('so the issue-3 scaffold request carries NO scene purpose — stated, not claimed as carryover',
   !!skelI3 && !/THIS SCENE'S PURPOSE WITHIN THE ISSUE/.test(skelI3.joined),
   skelI3 && (skelI3.joined.match(/THIS SCENE'S PURPOSE[\s\S]{0,160}/) || ['(correctly absent)'])[0]);
@@ -353,6 +358,103 @@ t('and the original event is NOT replayed — the directive asks for its consequ
 t('an UNAFFECTED issue-2 row keeps its kind and its assignment',
   i2affected.r14.kind === 'convergence' && !!i2affected.r14.accomplishes,
   JSON.stringify([i2affected.r14.kind, (i2affected.r14.accomplishes || '').slice(0, 60)]));
+
+// ═══ 4c. SUPPLIED SPINE ROWS FOR SCENES 21-30 NOW REACH THE RESOLVER AND THE SCAFFOLD ═══════
+section('4c. ISSUE 3 IS REACHABLE: ten constructed spine rows for scenes 21-30');
+// The reviewer's reproduction: ten spine rows for 21-30 produced ZERO iterations, because the
+// window was capped at the plan's 20 authored rows. The cap is gone; the window is the format's.
+calls.length = 0;
+const i3spine = await page.evaluate(async () => {
+  const s = window.state;
+  s.issueIndexInRun = 3; s._stagedAuthoringSceneIndex = 20;      // CG scene 21
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  // CONSTRUCTED spine rows, in the shape the normaliser produces, numbered GLOBALLY for issue 3.
+  const rows = [];
+  for (let n = 21; n <= 30; n++) {
+    rows.push({ n: n, accomplishes: 'Issue-3 development number ' + (n - 20) + ', stated concretely.',
+      follows_from: n === 21 ? '' : 'the development in scene ' + (n - 1),
+      link: n === 21 ? null : (n % 2 ? 'but' : 'therefore'),
+      changes: 'something is true at the end of scene ' + n + ' that was not true at its start',
+      sets_up: 'the pressure handed to scene ' + (n + 1),
+      kind: (n % 3 === 0) ? 'convergence' : (n % 3 === 1 ? 'independent' : 'conditional'),
+      depends_on: null, routes: null, routes_decided_by: null, player_decision: null });
+  }
+  s.cgScaffold = { storyId: s.storyId, issueArcs: [
+    { issueLabel: 'Issue 1', thesis: 'a', sceneOutline: null, cliffhanger: null },
+    { issueLabel: 'Issue 2', thesis: 'b', sceneOutline: null, cliffhanger: null },
+    { issueLabel: 'Issue 3 — the reckoning', thesis: 'whether she can live with what clearing her cost',
+      sceneOutline: rows,
+      cliffhanger: { scene: 30, event: 'The panel calls her back to answer for the thing she did not do.',
+        why_unresolved: 'whether she answers', issue2Predicament: 'She is summoned on a charge she could end with one sentence.' } }
+  ] };
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const o = window._resolveIssueOutline(s);
+  const r21 = o.scenes.filter(x => x.n === 21)[0] || null;
+  const r30 = o.scenes.filter(x => x.n === 30)[0] || null;
+  const block21 = window._renderIssueOutlineDirective(s, 21) || '';
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 21 });
+  const out = { bounds: o.bounds, coverage: o.outlineCoverage, rowCount: o.scenes.length,
+    r21: r21, r30: r30, cliff: o.cliffhanger, block21: block21,
+    kinds: o.scenes.map(r => [r.n, r.kind]) };
+  s.cgScaffold = null;
+  return JSON.parse(JSON.stringify(out));
+});
+const skelI3b = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined)).pop();
+fs.writeFileSync('_audit_out/issue_boundary/issue3_spine_scaffold_request.txt', (skelI3b && skelI3b.joined) || '(none)');
+fs.writeFileSync('_audit_out/issue_boundary/issue3_author_block.txt', i3spine.block21);
+t('the resolver now iterates all TEN issue-3 rows (it ran zero before)',
+  i3spine.rowCount === 10 && !!i3spine.r21 && !!i3spine.r30,
+  JSON.stringify({ rows: i3spine.rowCount, bounds: i3spine.bounds }));
+t('coverage reports it as COVERED, from the spine',
+  i3spine.coverage.status === 'covered' && i3spine.coverage.spineRowsInWindow === 10
+  && i3spine.coverage.authoredRowsPresent === false, JSON.stringify(i3spine.coverage));
+// The fixture assigns kind by n % 3 and link by n % 2, so scene 21 is 'convergence' and scene 30's
+// link is 'therefore'. Asserted against the fixture rather than against my first guess at it.
+t('the spine rows carry their accomplishment, their causal link and their kind',
+  /Issue-3 development number 1/.test(i3spine.r21.accomplishes)
+  && i3spine.r21.kind === 'convergence' && i3spine.r30.follows_from.link === 'therefore'
+  && i3spine.r21.follows_from.link === null,
+  JSON.stringify([i3spine.r21.kind, i3spine.r21.follows_from.link, i3spine.r30.follows_from.link]));
+t('and the issue mixes independent, convergence and conditional rows',
+  new Set(i3spine.kinds.map(k => k[1])).size >= 3, JSON.stringify(i3spine.kinds));
+t('the spine-supplied cliffhanger for scene 30 resolves',
+  !!i3spine.cliff && i3spine.cliff.scene === 30 && /calls her back to answer/.test(i3spine.cliff.event || ''),
+  JSON.stringify(i3spine.cliff && { scene: i3spine.cliff.scene, src: i3spine.cliff.source }));
+t('the OUTGOING AUTHOR request for scene 21 carries its issue-3 purpose',
+  /THIS SCENE'S PURPOSE WITHIN ISSUE 3 — THE RECKONING \(scene 21 of 30/.test(i3spine.block21)
+  && /Issue-3 development number 1/.test(i3spine.block21), i3spine.block21.slice(0, 400));
+t('the OUTGOING SCAFFOLD request for scene 21 carries it too',
+  !!skelI3b && /THIS SCENE'S PURPOSE WITHIN THE ISSUE/.test(skelI3b.joined)
+  && /Issue-3 development number 1/.test(skelI3b.joined),
+  skelI3b && (skelI3b.joined.match(/THIS SCENE'S PURPOSE[\s\S]{0,300}/) || ['(absent)'])[0]);
+t('...and the carried issue-1 history still reaches it',
+  !!skelI3b && /ob:answer_the_notice/.test(skelI3b.joined), 'carried history missing');
+// ── THE PRODUCTION TRACE, stated rather than assumed: the spine DOES generate an arc per issue
+// and the schema now tells it to number each arc's rows globally. What is NOT established here is
+// that a live spine reply fills those rows for every issue — that needs a paid generation.
+t('production asks the spine for a sceneOutline per issue, numbered GLOBALLY per issue',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /Scenes are numbered continuously across the whole run, NOT restarted per issue/.test(src)
+      && /so NO two issues may share a scene number/.test(src)
+      && /issueArcs": EXACTLY/.test(src);
+  })(), 'the spine schema does not request global per-issue numbering');
+t('and the generated spine is retained across a save (it rides state.cgScaffold)',
+  await page.evaluate(() => {
+    const src = null;
+    const s = window.state;
+    s.cgScaffold = { storyId: s.storyId, issueArcs: [{ issueLabel: 'x', sceneOutline: [{ n: 21, accomplishes: 'y' }] }] };
+    if (!document.getElementById('storyText')) { const e = document.createElement('div'); e.id = 'storyText'; document.body.appendChild(e); }
+    try { localStorage.removeItem('sb_saved_story'); } catch (_) {}
+    window.__saveStorySnapshot();
+    let snap = null;
+    try { snap = JSON.parse(localStorage.getItem('sb_saved_story') || 'null'); } catch (_) {}
+    const kept = !!(snap && snap.stateSnapshot && snap.stateSnapshot.cgScaffold
+      && snap.stateSnapshot.cgScaffold.issueArcs
+      && snap.stateSnapshot.cgScaffold.issueArcs[0].sceneOutline);
+    s.cgScaffold = null;
+    return kept;
+  }), 'the spine outline is not retained in the snapshot');
 
 // ═══ 5. PROSE FALLS OUT OF CONTEXT; DURABLE RECORDS DO NOT ══════════════════════════════════
 section('5. OLDER HISTORY STAYS USABLE WHEN ITS PROSE LEAVES THE WINDOW');

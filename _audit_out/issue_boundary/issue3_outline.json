@@ -6,18 +6,29 @@
   "mode": "cg",
   "source": "ISSUE_PRICING",
   "rowSupply": 20,
+  "authoredThrough": 20,
   "mapping": {
    "rowSupply": 20,
    "nativeMode": "literary",
    "mode": "cg",
    "per": 10,
    "issuesSpanned": 2,
-   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s); this issue is rows 21-20"
+   "authoredThrough": 20,
+   "authoredRowsInThisIssue": 0,
+   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s) of authored material; THIS issue is scenes 21-30 whatever the plan authored"
   },
   "first": 21,
-  "last": 20
+  "last": 30
  },
  "rowCount": 0,
+ "coverage": {
+  "rowsResolved": 0,
+  "authoredRowsPresent": false,
+  "spineRowsInWindow": 0,
+  "arcPresent": false,
+  "arcHasSceneOutline": false,
+  "status": "ABSENT — no authored rows and no spine sceneOutline rows cover scenes 21-30"
+ },
  "r21": null,
  "block21": "",
  "overturned": [

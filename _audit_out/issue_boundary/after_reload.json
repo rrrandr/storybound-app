@@ -107,13 +107,16 @@
   "mode": "cg",
   "source": "ISSUE_PRICING",
   "rowSupply": 20,
+  "authoredThrough": 20,
   "mapping": {
    "rowSupply": 20,
    "nativeMode": "literary",
    "mode": "cg",
    "per": 10,
    "issuesSpanned": 2,
-   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s); this issue is rows 11-20"
+   "authoredThrough": 20,
+   "authoredRowsInThisIssue": 10,
+   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s) of authored material; THIS issue is scenes 11-20 whatever the plan authored"
   },
   "first": 11,
   "last": 20

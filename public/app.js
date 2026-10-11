@@ -101745,8 +101745,22 @@ function _buildAuthorFloorDirective(s) {
               || (Array.isArray(r.reservedEvents) && r.reservedEvents.length);
           });
           var _rest = _later.filter(function (r) { return _declared.indexOf(r) === -1; });
-          _declared.concat(_rest).forEach(function (r) {
-            if (_mWatch.length >= 8) return;
+          // EVERY DECLARED ROW IS WATCHED. A flat cap of 8 silently dropped declared rows whenever
+          // a plan declared more, which is not what "every declared row" means. Declared rows go in
+          // first up to 12, the nearest rows fill to 12, and anything that still does not fit is
+          // NAMED in the log rather than dropped quietly.
+          var _MW_MAX = 12;
+          _declared.forEach(function (r) {
+            if (_mWatch.length >= _MW_MAX) return;
+            _mWatch.push({ n: Number(r.n), text: String(r.goal).trim().slice(0, 180) });
+          });
+          if (_declared.length > _MW_MAX) {
+            try { console.warn('[MILESTONE-WATCH] ' + (_declared.length - _MW_MAX) + ' declared row(s) NOT watched'
+              + ' this scene (over the ' + _MW_MAX + '-row request cap): '
+              + _declared.slice(_MW_MAX).map(function (r) { return r.n; }).join(',')); } catch (_) {}
+          }
+          _rest.forEach(function (r) {
+            if (_mWatch.length >= _MW_MAX) return;
             _mWatch.push({ n: Number(r.n), text: String(r.goal).trim().slice(0, 180) });
           });
           _mWatch.sort(function (a, b) { return a.n - b.n; });
@@ -101781,13 +101795,18 @@ function _buildAuthorFloorDirective(s) {
       var _asTarget = {
         storyId: (sceneIdentity && sceneIdentity.storyId) || (window.state && window.state.storyId) || null,
         sceneUid: (sceneIdentity && sceneIdentity.sceneUid) || null,
+        pageUid: (sceneIdentity && sceneIdentity.pageUid) || null,
         projectionHash: (sceneIdentity && sceneIdentity.projectionHash) || null,
         projectionRevision: (sceneIdentity && typeof sceneIdentity.projectionRevision === 'number')
           ? sceneIdentity.projectionRevision : null,
+        fullTextHash: (sceneIdentity && sceneIdentity.fullTextHash) || null,
         fullTextChars: (sceneIdentity && sceneIdentity.fullTextChars) || null,
         watchMilestones: _mWatch.map(function (m) { return Number(m.n); }),
         watchPrereqs: _pWatch.map(function (q) { return String(q.id); })
       };
+      // NO IDENTITY, NO DURABLE CONCLUSION. Without something a later rewrite will change, nothing
+      // can ever supersede the record, so it may be stored as an observation but never accepted.
+      _asTarget.bindable = !!(_asTarget.projectionHash || _asTarget.fullTextHash);
       if (_mWatch.length || _pWatch.length) {
         _vSys += '\n\nTWO ADDITIONAL QUESTIONS, judged ONLY against the SCENE PROSE above. Both are'
           + ' SEPARATE from the proposals: answer them about the prose itself.\n'
@@ -101817,17 +101836,18 @@ function _buildAuthorFloorDirective(s) {
             + ' "requested_not_delivered", which is NOT invalidation. Everything else uses the matching'
             + ' status above, and uncertainty is "cannot_determine".\n') : '')
           + 'BOUND THE REPLY. Return AT MOST 4 entries in "milestone_watch" and AT MOST 3 in'
-          + ' "prereq_watch" — the ones you are most confident about. Everything you leave out is'
-          + ' understood as absent.\n'
+          + ' "prereq_watch". Choose the ones you have something to say about. ANYTHING YOU LEAVE'
+          + ' OUT IS TREATED AS NOT ASSESSED — not as absent, and not as a judgement that it did not'
+          + ' happen. If you believe a watched item is genuinely absent from this prose, say so with'
+          + ' "not_present" rather than omitting it, and spend your entries on what matters.\n'
           + 'KEEP EACH WATCH ENTRY SHORT. "evidence" here is ONE quotation copied contiguously from the'
           + ' prose, at most 160 characters — never an array, never several spans. "participants" is bare'
           + ' names. "scope" is at most 80 characters. These answers are secondary to the delivery verdict'
           + ' above: if you are running out of room, finish the delivery verdict and per_proposal fields'
           + ' FIRST and return [] for both watch arrays.\n'
-          + 'OMIT THE ORDINARY CASE. Do NOT return an entry whose status would be "not_present" — leave it'
-          + ' out entirely. A watched item you do not mention is understood as absent from this prose. Report'
-          + ' an entry ONLY when you have something to say about it, and in the common case both arrays are'
-          + ' empty: [].\n'
+          + 'THE COMMON CASE IS EMPTY ARRAYS. Most scenes deliver none of the watched milestones and'
+          + ' invalidate none of the watched prerequisites, and returning [] for both is the normal,'
+          + ' correct answer — you do not have to enumerate every watched item to say nothing happened.\n'
           + 'HARD, for both: every "evidence" value must be VERBATIM text from the SCENE PROSE. A status of'
           + ' "delivered_on_page" or "invalidated_on_page" with no verbatim evidence is DISCARDED by the'
           + ' engine, and so is one whose quotation is not found in the prose. Do NOT infer, do NOT'
@@ -102036,8 +102056,28 @@ function _buildAuthorFloorDirective(s) {
           // that no longer exists, so nothing from it is accepted.
           var _asStale = null;
           try {
-            if (_asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
+            if (!_asTarget.bindable)
+              _asStale = 'no scene identity was available (no projection hash and no full-prose hash), '
+                + 'so nothing could later supersede this record — it is recorded as an observation only';
+            if (!_asStale && _asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
               _asStale = 'the story changed while the assessment was in flight';
+            // THE LITERARY STALE CHECK. No projection record exists, so the current prose is
+            // re-read and re-hashed: if it no longer matches what was sent, the reply describes
+            // text that has been rewritten.
+            if (!_asStale && !_asTarget.sceneUid && _asTarget.fullTextHash) {
+              var _nowProse = '';
+              try {
+                if (typeof _sbLatestProseText === 'function') _nowProse = String(_sbLatestProseText(window.state) || '');
+                if ((!_nowProse || _nowProse.length < 40) && typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+                  _nowProse = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+              } catch (_) {}
+              if (_nowProse && typeof _sbTextHash === 'function') {
+                var _nowHash = _sbTextHash(_nowProse);
+                if (String(_nowHash) !== String(_asTarget.fullTextHash))
+                  _asStale = 'the prose was rewritten while the assessment was in flight (full-text hash '
+                    + _asTarget.fullTextHash + ' -> ' + _nowHash + ')';
+              }
+            }
             if (!_asStale && _asTarget.sceneUid && typeof _sbSceneByUid === 'function') {
               var _nowRec = _sbSceneByUid(_asTarget.sceneUid, window.state);
               var _nowProj = (_nowRec && _nowRec.record && _nowRec.record.projection) || null;
@@ -102087,8 +102127,9 @@ function _buildAuthorFloorDirective(s) {
                     : (!parts.length ? 'no participants named' : 'no scope stated'))));
             _store('_milestoneDeliveries').push({
               milestoneScene: tgt, atScene: _asScene, turnScene: prevSceneNum,
-              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid,
+              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
+              fullTextHash: _asTarget.fullTextHash,
               status: st || 'unstated', accepted: accepted, why: why,
               evidence: m.evidence || null, participants: parts, scope: scope || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102116,8 +102157,9 @@ function _buildAuthorFloorDirective(s) {
                     : (!parts2.length ? 'no participants named' : 'no scope stated'))));
             _store('_prereqInvalidations').push({
               prereqId: String(q.id), atScene: _asScene, turnScene: prevSceneNum,
-              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid,
+              storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
+              fullTextHash: _asTarget.fullTextHash,
               status: st2 || 'unstated', accepted: acc2, why: why2,
               evidence: q.evidence || null, participants: parts2, scope: scope2 || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102131,19 +102173,70 @@ function _buildAuthorFloorDirective(s) {
           // and the planner could then assign the already-delivered event again. A conclusion is
           // durable; an observation is diagnostic. They are bounded separately, and an accepted
           // record is never evicted by a negative one.
+          // EVERY WATCHED ITEM WITH NO ENTRY IS RECORDED AS UNREPORTED — not assessed, not absent.
+          // The omission rule would otherwise make a gap read as a clean negative.
           try {
+            var _mSeen = {}, _pSeen = {};
+            _mw.forEach(function (m) { if (m && Number(m.n) > 0) _mSeen[String(Number(m.n))] = true; });
+            _pw.forEach(function (q) { if (q && q.id) _pSeen[String(q.id)] = true; });
+            var _unrep = function (key, extra) {
+              _store(key).push(Object.assign({
+                atScene: _asScene, turnScene: prevSceneNum,
+                storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
+                projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
+                fullTextHash: _asTarget.fullTextHash,
+                status: 'unreported', accepted: false,
+                why: 'the verifier returned no entry for this watched item — NOT ASSESSED, which is not absence',
+                evidence: null, participants: [], scope: null,
+                excerptHash: _asExcerptHash, superseded: false, at: Date.now(),
+                source: 'runtime commit verifier' }, extra));
+            };
+            _asTarget.watchMilestones.forEach(function (n2) {
+              if (_mSeen[String(n2)] || Number(n2) <= _asScene) return;
+              _unrep('_milestoneDeliveries', { milestoneScene: Number(n2) });
+            });
+            _asTarget.watchPrereqs.forEach(function (id2) {
+              if (_pSeen[String(id2)]) return;
+              _unrep('_prereqInvalidations', { prereqId: String(id2) });
+            });
+          } catch (_) {}
+          try {
+            var _targetOf = function (r) {
+              return (r && r.milestoneScene != null) ? ('m:' + r.milestoneScene)
+                : (r && r.prereqId != null) ? ('p:' + r.prereqId) : null;
+            };
             var _trim = function (key) {
               var arr = Array.isArray(window.state[key]) ? window.state[key] : null;
               if (!arr) return;
-              var keepAcc = arr.filter(function (r) { return r && r.accepted === true; });
-              var keepObs = arr.filter(function (r) { return !(r && r.accepted === true); });
-              if (keepAcc.length > 200) keepAcc = keepAcc.slice(-200);   // a hard ceiling, not a window
-              if (keepObs.length > 40) keepObs = keepObs.slice(-40);
-              if (keepAcc.length + keepObs.length === arr.length) return;
-              // Chronological order is preserved so the stores still read as a history.
+              var acc = arr.filter(function (r) { return r && r.accepted === true; });
+              var obs = arr.filter(function (r) { return !(r && r.accepted === true); });
+              // COMPACT the accepted set by TARGET, never by count. slice(-200) still deleted the
+              // first conclusion at record 201, and repeated assessments of ONE event consumed that
+              // allowance — 200 records need not be 200 distinct events. The newest accepted record
+              // for a target stands and earlier accepted records for the SAME target fold into it,
+              // so accepted storage is bounded by the number of distinct targets (which the plan
+              // bounds) and no conclusion is dropped for being old. Only explicit supersession
+              // takes one out of force.
+              var byTarget = {};
+              acc.forEach(function (r) {
+                var k = _targetOf(r);
+                if (!k) { byTarget['_' + (r.at || Math.random())] = r; return; }
+                var prev = byTarget[k];
+                if (!prev) { byTarget[k] = r; return; }
+                var keepNewer = (Number(r.at || 0) >= Number(prev.at || 0)) ? r : prev;
+                var folded = (keepNewer === r) ? prev : r;
+                keepNewer.occurrences = (Number(keepNewer.occurrences) || 1) + (Number(folded.occurrences) || 1);
+                keepNewer.firstAssessedAt = Math.min(Number(keepNewer.firstAssessedAt || keepNewer.at || 0),
+                                                     Number(folded.firstAssessedAt || folded.at || 0)) || keepNewer.at;
+                byTarget[k] = keepNewer;
+              });
+              var keepAcc = Object.keys(byTarget).map(function (k) { return byTarget[k]; });
+              var keepObs = (obs.length > 40) ? obs.slice(-40) : obs;   // DIAGNOSTIC: may expire
+              if (keepAcc.length === acc.length && keepObs.length === obs.length) return;
               var keep = keepAcc.concat(keepObs).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
-              try { console.log('[ASSESSMENT-STORE] ' + key + ' trimmed ' + arr.length + ' -> ' + keep.length
-                + ' (accepted kept: ' + keepAcc.length + ', observations kept: ' + keepObs.length + ')'); } catch (_) {}
+              try { console.log('[ASSESSMENT-STORE] ' + key + ' compacted ' + arr.length + ' -> ' + keep.length
+                + ' (accepted ' + acc.length + ' -> ' + keepAcc.length + ' by target, NONE dropped for age; '
+                + 'observations ' + obs.length + ' -> ' + keepObs.length + ')'); } catch (_) {}
               window.state[key] = keep;
             };
             _trim('_milestoneDeliveries');
@@ -102765,9 +102858,24 @@ function _buildAuthorFloorDirective(s) {
             try {
               var _idRec = (_prevUid && typeof _sbSceneByUid === 'function') ? _sbSceneByUid(_prevUid, s) : null;
               var _idProj = (_idRec && _idRec.record && _idRec.record.projection) || null;
+              // THE PAGE UID — the literary path's own unit identity. Ordinary literary
+              // continuation paginates and creates no scene projection record (the same fact
+              // _attachHistoryNote accommodates), so the page uid is what identifies the unit.
+              var _idPage = null;
+              try {
+                if (typeof StoryPagination !== 'undefined' && StoryPagination.getCurrentPageUid)
+                  _idPage = StoryPagination.getCurrentPageUid() || null;
+              } catch (_) {}
+              // A HASH OF THE COMPLETE PROSE, not of the 5,000-character excerpt the verifier is
+              // shown. This is the literary equivalent of a projection hash and is what a later
+              // rewrite changes.
+              var _idFullHash = null;
+              try { _idFullHash = (typeof _sbTextHash === 'function') ? _sbTextHash(_prevText) : null; } catch (_) {}
               _csIdent = { storyId: s.storyId || null, sceneUid: _prevUid || null,
+                           pageUid: _idPage,
                            projectionHash: _idProj ? (_idProj.hash || null) : null,
                            projectionRevision: _idProj ? (typeof _idProj.revision === 'number' ? _idProj.revision : null) : null,
+                           fullTextHash: _idFullHash,
                            fullTextChars: _prevText.length, excerptChars: Math.min(5000, _prevText.length) };
             } catch (_) { _csIdent = null; }
             await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum, _csIdent); // last ~scene worth for the delivery verifier
@@ -137862,19 +137970,25 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var first = ((ii - 1) * per) + 1, last = ii * per;
     var mapping = null;
     if (rowSupply > 0) {
-      // The plan's rows are consumed at the ACTIVE mode's issue length. Stated as a mapping, not
-      // as a disagreement: the window is the purchase contract's, the content is the plan's.
+      // The window is the PURCHASE CONTRACT's, always. `authoredThrough` says where the plan's
+      // material stops, so a consumer can tell "this issue has no authored rows" from "this issue
+      // does not exist" — but it NEVER shortens the window. An issue past the authored material is
+      // still a full issue; its rows come from the generated spine, or it has none and that is
+      // reported as a missing outline rather than as a truncated issue.
       var issuesForPlan = Math.max(1, Math.ceil(rowSupply / per));
       mapping = { rowSupply: rowSupply, nativeMode: nativeMode, mode: mode, per: per,
-                  issuesSpanned: issuesForPlan,
+                  issuesSpanned: issuesForPlan, authoredThrough: rowSupply,
+                  authoredRowsInThisIssue: Math.max(0, Math.min(last, rowSupply) - first + 1),
                   note: rowSupply + ' authored rows / ' + per + ' scenes per ' + mode + ' issue = '
-                    + issuesForPlan + ' issue(s); this issue is rows ' + first + '-' + Math.min(last, rowSupply) };
-      if (last > rowSupply) last = rowSupply;
+                    + issuesForPlan + ' issue(s) of authored material; THIS issue is scenes '
+                    + first + '-' + last + ' whatever the plan authored' };
       try { console.log('[ISSUE-OUTLINE:MAP] ' + mapping.note
-        + (nativeMode && nativeMode !== mode ? ' (plan authored for ' + nativeMode + ')' : '')); } catch (_) {}
+        + (nativeMode && nativeMode !== mode ? ' (plan authored for ' + nativeMode + ')' : '')
+        + (first > rowSupply ? ' — NO authored rows in this issue; its outline must come from the spine' : '')); } catch (_) {}
     }
     return { issueIndex: ii, per: per, pricingPer: per, mode: mode, source: 'ISSUE_PRICING',
-             rowSupply: rowSupply || null, mapping: mapping, first: first, last: last };
+             rowSupply: rowSupply || null, authoredThrough: rowSupply || null,
+             mapping: mapping, first: first, last: last };
   }
 
   // ── DELIVERY TRUTH ──
@@ -138624,7 +138738,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
     }
 
+    // WHY AN ISSUE HAS NO ROWS, stated rather than left for a reader to guess. "absent" means
+    // nothing supplies them; "unreachable" would mean something supplies them and the resolver
+    // cannot see them, which is the defect the window cap used to cause.
+    var outlineCoverage = null;
+    try {
+      var authoredHere = !!(plan && Array.isArray(plan.scenes) && plan.scenes.some(function (r) {
+        return r && Number(r.n) >= bounds.first && Number(r.n) <= bounds.last && (r.goal || r.objective === 'reader'); }));
+      var spineHere = spineOutline.filter(function (r) {
+        return r && Number(r.n) >= bounds.first && Number(r.n) <= bounds.last; }).length;
+      outlineCoverage = {
+        rowsResolved: rows.length, authoredRowsPresent: authoredHere, spineRowsInWindow: spineHere,
+        arcPresent: !!arc, arcHasSceneOutline: !!(arc && Array.isArray(arc.sceneOutline) && arc.sceneOutline.length),
+        status: rows.length > 0 ? 'covered'
+          : ((spineHere > 0 || authoredHere) ? 'UNREACHABLE — rows exist for this window but none resolved'
+            : 'ABSENT — no authored rows and no spine sceneOutline rows cover scenes '
+              + bounds.first + '-' + bounds.last)
+      };
+      if (!rows.length) console.warn('[ISSUE-OUTLINE:COVERAGE] issue ' + bounds.issueIndex + ': ' + outlineCoverage.status);
+    } catch (_) {}
     var out = { _key: key, issueIndex: bounds.issueIndex, bounds: bounds, sceneNow: sceneNow,
+                outlineCoverage: outlineCoverage,
                 label: (arc && arc.issueLabel) || ('Issue ' + bounds.issueIndex),
                 thesis: (arc && arc.thesis) || null,
                 horizon: horizon, horizonAxis: horizonAxis,
@@ -231974,6 +232108,9 @@ No text, no watermark, no UI elements, share-ready.`;
     var _outlineModeKey = _modeKey === 'cg' ? 'CG: 10 scenes per issue' : 'literary: 20 scenes per issue';
     var _outlineScenesPerIssue = 20;
     try { _outlineScenesPerIssue = (ISSUE_PRICING[_modeKey] || {}).scenesPerIssue || 20; } catch (_) {}
+    // Retained for the log below; the SCHEMA now states the per-issue global ranges explicitly,
+    // because the spine authors every issueArc in one reply and a 1..per numbering per arc made
+    // issue 2 collide with issue 1.
     var _outlineFirstScene = 1, _outlineLastScene = _outlineScenesPerIssue;
     var _pfRoster = window._capturePortfolioRoster(s);
     var sysPrompt =
@@ -232017,7 +232154,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // SHAPE and several downstream consumers read it; it stays, and it is now subordinate to the
       // specific cliffhanger below.
       '      "sceneOutline": [\n' +
-      '        { "n": <GLOBAL scene number, from ' + _outlineFirstScene + ' to ' + _outlineLastScene + ' for this issue, every scene, in order>,\n' +
+      '        { "n": <THE GLOBAL SCENE NUMBER. Scenes are numbered continuously across the whole run, NOT restarted per issue: issue 1 covers scenes 1-' + _outlineScenesPerIssue + ', issue 2 covers ' + (_outlineScenesPerIssue + 1) + '-' + (_outlineScenesPerIssue * 2) + ', issue 3 covers ' + (_outlineScenesPerIssue * 2 + 1) + '-' + (_outlineScenesPerIssue * 3) + ', and so on. Give EVERY scene of THIS issue, in order, using its own global number>,\n' +
       '          "accomplishes": "<one or two sentences — the CONCRETE thing this scene does: who acts, on whom, and what lands. Name events, not themes.>",\n' +
       '          "follows_from": "<one sentence — the development in the PREVIOUS scene that this one answers>",\n' +
       '          "link": "<therefore | but — \'therefore\' when the previous development CAUSED this one, \'but\' when it OBSTRUCTS it. Every scene after the first must be one or the other. A chain of \'and then\' is a FAILURE. These are structural labels for the planner, NEVER words to appear in the prose.>",\n' +
@@ -232103,7 +232240,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'CONSTRAINTS:\n' +
       '- "issueArcs": EXACTLY ' + _expectedIssueCount + ' entries. Not more, not fewer. Issues are the player-facing purchase unit; the count is fixed per tier+mode (CG ' + _tierKey + ' = ' + _expectedIssueCount + ' issues).\n' +
       '- "motifBank": 3-5 SPARSE anchor images only. NEVER prescriptive ("a glass of water tipping" is good; "Issue 3 Scene 4 mentions the glass" is forbidden).\n' +
-      '- "sceneOutline" per issue: EXACTLY ' + _outlineScenesPerIssue + ' entries, one per scene of that issue, numbered with GLOBAL scene numbers in ascending order. This is the ISSUE LENGTH (' + _outlineModeKey + '). It is NOT a beat count: the number of BEATS inside one scene is decided elsewhere and is a different, larger number.\n' +
+      '- "sceneOutline" per issue: EXACTLY ' + _outlineScenesPerIssue + ' entries, one per scene of that issue, numbered with GLOBAL scene numbers in ascending order — issue k covers scenes (k-1)x' + _outlineScenesPerIssue + '+1 through kx' + _outlineScenesPerIssue + ', so NO two issues may share a scene number. This is the ISSUE LENGTH (' + _outlineModeKey + '). It is NOT a beat count: the number of BEATS inside one scene is decided elsewhere and is a different, larger number.\n' +
       '- Every "sceneOutline" entry after an issue\'s first MUST carry "link": "therefore" or "but". If you cannot say which, the two scenes are not causally connected and the outline is wrong.\n' +
       '- "cliffhanger" per issue: REQUIRED. A specific event plus the predicament it leaves for the next issue. "A quiet rupture" is not a cliffhanger; "she signs the thing he asked her not to sign, in front of the person it ruins" is.\n' +
       '- Every "sceneOutline" entry MUST carry "kind". A sequence of nothing but "conditional" is a branching tree, not a plan; a sequence of nothing but "independent" is a plot the player cannot touch. Most issues are mostly independent and convergence, with conditional at the real choices.\n' +
@@ -330612,7 +330749,10 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
           // hash of the complete projection a rewrite changes — so the record survived the rewrite.
           var _matchUid = rec.sceneUid && String(rec.sceneUid) === String(uid);
           var _matchHash = rec.projectionHash && String(rec.projectionHash) === String(prevHash);
-          if (!_matchUid && !_matchHash) return;
+          // LITERARY: the unit is a page and the binding is the full-prose hash.
+          var _matchPage = rec.pageUid && String(rec.pageUid) === String(uid);
+          var _matchFull = rec.fullTextHash && String(rec.fullTextHash) === String(prevHash);
+          if (!_matchUid && !_matchHash && !_matchPage && !_matchFull) return;
           rec.superseded = true;
           rec.supersededReason = 'the prose its evidence was verified against was revised: hash '
             + String(prevHash) + ' -> revision ' + newRevision;
