@@ -101916,26 +101916,43 @@ function _buildAuthorFloorDirective(s) {
   function _commitTargetUnusable(t) {
     if (!t) return 'no assessment target was built for this scene';
     try {
-      if (!t.bindable)
+      // BINDABILITY IS DERIVED HERE, not read off a field someone else set. _asTarget.bindable is
+      // assigned inside _commitScene, so depending on it made this function report "unowned" for
+      // every caller that passed a plain identity — including the ownership checks themselves.
+      if (!(t.projectionHash || t.unitHash))
         return 'no unit owns this prose (' + (t.pageUidSource || 'no projection hash and no narrative hash')
           + '), so nothing could later supersede what is written from it';
       if (t.storyId && window.state && window.state.storyId
           && String(window.state.storyId) !== String(t.storyId))
         return 'the story changed while the assessment was in flight';
       // THE UNIT CHECK — the same named unit, re-read through the same helper. Only reached when
-      // there is no projection hash to compare (the literary case).
+      // there is no projection hash to compare (the literary case). ACCEPTING a new result
+      // requires the evidence to still be READABLE, not merely unchanged: a page that has
+      // disappeared cannot be checked at all, and an unverifiable reply is refused rather than
+      // trusted. (_revalidateAssessments deliberately keeps the opposite rule, because a conclusion
+      // already established must not be erased by text that merely rolled out of reach.)
       if (!t.projectionHash && t.unitHash && t.unitId) {
-        var ch = _commitUnitChanged(t, _commitUnitText(window.state, t));
+        var now = _commitUnitText(window.state, t);
+        if (!now || !now.found)
+          return 'the ' + (t.unitKind || 'unit') + ' this reply was bound to can no longer be read ('
+            + ((now && now.why) || 'unavailable') + '), so the arriving result cannot be checked '
+            + 'against the prose it claims to describe';
+        var ch = _commitUnitChanged(t, now);
         if (ch) return ch + ' while the assessment was in flight';
       }
       if (t.sceneUid && typeof _sbSceneByUid === 'function') {
         var rec = _sbSceneByUid(t.sceneUid, window.state);
         var proj = (rec && rec.record && rec.record.projection) || null;
         if (!rec) return 'the scene record ' + t.sceneUid + ' no longer exists';
-        if (t.projectionHash && proj && String(proj.hash) !== String(t.projectionHash))
+        // A SCENE THAT STILL EXISTS BUT HAS NO READABLE PROJECTION. Both comparisons below were
+        // guarded on `proj`, so a missing projection skipped them both and the reply was accepted.
+        if (!proj)
+          return 'the scene ' + t.sceneUid + ' has no readable projection any more, so the arriving '
+            + 'result cannot be checked against the prose it claims to describe';
+        if (t.projectionHash && String(proj.hash) !== String(t.projectionHash))
           return 'the scene was rewritten while the assessment was in flight (hash '
             + t.projectionHash + ' -> ' + proj.hash + ')';
-        if (t.projectionRevision != null && proj && Number(proj.revision) !== Number(t.projectionRevision))
+        if (t.projectionRevision != null && Number(proj.revision) !== Number(t.projectionRevision))
           return 'the scene revision moved while the assessment was in flight ('
             + t.projectionRevision + ' -> ' + proj.revision + ')';
       }
@@ -104550,13 +104567,23 @@ function _buildAuthorFloorDirective(s) {
           // exact content, by reference. Idempotent per scene+posture, so a retry reuses the same
           // record rather than minting a second.
           try {
+            // THE STORY SCENE IS ALWAYS RESOLVABLE. _planSceneNum is assigned only inside the
+            // authored-plan branch above, so on a story with no authored plan it was `undefined`
+            // and the seal recorded storyScene=ABSENT. Found by the two-turn integration control:
+            // with no storyScene the commit gate cannot resolve page ownership and refuses EVERY
+            // literary commit. _currentSceneNumber is the one owner of this number (the same
+            // formula _planSceneNum uses and the same one _sceneLedgerStamp records under), so it
+            // is asked directly whenever the planner branch did not set it.
+            var _sealStoryScene = (typeof _planSceneNum === 'number' && _planSceneNum > 0)
+              ? _planSceneNum
+              : ((typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : null);
             var _sealedProp = (typeof _sealProposal === 'function')
               ? _sealProposal({ kind: 'state_change', fact: _stateChange.event, milestone: (_curMs && _curMs.event) || '',
                   scene: (s.turnCount || 0),
-                  // THE AUTHORITATIVE STORY SCENE. _planSceneNum is the row this planner is
-                  // planning and the key _sceneObjectives is written under, so it is the one
-                  // number the note, the proposal, the verdict and the spine row can all share.
-                  storyScene: _planSceneNum,
+                  // THE AUTHORITATIVE STORY SCENE: the row this planner is planning and the key
+                  // _sceneObjectives is written under, so it is the one number the note, the
+                  // proposal, the verdict and the spine row can all share.
+                  storyScene: _sealStoryScene,
                   // THE ROW THIS EVENT REALISES, declared by the planner (_curMs.atScene is the
                   // plan row's own n). Carried so a later outline can know, structurally, that
                   // this row's milestone was delivered — instead of matching phrases.

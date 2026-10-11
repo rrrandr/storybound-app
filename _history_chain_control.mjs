@@ -2196,6 +2196,114 @@ t('REWRITTEN IN FLIGHT: the refusal names the rewrite',
        .test(String(rewriteRefusal.refusal.why)),
   JSON.stringify(rewriteRefusal.refusal));
 
+// ═══ 23. PRESERVING A CONCLUSION vs ACCEPTING A NEW ONE ═════════════════════════════════════
+section('23. a unit that has DISAPPEARED cannot authorize a new commit');
+// MEASURED DEFECT: both of these returned null from _commitTargetUnusable, meaning usable — a
+// literary page that existed at dispatch and was gone when the reply returned, and a CG scene
+// whose projection had become unreadable. Missing evidence must not erase an established
+// conclusion; it also must not authorize a new one.
+const vanished = await page.evaluate(() => {
+  const s = window.state;
+  window.__ctlResetLedger(s);
+  StoryPagination.clear();
+  const PAGE = 'A page of prose long enough to be judged, where the admission is made before the Chayr.';
+  StoryPagination.addPage('<p>' + PAGE + '</p>', true);
+  const ident = window.__ctlMount(s, 61, PAGE);
+  const usableAtDispatch = window._commitTargetUnusable(ident);
+  // THE PAGE DISAPPEARS — the reader starts a new book, the view is cleared, the uid is gone.
+  StoryPagination.clear();
+  const afterVanish = window._commitTargetUnusable(ident);
+  // A CG SCENE whose record exists but whose projection has become unreadable.
+  const uid = window._sbMintSceneUid('ctlP');
+  const TXT = 'A CG scene projection long enough to be judged at all, with more than forty characters.';
+  s.scenes = [{ uid: uid, text: TXT,
+    projection: { v: 1, kind: 'ctl', hash: window._sbTextHash(TXT), revision: 0, provenance: 'api_built' } }];
+  const cgIdent = window.__buildCommitSceneIdentity(s, TXT, uid, 'projection', 62);
+  const cgAtDispatch = window._commitTargetUnusable(cgIdent);
+  delete s.scenes[0].projection;                       // the projection becomes unreadable
+  const cgAfter = window._commitTargetUnusable(cgIdent);
+  return JSON.parse(JSON.stringify({ usableAtDispatch: usableAtDispatch, afterVanish: afterVanish,
+    cgAtDispatch: cgAtDispatch, cgAfter: cgAfter }));
+});
+t('both targets were USABLE at dispatch — the fixtures are valid to begin with',
+  vanished.usableAtDispatch === null && vanished.cgAtDispatch === null,
+  JSON.stringify([vanished.usableAtDispatch, vanished.cgAtDispatch]));
+t('a page that has DISAPPEARED refuses the arriving result',
+  /^the page this reply was bound to can no longer be read \(page [^ ]+ is not in pagination\), so the arriving result cannot be checked/
+    .test(String(vanished.afterVanish)), JSON.stringify(vanished.afterVanish));
+t('a CG scene with no readable projection refuses it too',
+  /^the scene [^ ]+ has no readable projection any more, so the arriving result cannot be checked/
+    .test(String(vanished.cgAfter)), JSON.stringify(vanished.cgAfter));
+
+section('23b. ...WHILE AN ESTABLISHED CONCLUSION IS STILL PRESERVED');
+const preserved = await page.evaluate(() => {
+  const s = window.state;
+  // An ACCEPTED conclusion whose unit is no longer readable at all.
+  s._milestoneDeliveries = [{ milestoneScene: 14, atScene: 9, status: 'delivered_on_page',
+    accepted: true, why: 'accepted', evidence: 'e', participants: ['Julian'], scope: 'x',
+    unitKind: 'page', unitId: 'pg:vanished', unitHash: 'h:gone', unitChars: 90,
+    superseded: false, at: 1 }];
+  s._prereqInvalidations = [{ prereqId: 'prereq:investigation_open', atScene: 9,
+    status: 'invalidated_on_page', accepted: true, why: 'accepted', evidence: 'e',
+    participants: ['Julian'], scope: 'x', unitKind: 'scene', unitId: 'u:vanished',
+    sceneUid: 'u:vanished', projectionHash: 'h:gone', superseded: false, at: 1 }];
+  const superseded = window._revalidateAssessments(s, 'the control');
+  return JSON.parse(JSON.stringify({ superseded: superseded,
+    md: s._milestoneDeliveries[0], pi: s._prereqInvalidations[0] }));
+});
+t('revalidation supersedes NOTHING when the evidence is merely out of reach',
+  preserved.superseded.length === 0, JSON.stringify(preserved.superseded));
+t('the established milestone delivery is still in force',
+  preserved.md.accepted === true && preserved.md.superseded !== true,
+  JSON.stringify({ acc: preserved.md.accepted, sup: preserved.md.superseded }));
+t('the established prerequisite invalidation is still in force',
+  preserved.pi.accepted === true && preserved.pi.superseded !== true,
+  JSON.stringify({ acc: preserved.pi.accepted, sup: preserved.pi.superseded }));
+
+section('23c. A VANISHED UNIT REFUSES THE WHOLE COMMIT, DELIVERED OR NOT');
+pageVerifierResp = { delivery: 'DELIVERED',
+  actual_exit_state: 'it happened',
+  slots_check: { actor_evidence: 'the admission', action_evidence: 'the admission',
+    target_evidence: 'the Chayr', exit_state_evidence: 'the Chayr',
+    precondition_evidence: 'a page', occurred_this_scene: true },
+  milestone_watch: [{ n: 16, status: 'delivered_on_page', evidence: 'the admission is made before the Chayr',
+    participants: ['Julian'], scope: 'the Chayr' }],
+  prereq_watch: [] };
+editDuringRequest = true;
+const vanishMidFlight = await page.evaluate(async () => {
+  const s = window.state;
+  window.__ctlResetLedger(s);
+  StoryPagination.clear();
+  const PAGE = 'A page of prose long enough to be judged, where the admission is made before the Chayr.';
+  StoryPagination.addPage('<p>' + PAGE + '</p>', true);
+  const ident = window.__ctlMount(s, 63, PAGE);
+  s._committedState = { facts: [{ scene: 60, event: 'an earlier committed fact', ref: 'prop:1:1' }],
+                        tableau: null, pendingIntent: null };
+  s._milestoneDeliveries = []; s._prereqInvalidations = []; s._sealedProposals = null;
+  const sealed = window._sealProposal({ kind: 'state_change', fact: 'the admission', milestone: 'm',
+    scene: 63, storyScene: 63, milestoneScene: 63 });
+  const sc = { event: sealed.fact, proposalRef: sealed.id, sceneProposed: 63, storyScene: 63 };
+  s._committedState.pendingIntent = { milestone: 'm', proposed: sealed.fact, sceneProposed: 63, storyScene: 63 };
+  // THE PAGE VANISHES WHILE THE REQUEST IS HELD.
+  window.__ctlEditPage = function () { StoryPagination.clear(); };
+  await window._commitScene(PAGE, sc, 63, ident);
+  return JSON.parse(JSON.stringify({ facts: s._committedState.facts,
+    pendingIntent: s._committedState.pendingIntent,
+    acceptedMd: s._milestoneDeliveries.filter(r => r.accepted === true),
+    refusal: s._lastCommitRefusal }));
+});
+pageVerifierResp = null;
+editDuringRequest = false;
+t('a unit that vanishes in flight commits NO fact although the reply said DELIVERED',
+  vanishMidFlight.facts.length === 1 && vanishMidFlight.facts[0].scene === 60,
+  JSON.stringify(vanishMidFlight.facts));
+t('...accepts no milestone delivery',
+  vanishMidFlight.acceptedMd.length === 0, JSON.stringify(vanishMidFlight.acceptedMd));
+t('...preserves the pending intent, and names the unreadable unit',
+  !!vanishMidFlight.pendingIntent
+  && /can no longer be read/.test(String((vanishMidFlight.refusal || {}).why)),
+  JSON.stringify(vanishMidFlight.refusal));
+
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 console.log('evidence: _audit_out/history_chain/');

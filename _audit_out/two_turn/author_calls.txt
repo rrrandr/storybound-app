@@ -1,0 +1,42 @@
+[
+ {
+  "role": "NARRATIVE_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "PRIMARY_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "PRIMARY_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "SPECIALIST_RENDERER",
+  "scene": 2
+ },
+ {
+  "role": "NARRATIVE_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "PRIMARY_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "PRIMARY_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "PRIMARY_AUTHOR",
+  "scene": 2
+ },
+ {
+  "role": "SPECIALIST_RENDERER",
+  "scene": 2
+ },
+ {
+  "role": "NARRATIVE_AUTHOR",
+  "scene": 3
+ }
+]
