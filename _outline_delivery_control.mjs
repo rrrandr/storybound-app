@@ -197,7 +197,10 @@ const unrelated = await page.evaluate(() => {
       { fact: 'A bird lands on a branch', proposalRef: 'prop:1:2',
         provenanceLink: 'sealed', committedAtScene: 2, provenance: 'delivered' }
     ],
-    _committedThroughScene: 2, pendingIntent: null, tableau: null, deliveryLog: {}
+    _committedThroughScene: 2, pendingIntent: null, tableau: null,
+    // Scene 1's OWN verdict recorded its planned event DELIVERED, so the row is `committed`
+    // rather than `partially_verified` (the distinction _history_chain_control drives).
+    deliveryLog: { '1': { scene: 1, aggregateDelivery: 'DELIVERED', committed: [{ ref: 'prop:1:1' }], pending: {} } }
   };
   s._historyNotes = [{ ref: 'u1' }, { ref: 'u2' }];
   s._issueOutline = null; s._issueOutlineHistory = {};

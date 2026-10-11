@@ -98776,6 +98776,13 @@ Return ONLY numbered beats. No prose. No dialogue.` }
                    : ' and the replacement below stands in its place.')
               + ' Build the causal sequence from what is NOW true, and do not sequence the void plan.');
           }
+          if (_por.alreadyWritten) {
+            _pl.push('  POSSIBLY ALREADY WRITTEN (a lexical flag, not a verdict): earlier prose quoted from the'
+              + ' scenes themselves appears to contain this development ('
+              + _por.alreadyWritten.map(function (h) { return '"' + String(h.quote).slice(0, 90) + '"'; }).join(' · ')
+              + '). If it genuinely did happen, outline the CONSEQUENCES rather than sequencing it again. If the'
+              + ' match is incidental, outline the assignment as given.');
+          }
           if (_por.accomplishes) _pl.push('  WHAT IT ACCOMPLISHES: ' + _por.accomplishes);
           if (_por.follows_from && _por.follows_from.text) _pl.push('  WHY IT FOLLOWS WHAT CAME BEFORE'
             + (_por.follows_from.link ? ' (' + _por.follows_from.link.toUpperCase() + ')' : '') + ': ' + _por.follows_from.text);
@@ -98792,6 +98799,17 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       try { _skelLocCanon = (typeof _veilwoodLocationCanon === 'function') ? _veilwoodLocationCanon(state) : ''; } catch (_) { _skelLocCanon = ''; }
       // RESERVED FOR THE PLAYER — from the accepted plot contract's own unresolved pressure, which
       // is where a scene's closing decision is actually reserved.
+      var _skelHistory = '';
+      try {
+        var _shb = (typeof _buildHistoryContinuityBlock === 'function')
+          ? (_buildHistoryContinuityBlock(state, {}) || '') : '';
+        if (_shb) _skelHistory = 'WHAT HAS ALREADY BEEN WRITTEN (the same account the scene planner and the author'
+          + ' receive — the QUOTED section is the scenes\' own words; everything under the summary heading is the'
+          + ' previous author\'s UNVERIFIED claim about its own scene; an obligation is a proposal, not a fact).\n'
+          + 'DO NOT OUTLINE A DEVELOPMENT THE QUOTED TEXT SHOWS ALREADY HAPPENED. Outline the CONSEQUENCES of'
+          + ' what is below, not a repeat of it. A character may refer back to something already written; that is\n'
+          + 'not the same as delivering it again.\n' + _shb + '\n';
+      } catch (_) { _skelHistory = ''; }
       var _skelReserved = '';
       try {
         var _rpc = state._scenePlotContract || null;
@@ -98806,7 +98824,7 @@ Return ONLY numbered beats. No prose. No dialogue.` }
        const _skelMsgs = [
           { role: 'system', content: _stageContractBlock + 'You define narrative skeletons for fiction scenes. Return ONLY a JSON object — no markdown, no commentary. Required fields: environment_anchor, structural_pacing, narrative_density, dialogue_ratio, beat_style, tension_rhythm, staged_characters, interlocutor_placement, li_texture_beat, pc_body_callback, li_body_callback, antagonist_body_callback, environment_plus, fusion, stage_contract, causal_outline.\nCAUSAL_OUTLINE = the DRAMATIC SEQUENCE that delivers the scene purpose given in the user message under THIS SCENE PURPOSE WITHIN THE ISSUE. An ARRAY of ' + _skelBeatRangeText + ' objects, in order: { "beat": "<the development: who does what, to whom, and what it costs or produces. 5-25 words. Name people and acts.>", "link": "<therefore | but>", "from": "<which earlier beat number this one answers, 1-indexed; omit for the first>" }.\nTHE BUT/THEREFORE RULE (HARD): each development must OBSTRUCT ("but") or CAUSE ("therefore") the next. A sequence joined by "and then" is a list of observations, not a scene, and is a FAILED outline. Every entry after the first MUST carry link exactly "therefore" or "but". These are STRUCTURAL LABELS FOR THE PLANNER: the words but / therefore / and then must NEVER be instructed into the prose, and you are not writing prose here.\nA BEAT IS NOT A SENTENCE and not a caption. It is ONE development, which the author may write through in several sentences of action, dialogue and consequence. The scene is written to a 700-1000-word budget, so an outline of thin glances and held breaths produces a thin scene however many entries it has: a development is something one person DOES to another, or SAYS in a way that changes what another person can do next. Stillness, noticing and atmosphere are how those land; they are not themselves developments.\nSTOP AT A GENUINELY UNRESOLVED PLAYER DECISION. If the purpose says the player decides at the end of this scene, the outline ends ON the decision being forced and does NOT contain the protagonist answer.\nDO NOT WRITE THE PROSE. Each entry ASSIGNS a development; the author chooses the words. environment_anchor = a physical object/surface/sound/environmental phenomenon the scene should begin from (4-12 words, world-specific).\nDo NOT return `character_plus`, `facet_id`, `option_id` or any per-character psychological angle. Character psychology for this scene is resolved by the backend from canon and is not yours to assign. Stage who is present; that is the whole of your responsibility for people.\nENVIRONMENT_PLUS = {target, axis}. REQUIRED EVERY SCENE, no exceptions — a scene whose place means nothing has failed. `target` is a specific object or place already present (prefer the environment_anchor or a listed prop). `axis` is exactly one of: history · use · damage · ownership · repair · ritual · absence — what this thing has BECOME because of what happened to it. Never symbolism; a spoon is usually a spoon.\nFUSION = {character, target} or null. Roughly one scene in five, NOT every scene: one beat where a person and a thing reveal each other. Prefer null to a forced one.\nASSIGN, DO NOT WRITE. Every field is a target for the author to realise in their own words. If you write the prose yourself the author copies your phrasing and the scene reads assembled. structural_pacing / narrative_density / dialogue_ratio / beat_style / tension_rhythm = short phrases (3-8 words). staged_characters = an ARRAY of {name, presence_mode, role} objects covering every character who APPEARS or is NAMED in the upcoming scene (include the protagonist). presence_mode is exactly one of: IN_PERSON (physically present, can be looked at / touched / handed a physical object), ON_PHONE (audible only via call/voice channel — NOT physically present, CANNOT receive a physical handoff — the most common failure shape is a planner treating a phone-call interlocutor as IN_PERSON), OFFSTAGE_REFERENCED (named or discussed but not present in any form). Be STRICT about ON_PHONE vs IN_PERSON. If the player intent or prior staging implies a transition (the player leaves a location, takes a call, walks into a new room), reflect that in the new staging. interlocutor_placement = if any NAMED character APPEARS or is in active engagement with the protagonist this scene (IN_PERSON OR ON_PHONE), give NAME + RELATIONSHIP-TO-PROTAGONIST + one revealing TELL in 10-20 words. The TELL form depends on presence_mode: IN_PERSON → an OBSERVED physical/behavioral detail. ON_PHONE → a REMEMBERED, PROJECTED, or HEARD-THROUGH-LINE detail (e.g. "Lina — her direct contact at the foundation board, a woman whose long sigh always preceded the part of the meeting she had stopped pretending to negotiate"). Naming + job alone is NOT enough — phone interlocutors require their own kind of texture. Null only if no named character is engaging with the protagonist. li_texture_beat = if the love interest is OFFSTAGE_REFERENCED or ON_PHONE in this scene, a 15-30-word sketch of WHICH beat carries a textured memory of him + WHAT the memory shape is. Roman 2026-06-01 PHOTOGRAPH TEST (HARD): the memory MUST contain a VERB he performed (a behavior / decision / joke / deflection / kindness / contradiction), drawn from his Bible\'s behavioral fields (signature_behavior / deflection_pattern / attraction_manifestation / defining_anecdote). A PHYSICAL ANCHOR is REQUIRED too (Roman 2026-06-04 — the PHOTOGRAPH TEST is REVISED, not removed): the ideal beat carries ALL THREE — a VERB + an attractive PHYSICAL ANCHOR + a REVELATION about who he is. A feature is wallpaper ONLY when it reveals NOTHING (✗ "rolled sleeves / a scar / broad shoulders / dark hair"); a feature that reveals him is REQUIRED (✓ "the scar at the corner of his mouth deepening whenever he was about to say something cruel" / "hands that looked capable of breaking things, paired with impossible patience"). TEST: remove the feature — is it pure WALLPAPER (gives NEITHER attraction NOR character)? If it gives EITHER — ATTRACTION ALONE is sufficient — keep it (Roman 2026-06-04 correction: a pure attraction anchor like broad shoulders / strong jaw needs NO character reason; characterization is a bonus). No = wallpaper. SOURCE PRIORITY (Roman 2026-06-03 — measured: the memory keeps drawing from deflection_pattern / signature_behavior, so he is remembered as an intriguing STRATEGIST, not a man she WANTS). For a DESIRE-bearing memory (engine = SHARED_HISTORY or LOOMING_PRESENCE, or any LI she has wanted), draw the VERB FIRST from attraction_manifestation or desire_register_exemplars — a moment of WANTING (his desire/care-as-action toward her, or a charged moment between them). deflection_pattern / signature_behavior are the STRATEGIST register: use them ONLY when the engine is ADVERSARIAL (COLLISION, pre-bond) or as secondary color — NEVER the default for a desire-bearing scene. ENEMIES-TO-LOVERS / ANTAGONISTIC SHARED-HISTORY (Roman 2026-06-04 — she opposes, distrusts, or has insulted him, but they have HISTORY and a charge): this is NOT adversarial-equals-strategist. It is RELUCTANT DESIRE — her body wants him AGAINST HER WILL and she is FURIOUS at herself for it. She notices his shoulders / forearms / mouth / the way he fills a doorway, hates that she noticed, and reaches for an insult to COVER the wanting. Draw the VERB from attraction_manifestation / desire_register and let the antagonism COLOR it — NEVER let the hostility REPLACE the wanting with pure scheming-analysis or name-calling. The hatred and the wanting COEXIST; that friction IS the engine of enemies-to-lovers. Strategist-only (all intrigue, zero body, just calling him names) is the failure. A memory that turns on a strategist move ("he named what she would not say, then waited") reads as intrigue, not desire. Pull from defining_anecdote when in doubt. Format: "beat 2: she catches herself remembering [a specific thing he DID — verb-anchored] — and [her embodied response]." Null if the LI is IN_PERSON or genuinely absent from the scene\'s consciousness. MICRO-SCENE vs SUMMARY (HARD — Roman 2026-06-03; applies to ALL scenes where LI is offstage, not just Scene 1): the texture beat MUST be a MICRO-SCENE (specific small moment + specific body reaction in her), NEVER a SUMMARY (personality/relationship/plot/factual statement about him). ✗ "he always knew what to say" / "things between us had always been complicated" / "he had lied to me about X" / "he ran the kind of enclave that made governments nervous." ✓ a single remembered moment / expression / gesture / look / reaction / fragment of dialogue. PAIRED: ✗ "he lied convincingly" vs ✓ "' + (typeof window._rotLiPairedComparison === 'function' ? window._rotLiPairedComparison() : 'he lied while setting his pen down with both hands and not picking it back up, and I had spent the whole conversation watching his hand instead of the lie') + '." COGNITIVE INTERFERENCE TEST (HARD — Roman 2026-06-03; the ladder from biography to desire — sketch at LEVEL 4): ✗ L1 EXPOSITION ("he was attentive"); ⚠ L2 NEUTRAL MICRO-SCENE ("I remembered how kind he was to the waiter" — moment without desire); ✓ L3 ATTRACTION-PRESENT ("the way he\'d watched me while pretending to listen" — attraction visible); ✓✓ L4 COGNITIVE INTERFERENCE ("the question he hadn\'t answered because I\'d spent the whole conversation watching his hands" — attraction breaks her thinking). ✓✓ L4 STRANGER-COMPATIBLE VARIANT (Roman 2026-06-12 — for COLLISION / LOOMING_PRESENCE, when she has no past observation of him): present-tense interference from anticipation / reputation / projection — NEVER invent a prior interaction ("the one time at the gala" / "we exchanged a few words last spring" / "I had met him briefly") to license L4. That is the Level-4-by-fake-history failure mode. Anticipation-shape examples: "she had been listening to Sophie for ten minutes and only now realized she had been picturing the back of a stranger\'s hand on a glass — a man she had not met and could not stop assembling from third-hand stories"; "she was answering an email and had lost the thread of her own sentence — somewhere in the building was a man she had been hearing about for six months, and her body had decided he was already someone". Same cognitive failure, NO past memory required. PREFER L4: she missed / lost the thread / stopped tracking because she was watching him. The attraction is in the COGNITIVE FAILURE, not the noticing. Roman 2026-06-01 P3 ENGINE GATE (HARD): see the ROMANCE ENGINE block in the user context. If the engine is COLLISION and this scene predates the PC having any memory of him at all (early-arc, pre-meet), li_texture_beat MUST be null — forcing a textured memory of someone she has not met is an engine-betrayal failure. If LOOMING_PRESENCE pre-meet, the texture should be ANTICIPATION-shape (reputation, what she has heard, the version she has built from other people\'s stories) — NOT a remembered event between them. pc_body_callback = a LIGHT recurring touch from the PC Body Bible (see PC BODY BIBLE block in the system context) — name WHICH beat carries it + WHICH feature (signature_feature / second_celebrated_feature) OR WHICH tell (stress_tic / desire_tell / impatience_tell / confidence_tell / vulnerability_tell) is firing + a sketch that POINTS AT the firing motif (not a verbatim copy of the Bible text). ROTATE across scenes so a salient PHYSICAL feature (signature_feature / second_celebrated_feature — NOT only a tic/tell) surfaces at least once every ~2 scenes, ALTERNATING with the LI so both bodies stay visible across the arc, and tells fire WHEN their trigger fires. Roman 2026-06-12 SKETCH-AS-POINTER RULE: your job is to pick WHICH BEAT + WHICH BIBLE FIELD fires. The sketch is a POINTER, not a script. Preserve the anchor (which body part / site) and the mechanic (press / count / turn / twist / pull / hold / drop). The PROSE LAYER reads the Bible and renders the motif for the scene — varying wording, framing, emphasis, narrative distance, and sentence construction so the same character-signature recurs without the same sentence recurring. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Do NOT inline the Bible\'s literal field text in your sketch. Format examples: "beat 2 — signature_feature (the crooked front tooth)"; "beat 1 — stress_tic (the grandmother\'s ring)"; "decision — desire_tell (the breath before she admits anything)". Each example names the firing motif + anchor; the prose layer renders the surface. Required. If no Bible exists yet, return null and the directive will be skipped. li_body_callback = if the LI is IN_PERSON or ON_PHONE this scene, name WHICH beat carries the PC noticing ONE specific thing about him from the LI Body Bible (see LOVE INTEREST BODY BIBLE block) — pick from pc_keenly_notices basket OR a tell of his firing (focus_tell when his attention locks onto her, restraint_tell when he holds back, interest_tell when he treats her differently than the room, frustration_tell, desire_tell). ROTATE across scenes; never default to the same anchor. NEVER "jaw" / "jaw tightening" (banned, calcified). NEVER power-coded ("the room reorganized around him" — that\'s presence, not desire). NEVER generic-handsome (chiseled jaw, piercing eyes). Roman 2026-06-12 SKETCH-AS-POINTER RULE: when this scene\'s callback fires a tell of his (focus / restraint / interest / frustration / desire), the sketch is a POINTER — name the firing motif and the anchor (body part / mechanic). Do NOT inline the Bible\'s literal field text. The PROSE LAYER reads the LI Bible and renders the motif, varying wording and sentence construction scene to scene while preserving the anchor and mechanic so the reader recognizes the character. Bible defines WHAT recurs; the sketch declares WHICH motif fired; the prose decides HOW it is expressed this time. Format: "beat 2 — restraint_tell (the pause he takes before answering)". Examples (using illustrative Bible values — your sketch uses THIS story\'s actual values): "beat 1 — pc_keenly_notices: she catches his hands on the glass — broad, the right one scarred at the knuckles"; "beat 2 — restraint_tell: his hand flattens slowly on the table — his version of pulling himself back"; "decision — interest_tell: he stands a foot closer to her than to anyone else in the room". MICRO-SCENE + COGNITIVE INTERFERENCE (HARD — Roman 2026-06-03; mirror of the offstage rules tuned for ON-STAGE LI noticing — every line he speaks is a chance for her cognition to break, so sketch the noticing as a moment in REAL TIME where her attention to him CAUSES HER TO MISS SOMETHING). The sketch must take a MICRO-MOMENT shape (a specific thing he does this scene + her body\'s specific response), NEVER a SUMMARY ("he was the kind of man whose hands gave him away" — biography). Climb to LEVEL 4: ✗ L1 EXPOSITION ("he had elegant hands"); ⚠ L2 NEUTRAL NOTICING ("she watched his hands while he poured the wine"); ✓ L3 ATTRACTION-PRESENT ("she watched his hands and felt the heat low in her sternum"); ✓✓ L4 COGNITIVE INTERFERENCE ("she watched his hands for the whole answer and had to ask him to repeat it"). PREFER L4: her noticing CAUSES her to miss / lose the thread / stop tracking / answer the wrong question. The attraction is in the COGNITIVE FAILURE, not the noticing. Null if LI is OFFSTAGE_REFERENCED — in that case li_texture_beat covers him. Required when LI is on-stage. antagonist_body_callback = if the ANTAGONIST is IN_PERSON in this scene AND the ANTAGONIST BODY BIBLE block exists in the system context, name WHICH beat carries the PC noticing ONE specific thing about them — pick from pc_keeps_noticing basket OR a tell firing (targeting_tell when his attention finds her; control_tell when he takes the room; pleasure_tell when he enjoys her discomfort; escalation_tell right before he pushes further). THREAT register — NOT desire register; never cross-wire with the LI noticing. ROTATE across scenes. The softness_seam — the ONE uncalculated tell that humanizes them — fires AT MOST ONCE in the whole arc; do NOT use it casually. NEVER generic-villain ("cold eyes", "cruel smile", "menacing presence"). Examples: "beat 2 — control_tell: he sits down before being invited; the room re-files itself around him"; "beat 1 — signature_feature: the smile arrives the half-second too late she has stopped pretending not to notice"; "decision — pleasure_tell: the corner of his mouth pulls a quarter-inch when she stumbles on the word". Null if the antagonist is OFFSTAGE_REFERENCED or ON_PHONE this scene, or if no Bible exists. Required only when antagonist is IN_PERSON.' },
           { role: 'user', content: `Define a narrative skeleton for the next scene:
-${_skelLocCanon}${_skelPurposeBlock}${_skelReserved}Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
+${_skelLocCanon}${_skelPurposeBlock}${_skelReserved}${_skelHistory}Relationship: ${ns.relationship_state || 'developing'} | Phase: ${state.relationship_phase || 'strangers'}
 Tension: ${ni.active_tension || 'building'} | Trust: ${rt.trust || 'unknown'}
 ST: ${ns.storyturn_state || state.storyturn || 'ST1'}
 Location: ${state.physicalState?.location || 'unknown'}
@@ -134101,6 +134119,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           },
         },
         { n: 6, kind: 'convergence', causalLink: 'but',
+          eventMarkers: ['should have been impossible', 'could not have worked', 'no wish could have'],
           changes: 'Lirael knows the wish succeeded in a way that should not have been possible.',
           followsFrom: 'The investigation has been steered away from the truth — but the wish itself is still there to be looked at.',
           setsUp: 'The wish\'s impossible success is a fact Lirael now holds and cannot account for.',
@@ -134111,6 +134130,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           setsUp: 'Her reputation is gone, so anything she says from here is heard as self-defence.',
           goal: 'Rumors spread through the city; the PC’s reputation collapses.' },
         { n: 8, kind: 'convergence', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          eventMarkers: ['someone else intervened', 'another hand touched', 'someone else had wished'],
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'There is nothing left for her to deduce: the intervention is public, and the question becomes what the Institution does about it and where that leaves her.',
             changes: 'Lirael is no longer the only explanation anyone has for the wish.',
@@ -134120,6 +134140,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           setsUp: 'Lirael is looking for a person, not an accident.',
           goal: 'The PC realizes someone else may have intervened.' },
         { n: 9, kind: 'convergence', dependsOn: ['prereq:julian_act_concealed', 'prereq:investigation_open'], causalLink: 'therefore',
+          eventMarkers: ['it was julian who', 'julian is the one who', 'julian had done it'],
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'Suspicion is beside the point; she must choose how to stand toward a man who is already accused, in front of people watching which way she goes.',
             changes: 'Her position on Julian becomes a public fact about her rather than a private suspicion.',
@@ -134139,6 +134160,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           },
         },
         { n: 10, kind: 'conditional', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          eventMarkers: ['i had nothing to do with', 'i did not touch the rite'],
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'He cannot deny it, so the scene is what he says instead — and what he asks of her now that denial is gone.',
             changes: 'What stands between them is no longer whether he did it but what he wants from her about it.',
@@ -134220,11 +134242,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           },
         },
         { n: 15, kind: 'convergence', causalLink: 'therefore',
+          eventMarkers: ['one of the oldest taboos', 'the oldest taboo'],
           changes: 'Lirael knows the intervention broke one of the oldest taboos, which makes it ruinous rather than irregular.',
           followsFrom: 'The inquiry has turned toward Julian, so what he actually did starts to come into view.',
           setsUp: 'What was done was not merely irregular: it broke one of the oldest taboos, so exposing it would destroy whoever did it.',
           goal: 'The PC learns the intervention violated one of the oldest taboos.' },
         { n: 16, kind: 'conditional', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          eventMarkers: ['i bent the wish', 'it was my wish', 'i was the one who turned it'],
           onOverturned: { provenance: 'authored_proposal_pending_review',
             accomplishes: 'The admission is already public, so the scene is what he tells HER that he has not told the panel.',
             changes: 'She knows something about his act that the inquiry does not.',
@@ -134246,11 +134270,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           },
         },
         { n: 17, kind: 'convergence', causalLink: 'therefore',
+          eventMarkers: ['what he gave up for', 'what it cost him to'],
           changes: 'Lirael knows what Julian gave up, and cannot unknow the size of it.',
           followsFrom: 'Julian admitted the act without giving a reason for it, which leaves only its cost to read him by.',
           setsUp: 'Lirael knows what he gave up.',
           goal: 'The PC learns what he sacrificed.' },
         { n: 18, kind: 'convergence', causalLink: 'therefore',
+          eventMarkers: ['to save you both', 'to save her and the'],
           changes: 'Lirael knows he did it to save both the youth and her, so his ruin and her exoneration are the same act.',
           followsFrom: 'Lirael knows what Julian sacrificed, and what it was for is legible in what it cost him.',
           setsUp: 'Exposure is now a betrayal of the man who saved her, and silence is now a lie she lives inside.',
@@ -135128,7 +135154,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._historyNoteList = _historyNoteList;
 
-  function _attachHistoryNote(sceneUid, note, prose) {
+  function _attachHistoryNote(sceneUid, note, prose, opts) {
     try {
       var s = window.state; if (!s || !note) return null;
       var found = (typeof _sbSceneByUid === 'function') ? _sbSceneByUid(sceneUid, s) : null;
@@ -135187,8 +135213,34 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         }
       } catch (_) {}
 
+      // SCENE IDENTITY. Supplied by the caller when it knows, else resolved from the scene
+      // ledger (which records sceneNumber against pageUid/sceneUid), else LEFT NULL — the
+      // formatter says "scene unknown" rather than inventing a position-derived number.
+      var _hnScene = null, _hnSceneSrc = 'unknown';
+      try {
+        if (opts && Number(opts.sceneNumber) > 0) { _hnScene = Number(opts.sceneNumber); _hnSceneSrc = String(opts.sceneNumberSource || 'caller'); }
+        else {
+          var _L = s._sceneLedger;
+          if (_L && Array.isArray(_L.entries)) {
+            for (var _li = _L.entries.length - 1; _li >= 0; _li--) {
+              var _e = _L.entries[_li];
+              if (!_e) continue;
+              if (String(_e.pageUid || '') === String(sceneUid) || String(_e.sceneUid || '') === String(sceneUid)) {
+                if (Number(_e.sceneNumber) > 0) { _hnScene = Number(_e.sceneNumber); _hnSceneSrc = 'scene ledger'; }
+                break;
+              }
+            }
+          }
+        }
+      } catch (_) {}
       var _hn = {
-        v: 3, sceneUid: sceneUid, ref: String(sceneUid), writtenAt: Date.now(),
+        v: 4, sceneUid: sceneUid, ref: String(sceneUid), writtenAt: Date.now(),
+        sceneNumber: _hnScene, sceneNumberSource: _hnSceneSrc,
+        // THE PROSE THE QUOTATIONS WERE CHECKED AGAINST. A later revision of that prose
+        // supersedes them, and _sbInvalidateDependentsOfScene marks this note stale.
+        proseHash: (typeof _sbTextHash === 'function') ? _sbTextHash(text) : null,
+        proseLen: String(text || '').length,
+        quotesStale: false, staleReason: null,
         quoted: quoted,            // backed by an exact quotation from THIS scene
         summary: summary,          // the author's paraphrase. NOT evidence of anything.
         obligations: obligations,  // proposed forward commitments
@@ -135358,7 +135410,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var recent = recs.slice(-(o.recent || _HN_MAX_RECENT));
       var estLines = [], sumLines = [];
       recent.forEach(function (hn, i) {
-        var n = recs.length - recent.length + i + 1;
+        // THE NOTE'S OWN SCENE NUMBER, never its position in the list. An unknown number is
+        // stated as unknown: a wrong number misaligns history against the issue outline, which
+        // is worse than an honest gap.
+        var n = (Number(hn.sceneNumber) > 0) ? ('scene ' + hn.sceneNumber)
+          : ('scene unknown [' + String(hn.ref || '?').slice(0, 24) + ']');
+        // A REVISED SCENE SUPERSEDES ITS OWN QUOTATIONS. They were verified against text that no
+        // longer exists, so they stop being presented as the scene's own words.
+        var stale = !!hn.quotesStale;
         // A QUOTE-BACKED ITEM CONTRIBUTES TO BOTH SECTIONS, and the split is the safeguard.
         // Only the QUOTATION is presented as something the scene contains; the author's sentence
         // about it goes under the summary heading like any other paraphrase. This is what keeps a
@@ -135367,15 +135426,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // anything", and the planner then sees the quiet chamber as text and the claim as the
         // author's unverified account — never the claim as fact.
         (hn.quoted || []).forEach(function (x) {
-          estLines.push('  scene ' + n + ' — the scene\'s own words: "' + x.quote + '"');
-          sumLines.push('  scene ' + n + ' [' + x.kind + ', author\'s gloss on the above]: ' + x.text);
+          if (stale) {
+            // Demoted to the unverified section, with the reason, rather than dropped: the
+            // continuity information is still useful and its status is no longer misstated.
+            sumLines.push('  ' + n + ' [' + x.kind + ', SUPERSEDED — this was quoted from a version'
+              + ' of the scene that has since been revised, so it is NO LONGER the scene\'s own'
+              + ' words' + (hn.staleReason ? ' (' + hn.staleReason + ')' : '') + ']: ' + x.text
+              + '  (was quoted as: "' + x.quote + '")');
+            return;
+          }
+          estLines.push('  ' + n + ' — the scene\'s own words: "' + x.quote + '"');
+          sumLines.push('  ' + n + ' [' + x.kind + ', author\'s gloss on the above]: ' + x.text);
         });
         (hn.knowledge || []).forEach(function (k) {
-          sumLines.push('  scene ' + n + ' [knowledge, UNVERIFIED — who knew what is the author\'s'
+          sumLines.push('  ' + n + ' [knowledge, UNVERIFIED — who knew what is the author\'s'
             + ' claim, not something the text establishes]: ' + k.who + ' — ' + k.text);
         });
         (hn.summary || []).forEach(function (x) {
-          sumLines.push('  scene ' + n + ' [' + x.kind + ']: ' + x.text);
+          sumLines.push('  ' + n + ' [' + x.kind + ']: ' + x.text);
         });
       });
       var lines = [];
@@ -137401,6 +137469,27 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var m = String(ref || '').match(/^prop:(\d+):/);
     return m ? Number(m[1]) : null;
   }
+  // One scene-identified, revision-aware history source for every consumer of this resolver.
+  // `quoted` is the only part that is the scene's own words, and a revised scene's quotations are
+  // marked stale by _sbInvalidateDependentsOfScene and are NOT treated as text here either.
+  function _outlineHistoryByScene(s) {
+    var out = {};
+    try {
+      var recs = (typeof _historyNoteList === 'function') ? _historyNoteList(s) : (s && s._historyNotes) || [];
+      (Array.isArray(recs) ? recs : []).forEach(function (hn) {
+        if (!hn) return;
+        var n = Number(hn.sceneNumber);
+        var key = (n > 0) ? String(n) : ('unknown:' + String(hn.ref || ''));
+        var rec = out[key] = out[key] || { sceneNumber: (n > 0 ? n : null), notes: 0, quoted: [], stale: 0, unidentified: !(n > 0) };
+        rec.notes++;
+        if (hn.quotesStale) { rec.stale++; return; }   // superseded text is not evidence of anything
+        (Array.isArray(hn.quoted) ? hn.quoted : []).forEach(function (q) {
+          if (q && q.quote) rec.quoted.push({ quote: String(q.quote), kind: q.kind || null, ref: hn.ref });
+        });
+      });
+    } catch (_) {}
+    return out;
+  }
   function _outlineCommitEvidence(s) {
     s = s || window.state;
     var cs = null;
@@ -137417,7 +137506,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     });
     return { through: (cs && cs._committedThroughScene != null) ? Number(cs._committedThroughScene) : null,
              byProposalScene: byProposalScene, byCommitScene: byCommitScene, unbound: unbound,
-             count: facts.length,
+             count: facts.length, history: _outlineHistoryByScene(s),
              deliveryLog: (cs && cs.deliveryLog && typeof cs.deliveryLog === 'object') ? cs.deliveryLog : {},
              pendingIntent: (cs && cs.pendingIntent) || null };
   }
@@ -137439,10 +137528,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // ── WHAT WAS VERIFIED IS THE FACT'S OWN TEXT, bound to THIS scene's sealed proposals. ──
     var own = (ev.byProposalScene[n] || []);
     if (own.length) {
-      return { status: 'committed',
-               verifiedFacts: own.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; }),
-               evidence: own.length + ' committed fact(s) sealed for scene ' + n + ': '
-                 + own.map(function (f) { return f.proposalRef; }).join(', ') };
+      var _vf = own.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; });
+      var _lg = ev.deliveryLog && ev.deliveryLog[String(n)];
+      var _aggDelivered = !!(_lg && String(_lg.aggregateDelivery || '').toUpperCase() === 'DELIVERED');
+      if (_aggDelivered) {
+        return { status: 'committed', verifiedFacts: _vf,
+                 evidence: own.length + ' committed fact(s) sealed for scene ' + n + ' ('
+                   + own.map(function (f) { return f.proposalRef; }).join(', ')
+                   + ') AND this scene\'s own verdict recorded the planned event DELIVERED' };
+      }
+      return { status: 'partially_verified', verifiedFacts: _vf,
+               evidence: own.length + ' committed fact(s) sealed for scene ' + n + ' ('
+                 + own.map(function (f) { return f.proposalRef; }).join(', ')
+                 + ') — but this scene\'s own verdict did NOT record the planned event delivered'
+                 + (_lg ? ' (aggregate ' + (_lg.aggregateDelivery || 'unstated') + ')' : ' (no verdict retained)')
+                 + ', so those facts are established and the ROW\'S ASSIGNMENT is not' };
     }
     if (n >= Number(sceneNow)) return { status: 'planned', evidence: 'not yet generated' };
     // A fact COMMITTED DURING this scene but sealed for another scene (or legacy, with no
@@ -137475,12 +137575,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       return { status: 'unverified',
                evidence: 'commit-scene assessed through ' + ev.through + ' but retained no verdict for scene '
                  + n + ', so whether its event landed is UNKNOWN — the latest verdict is not evidence about this scene' + foreignNote };
-    var wrote = false;
-    try { wrote = !!(s && Array.isArray(s._historyNotes) && s._historyNotes.length >= n); } catch (_) {}
-    if (!wrote) { try { wrote = (typeof _hasPriorRenderedScene === 'function') ? _hasPriorRenderedScene() : false; } catch (_) {} }
-    return wrote
-      ? { status: 'written_unassessed', evidence: 'prose exists for this ordinal; commit-scene has not assessed it (through=' + (ev.through == null ? 'never' : ev.through) + ')' + foreignNote }
-      : { status: 'not_written', evidence: 'no committed fact, no assessment, and no record this scene was produced' + foreignNote };
+    // A NOTE FOR THIS SCENE, identified by the note's own scene number. The old test — "are
+    // there at least n notes?" — counted notes instead of identifying scenes.
+    var hist = ev.history || {};
+    var mine = hist[String(n)] || null;
+    if (mine) return { status: 'written_unassessed',
+      evidence: 'a history note belongs to scene ' + n + ' (' + mine.quoted.length + ' quote-backed item(s)'
+        + (mine.stale ? ', ' + mine.stale + ' superseded by a later revision' : '')
+        + '); commit-scene has not assessed it (through=' + (ev.through == null ? 'never' : ev.through) + ')' + foreignNote };
+    var unid = Object.keys(hist).filter(function (k) { return k.indexOf('unknown:') === 0; }).length;
+    return { status: 'not_written',
+      evidence: 'no committed fact, no assessment, and no history note identifies scene ' + n
+        + (unid ? ' (' + unid + ' note(s) carry no scene identity, so they cannot answer for it either)' : '')
+        + foreignNote };
   }
 
   // A DECISION IS RESOLVED ONLY BY AN ACTUAL CHOICE. v1 counted a passed scene number, which is
@@ -137767,8 +137874,36 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                : 'no replacement is authored');
         }
       }
+      // ALREADY-WRITTEN CHECK. Quote-backed history only; stale quotations are excluded upstream.
+      var alreadyWritten = null;
+      try {
+        var _mk = [].concat(Array.isArray(planRow && planRow.eventMarkers) ? planRow.eventMarkers : [],
+          (Array.isArray(planRow && planRow.reservedEvents) ? planRow.reservedEvents : [])
+            .reduce(function (a, re) { return a.concat(Array.isArray(re && re.markers) ? re.markers : []); }, []),
+          Array.isArray(spineRow && spineRow.event_markers) ? spineRow.event_markers : []).map(String);
+        if (_mk.length) {
+          var _hits = [];
+          Object.keys(ev.history || {}).forEach(function (k) {
+            var h = ev.history[k];
+            if (!h || !h.quoted.length) return;
+            // Only EARLIER scenes, or an unidentified note: a quotation from THIS scene or a
+            // later one cannot show it was delivered early.
+            if (h.sceneNumber != null && h.sceneNumber >= n) return;
+            h.quoted.forEach(function (q) {
+              var hay = String(q.quote).toLowerCase();
+              _mk.forEach(function (m) {
+                var mm = m.toLowerCase().trim();
+                if (mm && hay.indexOf(mm) !== -1)
+                  _hits.push({ marker: m, quote: q.quote, atScene: h.sceneNumber, ref: q.ref });
+              });
+            });
+          });
+          if (_hits.length) alreadyWritten = _hits.slice(0, 4);
+        }
+      } catch (_) {}
       var row = {
         n: n, kind: kind,
+        alreadyWritten: alreadyWritten,
         delivery: del.status, deliveryEvidence: del.evidence,
         verifiedFacts: del.verifiedFacts || null,
         overturnedBy: overturnedBy,
@@ -137789,6 +137924,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       rows.push(row);
       if (del.status === 'committed') { try { s._issueOutlineHistory[String(n)] = row; } catch (_) {} }
       if (horizon == null && hasDecision && !decisionHere.resolved) { horizon = n; horizonAxis = decisionHere.axis; }
+      if (alreadyWritten) {
+        try { console.warn('[ISSUE-OUTLINE:ALREADY-WRITTEN] scene ' + n + ' is still scheduled, but earlier'
+          + ' quoted prose already shows it: ' + alreadyWritten.map(function (h) {
+            return '"' + h.marker + '" at scene ' + (h.atScene == null ? '?' : h.atScene); }).join(', ')); } catch (_) {}
+      }
       prevEff = eff || prevEff;
     }
 
@@ -137935,6 +138075,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
     written_unassessed: { head: 'WRITTEN BUT UNCHECKED — prose exists for these scenes and nothing has verified what landed. Do not assert them as established facts',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
+    partially_verified: { head: 'PARTLY VERIFIED — specific facts from these scenes were committed, but the scene\'s own verdict did NOT record its planned event as delivered. The listed facts are established; the scene\'s ASSIGNMENT is not, and may still be owed',
+                 line: function (r) {
+                   var fs_ = (r.verifiedFacts || []);
+                   return 'scene ' + r.n + ' — verified: ' + (fs_.length
+                     ? fs_.map(function (f) { return '"' + String(f.text).slice(0, 160) + '"'; }).join(' · ')
+                     : '(none retained)') + '  |  its assignment: NOT established';
+                 } },
     not_written: { head: 'NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } }
   };
@@ -137969,6 +138116,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             : row.follows_from.link === 'therefore' ? ' (CONSEQUENCE — the previous development caused this)' : '')
           + ': ' + row.follows_from.text);
       }
+      if (row.alreadyWritten) {
+        L.push('    ⚠ THIS DEVELOPMENT MAY ALREADY HAVE BEEN WRITTEN. Earlier prose, quoted from the scenes'
+          + ' themselves, already contains it:');
+        row.alreadyWritten.forEach(function (h) {
+          L.push('      – scene ' + (h.atScene == null ? '?' : h.atScene) + ' says: "' + String(h.quote).slice(0, 180) + '"');
+        });
+        L.push('      READ THE QUOTATION. If it genuinely shows this development already happened, do NOT'
+          + ' deliver it again as a NEW event or a NEW revelation: write the CONSEQUENCES of it having'
+          + ' happened — what it costs now, who acts on it now, what it makes possible or impossible. If the'
+          + ' match is incidental and the development has NOT actually occurred, deliver it as assigned. This'
+          + ' is a lexical flag, not a verdict.');
+      }
       if (row.changes) L.push('    WHAT CHANGES BY THE END: ' + row.changes);
       if (row.sets_up) L.push('    WHAT IT SETS UP: ' + row.sets_up);
       if (row.activeRoute && row.activeRoute.how) {
@@ -137984,10 +138143,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         L.push('      Do NOT decide it for them, do NOT write her as having already answered, and do NOT resolve the scene\'s central pressure before it.');
       }
       // ── DELIVERY TRUTH, PER CLASS. Only `committed` may be stated as established history.
-      ['committed', 'assessed_not_delivered', 'unverified', 'written_unassessed', 'not_written'].forEach(function (cls) {
+      ['committed', 'partially_verified', 'assessed_not_delivered', 'unverified', 'written_unassessed', 'not_written'].forEach(function (cls) {
         var set = o.scenes.filter(function (r) {
           if (r.n >= n || r.delivery !== cls) return false;
-          return (cls === 'committed') ? !!(r.verifiedFacts && r.verifiedFacts.length) : !!r.accomplishes;
+          return (cls === 'committed' || cls === 'partially_verified')
+            ? !!(r.verifiedFacts && r.verifiedFacts.length) : !!r.accomplishes;
         });
         if (!set.length) return;
         var w = _OUTLINE_DELIVERY_WORDING[cls];
@@ -138052,8 +138212,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
              decisions: o.decisions, overturned: o.overturned, commitEvidence: o.commitEvidence,
              planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
              cliffhanger: o.cliffhanger, lastRevision: o.lastRevision || null,
+             alreadyWritten: o.scenes.filter(function (r) { return r.alreadyWritten; })
+               .map(function (r) { return { scene: r.n, hits: r.alreadyWritten }; }),
              scenes: o.scenes.map(function (r) {
-               return r.n + ' [' + r.kind + '/' + r.delivery + (r.conditional ? '/conditional' : '') + '] '
+               return r.n + ' [' + r.kind + '/' + r.delivery + (r.conditional ? '/conditional' : '')
+                 + (r.alreadyWritten ? '/ALREADY-WRITTEN' : '') + '] '
                  + (r.follows_from.link ? ('(' + r.follows_from.link + ') ') : '')
                  + String(r.accomplishes || '(no goal)').slice(0, 110);
              }) };
@@ -324517,7 +324680,8 @@ ABSOLUTE RULES:
                 if (_stamp === _nowTurn || _stamp === _nowTurn - 1) {
                   var _pgUid = StoryPagination.getCurrentPageUid();
                   if (_pgUid && typeof _attachHistoryNote === 'function') {
-                    _attachHistoryNote(String(_pgUid), _pendHN.note, String(raw || ''));
+                    _attachHistoryNote(String(_pgUid), _pendHN.note, String(raw || ''),
+                      { sceneNumber: _stamp + 2, sceneNumberSource: 'literary turn stamp + 2 (the same arithmetic _currentSceneNumber uses)' });
                   }
                 } else {
                   console.warn('[HISTORY-NOTE] discarded a note stamped for turn ' + _stamp
@@ -329676,7 +329840,12 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     // happens inside _attachHistoryNote: unsupported claims are quarantined there and can never
     // reach the established-history block.
     if (_pendingNote) {
-      try { _attachHistoryNote(uid, _pendingNote, proj.text); } catch (_) {}
+      try {
+        var _hnSceneN = (spec.assignedEvent && spec.assignedEvent.sceneIndex != null)
+          ? (Number(spec.assignedEvent.sceneIndex) + 1) : null;
+        _attachHistoryNote(uid, _pendingNote, proj.text,
+          _hnSceneN > 0 ? { sceneNumber: _hnSceneN, sceneNumberSource: 'assignedEvent.sceneIndex + 1' } : null);
+      } catch (_) {}
     }
     try {
       console.log('[SCENE-PROJECTION] created ' + uid + ' kind=' + proj.kind + ' revision=0 hash=' + proj.hash
@@ -329741,8 +329910,24 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         out.push(k);
       });
     } catch (_) {}
+    // THE HISTORY NOTE IS A DEPENDENT TOO. Its quotations were checked against the superseded
+    // text, so they stop being presented as the scene's own words.
+    try {
+      (Array.isArray(s._historyNotes) ? s._historyNotes : []).forEach(function (hn) {
+        if (!hn || hn.quotesStale) return;
+        if (String(hn.sceneUid || hn.ref || '') !== String(uid)) return;
+        hn.quotesStale = true;
+        hn.staleReason = 'the scene was revised: hash ' + String(prevHash) + ' -> revision ' + newRevision;
+        hn.staleAt = Date.now();
+        out.push('historyNote:' + String(hn.ref));
+      });
+    } catch (_) {}
     return out;
   }
+
+  // Dev handle so a FREE provider-free control can drive the REAL invalidation hook — the same
+  // function _sbReviseSceneProjection calls — rather than a copy of it. No production caller.
+  try { window._sbInvalidateDependentsOfScene = _sbInvalidateDependentsOfScene; } catch (_) {}
 
   // MIGRATION — the explicit, provenance-marked exception to the ordinary route. It writes a record
   // whose text it did NOT build, so it says so rather than impersonating a projection write. The

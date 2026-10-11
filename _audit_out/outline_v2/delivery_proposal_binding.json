@@ -2,8 +2,9 @@
  "r1": {
   "n": 1,
   "kind": "independent",
+  "alreadyWritten": null,
   "delivery": "committed",
-  "deliveryEvidence": "2 committed fact(s) sealed for scene 1: prop:1:1, prop:1:2",
+  "deliveryEvidence": "2 committed fact(s) sealed for scene 1 (prop:1:1, prop:1:2) AND this scene's own verdict recorded the planned event DELIVERED",
   "verifiedFacts": [
    {
     "text": "The presiding Dohkar declares the rite his to rule on",
@@ -48,6 +49,7 @@
  "r2": {
   "n": 2,
   "kind": "conditional",
+  "alreadyWritten": null,
   "delivery": "unverified",
   "deliveryEvidence": "commit-scene assessed through 2 but retained no verdict for scene 2, so whether its event landed is UNKNOWN — the latest verdict is not evidence about this scene (a fact was committed during this scene but sealed elsewhere — prop:1:2: \"A bird lands on a branch\" — it does NOT certify this scene's assignment)",
   "verifiedFacts": null,

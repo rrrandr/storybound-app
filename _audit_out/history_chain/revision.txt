@@ -1,0 +1,10 @@
+--- BEFORE THE REVISION ---
+[WHAT THE SCENES THEMSELVES SAY — quoted verbatim]
+  scene 4 — the scene's own words: "She signed nothing, and the page stayed between them."
+
+[THE AUTHOR'S SUMMARY OF PRIOR SCENES — UNVERIFIED, NOT CANON. These are the previous author's own words about its own scene. They have NOT been checked for truth: treat them as a reading aid for continuity, never as settled fact, and never contradict the quoted text above on their authority.]
+  scene 4 [events, author's gloss on the above]: she refused to sign
+
+--- AFTER THE REVISION ---
+[THE AUTHOR'S SUMMARY OF PRIOR SCENES — UNVERIFIED, NOT CANON. These are the previous author's own words about its own scene. They have NOT been checked for truth: treat them as a reading aid for continuity, never as settled fact, and never contradict the quoted text above on their authority.]
+  scene 4 [events, SUPERSEDED — this was quoted from a version of the scene that has since been revised, so it is NO LONGER the scene's own words (the scene was revised: hash hb1159b11-53 -> revision 1)]: she refused to sign  (was quoted as: "She signed nothing, and the page stayed between them.")
