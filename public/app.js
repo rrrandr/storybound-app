@@ -98794,6 +98794,29 @@ Return ONLY numbered beats. No prose. No dialogue.` }
             + (_por.follows_from.link ? ' (' + _por.follows_from.link.toUpperCase() + ')' : '') + ': ' + _por.follows_from.text);
           if (_por.changes) _pl.push('  WHAT MUST BE TRUE BY THE END: ' + _por.changes);
           if (_por.sets_up) _pl.push('  WHAT IT SETS UP FOR THE NEXT SCENE: ' + _por.sets_up);
+          // THE CONVERGENCE SHAPE AND ITS ROUTES. The scaffold chooses the causal sequence, so it
+          // is the layer that most needs to know that HOW this point is reached is adaptable, and
+          // which routes are open — otherwise a player-redirected plot still gets one fixed outline.
+          if (_por.kind === 'convergence')
+            _pl.push('  THIS IS A CONVERGENCE POINT: Fate is steering the story here, but HOW it is reached'
+              + ' is adaptable. Sequence the route from where the characters ACTUALLY are now; do not move'
+              + ' anyone for the plot\'s convenience.');
+          var _pdep = _por.dependsOn;
+          if (Array.isArray(_pdep)) _pdep = _pdep.filter(Boolean).join(', ');
+          if (_pdep)
+            _pl.push('  THIS SCENE DEPENDS ON: ' + _pdep
+              + ' — if that is no longer true, the sequence below cannot stand as written.');
+          if (Array.isArray(_por.routes) && _por.routes.length) {
+            if (_por.routeTaken)
+              _pl.push('  THE ROUTE THE PLAYER ACTUALLY TOOK ("' + _por.routeTaken.choice + '"): '
+                + _por.routeTaken.how + (_por.routeTaken.carries ? ' — ARRIVING WITH: ' + _por.routeTaken.carries : ''));
+            else
+              _pl.push('  ROUTES TO THIS POINT (the player has not yet taken one — do not assume either):'
+                + _por.routes.map(function (rt) {
+                    return '\n    – if "' + rt.choice + '": ' + rt.how
+                      + (rt.carries ? '  → arriving with: ' + rt.carries : '');
+                  }).join(''));
+          }
           if (_por.decision) _pl.push('  THE PLAYER DECIDES AT THE END: ' + (_por.decision.axis || '(axis unstated)')
             + ' — the outline STOPS at the decision being forced. Do NOT outline the protagonist answering it.');
           _skelPurposeBlock = _pl.join('\n') + '\n';
@@ -101657,25 +101680,70 @@ function _buildAuthorFloorDirective(s) {
   }
   window._adjudicateSceneProposals = _adjudicateSceneProposals;
 
-  // THE NAMED SOURCES a commit assessment can be read from, and the ONLY normalisation applied to
-  // each. 'pagination' strips tags and collapses whitespace exactly as the caller's own branch
-  // does; 'projection' returns the latest projection text as-is. Called before dispatch to build
-  // the identity and again after it to check for a rewrite — same source, same normalisation.
-  function _commitProseForSource(s, tag) {
-    s = s || window.state;
+  // ONE PAGE'S OWN TEXT, by its stable uid. getAllContent() joins every page and therefore moves
+  // whenever the story continues; a page uid does not.
+  function _pageTextByUid(uid) {
     try {
-      var t = String(tag || '');
-      if (t === 'pagination') {
-        if (typeof StoryPagination === 'undefined' || !StoryPagination.getAllContent) return '';
-        return StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      }
-      if (t.indexOf('projection') === 0) {
-        return (typeof _sbLatestProseText === 'function') ? String(_sbLatestProseText(s) || '') : '';
-      }
-    } catch (_) {}
-    return '';
+      if (!uid || typeof StoryPagination === 'undefined'
+        || !StoryPagination.getPageUids || !StoryPagination.getPages) return null;
+      var uids = StoryPagination.getPageUids() || [];
+      var i = uids.indexOf(uid);
+      if (i < 0) return null;
+      var pages = StoryPagination.getPages() || [];
+      if (i >= pages.length) return null;
+      return String(pages[i] || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    } catch (_) { return null; }
   }
-  try { window._commitProseForSource = _commitProseForSource; } catch (_) {}
+
+  // THE TEXT OF ONE IDENTIFIED HISTORICAL UNIT, with the only normalisation applied to it.
+  // `found: false` means the unit's text is NOT AVAILABLE — which is not evidence that it changed.
+  function _commitUnitText(s, ident) {
+    s = s || window.state;
+    var kind = ident && ident.unitKind, id = ident && ident.unitId;
+    if (!kind || !id) return { found: false, text: '', kind: kind || null, id: id || null,
+                               why: 'no unit identity' };
+    try {
+      if (kind === 'scene') {
+        var rec = (typeof _sbSceneByUid === 'function') ? _sbSceneByUid(id, s) : null;
+        var r = rec && rec.record;
+        if (!r) return { found: false, text: '', kind: kind, id: id,
+                         why: 'scene record ' + id + ' is not in state.scenes' };
+        var txt = (r.projection && r.projection.text) || r.text || r.prose || '';
+        txt = String(txt || '');
+        if (!txt) return { found: false, text: '', kind: kind, id: id,
+                           why: 'scene record ' + id + ' carries no text' };
+        return { found: true, text: txt, kind: kind, id: id };
+      }
+      if (kind === 'page') {
+        var pt = _pageTextByUid(id);
+        if (pt == null) return { found: false, text: '', kind: kind, id: id,
+                                 why: 'page ' + id + ' is not in pagination' };
+        return { found: true, text: pt, kind: kind, id: id };
+      }
+    } catch (e) {
+      return { found: false, text: '', kind: kind, id: id, why: 'unreadable: ' + (e && e.message) };
+    }
+    return { found: false, text: '', kind: kind, id: id, why: 'unknown unit kind ' + kind };
+  }
+  try { window._commitUnitText = function (st, ident) { return _commitUnitText(st || window.state, ident); }; } catch (_) {}
+
+  // THE PREFIX COMPARISON. A unit's text may legitimately GROW — an illustration, a traveller's-
+  // guide insert and other appendToCurrentPage material land on the same page after the fact. So
+  // what is compared is the FIRST unitChars characters, which a rewrite changes and an append does
+  // not. Text shorter than unitChars IS a change.
+  function _commitUnitChanged(ident, now) {
+    if (!ident || !ident.unitHash || !ident.unitChars) return null;
+    if (!now || !now.found) return null;
+    var n = Number(ident.unitChars) || 0;
+    if (now.text.length < n)
+      return 'the ' + (ident.unitKind || 'unit') + ' was rewritten — its text is now shorter ('
+        + now.text.length + ' < ' + n + ' characters)';
+    var h = (typeof _sbTextHash === 'function') ? _sbTextHash(now.text.slice(0, n)) : null;
+    if (h && String(h) !== String(ident.unitHash))
+      return 'the ' + (ident.unitKind || 'unit') + ' ' + ident.unitId + ' was rewritten (hash of its first '
+        + n + ' characters ' + ident.unitHash + ' -> ' + h + ')';
+    return null;
+  }
 
   // THE COMMIT IDENTITY, built in ONE place by both production and the free harness. It records
   // WHICH source the hash came from, so the post-dispatch check rereads that same source.
@@ -101683,7 +101751,7 @@ function _buildAuthorFloorDirective(s) {
     s = s || window.state;
     var ident = { storyId: (s && s.storyId) || null, sceneUid: prevUid || null, pageUid: null,
                   projectionHash: null, projectionRevision: null,
-                  fullTextHash: null, fullTextSource: null,
+                  unitKind: null, unitId: null, unitHash: null, unitChars: null,
                   fullTextChars: String(prevText || '').length,
                   excerptChars: Math.min(5000, String(prevText || '').length) };
     try {
@@ -101698,18 +101766,19 @@ function _buildAuthorFloorDirective(s) {
       if (typeof StoryPagination !== 'undefined' && StoryPagination.getCurrentPageUid)
         ident.pageUid = StoryPagination.getCurrentPageUid() || null;
     } catch (_) {}
-    // THE SOURCE IS NAMED, and the hash is of THAT source reread through the shared helper — not
-    // of whatever string the caller happens to be holding. That is what makes the post-dispatch
-    // comparison meaningful.
+    // THE UNIT IS NAMED: the scene record this prose belongs to, or the page it was written onto.
+    // Not "the latest projection" and not "all the pages joined" — both of those move when the
+    // story simply continues.
     try {
-      var tag = (String(prevSrc || '').indexOf('projection') === 0) ? 'projection' : 'pagination';
-      var txt = _commitProseForSource(s, tag);
-      if (!txt && tag === 'pagination') { tag = 'projection'; txt = _commitProseForSource(s, tag); }
-      if (!txt && tag === 'projection') { tag = 'pagination'; txt = _commitProseForSource(s, tag); }
-      if (txt && typeof _sbTextHash === 'function') {
-        ident.fullTextHash = _sbTextHash(txt);
-        ident.fullTextSource = tag;
-        ident.fullTextChars = txt.length;
+      if (ident.sceneUid) { ident.unitKind = 'scene'; ident.unitId = ident.sceneUid; }
+      else if (ident.pageUid) { ident.unitKind = 'page'; ident.unitId = ident.pageUid; }
+      var u = _commitUnitText(s, ident);
+      if (u.found && typeof _sbTextHash === 'function') {
+        ident.unitChars = u.text.length;
+        ident.unitHash = _sbTextHash(u.text);
+        ident.fullTextChars = u.text.length;
+      } else if (ident.unitId) {
+        ident.unitUnreadable = u.why || 'unreadable';
       }
     } catch (_) {}
     return ident;
@@ -101724,33 +101793,32 @@ function _buildAuthorFloorDirective(s) {
       ['_milestoneDeliveries', '_prereqInvalidations'].forEach(function (key) {
         (Array.isArray(s[key]) ? s[key] : []).forEach(function (r) {
           if (!r || r.accepted !== true || r.superseded === true) return;
-          var changed = null;
-          // (a) A CG projection: compare the record's hash against the record's own scene.
+          // EXACTLY ONE COMPARISON PER RECORD, chosen by what the record is bound to, and NO
+          // FALL-THROUGH. A CG record is settled by its own scene's projection hash; falling
+          // through from there into a generic check compared scene A against scene B and deleted
+          // A's conclusion the moment B was written.
+          var changed = null, label = (r.milestoneScene != null ? ('row ' + r.milestoneScene) : r.prereqId);
           try {
-            if (r.sceneUid && r.projectionHash && typeof _sbSceneByUid === 'function') {
-              var rec = _sbSceneByUid(r.sceneUid, s);
+            if (r.sceneUid && r.projectionHash) {
+              var rec = (typeof _sbSceneByUid === 'function') ? _sbSceneByUid(r.sceneUid, s) : null;
               var proj = (rec && rec.record && rec.record.projection) || null;
-              // ONLY A HASH MISMATCH SUPERSEDES. A record that is no longer in state.scenes is NOT
-              // evidence that its prose changed: literary continuations create no scene record at
-              // all, and the array is bounded and spliced by the OAS archive. Treating "not found"
-              // as a rewrite wiped every assessment on a story whose records had rolled off —
-              // found by _history_chain_control section 18, where two valid supports both died.
-              if (!rec) {
-                try { console.log('[ASSESSMENT-REVALIDATE] ' + (r.milestoneScene != null ? ('row ' + r.milestoneScene) : r.prereqId)
-                  + ': scene record ' + r.sceneUid + ' is not in state.scenes — UNVERIFIABLE, left in force'); } catch (_) {}
-              } else if (proj && String(proj.hash) !== String(r.projectionHash))
-                changed = 'the scene was rewritten (projection hash ' + r.projectionHash + ' -> ' + proj.hash + ')';
-            }
-          } catch (_) {}
-          // (b) A LITERARY source: reread THE SAME named source through the shared helper.
-          try {
-            if (!changed && r.fullTextSource && r.fullTextHash) {
-              var txt = _commitProseForSource(s, r.fullTextSource);
-              if (txt && typeof _sbTextHash === 'function') {
-                var h = _sbTextHash(txt);
-                if (String(h) !== String(r.fullTextHash))
-                  changed = 'the prose was edited (source ' + r.fullTextSource + ', full-text hash '
-                    + r.fullTextHash + ' -> ' + h + ')';
+              // ONLY A HASH MISMATCH ON ITS OWN SCENE SUPERSEDES. A record that is no longer in
+              // state.scenes is NOT evidence that its prose changed — literary continuations create
+              // none and the array is spliced by the OAS archive — so it stays in force.
+              if (!rec || !proj) {
+                try { console.log('[ASSESSMENT-REVALIDATE] ' + label + ': scene ' + r.sceneUid
+                  + ' has no readable projection — UNVERIFIABLE, left in force'); } catch (_) {}
+              } else if (String(proj.hash) !== String(r.projectionHash)) {
+                changed = 'the scene was rewritten (projection hash ' + r.projectionHash
+                  + ' -> ' + proj.hash + ')';
+              }
+            } else if (r.unitId && r.unitHash) {
+              var now = _commitUnitText(s, r);
+              if (!now.found) {
+                try { console.log('[ASSESSMENT-REVALIDATE] ' + label + ': ' + (now.why || 'unit unreadable')
+                  + ' — UNVERIFIABLE, left in force'); } catch (_) {}
+              } else {
+                changed = _commitUnitChanged(r, now);
               }
             }
           } catch (_) {}
@@ -101918,15 +101986,17 @@ function _buildAuthorFloorDirective(s) {
         projectionHash: (sceneIdentity && sceneIdentity.projectionHash) || null,
         projectionRevision: (sceneIdentity && typeof sceneIdentity.projectionRevision === 'number')
           ? sceneIdentity.projectionRevision : null,
-        fullTextHash: (sceneIdentity && sceneIdentity.fullTextHash) || null,
-        fullTextSource: (sceneIdentity && sceneIdentity.fullTextSource) || null,
+        unitKind: (sceneIdentity && sceneIdentity.unitKind) || null,
+        unitId: (sceneIdentity && sceneIdentity.unitId) || null,
+        unitHash: (sceneIdentity && sceneIdentity.unitHash) || null,
+        unitChars: (sceneIdentity && sceneIdentity.unitChars) || null,
         fullTextChars: (sceneIdentity && sceneIdentity.fullTextChars) || null,
         watchMilestones: _mWatch.map(function (m) { return Number(m.n); }),
         watchPrereqs: _pWatch.map(function (q) { return String(q.id); })
       };
       // NO IDENTITY, NO DURABLE CONCLUSION. Without something a later rewrite will change, nothing
       // can ever supersede the record, so it may be stored as an observation but never accepted.
-      _asTarget.bindable = !!(_asTarget.projectionHash || _asTarget.fullTextHash);
+      _asTarget.bindable = !!(_asTarget.projectionHash || _asTarget.unitHash);
       if (_mWatch.length || _pWatch.length) {
         _vSys += '\n\nTWO ADDITIONAL QUESTIONS, judged ONLY against the SCENE PROSE above. Both are'
           + ' SEPARATE from the proposals: answer them about the prose itself.\n'
@@ -102181,19 +102251,13 @@ function _buildAuthorFloorDirective(s) {
                 + 'so nothing could later supersede this record — it is recorded as an observation only';
             if (!_asStale && _asTarget.storyId && window.state.storyId && String(window.state.storyId) !== String(_asTarget.storyId))
               _asStale = 'the story changed while the assessment was in flight';
-            // THE LITERARY STALE CHECK — THE SAME NAMED SOURCE, re-read through the SAME helper.
-            // The first version preferred the latest projection here while the caller had preferred
-            // pagination, so unchanged pagination beside an older stored projection reported a
-            // rewrite that had not happened.
-            if (!_asStale && !_asTarget.sceneUid && _asTarget.fullTextHash && _asTarget.fullTextSource) {
-              var _nowProse = _commitProseForSource(window.state, _asTarget.fullTextSource);
-              if (_nowProse && typeof _sbTextHash === 'function') {
-                var _nowHash = _sbTextHash(_nowProse);
-                if (String(_nowHash) !== String(_asTarget.fullTextHash))
-                  _asStale = 'the prose was rewritten while the assessment was in flight (source '
-                    + _asTarget.fullTextSource + ', full-text hash '
-                    + _asTarget.fullTextHash + ' -> ' + _nowHash + ')';
-              }
+            // THE UNIT STALE CHECK — THE SAME NAMED UNIT, re-read through the SAME helper. Only
+            // reached when there is no projection hash to compare (the literary case); a CG record
+            // is settled by its own projection above and never compared against anything else.
+            if (!_asStale && !_asTarget.projectionHash && _asTarget.unitHash && _asTarget.unitId) {
+              var _nowU = _commitUnitText(window.state, _asTarget);
+              var _ch = _commitUnitChanged(_asTarget, _nowU);
+              if (_ch) _asStale = _ch + ' while the assessment was in flight';
             }
             if (!_asStale && _asTarget.sceneUid && typeof _sbSceneByUid === 'function') {
               var _nowRec = _sbSceneByUid(_asTarget.sceneUid, window.state);
@@ -102246,7 +102310,8 @@ function _buildAuthorFloorDirective(s) {
               milestoneScene: tgt, atScene: _asScene, turnScene: prevSceneNum,
               storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-              fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
+              unitKind: _asTarget.unitKind, unitId: _asTarget.unitId,
+              unitHash: _asTarget.unitHash, unitChars: _asTarget.unitChars,
               status: st || 'unstated', accepted: accepted, why: why,
               evidence: m.evidence || null, participants: parts, scope: scope || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102276,7 +102341,8 @@ function _buildAuthorFloorDirective(s) {
               prereqId: String(q.id), atScene: _asScene, turnScene: prevSceneNum,
               storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
               projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-              fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
+              unitKind: _asTarget.unitKind, unitId: _asTarget.unitId,
+              unitHash: _asTarget.unitHash, unitChars: _asTarget.unitChars,
               status: st2 || 'unstated', accepted: acc2, why: why2,
               evidence: q.evidence || null, participants: parts2, scope: scope2 || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
@@ -102301,7 +102367,8 @@ function _buildAuthorFloorDirective(s) {
                 atScene: _asScene, turnScene: prevSceneNum,
                 storyId: _asTarget.storyId, sceneUid: _asTarget.sceneUid, pageUid: _asTarget.pageUid,
                 projectionHash: _asTarget.projectionHash, projectionRevision: _asTarget.projectionRevision,
-                fullTextHash: _asTarget.fullTextHash, fullTextSource: _asTarget.fullTextSource,
+                unitKind: _asTarget.unitKind, unitId: _asTarget.unitId,
+                unitHash: _asTarget.unitHash, unitChars: _asTarget.unitChars,
                 status: 'unreported', accepted: false,
                 why: 'the verifier returned no entry for this watched item — NOT ASSESSED, which is not absence',
                 evidence: null, participants: [], scope: null,
@@ -138087,6 +138154,42 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // carries a cliffhanger AT EACH of those boundaries, so the plot ends where the reader's issue
   // ends in either mode. v1 printed the two numbers and called that reconciliation; it was not.
   // (20-24 is a THIRD, unrelated number: the causal developments inside ONE CG scene.)
+  // A CANONICAL FINGERPRINT OF A WHOLE STRUCTURE. Keys are emitted in sorted order so two equal
+  // structures hash equally regardless of insertion order, and undefined is distinguished from
+  // absent. Any change anywhere inside changes the hash — that is the point: a consumer-by-
+  // consumer field list is what let a changed prerequisite, route or cliffhanger slip through.
+  function _sbCanonicalJSON(v) {
+    if (v === null) return 'null';
+    if (v === undefined) return 'undef';
+    var t = typeof v;
+    if (t === 'number') return (v === v ? String(v) : 'NaN');
+    if (t === 'boolean') return v ? 'true' : 'false';
+    if (t === 'string') return JSON.stringify(v);
+    if (t === 'function') return '"fn"';
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(_sbCanonicalJSON(v[i]));
+      return '[' + out.join(',') + ']';
+    }
+    if (t === 'object') {
+      var ks = Object.keys(v).sort(), parts = [];
+      for (var k = 0; k < ks.length; k++)
+        parts.push(JSON.stringify(ks[k]) + ':' + _sbCanonicalJSON(v[ks[k]]));
+      return '{' + parts.join(',') + '}';
+    }
+    return JSON.stringify(String(v));
+  }
+  function _sbStructureFingerprint(v) {
+    if (v == null) return 'none';
+    try {
+      var canon = _sbCanonicalJSON(v);
+      return (typeof _sbTextHash === 'function') ? (_sbTextHash(canon) + '/' + canon.length)
+        : ('len' + canon.length);
+    } catch (_) { return 'err'; }
+  }
+  try { window._sbStructureFingerprint = _sbStructureFingerprint;
+        window._sbCanonicalJSON = _sbCanonicalJSON; } catch (_) {}
+
   function _issueOutlineBounds(s, issueIndex) {
     s = s || window.state;
     var per = 0;
@@ -138523,29 +138626,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                'ov' + overturned.join('+'), 'ar' + ((overturned._atRisk || []).join('+')),
                'h' + histKey.join(','), 'd' + delKey.join(','),
                // ASSESSMENTS. A new accepted record, or one superseded by a rewrite, changes the plan.
-               // SPINE FINGERPRINT: which arcs exist, how many outline rows each carries, their
-               // scene numbers, and a cheap digest of what they say — so a spine that arrives, is
-               // regenerated, or has one row's purpose changed all invalidate the plan.
-               'sp' + (function () {
-                 try {
-                   var sc = s.cgScaffold;
-                   if (!sc) return 'none';
-                   var arcs = Array.isArray(sc.issueArcs) ? sc.issueArcs : [];
-                   return String(sc._generatedAt || '-') + ':' + String(sc.storyId || '-') + ':'
-                     + arcs.map(function (a, i) {
-                         var rows = (a && Array.isArray(a.sceneOutline)) ? a.sceneOutline : [];
-                         var digest = 0;
-                         rows.forEach(function (r) {
-                           var t = String((r && r.n) || '') + '|' + String((r && r.accomplishes) || '')
-                             + '|' + String((r && r.link) || '') + '|' + String((r && r.kind) || '')
-                             + '|' + String((r && r.changes) || '') + '|' + String((r && r.sets_up) || '');
-                           for (var ci = 0; ci < t.length; ci++) { digest = (digest * 31 + t.charCodeAt(ci)) >>> 0; }
-                         });
-                         return i + 'x' + rows.length + 'd' + digest.toString(36)
-                           + (a && a.cliffhanger ? 'C' : '');
-                       }).join(',');
-                 } catch (_) { return 'err'; }
-               })(),
+               // SPINE + PLAN FINGERPRINT — ONE CANONICAL MECHANISM, not a field list. The first
+               // version digested a chosen handful of fields (number, purpose, link, kind, change,
+               // setup) and therefore missed exactly the fields that adapt when the player
+               // redirects Fate's plot: prerequisites, convergence routes, routes_decided_by,
+               // player_decision, and the cliffhanger's own content — it checked only whether a
+               // cliffhanger EXISTED. Hashing the canonical serialisation of the whole structure
+               // cannot miss a field, now or when one is added.
+               'sp' + _sbStructureFingerprint(s.cgScaffold),
+               'pl' + _sbStructureFingerprint(_activePlan(s)),
                'as' + ((Array.isArray(s._milestoneDeliveries) ? s._milestoneDeliveries : []).map(function (r) {
                  return (r && r.milestoneScene) + '@' + (r && r.atScene) + (r && r.accepted ? 'A' : '-') + (r && r.superseded ? 'S' : ''); }).join(',')),
                'ps' + ((Array.isArray(s._prereqInvalidations) ? s._prereqInvalidations : []).map(function (r) {

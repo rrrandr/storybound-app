@@ -559,6 +559,82 @@ t('two OUTGOING scaffold requests were captured, and only the second carries the
   && /REVISED: she is called back/.test(skReqs[1].joined),
   JSON.stringify({ n: skReqs.length }));
 
+// ═══ 4f. EVERY SPINE FIELD A CONSUMER USES REACHES AN ORDINARY READ ═════════════════════════
+section('4f. PREREQUISITES, ROUTES, PLAYER DECISIONS AND CLIFFHANGER CONTENT ALL INVALIDATE');
+// The first fingerprint digested a chosen handful of fields and MISSED these — precisely the ones
+// that adapt when a player choice redirects Fate's plot. Each edit below is made IN PLACE on the
+// spine, with NO cache cleared, and must change an ordinary resolver read.
+const fieldEdits = await page.evaluate(async () => {
+  const s = window.state;
+  s.issueIndexInRun = 3; s._stagedAuthoringSceneIndex = 20; s.renderMode = 'staged_story_mode';
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  const row = () => s.cgScaffold.issueArcs[2].sceneOutline[2];        // scene 23
+  const arc = () => s.cgScaffold.issueArcs[2];
+  const keyNow = () => window._resolveIssueOutline(s)._key;           // ORDINARY read
+  const seen = [];
+  const step = (label, mutate) => {
+    const before = keyNow();
+    mutate();
+    const after = keyNow();
+    seen.push({ label: label, changed: before !== after });
+  };
+  // depends_on is an ARRAY of prerequisite ids — the shape the spine schema normalises to.
+  step('depends_on (a prerequisite)', () => { row().depends_on = ['prereq:acknowledgement_signed']; });
+  step('routes (a convergence route)', () => {
+    row().kind = 'convergence';
+    row().routes = [{ choice: 'intervene', how: 'she is already on record', carries: 'no deniability' },
+                    { choice: 'remain_bound', how: 'she is served on suspicion', carries: 'the private cost' }];
+  });
+  step('routes_decided_by', () => { row().routes_decided_by = 'the scene-19 decision'; });
+  step('one route\'s own wording', () => { row().routes[1].how = 'she is served on suspicion she cannot answer'; });
+  step('player_decision', () => { row().player_decision = 'whether to answer the charge at all'; });
+  step('the cliffhanger EVENT (not its presence)', () => {
+    arc().cliffhanger.event = 'The panel calls her back, and Julian is seated with them.';
+  });
+  step('the cliffhanger predicament', () => {
+    arc().cliffhanger.issue2Predicament = 'She is summoned on a charge only Julian can end.';
+  });
+  step('why_unresolved', () => { arc().cliffhanger.why_unresolved = 'whether he will say it'; });
+  // AND A NO-OP MUST NOT CHANGE IT — a fingerprint that always differs is no guard at all.
+  const beforeNoop = keyNow();
+  const reordered = {}; Object.keys(row()).sort().reverse().forEach(k => { reordered[k] = row()[k]; });
+  s.cgScaffold.issueArcs[2].sceneOutline[2] = reordered;
+  const afterNoop = keyNow();
+  return JSON.parse(JSON.stringify({ seen: seen, noopStable: beforeNoop === afterNoop }));
+});
+fieldEdits.seen.forEach(function (e) {
+  t('changing ' + e.label + ' changes an ordinary resolver read', e.changed === true, 'fingerprint unchanged');
+});
+t('and reordering the SAME keys does NOT change it (the fingerprint is canonical, not accidental)',
+  fieldEdits.noopStable === true, 'a no-op changed the fingerprint');
+
+section('4g. THOSE CHANGES REACH THE OUTGOING SCAFFOLD AND AUTHOR REQUESTS');
+calls.length = 0;
+const reached = await page.evaluate(async () => {
+  const s = window.state;
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 23 });
+  const r23 = window._issueOutlineRowFor(s, 23) || {};
+  const res = window._resolveIssueOutline(s);
+  return JSON.parse(JSON.stringify({ kind: r23.kind, routes: r23.routes,
+    dependsOn: r23.dependsOn || r23.depends_on, cliff: res.cliffhanger || null }));
+});
+const skReq = calls.filter(c => /mistral-proxy/.test(c.url) && /causal_outline/.test(c.joined)).pop();
+fs.writeFileSync('_audit_out/issue_boundary/scaffold_request_after_field_edits.txt', (skReq && skReq.joined) || '(none)');
+t('the prerequisite reaches the OUTGOING scaffold request as a named dependency',
+  !!skReq && /THIS SCENE DEPENDS ON: prereq:acknowledgement_signed/.test(skReq.joined),
+  'the dependency is absent from the request');
+t('...the routes with their revised wording',
+  Array.isArray(reached.routes) && reached.routes.length === 2
+  && /she is served on suspicion she cannot answer/.test(JSON.stringify(reached.routes)),
+  JSON.stringify(reached.routes));
+t('...and the revised cliffhanger event reaches the resolved scene-30 row',
+  /Julian is seated with them/.test(JSON.stringify(reached.cliff || {})),
+  JSON.stringify(reached.cliff));
+t('the OUTGOING scaffold request carries the revised route wording',
+  !!skReq && /she is served on suspicion she cannot answer/.test(skReq.joined),
+  skReq ? 'route text absent from the request' : 'no scaffold request captured');
+
 // ═══ 5. PROSE FALLS OUT OF CONTEXT; DURABLE RECORDS DO NOT ══════════════════════════════════
 section('5. OLDER HISTORY STAYS USABLE WHEN ITS PROSE LEAVES THE WINDOW');
 const windowed = await page.evaluate(() => {

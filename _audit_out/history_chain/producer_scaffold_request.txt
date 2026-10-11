@@ -39,6 +39,7 @@ THIS SCENE'S PURPOSE WITHIN THE ISSUE (the causal_outline must DELIVER this, not
   THIS SCENE IS OVERTURNED: a condition it needed is gone (prereq:julian_act_concealed), so its original assignment is VOID and the drafted replacement is not approved, so it is withheld too. Build the causal sequence from what is NOW true, and do not sequence the void plan.
   ALREADY DELIVERED AND COMMITTED: this scene's event is already in the engine's committed record from scene 3 (""I bent the wish," Julian said"). Its original assignment is VOID. Outline the CONSEQUENCES of that having already happened; do NOT sequence the event itself.
   WHY IT FOLLOWS WHAT CAME BEFORE (THEREFORE): Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.
+  THIS SCENE DEPENDS ON: prereq:julian_act_concealed — if that is no longer true, the sequence below cannot stand as written.
 Relationship: developing | Phase: strangers
 Tension: building | Trust: unknown
 ST: ST1
