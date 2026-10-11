@@ -1,0 +1,10 @@
+[
+ {
+  "scene": 2,
+  "event": "The presiding Dohkar serves Lirael formal notice of investigation in the gap between the trunks"
+ },
+ {
+  "scene": 3,
+  "event": "Julian claims the inquiry is his to convene, in front of the dispersing assembly"
+ }
+]

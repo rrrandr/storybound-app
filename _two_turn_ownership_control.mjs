@@ -12,18 +12,68 @@ const t = (label, ok, detail) => {
 };
 const section = (s) => console.log('\n' + s);
 
-const SCENE_TEXT = {
-  2: 'The presiding Dohkar served her notice in the gap between the trunks. "Your conduct at the rite is '
-     + 'under investigation," he said, and named the restrictions aloud while the clearing emptied behind him. '
-     + 'Lirael signed the acknowledgement because refusing it would have been its own offence.',
-  3: 'Julian found her on the spiralgrass afterwards and said the inquiry was his to convene, and that he '
-     + 'would convene it. Nobody contradicted him. Lirael heard every word of it where she stood, and did '
-     + 'not answer him before he walked away toward the seam.'
+// ONE EVENT PER TURN, carried identically by the proposal, the prose, the slots and the evidence.
+// TURN ONE is the Dohkar serving notice; TURN TWO is Julian claiming the inquiry. Nothing in turn
+// one's prose mentions Julian, and nothing in turn one's proposal does either.
+const TURN = {
+  2: {
+    prose: 'The presiding Dohkar served her notice in the gap between the trunks. "Your conduct at the rite is '
+      + 'under investigation," he said, and named the restrictions aloud while the clearing emptied behind him. '
+      + 'Lirael signed the acknowledgement because refusing it would have been its own offence.',
+    plan: {
+      event: 'The presiding Dohkar serves Lirael formal notice of investigation in the gap between the trunks',
+      state_change: 'Lirael is formally under investigation and bound by named restrictions',
+      milestone: 'row 4',
+      before: 'Lirael has not been told her conduct is under investigation',
+      after: 'Lirael is formally under investigation and bound by named restrictions',
+      unresolved_pressure: 'whether she signs the acknowledgement or refuses it',
+      slots: { precondition: 'the presiding Dohkar is present', actor: 'the presiding Dohkar',
+               action: 'serves formal notice of investigation', target: 'Lirael',
+               exit_state: 'Lirael is formally under investigation and bound by named restrictions' },
+      setting: 'the gap between the trunks', participants: ['Lirael', 'the presiding Dohkar']
+    },
+    // EVERY QUOTE BELOW IS A VERBATIM SUBSTRING of this turn's own prose, and each one is about
+    // THIS turn's actor, action, target and exit state.
+    evidence: {
+      pre: 'The presiding Dohkar served her notice in the gap between the trunks',
+      actor: 'The presiding Dohkar',
+      action: 'named the restrictions aloud while the clearing emptied behind him',
+      target: 'Lirael signed the acknowledgement',
+      exit: 'Lirael signed the acknowledgement because refusing it would have been its own offence'
+    },
+    exitState: 'Lirael is formally under investigation and bound by named restrictions'
+  },
+  3: {
+    prose: 'Julian found her on the spiralgrass afterwards and said the inquiry was his to convene, and that he '
+      + 'would convene it. Nobody contradicted him. Lirael heard every word of it where she stood, and did '
+      + 'not answer him before he walked away toward the seam.',
+    plan: {
+      event: 'Julian claims the inquiry is his to convene, in front of the dispersing assembly',
+      state_change: 'Julian has publicly claimed authority to convene the inquiry',
+      milestone: 'row 5',
+      before: 'Julian has not claimed the inquiry',
+      after: 'Julian has publicly claimed the inquiry',
+      unresolved_pressure: 'whether she answers him',
+      slots: { precondition: 'Julian is present', actor: 'Julian',
+               action: 'claims the inquiry is his to convene', target: 'the assembly',
+               exit_state: 'Julian has publicly claimed authority to convene the inquiry' },
+      setting: 'the spiralgrass outside the clearing', participants: ['Lirael', 'Julian']
+    },
+    evidence: {
+      pre: 'Julian found her on the spiralgrass afterwards',
+      actor: 'Julian found her on the spiralgrass',
+      action: 'said the inquiry was his to convene, and that he would convene it',
+      target: 'Nobody contradicted him',
+      exit: 'said the inquiry was his to convene, and that he would convene it'
+    },
+    exitState: 'Julian has publicly claimed authority to convene the inquiry'
+  }
 };
 
 const calls = [];
 const seenUrls = [];
 const authorCalls = [];
+const plannerCalls = [];
 const evidenceDrift = [];
 let turnScene = 2;      // which scene the author is writing this turn
 const out = { planner: [], commit: [], refs: [] };
@@ -60,7 +110,7 @@ await page.route('**/api/**', async (route) => {
   if (role === 'PRIMARY_AUTHOR' || role === 'NARRATIVE_AUTHOR' || role === 'SPECIALIST_RENDERER'
       || role === 'LINE_EDITOR' || role === 'STRUCTURAL_CORRECTION' || role === 'CINE_BEAT_REWRITE') {
     authorCalls.push({ role: role, scene: turnScene });
-    return reply(SCENE_TEXT[turnScene]);
+    return reply(TURN[turnScene].prose);
   }
   // THE RUNTIME COMMIT VERIFIER. Every evidence quote below is copied VERBATIM out of scene 2's
   // text, which is the prose the gate narrows the request to.
@@ -71,17 +121,15 @@ await page.route('**/api/**', async (route) => {
     const refs = joined.match(/prop:\d+:\d+/g) || [];
     const ref = refs[0] || null;
     out.refs.push(refs);
-    const q = {
-      pre: 'The presiding Dohkar served her notice in the gap between the trunks',
-      actor: 'The presiding Dohkar',
-      action: 'named the restrictions aloud while the clearing emptied behind him',
-      target: 'Lirael signed the acknowledgement',
-      exit: 'Lirael signed the acknowledgement because refusing it would have been its own offence'
-    };
-    Object.keys(q).forEach(k => { if (SCENE_TEXT[2].indexOf(q[k]) < 0) evidenceDrift.push(k + ': ' + q[k]); });
+    // THE COMMIT UNDER TEST is always TURN ONE's scene: the commit pass at the start of turn two
+    // judges the scene turn one wrote. So the verdict is quoted from TURN ONE's prose, about TURN
+    // ONE's proposal.
+    const T = TURN[2];
+    const q = T.evidence;
+    Object.keys(q).forEach(k => { if (T.prose.indexOf(q[k]) < 0) evidenceDrift.push(k + ': ' + q[k]); });
     return reply(JSON.stringify({
       delivery: 'DELIVERED',
-      actual_exit_state: 'Lirael is formally under investigation and restricted',
+      actual_exit_state: T.exitState,
       slots_check: { precondition_evidence: q.pre, actor_evidence: q.actor, action_evidence: q.action,
         target_evidence: q.target, exit_state_evidence: q.exit, occurred_this_scene: true },
       // THE FIELD IS `delivery` (what _adjudicateSealedProposal reads), not `status`.
@@ -91,19 +139,12 @@ await page.route('**/api/**', async (route) => {
       milestone_watch: [], prereq_watch: []
     }));
   }
-  // THE PLOT CONTRACT / SCENE PLANNER.
+  // THE PLOT CONTRACT / SCENE PLANNER — proposes THIS turn's event, the one this turn's prose
+  // then writes and the next turn's commit then judges.
   if (/plot contract|PLOT CONTRACT|state_change/i.test(joined) && /scene/i.test(joined)) {
     out.planner.push(joined);
-    return reply(JSON.stringify({
-      event: 'Julian claims the inquiry is his to convene, in front of the dispersing assembly',
-      state_change: 'Julian has publicly claimed authority to convene the inquiry',
-      milestone: 'row 5', before: 'Julian has not claimed the inquiry',
-      after: 'Julian has publicly claimed the inquiry', unresolved_pressure: 'whether she answers him',
-      slots: { precondition: 'Julian is present', actor: 'Julian',
-               action: 'claims the inquiry is his to convene', target: 'the assembly',
-               exit_state: 'Julian has publicly claimed authority to convene the inquiry' },
-      setting: 'the spiralgrass outside the clearing', participants: ['Lirael', 'Julian']
-    }));
+    plannerCalls.push({ scene: turnScene, event: TURN[turnScene].plan.event });
+    return reply(JSON.stringify(TURN[turnScene].plan));
   }
   return reply('{}');
 });
@@ -212,6 +253,7 @@ fs.writeFileSync('_audit_out/two_turn/logs.txt', calls.map(c => c.log).join('\n'
 fs.writeFileSync('_audit_out/two_turn/all_api_calls.txt', seenUrls.join('\n'));
 fs.writeFileSync('_audit_out/two_turn/author_calls.txt', JSON.stringify(authorCalls, null, 1));
 fs.writeFileSync('_audit_out/two_turn/refs.txt', JSON.stringify(out.refs, null, 1));
+fs.writeFileSync('_audit_out/two_turn/planner_calls.txt', JSON.stringify(plannerCalls, null, 1));
 
 t('the reader was parked on the OPENING page for the whole of turn two',
   viewedBefore === turn1.pageUids[0], JSON.stringify({ viewed: viewedBefore, opening: turn1.pageUids[0] }));
@@ -235,10 +277,15 @@ t('every verifier evidence quote is verbatim in the prose (no harness drift)',
   evidenceDrift.length === 0, JSON.stringify(evidenceDrift));
 t('the next planner request contains a COMMITTED WORLD STATE section',
   !!cwLine, 'no COMMITTED WORLD STATE line in the captured planner request');
-t('...and the committed fact appears in it, not an empty list',
-  !!cwLine && !/\[\]/.test(cwLine) && factStr.length > 0
-  && cwLine.indexOf(factStr.slice(0, 40)) >= 0,
-  JSON.stringify({ fact: factStr.slice(0, 70), line: cwLine.slice(0, 200) }));
+t('the committed fact IS turn one\'s own state_change, whole and unaltered',
+  factStr === TURN[2].plan.state_change,
+  JSON.stringify({ committed: factStr, expected: TURN[2].plan.state_change }));
+t('...and the COMPLETE fact appears in the COMMITTED WORLD STATE section, not a prefix of it',
+  !!cwLine && !/\[\]/.test(cwLine) && cwLine.indexOf(TURN[2].plan.state_change) >= 0,
+  JSON.stringify({ expected: TURN[2].plan.state_change, line: cwLine.slice(0, 260) }));
+t('...and turn TWO\'s event has NOT been committed — only the scene actually assessed',
+  cwLine.indexOf(TURN[3].plan.state_change) < 0,
+  JSON.stringify({ leaked: TURN[3].plan.state_change, line: cwLine.slice(0, 260) }));
 
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 console.log('evidence: _audit_out/two_turn/');
