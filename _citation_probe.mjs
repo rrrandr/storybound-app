@@ -19,12 +19,17 @@ for (const f of fs.readdirSync(D).filter(x => /_req\.json$/.test(x)).sort()) {
   const msgs = req.messages || [];
   const sys = String(msgs[0]?.content || '');
   if (!/RUNTIME COMMIT verifier/i.test(sys)) continue;
-  // The prose the verifier was given, from the request itself.
+  // ONLY the SCENE PROSE block, exactly as the prompt delimits it. If the boundaries are not
+  // found the case is reported as unusable rather than silently widened to the whole message.
   const usr = String(msgs[msgs.length - 1]?.content || '');
+  const a = usr.indexOf('SCENE PROSE:\n');
+  const b = usr.indexOf('\n\nReturn the JSON now.', a);
+  if (a < 0 || b < 0) { cases.push({ n, boundaryFailed: true }); continue; }
+  const prose = usr.slice(a + 'SCENE PROSE:\n'.length, b);
   let v = null;
   try { v = JSON.parse(unfence(res.choices?.[0]?.message?.content)); } catch (_) {}
   if (!v) { cases.push({ n, parseFailed: true }); continue; }
-  cases.push({ n, prose: usr, v });
+  cases.push({ n, prose: prose, v });
 }
 
 const browser = await chromium.launch();
@@ -35,9 +40,14 @@ await page.route('**/api/**', async (r) => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._quoteIsInProse === 'function', { timeout: 30000 });
 
-console.log('=== ' + cases.length + ' CAPTURED RUNTIME-COMMIT VERIFIER RESPONSES ===\n');
+console.log('=== ' + cases.length + ' CAPTURED RUNTIME-COMMIT VERIFIER RESPONSES ===');
+console.log('    (each judged against ONLY the SCENE PROSE block of its own request)\n');
 const summary = [];
 for (const c of cases) {
+  if (c.boundaryFailed) {
+    console.log('  ' + c.n + '  SKIPPED — SCENE PROSE boundaries not found in the request');
+    continue;
+  }
   if (c.parseFailed) { console.log('  ' + c.n + '  (response did not parse)'); continue; }
   const sc = c.v.slots_check || {};
   const pp = (c.v.per_proposal || [])[0] || {};

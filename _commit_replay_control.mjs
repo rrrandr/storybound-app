@@ -39,6 +39,8 @@ console.log('  verifier (037_res): delivery=' + VERIF.per_proposal[0].delivery
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+let logs = [];
+page.on('console', (m) => { try { logs.push(m.text()); } catch (_) {} });
 let reply = null;
 const plannerRequests = [];
 await page.route('**/api/**', async (route) => {
@@ -158,11 +160,47 @@ spans.slots_check.actor_evidence = spans.per_proposal[0].evidence;
 spans.slots_check.action_evidence = spans.per_proposal[0].evidence;
 spans.slots_check.target_evidence = 'The words land like a hand on my shoulder.';
 reply = spans;
+logs = [];
+plannerRequests.length = 0;
 const multi = await commit(3);
 console.log('\n  [constructed COMPLIANT multi-span response]');
 console.log('  facts: ' + JSON.stringify(multi.facts));
 t('a multi-span response whose every span verifies COMMITS the intended fact',
   multi.facts.length === 1 && multi.facts[0] === PLAN.state_change, JSON.stringify(multi.facts));
+
+// EVERY relevant consumer accepted the arrays - no aggregate slot failure, no impossible-event
+// claim, no rollback reported beside a successful commit.
+const contradictions = logs.filter(l => /SLOT-CHECK[^\n]*FAIL|IMPOSSIBLE-EVENT|\[ROLLBACK\]/.test(l));
+const slotLine = logs.filter(l => /\[SLOT-CHECK\]/.test(l))[0] || '(no slot-check line)';
+console.log('  ' + slotLine.slice(0, 120));
+t('arrays are accepted by the aggregate slot check too — no FAIL, IMPOSSIBLE-EVENT or ROLLBACK',
+  contradictions.length === 0, contradictions.slice(0, 2).join(' || '));
+
+// The exact committed fact reaches THIS case's own next planner request.
+await page.evaluate(async () => {
+  try { await window._generateLiteraryPlotContract('', '', null, null); } catch (_) {}
+});
+const multiLine = plannerRequests.length
+  ? ((plannerRequests[0].match(/COMMITTED WORLD STATE[^\n]*/) || [''])[0]) : '';
+console.log('  ' + multiLine.slice(0, 190));
+t('the multi-span commit reaches ITS OWN next planner request with the exact fact',
+  multiLine.indexOf(PLAN.state_change) !== -1,
+  'captured ' + plannerRequests.length + ' request(s)');
+
+// An array with one FABRICATED span must be refused - every span has to verify.
+const badSpan = JSON.parse(JSON.stringify(spans));
+badSpan.per_proposal[0].evidence = [
+  'THE PRESIDING DOHKAR: "Lirael, your conduct at this rite is under investigation."',
+  'Lirael drew the blade and the clearing went silent.'
+];
+badSpan.slots_check.actor_evidence = badSpan.per_proposal[0].evidence;
+badSpan.slots_check.action_evidence = badSpan.per_proposal[0].evidence;
+badSpan.slots_check.exit_state_evidence = badSpan.per_proposal[0].evidence;
+reply = badSpan;
+const bad = await commit(3);
+console.log('  [array with one fabricated span] facts: ' + JSON.stringify(bad.facts));
+t('an array containing a fabricated span is refused',
+  bad.facts.length === 0, JSON.stringify(bad.facts));
 
 // 2c. AND A STITCHED STRING IS STILL REFUSED - nothing splits it to make it fit.
 const stitched = JSON.parse(JSON.stringify(spans));

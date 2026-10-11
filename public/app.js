@@ -101490,7 +101490,7 @@ function _buildAuthorFloorDirective(s) {
       // determinism gate: the planned event must appear with its essential slots intact, or be rejected.
       var _slots = (typeof window !== 'undefined' && (window._structuredEventHandoff === true || window._evidenceCommitCheck !== false) && prevProposal && prevProposal.slots && prevProposal.slots.exitState) ? prevProposal.slots : null;
       if (_slots) {
-        _vSys += '\nEVIDENCE-GROUNDED SLOT CHECK (HARD — GROUND every judgment in the SCENE PROSE above, NOT in this planned event and NOT in outside context or "what seems consistent"). For each slot, return the LITERAL verbatim quote FROM THE SCENE PROSE that supports it. Return "slots_check": {"precondition_evidence":"<verbatim quote showing the required actor/target is PRESENT in the scene so the event was possible — they count as present even if the event then changes them; else empty>","actor_evidence":"<verbatim quote showing the actor performs the action, else empty>","action_evidence":"<verbatim quote showing the action occurs, else empty>","target_evidence":"<verbatim quote showing the target is present and receiving it, else empty>","exit_state_evidence":"<verbatim quote showing the exit state became TRUE on the page, else empty>","occurred_this_scene":true|false}. (Empty precondition_evidence means the event was IMPOSSIBLE — the required condition was not present.) HARD RULES: (1) every evidence value MUST be a verbatim substring of the SCENE PROSE — if you cannot find one, return "" (do NOT paraphrase, do NOT infer, do NOT write "the scene implies"). (2) if the named actor or target does not literally appear and act in the prose, its evidence is "". (3) occurred_this_scene = did it happen DURING this prose, not merely set up. A slot with EMPTY evidence is FALSE; if any load-bearing slot is FALSE, delivery MUST be "MISSED". Also return "actual_exit_state": a short phrase for what actually became TRUE this scene, or "".';
+        _vSys += '\nEVIDENCE-GROUNDED SLOT CHECK (HARD — GROUND every judgment in the SCENE PROSE above, NOT in this planned event and NOT in outside context or "what seems consistent"). For each slot, return the LITERAL verbatim quote FROM THE SCENE PROSE that supports it. Return "slots_check": {"precondition_evidence":"<verbatim quote showing the required actor/target is PRESENT in the scene so the event was possible — they count as present even if the event then changes them; else empty>","actor_evidence":"<verbatim quote showing the actor performs the action — or an ARRAY of such quotes when they are separated — else empty>","action_evidence":"<verbatim quote showing the action occurs, else empty>","target_evidence":"<verbatim quote showing the target is present and receiving it, else empty>","exit_state_evidence":"<verbatim quote showing the exit state became TRUE on the page, else empty>","occurred_this_scene":true|false}. (Empty precondition_evidence means the event was IMPOSSIBLE — the required condition was not present.) HARD RULES: (1) every evidence value MUST be verbatim text FROM THE SCENE PROSE — if you cannot find any, return "" (do NOT paraphrase, do NOT infer, do NOT write "the scene implies"). A value is EITHER one quotation copied contiguously from a single place, OR — when the support is spread across separated passages — an ARRAY of up to 4 such short quotations, e.g. "actor_evidence": ["<span>", "<span>"]. Each span is checked on its own and every one must be found. Do NOT join separated passages into one string with newlines or ellipses: that joined text does not appear in the prose and WILL fail. (2) if the named actor or target does not literally appear and act in the prose, its evidence is "". (3) occurred_this_scene = did it happen DURING this prose, not merely set up. A slot with EMPTY evidence is FALSE; if any load-bearing slot is FALSE, delivery MUST be "MISSED". Also return "actual_exit_state": a short phrase for what actually became TRUE this scene, or "".';
         _vUsr += '\n\nPLANNED EVENT SLOTS (find verbatim supporting text in the SCENE PROSE for each; use "" if absent):\n  PRECONDITION: ' + (_slots.precondition || '(none)') + '\n  ACTOR: ' + _slots.actor + '\n  ACTION: ' + _slots.action + '\n  TARGET: ' + _slots.target + '\n  EXIT STATE: ' + _slots.exitState;
       }
       var _delivery = 'MISSED', _tab = null, _replacement = 'none', _txnPos = -1, _firstIrrev = -1;
@@ -101536,7 +101536,8 @@ function _buildAuthorFloorDirective(s) {
             // Derive the verdict MECHANICALLY from EVIDENCE PRESENCE: empty verbatim quote → that slot is FALSE.
             // This is what fixed the rubber-stamp (verifier probe 4/4 on gpt-4o-mini) — the model cannot fabricate a
             // match it cannot cite. Any load-bearing slot with no evidence forces MISSED.
-            var _hasEv = function (x) { return typeof x === 'string' && x.trim().length > 3; };
+            // SAME evidence contract as the adjudicator: a string, or an array of spans.
+      var _hasEv = function (x) { return _hasUsableEvidence(x); };
             var _preReq = (_slots.precondition && String(_slots.precondition).toLowerCase().trim() !== 'none' && String(_slots.precondition).trim() !== '');
             var _pEv = _preReq ? _hasEv(_sk.precondition_evidence) : true;   // no precondition required → treated as met
             var _tReq = (_slots.target && String(_slots.target).toLowerCase().trim() !== 'none' && String(_slots.target).trim() !== '');   // impersonal event (target "none") requires no target evidence
@@ -101562,7 +101563,11 @@ function _buildAuthorFloorDirective(s) {
           try {
             var _sk2 = (typeof _vP !== 'undefined' && _vP && _vP.slots_check) ? _vP.slots_check : null;
             if (_sk2) ['precondition_evidence', 'actor_evidence', 'action_evidence', 'target_evidence', 'exit_state_evidence']
-              .forEach(function (k) { if (typeof _sk2[k] === 'string' && _sk2[k].trim()) _evQuotes.push(_sk2[k]); });
+              .forEach(function (k) {
+                // Arrays were silently dropped here, so a span citation was never swept at all.
+                if (typeof _sk2[k] === 'string') { if (_sk2[k].trim()) _evQuotes.push(_sk2[k]); }
+                else if (Array.isArray(_sk2[k]) && _sk2[k].length) _evQuotes.push(_sk2[k]);
+              });
           } catch (_) {}
           var _anchorChk = _checkDeliveryAnchors(prevProposal && prevProposal.proposalRef, _pt, _evQuotes);
           if (_anchorChk.verdict === 'anchor_missing') {
@@ -101612,7 +101617,19 @@ function _buildAuthorFloorDirective(s) {
         window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
           verdicts: (_ppRes && _ppRes.verdicts) || {}, unknownRefs: (_ppRes && _ppRes.unknownRefs) || [] };
       } catch (_) {}
-      if (_delivery !== 'DELIVERED') {
+      var _ppCommitted = 0;
+      try { _ppCommitted = (window.state._lastPerProposalAdjudication
+        && window.state._lastPerProposalAdjudication.verdicts)
+        ? Object.keys(window.state._lastPerProposalAdjudication.verdicts).filter(function (k) {
+            return window.state._lastPerProposalAdjudication.verdicts[k].commit;
+          }).length : 0; } catch (_) { _ppCommitted = 0; }
+      if (_delivery !== 'DELIVERED' && _ppCommitted > 0) {
+        // Nothing was rolled back: proposals were adjudicated independently and committed.
+        console.log('[PER-PROPOSAL-COMMIT] scene=' + prevSceneNum + ' ' + _ppCommitted
+          + ' proposal(s) COMMITTED on their own evidence; the aggregate delivery field was "'
+          + _delivery + '" (the response reported per-ref statuses, not a top-level delivery), so '
+          + 'NO rollback occurred and the committed state DID change');
+      } else if (_delivery !== 'DELIVERED') {
         console.log('[ROLLBACK] transition=rejected scene=' + prevSceneNum + ' delivery=' + _delivery + ' → replan from unchanged CommittedState (pendingIntent kept)');
         // AUTHOR PRIORITY INDEX (Roman 2026-07-27): what displaced the transition = what the author optimized for.
         console.log('[AUTHOR-PRIORITY] scene=' + prevSceneNum + ' delivery=' + _delivery + ' replaced_by=' + _replacement + ' mandate=' + (typeof window !== 'undefined' && window._deliveryMandate === 'B' ? 'B' : 'A'));
