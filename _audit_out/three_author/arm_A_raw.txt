@@ -1,0 +1,171 @@
+{
+  "visualState": {
+    "background": "the ritual clearing at dusk, crimson spiralgrass underfoot, the air still heavy with the rite's residue",
+    "camera": "over_shoulder_pc",
+    "pc_visibility": "back_only",
+    "li_position": "standing_apart",
+    "li_expression": "guarded",
+    "lighting": "low_cool",
+    "pc_wardrobe": "sheer gossamer tunic with ceremonial sash, mouth-band torn away and dangling",
+    "li_wardrobe": "sheer gossamer tunic, silver Weave-Script visible on deep slate-blue skin",
+    "other_characters_present": [
+      {"name": "Seren", "gender": "female", "species": "first_favored", "wardrobe": "gossamer child's tunic blooming luminous white over torso hips and seat, aqua skin pale coral hair", "position": "kneeling composed at the center of the spiralgrass"},
+      {"name": "the Dohkar", "gender": "male", "species": "first_favored", "wardrobe": "sheer gossamer with ornate ceremonial sash, mouth-band intact", "position": "standing at the head of the assembly facing Lirael"}
+    ],
+    "key_props": ["The Answer", "ceremonial sash", "mouth-band"],
+    "social_staging_mode": "adversarial",
+    "sceneDuty": "external_pressure",
+    "attractionPresence": "leaking",
+    "expression_arc": {
+      "baseline_family": "suppression",
+      "micro_drift": "guarded-then-cracking",
+      "peak_a_beat": 4,
+      "peak_b_beat": 9,
+      "decay_window": 3
+    }
+  },
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "The Dohkar's voice cuts across the clearing",
+      "li_visibility_phase": "shadowed",
+      "characters_present": ["protagonist", "Seren", "the Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "over_shoulder_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "hold",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "shoulders forward, fingers locked around The Answer",
+      "pc_emotional_state": "braced",
+      "other_postures": {"Seren": "kneeling composed", "the Dohkar": "standing authoritative facing Lirael"},
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 1,
+      "startBeat": 5,
+      "label": "Julian steps forward without a word",
+      "li_visibility_phase": "partial",
+      "characters_present": ["protagonist", "Seren", "the Dohkar", "li"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": "standing_apart",
+      "li_expression_override": "guarded",
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "weight back, one hand still gripping the blade",
+      "pc_emotional_state": "quiet dread",
+      "other_postures": {"Seren": "kneeling composed", "the Dohkar": "turning toward Julian"},
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 2,
+      "startBeat": 10,
+      "label": "The assembly's eyes fix on Lirael",
+      "li_visibility_phase": "shadowed",
+      "characters_present": ["protagonist", "Seren", "the Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "low_angle_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "push_in",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "shoulders tightening, breath held",
+      "pc_emotional_state": "suppressed",
+      "other_postures": {"Seren": "kneeling composed", "the Dohkar": "pointing at Lirael"},
+      "proximity": "public"
+    }
+  ],
+  "history_note": {
+    "events": [
+      {"text": "The presiding Dohkar publicly summons Lirael to remain for preliminary review of her conduct during the rite.", "quote": "Lirael. You will remain."},
+      {"text": "Julian's presence shifts the room's attention without breaking his stillness.", "quote": "His jaw tightens."}
+    ],
+    "decisions": [
+      {"text": "The player chose to run in shame after the interrupted interrogation, replacing the scheduled review with pursuit and summons.", "quote": "I won't play your game here, Julian."}
+    ],
+    "consequences": [
+      {"text": "The Dohkar's order now forces the choice between claiming interference or letting the assumption stand.", "quote": "The assembly's attention came back to me."}
+    ],
+    "transfers": [],
+    "disclosures": [],
+    "obligations": [
+      {"id": "review", "text": "Answer for conduct before formal inquiry", "owedBy": "protagonist"}
+    ],
+    "resolves": []
+  },
+  "panels": [
+    {
+      "panelIdx": 0,
+      "dramaticQuestion": "Will Lirael answer the Dohkar's summons or break protocol again?",
+      "shotType": "conversation",
+      "subjects": {"primary": "protagonist", "secondary": "the Dohkar", "background": ["Seren"]},
+      "cast": [
+        {"name": "protagonist", "performance": {"pose": "standing rigid with The Answer in hand", "expression": "braced", "looking_at": "the Dohkar", "action_tags": ["speaking"]}},
+        {"name": "the Dohkar", "performance": {"pose": "pointing at Lirael", "expression": "authoritative", "looking_at": "protagonist", "action_tags": ["speaking"]}}
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 1,
+      "dramaticQuestion": "What does Julian's stillness change in this moment?",
+      "shotType": "conversation",
+      "subjects": {"primary": "protagonist", "secondary": "li", "background": ["Seren", "the Dohkar"]},
+      "cast": [
+        {"name": "protagonist", "performance": {"pose": "shoulders forward, fingers locked on the blade", "expression": "suppressed", "looking_at": "li", "action_tags": ["recoiling"]}},
+        {"name": "li", "performance": {"pose": "standing apart, jaw tight", "expression": "guarded", "looking_at": "protagonist", "action_tags": ["speaking"]}}
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 2,
+      "dramaticQuestion": "Can she claim the interference without surrendering her will?",
+      "shotType": "discovery",
+      "subjects": {"primary": "protagonist", "secondary": null, "background": ["Seren", "the Dohkar"]},
+      "cast": [
+        {"name": "protagonist", "performance": {"pose": "weight back, breath held", "expression": "cracking", "looking_at": "the Dohkar", "action_tags": ["holding"]}}
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    }
+  ],
+  "state_change_beat": 4,
+  "beats": [
+    {"idx": 0, "kind": "narration", "text": "The Dohkar's voice slices through the clearing like a blade finding its mark.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 1, "kind": "dialogue", "text": "\"Lirael. You will remain.\"", "speaker": "the Dohkar", "tension_state": "tightening", "echo_profile": null, "expression_target": "jaw_clench", "expression_intensity": 0.35, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her fingers lock tighter around The Answer", "hand_gesture": null, "posture_change": null},
+    {"idx": 2, "kind": "narration", "text": "The assembly's eyes turn as one, the weight of their attention pressing against my skin like the ritual's own gaze.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "lips_tighten", "expression_intensity": 0.25, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 3, "kind": "narration", "text": "Seren remains kneeling, composed, her small hands folded as if the wish never twisted at all.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 4, "kind": "dialogue", "text": "\"The rite is mine to preside. Your conduct is mine to rule on.\"", "speaker": "the Dohkar", "tension_state": "cutting", "echo_profile": null, "expression_target": "lip_curl", "expression_intensity": 0.45, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": true, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "the breath catches and holds", "hand_gesture": null, "posture_change": "shoulders_tighten"},
+    {"idx": 5, "kind": "narration", "text": "Julian does not move toward me, yet the space between us shifts as if he has.", "speaker": null, "tension_state": "composed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 6, "kind": "dialogue", "text": "\"A formal inquiry will settle what happened here.\"", "speaker": "li", "tension_state": "suppressed", "echo_profile": null, "expression_target": "jaw_set", "expression_intensity": 0.3, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "her hand does not reach for him", "hand_gesture": null, "posture_change": null},
+    {"idx": 7, "kind": "narration", "text": "His words land like still water, the question beneath them pulling at the choice I have not yet spoken.", "speaker": null, "tension_state": "held_breath", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 8, "kind": "narration", "text": "The Dohkar's gaze locks onto mine for the first time since the rite began.", "speaker": null, "tension_state": "tightening", "echo_profile": null, "expression_target": "lips_pressed", "expression_intensity": 0.4, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 9, "kind": "dialogue", "text": "\"You will answer for what you did.\"", "speaker": "the Dohkar", "tension_state": "cracking", "echo_profile": null, "expression_target": "mouth_parted", "expression_intensity": 0.55, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": "the cuff of her sleeve tugs once", "hand_gesture": null, "posture_change": null},
+    {"idx": 10, "kind": "narration", "text": "I feel the world before I see it, the current of the Dohkar's authority pulling me toward a line I was told to hold.", "speaker": null, "tension_state": "suppressed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null},
+    {"idx": 11, "kind": "narration", "text": "I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it.", "speaker": null, "tension_state": "delayed", "echo_profile": null, "expression_target": "neutral", "expression_intensity": null, "cut_to_closeup": false, "closeup_target": null, "shot_type": null, "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false, "pc_proxy_action": null, "hand_gesture": null, "posture_change": null}
+  ],
+  "microDecision": null,
+  "is_consummate_scene": false,
+  "kink_introduced": null,
+  "pc_kink_response": null,
+  "kink_affinity": null,
+  "kinks_used": [],
+  "primaryEngine": null,
+  "interruption": null,
+  "sceneCharge": {
+    "stake": "the Dohkar's public summons forces her to claim or deny the interference",
+    "concrete_specific_beat_idx": 1,
+    "subtext_beat_idx": 6,
+    "almost_said_beat_idx": 10,
+    "escalation_rhythm": "Dohkar's order lands → Julian's stillness shifts the room → assembly gaze locks → the choice presses against her will"
+  }
+}

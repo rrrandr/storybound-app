@@ -1,0 +1,488 @@
+```json
+{
+  "visualState": {
+    "background": "the crimson spiralgrass clearing beneath the Dohkar’s tent, the air thick with the scent of damp earth and ritual smoke, the Dohkar’s ceremonial sash still tied behind his head, the ceremonial mouth-band torn away from the Sacrificiant’s face, the ceremonial table set with The Answer poised in the center",
+    "camera": "medium_two_shot",
+    "pc_visibility": "back_only",
+    "li_position": "offstage",
+    "li_expression": "neutral",
+    "lighting": "low_warm",
+    "pc_wardrobe": "a worn gossamer tunic, the fabric blooming into soft luminous white over the torso, hips and seat, the ceremonial sash still draped around her waist, hands visible, fingers curled around the ceremonial mouth-band still tied behind her head",
+    "other_characters_present": [
+      {
+        "name": "Seren",
+        "gender": "female",
+        "species": "first_favored",
+        "wardrobe": "a gossamer child's tunic, blooming into soft luminous white over the torso, hips and seat, pale coral hair framing her face, small rounded ears visible, kneeling in the center of the circle",
+        "position": "kneeling at the center of the circle, facing Lirael, hands folded in front of her"
+      }
+    ],
+    "key_props": ["The Answer", "ceremonial mouth-band"],
+    "sceneDuty": "external_pressure",
+    "attractionPresence": "leaking",
+    "expression_arc": {
+      "baseline_family": "suppression",
+      "micro_drift": "guarded-then-cracking",
+      "peak_a_beat": 5,
+      "peak_b_beat": 12,
+      "decay_window": 3
+    }
+  },
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "the presiding Dohkar calls Lirael's name",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "weight back, arms loose at her sides, fingers tightening around the ceremonial mouth-band",
+      "pc_emotional_state": "braced",
+      "other_postures": {
+        "Seren": "kneeling, hands folded in front of her, watching Lirael with a smile that lingers too long"
+      }
+    },
+    {
+      "phaseIdx": 1,
+      "startBeat": 6,
+      "label": "the presiding Dohkar's gaze locks onto Lirael",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "shoulders tighten, weight forward slightly, fingers gripping the ceremonial mouth-band tighter",
+      "pc_emotional_state": "tightening",
+      "other_postures": {
+        "Seren": "kneeling, hands folded in front of her, eyes flicking between Lirael and the Dohkar as if waiting for a cue"
+      }
+    },
+    {
+      "phaseIdx": 2,
+      "startBeat": 11,
+      "label": "the presiding Dohkar's voice cuts through the clearing",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "head tilts slightly, shoulders drop, fingers slightly relax around the ceremonial mouth-band",
+      "pc_emotional_state": "softening",
+      "other_postures": {
+        "Seren": "kneeling, hands folded in front of her, eyes shifting to Lirael's face as the Dohkar's voice echoes around them"
+      }
+    }
+  ],
+  "beats": [
+    {
+      "idx": 0,
+      "kind": "narration",
+      "text": "The presiding Dohkar’s voice cuts through the clearing like a blade, its edges sharp enough to cut through the air, through the silence, through every pulse of breath in the room. The crimson spiralgrass trembles around his feet, the ritual smoke rising in a slow spiral, but the voice does not falter. It is the voice of authority, the voice of the Dohkar.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.35,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 1,
+      "kind": "dialogue",
+      "text": "\"Lirael of the Veilwood, stand.\"",
+      "speaker": "protagonist",
+      "tension_state": "cracking",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.45,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": "her breath caught and held",
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 2,
+      "kind": "narration",
+      "text": "Lirael’s fingers tighten around the ceremonial mouth-band, the cloth pulling taut against her throat, the weight of the blade at her side pressing into her palm. She stands, her body leaning forward slightly, but her eyes remain fixed on the Dohkar’s face, the unspoken question there, the unspoken judgment. The ceremonial sash still drapes her waist, the mouth-band still tied behind her head. She does not move to remove it.",
+      "speaker": null,
+      "tension_state": "held_breath",
+      "echo_profile": "hollow",
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 3,
+      "kind": "narration",
+      "text": "The Dohkar’s gaze shifts to Seren, who kneels in the center of the circle, the ceremonial table set with The Answer poised in the center.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 4,
+      "kind": "narration",
+      "text": "The Dohkar’s voice drops to a tone that carries the weight of a vow. \"You have been summoned to answer for your conduct. The assembly will hear your words, and they will judge you.\"",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.40,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 5,
+      "kind": "dialogue",
+      "text": "\"I choose my truth, and it’s not yours.\"",
+      "speaker": "protagonist",
+      "tension_state": "cracking",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.55,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": "lean_forward_slight"
+    },
+    {
+      "idx": 6,
+      "kind": "narration",
+      "text": "Her stride reveals the craving she masks. The Dohkar’s gaze locks onto her, the unspoken question lingering in his eyes as if he can see what she cannot. The ceremonial mouth-band still tied behind her head, the ceremonial sash still draped around her waist. Lirael’s gaze lingers on the ceremonial table, the ceremonial mouth-band, and the blade at her side.",
+      "speaker": null,
+      "tension_state": "held_breath",
+      "echo_profile": "hollow",
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": "to_face",
+      "posture_change": null
+    },
+    {
+      "idx": 7,
+      "kind": "narration",
+      "text": "Seren’s smile fades, her eyes flickering to the Dohkar’s face, the unspoken question there, the unspoken judgment. Her hands remain folded in front of her, the ceremonial table set with The Answer poised in the center.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 8,
+      "kind": "narration",
+      "text": "\"The Sacrificiant’s conduct is mine to rule on, by the assembly’s decree. This is not your opportunity to test me, Provast. It is my decision to make, and I will make it before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to flirt with the accused.\"",
+      "speaker": null,
+      "tension_state": "cutting",
+      "echo_profile": "impact",
+      "expression_target": "lip_curl",
+      "expression_intensity": 0.60,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 9,
+      "kind": "narration",
+      "text": "Julian’s voice cuts through the clearing like a blade, the weight of his words pressing into the air, the silence around him. The crimson spiralgrass trembles around his feet, but his voice does not falter.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.45,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 10,
+      "kind": "dialogue",
+      "text": "\"Agreed. A formal inquiry — I will convene it, and preside. That was always where this was going.\"",
+      "speaker": "li",
+      "tension_state": "tightening",
+      "echo_profile": "impact",
+      "expression_target": "jaw_clench",
+      "expression_intensity": 0.35,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 11,
+      "kind": "narration",
+      "text": "The Dohkar’s gaze shifts to Julian, the unspoken question lingering in his eyes. The ceremonial mouth-band still tied behind Lirael’s head, the ceremonial sash still draped around her waist. The ceremonial table set with The Answer poised in the center.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": false,
+      "metaphor_hint": null,
+      "metaphor_peak": false,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 12,
+      "kind": "narration",
+      "text": "\"Lirael, you will stand before the assembly and answer for your conduct. You will not be alone.\"",
+      "speaker": "protagonist",
+      "tension_state": "softening",
+      "echo_profile": "afterglow",
+      "expression_target": "half_smile",
+      "expression_intensity": 0.25,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "impact_burst": true,
+      "metaphor_hint": "the Dohkar’s gaze locks onto her, the unspoken truth lingering in his eyes",
+      "metaphor_peak": true,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    }
+  ],
+  "state_change_beat": 12,
+  "history_note": {
+    "events": [
+      {
+        "text": "The presiding Dohkar publicly calls Lirael's name and orders her to remain for preliminary review.",
+        "quote": "\"Lirael of the Veilwood, stand.\""
+      }
+    ],
+    "decisions": [
+      {
+        "text": "The player must choose to either claim the interference openly or let the assembly keep its assumption.",
+        "quote": "\"I choose my truth, and it’s not yours.\""
+      }
+    ],
+    "consequences": [
+      {
+        "text": "The presiding Dohkar asserts authority to preside over a formal inquiry, initiating preliminary review pressure.",
+        "quote": "\"The Sacrificiant’s conduct is mine to rule on, by the assembly’s decree.\""
+      }
+    ],
+    "transfers": [
+      {
+        "text": "The ceremonial mouth-band remains tied behind Lirael’s head.",
+        "quote": "the ceremonial mouth-band still tied behind her head"
+      }
+    ],
+    "disclosures": [
+      {
+        "text": "Julian asserts his authority to convene and preside over a formal inquiry.",
+        "quote": "\"Agreed. A formal inquiry — I will convene it, and preside.\""
+      }
+    ],
+    "obligations": [
+      {
+        "id": "formal_inquiry_initiated",
+        "text": "The formal inquiry into Lirael’s conduct is now convened and presided over by Julian.",
+        "owedBy": "protagonist"
+      }
+    ],
+    "resolves": []
+  },
+  "panels": [
+    {
+      "panelIdx": 0,
+      "dramaticQuestion": "Will Lirael choose to claim her interference openly or remain silent?",
+      "shotType": "cooperation",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": "Seren",
+        "background": []
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "weight back, arms loose at her sides, fingers tightening around the ceremonial mouth-band",
+            "expression": "jaw_clench",
+            "looking_at": "the Dohkar’s face",
+            "action_tags": ["standing", "facing"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "kneeling, hands folded in front of her",
+            "expression": "half-smile",
+            "looking_at": "Lirael",
+            "action_tags": ["watching"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 1,
+      "dramaticQuestion": "How does Lirael react to the presiding Dohkar's command?",
+      "shotType": "discovery",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": null,
+        "background": ["Seren"]
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "leaning forward slightly, fingers gripping the ceremonial mouth-band tighter",
+            "expression": "jaw_clench",
+            "looking_at": "the ceremonial table",
+            "action_tags": ["standing", "tightening grip"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 2,
+      "dramaticQuestion": "What does the Dohkar say to Lirael?",
+      "shotType": "cooperation",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": "Seren",
+        "background": []
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "weight back, arms loose at her sides",
+            "expression": "jaw_clench",
+            "looking_at": "the Dohkar’s face",
+            "action_tags": ["standing", "facing"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "kneeling, hands folded in front of her",
+            "expression": "fading smile",
+            "looking_at": "the Dohkar’s face",
+            "action_tags": ["watching"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    }
+  ],
+  "primaryEngine": null,
+  "is_consummate_scene": false,
+  "kink_introduced": null,
+  "pc_kink_response": null,
+  "kinks_used": [],
+  "sceneCharge": {
+    "stake": "the presiding Dohkar publicly summons Lirael to answer for her conduct, initiating preliminary review pressure",
+    "concrete_specific_beat_idx": 2,
+    "subtext_beat_idx": 10,
+    "almost_said_beat_idx": 5,
+    "escalation_rhythm": "pressure lands at beat 1, the Dohkar’s gaze lingers at beat 5, the revelation of authority at beat 10"
+  }
+  },
+  "microDecision": null,
+  "<<WISH: I would ask Fate to reveal which of the assembly’s members cut the line during the rite, to know who to trust and who to avoid. I would ask it to show me the truth I cannot speak aloud.>>"
+}
+```

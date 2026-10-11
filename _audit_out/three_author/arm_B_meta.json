@@ -1,0 +1,30 @@
+{
+ "model": "ministral-8b-2512",
+ "ms": 79095,
+ "status": 200,
+ "meta": {
+  "requestedModel": "ministral-8b-2512",
+  "returnedModel": "ministral-8b-2512",
+  "upstreamAttempts": "not supplied by this proxy",
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 67016,
+   "total_tokens": 74663,
+   "completion_tokens": 7647,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "service_tier": "standard"
+  },
+  "reasoningSent": "omitted (no Ministral model accepts reasoning_effort)",
+  "maxTokens": 8000
+ },
+ "extraction": {
+  "parsed": true,
+  "beats": 23,
+  "words": 773,
+  "schema": "beats array of 23",
+  "note": null
+ },
+ "error": null
+}

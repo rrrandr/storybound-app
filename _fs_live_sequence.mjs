@@ -583,7 +583,8 @@ const consoleLog = [];
 page.on('console', m => consoleLog.push(m.text()));
 page.on('pageerror', e => consoleLog.push('PAGEERROR: ' + (e && e.message)));
 
-await page.addInitScript(() => {
+await page.addInitScript((armNoFallback) => {
+  if (armNoFallback) window._sbAuthorArmNoFallback = true;
   const session = { access_token: 'harness-session-token', user: { id: 'harness-reader' } };
   window.supabase = { createClient: () => ({
     auth: { getSession: async () => ({ data: { session }, error: null }),
@@ -595,7 +596,7 @@ await page.addInitScript(() => {
       insert: async () => ({ data: null, error: null }), upsert: async () => ({ data: null, error: null }),
       update: async () => ({ data: null, error: null }), then: (r) => r({ data: [], error: null }) }),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel: () => {} }) };
-});
+}, process.env.SB_NO_AUTHOR_FALLBACK === '1');
 
 await page.route('**/api/**', async (route) => {
   const req = route.request(); const url = req.url();

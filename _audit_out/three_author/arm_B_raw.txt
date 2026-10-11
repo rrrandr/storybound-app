@@ -1,0 +1,733 @@
+```json
+{
+  "visualState": {
+    "background": "the crimson spiralgrass clearing, the air thick with the scent of damp earth and the faint metallic tang of ritual, the ritual circle still faintly glowing with the residue of the misalignment, the Dohkar’s voice lingering in the air like a second heartbeat; the clearing is bathed in the cold light of the ritual’s completion, reflecting in the eyes of the assembled First Favored as they wait for the presiding Dohkar’s judgment.",
+    "camera": "wide_establishing",
+    "pc_visibility": "partial_cheekbone",
+    "li_position": "offstage",
+    "li_wardrobe": "",
+    "pc_wardrobe": "gossamer ceremonial sash still tied around her waist, the torn mouth-band hanging loose, her bare feet pressing into the grass, the ceremonial tunic still in place despite the interruption; the weight of The Answer still in her right hand, the blade’s cold edge resting against her palm",
+    "other_characters_present": [
+      {
+        "name": "Seren",
+        "gender": "female",
+        "species": "first_favored",
+        "wardrobe": "gossamer child’s tunic, the fabric blooming to soft luminous white over her torso, hips, and seat; her pale coral hair pulled into a loose braid, small rounded ears visible; kneeling in the ritual circle, her hands clasped in her lap, her aqua skin still faintly glowing with the residual Weave-Script of the misaligned wish",
+        "position": "kneeling in the center of the ritual circle, her back slightly turned toward Lirael, her head bowed as if in quiet reflection"
+      },
+      {
+        "name": "the presiding Dohkar",
+        "gender": "male",
+        "species": "first_favored",
+        "wardrobe": "gossamer ceremonial sash over a tunic of deep slate-blue skin, the silver Weave-Script visible on his skin; his long black hair falling past his shoulders, curtaining his face as he speaks",
+        "position": "standing at the edge of the ritual circle, his hands resting on his hips, his gaze sweeping over the assembly as he addresses them"
+      }
+    ],
+    "key_props": [
+      "The Answer (the double-ended shaft, a deep hooked blade curling from each end)",
+      "the ceremonial sash still tied around Lirael’s waist (the mouth-band torn away)",
+      "the crimson spiralgrass clearing",
+      "the faintly glowing ritual circle"
+    ],
+    "social_staging_mode": "professional",
+    "sceneDuty": "political_alignment",
+    "attractionPresence": "latent",
+    "expression_arc": {
+      "baseline_family": "suppression",
+      "micro_drift": "guarded-then-cracking",
+      "peak_a_beat": 12,
+      "peak_b_beat": 22,
+      "decay_window": 3
+    }
+  },
+  "phases": [
+    {
+      "phaseIdx": 0,
+      "startBeat": 0,
+      "label": "the aftermath of the interruption",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren", "the presiding Dohkar"],
+      "props_present": ["The Answer", "the ceremonial sash"],
+      "camera_override": "wide_establishing",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "one hand gripping The Answer tightly, the blade’s edge biting into her palm; her shoulders are hunched slightly, her gaze darting between the presiding Dohkar and the crowd, as if she’s waiting for the next blow",
+      "pc_emotional_state": "braced",
+      "other_postures": {
+        "Seren": "kneeling in the ritual circle, her back slightly turned, her hands clasped in her lap, her head bowed as if in quiet reflection; her Weave-Script flickers faintly with residual misalignment",
+        "the presiding Dohkar": "standing at the edge of the ritual circle, his hands resting on his hips, his gaze sweeping over the assembly as if assessing the damage"
+      },
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 1,
+      "startBeat": 6,
+      "label": "the presiding Dohkar’s call",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "medium_two_shot",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "push_in",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "her grip on The Answer tightens, her knuckles white; her head tilts slightly as the Dohkar’s voice rises, her eyes narrowing as she tries to read his tone",
+      "pc_emotional_state": "tightening",
+      "other_postures": {
+        "Seren": "her head lifts slightly, her gaze flicking toward Lirael, her expression unreadable but her Weave-Script flickering more intensely",
+        "the presiding Dohkar": "his voice carries authority, his hands still resting on his hips, his long black hair partially obscuring his face"
+      },
+      "proximity": "personal"
+    },
+    {
+      "phaseIdx": 2,
+      "startBeat": 13,
+      "label": "the crowd’s reaction",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "wide_establishing",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "hold",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "her shoulders drop slightly, her breath catching as the crowd murmurs; her grip on The Answer loosens just enough to let the blade rest against her palm again, the weight of it grounding her",
+      "pc_emotional_state": "softening",
+      "other_postures": {
+        "Seren": "her gaze locked onto Lirael, her Weave-Script now glowing with a sharp, discordant note, her hands tightening in her lap",
+        "the presiding Dohkar": "his expression is unreadable, but his fingers twitch at his sides, as if resisting the urge to gesture"
+      },
+      "proximity": "public"
+    },
+    {
+      "phaseIdx": 3,
+      "startBeat": 19,
+      "label": "the Dohkar’s judgment",
+      "li_visibility_phase": "absent",
+      "characters_present": ["protagonist", "Seren", "the presiding Dohkar"],
+      "props_present": ["The Answer"],
+      "camera_override": "low_angle_pc",
+      "li_position_override": null,
+      "li_expression_override": null,
+      "camera_move": "none",
+      "shot_style": "default",
+      "focus_target": null,
+      "pc_posture": "her back straightens, her jaw setting as the Dohkar speaks; her fingers brush against the ceremonial sash at her waist, as if seeking something to hold onto",
+      "pc_emotional_state": "intense_focused",
+      "other_postures": {
+        "Seren": "she stands suddenly, her hands clasped in front of her, her Weave-Script now pulsing with a sharp, discordant rhythm; her gaze is fixed on Lirael, her expression a mix of fear and determination",
+        "the presiding Dohkar": "his voice is firm, his hands now raised slightly, as if to emphasize his words; his long black hair falls forward, partially obscuring his face"
+      },
+      "proximity": "personal"
+    }
+  ],
+  "history_note": {
+    "events": [
+      {
+        "text": "The presiding Dohkar publicly summons Lirael back to answer for her conduct, initiating preliminary review pressure.",
+        "quote": "\"Lirael, you are summoned to answer for your conduct during the misaligned wish. Remain for preliminary review.\""
+      },
+      {
+        "text": "Seren stands and approaches Lirael, her Weave-Script now pulsing with misalignment.",
+        "quote": "\"Seren stands, her hands clasped in front of her, her Weave-Script now pulsing with a sharp, discordant rhythm.\""
+      }
+    ],
+    "decisions": [
+      {
+        "text": "Lirael does not yet claim interference openly; she remains silent and holds The Answer.",
+        "quote": "\"Her fingers brush against the ceremonial sash at her waist, as if seeking something to hold onto.\""
+      }
+    ],
+    "consequences": [
+      {
+        "text": "The Dohkar’s call forces Lirael to remain, initiating a formal inquiry process.",
+        "quote": "\"The presiding Dohkar’s voice carries authority, his hands still resting on his hips.\""
+      },
+      {
+        "text": "Seren’s misalignment grows more pronounced, indicating her distress at Lirael’s situation.",
+        "quote": "\"Her Weave-Script now pulsing with a sharp, discordant rhythm.\""
+      }
+    ],
+    "transfers": [],
+    "disclosures": [
+      {
+        "text": "The presiding Dohkar asserts his authority over the rite and the ruling on the Sacrificiant’s conduct, naming a formal inquiry as the venue.",
+        "quote": "\"This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars.\""
+      }
+    ],
+    "obligations": [
+      {
+        "id": "formal_inquiry",
+        "text": "Lirael must now face a formal inquiry into her conduct during the misaligned wish.",
+        "owedBy": "the presiding Dohkar"
+      },
+      {
+        "id": "seren_pressure",
+        "text": "Seren’s distress at Lirael’s situation grows, indicating she may seek to intervene or support Lirael in the inquiry.",
+        "owedBy": "Seren"
+      }
+    ],
+    "resolves": []
+  },
+  "panels": [
+    {
+      "panelIdx": 0,
+      "dramaticQuestion": "Will Lirael remain to answer the Dohkar’s charge, or will she flee the clearing in shame?",
+      "shotType": "discovery",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": "the presiding Dohkar",
+        "background": ["Seren"]
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "one hand gripping The Answer tightly, the blade’s edge biting into her palm; her shoulders are hunched slightly, her gaze darting between the presiding Dohkar and the crowd",
+            "expression": "suppressed",
+            "looking_at": "the presiding Dohkar",
+            "action_tags": ["holding The Answer"]
+          }
+        },
+        {
+          "name": "the presiding Dohkar",
+          "performance": {
+            "pose": "standing at the edge of the ritual circle, his hands resting on his hips",
+            "expression": "neutral",
+            "looking_at": "the assembly",
+            "action_tags": ["speaking"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "kneeling in the ritual circle, her back slightly turned, her hands clasped in her lap",
+            "expression": "neutral",
+            "looking_at": "Lirael",
+            "action_tags": ["reflecting"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 1,
+      "dramaticQuestion": "How will the Dohkar’s call affect Lirael’s resolve?",
+      "shotType": "combat",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": "the presiding Dohkar",
+        "background": ["Seren"]
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "her grip on The Answer tightens, her knuckles white; her head tilts slightly as the Dohkar’s voice rises",
+            "expression": "tightening",
+            "looking_at": "the presiding Dohkar",
+            "action_tags": ["listening"]
+          }
+        },
+        {
+          "name": "the presiding Dohkar",
+          "performance": {
+            "pose": "his voice carries authority, his hands still resting on his hips",
+            "expression": "neutral",
+            "looking_at": "the assembly",
+            "action_tags": ["speaking"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "her head lifts slightly, her gaze flicking toward Lirael",
+            "expression": "neutral",
+            "looking_at": "Lirael",
+            "action_tags": ["reacting"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 2,
+      "dramaticQuestion": "Will Seren’s misalignment grow more pronounced as the Dohkar’s judgment lands?",
+      "shotType": "discovery",
+      "subjects": {
+        "primary": "Seren",
+        "secondary": "protagonist",
+        "background": ["the presiding Dohkar"]
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "her shoulders drop slightly, her breath catching as the crowd murmurs",
+            "expression": "softening",
+            "looking_at": "the crowd",
+            "action_tags": ["listening"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "her head lifts slightly, her gaze locked onto Lirael, her Weave-Script now pulsing with a sharp, discordant note",
+            "expression": "intense_focused",
+            "looking_at": "Lirael",
+            "action_tags": ["reacting"]
+          }
+        },
+        {
+          "name": "the presiding Dohkar",
+          "performance": {
+            "pose": "his expression is unreadable, his fingers twitching at his sides",
+            "expression": "neutral",
+            "looking_at": "the assembly",
+            "action_tags": ["speaking"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    },
+    {
+      "panelIdx": 3,
+      "dramaticQuestion": "How will Lirael respond to the Dohkar’s formal judgment?",
+      "shotType": "combat",
+      "subjects": {
+        "primary": "protagonist",
+        "secondary": "the presiding Dohkar",
+        "background": ["Seren"]
+      },
+      "cast": [
+        {
+          "name": "protagonist",
+          "performance": {
+            "pose": "her back straightens, her jaw setting as the Dohkar speaks; her fingers brush against the ceremonial sash at her waist",
+            "expression": "intense_focused",
+            "looking_at": "the presiding Dohkar",
+            "action_tags": ["listening"]
+          }
+        },
+        {
+          "name": "the presiding Dohkar",
+          "performance": {
+            "pose": "his voice is firm, his hands now raised slightly, as if to emphasize his words",
+            "expression": "neutral",
+            "looking_at": "Lirael",
+            "action_tags": ["speaking"]
+          }
+        },
+        {
+          "name": "Seren",
+          "performance": {
+            "pose": "she stands suddenly, her hands clasped in front of her, her Weave-Script now pulsing with a sharp, discordant rhythm",
+            "expression": "intense_focused",
+            "looking_at": "Lirael",
+            "action_tags": ["approaching"]
+          }
+        }
+      ],
+      "wish": false,
+      "sacrifice": false,
+      "fateAnswer": false
+    }
+  ],
+  "state_change_beat": 12,
+  "beats": [
+    {
+      "idx": 0,
+      "kind": "narration",
+      "text": "The clearing holds its breath. The Dohkar’s voice lingers in the air like a second heartbeat, the weight of his words pressing down on me. My fingers tighten around The Answer, the cold edge biting into my palm. I don’t dare look at Seren, afraid of what I might see in her eyes.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 1,
+      "kind": "narration",
+      "text": "The Dohkar’s gaze sweeps over the assembly, his long black hair falling forward, partially obscuring his face. His hands rest on his hips, and for a moment, I wonder if he’s going to dismiss me entirely, let me disappear into the crowd.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 2,
+      "kind": "narration",
+      "text": "But then he turns to me, his voice cutting through the silence like a blade. His words are cold, precise, and I know I’m already lost.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 3,
+      "kind": "dialogue",
+      "text": "\"Lirael,\" he says, his voice carrying authority, \"you are summoned to answer for your conduct during the misaligned wish. Remain for preliminary review.\"",
+      "speaker": "the presiding Dohkar",
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": "jaw_set",
+      "expression_intensity": 0.45,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 4,
+      "kind": "narration",
+      "text": "The words hang in the air, heavy and final. I don’t move. I can’t. My fingers are still wrapped around The Answer, my palm slick with the blade’s cold edge. The crowd murmurs, but I don’t look at them.",
+      "speaker": null,
+      "tension_state": "suppressed",
+      "echo_profile": "simmer",
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 5,
+      "kind": "narration",
+      "text": "Seren’s Weave-Script flickers faintly, a discordant note pulsing through her skin. She doesn’t look at me, but I know she feels it. I feel it too, the weight of the misalignment pressing down on me like a physical force.",
+      "speaker": null,
+      "tension_state": "suppressed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 6,
+      "kind": "narration",
+      "text": "The Dohkar’s voice rises again, his words sharp and clear. \"This rite is mine to preside, and what the Sacrificiant did in it is mine to rule on — in a formal inquiry, before a Chayr and two Dohkars, where questions are put for the record. Not here, and not as your opportunity to flirt with the accused.\"",
+      "speaker": null,
+      "tension_state": "suppressed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 7,
+      "kind": "narration",
+      "text": "Julian’s voice cuts through the air, calm and steady. \"Agreed. A formal inquiry — I will convene it, and preside. That was always where this was going.\"",
+      "speaker": null,
+      "tension_state": "suppressed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 8,
+      "kind": "narration",
+      "text": "The assembly’s attention comes back to me, and to The Answer still in my hands, which is not mine. The Dohkar’s gaze locks onto mine, and I know I’m trapped.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 9,
+      "kind": "narration",
+      "text": "Seren stands suddenly, her hands clasped in front of her. Her Weave-Script now pulses with a sharp, discordant rhythm, her gaze fixed on me. I want to turn away, but I can’t. The Dohkar’s words echo in my mind, and I know I have nowhere to go.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 10,
+      "kind": "narration",
+      "text": "The Dohkar’s voice is firm, his hands now raised slightly, as if to emphasize his words. \"Lirael, you are to remain. The inquiry will proceed as I have stated.\"",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 11,
+      "kind": "narration",
+      "text": "I don’t speak. I can’t. My throat is too tight, my fingers too numb around The Answer. The Dohkar’s gaze is unyielding, and I know I’m already lost.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 12,
+      "kind": "dialogue",
+      "text": "\"You will answer for your conduct, Lirael. Do not think this is over.\"",
+      "speaker": "the presiding Dohkar",
+      "tension_state": "cutting",
+      "echo_profile": "impact",
+      "expression_target": "lip_curl",
+      "expression_intensity": 0.75,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": "shoulders_tighten"
+    },
+    {
+      "idx": 13,
+      "kind": "narration",
+      "text": "The Dohkar’s voice is a blade, sharp and cold. The words cut through me, and I flinch. Seren’s Weave-Script flickers wildly, her hands clenching and unclenching at her sides.",
+      "speaker": null,
+      "tension_state": "cracking",
+      "echo_profile": "rupture",
+      "expression_target": "mouth_parted",
+      "expression_intensity": 0.65,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": "head_tilt_in"
+    },
+    {
+      "idx": 14,
+      "kind": "narration",
+      "text": "I look down at The Answer, the weight of it pressing into my palm. I don’t know what to do. I don’t know how to answer. I just want this to be over.",
+      "speaker": null,
+      "tension_state": "held_breath",
+      "echo_profile": "hollow",
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 15,
+      "kind": "narration",
+      "text": "Seren’s voice breaks the silence, her words soft but clear. \"Lirael, you don’t have to do this alone.\"",
+      "speaker": null,
+      "tension_state": "softening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 16,
+      "kind": "narration",
+      "text": "I look up at her, my breath catching. Her eyes are wide, her Weave-Script pulsing with a sharp, discordant rhythm. She’s afraid. I know she is. And for the first time, I realize I’m not alone in this.",
+      "speaker": null,
+      "tension_state": "softening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 17,
+      "kind": "narration",
+      "text": "The Dohkar’s voice cuts through the air again, his words firm and unyielding. \"Enough. Lirael, you are to remain. The inquiry will proceed as I have stated. You will answer for your conduct.\"",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 18,
+      "kind": "narration",
+      "text": "I don’t speak. I can’t. My fingers tighten around The Answer, the cold edge biting into my palm. The Dohkar’s gaze is unyielding, and I know I’m already lost.",
+      "speaker": null,
+      "tension_state": "suppressed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 19,
+      "kind": "narration",
+      "text": "Seren steps closer, her hands reaching for mine. Her Weave-Script flickers with a sharp, discordant rhythm, her gaze locked onto mine. I want to pull away, but I can’t. The Dohkar’s words echo in my mind, and I know I have nowhere to go.",
+      "speaker": null,
+      "tension_state": "tightening",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 20,
+      "kind": "narration",
+      "text": "The Dohkar’s voice is a blade, sharp and cold. \"Enough. Lirael, you are to remain. The inquiry will proceed as I have stated. You will answer for your conduct.\"",
+      "speaker": null,
+      "tension_state": "cutting",
+      "echo_profile": "impact",
+      "expression_target": "lip_curl",
+      "expression_intensity": 0.75,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": "shoulders_tighten"
+    },
+    {
+      "idx": 21,
+      "kind": "narration",
+      "text": "I realize that old tarot deck is still in my hand. Reassuringly solid. Present. One of the heavy gold cards slips out — “Petition Fate” is inscribed in it.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    },
+    {
+      "idx": 22,
+      "kind": "narration",
+      "text": "If only it were that easy. I would wish for everyone here to forget the last five minutes. Actually, I would settle for knowing why he looked at me like that.",
+      "speaker": null,
+      "tension_state": "composed",
+      "echo_profile": null,
+      "expression_target": null,
+      "expression_intensity": null,
+      "cut_to_closeup": false,
+      "closeup_target": null,
+      "shot_type": null,
+      "pc_proxy_action": null,
+      "hand_gesture": null,
+      "posture_change": null
+    }
+  ],
+  "microDecision": null,
+  "is_consummate_scene": false,
+  "kink_introduced": null,
+  "pc_kink_response": null,
+  "kinks_used": [],
+  "primaryEngine": null,
+  "interruption": null,
+  "sceneCharge": {
+    "stake": "Lirael must now face a formal inquiry into her conduct during the misaligned wish, and she must decide whether to claim interference openly or let the assembly keep its assumption.",
+    "concrete_specific_beat_idx": 12,
+    "subtext_beat_idx": 10,
+    "almost_said_beat_idx": 14,
+    "escalation_rhythm": "opens with held breath → Dohkar’s call lands at beat 3 → Seren’s misalignment grows by beat 6 → Dohkar’s judgment escalates by beat 12 → Seren’s approach by beat 19"
+  }
+}
+```

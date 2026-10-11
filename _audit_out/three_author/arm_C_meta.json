@@ -1,0 +1,30 @@
+{
+ "model": "ministral-3b-2512",
+ "ms": 32781,
+ "status": 200,
+ "meta": {
+  "requestedModel": "ministral-3b-2512",
+  "returnedModel": "ministral-3b-2512",
+  "upstreamAttempts": "not supplied by this proxy",
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 67016,
+   "total_tokens": 71884,
+   "completion_tokens": 4868,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "service_tier": "standard"
+  },
+  "reasoningSent": "omitted (no Ministral model accepts reasoning_effort)",
+  "maxTokens": 8000
+ },
+ "extraction": {
+  "parsed": false,
+  "beats": 0,
+  "words": 0,
+  "schema": null,
+  "note": "JSON parse failed: Unexpected non-whitespace character after JSON at position 17841 (line 483 column 4)"
+ },
+ "error": null
+}

@@ -34,7 +34,12 @@ const ALLOWED_MISTRAL_MODELS = [
   // mistral-small-latest's 20,000 TPM ceiling but fit ministral-8b-2512 with wide headroom
   // (verified against the REAL governor.admit() calculation, not a hand estimate — see
   // _measure_governor_admission.mjs and _audit_out/mistral_provider_policy_conversion.md).
-  'ministral-8b-2512'
+  'ministral-8b-2512',
+  // ADDED 2026-10-11 for the three-author comparison. Its MODEL_LIMITS entry already carried this
+  // account's REAL limits (1,300,000 TPM / 12.5 RPS, source=admin.mistral.ai/plateforme/limits,
+  // readOn=2026-09-04) in its own bucket; only this allowlist was missing, so every request naming
+  // it was rejected here before admission. No routing change: nothing selects it automatically.
+  'ministral-3b-2512'
 ];
 
 // ── QUOTA GOVERNOR BOOTSTRAP ──
