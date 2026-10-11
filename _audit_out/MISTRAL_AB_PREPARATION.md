@@ -25,30 +25,44 @@ separately as `.thinking`. So reasoning is never counted as prose. The proxy for
 (detected by the "STORYBOUND ARCHITECTURE LAWS" system prompt). Any other prompt omitting the field
 is served as ordinary non-reasoning Mistral with no error.
 
-## 2. EVERY PERMITTED CANDIDATE IS REFUSED BEFORE DISPATCH — measured
+## 2. Every permitted candidate is refused by the LOCAL GOVERNOR — and what that figure is
 
-Run against the **real governor** (`api/_mistral-governor.js`) with the **real frozen request**
-(Scene 2's author messages from `wire/017_req.json`, `max_tokens=8000`):
+**Correction to my earlier wording.** I called 274,623 a "governor reservation" without saying what
+it measures. `reservationFor` (api/_mistral-governor.js:86) is:
+
+```js
+for (const m of messages) bytes += utf8Len(m.content);
+return bytes + maxTokens;
+```
+
+So for the frozen Scene 2 request it is **266,623 UTF-8 bytes + 8,000 reserved output tokens**. It
+is a deliberately conservative local admission figure. It is **not** a measured Mistral token count
+and **not** a context-window requirement. For the same request Grok reported **59,195 input
+tokens** — 4.50 bytes/token — so the reservation is **4.6× the actual usage Grok measured**.
+
+Against that figure:
 
 ```
-governor reservation: 274,623 tokens
-
-  mistral-small-2603    tpm=   20000  OVERSIZED — reservation exceeds the whole minute
-  mistral-small-latest  tpm=   20000  OVERSIZED — reservation exceeds the whole minute
+  mistral-small-2603    tpm=   20000  OVERSIZED
+  mistral-small-latest  tpm=   20000  OVERSIZED
   mistral-medium-latest UNCONFIGURED — no MODEL_LIMITS entry; refused before dispatch
   mistral-large-latest  UNCONFIGURED — no MODEL_LIMITS entry; refused before dispatch
   ministral-8b-2512     tpm=  625000  admissible
 ```
 
-- The Small models are configured at **20,000 TPM** against a 274,623-token reservation. The
-  governor's own comment is explicit that this is not a waiting problem: "A request that cannot fit
-  its model's ENTIRE minute can never be admitted, so waiting is not a remedy."
-- Medium and Large have **no `MODEL_LIMITS` entry**, so admission returns `UNCONFIGURED` and the
-  call never reaches the provider. The governor requires `tpm`, `rps`, `source` and `readOn`.
-- `ministral-8b-2512` is the only admissible route, and it is excluded by instruction.
+**Adding Medium's limits does not by itself make the request admissible.** Two conditions must both
+hold, and I will verify them before anything is spent:
 
-**So the comparison cannot be dispatched on any permitted model.** I am not requesting a ceiling for
-a run that cannot happen.
+1. Medium's recorded **TPM must be ≥ 274,623**, because the governor refuses outright when
+   `reserve > limits.tpm` ("a request that cannot fit its model's ENTIRE minute can never be
+   admitted, so waiting is not a remedy"). Ministral 8B's 625,000 clears it; Small's 20,000 does
+   not. If Medium's TPM is below that, the comparison stays blocked whatever we add.
+2. The **current minute must have that much free** in the shared Postgres bucket. Buckets are
+   shared — `mistral-small-latest` and `mistral-small-2603` already share one — so any shared
+   allowance matters.
+
+Note also that the governor reserves `max_tokens` **in full**, so raising the output allowance for
+reasoning raises the reservation one-for-one and makes admission harder, not easier.
 
 ## 3. Two further recorded findings that bear on the premise
 
@@ -56,10 +70,14 @@ a run that cannot happen.
   plus a canary after 16 minutes of total Mistral quiet all returned HTTP 429 `rate_limited` code
   1300, `"governor": false` — provider-side, not local. $0 spent, since a 429 refuses before
   generation.
-- **Mistral gave no prompt caching**: `prompt_tokens_details.cached_tokens` was 0 on *every* Mistral
-  call measured, on 86–93k-token prompts. Grok 4.3 reads cache at $0.20/M against its $1.25/M
-  input. Medium 3.5 at $1.50/M in / $7.50/M out was already assessed here as "worse than Grok on
-  both sides — not a candidate".
+- **No cache hits were observed in our earlier Mistral calls** — `cached_tokens` was 0 on every
+  one, on 86–93k-token prompts. That is the supported claim. **"Mistral has no prompt caching" is
+  not supported and is withdrawn**: current Mistral pricing explicitly includes a cached-input
+  rate. This experiment is budgeted with **no cache savings**, which is the prudent assumption for
+  a first call on a cold prompt, not a statement about the provider.
+- Medium 3.5 list pricing is $1.50/M in / $7.50/M out. An earlier note here called it "not a
+  candidate" on price alone. **That judgement is set aside**: the point of this comparison is to
+  measure its writing and its actual billed cost, not to reject it beforehand.
 
 ## 4. What unblocks it — one decision
 
@@ -78,24 +96,46 @@ If those limits are not available, the alternatives are both outside the brief: 
 `ministral-8b-2512` (excluded by instruction), or raise the Small models' recorded TPM (which would
 be recording a limit we have not verified — not acceptable).
 
-## 5. Cost estimate, ready for when it is unblocked
+## 5. Cost estimate — revised, with its uncertainty labelled
 
-Measured from `run_2026-10-11T01-54-31-949Z`. The Grok arm is the fresh run's own Scene 2 response,
-so it is not paid for twice.
+**Correction.** My first estimate priced the Mistral arm using **Grok's** 59,195 input tokens.
+Different tokenizers need not agree, and no Mistral tokenizer is available locally. Two better
+anchors, both from this project's own measurements:
+
+- Mistral's **measured** `prompt_tokens` on comparable author legs: **85,978** and **92,123**.
+- This request is 266,623 UTF-8 bytes; at 3.1–3.2 bytes/token that is **~83,000–86,000 tokens**,
+  consistent with those measurements.
+
+So Mistral reads this request as roughly **1.4× more tokens than Grok does** — the single largest
+correction to the estimate.
+
+| | tokens | medium 3.5 | note |
+|---|---|---|---|
+| input | ~83,000–86,000 | $0.1250–$0.1290 | estimated from bytes, anchored on measured Mistral author legs; **not** Grok's count |
+| output | ~6,250 | $0.0469 | prose ~1,350 + **reasoning ~2,500 + beat metadata ~2,400** — the allowance covers all three, and only the prose is counted as writing |
+| **Mistral arm** | | **~$0.172–$0.176** | vs my earlier $0.1225 — I underestimated by ~40% |
 
 | component | cost |
 |---|---|
-| fresh opening through Scene 2 committed (22 calls) | $0.4455 |
-| 700–1000-word target delta on that author call | $0.0128 |
-| Mistral arm, same frozen request (medium 3.5: 59,195 in @ $1.50/M, ~4,500 out @ $7.50/M, no caching) | $0.1225 |
+| fresh opening through Scene 2 committed (22 calls, measured) | $0.4455 |
+| 700–1000-word target delta on the Grok author call | $0.0128 |
+| Mistral arm (above) | $0.1760 |
 | retained-unresolved allowance | $0.0134 |
-| **total** | **$0.5942** |
+| **total** | **~$0.648** |
 
-Committed to date **$9.3054242**, so this needs a cumulative ceiling of **$10.00** ($0.69 headroom,
-~16% above the projection). The remaining $0.1945758 is not permission to begin.
+Committed to date **$9.3054242**. With ~15% contingency on an estimate this uncertain, the ask is a
+cumulative ceiling of **$10.10**. The remaining $0.1945758 is not permission to begin.
 
-For reference, the same frozen request on `mistral-small-2603` would be $0.0116 — but it is
-OVERSIZED and cannot be dispatched.
+## 5b. The exact version must be pinned, not an alias
+
+`mistral-medium-latest` is a drifting alias; a comparison recorded against it is not reproducible.
+Before dispatch I need the **pinned snapshot id** (e.g. `mistral-medium-<YYMM>`) that the account
+currently serves, and it goes in the allowlist and the limits entry. If only the alias is
+dispatchable, the proxy's echoed `resolvedModel` becomes the identity of record and will be
+reported as such for both arms.
+
+Historical Small-model 429s do **not** establish anything about Medium's availability or its
+writing. That was my inference and it is withdrawn.
 
 ## 6. What the comparison would and would not establish
 
