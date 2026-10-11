@@ -21,8 +21,15 @@ const section = (n) => console.log('\n' + n);
 // Shaped to the real contract: every field the production normaliser reads, plus a causal_outline
 // whose developments deliver First Sacrifice scene 4's own authored purpose (procedural notice and
 // restriction served on Lirael, Julian named but absent). Hand-written for this test.
+//
+// CANON CORRECTED 2026-10-11: the first version of this fixture staged the Dohkar "in the doorway"
+// and anchored on "the rite-hall doors". There are NO doors or doorways in the Veilwood — the
+// ceremony is in an OPEN CLEARING and an opening in the ring of trunks is a GAP BETWEEN TREES. The
+// error was in the SCAFFOLD, i.e. the geography was decided before the author wrote a word, which
+// is exactly the class of defect this layer exists to prevent. Blocking her departure now uses the
+// real geography (seed grounded object O8).
 const CONSTRUCTED_SKELETON = {
-  environment_anchor: 'the rite-hall doors still standing open behind her',
+  environment_anchor: 'the gap between two trunks where the assembly came in',
   structural_pacing: 'measured escalation', narrative_density: 'moderate',
   dialogue_ratio: 'dialogue-led', beat_style: 'procedure then reaction',
   tension_rhythm: 'rising with pauses',
@@ -35,18 +42,18 @@ const CONSTRUCTED_SKELETON = {
   li_texture_beat: 'beat 6: she catches herself remembering Julian setting The Answer down with both hands, and not letting go of it',
   pc_body_callback: 'beat 3 — stress_tic (the gossamer band she has nothing to do with now)',
   li_body_callback: null, antagonist_body_callback: null,
-  environment_plus: { target: 'the rite-hall doors', axis: 'ritual' },
+  environment_plus: { target: 'the gap between two trunks', axis: 'use' },
   fusion: null,
   causal_outline: [
-    { beat: 'The presiding Dohkar stops Lirael in the doorway and will not let her pass' },
+    { beat: 'The presiding Dohkar steps into the gap between the trunks and will not let Lirael pass' },
     { beat: 'He reads her the formal notice: her conduct at the rite is under investigation', link: 'therefore', from: 1 },
     { beat: 'Lirael asks who will hear it; he declines to say, and the refusal is the answer', link: 'but', from: 2 },
     { beat: 'He names the restrictions: she may supervise no rite, and she may not leave the Veilwood', link: 'therefore', from: 3 },
     { beat: 'Lirael begins to explain what she saw the wish do; he tells her to stop', link: 'but', from: 4 },
     { beat: 'He tells her Julian demanded the review, and did not come to say it himself', link: 'therefore', from: 5 },
-    { beat: 'Lirael looks for Julian in the emptying hall and does not find him', link: 'therefore', from: 6 },
+    { beat: 'Lirael looks for Julian among the dispersing assembly and does not find him', link: 'therefore', from: 6 },
     { beat: 'She signs the acknowledgement because refusing it would be its own offence', link: 'but', from: 7 },
-    { beat: 'The Dohkar takes the page and leaves her standing supervised in her own hall', link: 'therefore', from: 8 },
+    { beat: 'The Dohkar takes the page and leaves her standing supervised in the middle of her own clearing', link: 'therefore', from: 8 },
   ],
   stage_contract: { present: ['Lirael', 'the presiding Dohkar'] },
 };
@@ -205,7 +212,7 @@ const authWithEvent = await page.evaluate(() => {
   const s = window.state;
   // A CONSTRUCTED planner contract, in the shape production writes at app.js ~103434.
   s._scenePlotContract = { sceneIndex: 3,
-    stateChange: { event: 'The presiding Dohkar serves Lirael formal notice in the doorway of the rite-hall',
+    stateChange: { event: 'The presiding Dohkar serves Lirael formal notice in the gap between the trunks, with the clearing still emptying behind him',
       precondition: 'Lirael has not yet been told her conduct is under investigation',
       forces_choice: 'whether to sign the acknowledgement or refuse it',
       slots: { actor: 'the presiding Dohkar', action: 'serves formal notice of investigation',
@@ -383,6 +390,111 @@ t('the LITERARY author block contains the purpose AND the causal outline',
 t('each path resolves its OWN scene number (CG scene 4 via staged index, literary scene 4 via turnCount)',
   /scene 4 of 20/.test(live.cg) && /scene 4 of 20/.test(live.lit),
   JSON.stringify({ cg: (live.cg.match(/scene \d+ of \d+/) || [])[0], lit: (live.lit.match(/scene \d+ of \d+/) || [])[0] }));
+
+// ═══ 7. VEILWOOD GEOGRAPHY REACHES PLANNING AND AUTHOR REQUESTS, AND IS LOCATION-SCOPED ════
+section('7. VEILWOOD GEOGRAPHY CANON (location-scoped) REACHES THE SPINE, THE SCAFFOLD AND THE AUTHOR');
+const VW_RE = /VEILWOOD GEOGRAPHY \(canon/;
+const DOOR_RE = /\b(doorway|doorways|doorframe|rite-hall)\b|\bdoors?\b/i;
+
+// 7a. THE ISSUE SPINE. Captured from the REAL builder (window.__buildCGScaffold, a free-harness
+// handle) with the provider intercepted — not from a copy of the prompt.
+calls.length = 0;
+const spineReq = await page.evaluate(async () => {
+  const s = window.state;
+  s._starterId = 'starter_first_sacrifice';
+  s.fantasyRegion = 'the_veilwood';
+  s.currentEngine = 'graphic'; s.renderMode = 'cg';
+  try { await window.__buildCGScaffold(s, {}); } catch (e) { return 'threw: ' + (e && e.message); }
+  return 'ok';
+});
+const spineCall = calls.filter(c => /ARCHITECT|GRAVITATIONAL|CORE DOCTRINE/i.test(c.joined))[0];
+t('the ISSUE SPINE request is captured from the real builder',
+  !!spineCall, spineReq + ' | roles seen: ' + calls.map(c => c.role).join(','));
+t('the spine request carries the Veilwood geography canon',
+  !!spineCall && VW_RE.test(spineCall.joined), !!spineCall);
+t('...naming the gap between trees, the tree-home canopies, and how a departure is blocked',
+  !!spineCall && /GAP, or a PASSAGE BETWEEN TREES/.test(spineCall.joined)
+  && /A ceremony clearing has none/.test(spineCall.joined)
+  && /step into the gap between the trunks/.test(spineCall.joined),
+  spineCall && (spineCall.joined.match(/VEILWOOD GEOGRAPHY[\s\S]{0,1400}/) || [''])[0]);
+
+// 7b. THE SCENE SCAFFOLD — the layer where the defect was actually found.
+calls.length = 0;
+await page.evaluate(() => {
+  const s = window.state;
+  s.sceneSkeleton = null; s._skeletonMeta = null; s._stagedAuthoringSceneIndex = 3;
+  s._issueOutline = null; s._sceneDecisions = null;
+});
+await page.evaluate(() => window.__generateSceneSkeleton('wait for the Dohkar', '', { sceneNumber: 4 }));
+const skelCall2 = calls.filter(c => /mistral-proxy/.test(c.url) && /narrative skeletons/i.test(c.joined))[0];
+t('the SCENE SCAFFOLD request carries the canon, before it chooses any staging',
+  !!skelCall2 && VW_RE.test(skelCall2.joined), !!skelCall2);
+t('and it arrives BEFORE the scene purpose in the request, where staging is decided',
+  !!skelCall2 && skelCall2.joined.indexOf('VEILWOOD GEOGRAPHY') < skelCall2.joined.indexOf("THIS SCENE'S PURPOSE"),
+  skelCall2 && [skelCall2.joined.indexOf('VEILWOOD GEOGRAPHY'), skelCall2.joined.indexOf("THIS SCENE'S PURPOSE")].join(' < '));
+
+// 7c. THE AUTHOR — at both exits of the shared builder.
+const vwAuthor = await page.evaluate(() => {
+  const s = window.state;
+  const out = {};
+  s._scenePlotContract = null;
+  out.noContract = window._buildPlotContractDirective() || '';
+  s._scenePlotContract = { sceneIndex: 3,
+    stateChange: { event: 'The presiding Dohkar serves Lirael formal notice in the gap between the trunks',
+      slots: { actor: 'the presiding Dohkar', action: 'serves formal notice', target: 'Lirael',
+               exitState: 'Lirael is formally under investigation' } },
+    hardBeats: [{ description: 'the notice is served' }], aftermathTruths: [], reservedConstraints: [] };
+  out.withContract = window._buildPlotContractDirective() || '';
+  return out;
+});
+fs.writeFileSync('_audit_out/issue_outline/veilwood_author_block.txt', vwAuthor.withContract);
+t('the AUTHOR request carries the canon on the contract path', VW_RE.test(vwAuthor.withContract),
+  vwAuthor.withContract.length);
+t('...and on the no-contract path, which returns early and would otherwise drop it',
+  VW_RE.test(vwAuthor.noContract), vwAuthor.noContract.length);
+t('the canon also rules out figurative architecture in Veilwood prose',
+  /no door closing on anyone, no doorway she fills, no room with one exit/.test(vwAuthor.withContract)
+  && /is not architecture and is fine/.test(vwAuthor.withContract), 'figurative clause missing');
+
+// 7d. LOCATION-SCOPED: a scene somewhere else is told nothing about doors.
+const scoped = await page.evaluate(() => {
+  const s = window.state;
+  const saved = { st: s._starterId, reg: s.fantasyRegion, sk: s.sceneSkeleton, asg: s._sceneAssignment,
+                  ph: s.physicalState, picks: s.picks };
+  s._starterId = null; s.fantasyRegion = 'vaelryn_reach';
+  s.sceneSkeleton = { environment_anchor: 'the rain on the counting-house shutters' };
+  s._sceneAssignment = { event: 'she signs the ledger', setting: 'the counting house at Pulse Point' };
+  s.physicalState = { location: 'the counting house' }; s.picks = { world: 'fatelands' };
+  const away = window._veilwoodLocationCanon(s);
+  s._starterId = saved.st; s.fantasyRegion = saved.reg; s.sceneSkeleton = saved.sk;
+  s._sceneAssignment = saved.asg; s.physicalState = saved.ph; s.picks = saved.picks;
+  const home = window._veilwoodLocationCanon(s);
+  return { away: away, home: home };
+});
+t('a NON-Veilwood scene receives NOTHING — this is not a global ban on doors',
+  scoped.away === '', JSON.stringify(scoped.away).slice(0, 300));
+t('the same renderer still fires for the Veilwood scene', VW_RE.test(scoped.home), scoped.home.length);
+
+// 7e. THE FIXTURE ITSELF RESPECTS THE CANON.
+const fixtureText = JSON.stringify(CONSTRUCTED_SKELETON) + JSON.stringify(CONSTRUCTED_SPINE_ARC);
+t('the constructed scaffold fixture contains no door, doorway or rite-hall',
+  !DOOR_RE.test(fixtureText), (fixtureText.match(DOOR_RE) || [''])[0]);
+t('and it blocks her departure with the clearing\'s own geography instead',
+  /steps into the gap between the trunks and will not let Lirael pass/.test(fixtureText)
+  && /environment_anchor":"the gap between two trunks/.test(fixtureText),
+  fixtureText.slice(0, 200));
+t('the seed names the ring and the gap, and makes the gap addressable',
+  (() => {
+    const src2 = fs.readFileSync('public/app.js', 'utf8');
+    return /OPEN GROUND inside a ring of pale living trunks/.test(src2)
+      && /object_id: 'O8', name: 'the gap between two trunks/.test(src2);
+  })(), 'seed geography missing');
+t('the seed\'s reject-only planner check now rules out declared enclosures (not a prose filter)',
+  (() => {
+    const src2 = fs.readFileSync('public/app.js', 'utf8');
+    const m = src2.match(/forbiddenEnvironmentFacts: '([^']+)'/);
+    return !!m && /doorway/.test(m[1]) && /rite-hall/.test(m[1]) && !/threshold/.test(m[1]);
+  })(), 'forbiddenEnvironmentFacts not updated, or wrongly includes threshold');
 
 // ── PRESERVE THE EVIDENCE ───────────────────────────────────────────────────────────────────
 fs.writeFileSync('_audit_out/issue_outline/issue_outline.json', JSON.stringify(o1, null, 1));

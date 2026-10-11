@@ -2,7 +2,7 @@
  "causal_outline": [
   {
    "i": 1,
-   "beat": "The presiding Dohkar stops Lirael in the doorway and will not let her pass",
+   "beat": "The presiding Dohkar steps into the gap between the trunks and will not let Lirael pass",
    "link": null,
    "from": null
   },
@@ -38,7 +38,7 @@
   },
   {
    "i": 7,
-   "beat": "Lirael looks for Julian in the emptying hall and does not find him",
+   "beat": "Lirael looks for Julian among the dispersing assembly and does not find him",
    "link": "therefore",
    "from": 6
   },
@@ -50,13 +50,13 @@
   },
   {
    "i": 9,
-   "beat": "The Dohkar takes the page and leaves her standing supervised in her own hall",
+   "beat": "The Dohkar takes the page and leaves her standing supervised in the middle of her own clearing",
    "link": "therefore",
    "from": 8
   }
  ],
  "note": "9 developments, 8 of 8 causally linked",
- "anchor": "the rite-hall doors still standing open behind her",
+ "anchor": "the gap between two trunks where the assembly came in",
  "staged": [
   {
    "name": "Lirael",

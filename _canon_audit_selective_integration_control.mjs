@@ -272,10 +272,10 @@ const ORDINARY = {
   // unrelated. Every one must cost nothing.
   const NEG = [
     ['memory_perception', 'The assembly parts to let Lirael through and someone offers her a cup of water'],
-    ['history_rewrite', 'Seren straightens the bench she is sitting on and looks at the floor'],
-    ['identity_reputation', 'Lirael ties back her hair and steps out of the doorway into the cold'],
-    ['materialization_possession', 'The assembly settles onto the benches as the lamps are lit'],
-    ['relationship_social', 'Julian sits down beside Lirael without speaking and watches the door']
+    ['history_rewrite', 'Seren smooths the spiralgrass flat where she has been kneeling and looks at the ground'],
+    ['identity_reputation', 'Lirael ties back her hair and steps out through the gap between the trunks'],
+    ['materialization_possession', 'The assembly settles onto the spiralgrass as the dawn light reaches the clearing'],
+    ['relationship_social', 'Julian sits down beside Lirael without speaking and watches the gap between the trunks']
   ];
   for (const [cls, change] of NEG) {
     const plan = JSON.parse(JSON.stringify(ORDINARY));
