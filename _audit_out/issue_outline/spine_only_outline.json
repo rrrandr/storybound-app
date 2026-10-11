@@ -19,6 +19,7 @@
  "horizonAxis": null,
  "decisions": [],
  "overturned": [],
+ "overturnedWhy": {},
  "commitEvidence": {
   "through": null,
   "facts": 0
@@ -29,6 +30,8 @@
    "kind": "convergence",
    "delivery": "not_written",
    "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
@@ -56,6 +59,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -83,6 +88,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -117,6 +124,7 @@
   "event": "She asks him to burn the original, in the room where the auditor is still working",
   "why_unresolved": "whether he does it",
   "issue2Predicament": "She has made a second person into an accomplice, and he has not said yes. Issue 2 opens with her owing him something she cannot name and the auditor one room away.",
+  "pendingReview": false,
   "selected": null
  },
  "planPresent": false,

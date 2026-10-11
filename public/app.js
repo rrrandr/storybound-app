@@ -98766,6 +98766,16 @@ Return ONLY numbered beats. No prose. No dialogue.` }
           ? _issueOutlineRowFor(state, _optSceneNum || null) : null;
         if (_por) {
           var _pl = ['THIS SCENE\'S PURPOSE WITHIN THE ISSUE (the causal_outline must DELIVER this, not decorate it):'];
+          if (_por.kind === 'overturned') {
+            _pl.push('  THIS SCENE IS OVERTURNED: a condition it needed is gone ('
+              + ((_por.brokenPrereqs || []).join(', ') || 'unstated') + '), so its original assignment is VOID'
+              + ((_por.overturnedBy && _por.overturnedBy.replacement === 'none')
+                 ? ' and no replacement is available.'
+                 : (_por.overturnedBy && _por.overturnedBy.replacement === 'authored_but_awaiting_review')
+                   ? ' and the drafted replacement is not approved, so it is withheld too.'
+                   : ' and the replacement below stands in its place.')
+              + ' Build the causal sequence from what is NOW true, and do not sequence the void plan.');
+          }
           if (_por.accomplishes) _pl.push('  WHAT IT ACCOMPLISHES: ' + _por.accomplishes);
           if (_por.follows_from && _por.follows_from.text) _pl.push('  WHY IT FOLLOWS WHAT CAME BEFORE'
             + (_por.follows_from.link ? ' (' + _por.follows_from.link.toUpperCase() + ')' : '') + ': ' + _por.follows_from.text);
@@ -98841,28 +98851,69 @@ ${state.recentEnvironmentAnchors?.length ? `AVOID these recent anchors: ${state.
 ${(function(){ try { var _p = (typeof window._buildPlanningRomanceContext === 'function') ? window._buildPlanningRomanceContext(state) : ''; return _p || ''; } catch (_) { return ''; } })()}
 ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'function') ? (_ffBuildRevealWithholdDirective(state) || '') : ''; } catch (_) { return ''; } })()}Return ONLY valid JSON. No markdown. No explanation.` }
       ];
-      // ROUTE: mistral-small, non-reasoning. This returns ~1k of JSON, not prose — paying
-      // PRIMARY_AUTHOR (Grok) rates for a planning call was never justified. The ceiling is
-      // raised from 500 because the contract now also assigns Character+, Environment+ and
-      // fusion targets.
+      // ═══ ROUTE — ADMISSION-ORDERED, NOT A SINGLE UNADMISSIBLE MODEL (Roman 2026-10-11) ═══════
+      // MEASURED DEFECT: this requested 'mistral-small-latest' unconditionally. The governor
+      // reserves UTF-8 BYTES + max_tokens, and the real captured request is ~21,900 bytes, so the
+      // reservation is ~25,700 against Small's recorded 20,000 TPM — over its ENTIRE minute, which
+      // means waiting can never admit it. api/mistral-proxy.js refuses and, by design, NEVER
+      // substitutes a model ("A refusal returns immediately with typed metadata so the caller
+      // decides what to do"). The caller did not decide: it returned no skeleton and CG continued
+      // with "scene proceeds WITHOUT a causal outline". An earlier report of mine claimed Ministral
+      // 8B served these calls — that was the ISSUE SPINE's calls, not this one. Withdrawn.
+      //
+      // ministral-8b-2512 is the route ALREADY AUTHORIZED for exactly this class: see the
+      // allowlist note in api/mistral-proxy.js, added because "the CG/OAS setup-phase generators
+      // … have real measured reservations (up to ~71,848) that exceed" Small's allowance. The
+      // governor remains the ONLY authority on admission — this is a caller-side candidate list,
+      // and every refusal is reported rather than swallowed.
+      //
+      // mistral-small-latest is deliberately NOT a candidate: at this payload size it is provably
+      // never admissible, so including it would spend a round-trip per scene on a guaranteed
+      // refusal. reasoning_effort is OMITTED for Ministral models, which do not accept it; the
+      // proxy's author-class default cannot fire here (it keys on the "STORYBOUND ARCHITECTURE
+      // LAWS" author prompt and on mistral-small, neither of which applies).
+      var _SKEL_CANDIDATES = [
+        { model: 'ministral-8b-2512', why: 'tpm 625,000 / rps 3.13 — admits this reservation; the authorized setup-phase route' },
+        { model: 'ministral-3b-2512', why: 'tpm 1,300,000 / rps 12.5 — larger allowance; last resort before no scaffold' }
+      ];
+      var _skelRouteLog = [];
       const result = await (async function () {
-        try {
-          const _r = await fetch('/api/mistral-proxy', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            // reasoning_effort MUST be explicit: omitting the field is not the same as
-            // requesting none, and the proxy's author-class default can otherwise switch
-            // reasoning on. JSON mode because this returns a structured object, not prose.
-            body: JSON.stringify({ role: 'PROMPT_PREPROCESSOR', model: 'mistral-small-latest',
+        for (var _ci = 0; _ci < _SKEL_CANDIDATES.length; _ci++) {
+          var _cand = _SKEL_CANDIDATES[_ci];
+          try {
+            const _r = await fetch('/api/mistral-proxy', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              // JSON mode because this returns a structured object, not prose.
               // 1400 → 2300: +900 for stage_contract, the allowance in __CP_STAGE_CONTRACT.
               // 2300 → 3800: +1500 for causal_outline (20-24 entries × ~25 words, plus links).
               // A truncated skeleton loses the whole object, so this is sized for the worst case.
-              temperature: 0.4, max_tokens: 3800, reasoning_effort: 'none',
-              response_format: { type: 'json_object' }, messages: _skelMsgs }),
-          });
-          const _j = await _r.json();
-          return String(_j.content || (_j.choices && _j.choices[0] && _j.choices[0].message && _j.choices[0].message.content) || '');
-        } catch (_e) { console.warn('[SKELETON] mistral route failed:', _e && _e.message); return null; }
+              body: JSON.stringify({ role: 'PROMPT_PREPROCESSOR', model: _cand.model,
+                temperature: 0.4, max_tokens: 3800,
+                response_format: { type: 'json_object' }, messages: _skelMsgs }),
+            });
+            const _j = await _r.json();
+            var _txt = String(_j.content || (_j.choices && _j.choices[0] && _j.choices[0].message && _j.choices[0].message.content) || '');
+            if (_r.ok && _txt) {
+              _skelRouteLog.push(_cand.model + ': SERVED');
+              try { console.log('[SKELETON:ROUTE] ' + _skelRouteLog.join(' | ')); } catch (_) {}
+              return _txt;
+            }
+            // A GOVERNOR REFUSAL IS NOT A PROVIDER FAILURE. It means no call was made, so the
+            // next candidate is tried. Anything else is reported and also falls through, because
+            // a scene with no scaffold has no causal outline at all.
+            var _why = (_j && (_j.error || _j.code)) ? String(_j.error || _j.code) : ('http ' + _r.status);
+            _skelRouteLog.push(_cand.model + ': REFUSED (' + _why
+              + (_j && _j.governor ? ', governor — no provider call made' : '')
+              + (_j && _j.outcome ? ', outcome=' + _j.outcome : '')
+              + (_j && _j.reserve ? ', reserve=' + _j.reserve : '') + ')');
+          } catch (_e) {
+            _skelRouteLog.push(_cand.model + ': THREW (' + (_e && _e.message) + ')');
+          }
+        }
+        try { console.warn('[SKELETON:ROUTE] no candidate served the scene scaffold — ' + _skelRouteLog.join(' | ')); } catch (_) {}
+        return null;
       })();
+      try { state._skeletonRouteLog = _skelRouteLog.slice(); } catch (_) {}
 
       if (!result || typeof result !== 'string') {
           _skeletonGateBeacon('mistral_empty_or_non_string', { resultType: typeof result });
@@ -101730,6 +101781,27 @@ function _buildAuthorFloorDirective(s) {
         });
         window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
           verdicts: (_ppRes && _ppRes.verdicts) || {}, unknownRefs: (_ppRes && _ppRes.unknownRefs) || [] };
+        // ── PER-SCENE DELIVERY LOG (Roman 2026-10-11) ──
+        if (!cs.deliveryLog || typeof cs.deliveryLog !== 'object') cs.deliveryLog = {};
+        var _dlPend = {};
+        try { (_ppRes && _ppRes.pending ? _ppRes.pending : []).forEach(function (pnd) {
+          if (pnd && pnd.ref) _dlPend[pnd.ref] = { status: pnd.status || null, reason: pnd.reason || null, kind: pnd.kind || null };
+        }); } catch (_) {}
+        var _dlComm = [];
+        try { (_ppRes && _ppRes.committed ? _ppRes.committed : []).forEach(function (c) {
+          if (c && c.ref) _dlComm.push({ ref: c.ref, kind: c.kind || null });
+        }); } catch (_) {}
+        cs.deliveryLog[String(prevSceneNum)] = {
+          scene: prevSceneNum, at: Date.now(),
+          aggregateDelivery: _delivery || null,
+          committed: _dlComm, pending: _dlPend,
+          unknownRefs: (_ppRes && _ppRes.unknownRefs) || []
+        };
+        // Bound it to the same depth as the fact list.
+        try {
+          var _dlKeys = Object.keys(cs.deliveryLog).map(Number).filter(function (x) { return x >= 0; }).sort(function (a, b) { return a - b; });
+          while (_dlKeys.length > 40) { delete cs.deliveryLog[String(_dlKeys.shift())]; }
+        } catch (_) {}
       } catch (_) {}
       var _ppCommitted = 0;
       try { _ppCommitted = (window.state._lastPerProposalAdjudication
@@ -133570,8 +133642,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // inferred from a rupture's prose. When one is invalidated, only the rows that depend on it
       // are revised — the rest of Fate's trajectory stands.
       prerequisites: [
-        { id: 'prereq:investigation_open', text: 'Lirael\'s conduct at the rite is under investigation and she is restricted', establishedAtScene: 4 },
-        { id: 'prereq:julian_act_concealed', text: 'What Julian did is not publicly known, and the investigation cannot reach it', establishedAtScene: 5 },
+        { id: 'prereq:investigation_open',
+          text: 'Lirael\'s conduct at the rite is under investigation and she is restricted',
+          establishedAtScene: 4,
+          // What an adjudicated Fate record must SAY for this condition to stop holding.
+          invalidatedWhen: ['the investigation is closed', 'the inquiry is dropped', 'the review is withdrawn',
+                            'her conduct is cleared', 'the notice is rescinded', 'the restrictions are lifted'] },
+        { id: 'prereq:julian_act_concealed',
+          text: 'What Julian did is not publicly known, and the investigation cannot reach it',
+          establishedAtScene: 5,
+          invalidatedWhen: ['who actually bent the wish', 'an outside hand touched the rite',
+                            'julian is exposed', 'julian is named', 'the intervention is public',
+                            'everyone knows someone intervened', 'the concealment is broken'] },
       ],
       // ── CLIFFHANGERS, ONE PER ISSUE BOUNDARY IN EITHER MODE ──
       // ⚠ AUTHORED PROPOSALS, PENDING ROMAN'S REVIEW. These are SUBSTANTIVE STORY DECISIONS — an
@@ -133952,13 +134034,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // belongs to the convened panel, which is now row 14's business. Beat 1 deliberately WITHHOLDS
     // who will hear the matter, turning the old attractor into an explicit refusal.
     { n: 4, kind: 'convergence', routesDecidedBy: 1,
+      // ROUTE KEYS MATCH THE RECORDED DECISION AXIS (the baked opening package's own keys), not
+      // this row's decision_axis prose. _resolveIssueOutline warns if they ever diverge again.
       routes: [
-        { choice: 'intervene',
-          how: 'She broke witness protocol in front of everyone, so the notice lands on conduct the whole assembly saw. She is served as someone who has already admitted the act by doing it.',
-          carries: 'the assembly\'s eyewitness memory of her tearing the band away, Seren\'s knowledge that she came, and no deniability left about the interference' },
-        { choice: 'remain_bound',
-          how: 'She held the line, so the notice lands on conduct nobody can describe. She is served on suspicion, and cannot answer it without claiming an interference she did not commit.',
-          carries: 'a formal record still intact, Seren\'s knowledge that she did not come, and the private cost of having obeyed' },
+        { choice: 'run',
+          how: 'She left the clearing, so the notice has to find her — served after the assembly has already talked about her in her absence, by an authority who had to come looking.',
+          carries: 'the fact that she was not there to answer anything, whatever the assembly decided about her while she was gone, and Seren left alone with the aftermath' },
+        { choice: 'remain',
+          how: 'She stayed and was questioned in front of everyone, so the notice lands on conduct the whole assembly watched, as the next step in a process already underway.',
+          carries: 'everything the assembly saw and heard her say, Julian\'s interrogation already on the record, and Seren having watched her stand there' },
       ],
       causalLink: 'but',
       changes: 'Lirael is formally under investigation, bound by named restrictions, and has not been allowed to explain herself.',
@@ -134027,11 +134111,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           setsUp: 'Her reputation is gone, so anything she says from here is heard as self-defence.',
           goal: 'Rumors spread through the city; the PC’s reputation collapses.' },
         { n: 8, kind: 'convergence', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          onOverturned: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'There is nothing left for her to deduce: the intervention is public, and the question becomes what the Institution does about it and where that leaves her.',
+            changes: 'Lirael is no longer the only explanation anyone has for the wish.',
+            sets_up: 'She has to decide where she stands in relation to a man already accused.' },
           changes: 'Lirael is now looking for a person who intervened, not for an accident in the rite.',
           followsFrom: 'Her own word is worthless now, so the only explanation left to her is that someone else acted.',
           setsUp: 'Lirael is looking for a person, not an accident.',
           goal: 'The PC realizes someone else may have intervened.' },
         { n: 9, kind: 'convergence', dependsOn: ['prereq:julian_act_concealed', 'prereq:investigation_open'], causalLink: 'therefore',
+          onOverturned: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'Suspicion is beside the point; she must choose how to stand toward a man who is already accused, in front of people watching which way she goes.',
+            changes: 'Her position on Julian becomes a public fact about her rather than a private suspicion.',
+            sets_up: 'Whatever she does next is read as either defending him or abandoning him.' },
           followsFrom: 'Lirael is looking for whoever intervened, and Julian is the one who demanded the review and steered it.',
           setsUp: 'Suspicion of Julian is established; the evidence for it is not.',
           goal: 'She begins suspecting Julian.', requiredTruth: 'Julian is still innocent in the reader’s eyes.', exitState: 'Suspicion established; evidence incomplete.', cliffhanger: 'The PC finds contradictory evidence.',
@@ -134047,6 +134139,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           },
         },
         { n: 10, kind: 'conditional', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          onOverturned: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'He cannot deny it, so the scene is what he says instead — and what he asks of her now that denial is gone.',
+            changes: 'What stands between them is no longer whether he did it but what he wants from her about it.',
+            sets_up: 'She is holding a request she has not answered.' },
           changes: 'Julian has denied it to her face, and she does not believe him.',
           followsFrom: 'Lirael suspects Julian and has nothing to put against him, so she asks him directly.',
           setsUp: 'His denial was unconvincing, which is not the same as proof.',
@@ -134096,12 +134192,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // lexical link from the world-truth group — still resolves, only to a later scene.
         { n: 14, kind: 'convergence', dependsOn: ['prereq:investigation_open'], routesDecidedBy: 1,
           routes: [
-            { choice: 'intervene',
-              how: 'The panel opens with her own witnessed breach already on the record, so the inquiry into her is quick and the attention moves to who else acted.',
-              carries: 'an admitted breach, and whatever standing she still has with the people who watched her break it' },
-            { choice: 'remain_bound',
-              how: 'The panel opens with nothing it can describe, so it works outward from the wish itself — and that is what turns it toward Julian.',
-              carries: 'an unexplained record, and the obedience nobody credits her for' },
+            { choice: 'run',
+              how: 'The panel opens on a record that includes her leaving, so her absence is the first thing it has to weigh — and working out what she avoided is what turns it toward Julian.',
+              carries: 'a flight on the record, and the time the story had to be told without her' },
+            { choice: 'remain',
+              how: 'The panel opens on everything she already said in front of witnesses, so it works forward from her own answers — and the gaps in them are what turn it toward Julian.',
+              carries: 'her own testimony already given, and the witnesses who can be asked what she said' },
           ],
           causalLink: 'therefore',
           changes: 'A Chayr and two Dohkars are seated and the inquiry is open, and its attention has moved from Lirael to Julian.',
@@ -134129,6 +134225,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           setsUp: 'What was done was not merely irregular: it broke one of the oldest taboos, so exposing it would destroy whoever did it.',
           goal: 'The PC learns the intervention violated one of the oldest taboos.' },
         { n: 16, kind: 'conditional', dependsOn: ['prereq:julian_act_concealed'], causalLink: 'therefore',
+          onOverturned: { provenance: 'authored_proposal_pending_review',
+            accomplishes: 'The admission is already public, so the scene is what he tells HER that he has not told the panel.',
+            changes: 'She knows something about his act that the inquiry does not.',
+            sets_up: 'She is now holding his concealment instead of her own.' },
           changes: 'Julian has admitted to her that he acted, and has given her no reason to hold alongside it.',
           followsFrom: 'Lirael now knows the intervention broke one of the oldest taboos, and the inquiry is already closing on him.',
           setsUp: 'Julian has admitted the act and offered no reason with it.',
@@ -137292,20 +137392,33 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // ── DELIVERY TRUTH ──
   // The engine already records delivery and commitment; v1 ignored all of it and inferred
   // "delivered" from a scene number. These read the SAME records _commitScene writes.
+  // A sealed proposal id is `prop:<scene>:<seq>` (see _sealProposal), so the SCENE a committed
+  // fact belongs to is readable from its REFERENCE — not from `committedAtScene`, which only
+  // records when the commit was written. v2 keyed on committedAtScene, so ANY fact committed
+  // during scene n marked scene n's whole planned accomplishment established: an unrelated
+  // "a bird lands on a branch" certified "Julian finally admits he acted". It does not.
+  function _refScene(ref) {
+    var m = String(ref || '').match(/^prop:(\d+):/);
+    return m ? Number(m[1]) : null;
+  }
   function _outlineCommitEvidence(s) {
     s = s || window.state;
     var cs = null;
     try { cs = (s && s._committedState) || null; } catch (_) {}
     var facts = (cs && Array.isArray(cs.facts)) ? cs.facts : [];
-    var byScene = {};
+    var byProposalScene = {}, byCommitScene = {}, unbound = [];
     facts.forEach(function (f) {
       if (!f) return;
-      var n = Number(f.committedAtScene);
-      if (!(n >= 0)) return;
-      (byScene[n] = byScene[n] || []).push(f);
+      var rs = _refScene(f.proposalRef);
+      if (rs != null) (byProposalScene[rs] = byProposalScene[rs] || []).push(f);
+      else unbound.push(f);
+      var cn = Number(f.committedAtScene);
+      if (cn >= 0) (byCommitScene[cn] = byCommitScene[cn] || []).push(f);
     });
     return { through: (cs && cs._committedThroughScene != null) ? Number(cs._committedThroughScene) : null,
-             byScene: byScene, count: facts.length,
+             byProposalScene: byProposalScene, byCommitScene: byCommitScene, unbound: unbound,
+             count: facts.length,
+             deliveryLog: (cs && cs.deliveryLog && typeof cs.deliveryLog === 'object') ? cs.deliveryLog : {},
              pendingIntent: (cs && cs.pendingIntent) || null };
   }
   // A scene's own accepted objective (reader-owned rows) is delivery-adjacent evidence: it proves
@@ -137323,23 +137436,51 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   //   written_unassessed    — prose exists for this ordinal; nothing has checked it.
   //   not_written           — no record this scene was produced.
   function _outlineDeliveryStatus(s, n, ev, sceneNow) {
-    var hasFact = !!(ev.byScene[n] && ev.byScene[n].length);
-    if (hasFact) return { status: 'committed', evidence: 'committed fact at scene ' + n + ' (proposalRef ' + (ev.byScene[n][0].proposalRef || 'legacy') + ')' };
-    if (n >= Number(sceneNow)) return { status: 'planned', evidence: 'not yet generated' };
-    var assessed = (ev.through != null && ev.through >= n);
-    if (assessed) {
-      var st = String((ev.pendingIntent && ev.pendingIntent.lastStatus) || '').toUpperCase();
-      var rsn = String((ev.pendingIntent && ev.pendingIntent.lastReason) || '');
-      if (st === 'MISSED' || /verified_not_delivered/i.test(rsn))
-        return { status: 'assessed_not_delivered', evidence: 'commit-scene assessed through ' + ev.through + ', status ' + (st || rsn) + ', no committed fact' };
-      return { status: 'unverified', evidence: 'commit-scene assessed through ' + ev.through + ', status ' + (st || rsn || 'unstated') + ', no committed fact' };
+    // ── WHAT WAS VERIFIED IS THE FACT'S OWN TEXT, bound to THIS scene's sealed proposals. ──
+    var own = (ev.byProposalScene[n] || []);
+    if (own.length) {
+      return { status: 'committed',
+               verifiedFacts: own.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; }),
+               evidence: own.length + ' committed fact(s) sealed for scene ' + n + ': '
+                 + own.map(function (f) { return f.proposalRef; }).join(', ') };
     }
+    if (n >= Number(sceneNow)) return { status: 'planned', evidence: 'not yet generated' };
+    // A fact COMMITTED DURING this scene but sealed for another scene (or legacy, with no
+    // reference at all) says nothing about THIS scene's assignment. Reported, never promoted.
+    var foreign = (ev.byCommitScene[n] || []).filter(function (f) { return _refScene(f.proposalRef) !== n; });
+    var foreignNote = foreign.length
+      ? ' (a fact was committed during this scene but sealed elsewhere — ' + foreign.map(function (f) {
+          return (f.proposalRef || 'no reference') + ': "' + String(f.fact || '').slice(0, 60) + '"'; }).join('; ')
+        + ' — it does NOT certify this scene\'s assignment)'
+      : '';
+    // ── THIS SCENE'S OWN VERDICT, never the latest one applied backwards. ──
+    var log = ev.deliveryLog && ev.deliveryLog[String(n)];
+    if (log) {
+      var agg = String(log.aggregateDelivery || '').toUpperCase();
+      var pend = log.pending || {};
+      var reasons = Object.keys(pend).map(function (k) { return (pend[k].status || '?') + '/' + (pend[k].reason || '?'); });
+      var anyNotDelivered = agg === 'MISSED' || reasons.some(function (r) { return /MISSED|verified_not_delivered/i.test(r); });
+      if (anyNotDelivered)
+        return { status: 'assessed_not_delivered',
+                 evidence: 'this scene\'s own verdict: aggregate ' + (agg || 'unstated')
+                   + (reasons.length ? ', per-proposal ' + reasons.join(', ') : '') + ', nothing committed' + foreignNote };
+      return { status: 'unverified',
+               evidence: 'this scene\'s own verdict: aggregate ' + (agg || 'unstated')
+                 + (reasons.length ? ', per-proposal ' + reasons.join(', ') : '')
+                 + ' — checked, nothing committed, and not established as undelivered either' + foreignNote };
+    }
+    // Assessed, but no verdict was retained FOR THIS SCENE. v2 filled that gap with
+    // pendingIntent.lastStatus — the newest verdict, applied retrospectively. It no longer does.
+    if (ev.through != null && ev.through >= n)
+      return { status: 'unverified',
+               evidence: 'commit-scene assessed through ' + ev.through + ' but retained no verdict for scene '
+                 + n + ', so whether its event landed is UNKNOWN — the latest verdict is not evidence about this scene' + foreignNote };
     var wrote = false;
     try { wrote = !!(s && Array.isArray(s._historyNotes) && s._historyNotes.length >= n); } catch (_) {}
     if (!wrote) { try { wrote = (typeof _hasPriorRenderedScene === 'function') ? _hasPriorRenderedScene() : false; } catch (_) {} }
     return wrote
-      ? { status: 'written_unassessed', evidence: 'prose exists for this ordinal; commit-scene has not assessed it (through=' + (ev.through == null ? 'never' : ev.through) + ')' }
-      : { status: 'not_written', evidence: 'no committed fact, no assessment, and no record this scene was produced' };
+      ? { status: 'written_unassessed', evidence: 'prose exists for this ordinal; commit-scene has not assessed it (through=' + (ev.through == null ? 'never' : ev.through) + ')' + foreignNote }
+      : { status: 'not_written', evidence: 'no committed fact, no assessment, and no record this scene was produced' + foreignNote };
   }
 
   // A DECISION IS RESOLVED ONLY BY AN ACTUAL CHOICE. v1 counted a passed scene number, which is
@@ -137365,16 +137506,52 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // which planned prerequisites it invalidated (_temptFateDurableConsequences[].invalidatesPrereqs).
   // Absent that field nothing is overturned — the plan stands. Guessing from a rupture's prose
   // would be a renderer deciding plot, which is exactly what this layer must not do.
-  function _outlineOverturnedPrereqs(s) {
-    var out = [];
+  function _outlineAdjudicatedRecords(s) {
+    var recs = [];
     try {
       (Array.isArray(s && s._temptFateDurableConsequences) ? s._temptFateDurableConsequences : [])
-        .forEach(function (c) {
-          (Array.isArray(c && c.invalidatesPrereqs) ? c.invalidatesPrereqs : []).forEach(function (p) {
-            if (p && out.indexOf(String(p)) === -1) out.push(String(p));
-          });
-        });
+        .forEach(function (c) { if (c) recs.push({ src: 'tempt', rec: c }); });
     } catch (_) {}
+    try {
+      var fp = s && s._fpcActiveCompiled;
+      if (fp) recs.push({ src: 'petition', rec: fp });
+    } catch (_) {}
+    return recs;
+  }
+  function _outlineOverturnedPrereqs(s) {
+    var out = [], why = {};
+    var prereqs = [];
+    try {
+      var plan = (typeof _activePlan === 'function') ? _activePlan(s) : null;
+      prereqs = (plan && Array.isArray(plan.prerequisites)) ? plan.prerequisites : [];
+    } catch (_) {}
+    var add = function (id, reason) {
+      id = String(id || ''); if (!id) return;
+      if (out.indexOf(id) === -1) { out.push(id); why[id] = reason; }
+    };
+    _outlineAdjudicatedRecords(s).forEach(function (w) {
+      var c = w.rec;
+      // (a) AN EXPLICIT DECLARATION from the adjudication wins outright.
+      (Array.isArray(c && c.invalidatesPrereqs) ? c.invalidatesPrereqs : [])
+        .forEach(function (id) { add(id, w.src + ': declared invalidatesPrereqs'); });
+      // (b) OTHERWISE, the prerequisite's OWN seed-authored markers are matched against what the
+      // adjudication itself says changed. Lexical and reject-only in spirit: no match leaves the
+      // plan standing, and nothing is inferred from a rupture's narrative prose.
+      var hay = [String(c.requestedRupture || c.label || '')]
+        .concat((Array.isArray(c.changed) ? c.changed : []).map(function (x) {
+          return String((x && x.subject) || '') + ' ' + String((x && x.whatChanged) || ''); }))
+        .concat(Array.isArray(c.establishedEvidence) ? c.establishedEvidence.map(String) : [])
+        .join(' \n ').toLowerCase();
+      prereqs.forEach(function (pq) {
+        if (!pq || !pq.id || !Array.isArray(pq.invalidatedWhen)) return;
+        for (var i = 0; i < pq.invalidatedWhen.length; i++) {
+          var mk = String(pq.invalidatedWhen[i] || '').toLowerCase().trim();
+          if (mk && hay.indexOf(mk) !== -1) { add(pq.id, w.src + ': matched the seed marker "' + mk + '"'); return; }
+        }
+      });
+    });
+    try { if (out.length) console.log('[ISSUE-OUTLINE:OVERTURN] ' + out.map(function (id) { return id + ' (' + why[id] + ')'; }).join(' | ')); } catch (_) {}
+    out._why = why;
     return out;
   }
 
@@ -137526,6 +137703,22 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           activeRoute = routes.filter(function (r) { return r && String(r.choice) === chosen; })[0] || null;
         }
         if (!activeRoute && chosen) activeRoute = { choice: chosen, how: null, carries: null, _unmatched: true };
+        // A ROUTE SET WHOSE KEYS CANNOT BE RECORDED CAN NEVER FIRE. Reported here rather than
+        // failing silently, which is how 'intervene'/'remain_bound' survived unnoticed.
+        try {
+          var _axKeys = null;
+          if (decidedAt === 1 && typeof _sceneDecisionAxis === 'function') {
+            var _bax = _sceneDecisionAxis();
+            if (_bax) _axKeys = [String(_bax.a.key).toLowerCase(), String(_bax.b.key).toLowerCase()];
+          }
+          if (_axKeys) {
+            var _bad = routes.map(function (r) { return String(r.choice).toLowerCase(); })
+              .filter(function (k) { return _axKeys.indexOf(k) === -1; });
+            if (_bad.length) console.warn('[ISSUE-OUTLINE:ROUTES] scene ' + n + ' declares route key(s) '
+              + _bad.join('/') + ' that the recorded decision axis cannot produce (its keys are '
+              + _axKeys.join('/') + ') — those routes can never fire');
+          }
+        } catch (_) {}
       }
 
       // ── CONDITIONAL ON AN UNANSWERED DECISION — only where the row genuinely depends on it.
@@ -137537,8 +137730,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       var decisionHere = null;
       var hasDecision = !!(eff && eff.player_decision_required) || !!(spineRow && spineRow.player_decision);
       if (hasDecision) {
+        // The BAKED axis is what the reader is actually asked and what the recorder keys on.
+        var baked = null;
+        try { baked = (n === 1 && typeof _sceneDecisionAxis === 'function') ? _sceneDecisionAxis() : null; } catch (_) { baked = null; }
         decisionHere = {
-          axis: (eff && eff.decision_axis) || (spineRow && spineRow.player_decision) || null,
+          axis: (baked && baked.axis) || (eff && eff.decision_axis) || (spineRow && spineRow.player_decision) || null,
+          axisSource: baked ? 'baked opening package (what the reader is asked)'
+            : ((eff && eff.player_decision_required) ? 'plan row decision_axis' : 'issue spine'),
+          choiceKeys: baked ? [baked.a.key, baked.b.key] : null,
           consequence: (eff && eff.decision_consequence) || null,
           source: (eff && eff.player_decision_required) ? 'plan row' : 'issue spine',
           resolved: _outlineDecisionResolved(s, n),
@@ -137546,9 +137745,33 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         };
       }
 
+      // OVERTURNED: the obsolete assignment is replaced or withheld, never delivered alongside a
+      // warning. The replacement, when one exists, is authored by the plan or the spine.
+      var overturnedBy = null;
+      if (kind === 'overturned') {
+        var repl = (planRow && planRow.onOverturned) || (spineRow && spineRow.on_overturned) || null;
+        var replPending = !!(repl && String(repl.provenance || '') === 'authored_proposal_pending_review');
+        overturnedBy = { prereqs: brokenPrereqs,
+                         replacement: repl ? (replPending ? 'authored_but_awaiting_review' : 'authored') : 'none' };
+        if (repl && replPending) repl = null;
+        if (repl) {
+          accomplishes = String(repl.accomplishes || '');
+          aSrc = 'plan row onOverturned (the original assignment is void)';
+          changes = String(repl.changes || '');
+          setsUp = String(repl.sets_up || repl.setsUp || '');
+        } else {
+          accomplishes = ''; changes = ''; setsUp = '';
+          aSrc = 'WITHHELD: this row\'s assignment is void (' + brokenPrereqs.join(', ') + ') and '
+            + (overturnedBy.replacement === 'authored_but_awaiting_review'
+               ? 'the drafted replacement has NOT been approved, so it is withheld too'
+               : 'no replacement is authored');
+        }
+      }
       var row = {
         n: n, kind: kind,
         delivery: del.status, deliveryEvidence: del.evidence,
+        verifiedFacts: del.verifiedFacts || null,
+        overturnedBy: overturnedBy,
         status: del.status,                       // kept for readers of v1's field name
         conditional: conditional, conditionalOn: conditional ? horizon : null,
         pendingDecision: pendingDecision,
@@ -137591,6 +137814,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 event: declared.event || null,
                 why_unresolved: declared.why_unresolved || null,
                 issue2Predicament: declared.issue2Predicament || null,
+                // QUARANTINE. An authored outcome awaiting sign-off is NOT delivered to the author:
+                // the resolver still carries it so it can be reviewed and so the summary can list
+                // it, and _renderIssueOutlineDirective withholds it.
+                pendingReview: String(declared.provenance || '') === 'authored_proposal_pending_review',
                 selected: null };
       if (cliff.branches && choiceC) {
         var sel = cliff.branches.filter(function (b) { return b && String(b.choice) === String(choiceC); })[0] || null;
@@ -137615,6 +137842,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 thesis: (arc && arc.thesis) || null,
                 horizon: horizon, horizonAxis: horizonAxis,
                 decisions: decisionKey, overturned: overturned,
+                overturnedWhy: (overturned && overturned._why) || {},
                 commitEvidence: { through: ev.through, facts: ev.count },
                 scenes: rows, cliffhanger: cliff,
                 planPresent: !!plan, spineOutlinePresent: spineOutline.length > 0 };
@@ -137693,8 +137921,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // truth of what came before. The causal outline of THIS scene belongs to the Scene Scaffold
   // (see _renderCausalOutlineDirective).
   var _OUTLINE_DELIVERY_WORDING = {
-    committed: { head: 'ESTABLISHED AND VERIFIED — already delivered on the page; do NOT stage it again as a new event or a new revelation (a character may refer back to it, which is not the same as delivering it)',
-                 line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
+    // What was verified is the COMMITTED FACT's own text. The row's planned accomplishment is not
+    // evidence of itself, and printing it here is how a plan became history.
+    committed: { head: 'ESTABLISHED AND VERIFIED — these exact facts were delivered on the page and committed. Do NOT stage any of them again as a new event or a new revelation (a character may refer back to one, which is not the same as delivering it). Only what is listed here is verified: anything else that scene was PLANNED to do is NOT established by this',
+                 line: function (r) {
+                   var fs_ = (r.verifiedFacts || []);
+                   if (!fs_.length) return 'scene ' + r.n + ': (committed, but no fact text retained)';
+                   return 'scene ' + r.n + ': ' + fs_.map(function (f) { return '"' + String(f.text).slice(0, 200) + '"'; }).join(' · ');
+                 } },
     assessed_not_delivered: { head: 'CHECKED AND NOT DELIVERED — this was planned, the scene was written, and the event did NOT land. It is STILL OWED. Do not treat it as history, and do not assume the reader knows it',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
     unverified: { head: 'NOT VERIFIED EITHER WAY — written, checked, and the evidence did not settle whether it landed. Treat it as UNCERTAIN: you may neither rely on the reader knowing it nor re-stage it as new',
@@ -137720,7 +137954,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       L.push('    WHAT KIND OF DEVELOPMENT THIS IS: ' + (
         row.kind === 'independent' ? 'INDEPENDENT — it happens because the world is already moving toward it, whatever the protagonist does. She can be present for it, resist it, or arrive late; she cannot make it not happen by choosing otherwise.'
         : row.kind === 'convergence' ? 'A CONVERGENCE POINT — Fate is steering the story here, and HOW it is reached is adaptable. Find the route from where she actually is now; do not reach it by moving her for the plot\'s convenience.'
-        : row.kind === 'overturned' ? 'OVERTURNED — a prerequisite this scene needed has been invalidated by something that actually happened' + (row.brokenPrereqs ? ' (' + row.brokenPrereqs.join(', ') + ')' : '') + '. Do NOT perform the old plan, and do NOT manufacture an equivalent loss to restore it. Develop from what is now true.'
+        : row.kind === 'overturned' ? 'OVERTURNED — a prerequisite this scene needed has been invalidated by something that actually happened' + (row.brokenPrereqs ? ' (' + row.brokenPrereqs.join(', ') + ')' : '') + '. Its original assignment is VOID and is not stated below. Do NOT manufacture an equivalent loss to restore it. Develop from what is now true.'
+          + ((row.overturnedBy && row.overturnedBy.replacement === 'none')
+            ? ' NO replacement assignment is available for it, so this scene has no fixed goal: build it from the current situation and the unresolved pressure the story is actually carrying.'
+            : (row.overturnedBy && row.overturnedBy.replacement === 'authored_but_awaiting_review')
+              ? ' A replacement is DRAFTED BUT NOT APPROVED, so it is withheld: this scene has no fixed goal, and you must build it from the current situation rather than from either plan.'
+              : ' A replacement assignment IS authored, and it is the one stated below.')
         : 'CONDITIONAL — it depends on what the player or another character actually does. It is not settled.'));
       if (row.accomplishes) L.push('    WHAT THIS SCENE ACCOMPLISHES: ' + row.accomplishes);
       else L.push('    WHAT THIS SCENE ACCOMPLISHES: owned by the scene objective below — this row carries no fixed goal.');
@@ -137746,7 +137985,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
       // ── DELIVERY TRUTH, PER CLASS. Only `committed` may be stated as established history.
       ['committed', 'assessed_not_delivered', 'unverified', 'written_unassessed', 'not_written'].forEach(function (cls) {
-        var set = o.scenes.filter(function (r) { return r.n < n && r.delivery === cls && r.accomplishes; });
+        var set = o.scenes.filter(function (r) {
+          if (r.n >= n || r.delivery !== cls) return false;
+          return (cls === 'committed') ? !!(r.verifiedFacts && r.verifiedFacts.length) : !!r.accomplishes;
+        });
         if (!set.length) return;
         var w = _OUTLINE_DELIVERY_WORDING[cls];
         L.push('    EARLIER IN THIS ISSUE — ' + w.head + ':');
@@ -137767,7 +138009,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           + ' answer she gave, write her as having already given one, or deliver a development that only makes sense'
           + ' under one answer.');
       }
-      if (o.cliffhanger && o.cliffhanger.scene === n) {
+      if (o.cliffhanger && o.cliffhanger.scene === n && o.cliffhanger.pendingReview) {
+        L.push('    THIS IS THE FINAL SCENE OF ' + String(o.label).toUpperCase() + ', so it must end on a'
+          + ' genuine unresolved pressure rather than settling. Its specific ENDING is an AUTHORED PROPOSAL'
+          + ' THAT HAS NOT BEEN APPROVED, so it is withheld: no outcome is prescribed to you here. End on'
+          + ' the pressure this scene has actually earned, leave it open, and do not invent an issue-ending'
+          + ' revelation to fill the gap.');
+      } else if (o.cliffhanger && o.cliffhanger.scene === n) {
         if (o.cliffhanger.selected && o.cliffhanger.event) {
           L.push('    THIS IS THE ISSUE\'S CLIFFHANGER, and the player has chosen "' + o.cliffhanger.selected + '": ' + o.cliffhanger.event);
           if (o.cliffhanger.issue2Predicament) L.push('      Its consequences must leave the story inside this predicament, which the next issue opens on: ' + o.cliffhanger.issue2Predicament);
@@ -137794,6 +138042,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var o = _resolveIssueOutline(window.state, { force: true });
     if (!o) return { present: false };
     return { present: true, issue: o.label, bounds: o.bounds, horizon: o.horizon,
+             awaitingReview: (o.cliffhanger && o.cliffhanger.pendingReview)
+               ? { what: 'the issue cliffhanger at scene ' + o.cliffhanger.scene,
+                   withheldFromGeneration: true,
+                   branches: (o.cliffhanger.branches || []).map(function (b) {
+                     return { choice: b.choice, event: b.event, issue2Predicament: b.issue2Predicament }; }),
+                   event: o.cliffhanger.event, issue2Predicament: o.cliffhanger.issue2Predicament }
+               : null,
              decisions: o.decisions, overturned: o.overturned, commitEvidence: o.commitEvidence,
              planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
              cliffhanger: o.cliffhanger, lastRevision: o.lastRevision || null,

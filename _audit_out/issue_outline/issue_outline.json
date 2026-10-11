@@ -26,6 +26,7 @@
  "horizonAxis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
  "decisions": [],
  "overturned": [],
+ "overturnedWhy": {},
  "commitEvidence": {
   "through": null,
   "facts": 0
@@ -36,6 +37,8 @@
    "kind": "independent",
    "delivery": "not_written",
    "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
@@ -52,6 +55,8 @@
    "openObjective": false,
    "decision": {
     "axis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
+    "axisSource": "plan row decision_axis",
+    "choiceKeys": null,
     "consequence": "The choice MUST alter who witnesses the twist, how Lirael is judged when it lands, and what she is able to learn afterwards. A scene may NOT resolve the central crisis before the player decides.",
     "source": "plan row",
     "resolved": false,
@@ -69,6 +74,8 @@
    "kind": "conditional",
    "delivery": "not_written",
    "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "not_written",
    "conditional": true,
    "conditionalOn": 1,
@@ -85,6 +92,8 @@
    "openObjective": true,
    "decision": {
     "axis": "claim the interference openly vs let the assembly keep its assumption",
+    "axisSource": "plan row decision_axis",
+    "choiceKeys": null,
     "consequence": "Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.",
     "source": "plan row",
     "resolved": false,
@@ -102,6 +111,8 @@
    "kind": "independent",
    "delivery": "not_written",
    "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "not_written",
    "conditional": false,
    "conditionalOn": null,
@@ -118,6 +129,8 @@
    "openObjective": false,
    "decision": {
     "axis": "player-facing Tempt Fate threshold — offered, never taken by a character",
+    "axisSource": "plan row decision_axis",
+    "choiceKeys": null,
     "consequence": "The scene builds the temptation and STOPS. Lirael does not resolve it.",
     "source": "plan row",
     "resolved": false,
@@ -135,6 +148,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -154,14 +169,14 @@
    "brokenPrereqs": null,
    "routes": [
     {
-     "choice": "intervene",
-     "how": "She broke witness protocol in front of everyone, so the notice lands on conduct the whole assembly saw. She is served as someone who has already admitted the act by doing it.",
-     "carries": "the assembly's eyewitness memory of her tearing the band away, Seren's knowledge that she came, and no deniability left about the interference"
+     "choice": "run",
+     "how": "She left the clearing, so the notice has to find her — served after the assembly has already talked about her in her absence, by an authority who had to come looking.",
+     "carries": "the fact that she was not there to answer anything, whatever the assembly decided about her while she was gone, and Seren left alone with the aftermath"
     },
     {
-     "choice": "remain_bound",
-     "how": "She held the line, so the notice lands on conduct nobody can describe. She is served on suspicion, and cannot answer it without claiming an interference she did not commit.",
-     "carries": "a formal record still intact, Seren's knowledge that she did not come, and the private cost of having obeyed"
+     "choice": "remain",
+     "how": "She stayed and was questioned in front of everyone, so the notice lands on conduct the whole assembly watched, as the next step in a process already underway.",
+     "carries": "everything the assembly saw and heard her say, Julian's interrogation already on the record, and Seren having watched her stand there"
     }
    ],
    "activeRoute": null,
@@ -173,6 +188,8 @@
    "kind": "independent",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -202,6 +219,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -229,6 +248,8 @@
    "kind": "independent",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -256,6 +277,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -285,6 +308,8 @@
    "kind": "convergence",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": false,
    "conditionalOn": null,
@@ -315,6 +340,8 @@
    "kind": "conditional",
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
+   "verifiedFacts": null,
+   "overturnedBy": null,
    "status": "planned",
    "conditional": true,
    "conditionalOn": 1,
@@ -351,6 +378,7 @@
   "event": "Julian denies it to her face, and denies it so badly that she knows — and he knows she knows. Neither of them says so, and he leaves her holding a certainty she cannot prove to anyone.",
   "why_unresolved": "whether anything she finds will stand up, and what he does now that she has asked him outright",
   "issue2Predicament": "Lirael is certain Julian intervened and holds nothing anyone would accept as evidence, while he now knows she suspects him. The next issue opens with both of them acting on that, and with the hidden sacrifice starting to cost someone else.",
+  "pendingReview": true,
   "selected": null
  },
  "planPresent": true,

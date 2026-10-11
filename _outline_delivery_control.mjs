@@ -9,6 +9,8 @@
 // populates it, and the author request is read off the wire.
 import { chromium } from 'playwright-core';
 import fs from 'fs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 let pass = 0, fail = 0;
 const t = (label, ok, detail) => {
@@ -87,20 +89,32 @@ console.log('Every model response in this file is CONSTRUCTED here and labelled 
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const calls = [];
+let refuseModels = new Set();
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
   try { body = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
   const msgs = body.messages || [];
   const joined = msgs.map(m => String(m.content || '')).join('\n');
-  calls.push({ url, role: body.role, model: body.model || body.preferredModel, joined, bytes: joined.length });
+  calls.push({ url, role: body.role, model: body.model || body.preferredModel, joined,
+               bytes: joined.length, messages: msgs, maxTokens: body.max_tokens,
+               reasoningEffort: body.reasoning_effort });
   const reply = (content, model) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ model: model || 'constructed', resolvedModel: model || 'constructed',
       upstreamAttempts: 1, choices: [{ message: { content: content }, finish_reason: 'stop' }],
       usage: { prompt_tokens: 10, completion_tokens: 10, cost_in_usd_ticks: 0 } }) });
-  // SCENE SCAFFOLD
-  if (/mistral-proxy/.test(url) && /narrative skeletons/i.test(joined))
-    return reply(JSON.stringify(CONSTRUCTED_SCAFFOLD), 'mistral-small-latest');
+  // SCENE SCAFFOLD. `refuseModels` makes a candidate return the proxy's own typed governor
+  // refusal shape (governor:true, no provider call made), so the caller's fall-through is driven
+  // by the real refusal contract rather than by a convenient success.
+  if (/mistral-proxy/.test(url) && /narrative skeletons/i.test(joined)) {
+    if (refuseModels.has(String(body.model || ''))) {
+      return route.fulfill({ status: 429, contentType: 'application/json',
+        body: JSON.stringify({ error: 'OVERSIZED', outcome: 'OVERSIZED', governor: true, terminal: true,
+          model: body.model, reserve: 25657, limitTpm: 20000,
+          detail: 'reservation exceeds the model\'s entire minute' }) });
+    }
+    return reply(JSON.stringify(CONSTRUCTED_SCAFFOLD), String(body.model || 'constructed'));
+  }
   // SCENE PLANNER
   if (/local_objective|SCENE SPINE PLANNER|state_change_precondition/i.test(joined) && /OPEN ROW|local_objective/i.test(joined))
     return reply(JSON.stringify(CONSTRUCTED_PLANNER), 'grok-4.3');
@@ -115,6 +129,19 @@ await page.route('**/api/**', async (route) => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._resolveIssueOutline === 'function'
   && typeof window._runCGScreenplayGen === 'function', { timeout: 30000 });
+
+// ═══ 0. PROVIDER ADMISSION, COMPUTED BY THE REAL GOVERNOR ═══════════════════════════════════
+// Asked of api/_mistral-governor.js itself - the authoritative MODEL_LIMITS table and the
+// authoritative reservationFor() - not a copy of either. The captured scaffold request supplies
+// the real messages and max_tokens.
+section('0. PROVIDER ADMISSION FOR THE SCENE SCAFFOLD (the real governor, no provider call)');
+const gov = require('./api/_mistral-governor.js');
+t('the governor module exposes its own MODEL_LIMITS and reservationFor',
+  !!gov && !!gov.MODEL_LIMITS && typeof gov.reservationFor === 'function',
+  Object.keys(gov || {}).join(','));
+
+// The admission arithmetic is run AFTER the CG section captures the real scaffold request, so it
+// uses the real messages and max_tokens rather than a reconstruction. See section 0b.
 
 const baseState = (over) => page.evaluate((o) => {
   const s = window.state;
@@ -135,14 +162,13 @@ const baseState = (over) => page.evaluate((o) => {
   return true;
 }, over || {});
 
-// ═══ 1. DELIVERY TRUTH — A PLANNED EVENT IS NEVER "DELIVERED" BECAUSE ITS NUMBER PASSED ═════
-section('1. DELIVERY TRUTH (the v1 regression): no scene history at all');
+// ═══ 1. DELIVERY TRUTH ══════════════════════════════════════════════════════════════════════
+section('1. DELIVERY TRUTH: no scene history at all');
 await baseState({ _stagedAuthoringSceneIndex: 5 });   // scene 6
 const empty = await page.evaluate(() => {
   const o = window._resolveIssueOutline(window.state, { force: true });
   return JSON.parse(JSON.stringify({
     perRow: o.scenes.map(r => [r.n, r.delivery]),
-    commit: o.commitEvidence,
     block: window._renderIssueOutlineDirective(window.state, 6) || ''
   }));
 });
@@ -154,57 +180,103 @@ t('those scenes are classified not_written, and said to be NOT history',
   && /NO RECORD THESE WERE PRODUCED/.test(empty.block) && /They are NOT history/.test(empty.block),
   JSON.stringify(empty.perRow.filter(([n]) => n < 6)));
 t('and the author is never told to treat them as established',
-  !/ALREADY DELIVERED EARLIER IN THIS ISSUE/.test(empty.block)
-  && !/ESTABLISHED AND VERIFIED/.test(empty.block), empty.block.slice(0, 400));
+  !/ESTABLISHED AND VERIFIED/.test(empty.block), empty.block.slice(0, 400));
 
-section('1b. DELIVERY TRUTH — the four classes, each from its own real evidence');
-const classes = await page.evaluate(() => {
+section('1b. AN UNRELATED COMMITTED FACT DOES NOT CERTIFY A SCENE\'S ASSIGNMENT');
+// The reviewer's reproduction: a committed fact that has nothing to do with the scene's planned
+// accomplishment used to mark the whole row established, and the renderer then reported the PLAN.
+const unrelated = await page.evaluate(() => {
   const s = window.state;
-  // CONSTRUCTED delivery records, in the shapes _commitTransition and _commitScene write.
   s._committedState = {
-    facts: [{ fact: 'The presiding Dohkar declares the rite his to rule on', proposalRef: 'prop:1:1',
-              provenanceLink: 'sealed', committedAtScene: 1, provenance: 'delivered' }],
-    _committedThroughScene: 3,
-    pendingIntent: { lastStatus: 'MISSED', lastReason: 'verified_not_delivered' },
-    tableau: null
+    // CONSTRUCTED. Sealed for scene 1 (prop:1:1) and committed during scene 1 - this one is the
+    // scene's own proposal. The second is committed DURING scene 2 but sealed for scene 1, so it
+    // belongs to scene 1's proposal, not to scene 2's assignment.
+    facts: [
+      { fact: 'The presiding Dohkar declares the rite his to rule on', proposalRef: 'prop:1:1',
+        provenanceLink: 'sealed', committedAtScene: 1, provenance: 'delivered' },
+      { fact: 'A bird lands on a branch', proposalRef: 'prop:1:2',
+        provenanceLink: 'sealed', committedAtScene: 2, provenance: 'delivered' }
+    ],
+    _committedThroughScene: 2, pendingIntent: null, tableau: null, deliveryLog: {}
   };
-  s._historyNotes = [{ ref: 'u1' }, { ref: 'u2' }, { ref: 'u3' }, { ref: 'u4' }];
+  s._historyNotes = [{ ref: 'u1' }, { ref: 'u2' }];
   s._issueOutline = null; s._issueOutlineHistory = {};
+  s._stagedAuthoringSceneIndex = 5;
   const o = window._resolveIssueOutline(s, { force: true });
   return JSON.parse(JSON.stringify({
-    rows: o.scenes.filter(r => r.n <= 6).map(r => [r.n, r.delivery, r.deliveryEvidence]),
+    r1: o.scenes.filter(r => r.n === 1)[0], r2: o.scenes.filter(r => r.n === 2)[0],
     block: window._renderIssueOutlineDirective(s, 6) || ''
   }));
 });
 fs.mkdirSync('_audit_out/outline_v2', { recursive: true });
-fs.writeFileSync('_audit_out/outline_v2/delivery_classes.json', JSON.stringify(classes, null, 1));
-t('scene 1 is COMMITTED, from a committed fact carrying its scene number',
-  classes.rows[0][1] === 'committed' && /committed fact at scene 1/.test(classes.rows[0][2]),
-  JSON.stringify(classes.rows[0]));
-t('scenes 2-3 are ASSESSED AND NOT DELIVERED — checked, no fact, status MISSED',
-  classes.rows[1][1] === 'assessed_not_delivered' && classes.rows[2][1] === 'assessed_not_delivered',
-  JSON.stringify(classes.rows.slice(1, 3)));
-t('scene 4 is WRITTEN BUT UNCHECKED (4 accepted units exist, commit-scene assessed only through 3)',
-  classes.rows[3][1] === 'written_unassessed' && /has not assessed it \(through=3\)/.test(classes.rows[3][2]),
-  JSON.stringify(classes.rows[3]));
-t('scene 5 is NOT WRITTEN — there is no accepted unit for it, so it is not history either',
-  classes.rows[4][1] === 'not_written', JSON.stringify(classes.rows[4]));
-t('only the committed one is stated as established history',
-  /ESTABLISHED AND VERIFIED[\s\S]{0,400}scene 1:/.test(classes.block)
-  && !/ESTABLISHED AND VERIFIED[\s\S]{0,400}scene 2:/.test(classes.block),
-  (classes.block.match(/EARLIER IN THIS ISSUE[\s\S]{0,700}/) || [''])[0]);
-t('the undelivered ones are stated as STILL OWED, not suppressed',
-  /CHECKED AND NOT DELIVERED/.test(classes.block) && /It is STILL OWED/.test(classes.block),
-  'missing');
-t('the unchecked ones are stated as uncertain',
-  /WRITTEN BUT UNCHECKED/.test(classes.block) && /Do not assert them as established facts/.test(classes.block),
-  'missing');
+fs.writeFileSync('_audit_out/outline_v2/delivery_proposal_binding.json', JSON.stringify(unrelated, null, 1));
+t('scene 2 is NOT committed by a fact sealed for another scene',
+  unrelated.r2.delivery !== 'committed', JSON.stringify([unrelated.r2.delivery, unrelated.r2.deliveryEvidence]));
+t('...and that foreign fact is REPORTED as not certifying this scene\'s assignment',
+  /sealed elsewhere/.test(unrelated.r2.deliveryEvidence)
+  && /does NOT certify this scene/.test(unrelated.r2.deliveryEvidence)
+  && /A bird lands on a branch/.test(unrelated.r2.deliveryEvidence),
+  unrelated.r2.deliveryEvidence);
+t('scene 1 IS committed, bound by its own sealed proposal reference',
+  unrelated.r1.delivery === 'committed' && /prop:1:1/.test(unrelated.r1.deliveryEvidence),
+  unrelated.r1.deliveryEvidence);
+t('the author is told the COMMITTED FACT TEXT, not the row\'s planned accomplishment',
+  /ESTABLISHED AND VERIFIED/.test(unrelated.block)
+  && /"The presiding Dohkar declares the rite his to rule on"/.test(unrelated.block)
+  && !/ESTABLISHED AND VERIFIED[\s\S]{0,400}THE WISH — steps 1-4/.test(unrelated.block),
+  (unrelated.block.match(/ESTABLISHED AND VERIFIED[\s\S]{0,500}/) || [''])[0]);
+t('...and told explicitly that anything else the scene was planned to do is NOT established',
+  /Only what is listed here is verified/.test(unrelated.block), 'caveat missing');
+
+section('1c. THE LATEST VERDICT IS NOT APPLIED RETROSPECTIVELY');
+// The reviewer's second reproduction: assessment through scene 3 with the latest status MISSED
+// used to classify BOTH scenes 2 and 3 as not delivered, on a verdict that was only about one.
+const retro = await page.evaluate(() => {
+  const s = window.state;
+  s._committedState = {
+    facts: [], _committedThroughScene: 3,
+    pendingIntent: { lastStatus: 'MISSED', lastReason: 'verified_not_delivered' },
+    // The per-scene log holds a verdict for scene 3 ONLY. Scene 2 was assessed before per-scene
+    // verdicts were retained, so nothing establishes what happened there.
+    deliveryLog: { '3': { scene: 3, aggregateDelivery: 'MISSED', committed: [],
+                          pending: { 'prop:3:1': { status: 'MISSED', reason: 'verified_not_delivered' } } } },
+    tableau: null
+  };
+  s._historyNotes = [{ ref: 'a' }, { ref: 'b' }, { ref: 'c' }];
+  s._issueOutline = null; s._issueOutlineHistory = {};
+  s._stagedAuthoringSceneIndex = 5;
+  const o = window._resolveIssueOutline(s, { force: true });
+  return JSON.parse(JSON.stringify({
+    r2: o.scenes.filter(r => r.n === 2)[0], r3: o.scenes.filter(r => r.n === 3)[0],
+    block: window._renderIssueOutlineDirective(s, 6) || ''
+  }));
+});
+t('scene 3 is assessed_not_delivered — from ITS OWN retained verdict',
+  retro.r3.delivery === 'assessed_not_delivered' && /this scene's own verdict/.test(retro.r3.deliveryEvidence),
+  JSON.stringify([retro.r3.delivery, retro.r3.deliveryEvidence]));
+t('scene 2 is NOT called undelivered on scene 3\'s verdict — it is UNVERIFIED',
+  retro.r2.delivery === 'unverified' && /retained no verdict for scene 2/.test(retro.r2.deliveryEvidence)
+  && /the latest verdict is not evidence about this scene/.test(retro.r2.deliveryEvidence),
+  JSON.stringify([retro.r2.delivery, retro.r2.deliveryEvidence]));
+// Scene 2 is the reader-owned row and has no accepted objective in this state, so it has no
+// stated accomplishment to list - correct, and checked at row level above. Scene 1 is the
+// unverified row with text, scene 3 the undelivered one.
+t('the author sees the two classes stated separately, each under its own heading',
+  /CHECKED AND NOT DELIVERED[\s\S]{0,400}scene 3:/.test(retro.block)
+  && /NOT VERIFIED EITHER WAY[\s\S]{0,400}scene 1:/.test(retro.block)
+  && retro.block.indexOf('CHECKED AND NOT DELIVERED') !== retro.block.indexOf('NOT VERIFIED EITHER WAY'),
+  (retro.block.match(/EARLIER IN THIS ISSUE[\s\S]{0,900}/) || [''])[0]);
+t('and the reader-owned row with no accepted objective is listed under none of them',
+  !/scene 2:/.test(retro.block) && retro.r2.delivery === 'unverified',
+  (retro.block.match(/scene 2:[^\n]{0,80}/) || ['(correctly absent)'])[0]);
 t('a committed row is SNAPSHOTTED so a later recompute cannot rewrite history',
   await page.evaluate(() => {
     const s = window.state;
+    s._committedState.facts = [{ fact: 'The presiding Dohkar declares the rite his to rule on',
+      proposalRef: 'prop:1:1', provenanceLink: 'sealed', committedAtScene: 1, provenance: 'delivered' }];
+    s._issueOutline = null; s._issueOutlineHistory = {};
     const before = window._resolveIssueOutline(s, { force: true }).scenes.filter(r => r.n === 1)[0];
-    // Mutate the live plan row's resolution inputs, then recompute.
-    s._sceneDecisions = { '1': { choice: 'intervene', label: 'x', at: Date.now(), storyId: s.storyId } };
+    s._sceneDecisions = { '1': { choice: 'run', label: 'x', at: Date.now(), storyId: s.storyId } };
     const after = window._resolveIssueOutline(s, { force: true }).scenes.filter(r => r.n === 1)[0];
     return before.accomplishes === after.accomplishes && before.changes === after.changes;
   }), 'a committed row moved');
@@ -218,7 +290,7 @@ const dec = await page.evaluate(() => {
   s._sceneDecisions = null; s._sceneObjectives = null; s._issueOutline = null;
   s._stagedAuthoringSceneIndex = 11;              // scene 12, well past the scene-1 decision
   const noChoice = window._resolveIssueOutline(s, { force: true });
-  s._sceneDecisions = { '1': { choice: 'intervene', label: 'tear the band', at: Date.now(), storyId: s.storyId } };
+  s._sceneDecisions = { '1': { choice: 'run', label: 'run in shame', at: Date.now(), storyId: s.storyId } };
   s._issueOutline = null;
   const withChoice = window._resolveIssueOutline(s, { force: true });
   return JSON.parse(JSON.stringify({
@@ -229,7 +301,7 @@ const dec = await page.evaluate(() => {
 t('scene 1 past, no recorded choice → its decision is NOT resolved and it is the horizon',
   dec.noChoiceR1.resolved === false && dec.noChoiceHorizon === 1, JSON.stringify(dec));
 t('recording the actual choice resolves it and moves the horizon on',
-  dec.withR1.resolved === true && dec.withR1.choice === 'intervene' && dec.withHorizon !== 1,
+  dec.withR1.resolved === true && dec.withR1.choice === 'run' && dec.withHorizon !== 1,
   JSON.stringify({ r1: dec.withR1, horizon: dec.withHorizon }));
 
 // ═══ 3. CONVERGENCE — TWO ROUTES, ONE DESTINATION, DIFFERENT CONSEQUENCES ═══════════════════
@@ -244,7 +316,7 @@ const conv = await page.evaluate(() => {
     return { row4: o.scenes.filter(r => r.n === 4)[0], row14: o.scenes.filter(r => r.n === 14)[0],
              block: window._renderIssueOutlineDirective(s, 4) || '', horizon: o.horizon };
   };
-  return JSON.parse(JSON.stringify({ intervene: run('intervene'), remain: run('remain_bound'), none: run(null) }));
+  return JSON.parse(JSON.stringify({ intervene: run('run'), remain: run('remain'), none: run(null) }));
 });
 fs.writeFileSync('_audit_out/outline_v2/convergence_intervene.txt', conv.intervene.block);
 fs.writeFileSync('_audit_out/outline_v2/convergence_remain.txt', conv.remain.block);
@@ -256,19 +328,19 @@ t('scene 4 is the SAME convergence destination on both routes',
     conv.intervene.row4.accomplishes === conv.remain.row4.accomplishes]));
 t('but the ROUTE differs, and each route is selected by the recorded choice',
   conv.intervene.row4.activeRoute && conv.remain.row4.activeRoute
-  && conv.intervene.row4.activeRoute.choice === 'intervene'
-  && conv.remain.row4.activeRoute.choice === 'remain_bound'
+  && conv.intervene.row4.activeRoute.choice === 'run'
+  && conv.remain.row4.activeRoute.choice === 'remain'
   && conv.intervene.row4.activeRoute.how !== conv.remain.row4.activeRoute.how,
   JSON.stringify([conv.intervene.row4.activeRoute, conv.remain.row4.activeRoute]));
 t('and what she CARRIES into it differs — convergence does not reset the choice',
   conv.intervene.row4.activeRoute.carries !== conv.remain.row4.activeRoute.carries
-  && /eyewitness memory/.test(conv.intervene.row4.activeRoute.carries)
-  && /did not come/.test(conv.remain.row4.activeRoute.carries),
+  && /was not there to answer anything/.test(conv.intervene.row4.activeRoute.carries)
+  && /the assembly saw and heard her say/.test(conv.remain.row4.activeRoute.carries),
   JSON.stringify([conv.intervene.row4.activeRoute.carries, conv.remain.row4.activeRoute.carries]));
 t('the author request states the route AND what it costs her',
-  /THE ROUTE THE PLAYER PUT HER ON: She broke witness protocol/.test(conv.intervene.block)
+  /THE ROUTE THE PLAYER PUT HER ON: She left the clearing/.test(conv.intervene.block)
   && /SHE ARRIVES CARRYING THIS, and it must stay visible/.test(conv.intervene.block)
-  && /THE ROUTE THE PLAYER PUT HER ON: She held the line/.test(conv.remain.block),
+  && /THE ROUTE THE PLAYER PUT HER ON: She stayed and was questioned/.test(conv.remain.block),
   (conv.intervene.block.match(/THE ROUTE[\s\S]{0,400}/) || [''])[0]);
 // Scene 14 is outside the CG issue-1 window (rows 1-10) by design, so the later convergence point
 // is checked in the LITERARY window, where it is in scope.
@@ -282,7 +354,7 @@ const conv14 = await page.evaluate(() => {
     const o = window._resolveIssueOutline(s, { force: true });
     return o.scenes.filter(r => r.n === 14)[0];
   };
-  const out = { intervene: run('intervene'), remain: run('remain_bound') };
+  const out = { intervene: run('run'), remain: run('remain') };
   s.currentEngine = 'graphic'; s.renderMode = 'cg';
   return JSON.parse(JSON.stringify(out));
 });
@@ -318,50 +390,90 @@ t('the author is told the plan continues past the unanswered decision, not that 
   && /What you may NOT do is assert which answer she gave/.test(horizonPlan.block),
   (horizonPlan.block.match(/UNANSWERED DECISION[\s\S]{0,500}/) || [''])[0]);
 
-// ═══ 4. AN ADJUDICATED INTERVENTION OVERTURNS A DESTINATION — AND ONLY ITS DEPENDENTS ═══════
+// ═══ 4. DISRUPTION: PRODUCED FROM SEED MARKERS, AND THE VOID PLAN IS NOT DELIVERED ══════════
 section('4. DISRUPTION: an adjudicated intervention invalidates a prerequisite');
 const overturn = await page.evaluate(() => {
   const s = window.state;
-  // LITERARY window, so all 20 rows are in scope. In the CG window (rows 1-10) only the in-window
-  // dependents can be affected — which is correct, not a gap.
   s.currentEngine = 'literary'; s.renderMode = 'literary';
   delete s._stagedAuthoringSceneIndex; s.turnCount = 4;        // scene 6
-  s._committedState = null;
-  s._sceneDecisions = { '1': { choice: 'intervene', label: 'x', at: Date.now(), storyId: s.storyId } };
+  s._committedState = null; s._fpcActiveCompiled = null;
+  s._sceneDecisions = { '1': { choice: 'run', label: 'x', at: Date.now(), storyId: s.storyId } };
   s._temptFateDurableConsequences = [];
   s._issueOutline = null; s._issueOutlineHistory = {};
   const before = window._resolveIssueOutline(s, { force: true });
-  // A CONSTRUCTED adjudicated Tempt record, in the shape _buildTemptFateDurableConsequenceDirective
-  // reads, declaring which named prerequisite it invalidated. Nothing is inferred from its prose.
+  // A CONSTRUCTED adjudicated Tempt record in the shape
+  // _buildTemptFateDurableConsequenceDirective reads. It declares NO invalidatesPrereqs: the
+  // invalidation is PRODUCED by matching the prerequisite's own seed-authored invalidatedWhen
+  // markers against what the adjudication itself says changed.
   s._temptFateDurableConsequences = [{
-    requestedRupture: 'let the Veilwood know who actually bent the wish', sceneIdx: 5,
-    changed: [{ subject: 'the assembly', whatChanged: 'knows an outside hand touched the rite' }],
-    invalidatesPrereqs: ['prereq:julian_act_concealed']
+    requestedRupture: 'let the Veilwood know the truth of the rite', sceneIdx: 5,
+    changed: [{ subject: 'the assembly', whatChanged: 'now knows an outside hand touched the rite' }],
+    establishedEvidence: ['the Chayr read the finding aloud']
   }];
   const after = window._reviseIssueOutlineForMove(s, 'adjudicated Tempt Fate outcome');
   return JSON.parse(JSON.stringify({
     beforeKinds: before.scenes.map(r => [r.n, r.kind]),
     afterKinds: after.scenes.map(r => [r.n, r.kind]),
     overturnedRows: after.scenes.filter(r => r.kind === 'overturned').map(r => r.n),
-    diff: after.lastRevision,
+    why: after.overturnedWhy, diff: after.lastRevision,
+    row16: after.scenes.filter(r => r.n === 16)[0],
     block16: (() => { s.turnCount = 14; s._issueOutline = null;
       return window._renderIssueOutlineDirective(s, 16) || ''; })()
   }));
 });
 fs.writeFileSync('_audit_out/outline_v2/overturned_scene16.txt', overturn.block16);
-t('the rows that DEPEND on the invalidated prerequisite become overturned',
-  overturn.overturnedRows.join(',') === '8,9,10,16', JSON.stringify(overturn.overturnedRows));
+t('the invalidation is PRODUCED from the prerequisite\'s own seed markers — no hand-inserted flag',
+  overturn.overturnedRows.join(',') === '8,9,10,16'
+  && /matched the seed marker .{0,4}an outside hand touched the rite/.test(JSON.stringify(overturn.why)),
+  JSON.stringify({ rows: overturn.overturnedRows, why: overturn.why }));
 t('and NOTHING else changes kind — the rest of Fate\'s trajectory stands',
-  overturn.beforeKinds.filter(([n, k], i) => overturn.afterKinds[i][1] !== k)
+  overturn.beforeKinds.filter(([n, k], idx) => overturn.afterKinds[idx][1] !== k)
     .every(([n]) => [8, 9, 10, 16].indexOf(n) !== -1),
-  JSON.stringify(overturn.beforeKinds.filter(([n, k], i) => overturn.afterKinds[i][1] !== k)));
-t('the revision report names the overturned rows',
-  (overturn.diff.overturned || []).join(',') === '8,9,10,16', JSON.stringify(overturn.diff));
-t('the author is told not to perform the old plan and not to manufacture a replacement loss',
-  /OVERTURNED — a prerequisite this scene needed has been invalidated/.test(overturn.block16)
-  && /do NOT manufacture an equivalent loss to restore it/.test(overturn.block16)
-  && /prereq:julian_act_concealed/.test(overturn.block16),
-  (overturn.block16.match(/WHAT KIND OF DEVELOPMENT[\s\S]{0,500}/) || [''])[0]);
+  JSON.stringify(overturn.beforeKinds.filter(([n, k], idx) => overturn.afterKinds[idx][1] !== k)));
+t('the OBSOLETE ASSIGNMENT IS NOT DELIVERED — it is withheld, not labelled',
+  !/Julian finally admits he acted/.test(overturn.block16)
+  && overturn.row16.accomplishes === '' && overturn.row16.changes === '' && overturn.row16.sets_up === '',
+  (overturn.block16.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,200}/) || ['(absent)'])[0]);
+t('the author is told its assignment is VOID and why, with no replacement to perform',
+  /Its original assignment is VOID and is not stated below/.test(overturn.block16)
+  && /prereq:julian_act_concealed/.test(overturn.block16)
+  && /DRAFTED BUT NOT APPROVED, so it is withheld/.test(overturn.block16)
+  && /Do NOT manufacture an equivalent loss/.test(overturn.block16),
+  (overturn.block16.match(/WHAT KIND OF DEVELOPMENT[\s\S]{0,700}/) || [''])[0]);
+t('an APPROVED replacement IS delivered in place of the void plan',
+  await page.evaluate(() => {
+    const s = window.state;
+    // CONSTRUCTED approval: the same drafted replacement with its pending-review marker removed.
+    const plan = window.STARTER_PLANS.starter_first_sacrifice;
+    const row = plan.scenes.filter(r => r.n === 16)[0];
+    const saved = row.onOverturned;
+    row.onOverturned = Object.assign({}, saved, { provenance: 'approved_by_roman' });
+    s.turnCount = 14; s._issueOutline = null; s._issueOutlineHistory = {};
+    const block = window._renderIssueOutlineDirective(s, 16) || '';
+    row.onOverturned = saved;
+    return /what he tells HER that he has not told the panel/.test(block)
+      && /A replacement assignment IS authored/.test(block)
+      && !/Julian finally admits he acted/.test(block);
+  }), 'approved replacement not delivered');
+t('a PETITION consequence is read too, not only Tempt',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._temptFateDurableConsequences = [];
+    s._fpcActiveCompiled = { label: 'close the review',
+      changed: [{ subject: 'the panel', whatChanged: 'the investigation is closed' }] };
+    s._issueOutline = null; s._issueOutlineHistory = {};
+    const o = window._resolveIssueOutline(s, { force: true });
+    s._fpcActiveCompiled = null;
+    return o.overturned.indexOf('prereq:investigation_open') !== -1
+      && /petition: matched the seed marker/.test(JSON.stringify(o.overturnedWhy));
+  }), 'petition store not read');
+t('with no adjudicated record at all, NOTHING is overturned',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._temptFateDurableConsequences = []; s._fpcActiveCompiled = null;
+    s._issueOutline = null; s._issueOutlineHistory = {};
+    return window._resolveIssueOutline(s, { force: true }).overturned.length === 0;
+  }), 'something was overturned with no record');
 
 // ═══ 5. THE CLIFFHANGER IS SELECTED AND CARRIED ═════════════════════════════════════════════
 section('5. THE RECORDED CHOICE IS CARRIED INTO THE CLIFFHANGER');
@@ -372,7 +484,7 @@ const cliff = await page.evaluate(() => {
   const at = (n) => { delete s._stagedAuthoringSceneIndex; s.turnCount = n - 2;
     s._issueOutline = null; s._issueOutlineHistory = {};
     return { o: window._resolveIssueOutline(s, { force: true }), block: window._renderIssueOutlineDirective(s, n) || '' }; };
-  s._sceneDecisions = { '1': { choice: 'intervene', label: 'x', at: Date.now(), storyId: s.storyId } };
+  s._sceneDecisions = { '1': { choice: 'run', label: 'x', at: Date.now(), storyId: s.storyId } };
   const undecided = at(20);
   s._sceneDecisions['19'] = { choice: 'expose', label: 'expose what Julian did', at: Date.now(), storyId: s.storyId };
   const decided = at(20);
@@ -388,10 +500,9 @@ const cliff = await page.evaluate(() => {
   }));
 });
 fs.writeFileSync('_audit_out/outline_v2/cliffhanger_selected.txt', cliff.decided.block);
-t('undecided: both possibilities are offered, neither selected',
+t('undecided: the resolver offers both possibilities and selects neither',
   cliff.undecided.c.selected === null && cliff.undecided.c.decided === false
-  && /do not pick for them, and do not blend the two/.test(cliff.undecided.block)
-  && /if "expose"/.test(cliff.undecided.block) && /if "conceal"/.test(cliff.undecided.block),
+  && (cliff.undecided.c.branches || []).length === 2,
   JSON.stringify(cliff.undecided.c.selected));
 t('recording "expose" SELECTS that branch and copies its event into the cliffhanger',
   cliff.decided.c.selected === 'expose' && /puts Julian's act on the inquiry's record/.test(cliff.decided.c.event || ''),
@@ -399,11 +510,12 @@ t('recording "expose" SELECTS that branch and copies its event into the cliffhan
 t('...and carries its NEXT-ISSUE PREDICAMENT',
   /Institution is now prosecuting a broken taboo/.test(cliff.decided.c.issue2Predicament || ''),
   (cliff.decided.c.issue2Predicament || '').slice(0, 120));
-t('...and the author request shows the chosen outcome and predicament, not the alternatives',
-  /the player has chosen "expose"/.test(cliff.decided.block)
-  && /the next issue opens on/i.test(cliff.decided.block)
-  && !/if "conceal"/.test(cliff.decided.block),
-  (cliff.decided.block.match(/CLIFFHANGER[\s\S]{0,700}/) || [''])[0]);
+// The DIRECTIVE for this cliffhanger is quarantined while it awaits sign-off (section 5b drives
+// both the withheld and the approved form). Here the SELECTION is what is checked.
+t('...and the selection is carried on the resolved object, not merely flagged',
+  cliff.decided.c.decided === true && cliff.decided.c.selected === 'expose'
+  && cliff.decided.c.event !== cliff.undecided.c.event,
+  JSON.stringify({ decided: cliff.decided.c.decided, selected: cliff.decided.c.selected }));
 t('recording "conceal" selects the OTHER branch',
   cliff.other.c.selected === 'conceal' && /lets the record stand/.test(cliff.other.c.event || ''),
   JSON.stringify(cliff.other.c.selected));
@@ -412,6 +524,49 @@ t('an unmatched recorded choice is REPORTED, never guessed',
   JSON.stringify(cliff.bogus.c));
 t('the authored cliffhanger outcomes are marked as proposals pending review',
   cliff.decided.c.provenance === 'authored_proposal_pending_review', cliff.decided.c.provenance);
+
+section('5b. QUARANTINE: AN UNAPPROVED OUTCOME IS WITHHELD FROM GENERATION');
+// `authored_proposal_pending_review` was metadata only: the renderer injected the proposed
+// outcomes as authoritative instructions anyway, so "awaiting sign-off" kept nothing out.
+const quar = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  s._temptFateDurableConsequences = []; s._fpcActiveCompiled = null;
+  s._sceneDecisions = { '1': { choice: 'run', label: 'x', at: Date.now(), storyId: s.storyId },
+                        '19': { choice: 'expose', label: 'expose', at: Date.now(), storyId: s.storyId } };
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 18;   // scene 20
+  s._issueOutline = null; s._issueOutlineHistory = {};
+  const withheld = window._renderIssueOutlineDirective(s, 20) || '';
+  const summary = window._issueOutlineSummary();
+  // CONSTRUCTED approval, to show the same directive once it IS approved.
+  const plan = window.STARTER_PLANS.starter_first_sacrifice;
+  const saved = plan.issueCliffhangers['20'].provenance;
+  plan.issueCliffhangers['20'].provenance = 'approved_by_roman';
+  s._issueOutline = null;
+  const approved = window._renderIssueOutlineDirective(s, 20) || '';
+  plan.issueCliffhangers['20'].provenance = saved;
+  return JSON.parse(JSON.stringify({ withheld, approved, awaiting: summary.awaitingReview }));
+});
+fs.writeFileSync('_audit_out/outline_v2/cliffhanger_quarantined.txt', quar.withheld);
+t('the unapproved outcome does NOT reach the author request',
+  !/puts Julian's act on the inquiry's record/.test(quar.withheld)
+  && !/Institution is now prosecuting a broken taboo/.test(quar.withheld)
+  && !/lets the record stand/.test(quar.withheld),
+  (quar.withheld.match(/FINAL SCENE[\s\S]{0,500}/) || [''])[0]);
+t('...and the author is told the ending is withheld, not that there is none',
+  /AUTHORED PROPOSAL THAT HAS NOT BEEN APPROVED, so it is withheld/.test(quar.withheld)
+  && /do not invent an issue-ending revelation to fill the gap/.test(quar.withheld),
+  quar.withheld.slice(-500));
+t('the pending item is surfaced for sign-off, with both branch texts',
+  !!quar.awaiting && quar.awaiting.withheldFromGeneration === true
+  && (quar.awaiting.branches || []).length === 2
+  && /Institution is now prosecuting a broken taboo/.test(JSON.stringify(quar.awaiting)),
+  JSON.stringify(quar.awaiting && { what: quar.awaiting.what, n: (quar.awaiting.branches || []).length }));
+t('once APPROVED, the selected outcome and its predicament do reach the author',
+  /the player has chosen "expose"/.test(quar.approved)
+  && /puts Julian's act on the inquiry's record/.test(quar.approved)
+  && /Institution is now prosecuting a broken taboo/.test(quar.approved),
+  quar.approved.slice(-600));
 
 // ═══ 6. THE ISSUE BOUNDARY IS RECONCILED, NOT LOGGED ════════════════════════════════════════
 section('6. THE PURCHASE CONTRACT DECIDES WHERE THE ISSUE ENDS, AND THE PLOT ENDS THERE TOO');
@@ -459,8 +614,10 @@ const cgRun = await page.evaluate(async () => {
   s._historyNotes = [{ ref: 'a' }, { ref: 'b' }, { ref: 'c' }];
   s._committedState = { facts: [{ fact: 'The presiding Dohkar declares the rite his to rule on',
       proposalRef: 'prop:1:1', provenanceLink: 'sealed', committedAtScene: 1, provenance: 'delivered' }],
-    _committedThroughScene: 3, pendingIntent: { lastStatus: 'DELIVERED', lastReason: 'delivered' }, tableau: null };
-  s._sceneDecisions = { '1': { choice: 'intervene', label: 'tear the band', at: Date.now(), storyId: s.storyId } };
+    _committedThroughScene: 3, pendingIntent: { lastStatus: 'DELIVERED', lastReason: 'delivered' },
+    deliveryLog: { '1': { scene: 1, aggregateDelivery: 'DELIVERED', committed: [{ ref: 'prop:1:1' }], pending: {} } },
+    tableau: null };
+  s._sceneDecisions = { '1': { choice: 'run', label: 'run in shame', at: Date.now(), storyId: s.storyId } };
   s._issueOutline = null; s._issueOutlineHistory = {};
   // A CONSTRUCTED accepted plot contract, in the shape the planner writes at app.js ~103434 —
   // because this control is testing the SCAFFOLD + AUTHOR boundary, not the planner.
@@ -507,12 +664,13 @@ t('the REAL author request carries all 21 causal developments from the generated
   !!authorReq && SCAFFOLD_BEATS.every(([b]) => authorReq.joined.includes(b)),
   authorReq ? SCAFFOLD_BEATS.filter(([b]) => !authorReq.joined.includes(b)).map(([b]) => b).join(' | ') : 'no request');
 t('the REAL author request carries the route the player put her on, with its cost',
-  !!authorReq && /THE ROUTE THE PLAYER PUT HER ON: She broke witness protocol/.test(authorReq.joined)
-  && /SHE ARRIVES CARRYING THIS/.test(authorReq.joined), 'route absent');
-t('the REAL author request states delivery truth per class, and only scene 1 as established',
+  !!authorReq && /THE ROUTE THE PLAYER PUT HER ON: She left the clearing/.test(authorReq.joined)
+  && /SHE ARRIVES CARRYING THIS/.test(authorReq.joined),
+  authorReq && (authorReq.joined.match(/THE ROUTE[\s\S]{0,260}/) || ['(absent)'])[0]);
+t('the REAL author request states delivery truth per class, reporting the VERIFIED FACT for scene 1',
   !!authorReq && /ESTABLISHED AND VERIFIED/.test(authorReq.joined)
-  && /scene 1: THE WISH/.test(authorReq.joined)
-  && !/ESTABLISHED AND VERIFIED[\s\S]{0,300}scene 3:/.test(authorReq.joined),
+  && /scene 1: "The presiding Dohkar declares the rite his to rule on"/.test(authorReq.joined)
+  && !/scene 1: THE WISH/.test(authorReq.joined),
   authorReq && (authorReq.joined.match(/EARLIER IN THIS ISSUE[\s\S]{0,600}/) || ['(absent)'])[0]);
 t('the REAL author request carries the Veilwood geography canon',
   !!authorReq && /VEILWOOD GEOGRAPHY \(canon/.test(authorReq.joined), 'canon absent');
@@ -524,6 +682,66 @@ t('the generated outline does NOT resolve the reserved player decision',
   !/\bshe signs\b|\bsigns the acknowledgement\b|\brefuses to sign\b/i.test(
     SCAFFOLD_BEATS.map(([b]) => b).join(' ')),
   SCAFFOLD_BEATS.map(([b]) => b).filter(b => /sign/i.test(b)).join(' | '));
+
+// ═══ 0b. ADMISSION, ON THE REAL REQUEST, BY THE REAL GOVERNOR ═══════════════════════════════
+section('0b. PROVIDER ADMISSION for the captured scaffold request (api/_mistral-governor.js itself)');
+const LIM = gov.MODEL_LIMITS;
+const reserve = scaffoldReq ? gov.reservationFor(scaffoldReq.messages, Number(scaffoldReq.maxTokens) || 0) : null;
+const admits = (m) => {
+  const l = LIM[m];
+  if (!l) return { model: m, outcome: 'UNCONFIGURED' };
+  return { model: m, tpm: l.tpm, rps: l.rps, outcome: (reserve > l.tpm) ? 'OVERSIZED' : 'ADMISSIBLE' };
+};
+const adm = ['mistral-small-latest', 'ministral-8b-2512', 'ministral-3b-2512'].map(admits);
+fs.writeFileSync('_audit_out/outline_v2/admission.json', JSON.stringify(
+  { source: 'api/_mistral-governor.js MODEL_LIMITS + reservationFor',
+    requestBytes: scaffoldReq ? scaffoldReq.bytes : null, maxTokens: scaffoldReq && scaffoldReq.maxTokens,
+    reservation: reserve, limitsSource: LIM['ministral-8b-2512'] && LIM['ministral-8b-2512'].source,
+    limitsReadOn: LIM['ministral-8b-2512'] && LIM['ministral-8b-2512'].readOn, candidates: adm }, null, 1));
+console.log('      reservation=' + reserve + '  ' + adm.map(a => a.model + ':' + a.outcome).join('  '));
+t('the reservation is computed by the governor\'s own reservationFor on the captured request',
+  typeof reserve === 'number' && reserve > 20000, String(reserve));
+t('mistral-small-latest is OVERSIZED — its ENTIRE minute is smaller than this one request',
+  adm[0].outcome === 'OVERSIZED' && adm[0].tpm === 20000, JSON.stringify(adm[0]));
+t('ministral-8b-2512 ADMITS it, on the account limits already recorded in the governor table',
+  adm[1].outcome === 'ADMISSIBLE' && adm[1].tpm === 625000
+  && /admin\.mistral\.ai/.test(String(LIM['ministral-8b-2512'].source)),
+  JSON.stringify(adm[1]));
+t('ministral-3b-2512 admits it too, as the second candidate',
+  adm[2].outcome === 'ADMISSIBLE', JSON.stringify(adm[2]));
+t('PRODUCTION no longer names the unadmissible model — it requests ministral-8b-2512',
+  !!scaffoldReq && scaffoldReq.model === 'ministral-8b-2512',
+  scaffoldReq && scaffoldReq.model);
+t('and sends NO reasoning_effort, which no Ministral model accepts',
+  !!scaffoldReq && scaffoldReq.reasoningEffort === undefined,
+  scaffoldReq && String(scaffoldReq.reasoningEffort));
+
+section('0c. A GOVERNOR REFUSAL ON THE FIRST CANDIDATE FALLS THROUGH, AND IS REPORTED');
+refuseModels = new Set(['ministral-8b-2512']);
+const fellThrough = await page.evaluate(async () => {
+  const s = window.state;
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 4 });
+  return { log: (s._skeletonRouteLog || []).slice(), builtFor: s.sceneSkeleton && s.sceneSkeleton._builtForScene };
+});
+console.log('      route log: ' + JSON.stringify(fellThrough.log));
+t('with 8B refused by the governor, the caller tries the next candidate and still gets a scaffold',
+  fellThrough.log.length === 2 && /ministral-8b-2512: REFUSED/.test(fellThrough.log[0])
+  && /governor — no provider call made/.test(fellThrough.log[0])
+  && /ministral-3b-2512: SERVED/.test(fellThrough.log[1])
+  && fellThrough.builtFor === 4,
+  JSON.stringify(fellThrough));
+refuseModels = new Set(['ministral-8b-2512', 'ministral-3b-2512']);
+const noneServed = await page.evaluate(async () => {
+  const s = window.state;
+  s.sceneSkeleton = null; s._skeletonMeta = null;
+  await window.__generateSceneSkeleton('wait', '', { sceneNumber: 4 });
+  return { log: (s._skeletonRouteLog || []).slice(), skel: !!s.sceneSkeleton };
+});
+t('with EVERY candidate refused, the refusals are reported and no scaffold is fabricated',
+  noneServed.log.length === 2 && noneServed.log.every(l => /REFUSED/.test(l)) && noneServed.skel === false,
+  JSON.stringify(noneServed));
+refuseModels = new Set();
 
 // ═══ 8. THE LITERARY PATH RENDERS THE OUTLINE AFTER ITS SKELETON IS GENERATED ═══════════════
 section('8. THE LITERARY ORDERING DEFECT');

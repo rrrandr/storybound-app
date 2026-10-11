@@ -1,0 +1,28 @@
+{
+ "source": "api/_mistral-governor.js MODEL_LIMITS + reservationFor",
+ "requestBytes": 21857,
+ "maxTokens": 3800,
+ "reservation": 25857,
+ "limitsSource": "https://admin.mistral.ai/plateforme/limits",
+ "limitsReadOn": "2026-09-04",
+ "candidates": [
+  {
+   "model": "mistral-small-latest",
+   "tpm": 20000,
+   "rps": 1,
+   "outcome": "OVERSIZED"
+  },
+  {
+   "model": "ministral-8b-2512",
+   "tpm": 625000,
+   "rps": 3.13,
+   "outcome": "ADMISSIBLE"
+  },
+  {
+   "model": "ministral-3b-2512",
+   "tpm": 1300000,
+   "rps": 12.5,
+   "outcome": "ADMISSIBLE"
+  }
+ ]
+}

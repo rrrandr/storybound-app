@@ -1,0 +1,86 @@
+{
+ "r1": {
+  "n": 1,
+  "kind": "independent",
+  "delivery": "committed",
+  "deliveryEvidence": "2 committed fact(s) sealed for scene 1: prop:1:1, prop:1:2",
+  "verifiedFacts": [
+   {
+    "text": "The presiding Dohkar declares the rite his to rule on",
+    "ref": "prop:1:1"
+   },
+   {
+    "text": "A bird lands on a branch",
+    "ref": "prop:1:2"
+   }
+  ],
+  "overturnedBy": null,
+  "status": "committed",
+  "conditional": false,
+  "conditionalOn": null,
+  "pendingDecision": false,
+  "accomplishes": "THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS: it establishes the unfolding personal disaster, makes clear what it costs LIRAEL specifically, and ends on a decision she must make. The twist does NOT land here. IN THIS ORDER: (A) The presiding Dohkar calls for the cost first. (B) Seren names her offering ALOUD as dialogue — her earliest memory — and the assembly settles, because this is correct. (C) She looks at Lirael and abandons the practiced wish, SPOKEN: \"so that Lirael may find the one she lost.\" She knows the rule; she wants the assembly to see her compassion; she blurs the wording to avoid naming Lirael's wound. (D) Individual reactions ripple — a Weave-Script stutters, one hand stops mid-gesture, the Dohkar goes still. NEVER \"everyone felt it\". (E) An OMEN occurs: atmospheric, dread or curiosity, NO information. Someone may misread it or dismiss it; nobody explains it. (F) Lirael understands what this costs her and what intervening will look like, because the wish is about her. END ON THE DECISION: tear the gossamer band away and go to Seren, or hold the line she was told to hold.",
+  "accomplishesSource": "plan row goal",
+  "follows_from": {
+   "text": "",
+   "link": null,
+   "source": "none"
+  },
+  "changes": "RESOLVED: the wish is spoken, the room knows something is wrong, the omen has been seen. NEW PROBLEM: Lirael must choose — break protocol for her ward, or protect her own standing.",
+  "sets_up": "Lirael must choose — break protocol for her ward, or protect her own standing.",
+  "openObjective": false,
+  "decision": {
+   "axis": "intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)",
+   "axisSource": "plan row decision_axis",
+   "choiceKeys": null,
+   "consequence": "The choice MUST alter who witnesses the twist, how Lirael is judged when it lands, and what she is able to learn afterwards. A scene may NOT resolve the central crisis before the player decides.",
+   "source": "plan row",
+   "resolved": false,
+   "choice": null
+  },
+  "dependsOn": null,
+  "brokenPrereqs": null,
+  "routes": null,
+  "activeRoute": null,
+  "withheld": [],
+  "source": "plan row"
+ },
+ "r2": {
+  "n": 2,
+  "kind": "conditional",
+  "delivery": "unverified",
+  "deliveryEvidence": "commit-scene assessed through 2 but retained no verdict for scene 2, so whether its event landed is UNKNOWN — the latest verdict is not evidence about this scene (a fact was committed during this scene but sealed elsewhere — prop:1:2: \"A bird lands on a branch\" — it does NOT certify this scene's assignment)",
+  "verifiedFacts": null,
+  "overturnedBy": null,
+  "status": "unverified",
+  "conditional": true,
+  "conditionalOn": 1,
+  "pendingDecision": true,
+  "accomplishes": "",
+  "accomplishesSource": "reader-owned row: objective not yet accepted",
+  "follows_from": {
+   "text": "The wish has already twisted in front of the assembly, and scene 1 ended on Lirael's decision about whether to break protocol for Seren.",
+   "link": "therefore",
+   "source": "plan row"
+  },
+  "changes": "RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael's standing is at risk and the cost is still uncounted.",
+  "sets_up": "Lirael's standing is at risk and the cost of the wish is still uncounted.",
+  "openObjective": true,
+  "decision": {
+   "axis": "claim the interference openly vs let the assembly keep its assumption",
+   "axisSource": "plan row decision_axis",
+   "choiceKeys": null,
+   "consequence": "Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.",
+   "source": "plan row",
+   "resolved": false,
+   "choice": null
+  },
+  "dependsOn": null,
+  "brokenPrereqs": null,
+  "routes": null,
+  "activeRoute": null,
+  "withheld": [],
+  "source": "plan row (reader-owned)"
+ },
+ "block": "\n  THIS SCENE'S PURPOSE WITHIN ISSUE 1 (scene 6 of 10; HARD — this is the scene's ASSIGNMENT, not background):\n    WHAT KIND OF DEVELOPMENT THIS IS: A CONVERGENCE POINT — Fate is steering the story here, and HOW it is reached is adaptable. Find the route from where she actually is now; do not reach it by moving her for the plot's convenience.\n    WHAT THIS SCENE ACCOMPLISHES: The PC discovers the wish succeeded in a way that should have been impossible.\n    WHY IT FOLLOWS WHAT CAME BEFORE (OBSTRUCTION — the previous development got in the way): The investigation has been steered away from the truth — but the wish itself is still there to be looked at.\n    WHAT CHANGES BY THE END: Lirael knows the wish succeeded in a way that should not have been possible.\n    WHAT IT SETS UP: The wish's impossible success is a fact Lirael now holds and cannot account for.\n    EARLIER IN THIS ISSUE — ESTABLISHED AND VERIFIED — these exact facts were delivered on the page and committed. Do NOT stage any of them again as a new event or a new revelation (a character may refer back to one, which is not the same as delivering it). Only what is listed here is verified: anything else that scene was PLANNED to do is NOT established by this:\n      – scene 1: \"The presiding Dohkar declares the rite his to rule on\" · \"A bird lands on a branch\"\n    EARLIER IN THIS ISSUE — NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history:\n      – scene 3: THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory's own domain, never a faculty Seren did not offer. It lands onl\n      – scene 4: NOTICE AND RESTRICTION — procedural pressure closes on Lirael and NOTHING is convened. The presiding Dohkar serves her formal notice that her conduct at the rite is under investigation, and states the restrictions she mu\n      – scene 5: Julian quietly prevents the investigation from uncovering the truth.\n    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):\n      – scene 7 [INDEPENDENT]: Rumors spread through the city; the PC’s reputation collapses.\n      – scene 8 [CONVERGENCE]: The PC realizes someone else may have intervened.\n      – scene 9 [CONVERGENCE]: She begins suspecting Julian.\n"
+}

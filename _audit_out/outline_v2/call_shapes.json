@@ -8,19 +8,43 @@
  {
   "url": "http://localhost:3000/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
-  "model": "mistral-small-latest",
+  "model": "ministral-8b-2512",
   "bytes": 21857
  },
  {
   "url": "http://localhost:3000/api/proxy",
   "role": "STRUCTURE_GENERATOR",
   "model": "grok-4-1-fast-reasoning",
-  "bytes": 250192
+  "bytes": 250168
  },
  {
   "url": "http://localhost:3000/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
-  "model": "mistral-small-latest",
+  "model": "ministral-8b-2512",
+  "bytes": 21993
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "ministral-3b-2512",
+  "bytes": 21993
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "ministral-8b-2512",
+  "bytes": 21993
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "ministral-3b-2512",
+  "bytes": 21993
+ },
+ {
+  "url": "http://localhost:3000/api/mistral-proxy",
+  "role": "PROMPT_PREPROCESSOR",
+  "model": "ministral-8b-2512",
   "bytes": 22059
  }
 ]
