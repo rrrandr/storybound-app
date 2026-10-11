@@ -39,6 +39,7 @@ console.log('Every model response in this file is CONSTRUCTED here and labelled 
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const calls = [];
+let verifierSeen = null;
 await page.route('**/api/**', async (route) => {
   const url = route.request().url();
   let body = {};
@@ -51,6 +52,28 @@ await page.route('**/api/**', async (route) => {
       usage: { prompt_tokens: 10, completion_tokens: 10, cost_in_usd_ticks: 0 } }) });
   if (/mistral-proxy/.test(url) && /narrative skeletons/i.test(joined))
     return reply(JSON.stringify(CONSTRUCTED_SCAFFOLD), String(body.model || 'constructed'));
+  // THE RUNTIME COMMIT VERIFIER. A CONSTRUCTED verdict in the shape the production contract asks
+  // for, with evidence copied verbatim out of the prose the request actually carries, and the ref
+  // copied from the request so nothing is invented.
+  if (/RUNTIME COMMIT verifier/i.test(joined)) {
+    const ref = (joined.match(/prop:\d+:\d+/) || [null])[0];
+    verifierSeen = { ref: ref, bytes: joined.length };
+    return reply(JSON.stringify({
+      delivery: 'DELIVERED',
+      actual_exit_state: 'Julian has publicly claimed authority to convene the inquiry',
+      slots_check: {
+        actor_evidence: 'Julian stepped past the Dohkar',
+        action_evidence: 'the inquiry was his to convene, and he would convene it',
+        target_evidence: 'said it to the whole clearing',
+        exit_state_evidence: '"A formal inquiry," he said. "I will preside."',
+        precondition_evidence: 'the assembly heard every word of it where they stood on the spiralgrass'
+      },
+      per_proposal: ref ? [{ ref: ref, delivery: 'DELIVERED',
+        evidence: 'the inquiry was his to convene, and he would convene it',
+        precondition_evidence: 'the assembly heard every word of it where they stood on the spiralgrass',
+        reason: 'delivered' }] : []
+    }), 'constructed-verifier');
+  }
   return reply('{}', 'constructed');
 });
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -487,7 +510,10 @@ t('all three are surfaced as WARNINGS, so the signal is not lost',
   JSON.stringify([lexical.denial.warned, lexical.wrongSpeaker.warned]));
 
 // ═══ 9. THE STRUCTURAL LINK IS WHAT REPLANS ═════════════════════════════════════════════════
-section('9. ONLY AN EXPLICIT MILESTONE LINK VOIDS AN ASSIGNMENT (and that is the replanning test)');
+section('9. ONLY AN EXPLICIT MILESTONE LINK VOIDS AN ASSIGNMENT — a CONSUMER test, see section 12');
+// SCOPE, STATED: the link below is CONSTRUCTED. It shows the resolver CONSUMING a cross-scene
+// milestone link correctly. It does NOT show the running story producing one — section 12 traces
+// that, and the answer is that no producer exists.
 t('a committed fact SEALED AGAINST ROW 16\'S MILESTONE voids its assignment',
   lexical.linked.delivered === true && lexical.linked.accomplishes === ''
   && /already delivered at scene 3/.test(lexical.linked.src),
@@ -626,6 +652,189 @@ t('the commit pass records whether the aggregate was SUPPLIED, not just present'
       && /aggregateSupplied: _dlAggSupplied,/.test(src)
       && /aggregateDelivery: _dlAggSupplied \? \(_delivery \|\| null\) : null,/.test(src);
   })(), 'the commit pass does not record aggregateSupplied');
+
+// ═══ 12. WHO PRODUCES A CROSS-SCENE MILESTONE LINK? NOBODY — TRACED, NOT ASSUMED ════════════
+section('12. THE PRODUCER TRACE: production cannot currently produce a cross-scene link');
+const produced = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  s._sealedProposals = null; s._historyNotes = []; s.scenes = [];
+  // THE SHIPPED SEAL, called exactly as production calls it: _curMs.atScene is the row the planner
+  // selected, and the planner selects by p.n === _planSceneNum, i.e. the CURRENT scene.
+  const atScene = 3, planSceneNum = 3;
+  const rec = window._sealProposal({ kind: 'state_change', fact: 'something happens', milestone: 'm',
+    scene: 1, storyScene: planSceneNum, milestoneScene: atScene });
+  return JSON.parse(JSON.stringify({ storyScene: rec.storyScene, milestoneScene: rec.milestoneScene }));
+});
+t('planning scene 3 produces milestoneScene 3 — the row it is planning, never a later one',
+  produced.storyScene === 3 && produced.milestoneScene === 3, JSON.stringify(produced));
+t('the planner cannot select a row other than the scene being planned',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /_plan\.scenes\.find\(function \(p\) \{ return p && p\.n === _planSceneNum/.test(src)
+      && /_curMs = \{ event: _planScene\.goal, atScene: _planScene\.n/.test(src);
+  })(), 'row selection is not pinned to the planned scene');
+t('a planner that DECLARES it touched a later row\'s reserved event is REJECTED, not recorded',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /if \(st !== 'untouched'\) why\.push\('reserved event ' \+ r\.id/.test(src);
+  })(), 'the reserved-status check does not reject a touched declaration');
+t('the production seal site records that no cross-scene producer exists, rather than implying one',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /NO PRODUCER EXISTS FOR A CROSS-SCENE LINK/.test(src)
+      && /That is PREVENTION,\s*\n\s*\/\/\s*not recording/.test(src);
+  })(), 'the trace is not recorded in the source');
+t('so an unscheduled early event still gets ONLY the lexical warning — stated, not claimed closed',
+  await page.evaluate(() => {
+    const s = window.state;
+    delete s._stagedAuthoringSceneIndex; s.turnCount = 14;      // scene 16
+    s._committedState = { facts: [], _committedThroughScene: 0, pendingIntent: null, tableau: null, deliveryLog: {} };
+    s._historyNotes = [{ v: 4, ref: 'p:s3', sceneUid: 'p:s3', sceneNumber: 3, quotesStale: false,
+      quoted: [{ quote: 'I bent the wish, Julian said, and did not look away when he said it.', kind: 'event', text: 'x' }],
+      summary: [], knowledge: [], obligations: [] }];
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const r = window._resolveIssueOutline(s).scenes.filter(x => x.n === 16)[0];
+    return !!r.alreadyWritten && !r.alreadyDelivered && /Julian finally admits he acted/.test(r.accomplishes);
+  }), 'an early event in prose was treated as more than a warning');
+
+// ═══ 13. A COMPLETED SCENE REACHES THE NEXT PLANNER THROUGH THE REAL COMMIT PATH ════════════
+section('13. THE REAL COMMIT PATH: window._commitScene, with the right identity and verdict');
+let verifierReq = null;
+const committed = await page.evaluate(async () => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 2;
+  s._sealedProposals = null; s._historyNotes = []; s.scenes = [];
+  s._committedState = { facts: [], tableau: null, pendingIntent: null };
+  // THE SHIPPED SEAL, as the planner performs it for story scene 2 (turnCount 1 at that moment).
+  const sealed = window._sealProposal({ kind: 'state_change',
+    fact: 'Julian publicly claims authority to convene the inquiry',
+    milestone: 'row 2', scene: 1, storyScene: 2, milestoneScene: 2 });
+  // THE HANDOFF, as production performs it at the seal site.
+  const stateChange = { event: sealed.fact, proposalRef: sealed.id,
+    storyScene: sealed.storyScene, milestoneScene: sealed.milestoneScene,
+    precondition: 'the assembly is still gathered', forces_choice: 'whether she answers him' };
+  s._priorSceneStateChange = stateChange;
+  s._committedState.pendingIntent = { milestone: 'row 2', proposed: sealed.fact,
+    sceneProposed: 1, storyScene: 2 };
+  const PROSE = 'Julian stepped past the Dohkar and said it to the whole clearing: the inquiry was his to '
+    + 'convene, and he would convene it. "A formal inquiry," he said. "I will preside." Nobody contradicted him, '
+    + 'and the assembly heard every word of it where they stood on the spiralgrass.';
+  // THE REAL FUNCTION. prevSceneNum is the turn counter production passes (pendingIntent.sceneProposed).
+  await window._commitScene(PROSE, stateChange, 1);
+  const cs = s._committedState;
+  return JSON.parse(JSON.stringify({
+    facts: cs.facts, log: cs.deliveryLog, through: cs._committedThroughScene,
+    pendingIntent: cs.pendingIntent
+  }));
+});
+fs.writeFileSync('_audit_out/history_chain/real_commit.json',
+  JSON.stringify({ verifierRequest: verifierSeen, result: committed }, null, 1));
+t('the real path dispatched the runtime commit verifier, carrying the sealed ref',
+  !!verifierSeen && verifierSeen.ref === 'prop:1:1', JSON.stringify(verifierSeen));
+t('the REAL commit path committed the sealed fact',
+  (committed.facts || []).length === 1 && committed.facts[0].proposalRef === 'prop:1:1'
+  && /claims authority to convene the inquiry/.test(committed.facts[0].fact),
+  JSON.stringify(committed.facts));
+t('...carrying the STORY scene (2) and the MILESTONE link (2) from its seal',
+  committed.facts[0].storyScene === 2 && committed.facts[0].milestoneScene === 2
+  && committed.facts[0].storySceneProvenance === 'caller',
+  JSON.stringify(committed.facts[0]));
+t('the delivery log is keyed by the STORY scene, resolved through the handoff',
+  !!committed.log && !!committed.log['2'] && committed.log['2'].storyScene === 2
+  && committed.log['2'].turnScene === 1 && /storyScene via/.test(committed.log['2'].keyProvenance),
+  JSON.stringify(committed.log));
+t('...and records whether the aggregate verdict was SUPPLIED by the verifier',
+  committed.log['2'].verifierReported === true && committed.log['2'].aggregateSupplied === true
+  && committed.log['2'].aggregateDelivery === 'DELIVERED',
+  JSON.stringify(committed.log['2']));
+t('the per-proposal result is recorded under the id the adjudicator emits',
+  (committed.log['2'].committed || []).some(c => c.ref === 'prop:1:1'),
+  JSON.stringify(committed.log['2'].committed));
+const reaches = await page.evaluate(() => {
+  const s = window.state;
+  // THE PLANNER'S OWN INPUT. The COMMITTED WORLD STATE line maps over _ensureCommittedState().facts;
+  // this is that exact array, read through the shipped accessor.
+  const facts = (window._ensureCommittedState ? window._ensureCommittedState() : s._committedState).facts;
+  delete s._issueOutline; delete s._issueOutlineHistory;
+  s.turnCount = 4;                                 // scene 6, so scene 2 is behind us
+  const o = window._resolveIssueOutline(s);
+  const r2 = o.scenes.filter(x => x.n === 2)[0];
+  return JSON.parse(JSON.stringify({ plannerFacts: facts.map(f => f.fact), r2: r2,
+    history: window._buildHistoryContinuityBlock(s, {}) || '',
+    block: window._renderIssueOutlineDirective(s, 6) || '' }));
+});
+fs.writeFileSync('_audit_out/history_chain/reaches_next_planner.txt', reaches.block);
+t('the committed fact is in the array the planner\'s COMMITTED WORLD STATE line maps over',
+  reaches.plannerFacts.some(f => /claims authority to convene the inquiry/.test(f)),
+  JSON.stringify(reaches.plannerFacts));
+t('...and that line is built from that same accessor (source-level, the boundary this test stops at)',
+  (() => {
+    const src = fs.readFileSync('public/app.js', 'utf8');
+    return /var _csGen = \(typeof _ensureCommittedState === 'function'\) \? _ensureCommittedState\(\)/.test(src)
+      && /COMMITTED WORLD STATE[\s\S]{0,200}_csGen\.facts/.test(src);
+  })(), 'the planner line does not read _ensureCommittedState().facts');
+t('the outline classifies story scene 2 as COMMITTED, via the structural milestone link',
+  reaches.r2.delivery === 'committed' && /verdict recorded the planned event DELIVERED/.test(reaches.r2.deliveryEvidence),
+  JSON.stringify([reaches.r2.delivery, reaches.r2.deliveryEvidence]));
+t('and the author is told the VERIFIED FACT, not the row\'s planned accomplishment',
+  /ESTABLISHED AND VERIFIED/.test(reaches.block)
+  && /"Julian publicly claims authority to convene the inquiry"/.test(reaches.block),
+  (reaches.block.match(/ESTABLISHED AND VERIFIED[\s\S]{0,400}/) || ['(absent)'])[0]);
+
+// ═══ 14. A PHRASE MATCH NO LONGER OVERTURNS A FATE PREREQUISITE ══════════════════════════════
+section('14. FATE DETECTION: an unsupported phrase match warns, it does not overturn');
+const fate = await page.evaluate(() => {
+  const s = window.state;
+  s.currentEngine = 'literary'; s.renderMode = 'literary';
+  delete s._stagedAuthoringSceneIndex; s.turnCount = 4;
+  s._committedState = { facts: [], _committedThroughScene: 0, pendingIntent: null, tableau: null, deliveryLog: {} };
+  s._historyNotes = []; s._fpcActiveCompiled = null;
+  const run = (rec) => {
+    s._temptFateDurableConsequences = rec ? [rec] : [];
+    delete s._issueOutline; delete s._issueOutlineHistory;
+    const o = window._resolveIssueOutline(s);
+    const r16 = o.scenes.filter(x => x.n === 16)[0];
+    return { overturned: o.overturned.slice(), atRisk: o.prereqsAtRisk.slice(),
+             kind: r16.kind, accomplishes: r16.accomplishes,
+             rowAtRisk: r16.prereqsAtRisk, block: window._renderIssueOutlineDirective(s, 16) || '' };
+  };
+  return JSON.parse(JSON.stringify({
+    // THE WISH THAT WAS ASKED FOR carries the marker; the OUTCOME does not. Previously this
+    // overturned the prerequisite on the request alone.
+    requestOnly: run({ requestedRupture: 'let everyone know an outside hand touched the rite',
+      sceneIdx: 5, changed: [{ subject: 'the clearing', whatChanged: 'nothing changed; the wish was refused' }] }),
+    // THE OUTCOME carries the marker: a WARNING, and nothing is overturned.
+    outcomeMatch: run({ requestedRupture: 'something else', sceneIdx: 5,
+      changed: [{ subject: 'the assembly', whatChanged: 'now knows an outside hand touched the rite' }] }),
+    // AN EXPLICIT DECLARATION: this and only this overturns.
+    declared: run({ requestedRupture: 'x', sceneIdx: 5, changed: [],
+      invalidatesPrereqs: ['prereq:julian_act_concealed'] }),
+    none: run(null)
+  }));
+});
+fs.writeFileSync('_audit_out/history_chain/fate_detection.json', JSON.stringify(fate, null, 1));
+t('a marker in the REQUESTED WISH overturns nothing and does not even warn',
+  fate.requestOnly.overturned.length === 0 && fate.requestOnly.atRisk.length === 0
+  && fate.requestOnly.kind !== 'overturned',
+  JSON.stringify(fate.requestOnly.overturned.concat(fate.requestOnly.atRisk)));
+t('a marker in the DELIVERED OUTCOME raises a WARNING and overturns nothing',
+  fate.outcomeMatch.overturned.length === 0
+  && fate.outcomeMatch.atRisk.indexOf('prereq:julian_act_concealed') !== -1
+  && fate.outcomeMatch.kind !== 'overturned',
+  JSON.stringify({ ov: fate.outcomeMatch.overturned, ar: fate.outcomeMatch.atRisk, kind: fate.outcomeMatch.kind }));
+t('...and the row KEEPS its assignment while the warning is stated as a warning',
+  /Julian finally admits he acted/.test(fate.outcomeMatch.accomplishes)
+  && /WARNING, NOT A VERDICT — a condition this scene depends on MAY have been changed/.test(fate.outcomeMatch.block)
+  && /assignment stands as written/.test(fate.outcomeMatch.block),
+  (fate.outcomeMatch.block.match(/WARNING, NOT A VERDICT[\s\S]{0,500}/) || [''])[0]);
+t('an EXPLICIT invalidatesPrereqs declaration still overturns, as the only thing that may',
+  fate.declared.overturned.indexOf('prereq:julian_act_concealed') !== -1
+  && fate.declared.kind === 'overturned' && fate.declared.accomplishes === '',
+  JSON.stringify({ ov: fate.declared.overturned, kind: fate.declared.kind }));
+t('with no adjudicated record, nothing is overturned and nothing is at risk',
+  fate.none.overturned.length === 0 && fate.none.atRisk.length === 0, JSON.stringify(fate.none.overturned));
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');

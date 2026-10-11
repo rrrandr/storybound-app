@@ -1,0 +1,44 @@
+{
+ "verifierRequest": {
+  "ref": "prop:1:1",
+  "bytes": 3995
+ },
+ "result": {
+  "facts": [
+   {
+    "fact": "Julian publicly claims authority to convene the inquiry",
+    "proposalRef": "prop:1:1",
+    "provenanceLink": "sealed",
+    "sourceEvent": "scene1_transition",
+    "committedAtScene": 1,
+    "storyScene": 2,
+    "storySceneProvenance": "caller",
+    "milestoneScene": 2,
+    "provenance": "delivered"
+   }
+  ],
+  "log": {
+   "2": {
+    "scene": 2,
+    "storyScene": 2,
+    "turnScene": 1,
+    "keyProvenance": "storyScene via the proposal object",
+    "at": 1791744503404,
+    "verifierReported": true,
+    "aggregateSupplied": true,
+    "aggregateDelivery": "DELIVERED",
+    "aggregateDefaulted": null,
+    "committed": [
+     {
+      "ref": "prop:1:1",
+      "kind": "state_change"
+     }
+    ],
+    "pending": {},
+    "unknownRefs": []
+   }
+  },
+  "through": 1,
+  "pendingIntent": null
+ }
+}

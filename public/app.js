@@ -100389,6 +100389,22 @@ function _buildAuthorFloorDirective(s) {
       var storySceneProvenance = storyScene ? 'caller' : 'absent';
       // THE MILESTONE THIS PROPOSAL IS REALISING, as the PLANNER declared it — the plan row's own
       // number, not an inference. This is the only link that may later void that row's assignment.
+      //
+      // ── TRACED 2026-10-11: NO PRODUCER EXISTS FOR A CROSS-SCENE LINK. ────────────────────
+      // In production this value ALWAYS equals the scene being planned, because the planner
+      // selects its row by `p.n === _planSceneNum` and _curMs.atScene is that row's own n. Three
+      // places could in principle produce milestoneScene !== the current scene, and none does:
+      //   1. the row selection above — it cannot choose another row;
+      //   2. the planner's own `reserved` report, which CAN declare a later row's reserved event
+      //      "touched" — but _validateLocalObjective REJECTS any status other than "untouched",
+      //      so a declared early delivery never reaches a seal or a commit. That is PREVENTION,
+      //      not recording;
+      //   3. an author volunteering a later row's event in prose, which produces no structured
+      //      record at all — only a history-note quotation, i.e. the lexical WARNING tier.
+      // So the resolver can CONSUME a cross-scene link (and does, correctly), but nothing in the
+      // running story currently PRODUCES one. An unscheduled early confession therefore receives
+      // the lexical warning and nothing more. Closing that needs a producer this file does not
+      // have: an adjudicated statement that scene X's prose delivered row Y's milestone.
       var milestoneScene = (typeof spec.milestoneScene === 'number' && spec.milestoneScene > 0)
         ? spec.milestoneScene : null;
       var ph = null;
@@ -137800,29 +137816,54 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       id = String(id || ''); if (!id) return;
       if (out.indexOf(id) === -1) { out.push(id); why[id] = reason; }
     };
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    // AN UNSUPPORTED PHRASE MATCH NO LONGER OVERTURNS A PREREQUISITE (Roman 2026-10-11).
+    // Two things were wrong at once:
+    //   · the haystack included requestedRupture / label — the WISH THAT WAS ASKED FOR, not the
+    //     outcome that was adjudicated. A wish can be refused, twisted, or granted in a form that
+    //     leaves the prerequisite standing, so matching the request is matching an intention.
+    //   · a substring hit OVERTURNED the prerequisite, voiding dependent rows' assignments —
+    //     the same error the already-delivered path had: lexical matching deciding plot.
+    // Same resolution: ONLY an explicit adjudicated declaration overturns anything. A seed-marker
+    // hit against the DELIVERED OUTCOME is kept as a WARNING, surfaced so the signal is not lost,
+    // and it changes no assignment. No negation blacklist; no invented state change.
+    // ══════════════════════════════════════════════════════════════════════════════════════
+    var atRisk = [], atRiskWhy = {};
+    var addRisk = function (id, reason) {
+      id = String(id || ''); if (!id) return;
+      if (out.indexOf(id) !== -1) return;               // already overturned outright
+      if (atRisk.indexOf(id) === -1) { atRisk.push(id); atRiskWhy[id] = reason; }
+    };
     _outlineAdjudicatedRecords(s).forEach(function (w) {
       var c = w.rec;
-      // (a) AN EXPLICIT DECLARATION from the adjudication wins outright.
+      // (a) THE ONLY THING THAT OVERTURNS: an explicit declaration by the adjudication itself.
       (Array.isArray(c && c.invalidatesPrereqs) ? c.invalidatesPrereqs : [])
         .forEach(function (id) { add(id, w.src + ': declared invalidatesPrereqs'); });
-      // (b) OTHERWISE, the prerequisite's OWN seed-authored markers are matched against what the
-      // adjudication itself says changed. Lexical and reject-only in spirit: no match leaves the
-      // plan standing, and nothing is inferred from a rupture's narrative prose.
-      var hay = [String(c.requestedRupture || c.label || '')]
-        .concat((Array.isArray(c.changed) ? c.changed : []).map(function (x) {
+      // (b) A WARNING ONLY. The haystack is the DELIVERED OUTCOME — what the adjudication says
+      // CHANGED and the evidence it says is on the page. The requested wish is excluded.
+      var hay = ((Array.isArray(c.changed) ? c.changed : []).map(function (x) {
           return String((x && x.subject) || '') + ' ' + String((x && x.whatChanged) || ''); }))
         .concat(Array.isArray(c.establishedEvidence) ? c.establishedEvidence.map(String) : [])
-        .join(' \n ').toLowerCase();
+        .join(' | ').toLowerCase();
       prereqs.forEach(function (pq) {
         if (!pq || !pq.id || !Array.isArray(pq.invalidatedWhen)) return;
         for (var i = 0; i < pq.invalidatedWhen.length; i++) {
           var mk = String(pq.invalidatedWhen[i] || '').toLowerCase().trim();
-          if (mk && hay.indexOf(mk) !== -1) { add(pq.id, w.src + ': matched the seed marker "' + mk + '"'); return; }
+          if (mk && hay.indexOf(mk) !== -1) {
+            addRisk(pq.id, w.src + ': a seed marker ("' + mk + '") appears in what the adjudication says'
+              + ' changed. A WARNING ONLY — nothing is overturned on a phrase match.');
+            return;
+          }
         }
       });
     });
-    try { if (out.length) console.log('[ISSUE-OUTLINE:OVERTURN] ' + out.map(function (id) { return id + ' (' + why[id] + ')'; }).join(' | ')); } catch (_) {}
+    try {
+      if (out.length) console.log('[ISSUE-OUTLINE:OVERTURN] ' + out.map(function (id) { return id + ' (' + why[id] + ')'; }).join(' | '));
+      if (atRisk.length) console.warn('[ISSUE-OUTLINE:PREREQ-AT-RISK:WARNING] ' + atRisk.map(function (id) { return id + ' (' + atRiskWhy[id] + ')'; }).join(' | '));
+    } catch (_) {}
     out._why = why;
+    out._atRisk = atRisk;
+    out._atRiskWhy = atRiskWhy;
     return out;
   }
 
@@ -137915,7 +137956,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var key = [s.storyId || '', bounds.issueIndex, bounds.per, bounds.last, sceneNow,
                decisionKey.join(','), postureKey.join(','),
                'ct' + (ev.through == null ? '-' : ev.through), 'cf' + ev.count,
-               'ov' + overturned.join('+'),
+               'ov' + overturned.join('+'), 'ar' + ((overturned._atRisk || []).join('+')),
                'h' + histKey.join(','), 'd' + delKey.join(',')].join('|');
     if (s._issueOutline && s._issueOutline._key === key && !opts.force) return s._issueOutline;
 
@@ -137989,6 +138030,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         .map(String);
       var brokenPrereqs = dependsOn.filter(function (d) { return overturned.indexOf(d) !== -1; });
       if (brokenPrereqs.length) kind = 'overturned';
+      // A PREREQUISITE ONLY FLAGGED BY A PHRASE MATCH. Reported, never acted on: the row keeps
+      // its kind and its assignment.
+      var prereqsAtRisk = dependsOn.filter(function (d) { return (overturned._atRisk || []).indexOf(d) !== -1; });
 
       // ── ROUTES. How different player positions reach the same point, and what each route
       // CARRIES into it. Convergence must not reset a consequence.
@@ -138181,6 +138225,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         decision: decisionHere,
         dependsOn: dependsOn.length ? dependsOn : null,
         brokenPrereqs: brokenPrereqs.length ? brokenPrereqs : null,
+        prereqsAtRisk: prereqsAtRisk.length ? prereqsAtRisk : null,
+        prereqsAtRiskWhy: prereqsAtRisk.length ? prereqsAtRisk.map(function (d) { return overturned._atRiskWhy[d]; }) : null,
         routes: routes || null, activeRoute: activeRoute,
         withheld: (eff && eff._reconciliation && eff._reconciliation.withheld) ? eff._reconciliation.withheld.slice() : [],
         source: (eff ? (eff.openObjective ? 'plan row (reader-owned)' : 'plan row') : 'issue spine')
@@ -138252,6 +138298,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 horizon: horizon, horizonAxis: horizonAxis,
                 decisions: decisionKey, overturned: overturned,
                 overturnedWhy: (overturned && overturned._why) || {},
+                prereqsAtRisk: (overturned && overturned._atRisk) || [],
+                prereqsAtRiskWhy: (overturned && overturned._atRiskWhy) || {},
                 commitEvidence: { through: ev.through, facts: ev.count },
                 scenes: rows, cliffhanger: cliff,
                 planPresent: !!plan, spineOutlinePresent: spineOutline.length > 0 };
@@ -138403,6 +138451,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               : ' NO replacement is authored, so this scene has no fixed goal: build it from the consequences of'
                 + ' that already-committed event.'));
       }
+      if (row.prereqsAtRisk) {
+        L.push('    ⚠ WARNING, NOT A VERDICT — a condition this scene depends on MAY have been changed by a'
+          + ' Fate intervention: ' + row.prereqsAtRisk.join(', ') + '. The signal is a phrase appearing in what'
+          + ' the adjudication said changed, which is NOT proof the condition stopped holding, so this scene\'s'
+          + ' assignment stands as written. If the condition genuinely has changed, let the scene show that'
+          + ' rather than performing an assignment the world no longer supports.');
+        (row.prereqsAtRiskWhy || []).forEach(function (wy) { L.push('      – ' + wy); });
+      }
       if (row.alreadyWritten && !row.alreadyDelivered) {
         L.push('    ⚠ WARNING, NOT A VERDICT — THIS DEVELOPMENT MAY ALREADY HAVE BEEN WRITTEN. A phrase from the'
           + ' assignment appears in prose the previous author quoted in its own note. That is a diagnostic'
@@ -138501,6 +138557,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
              decisions: o.decisions, overturned: o.overturned, commitEvidence: o.commitEvidence,
              planPresent: o.planPresent, spineOutlinePresent: o.spineOutlinePresent,
              cliffhanger: o.cliffhanger, lastRevision: o.lastRevision || null,
+             prereqsAtRiskWarnings: o.scenes.filter(function (r) { return r.prereqsAtRisk; })
+               .map(function (r) { return { scene: r.n, prereqs: r.prereqsAtRisk, tier: 'lexical warning' }; }),
              alreadyWrittenWarnings: o.scenes.filter(function (r) { return r.alreadyWritten && !r.alreadyDelivered; })
                .map(function (r) { return { scene: r.n, hits: r.alreadyWritten, tier: 'lexical warning' }; }),
              alreadyDelivered: o.scenes.filter(function (r) { return r.alreadyDelivered; })

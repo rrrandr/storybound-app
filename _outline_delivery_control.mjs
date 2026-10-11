@@ -393,8 +393,12 @@ t('the author is told the plan continues past the unanswered decision, not that 
   && /What you may NOT do is assert which answer she gave/.test(horizonPlan.block),
   (horizonPlan.block.match(/UNANSWERED DECISION[\s\S]{0,500}/) || [''])[0]);
 
-// ═══ 4. DISRUPTION: PRODUCED FROM SEED MARKERS, AND THE VOID PLAN IS NOT DELIVERED ══════════
-section('4. DISRUPTION: an adjudicated intervention invalidates a prerequisite');
+// ═══ 4. AN ADJUDICATED INTERVENTION OVERTURNS A DESTINATION — BY DECLARATION ONLY ═══════════
+section('4. DISRUPTION: only an EXPLICIT adjudicated declaration overturns a prerequisite');
+// CHANGED 2026-10-11: a seed-marker match no longer overturns anything. A phrase inside what an
+// adjudication says changed is a WARNING; only invalidatesPrereqs voids a dependent row. The
+// fuller matrix (requested wish vs delivered outcome vs declaration) is
+// _history_chain_control.mjs section 14.
 const overturn = await page.evaluate(() => {
   const s = window.state;
   s.currentEngine = 'literary'; s.renderMode = 'literary';
@@ -404,18 +408,21 @@ const overturn = await page.evaluate(() => {
   s._temptFateDurableConsequences = [];
   s._issueOutline = null; s._issueOutlineHistory = {};
   const before = window._resolveIssueOutline(s, { force: true });
-  // A CONSTRUCTED adjudicated Tempt record in the shape
-  // _buildTemptFateDurableConsequenceDirective reads. It declares NO invalidatesPrereqs: the
-  // invalidation is PRODUCED by matching the prerequisite's own seed-authored invalidatedWhen
-  // markers against what the adjudication itself says changed.
+  // (a) A MARKER ONLY, in what the adjudication says changed: a warning, nothing overturned.
   s._temptFateDurableConsequences = [{
     requestedRupture: 'let the Veilwood know the truth of the rite', sceneIdx: 5,
     changed: [{ subject: 'the assembly', whatChanged: 'now knows an outside hand touched the rite' }],
     establishedEvidence: ['the Chayr read the finding aloud']
   }];
+  s._issueOutline = null;
+  const warned = window._resolveIssueOutline(s, { force: true });
+  // (b) THE SAME RECORD, now DECLARING the invalidation: this is what overturns.
+  s._temptFateDurableConsequences[0].invalidatesPrereqs = ['prereq:julian_act_concealed'];
   const after = window._reviseIssueOutlineForMove(s, 'adjudicated Tempt Fate outcome');
   return JSON.parse(JSON.stringify({
     beforeKinds: before.scenes.map(r => [r.n, r.kind]),
+    warnedOverturned: warned.overturned.slice(), warnedAtRisk: warned.prereqsAtRisk.slice(),
+    warnedKinds: warned.scenes.map(r => [r.n, r.kind]),
     afterKinds: after.scenes.map(r => [r.n, r.kind]),
     overturnedRows: after.scenes.filter(r => r.kind === 'overturned').map(r => r.n),
     why: after.overturnedWhy, diff: after.lastRevision,
@@ -425,18 +432,25 @@ const overturn = await page.evaluate(() => {
   }));
 });
 fs.writeFileSync('_audit_out/outline_v2/overturned_scene16.txt', overturn.block16);
-t('the invalidation is PRODUCED from the prerequisite\'s own seed markers — no hand-inserted flag',
+t('a seed-marker match alone overturns NOTHING — it raises a warning',
+  overturn.warnedOverturned.length === 0
+  && overturn.warnedAtRisk.indexOf('prereq:julian_act_concealed') !== -1
+  && overturn.warnedKinds.filter(([, k]) => k === 'overturned').length === 0,
+  JSON.stringify({ ov: overturn.warnedOverturned, ar: overturn.warnedAtRisk }));
+t('an EXPLICIT declaration overturns exactly the rows that depend on it',
   overturn.overturnedRows.join(',') === '8,9,10,16'
-  && /matched the seed marker .{0,4}an outside hand touched the rite/.test(JSON.stringify(overturn.why)),
+  && /declared invalidatesPrereqs/.test(JSON.stringify(overturn.why)),
   JSON.stringify({ rows: overturn.overturnedRows, why: overturn.why }));
 t('and NOTHING else changes kind — the rest of Fate\'s trajectory stands',
   overturn.beforeKinds.filter(([n, k], idx) => overturn.afterKinds[idx][1] !== k)
     .every(([n]) => [8, 9, 10, 16].indexOf(n) !== -1),
   JSON.stringify(overturn.beforeKinds.filter(([n, k], idx) => overturn.afterKinds[idx][1] !== k)));
-t('the OBSOLETE ASSIGNMENT IS NOT DELIVERED — it is withheld, not labelled',
+t('the revision report names the overturned rows',
+  (overturn.diff.overturned || []).join(',') === '8,9,10,16', JSON.stringify(overturn.diff));
+t('the OBSOLETE ASSIGNMENT IS NOT DELIVERED — withheld, not labelled',
   !/Julian finally admits he acted/.test(overturn.block16)
   && overturn.row16.accomplishes === '' && overturn.row16.changes === '' && overturn.row16.sets_up === '',
-  (overturn.block16.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,200}/) || ['(absent)'])[0]);
+  (overturn.block16.match(/WHAT THIS SCENE ACCOMPLISHES[\s\S]{0,160}/) || ['(absent)'])[0]);
 t('the author is told its assignment is VOID and why, with no replacement to perform',
   /Its original assignment is VOID and is not stated below/.test(overturn.block16)
   && /prereq:julian_act_concealed/.test(overturn.block16)
@@ -446,7 +460,6 @@ t('the author is told its assignment is VOID and why, with no replacement to per
 t('an APPROVED replacement IS delivered in place of the void plan',
   await page.evaluate(() => {
     const s = window.state;
-    // CONSTRUCTED approval: the same drafted replacement with its pending-review marker removed.
     const plan = window.STARTER_PLANS.starter_first_sacrifice;
     const row = plan.scenes.filter(r => r.n === 16)[0];
     const saved = row.onOverturned;
@@ -458,7 +471,20 @@ t('an APPROVED replacement IS delivered in place of the void plan',
       && /A replacement assignment IS authored/.test(block)
       && !/Julian finally admits he acted/.test(block);
   }), 'approved replacement not delivered');
-t('a PETITION consequence is read too, not only Tempt',
+t('a PETITION declaration is read too, not only Tempt',
+  await page.evaluate(() => {
+    const s = window.state;
+    s._temptFateDurableConsequences = [];
+    s._fpcActiveCompiled = { label: 'close the review',
+      changed: [{ subject: 'the panel', whatChanged: 'the investigation is closed' }],
+      invalidatesPrereqs: ['prereq:investigation_open'] };
+    s._issueOutline = null; s._issueOutlineHistory = {};
+    const o = window._resolveIssueOutline(s, { force: true });
+    s._fpcActiveCompiled = null;
+    return o.overturned.indexOf('prereq:investigation_open') !== -1
+      && /petition: declared invalidatesPrereqs/.test(JSON.stringify(o.overturnedWhy));
+  }), 'petition declaration not read');
+t('a PETITION marker match also only WARNS',
   await page.evaluate(() => {
     const s = window.state;
     s._temptFateDurableConsequences = [];
@@ -467,15 +493,15 @@ t('a PETITION consequence is read too, not only Tempt',
     s._issueOutline = null; s._issueOutlineHistory = {};
     const o = window._resolveIssueOutline(s, { force: true });
     s._fpcActiveCompiled = null;
-    return o.overturned.indexOf('prereq:investigation_open') !== -1
-      && /petition: matched the seed marker/.test(JSON.stringify(o.overturnedWhy));
-  }), 'petition store not read');
-t('with no adjudicated record at all, NOTHING is overturned',
+    return o.overturned.length === 0 && o.prereqsAtRisk.indexOf('prereq:investigation_open') !== -1;
+  }), 'a petition marker overturned something');
+t('with no adjudicated record at all, NOTHING is overturned and nothing is at risk',
   await page.evaluate(() => {
     const s = window.state;
     s._temptFateDurableConsequences = []; s._fpcActiveCompiled = null;
     s._issueOutline = null; s._issueOutlineHistory = {};
-    return window._resolveIssueOutline(s, { force: true }).overturned.length === 0;
+    const o = window._resolveIssueOutline(s, { force: true });
+    return o.overturned.length === 0 && o.prereqsAtRisk.length === 0;
   }), 'something was overturned with no record');
 
 // ═══ 5. THE CLIFFHANGER IS SELECTED AND CARRIED ═════════════════════════════════════════════
