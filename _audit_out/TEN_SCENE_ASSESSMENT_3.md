@@ -58,20 +58,41 @@ downstream instead of both arriving as "missed".
 scene refusing the shared quote, a fabricated quote still refused, and a verbatim per-proposal quote
 still committing on its own.
 
-## The repeated denial is the same root cause
+## The repeated denial is NOT the same cause — withdrawn
+
+I claimed the duplicate denial was explained by the commit failure. The assigned events say
+otherwise:
 
 ```
-[MILESTONE-TRANSITION] scene=9 transition=YES prev="She begins suspecting Julian."
-                       current="Julian denies involvement — but not convincin"
-[PLAN-SPINE] scene=10 OBJECTIVE from authored spine: "Julian denies involvement — but not convincingly."
+[EVENT-SLOTS] scene=8 actor="Julian" action="tightens fingers around wrist" target="Lirael's wrist"
 [EVENT-SLOTS] scene=9 actor="Julian" action="denies involvement" target="the murmur about the wish"
 ```
 
-The denial is scheduled for story Scene 10 while story Scene 9 has already put it on the page —
-`JULIAN: "I had no part in its turning."` appears in both. Because nothing commits, the milestone
-scheduler has no record that the denial was delivered, so it assigns a *first* denial again. The
-next scene needs the **consequence** of the denial already given. More words would only enlarge the
-repetition.
+Story Scene 9's assigned event was the **wrist grip**, not a denial. The denial
+(`JULIAN: "I had no part in its turning."`) appeared in that scene as **unassigned prose** the
+author volunteered ahead of its schedule. Committing the wrist-grip event would therefore NOT have
+registered the denial as a delivered milestone, so the commit repair does not address this.
+
+The accurate statement: nothing tracks a milestone-relevant event the author puts on the page
+before its assignment, so the scheduler assigned a *first* denial in Scene 10 for something the
+reader had already read in Scene 9. That is a separate defect and is **not fixed here**.
+
+## Length is still a requirement
+
+Separate from the withdrawn "factor of six": two runs averaging 224 then 150 words are too short,
+and a ceiling alone never said what a finished scene is. A **SCENE BUDGET of 700-1000 words** now
+sits beside the unchanged ceiling — a writing budget for the whole scene, explicitly **not** a beat
+count, sentence minimum, or reason to add beats. It also says what the words are for: consequential
+interaction (what one person does to another and what it costs, what is said and what the saying
+changes, a decision taken and acted on) and **not** further description of stillness, of someone
+watching, of a room emptying, or of a choice felt but not made. A scene well under budget is named
+as UNDERDEVELOPED — its moments too thin, not too few.
+
+**The output allowance accommodates it.** Measured from the run's own 9 scene-author calls:
+`maxTokens=8000`, `outTok` 3102-3597, of which `reasoningTok` 554-1458, leaving ~1644-2998 of
+visible output for ~150 words of prose plus the per-beat metadata. Adding 550-850 words of prose
+costs roughly another 750-1150 tokens, so the worst observed case lands near 5300 of 8000. No change
+needed, and none made.
 
 ## Prose: what the sentence statistics do and do not show
 

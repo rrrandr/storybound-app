@@ -101259,7 +101259,27 @@ function _buildAuthorFloorDirective(s) {
       var _sharedExit = (o.sharedSlots && typeof o.sharedSlots.exit_state_evidence === 'string')
         ? o.sharedSlots.exit_state_evidence.trim() : '';
       var _soleProposal = (Number(o.proposalCount || 0) === 1);
-      if (_soleProposal && _hasUsableEvidence(_sharedExit) && _quoteIsInProse(_sharedExit, prose)) {
+      var _sharedOk = false, _sharedWhyNot = 'no shared exit quote';
+      if (_hasUsableEvidence(_sharedExit)) {
+        var _ss = o.sharedSlots || {};
+        if (_ss.occurred_this_scene === false) {
+          _sharedWhyNot = 'the shared slot check says the event did NOT occur this scene';
+        } else if (_ss.occurred_this_scene !== true) {
+          _sharedWhyNot = 'the shared slot check does not affirm the event occurred this scene';
+        } else if (!_quoteIsInProse(_sharedExit, prose)) {
+          _sharedWhyNot = 'the shared exit quote is not verbatim in the prose';
+        } else {
+          // Its other load-bearing citations must exist AND verify. A slot check that cannot cite
+          // the actor or the action is the same check the aggregate path downgrades on.
+          var _need = ['actor_evidence', 'action_evidence'];
+          var _bad = _need.filter(function (k) {
+            return !_hasUsableEvidence(_ss[k]) || !_quoteIsInProse(String(_ss[k]), prose);
+          });
+          if (_bad.length) _sharedWhyNot = 'the shared slot check cannot cite ' + _bad.join(' and ');
+          else _sharedOk = true;
+        }
+      }
+      if (_soleProposal && _sharedOk) {
         ev = _sharedExit;
         evSource = 'shared_slots_check';
         why.push('evidence=shared_slots_check (the per_proposal quote did not verify)');
@@ -101267,14 +101287,20 @@ function _buildAuthorFloorDirective(s) {
         // NOT the same finding as "the event did not happen": the verifier asserted DELIVERED and
         // supplied no quote that verifies. Recorded as unverifiable so the two are distinguishable
         // downstream, and still committing nothing.
+        var _sharedSaysNo = !!(o.sharedSlots && o.sharedSlots.occurred_this_scene === false);
         return { ref: pend.id, commit: false, status: 'DELIVERED',
-          reason: 'evidence_unverifiable',
+          reason: _sharedSaysNo ? 'verified_not_delivered' : 'evidence_unverifiable',
           verifierReason: reason || null, downgraded: true, evidenceSource: 'none',
-          why: ['DELIVERED but NO verbatim quote verifies it — neither the per_proposal evidence nor '
-            + (_soleProposal ? 'the scene slots_check exit evidence' : 'a shared quote (multiple '
-              + 'proposals, so a shared quote cannot be attributed)')
-            + '. This is UNVERIFIED DELIVERY, not a finding that the event did not happen; nothing '
-            + 'is committed either way.'] };
+          why: [_sharedSaysNo
+            ? ('VERIFIED NON-DELIVERY: the verifier slot check affirms the event did not occur in '
+               + 'this scene. Nothing is committed, and this is a finding about the EVENT, not about '
+               + 'its citation.')
+            : ('UNVERIFIED DELIVERY: the verifier said DELIVERED but no verbatim quote verifies it '
+               + '— the per_proposal quote is not in the prose, and the shared slot check was not '
+               + 'usable either (' + (!_soleProposal
+                   ? 'multiple proposals, so a shared quote cannot be attributed'
+                   : _sharedWhyNot) + '). This is NOT a finding that the event did not happen; '
+               + 'nothing is committed either way.')] };
       }
     }
     if (evSource === 'per_proposal') why.push('evidence=per_proposal');
@@ -101350,7 +101376,10 @@ function _buildAuthorFloorDirective(s) {
         try { console.log('[COMMIT] ' + pp.kind + ' ' + pp.id + ' DELIVERED scene=' + o.scene
           + ' factsTotal=' + _ensureCommittedState().facts.length); } catch (_) {}
       } else {
-        pendingOut.push({ id: pp.id, kind: pp.kind, status: verdict.status });
+        pendingOut.push({ id: pp.id, kind: pp.kind, status: verdict.status,
+          // the REASON travels with the pending entry, so the planner can be told which of the two
+          // uncommitted outcomes this was
+          reason: verdict.reason || null });
         try { console.log('[PENDING] ' + pp.kind + ' ' + pp.id + ' status=' + verdict.status
           + ' scene=' + o.scene + ' :: ' + (verdict.why || []).join(' | ')); } catch (_) {}
       }
@@ -101526,7 +101555,13 @@ function _buildAuthorFloorDirective(s) {
           }
         });
         if (_ppRes && _ppRes.pending) _ppRes.pending.forEach(function (pnd) {
-          if (pnd.kind === 'state_change' && cs.pendingIntent) cs.pendingIntent.lastStatus = pnd.status;
+          if (pnd.kind === 'state_change' && cs.pendingIntent) {
+            cs.pendingIntent.lastStatus = pnd.status;
+            // The planner has to be able to tell "we checked and it did not happen" from "it was
+            // written but we could not verify the citation". Both stay uncommitted; they are not
+            // the same instruction to the next planner.
+            cs.pendingIntent.lastReason = pnd.reason || null;
+          }
         });
         window.state._lastPerProposalAdjudication = { scene: prevSceneNum,
           verdicts: (_ppRes && _ppRes.verdicts) || {}, unknownRefs: (_ppRes && _ppRes.unknownRefs) || [] };
@@ -102305,7 +102340,16 @@ function _buildAuthorFloorDirective(s) {
               })()
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
-            + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
+            + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? (((_csGen.pendingIntent.lastReason === 'evidence_unverifiable')
+                ? ('\nPENDING INTENT — UNVERIFIED, NOT FAILED. A prior scene appears to have put this on '
+                   + 'the page, but its citation could not be verified, so it is NOT a committed fact and '
+                   + 'you must not rely on it. Do NOT simply stage it again as if it had never happened: '
+                   + 'read WHAT THE READER HAS ALREADY READ below, and if it is there, advance from its '
+                   + 'CONSEQUENCE. Only if the reader has genuinely not seen it should you deliver it: ')
+                : '\nPENDING INTENT — CHECKED AND NOT DELIVERED. A prior scene tried to advance toward the '
+                  + 'milestone and the attempt was verified as not delivered. Continue TOWARD the milestone, '
+                  + 'but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat '
+                  + 'the failed attempt: ') + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
             + ((function () {
                 // ── WHAT THE READER HAS ALREADY READ (2026-10-07) ────────────────────────────
@@ -235968,6 +236012,19 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       var _lcTier = String((window.state && window.state.storyLength) || 'fling').toLowerCase();
       if ((_currentST === 'ST1' || _currentST === 'ST2') && ['fling', 'taste', 'starter', 'default', ''].indexOf(_lcTier) !== -1) {
         lines.push('LENGTH CEILING (HARD — Roman 2026-06-13): keep this scene UNDER ~1000 words / ~6000 characters. This is a WORD ceiling, NOT a beat ceiling — it coexists with SCENE COVERAGE: a scene that covers its ground fits under 1000 words without being cut into fragments, so meet BOTH. Beat LENGTH is governed by TEXT RULES, never by this ceiling. "Restraint" means each beat is LEAN, not that the scene is short on beats: do NOT pad WITHIN a beat with stacked interiority, enumerated desire ("the way X… the way Y… the way Z"), "Because… Because… Because" ladders, or machine-gun Q&A dialogue — but DO give the scene its full span of real, causally-linked movement — the whole situation traversed, not a sketch of it. When a single beat wants more words, spend them where the moment earns it and TAKE THEM BACK ELSEWHERE — trim a beat that is only marking time, not the moment that is doing the work. The ceiling is a budget across the whole scene, not a per-beat cap: a scene may hold two or three developed passages and many lean ones. Do NOT fragment a moment into separate beats to protect a count. A scene that skips its grounding and arrives as stacked ultimatums has FAILED. The reader should leave wanting, not exhausted — and not shortchanged.');
+        // The TARGET inside that ceiling. The ceiling says when to stop; this says what a finished
+        // scene is, so "short" is not the default outcome of having no floor.
+        lines.push('SCENE BUDGET (what a FINISHED scene is): a normal scene runs 700-1000 words. '
+          + 'That is a WRITING BUDGET for the whole scene, not a beat count, not a sentence minimum, '
+          + 'and not a reason to add beats — the number of moments is still however many the scene '
+          + 'contains. Spend the budget on CONSEQUENTIAL INTERACTION: what one person does to '
+          + 'another and what it costs them, what is said and what the saying changes, a decision '
+          + 'taken and acted on inside this scene. Do NOT spend it on further description of '
+          + 'stillness, of someone watching, of a room emptying, or of a choice being felt but not '
+          + 'made — a scene can be 1000 words of that and still contain nothing. If you reach the '
+          + 'end of the scene well under this budget, the scene is UNDERDEVELOPED: the moments you '
+          + 'have are too thin, not too few, so develop what is already there rather than adding '
+          + 'new material.');
       }
     } catch (_) {}
     // ── SCENE-1 LOAD CONTROL (Roman 2026-06-13) — one crisis, tiny cast ──────
