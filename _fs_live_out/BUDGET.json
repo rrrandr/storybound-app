@@ -1,5 +1,5 @@
 {
-  "receipted": 10.6360099,
+  "receipted": 10.7347009,
   "unresolved": 1.8663661,
   "outstanding": [],
   "runs": [
@@ -124,6 +124,13 @@
       "unresolved": 0.140683,
       "outstandingAtExit": 0,
       "note": "arm_B_reconciled receipted 0.0986006 (ticks 986006000 x 1e-10); arm_A_current returned HTTP 429 resource-exhausted from xAI with no receipt, so its 0.140683 reservation is RETAINED as unresolved exposure, not forgiven."
+    },
+    {
+      "run": "_ab_writing_out/run_2026-10-12T15-43-21-544Z (arm A control, out of band)",
+      "receipted": 0.098691,
+      "unresolved": 0,
+      "outstandingAtExit": 0,
+      "note": "arm_A_current receipted 0.098691 on the exact frozen request; served grok-4.3 via chainEntry grok-4-1-fast-reasoning, effort high, upstreamAttempts 1 — matching arm B, so the pair is VALID. Arm B was reused from the earlier dispatch and NOT re-charged."
     }
   ],
   "authorization": null,

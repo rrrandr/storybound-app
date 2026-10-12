@@ -293,9 +293,39 @@ async function dispatch(label, body) {
   return rec;
 }
 
-say('\n── DISPATCH (the same frozen request, twice) ──');
-const rA = await dispatch('arm_A_current', armA);
-const rB = await dispatch('arm_B_reconciled', armB);
+// ── WHICH ARM(S) TO DISPATCH ────────────────────────────────────────────────────────────────
+// SB_AB_ONLY=A completes a pair whose other arm already exists: arm A was refused upstream
+// (xAI 429) on the first attempt while arm B was served, so only the control is missing. The
+// saved B response is reused verbatim via SB_AB_B_RESPONSE — it is NOT regenerated, so B is
+// exactly the passage already read and reported.
+const ONLY = String(process.env.SB_AB_ONLY || '').toUpperCase();
+const B_SAVED = process.env.SB_AB_B_RESPONSE || null;
+if (ONLY) say('\n  DISPATCHING ONLY ARM ' + ONLY + (B_SAVED ? ('; the other arm is reused from ' + B_SAVED) : ''));
+
+say('\n── DISPATCH (the same frozen request) ──');
+const rA = (ONLY === 'B') ? { label: 'arm_A_current', skipped: true }
+  : await dispatch('arm_A_current', armA);
+const rB = (ONLY === 'A') ? { label: 'arm_B_reconciled', skipped: true }
+  : await dispatch('arm_B_reconciled', armB);
+// Bring the saved arm forward so the measures and the validity check see both.
+if (B_SAVED && ONLY === 'A') {
+  try {
+    const savedTxt = fs.readFileSync(B_SAVED, 'utf8');
+    write('arm_B_reconciled_response_raw.json', savedTxt);
+    const sp = JSON.parse(savedTxt);
+    const so = sp._orchestration || null;
+    calls.push({ label: 'arm_B_reconciled', reusedFrom: B_SAVED, status: 200,
+      ms: null, model: sp.model || null, usage: sp.usage || null,
+      measured: 0, receipt: false, retainedEst: 0,   // already paid for and already in the ledger
+      provenance: { requested: armB.preferredModel || armB.model || null,
+        chainEntry: so ? so.chainEntry : null,
+        resolvedModel: so ? so.resolvedModel : (sp.model || null),
+        reasoningEffort: so ? so.reasoningEffort : null,
+        upstreamAttempts: so ? so.upstreamAttempts : null,
+        firstAttempt: so ? (so.upstreamAttempts === 1) : null } });
+    say('  [arm_B_reconciled] REUSED from the earlier dispatch — not regenerated, not re-charged');
+  } catch (e) { say('  [arm_B_reconciled] could not reuse saved response: ' + (e && e.message)); }
+}
 
 // ── MEASURE (the READING is the finding; these sit underneath it) ────────────────────────────
 function measure(label) {
