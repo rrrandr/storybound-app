@@ -57,31 +57,62 @@ const write = (f, o) => fs.writeFileSync(OUT + '/' + f, typeof o === 'string' ? 
 // removal, no second call, no segmentation stage. The 700-1000-word requirement is untouched.
 const ARM_B_EDITS = [
   {
-    name: 'screenplay governs form, not substance — interiority is not excluded',
+    // BOTH PARAGRAPHS, AS ONE REPLACEMENT. The first pass changed only the "rather than as
+    // novelistic narration with interiority" clause and left its NEIGHBOUR — "TWO FAILURES …
+    // (1) Literary prose cut into beats — paragraphs of interiority with beat boundaries dropped
+    // in" — untouched. Arm B would then have permitted her perception and thought in one
+    // paragraph and condemned it in the next, and the experiment could have bought an
+    // inconclusive result. The reconciled version distinguishes ARBITRARY SEGMENTATION (the real
+    // failure: prose chopped where paragraphs happened to break) from perception and thought
+    // carried INSIDE a staged moment (legitimate).
+    name: 'screenplay governs form, not substance — and the neighbouring prohibition agrees',
     find: 'WHAT THAT GOVERNS IS THE FORM, NOT THE SUBSTANCE. "Screenplay-native" means the scene'
       + ' arrives as staged beats — what is done, what is said, what is seen — rather than as'
-      + ' novelistic narration with interiority and literary description.',
+      + ' novelistic narration with interiority and literary description. It does NOT mean a thin'
+      + ' scene, a summary, or one line per moment. A screenplay scene is FULLY ENACTED: a person'
+      + ' makes a demand, another answers it, the exchange continues, and the situation is different'
+      + ' afterwards. That is what the word budget below is for.\n'
+      + 'TWO FAILURES, BOTH WRONG. (1) Literary prose cut into beats — paragraphs of interiority with'
+      + ' beat boundaries dropped in. (2) An outline rendered as captions — each development reduced'
+      + ' to a single declarative line so the scene reads as its own summary. Write the scene, in'
+      + ' screenplay-native beats, at the length the moments actually need.',
     replace: 'WHAT THAT GOVERNS IS THE FORM, NOT THE SUBSTANCE. "Screenplay-native" governs STAGING,'
       + ' DIALOGUE AND BEAT DELIVERY: the scene arrives as staged beats — what is done, what is said,'
       + ' what is seen, and what the point-of-view character makes of it as it happens. It does NOT'
-      + ' exclude her perception, her thought, her physical response or her voice. Narration carries'
-      + ' those AROUND the spoken and the done — never IN PLACE OF them, and never instead of the'
-      + ' event itself. What is excluded is literary ornament and essayistic digression, not'
-      + ' interiority: a reader must never have to reconstruct the situation from her feelings about'
-      + ' it, and at any important moment they should know where we are, what just happened, what she'
-      + ' wants now, what prevents it, and what she fears will follow.'
+      + ' exclude her perception, her thought, her physical response or her voice. Those ride INSIDE'
+      + ' the staged moment, carried around the spoken and the done rather than in place of them.'
+      + ' What is excluded is literary ornament and essayistic digression — NOT interiority. A reader'
+      + ' must never have to reconstruct the situation from her feelings about it: at any important'
+      + ' moment they should know where we are, what just happened, what she wants now, what prevents'
+      + ' it, and what she fears will follow. It does NOT mean a thin scene, a summary, or one line'
+      + ' per moment. A screenplay scene is FULLY ENACTED: a person makes a demand, another answers'
+      + ' it, the exchange continues, and the situation is different afterwards. That is what the word'
+      + ' budget below is for.\n'
+      + 'TWO FAILURES, BOTH WRONG. (1) ARBITRARY SEGMENTATION — a continuous passage written as prose'
+      + ' and then divided at convenient points, so the beat boundaries fall where a paragraph'
+      + ' happened to break instead of where the moments are. The test is whether each beat is ONE'
+      + ' moment — NOT whether it contains her perception or her thought. A staged moment that'
+      + ' carries both is correct, and is not this failure. (2) An outline rendered as captions —'
+      + ' each development reported in a single declarative line so the scene reads as its own'
+      + ' summary. Write the scene, in screenplay-native beats, at the length the moments actually'
+      + ' need.'
   },
   {
-    name: 'a short beat is fine; a scene made of labels is not',
+    // THE CRITERION IS ENACTMENT, NOT LENGTH. The first pass said "THE FAILURE IS NOT A SHORT BEAT
+    // — IT IS A SCENE MADE OF THEM", which smuggles shortness back in as the measure. It is not.
+    // A moment complete in a few words has not failed. What fails is a load-bearing moment
+    // REPORTED instead of played out. No sentence count, no word count, no beat-length rule.
+    name: 'the criterion is summary vs enactment, not sentence length',
     find: 'A beat is still never a scene.',
-    replace: 'A beat is still never a scene. THE FAILURE IS NOT A SHORT BEAT — IT IS A SCENE MADE OF'
-      + ' THEM. A sharp short line is a legitimate choice and some moments need nothing more. What'
-      + ' fails is sustained underdevelopment: beat after beat that LABELS the situation — reporting'
-      + ' that pressure landed, that a restriction weighs, that something was understood — instead of'
-      + ' writing the interaction through, so the scene reads as its own summary. Where a moment is'
-      + ' load-bearing the exchange CONTINUES: the other person answers, and the cost arrives on the'
-      + ' page. Before you return the scene, read it whole: if most of its beats name what is'
-      + ' happening rather than enact it, develop those moments.'
+    replace: 'A beat is still never a scene. WHAT FAILS IS SUMMARY, NOT BREVITY. A beat fails when it'
+      + ' REPORTS the situation instead of enacting it — stating that pressure landed, that a'
+      + ' restriction weighs, that something was understood — while the interaction it belongs to is'
+      + ' never carried any further. A moment that is genuinely complete in a few words has NOT'
+      + ' failed, and NO beat is wrong merely for being short. What is wrong is a scene whose'
+      + ' load-bearing moments are named rather than played: where a moment is load-bearing the'
+      + ' exchange CONTINUES — the other person answers, and the cost arrives on the page. Before'
+      + ' returning the scene, read it whole and ask of each load-bearing moment whether it was'
+      + ' ENACTED or merely REPORTED.'
   }
 ];
 
@@ -142,6 +173,29 @@ if (!(sameKeys && sameNonSystem && sameScalars && reconExact)) {
 }
 say('  VERIFIED: the arms differ ONLY in the two declared substrings.');
 
+// ── READ THE WHOLE RESULTING OPENING, NOT JUST THE REPLACED SUBSTRINGS ──────────────────────
+// The first preparation pass reconciled one clause and left its neighbour contradicting it. The
+// only way to catch that is to read the assembled block, so both arms' openings are written out
+// in full and arm B's is printed here before anything is dispatched.
+const OPENING_CHARS = 2600;
+write('arm_A_opening.txt', armA.messages[0].content.slice(0, OPENING_CHARS));
+write('arm_B_opening.txt', armB.messages[0].content.slice(0, OPENING_CHARS));
+say('\n── ARM B, COMPLETE OPENING AS ASSEMBLED (read it, do not trust the diff) ──');
+say(armB.messages[0].content.slice(0, 2100).split('\n').map((l) => '  | ' + l).join('\n'));
+// A contradiction guard with teeth: no residue of the prohibitions arm B is supposed to have
+// reconciled may survive anywhere in arm B's prompt.
+const RESIDUE = [
+  'novelistic narration with interiority',
+  'paragraphs of interiority with beat boundaries dropped in',
+  'IT IS A SCENE MADE OF THEM'
+];
+const residueFound = RESIDUE.filter((r) => armB.messages[0].content.indexOf(r) !== -1);
+say('\n  residual contradicting text in arm B: ' + (residueFound.length ? residueFound.join(' | ') : 'NONE'));
+if (residueFound.length) {
+  say('*** ABORT BEFORE SPENDING — arm B still contains text that discourages the writing under test. ***');
+  process.exit(6);
+}
+
 // FAIL CLOSED on an unpriceable model: estimateUsd returns {bounded,estimate,refuseReason} and
 // Infinity when it cannot bound the cost. A dispatch that cannot be priced is not dispatched.
 const estA = estimateUsd(armA, armA.preferredModel || armA.model, FROZEN_URL);
@@ -162,9 +216,14 @@ if (DRY) {
 }
 
 // ── SPEND ───────────────────────────────────────────────────────────────────────────────────
-let settled = 0, retained = 0, inFlight = 0;
+let settled = 0, retained = 0, inFlight = 0, peak = 0;
 const calls = [];
+// EXPOSURE AT ANY INSTANT: prior + receipted + retained + whatever is reserved RIGHT NOW.
+// PEAK is tracked along the actual execution sequence. Summing every reservation ever made is
+// NOT peak exposure when calls run one at a time: a receipted call RELEASES its reservation
+// before the next is made, so only one author reservation is ever in flight here.
 const exposure = () => PRIOR + settled + retained + inFlight;
+const mark = () => { const e = exposure(); if (e > peak) peak = e; return e; };
 
 async function dispatch(label, body) {
   const e = estimateUsd(body, body.preferredModel || body.model, FROZEN_URL);
@@ -179,6 +238,7 @@ async function dispatch(label, body) {
     return { label, halted: true };
   }
   inFlight += est;
+  mark();
   const t0 = Date.now();
   let txt = '', status = 0;
   try {
@@ -197,11 +257,30 @@ async function dispatch(label, body) {
   let measured = 0, receipt = false, retainedEst = 0;
   if (typeof ticks === 'number' && ticks > 0) { measured = ticks / 1e7; settled += measured; receipt = true; }
   else { retained += est; retainedEst = est; }
+  mark();
   const content = (((parsed.choices || [])[0] || {}).message || {}).content || '';
   write(label + '_response_raw.json', txt);
+  // ── WHO ACTUALLY WROTE IT ─────────────────────────────────────────────────────────────────
+  // Logging the returned model is not enough: the proxy runs a fallback chain
+  // (grok-4-1-fast-reasoning -> grok-4-1-fast-non-reasoning -> grok-4.3), and a substituted model
+  // makes the arm useless for this comparison. _orchestration carries chainEntry, resolvedModel,
+  // reasoningEffort and upstreamAttempts, so a fallback is detectable rather than assumed absent.
+  const orch = parsed._orchestration || null;
+  const prov = {
+    requested: body.preferredModel || body.model || null,
+    chainEntry: orch ? orch.chainEntry : null,
+    resolvedModel: orch ? orch.resolvedModel : (parsed.model || null),
+    reasoningEffort: orch ? orch.reasoningEffort : null,
+    upstreamAttempts: orch ? orch.upstreamAttempts : null,
+    firstAttempt: orch ? (orch.upstreamAttempts === 1) : null
+  };
   const rec = { label, status, ms, model: parsed.model || null, usage: parsed.usage || null,
-    measured, receipt, retainedEst, contentChars: content.length };
+    measured, receipt, retainedEst, contentChars: content.length, provenance: prov };
   calls.push(rec);
+  say('    provenance: requested=' + prov.requested + ' chainEntry=' + prov.chainEntry
+    + ' served=' + prov.resolvedModel + ' effort=' + prov.reasoningEffort
+    + ' upstreamAttempts=' + prov.upstreamAttempts
+    + (prov.firstAttempt === false ? '  *** FALLBACK OCCURRED ***' : ''));
   say('  [' + label + '] status=' + status + ' ' + ms + 'ms model=' + (parsed.model || '?')
     + ' in=' + ((parsed.usage || {}).prompt_tokens ?? '?')
     + ' out=' + ((parsed.usage || {}).completion_tokens ?? '?')
@@ -237,14 +316,37 @@ const mA = measure('arm_A_current'), mB = measure('arm_B_reconciled');
 say('\n── MEASURES ──');
 [mA, mB].forEach((m) => { if (m) say('  ' + JSON.stringify(m)); });
 
+// ── VALIDITY: SAME AUTHOR, FIRST ATTEMPT, BOTH ARMS ─────────────────────────────────────────
+const pA = (calls.find((c) => c.label === 'arm_A_current') || {}).provenance || null;
+const pB = (calls.find((c) => c.label === 'arm_B_reconciled') || {}).provenance || null;
+const sameAuthor = !!(pA && pB
+  && pA.resolvedModel === pB.resolvedModel
+  && pA.chainEntry === pB.chainEntry
+  && pA.reasoningEffort === pB.reasoningEffort);
+const noFallback = !!(pA && pB && pA.firstAttempt === true && pB.firstAttempt === true);
+const VALID = sameAuthor && noFallback;
+say('\n── COMPARISON VALIDITY ──');
+say('  same chainEntry / served model / reasoning effort : ' + sameAuthor);
+say('  both served on the FIRST upstream attempt         : ' + noFallback);
+if (!VALID) {
+  say('  *** THIS PAIR IS INVALID FOR THE COMPARISON ***');
+  say('      A substituted model, or a differing reasoning effort, confounds the only variable');
+  say('      under test. Report the result as invalid; do NOT read it as a contract finding.');
+} else {
+  say('  VALID: both arms were written by the same model on its first attempt.');
+}
+
 const sum = (k) => calls.reduce((n, c) => n + (c[k] || 0), 0);
 say('\n── SPEND (author arms only; the shared setup is the runner\'s own accounting) ──');
 say('  receipted $' + sum('measured').toFixed(6) + ' + retained $' + sum('retainedEst').toFixed(6)
   + ' = $' + (sum('measured') + sum('retainedEst')).toFixed(6));
-say('  TOTAL EXPOSURE $' + exposure().toFixed(6) + ' of ceiling $' + CEILING.toFixed(6));
+say('  FINAL EXPOSURE $' + exposure().toFixed(6) + ' of ceiling $' + CEILING.toFixed(6));
+say('  PEAK EXPOSURE  $' + peak.toFixed(6) + ' (highest point along the execution sequence,'
+  + ' with one reservation in flight at a time)');
 if (inFlight > 0.000001) say('  NOTE: $' + inFlight.toFixed(6) + ' outstanding at exit — UNRESOLVED, not forgiven.');
 
-write('SUMMARY.json', { armA: mA, armB: mB, edits: applied, calls,
-  settled, retained, inFlight, exposure: exposure(), ceiling: CEILING, prior: PRIOR });
+write('SUMMARY.json', { armA: mA, armB: mB, edits: applied, calls, valid: VALID,
+  provenance: { armA: pA, armB: pB }, sameAuthor, noFallback,
+  settled, retained, inFlight, exposure: exposure(), peak, ceiling: CEILING, prior: PRIOR });
 say('\noutput: ' + OUT);
 say('ONE PAIR IS DIAGNOSTIC, NOT PROOF OF RELIABILITY.');
