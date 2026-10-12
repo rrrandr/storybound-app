@@ -1,5 +1,5 @@
 {
-  "receipted": 10.7621779,
+  "receipted": 10.7660319,
   "unresolved": 1.8663661,
   "outstanding": [],
   "runs": [
@@ -138,6 +138,13 @@
       "unresolved": 0,
       "outstandingAtExit": 0,
       "note": "Priced before dispatch at $0.043160 (promptTokens~20009 ESTIMATED chars/4.0); measured receipt $0.027477; grok-4.3, status 200, 20310ms, in 18775 out 916. Reply had ONE fault (pc_opening_fusion); production attempted its single holistic repair call, which the one-call guard refused (503), so Scene 1 was not authored and the arm stopped. Request and response preserved."
+    },
+    {
+      "run": "literary arm 1 — one bounded repair call (planner response REPLAYED, not re-paid)",
+      "receipted": 0.003854,
+      "unresolved": 0,
+      "outstandingAtExit": 0,
+      "note": "Repair priced before dispatch at $0.016023 from the saved request; measured receipt $0.003854; grok-4.3, status 200, 11476ms, in 2003 out 46. It returned a correct fix for NO_CONTACT, but validation then failed on a DIFFERENT fault the repair was not scoped to touch: environment_plus.beat carries object O4's own record name, 'the gossamer band tied across the Sacrificiant\\'s mouth', and the person validator reads 'Sacrificiant' as a person not in the story. Arm stopped; no second repair, no rewriting."
     }
   ],
   "authorization": null,

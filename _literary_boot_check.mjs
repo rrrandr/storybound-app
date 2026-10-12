@@ -44,6 +44,15 @@ import { estimateUsd } from './_fsc_cost_guard.mjs';
 const LIVE_PLANNER = process.env.SB_LIVE_PLANNER === '1';
 const CEILING = Number(process.env.SB_CAP || 0);
 const PRIOR = Number(process.env.SB_PRIOR || 0);
+// REPLAY + REPAIR. SB_REPLAY_PLANNER serves a SAVED planner response so the paid planner call is
+// not repeated; SB_LIVE_REPAIR dispatches production's ONE conditional repair call live. Repair is
+// CONDITIONAL on a response failing validation — not a mandatory second call for every opening.
+const REPLAY_PLANNER = process.env.SB_REPLAY_PLANNER || null;
+const REPLAY_BODY = REPLAY_PLANNER ? fs.readFileSync(REPLAY_PLANNER, 'utf8') : null;
+const LIVE_REPAIR = process.env.SB_LIVE_REPAIR === '1';
+const EXPECT_FAULT = process.env.SB_EXPECT_FAULT || 'NO_CONTACT';
+let repairDispatched = false, repairSpend = 0, repairRetained = 0, repairReceipt = false;
+let repairMeta = null, repairFaultMatched = null;
 let plannerDispatched = false, plannerSpend = 0, plannerRetained = 0, plannerReceipt = false;
 let plannerMeta = null;
 if (LIVE_PLANNER && !(CEILING > 0)) {
@@ -110,10 +119,72 @@ await page.route('**/*', async (route) => {
     } catch (_) {}
   }
 
+  // ── THE CONDITIONAL REPAIR STAGE ──────────────────────────────────────────────────────────
+  // Production assembles this ONLY when a planner response fails validation. Its prompt shares
+  // the planner's opening sentence, which is why the earlier capture overwrote itself; the
+  // discriminator is its own scope line.
+  const _usrMsg = String((body.messages && body.messages[1] && body.messages[1].content) || "");
+  if (/top-level keys, corrected:/i.test(_usrMsg)) {
+    const usr = String((body.messages && body.messages[1] && body.messages[1].content) || '');
+    repairFaultMatched = usr.indexOf(EXPECT_FAULT) !== -1;
+    fs.writeFileSync(OUT + '/ARM1_repair_request_assembled.json', JSON.stringify({ url, body }, null, 2));
+    say('  [REPAIR] assembled; expected fault "' + EXPECT_FAULT + '" present: ' + repairFaultMatched);
+    if (!LIVE_REPAIR) {
+      say('  [REPAIR] not authorised in this run — refusing');
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"repair not authorised"}' });
+    }
+    if (repairDispatched) {
+      say('  [REPAIR] a SECOND repair was attempted — REFUSED (one repair only, no loop)');
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"one repair only"}' });
+    }
+    if (!repairFaultMatched) {
+      say('  [REPAIR] REFUSED — the assembled fault does not match the saved one; context differs');
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"fault mismatch"}' });
+    }
+    repairDispatched = true;
+    const e = estimateUsd(body, body.preferredModel || body.model, url);
+    if (!e || !e.bounded) {
+      say('  [REPAIR] REFUSED — unpriceable: ' + ((e && e.refuseReason) || 'no estimate'));
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unpriceable"}' });
+    }
+    say('  [REPAIR] priced before dispatch: $' + e.estimate.toFixed(6)
+      + ' (promptTokens~' + e.promptTokens + ' ESTIMATED chars/4.0, reserved out~' + e.outTokens + ')');
+    if (PRIOR + repairSpend + e.estimate > CEILING) {
+      say('  [REPAIR] HALTED BEFORE DISPATCH — would exceed the cap $' + CEILING.toFixed(6));
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"cap"}' });
+    }
+    const t0 = Date.now();
+    let res, txt = '';
+    try { res = await route.fetch(); txt = await res.text(); }
+    catch (err) {
+      repairRetained = e.estimate;
+      say('  [REPAIR] DISPATCH FAILED: ' + (err && err.message) + ' — reservation RETAINED');
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"dispatch failed"}' });
+    }
+    const ms = Date.now() - t0;
+    let parsed = {}; try { parsed = JSON.parse(txt); } catch (_) {}
+    const ticks = parsed.usage && parsed.usage.cost_in_usd_ticks;
+    if (typeof ticks === 'number' && ticks > 0) { repairSpend = ticks * 1e-10; repairReceipt = true; }
+    else { repairRetained = e.estimate; }
+    repairMeta = { ms, status: res.status(), model: parsed.model || null,
+      orchestration: parsed._orchestration || null, usage: parsed.usage || null,
+      estimated: e.estimate, measured: repairSpend, receipt: repairReceipt, retained: repairRetained };
+    fs.writeFileSync(OUT + '/ARM1_repair_response_raw.json', txt);
+    say('  [REPAIR] status=' + res.status() + ' ' + ms + 'ms in=' + ((parsed.usage || {}).prompt_tokens ?? '?')
+      + ' out=' + ((parsed.usage || {}).completion_tokens ?? '?')
+      + (repairReceipt ? ('  receipt $' + repairSpend.toFixed(6)) : ('  NO RECEIPT — retained $' + repairRetained.toFixed(6))));
+    return route.fulfill({ status: res.status(), headers: res.headers(), body: txt });
+  }
+
   // ── STAGE 1: ONE REAL OPENING-PLANNER CALL (SB_LIVE_PLANNER=1) ────────────────────────────
   // The ACTUAL outgoing request is priced here, before it leaves — not from an earlier call's
   // receipt, which is a reference figure for a different request. Exactly one dispatch; no
   // retry, and the production validator is untouched either way.
+  if (/scene-structure planner for the OPENING scene/i.test(sys) && REPLAY_BODY) {
+    say('  [REPLAY] serving the SAVED planner response — the paid planner call is NOT repeated');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: REPLAY_BODY });
+  }
+
   if (/scene-structure planner for the OPENING scene/i.test(sys) && LIVE_PLANNER) {
     if (plannerDispatched) {
       say('  [LIVE-PLANNER] a second opening-planner call was attempted — REFUSED (one call only)');
