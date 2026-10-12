@@ -1,0 +1,126 @@
+{
+  "req": "_fs_live_out/run_2026-10-12T04-34-19-798Z/wire/075_req.json",
+  "res": "_fs_live_out/run_2026-10-12T04-34-19-798Z/wire/075_res.json",
+  "offset": -1,
+  "outlineEntries": 25,
+  "beats": 19,
+  "words": 254,
+  "alignedGte60": 0,
+  "bestGte60": 2,
+  "rows": [
+    {
+      "beat": 0,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.63,
+      "bestAt": 1
+    },
+    {
+      "beat": 1,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.33,
+      "bestAt": 8
+    },
+    {
+      "beat": 2,
+      "alignedOverlap": 0.13,
+      "bestOverlap": 0.14,
+      "bestAt": 9
+    },
+    {
+      "beat": 3,
+      "alignedOverlap": 0,
+      "bestOverlap": 0,
+      "bestAt": null
+    },
+    {
+      "beat": 4,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.38,
+      "bestAt": 16
+    },
+    {
+      "beat": 5,
+      "alignedOverlap": 0.2,
+      "bestOverlap": 0.2,
+      "bestAt": 5
+    },
+    {
+      "beat": 6,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.2,
+      "bestAt": 2
+    },
+    {
+      "beat": 7,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.17,
+      "bestAt": 2
+    },
+    {
+      "beat": 8,
+      "alignedOverlap": 0.25,
+      "bestOverlap": 0.25,
+      "bestAt": 8
+    },
+    {
+      "beat": 9,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.25,
+      "bestAt": 16
+    },
+    {
+      "beat": 10,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.25,
+      "bestAt": 18
+    },
+    {
+      "beat": 11,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.13,
+      "bestAt": 3
+    },
+    {
+      "beat": 12,
+      "alignedOverlap": 0,
+      "bestOverlap": 0,
+      "bestAt": null
+    },
+    {
+      "beat": 13,
+      "alignedOverlap": 0.25,
+      "bestOverlap": 0.25,
+      "bestAt": 13
+    },
+    {
+      "beat": 14,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.17,
+      "bestAt": 8
+    },
+    {
+      "beat": 15,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.71,
+      "bestAt": 9
+    },
+    {
+      "beat": 16,
+      "alignedOverlap": 0.17,
+      "bestOverlap": 0.17,
+      "bestAt": 16
+    },
+    {
+      "beat": 17,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.38,
+      "bestAt": 3
+    },
+    {
+      "beat": 18,
+      "alignedOverlap": 0,
+      "bestOverlap": 0.22,
+      "bestAt": 1
+    }
+  ]
+}
