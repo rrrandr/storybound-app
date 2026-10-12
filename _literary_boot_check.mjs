@@ -22,6 +22,9 @@ import { configBody, installSession, isAuthOrigin, installEntitledProfileStub, m
 import { findFSDef } from './_fs_story_setup.mjs';
 
 const ORIGIN = process.env.SB_ORIGIN || 'http://localhost:3000';
+const SPINE_FIXTURE = fs.existsSync(process.env.SB_SPINE_FIXTURE || '_runner_fixtures/opening_spine_literary.json')
+  ? JSON.parse(fs.readFileSync(process.env.SB_SPINE_FIXTURE || '_runner_fixtures/opening_spine_literary.json', 'utf8'))
+  : null;
 const FIXTURES = JSON.parse(fs.readFileSync(process.env.SB_FIXTURES || '_runner_fixtures/full.json', 'utf8'));
 const OUT = '_ab_writing_out/literary_boot_' + new Date().toISOString().replace(/[:.]/g, '-');
 fs.mkdirSync(OUT, { recursive: true });
@@ -79,6 +82,27 @@ await page.route('**/*', async (route) => {
   if (CG_AUTHOR.test(sys)) {
     if (!cgReq) { cgReq = body; say('  [!!] a CG SCREENPLAY author request arrived — the override did not hold'); }
     return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"cg author refused"}' });
+  }
+
+  // THE OPENING-PLANNER REQUEST IS SAVED. Production derives its allowlist from the TEMPLATE IT
+  // DISPATCHED (_openingSpineDeclaredFields), so the only reliable way to build a conforming
+  // fixture is to read the declared keys out of the real request rather than guess which
+  // conditional branch of the schema was used.
+  if (/scene-structure planner for the OPENING scene/i.test(sys)) {
+    try {
+      fs.writeFileSync(OUT + '/opening_planner_request.json', JSON.stringify({ url, body }, null, 2));
+      say('  [CAPTURED] the opening-planner request (template saved for fixture derivation)');
+    } catch (_) {}
+  }
+
+  // THE CORRECTED OPENING-PLANNER FIXTURE takes precedence over the CG-era one, whose five
+  // undeclared fields (environment_elements, li_texture_beat, pc_wound_anchor,
+  // antagonist_body_callback, stage_contract) made production refuse to author Scene 1. The
+  // replacement is DERIVED from the dispatched template's own declared keys
+  // (_opening_spine_fixture_from_template.mjs). The production validator is untouched.
+  if (/scene-structure planner for the OPENING scene/i.test(sys) && SPINE_FIXTURE) {
+    say('  [FIXTURE] serving the template-derived opening_spine reply');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: SPINE_FIXTURE.body });
   }
 
   // Pre-author stages: serve the runner's own fixture bodies so the flow can reach the author.
