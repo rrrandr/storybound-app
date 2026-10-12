@@ -163,8 +163,8 @@ const over = await run({ prose: PROSE, refs: ['prop:3:3'],
 console.log('      5 verbatim spans -> ' + JSON.stringify(over.verdicts));
 t('a 5-span precondition array still commits NOTHING (validation preserved)',
   over.committed.length === 0, JSON.stringify(over));
-t('it is reported as precondition_evidence_unusable, NOT precondition_absent',
-  over.verdicts[0] && over.verdicts[0].reason === 'precondition_evidence_unusable',
+t('it is reported as precondition_unverified, NOT precondition_absent',
+  over.verdicts[0] && over.verdicts[0].reason === 'precondition_unverified',
   JSON.stringify(over.verdicts));
 t('the refusal names the span limit',
   /at most 4/.test(JSON.stringify(over.verdicts)), JSON.stringify(over.verdicts));
@@ -179,16 +179,23 @@ const under = await run({ prose: PROSE, refs: ['prop:3:3'],
 t('four of the SAME five spans commits — the count was the only defect',
   under.committed.length === 1, JSON.stringify(under.verdicts));
 
-// 6e. A GENUINELY ABSENT PRECONDITION KEEPS THE STRONGER READING. The distinction must cut both
-//     ways: an empty value still says the condition was not on the page.
-const absent = await run({ prose: PROSE, refs: ['prop:3:3'],
-  evidence: [GOOD_EV], precondition: [''],
-  sharedPre: '', sharedExit: VERBATIM_EXIT,
-  occurred: true, sharedActor: 'The presiding Dohkar steps forward, voice cutting through the grass.', sharedAction: 'JULIAN: "This matter concerns me as well."' });
-t('an EMPTY precondition is still precondition_absent and still commits nothing',
-  absent.committed.length === 0
-  && absent.verdicts[0] && absent.verdicts[0].reason === 'precondition_absent',
-  JSON.stringify(absent.verdicts));
+// 6e. NO CITATION DEFECT ESTABLISHES ABSENCE. An empty value and a one-word value are each a
+//     verifier that did not answer — not an observation that the condition was missing from the
+//     scene. Both still commit nothing; neither may claim impossibility.
+for (const [label, val] of [['EMPTY', ''], ['one-word ("No")', 'No']]) {
+  const bad = await run({ prose: PROSE, refs: ['prop:3:3'],
+    evidence: [GOOD_EV], precondition: [val],
+    sharedPre: val, sharedExit: VERBATIM_EXIT,
+    occurred: true, sharedActor: 'The presiding Dohkar steps forward, voice cutting through the grass.', sharedAction: 'JULIAN: "This matter concerns me as well."' });
+  t('a ' + label + ' precondition commits nothing',
+    bad.committed.length === 0, JSON.stringify(bad.verdicts));
+  t('a ' + label + ' precondition is UNVERIFIED, not a claim of absence',
+    bad.verdicts[0] && bad.verdicts[0].reason === 'precondition_unverified',
+    JSON.stringify(bad.verdicts));
+  t('a ' + label + ' precondition never says the event could not have happened',
+    !/could not have happened|was not on the page|IMPOSSIBLE/i.test(JSON.stringify(bad.verdicts)),
+    JSON.stringify(bad.verdicts));
+}
 
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
