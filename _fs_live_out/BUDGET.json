@@ -1,6 +1,6 @@
 {
-  "receipted": 9.14216745,
-  "unresolved": 1.6200317400000004,
+  "receipted": 10.6360099,
+  "unresolved": 1.8663661,
   "outstanding": [],
   "runs": [
     {
@@ -106,7 +106,26 @@
       "run": "_fs_live_out/run_2026-10-12T02-16-25-745Z",
       "receipted": 0.9704135999999999,
       "unresolved": 0.11242422000000002
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-12T04-34-19-798Z",
+      "receipted": 1.2058237500000002,
+      "unresolved": 0.09245159999999998
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-12T15-18-50-132Z",
+      "receipted": 0.1894181,
+      "unresolved": 0.01319976,
+      "outstandingAtExit": 0
+    },
+    {
+      "run": "_ab_writing_out/run_2026-10-12T15-27-39-319Z (A/B author arms, out of band)",
+      "receipted": 0.09860060000000001,
+      "unresolved": 0.140683,
+      "outstandingAtExit": 0,
+      "note": "arm_B_reconciled receipted 0.0986006 (ticks 986006000 x 1e-10); arm_A_current returned HTTP 429 resource-exhausted from xAI with no receipt, so its 0.140683 reservation is RETAINED as unresolved exposure, not forgiven."
     }
   ],
-  "note": " RECONCILED 2026-10-05: $0.0210015 of outstanding reservations were dropped by a faulty final save and are restored here as unresolved exposure."
+  "authorization": null,
+  "note": " A/B author arms added 2026-10-12: the runner only accounted for the freeze stage; these two calls were dispatched out of band and are recorded here."
 }

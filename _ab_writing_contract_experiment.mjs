@@ -255,8 +255,13 @@ async function dispatch(label, body) {
   let parsed = {}; try { parsed = JSON.parse(txt); } catch (_) {}
   const ticks = parsed.usage && parsed.usage.cost_in_usd_ticks;
   let measured = 0, receipt = false, retainedEst = 0;
-  if (typeof ticks === 'number' && ticks > 0) { measured = ticks / 1e7; settled += measured; receipt = true; }
-  else { retained += est; retainedEst = est; }
+  // TICKS ARE 1e-10 USD. The first run of this script divided by 1e7 and reported arm B's
+  // $0.0986 receipt as $98.60 — a DISPLAY error only: both dispatches were gated by the
+  // pre-dispatch ESTIMATE, not by this figure, and no further call followed. Same conversion as
+  // _fs_live_sequence.mjs:1056 (`rec.ticks * 1e-10`), which is the authority here.
+  if (typeof ticks === 'number' && ticks > 0) {
+    measured = ticks * 1e-10; settled += measured; receipt = true;
+  } else { retained += est; retainedEst = est; }
   mark();
   const content = (((parsed.choices || [])[0] || {}).message || {}).content || '';
   write(label + '_response_raw.json', txt);
