@@ -675,6 +675,28 @@ await page.route('**/api/**', async (route) => {
     || callFunction(sys0ForIdentity) === 'OAS line-edit';
   const reqPreviewIdentity = _needsIdentity ? await capturePreviewIdentity(page) : null;
 
+  // ── A/B FREEZE HOOK (SB_AB_FREEZE, default off) ───────────────────────────────────────────
+  // Writes the FIRST scene-author request body to disk and REFUSES it, so the app never receives
+  // a scene and nothing enters accepted story history. _ab_writing_contract_experiment.mjs then
+  // dispatches that one frozen body twice, out of band, as arms A and B.
+  // Placed BEFORE the reservation on purpose: the refused call costs nothing, and the frozen body
+  // is identical to what this run would have sent.
+  if (process.env.SB_AB_FREEZE && callFunction(sys0ForIdentity) === 'scene author') {
+    try {
+      if (!fs.existsSync(process.env.SB_AB_FREEZE)) {
+        fs.writeFileSync(process.env.SB_AB_FREEZE, JSON.stringify({
+          url: req.url(), body: body, frozenAt: new Date().toISOString()
+        }, null, 2));
+        say('  [AB-FREEZE] the scene-author request was captured to ' + process.env.SB_AB_FREEZE
+          + ' and REFUSED — no scene is accepted into history');
+      } else {
+        say('  [AB-FREEZE] a frozen request already exists — refusing this author call too');
+      }
+    } catch (e) { say('  [AB-FREEZE] capture FAILED: ' + (e && e.message)); }
+    return route.fulfill({ status: 503, contentType: 'application/json',
+      body: JSON.stringify({ error: 'author call withheld by the A/B freeze hook' }) });
+  }
+
   // RESERVE ATOMICALLY, BEFORE THE REQUEST LEAVES.
   if (halted || exposure() + est > CEILING) {
     if (!halted) { halted = true;
