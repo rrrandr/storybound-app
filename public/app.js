@@ -101450,14 +101450,56 @@ function _buildAuthorFloorDirective(s) {
   // committed content comes from the sealed record by reference, and the only thing taken from the
   // verifier is a verdict plus a citation that is itself checked against the prose.
   // Is a verbatim-evidence value usable? Same threshold the slot check uses.
+  var _EVIDENCE_MAX_SPANS = 4;   // the contract's own bound, stated to the verifier in the prompt
   function _hasUsableEvidence(x) {
     if (typeof x === 'string') return x.trim().length > 3;
     // An array of spans is usable when it has at least one and every entry is a real quotation.
     if (Array.isArray(x)) {
-      return x.length > 0 && x.length <= 4
+      return x.length > 0 && x.length <= _EVIDENCE_MAX_SPANS
         && x.every(function (q) { return typeof q === 'string' && q.trim().length > 3; });
     }
     return false;
+  }
+  // ── WHY an evidence value is unusable — MISSING and OVER-LIMIT ARE NOT THE SAME FAILURE ─────
+  // (Live run 2026-10-11.) `_hasUsableEvidence` answers one question — may this be relied on —
+  // and every "no" looked identical downstream. Two of that run's six verifier replies returned
+  // DELIVERED with citation arrays of FIVE spans; the contract bounds them at four, so the arrays
+  // were rejected, logged as absent fields, and one was reported as proof the event "could not
+  // have happened". An oversized citation array establishes nothing of the kind: it is a reply
+  // that broke its format while still pointing at the prose.
+  //
+  // THIS CHANGES CLASSIFICATION AND REPORTING ONLY. Every value that was unusable before is still
+  // unusable, still blocks the commit, and is still never treated as satisfied. What changes is
+  // that the ENGINE now says which defect it saw, and stops upgrading a format violation into a
+  // claim about the story.
+  function _evidenceDefect(x) {
+    if (_hasUsableEvidence(x)) return null;
+    if (x == null) return 'missing';
+    if (typeof x === 'string') return x.trim() ? 'too_short' : 'missing';
+    if (Array.isArray(x)) {
+      if (x.length === 0) return 'missing';
+      if (x.length > _EVIDENCE_MAX_SPANS) return 'over_limit';
+      return 'malformed';
+    }
+    return 'malformed';
+  }
+  // One phrasing for every report site, so a format fault never reads as a finding about the scene.
+  function _evidenceDefectWhy(x) {
+    var d = _evidenceDefect(x);
+    if (!d) return '';
+    if (d === 'over_limit') {
+      return 'cites ' + (Array.isArray(x) ? x.length : '?') + ' passages but the contract permits at most '
+        + _EVIDENCE_MAX_SPANS + ' — UNVERIFIED (a format violation, NOT evidence the event is absent)';
+    }
+    if (d === 'malformed') return 'is not a usable list of quotations — UNVERIFIED (format violation, NOT evidence the event is absent)';
+    if (d === 'too_short') return 'is too short to be a quotation — UNVERIFIED';
+    return 'is absent';
+  }
+  // Does this defect support the stronger reading that the condition was NOT on the page?
+  // Only a genuinely ABSENT value does. Everything else is a broken reply.
+  function _evidenceDefectMeansAbsent(x) {
+    var d = _evidenceDefect(x);
+    return d === 'missing' || d === 'too_short';
   }
   // EVERY span must verify, independently, against the assessed prose. One span is the old rule.
   function _evidenceVerifies(x, prose) {
@@ -101521,10 +101563,24 @@ function _buildAuthorFloorDirective(s) {
         ? o.sharedSlots.precondition_evidence : null);
     if (preVal !== null) {
       if (!_hasUsableEvidence(preVal)) {
-        return { ref: pend.id, commit: false, status: 'DELIVERED', reason: reason || 'precondition_absent',
+        // NOTHING IS COMMITTED EITHER WAY. Only the account of WHY differs: a genuinely absent
+        // precondition supports "the event could not have happened"; a reply that cited five
+        // passages where four are allowed supports no such conclusion, and must not be recorded
+        // as one. (Live run 2026-10-11 did exactly that to a DELIVERED verdict.)
+        var _preAbsent = _evidenceDefectMeansAbsent(preVal);
+        // THE ENGINE'S CLASSIFICATION WINS HERE, not the model's self-report. The old rule was
+        // `reason || 'precondition_absent'`, and on this branch the model's own reason is almost
+        // always the string "delivered" — so a DOWNGRADED entry that committed nothing was filed
+        // under "delivered" and the real defect lived only in prose. Nothing reads this field for
+        // control flow (the decision is `commit:false`); it is the record of WHY.
+        return { ref: pend.id, commit: false, status: 'DELIVERED',
+          reason: (_preAbsent ? 'precondition_absent' : 'precondition_evidence_unusable'),
+          verifierStatedReason: reason || null,
           downgraded: true, preconditionSource: preSource,
-          why: ['DELIVERED but its precondition evidence (' + preSource + ') is empty or unusable — '
-            + 'the event could not have happened, so delivery is DOWNGRADED and nothing is committed'] };
+          evidenceDefect: _evidenceDefect(preVal),
+          why: ['DELIVERED but its precondition evidence (' + preSource + ') '
+            + _evidenceDefectWhy(preVal) + ' — delivery is DOWNGRADED and nothing is committed'
+            + (_preAbsent ? ', because the required condition was not on the page' : '')] };
       }
       if (!_evidenceVerifies(preVal, prose)) {
         return { ref: pend.id, commit: false, status: 'DELIVERED', reason: 'precondition_unverifiable',
@@ -102243,10 +102299,24 @@ function _buildAuthorFloorDirective(s) {
             var _pEv = _preReq ? _hasEv(_sk.precondition_evidence) : true;   // no precondition required → treated as met
             var _tReq = (_slots.target && String(_slots.target).toLowerCase().trim() !== 'none' && String(_slots.target).trim() !== '');   // impersonal event (target "none") requires no target evidence
             var _aEv = _hasEv(_sk.actor_evidence), _acEv = _hasEv(_sk.action_evidence), _tEv = _tReq ? _hasEv(_sk.target_evidence) : true, _eEv = _hasEv(_sk.exit_state_evidence);
-            var _impossible = _preReq && !_pEv;   // precondition absent from the scene → the planned event was IMPOSSIBLE (PLANNER error, not author's)
-            var _slotFail = (_impossible || !_eEv || !_aEv || !_acEv || !_tEv || _sk.occurred_this_scene === false);
+            // IMPOSSIBLE is a claim about the STORY — that the condition the event needed was not
+            // on the page. Only genuinely ABSENT precondition evidence supports it. A reply whose
+            // citation array broke the four-span bound is UNVERIFIED, and saying "the planned event
+            // was IMPOSSIBLE / PLANNER error" on that basis blames the planner for the verifier's
+            // formatting. (Live run 2026-10-11: two DELIVERED verdicts carried five-span arrays.)
+            var _preAbsentSk = _preReq && !_pEv && _evidenceDefectMeansAbsent(_sk.precondition_evidence);
+            var _impossible = _preAbsentSk;
+            var _slotFail = (_preReq && !_pEv) || !_eEv || !_aEv || !_acEv || !_tEv || _sk.occurred_this_scene === false;
             if (_slotFail && _delivery === 'DELIVERED') { _delivery = 'MISSED'; }
-            try { console.log('[SLOT-CHECK] scene=' + prevSceneNum + (_slotFail ? ' FAIL→MISSED' : ' PASS') + (_impossible ? ' [IMPOSSIBLE-EVENT: precondition absent = PLANNER error]' : '') + ' evidence[pre=' + (_pEv ? 'Y' : '—') + ' actor=' + (_aEv ? 'Y' : '—') + ' action=' + (_acEv ? 'Y' : '—') + ' target=' + (_tEv ? 'Y' : '—') + ' exit=' + (_eEv ? 'Y' : '—') + '] thisScene=' + _sk.occurred_this_scene); } catch (_) {}
+            // Each slot reports Y, its DEFECT, or — so an over-limit citation is never read as a
+            // field the verifier left out.
+            var _evMark = function (ok, raw) {
+              if (ok) return 'Y';
+              var d = _evidenceDefect(raw);
+              return (d === 'over_limit') ? ('OVER-LIMIT(' + (Array.isArray(raw) ? raw.length : '?') + ')')
+                : (d === 'malformed') ? 'MALFORMED' : '—';
+            };
+            try { console.log('[SLOT-CHECK] scene=' + prevSceneNum + (_slotFail ? ' FAIL→MISSED' : ' PASS') + (_impossible ? ' [IMPOSSIBLE-EVENT: precondition absent = PLANNER error]' : '') + ' evidence[pre=' + _evMark(_pEv, _sk.precondition_evidence) + ' actor=' + _evMark(_aEv, _sk.actor_evidence) + ' action=' + _evMark(_acEv, _sk.action_evidence) + ' target=' + _evMark(_tEv, _sk.target_evidence) + ' exit=' + _evMark(_eEv, _sk.exit_state_evidence) + '] thisScene=' + _sk.occurred_this_scene); } catch (_) {}
             try { console.log('[SLOT-EVIDENCE] scene=' + prevSceneNum + ' exit_ev="' + String(_sk.exit_state_evidence || '').slice(0, 80) + '"'); } catch (_) {}
           }
         }
@@ -233073,7 +233143,40 @@ No text, no watermark, no UI elements, share-ready.`;
     // max_tokens is a CEILING, not an instruction to fill it, so raising it conditionally is
     // cheaper than buying a second request.
     var _portfolioSubjectEligible = !!_pfRoster.eligible;   // the roster captured above sysPrompt
-    var _scaffoldMaxTok = _scaffoldVerbose ? Math.min(6000, 2500 + (_expectedIssueCount || 4) * 500) : 2000;
+    // ── THE ALLOWANCE FOLLOWS THE SCHEMA, NEVER THE MODEL'S IDENTITY ──────────────────────────
+    // MEASURED on the live run of 2026-10-11 (_fs_live_out/run_2026-10-12T02-16-25-745Z): the OLD
+    // rule gave this request 2,000 output tokens for the WHOLE schema whenever the serving model
+    // was not opus/grok/haiku. The spine ran on ministral-8b, so ALL FOURTEEN attempts of that run
+    // returned finish_reason "length" at EXACTLY 2,000 completion tokens, the JSON died mid-field
+    // (issue 1, scene 10, inside "changes"), and every one of the seven scenes was authored with NO
+    // SPINE AT ALL. The failure was invisible because it surfaced only as a JSON parse error.
+    //
+    // WHY A MODEL GATE WAS THE WRONG AXIS: the prompt demands EXACTLY _expectedIssueCount issueArcs,
+    // each carrying a scene-by-scene outline plus a cliffhanger. That cost is set by the SCHEMA the
+    // prompt asks for, not by which provider answers it. The old `verbose` formula also priced an
+    // issue at 500 tokens; the measurement says an issue of 10 rows costs ~1,750 (8,806 chars for
+    // one issue), so 2,500 + issues*500 would ALSO have truncated here. Both numbers below are the
+    // measured ones with headroom, and the per-issue figure is the one that matters.
+    //
+    // COST: max_tokens is a CEILING, not an instruction to fill it — output is billed on tokens
+    // actually produced, so a ceiling that fits the schema costs nothing extra on a reply that does
+    // not need it, and is far cheaper than a truncated reply that buys a second doomed request.
+    var _SPINE_TOK_BASE = 700;         // runThesis + motifBank + forbiddenDefaults + the JSON frame
+    var _SPINE_TOK_PER_ISSUE = 1900;   // 10 scene rows + cliffhanger, measured ~1,750 + headroom
+    var _SPINE_TOK_HARD_MAX = 12000;   // a bound that is LOGGED when it binds, never silent
+    var _spineIssues = (_expectedIssueCount || 4);
+    var _spineNeed = _SPINE_TOK_BASE + _spineIssues * _SPINE_TOK_PER_ISSUE;
+    var _scaffoldMaxTok = Math.min(_SPINE_TOK_HARD_MAX, _spineNeed);
+    if (_spineNeed > _SPINE_TOK_HARD_MAX) {
+      // SILENT CLAMPING IS WHAT CAUSED THE 14/14 TRUNCATION. If the schema genuinely needs more
+      // than the bound, say so: the reply WILL be truncated and the spine WILL be missing.
+      try { console.warn('[CG:SCAFFOLD] allowance CLAMPED — ' + _spineIssues + ' issue(s) need ~'
+        + _spineNeed + ' output tokens but the bound is ' + _SPINE_TOK_HARD_MAX
+        + '. Expect finish_reason "length" and NO spine. Raise the bound or shrink the schema.'); } catch (_) {}
+    }
+    try { console.log('[CG:SCAFFOLD] output allowance ' + _scaffoldMaxTok + ' tokens for '
+      + _spineIssues + ' issue(s) (schema-derived: ' + _SPINE_TOK_BASE + ' + ' + _spineIssues
+      + '×' + _SPINE_TOK_PER_ISSUE + '), model=' + (_genre && _genre.model)); } catch (_) {}
     if (_portfolioSubjectEligible) {
       _scaffoldMaxTok += PORTFOLIO_MAX_TOKENS;
       try { console.log('[CG:SCAFFOLD] portfolio subject present — ceiling ' + _scaffoldMaxTok
@@ -233724,6 +233827,25 @@ No text, no watermark, no UI elements, share-ready.`;
 
   async function _runEnsureCGScaffold(s) {
     if (!_shouldGenerateCGScaffold(s)) return (s && s.cgScaffold) || null;
+    // ── ONE FAILED SPINE PER TURN, NOT TWO ────────────────────────────────────────────────────
+    // The in-flight guard above (s._cgScaffoldPromise) shares a CONCURRENT generation, which is
+    // all it was built for. It cannot help a SEQUENTIAL repeat: when generation fails the catch
+    // below returns null, s.cgScaffold stays unset, and the NEXT consumer in the same turn enters
+    // here and dispatches the identical request again. The live run of 2026-10-11 paid for exactly
+    // that — 14 spine calls across 7 scenes, two per scene, every one truncated identically, the
+    // second never able to succeed where the first had just failed for a structural reason.
+    // A failure is remembered for the TURN it happened on, so a later turn still retries freely
+    // (a transient provider fault must not disable the spine for the rest of the run).
+    try {
+      var _failTurn = s && s._cgScaffoldFailure && s._cgScaffoldFailure.atTurn;
+      var _nowTurn = (s && s.turnCount != null) ? s.turnCount : null;
+      if (_failTurn != null && _nowTurn != null && _failTurn === _nowTurn) {
+        console.warn('[CG:SCAFFOLD] generation already FAILED this turn ('
+          + ((s._cgScaffoldFailure && s._cgScaffoldFailure.why) || 'unknown')
+          + ') — NOT re-dispatching the same request; the scene proceeds without a spine');
+        return null;
+      }
+    } catch (_) {}
     try {
       var _g = _cgScaffoldGenreFor(s);
       var _flavorLabel = (s.worldSubtype) || (s.picks && s.picks.flavor) || '?';
@@ -233795,6 +233917,14 @@ No text, no watermark, no UI elements, share-ready.`;
       return scaffold;
     } catch (e) {
       console.warn('[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold:', e && e.message);
+      // Remembered so a second consumer in the SAME turn does not pay for the identical request
+      // again (see the guard at the top of this function).
+      try {
+        if (s) s._cgScaffoldFailure = {
+          atTurn: (s.turnCount != null) ? s.turnCount : null,
+          why: (e && e.message) ? String(e.message).slice(0, 160) : 'unknown'
+        };
+      } catch (_) {}
       return null;
     }
   }

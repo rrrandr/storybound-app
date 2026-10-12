@@ -1,6 +1,6 @@
 {
-  "receipted": 8.17175385,
-  "unresolved": 1.5076075200000003,
+  "receipted": 9.14216745,
+  "unresolved": 1.6200317400000004,
   "outstanding": [],
   "runs": [
     {
@@ -101,6 +101,11 @@
       "receipted": 0.01838785,
       "unresolved": 0,
       "note": "ministral-8b-2512 $0.011199 (67,016 in + 7,647 out @ $0.15/M) and ministral-3b-2512 $0.007188 (67,016 in + 4,868 out @ $0.10/M), computed from the providers reported usage at list price - the Mistral proxy returns no cost ticks"
+    },
+    {
+      "run": "_fs_live_out/run_2026-10-12T02-16-25-745Z",
+      "receipted": 0.9704135999999999,
+      "unresolved": 0.11242422000000002
     }
   ],
   "note": " RECONCILED 2026-10-05: $0.0210015 of outstanding reservations were dropped by a faulty final save and are restored here as unresolved exposure."

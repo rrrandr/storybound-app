@@ -136,6 +136,60 @@ const fake = await run({ prose: PROSE, refs: ['prop:3:3'],
 t('an invented quote found nowhere in the prose is still refused',
   fake.committed.length === 0, JSON.stringify(fake.verdicts));
 
+// ── 6. OVER-LIMIT CITATION IS A FORMAT FAULT, NOT PROOF THE EVENT DID NOT HAPPEN ────────────
+// From the live run of 2026-10-11 (run_2026-10-12T02-16-25-745Z, verifier replies 047 and 077):
+// the model returned DELIVERED with per_proposal citation arrays of FIVE spans. The contract
+// permits four. Both were rejected — correctly, nothing should commit on a reply that broke its
+// format — but the engine recorded the rejection as "the event could not have happened", and the
+// slot log printed the field as though the verifier had omitted it.
+//
+// THE COUNT IS THE ONLY DIFFERENCE. Every span below is verbatim prose; 6d runs the SAME call with
+// four of the same five spans and commits. That is what makes this control bite: if the rejection
+// came from the content rather than the count, 6d would fail too.
+const FIVE_VERBATIM = [
+  "The clearing holds its breath around the Dohkar's crimson robes.",
+  'The presiding Dohkar steps forward, voice cutting through the grass.',
+  'The words land like a hand on my shoulder.',
+  'Julian moves before the words finish settling.',
+  'JULIAN: "This matter concerns me as well."'
+];
+const FOUR_VERBATIM = FIVE_VERBATIM.slice(0, 4);
+const GOOD_EV = 'Julian moves before the words finish settling.';
+
+const over = await run({ prose: PROSE, refs: ['prop:3:3'],
+  evidence: [GOOD_EV], precondition: [FIVE_VERBATIM],
+  sharedPre: VERBATIM_EXIT, sharedExit: VERBATIM_EXIT,
+  occurred: true, sharedActor: 'The presiding Dohkar steps forward, voice cutting through the grass.', sharedAction: 'JULIAN: "This matter concerns me as well."' });
+console.log('      5 verbatim spans -> ' + JSON.stringify(over.verdicts));
+t('a 5-span precondition array still commits NOTHING (validation preserved)',
+  over.committed.length === 0, JSON.stringify(over));
+t('it is reported as precondition_evidence_unusable, NOT precondition_absent',
+  over.verdicts[0] && over.verdicts[0].reason === 'precondition_evidence_unusable',
+  JSON.stringify(over.verdicts));
+t('the refusal names the span limit',
+  /at most 4/.test(JSON.stringify(over.verdicts)), JSON.stringify(over.verdicts));
+t('and it does NOT claim the event could not have happened',
+  !/could not have happened/.test(JSON.stringify(over.verdicts)), JSON.stringify(over.verdicts));
+
+// 6d. THE SAME SPANS, WITHIN THE LIMIT -> commits. Proves the count was the whole cause.
+const under = await run({ prose: PROSE, refs: ['prop:3:3'],
+  evidence: [GOOD_EV], precondition: [FOUR_VERBATIM],
+  sharedPre: VERBATIM_EXIT, sharedExit: VERBATIM_EXIT,
+  occurred: true, sharedActor: 'The presiding Dohkar steps forward, voice cutting through the grass.', sharedAction: 'JULIAN: "This matter concerns me as well."' });
+t('four of the SAME five spans commits — the count was the only defect',
+  under.committed.length === 1, JSON.stringify(under.verdicts));
+
+// 6e. A GENUINELY ABSENT PRECONDITION KEEPS THE STRONGER READING. The distinction must cut both
+//     ways: an empty value still says the condition was not on the page.
+const absent = await run({ prose: PROSE, refs: ['prop:3:3'],
+  evidence: [GOOD_EV], precondition: [''],
+  sharedPre: '', sharedExit: VERBATIM_EXIT,
+  occurred: true, sharedActor: 'The presiding Dohkar steps forward, voice cutting through the grass.', sharedAction: 'JULIAN: "This matter concerns me as well."' });
+t('an EMPTY precondition is still precondition_absent and still commits nothing',
+  absent.committed.length === 0
+  && absent.verdicts[0] && absent.verdicts[0].reason === 'precondition_absent',
+  JSON.stringify(absent.verdicts));
+
 await browser.close();
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 process.exit(fail ? 1 : 0);
