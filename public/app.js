@@ -102330,16 +102330,23 @@ function _buildAuthorFloorDirective(s) {
         // COST: the ordinary reply is unchanged (both watch arrays empty). The REQUEST grows by the
         // contract text plus the watch lists, ~950 tokens; on ministral-8b at $0.15/M that is
         // ~$0.00014 per scene, and a pessimistic reply adds ~$0.00009 of output. ~0.02c per scene.
-        // 1750 → 3200 (2026-10-12). The watch-evidence instruction was just reconciled to the
-        // engine's own rule, which accepts an ARRAY OF UP TO 4 spans per entry; the budget was
-        // still sized for ONE quotation per entry. Measured in _verifier_contract_preflight.mjs:
-        // a compliant worst case is ~1,310 tokens at one span per entry and ~2,245 at four, so
-        // 1750 did not cover the contract it was now asking for — the same truncation risk this
-        // whole repair exists to remove. 25% headroom over ~2,245 needs ~2,993.
-        // NOTHING IS WEAKENED TO FIT: evidence validation is unchanged, the watch arrays keep
-        // their 4-and-3 entry bounds, and no assessment is silently dropped. The ceiling costs
-        // nothing on an ordinary reply, where both watch arrays come back empty.
-        ], { max_tokens: 3200, temperature: 0.1 });
+        // 1750 → 4800 (2026-10-12), in two corrected steps.
+        // The contract permits "an ARRAY of up to 4" spans in EVERY evidence field: both
+        // per_proposal fields, all five slots_check fields, and each watch entry. The budget was
+        // sized for ONE quotation per field. _verifier_contract_preflight.mjs measures the
+        // COMPLETE permitted shape at the fixture's quotation lengths:
+        //     one span everywhere                      ~1,310 tokens
+        //     four spans in the watch entries only     ~2,245   (my first, incomplete fix)
+        //     four spans in EVERY permitted field      ~3,575   (the shape actually allowed)
+        // 1750 and then 3200 both sat under that, which is the truncation risk this repair exists
+        // to remove. 4800 carries ~25% margin over ~3,575.
+        // THIS IS AN APPROXIMATION, NOT A PROVEN WORST CASE. Quotation text is not length-bounded
+        // by the contract — only the span COUNT is — so the preflight measures a representative
+        // full-shape reply with a chars÷4 estimator, not a mathematical maximum.
+        // NOTHING IS WEAKENED TO FIT: evidence validation is unchanged, the span limit and the
+        // 4-and-3 watch entry bounds stand, and no assessment is dropped to make room. The ceiling
+        // costs nothing on an ordinary reply, where both watch arrays come back empty.
+        ], { max_tokens: 4800, temperature: 0.1 });
         // 280 was set BEFORE per_proposal existed. Run 15 measured finish_reason "length" at
         // exactly 280 completion tokens with the reply cut mid-'"tableau": {', so a correct
         // per-proposal verdict became unparseable JSON.

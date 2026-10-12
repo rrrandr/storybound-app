@@ -66,14 +66,25 @@ could not have happened".
 - **Nothing is weakened**: every value unusable before is still unusable and still commits nothing.
 
 ### The verifier's reply budget now covers the contract it asks for
-Reconciling the watch-evidence instruction to the engine's rule (arrays of up to 4 spans) made the
-reply bigger than the budget sized for ONE quotation per entry. Measured in
-`_verifier_contract_preflight.mjs`: ~1,310 tokens at one span per entry, ~**2,245** at four, against
-a configured **1,750** — over the ceiling before any headroom, which recreates the truncation risk
-this repair exists to remove. `max_tokens` is now **3,200** (~30% headroom over 2,245). The old
-29/31 pass did **not** establish capacity for the revised contract, because its fixture still sent
-one span per entry; the fixture now sends four. Evidence validation is unchanged, the 4-and-3 entry
-bounds stand, and no assessment is dropped to make room.
+The contract permits "an ARRAY of up to 4" spans in **every** evidence field: both `per_proposal`
+fields, all five `slots_check` fields, and each watch entry. The budget was sized for ONE quotation
+per field, and the preflight fixture sent one, so its pass measured a reply the contract does not
+describe. This took **two** corrections, because my first fix expanded only the watch entries:
+
+| constructed reply | ≈ tokens |
+|---|---:|
+| one span everywhere (original fixture) | 1,310 |
+| four spans in the watch entries only (my incomplete fix) | 2,245 |
+| four spans in every permitted field (the shape actually allowed) | **3,575** |
+
+`max_tokens` went 1,750 → 3,200 → **4,800**, which carries ~25% margin over 3,575. Neither the
+original 29/29 nor the intermediate 31/31 established capacity for the permitted shape.
+
+**The figure is an approximation, not a proven worst case.** The contract bounds the span COUNT and
+the watch entries' 160 chars, but puts no length limit on `per_proposal` or `slots_check`
+quotations, so there is no finite maximum to compute; the preflight measures a representative
+full-shape reply with a chars÷4 estimator. Evidence validation, the span limit and the 4-and-3
+watch bounds are all unchanged, and no assessment is dropped to make room.
 
 ### Contract cleanup
 - The watch-evidence instructions contradicted themselves and the engine: the two schemas offered

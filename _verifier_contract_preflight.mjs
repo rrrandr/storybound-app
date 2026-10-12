@@ -90,10 +90,10 @@ console.log('   configured max_tokens: ' + MAX_TOKENS);
 // The upper end moved from 1000 to 2400 when the contract was expanded with the milestone and
 // prerequisite watch (Roman 2026-10-11). It is still a FIXED bound, and the headroom check below
 // is what actually constrains it — not this range.
-// Upper end moved 1900 → 3600 when the watch-evidence instruction was reconciled to permit the
-// 4-span arrays the engine already accepted. The headroom check below is what constrains it.
+// Upper end moved 1900 → 5200 once the fixture exercised 4-span arrays in EVERY field that permits
+// them, not just the watch entries. The headroom check below is what actually constrains it.
 t('max_tokens is a fixed bound, and large enough for the guard fields',
-  MAX_TOKENS >= 600 && MAX_TOKENS <= 3600, 'max_tokens=' + MAX_TOKENS);
+  MAX_TOKENS >= 600 && MAX_TOKENS <= 5200, 'max_tokens=' + MAX_TOKENS);
 t('  it exceeds the originally-stated 600-700 — recorded as a deviation',
   MAX_TOKENS > 700, 'max_tokens=' + MAX_TOKENS + ' (deliberate; see the comment at the call site)');
 
@@ -101,21 +101,33 @@ t('  it exceeds the originally-stated 600-700 — recorded as a deviation',
 // long evidence in every slot, plus both position metrics and actual_exit_state.
 const LONG = 'The Toll Road Commission received a formal demand to investigate the burning, entered '
   + 'in the book in a hand that did not shake, and the clerk did not look up as he took it from her.';
+// The contract's own span limit, at the fixture's existing quotation length. Used in EVERY field
+// that permits an array, which is all of them: per_proposal.evidence,
+// per_proposal.precondition_evidence, and the five slots_check fields, as well as the watch entries.
+const SPANS = [1, 2, 3, 4].map(function () { return LONG; });
 const WORST = {
   delivery: 'DELIVERED',
   transition_position: 42,
   first_irreversible_position: 42,
-  // Each entry now carries its OWN precondition_evidence and a reason, per the guard added after
-  // run 17. Both are long here, which is the pessimistic case for the budget.
+  // Each entry carries its OWN precondition_evidence and a reason, per the guard added after
+  // run 17.
+  //
+  // FOUR SPANS EVERYWHERE THE CONTRACT PERMITS THEM (corrected 2026-10-12, second pass). The
+  // previous fixture expanded only the WATCH entries, and so did the 2,245-token figure it was
+  // reconciled against. But per_proposal.evidence, per_proposal.precondition_evidence and all
+  // FIVE slots_check fields each accept "an ARRAY of up to 4" as well — the same rule, stated in
+  // the same contract and enforced by the same _hasUsableEvidence. Measuring one span in those
+  // places while the model may legitimately send four is the identical mistake one level down:
+  // the test passes on a reply the contract does not describe.
   per_proposal: [
-    { ref: 'prop:1234:1', delivery: 'DELIVERED', evidence: LONG,
-      precondition_evidence: LONG, reason: 'delivered' },
-    { ref: 'prop:1234:2', delivery: 'DELIVERED', evidence: LONG,
-      precondition_evidence: LONG, reason: 'delivered' }
+    { ref: 'prop:1234:1', delivery: 'DELIVERED', evidence: SPANS,
+      precondition_evidence: SPANS, reason: 'delivered' },
+    { ref: 'prop:1234:2', delivery: 'DELIVERED', evidence: SPANS,
+      precondition_evidence: SPANS, reason: 'delivered' }
   ],
   slots_check: {
-    precondition_evidence: LONG, actor_evidence: LONG, action_evidence: LONG,
-    target_evidence: LONG, exit_state_evidence: LONG, occurred_this_scene: true
+    precondition_evidence: SPANS, actor_evidence: SPANS, action_evidence: SPANS,
+    target_evidence: SPANS, exit_state_evidence: SPANS, occurred_this_scene: true
   },
   actual_exit_state: 'the sealed demand now sits in the commission\'s possession',
   // ── THE EXPANDED CONTRACT (Roman 2026-10-11) ──
@@ -145,13 +157,22 @@ const WORST = {
 };
 const worstJson = JSON.stringify(WORST, null, 2);
 // The app's own estimator: 4.0 chars/token (see _fsc_cost_guard.mjs).
+//
+// WHAT THIS NUMBER IS. An APPROXIMATION of the COMPLETE PERMITTED SHAPE at representative
+// quotation lengths — every field that may hold an array holding four, and the watch arrays at
+// their 4-and-3 entry bounds. It is NOT a mathematical worst case: the contract bounds the span
+// COUNT and the watch entries' 160 chars, but places no length limit on per_proposal or
+// slots_check quotations, so no finite maximum exists to compute. A reply quoting far longer
+// passages can still exceed this.
 const estTokens = Math.ceil(worstJson.length / 4);
-console.log('   worst-case reply: ' + worstJson.length + ' chars ≈ ' + estTokens + ' tokens'
-  + '  (includes ' + WORST.milestone_watch.length + ' milestone + ' + WORST.prereq_watch.length + ' prerequisite entries)');
-t('the worst case fits inside max_tokens', estTokens < MAX_TOKENS,
+console.log('   complete permitted shape (APPROXIMATE, representative lengths): '
+  + worstJson.length + ' chars ≈ ' + estTokens + ' tokens'
+  + '  (4 spans in every array-permitting field; '
+  + WORST.milestone_watch.length + ' milestone + ' + WORST.prereq_watch.length + ' prerequisite entries)');
+t('the complete permitted shape fits inside max_tokens', estTokens < MAX_TOKENS,
   estTokens + ' tokens vs max_tokens ' + MAX_TOKENS);
-t('  with at least 25% headroom', estTokens < MAX_TOKENS * 0.75,
-  'headroom=' + Math.round((1 - estTokens / MAX_TOKENS) * 100) + '%');
+t('  with at least 25% margin', estTokens < MAX_TOKENS * 0.75,
+  'margin=' + Math.round((1 - estTokens / MAX_TOKENS) * 100) + '%');
 // And the shape that FAILED: run 15's reply, with tableau and dominant_replacement restored.
 const WITH_LEGACY = Object.assign({}, WORST, {
   dominant_replacement: 'relationship_dialogue',
