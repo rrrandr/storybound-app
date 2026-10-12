@@ -138,9 +138,19 @@ for (const mode of ['cg', 'literary']) {
       + ' chars ≈ ' + estTokens + ' tok · needs ' + needed + ' with headroom · allowance '
       + allow.tokens + (allow.clamped ? ' [CLAMPED at ' + tiers.tok.hardMax + ']' : ''));
     if (allow.clamped) {
-      unservable.push(mode + '/' + tier + ' (needs ' + needed + ', bound ' + tiers.tok.hardMax + ')');
+      // PRECISION MATTERS HERE. `needed` INCLUDES the 25% margin. A clamp therefore means the
+      // allowance no longer carries the intended MARGIN — not that the response cannot fit. Those
+      // are different findings, and conflating them was my error: it would argue for per-issue
+      // generation on evidence that only shows a thin margin.
+      const fitsUnpadded = estTokens < tiers.tok.hardMax;
+      unservable.push(mode + '/' + tier + ': constructed reply ≈' + estTokens
+        + ' tok (fits the ' + tiers.tok.hardMax + ' bound' + (fitsUnpadded ? '' : ' — DOES NOT FIT')
+        + '), but ' + needed + ' with the 25% margin exceeds it — margin ≈'
+        + Math.round((1 - estTokens / allow.tokens) * 100) + '% instead of 25%');
       t('a CLAMPED ' + mode + '/' + tier + ' is reported as clamped, never silently accepted',
         allow.clamped === true && allow.need > allow.tokens, JSON.stringify(allow));
+      t('  and the constructed ' + mode + '/' + tier + ' reply still fits the bound itself',
+        fitsUnpadded, 'est ' + estTokens + ' vs bound ' + tiers.tok.hardMax);
     } else {
       t('a COMPLETE ' + mode + '/' + tier + ' reply fits the allowance', allow.tokens >= needed,
         'needs ' + needed + ', allowance ' + allow.tokens);
@@ -162,11 +172,12 @@ for (const mode of ['cg', 'literary']) {
 
 await browser.close();
 if (unservable.length) {
-  console.log('\n  OPEN FINDING — the COMPLETE contract exceeds the single-reply bound for:');
+  console.log('\n  OPEN FINDING — REDUCED MARGIN, not an unservable contract:');
   unservable.forEach((u) => console.log('    · ' + u));
-  console.log('  The allowance formula cannot fix this: one reply cannot carry every issue\'s full'
-    + '\n  outline at these sizes. Either the spine is generated PER ISSUE, or the per-row contract'
-    + '\n  sheds optional blocks. Production warns at request time when this binds.');
+  console.log('  The constructed reply fits the bound; what does not fit is the 25% safety margin'
+    + '\n  the other tiers get. This is a thinner cushion against a verbose reply, NOT proof that one'
+    + '\n  response cannot hold the outline, and NOT on its own a reason to generate per issue.'
+    + '\n  Production warns at request time when the clamp binds.');
 }
 console.log('\n' + pass + '/' + (pass + fail) + ' checks passed');
 process.exit(fail ? 1 : 0);

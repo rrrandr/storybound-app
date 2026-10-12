@@ -61,8 +61,16 @@ console.log('\n   and the per-proposal guard fields are REQUESTED');
 t('each entry is asked for its own precondition_evidence',
   /"precondition_evidence": "<a VERBATIM substring of the SCENE PROSE showing the/.test(SRC));
 t('  with the downgrade rule stated to the model',
-  /whose "precondition_evidence" is empty is DOWNGRADED/.test(SRC)
-  && /cannot have happened/.test(SRC));
+  /"precondition_evidence" is empty, unusable, or over the/.test(SRC)
+  && /is DOWNGRADED and commits nothing/.test(SRC));
+// The instruction must not re-assert the inference the code path abandoned: an unsupported
+// precondition is UNVERIFIED, not a finding that the participants were never present.
+t('  and the instruction does NOT equate missing support with absence',
+  /be VERIFIED/.test(SRC)
+  && /NOT a finding that the required people or/.test(SRC)
+  && /If you believe they genuinely were absent, say so/.test(SRC));
+t('  the old "participants were never on the page" inference is GONE',
+  !/required participants were never on the page cannot have happened/.test(SRC));
 t('each entry is asked for a reason naming the cause',
   /"reason": "delivered" \| "precondition_absent" \| "incomplete_rendering" \|/.test(SRC)
   && /"inconsistent"/.test(SRC));
@@ -82,8 +90,10 @@ console.log('   configured max_tokens: ' + MAX_TOKENS);
 // The upper end moved from 1000 to 2400 when the contract was expanded with the milestone and
 // prerequisite watch (Roman 2026-10-11). It is still a FIXED bound, and the headroom check below
 // is what actually constrains it — not this range.
+// Upper end moved 1900 → 3600 when the watch-evidence instruction was reconciled to permit the
+// 4-span arrays the engine already accepted. The headroom check below is what constrains it.
 t('max_tokens is a fixed bound, and large enough for the guard fields',
-  MAX_TOKENS >= 600 && MAX_TOKENS <= 1900, 'max_tokens=' + MAX_TOKENS);
+  MAX_TOKENS >= 600 && MAX_TOKENS <= 3600, 'max_tokens=' + MAX_TOKENS);
 t('  it exceeds the originally-stated 600-700 — recorded as a deviation',
   MAX_TOKENS > 700, 'max_tokens=' + MAX_TOKENS + ' (deliberate; see the comment at the call site)');
 
@@ -114,15 +124,22 @@ const WORST = {
   // "every watched item" but "every watched item the model has something to say about" — taken
   // here as ALL of them, with long quotations, which is the worst a compliant reply can be.
   // The contract bounds the REPLY to at most 4 milestone and 3 prerequisite entries, and bounds
-  // each entry: ONE quotation of at most 160 chars, bare names, and a scope of at most 80. The
-  // pessimistic case is measured at exactly those limits.
+  // each entry: a quotation of at most 160 chars, bare names, and a scope of at most 80.
+  //
+  // FOUR SPANS PER ENTRY, NOT ONE (corrected 2026-10-12). This fixture used to send a single
+  // quotation per watch entry while the contract — reconciled to the engine's own _evOk, which
+  // accepts up to 4 — permits an ARRAY of four. So the test was measuring a reply the contract no
+  // longer describes, and its PASS said nothing about the capacity actually being asked for. The
+  // pessimistic case is now measured at exactly the permitted limits: 4 spans × 160 chars.
   milestone_watch: [1, 2, 3, 4].map(function (i) {
-    return { n: 10 + i, status: 'delivered_on_page', evidence: LONG.slice(0, 160),
+    return { n: 10 + i, status: 'delivered_on_page',
+             evidence: [1, 2, 3, 4].map(function () { return LONG.slice(0, 160); }),
              participants: ['Julian', 'the presiding Dohkar'],
              scope: 'the Chayr, two Dohkars and the assembled First Favored present at the rite'.slice(0, 80) };
   }),
   prereq_watch: [1, 2, 3].map(function (i) {
-    return { id: 'prereq:some_named_condition_' + i, status: 'invalidated_on_page', evidence: LONG.slice(0, 160),
+    return { id: 'prereq:some_named_condition_' + i, status: 'invalidated_on_page',
+             evidence: [1, 2, 3, 4].map(function () { return LONG.slice(0, 160); }),
              participants: ['Julian'], scope: 'the whole assembly and the seated panel'.slice(0, 80) };
   })
 };

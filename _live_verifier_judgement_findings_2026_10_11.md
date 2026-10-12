@@ -65,6 +65,16 @@ could not have happened".
   support it; NOT a finding that it was absent".
 - **Nothing is weakened**: every value unusable before is still unusable and still commits nothing.
 
+### The verifier's reply budget now covers the contract it asks for
+Reconciling the watch-evidence instruction to the engine's rule (arrays of up to 4 spans) made the
+reply bigger than the budget sized for ONE quotation per entry. Measured in
+`_verifier_contract_preflight.mjs`: ~1,310 tokens at one span per entry, ~**2,245** at four, against
+a configured **1,750** — over the ceiling before any headroom, which recreates the truncation risk
+this repair exists to remove. `max_tokens` is now **3,200** (~30% headroom over 2,245). The old
+29/31 pass did **not** establish capacity for the revised contract, because its fixture still sent
+one span per entry; the fixture now sends four. Evidence validation is unchanged, the 4-and-3 entry
+bounds stand, and no assessment is dropped to make room.
+
 ### Contract cleanup
 - The watch-evidence instructions contradicted themselves and the engine: the two schemas offered
   "an ARRAY of up to 4 such substrings" while a later line said "never an array, never several
@@ -78,10 +88,17 @@ could not have happened".
   means staged beats rather than novelistic interiority, and explicitly **not** a thin scene. Both
   failure directions are named: literary prose cut into beats, and an outline rendered as captions.
 - **Scene Scaffold.** A development must **change what is possible next**; `therefore`/`but`
-  describe a causal relation and do not create one. **Restatement is not development** — the
-  measured failure, with the four real restatements quoted from the run. The requested count is a
-  consequence of a developed encounter, not a quota to fill. No word-count or keyword gate was
-  added; player ownership of the unresolved choice is preserved.
+  describe a causal relation and do not create one. **Restatement is not development**, stated
+  structurally: naming the same standing condition at higher intensity, as a symbol, or as
+  something felt more acutely is the same condition again, and each entry is tested against the
+  STATE of the scene rather than against the wording of the entry before it. The requested count is
+  a consequence of a developed encounter, not a quota. No word-count or keyword gate was added;
+  player ownership of the unresolved choice is preserved.
+- **No exemplars, no debugging history in either prompt.** My first version of the restatement rule
+  quoted four of the run's bad lines and offered three substitute scene events, and stamped the
+  instruction with the failure's date. Concrete exemplars leak — that is a standing finding here,
+  not a hypothesis — so the rule is now purely structural. Verified absent from the intercepted
+  request: the quoted lines, the substitute events, and every date.
 
 Both new blocks were verified present in the **intercepted outgoing requests**
 (`_audit_out/outline_v2/REAL_cg_scaffold_request.txt`, `REAL_cg_author_request.txt`), not only in
@@ -101,10 +118,12 @@ supports the verdict.** Accepted, and two planned rows went to `overturned` for 
 Not patched: a verbatim citation proves the quotation exists, not that the conclusion follows, and a
 keyword test would swap one unreliable judgement for another.
 
-**2. The complete contract does not fit one reply at the largest tier.** `literary/soulmates`
-(5 issues × 20 rows) needs ~33,025 tokens against a 32,000 bound. The allowance formula cannot fix
-this; either the spine is generated **per issue** or the per-row contract sheds optional blocks.
-Reported by the preflight and warned about in production at request time.
+**2. One tier runs on a thinner margin (corrected).** I first reported that `literary/soulmates`
+(5 issues × 20 rows) "does not fit one reply" and argued for per-issue generation. That was wrong:
+the 33,025 figure **includes the 25% margin**. The constructed complete reply is ≈**26,420 tokens**,
+which fits the 32,000 bound; what does not fit is the margin, leaving ≈17% instead of 25%. So this
+tier has a thinner cushion against a verbose reply, and **nothing here argues for per-issue
+generation.** Production's clamp warning says exactly that rather than predicting truncation.
 
 **3. Scene length and the screenplay framing.** Seven scenes at ~161/214/209/171/209/208/189 words
 (~194 average, speaker labels included). The author produced ~16.9 KB of JSON per scene of which
@@ -126,8 +145,8 @@ report UNAVAILABLE and commit nothing; pre-existing ANCHOR DRIFT in
 | control | result |
 |---|---|
 | `_evidence_path_control` | 23/23 (was 12/12) |
-| `_spine_contract_preflight` | 11/11 (new) |
-| `_verifier_contract_preflight` | 29/29 |
+| `_spine_contract_preflight` | 12/12 (new) |
+| `_verifier_contract_preflight` | 31/31 (was 29/29 on a one-span fixture) |
 | `_history_chain_control` | 194/194 |
 | `_two_turn_ownership_control` | 15/15 |
 | `_commit_replay_control` | 15/15 |
