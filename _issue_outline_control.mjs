@@ -93,7 +93,7 @@ await page.route('**/api/**', async (route) => {
   }
   return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._resolveIssueOutline === 'function', { timeout: 30000 });
 
 const setup = (sceneNum) => page.evaluate((n) => {

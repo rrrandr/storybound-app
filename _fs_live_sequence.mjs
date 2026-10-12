@@ -1220,7 +1220,13 @@ await page.route('**/sb-test.localhost/**', async (r) => {
   }
   try { await r.fallback(); } catch (_) {}
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+// ORIGIN IS NOT ASSUMED. The dev server is not always on 3000 — on 2026-10-12 a second instance
+// held 3000 while serving a function layer whose @vercel/node builder had failed to install, so
+// every /api/* call there answered 502 while static files served normally. A paid run pointed at
+// that instance would have spent its authorization on local failures. Default unchanged.
+const SB_ORIGIN = process.env.SB_ORIGIN || 'http://localhost:3000';
+say('origin: ' + SB_ORIGIN + (process.env.SB_ORIGIN ? ' (SB_ORIGIN)' : ' (default)'));
+await page.goto(SB_ORIGIN + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._advanceStagedScene === 'function', { timeout: 30000 });
 say('app loaded\n');
 write('PLAN.md', '# FS live sequence\n\nCeiling $3.00, authorized 2026-10-04.\n'
@@ -3190,7 +3196,15 @@ try {
     //           This is the test scope and is entirely within the runner's knowledge.
     // CLAIM B — THE PRODUCTION ISSUE BOUNDARY: the app's own counter agrees the issue is done.
     //           This is the app's claim, and it is asserted, not merely logged.
-    const corpusOk = endState.tenthAccepted && endState.cgScenes === 9;
+    // THE CLAIM FOLLOWS THE REQUESTED SCOPE, NOT A FIXED TEN (corrected 2026-10-12).
+    // This was `endState.cgScenes === 9`, i.e. scenes 2-10 hardcoded. An authorized run of
+    // SB_LAST_SCENE=8 therefore reported "FAILED — the requested ten-scene corpus was not
+    // generated" for producing exactly what was asked of it, and the response to that was to
+    // extend the next run to ten scenes to satisfy the assertion. That is the harness dictating
+    // scope to the person paying for it. The requested scope is SB_LAST_SCENE; story scene 1 is
+    // the fixed opening and generates nothing, so the expected record count is LAST_SCENE - 1.
+    const expectedRecords = LAST_SCENE - 1;
+    const corpusOk = endState.tenthAccepted && endState.cgScenes === expectedRecords;
     // The fixed opening is story scene 1 and generates nothing, so a complete ten-scene issue
     // leaves nine generated records. Production's own position must therefore read
     // scenesPerIssue - 1 if (and only if) its counter excludes the opening the same way.
@@ -3199,14 +3213,23 @@ try {
     // Production's own predicate is _isLastSceneOfIssue(): _getSceneInIssue() === scenesPerIssue.
     // Nothing else passes.
     const boundaryOk = (endState.isLastSceneOfIssue === true);
-    const boundaryAgrees = boundaryOk;
     const expectedPos = endState.scenesPerIssue;
+    // CLAIM B is only MEANINGFUL when the requested scope actually reaches the issue's last
+    // scene. A run deliberately stopping short has not failed to reach a boundary it was never
+    // asked to reach, and asserting it would be the same scope error as CLAIM A's.
+    const boundaryInScope = (LAST_SCENE >= endState.scenesPerIssue);
+    const boundaryAgrees = boundaryInScope ? boundaryOk : true;
 
-    say('  CLAIM A — requested ten-scene corpus (fixed opening + generated 2-10): '
+    say('  CLAIM A — requested ' + LAST_SCENE + '-scene corpus (fixed opening + generated 2-'
+      + LAST_SCENE + '): '
       + (corpusOk ? 'GENERATED' : 'NOT GENERATED')
-      + '  (' + endState.cgScenes + ' generated records, scene ' + LAST_SCENE
+      + '  (' + endState.cgScenes + ' generated records, expected ' + expectedRecords
+      + ', scene ' + LAST_SCENE
       + ' projection ' + (endState.tenthAccepted ? 'accepted' : 'MISSING') + ')');
-    say('  CLAIM B — production recognizes issue completion: ' + (boundaryOk ? 'YES' : 'NO')
+    say('  CLAIM B — production recognizes issue completion: '
+      + (boundaryInScope ? (boundaryOk ? 'YES' : 'NO')
+          : 'NOT IN SCOPE (this run requested scene ' + LAST_SCENE + ' of an issue of '
+            + endState.scenesPerIssue + '; the boundary was never asked for)')
       + '  (_isLastSceneOfIssue()=' + endState.isLastSceneOfIssue
       + '; position ' + endState.sceneInIssue + ' of ' + endState.scenesPerIssue
       + ' — production requires exactly ' + expectedPos + ')');

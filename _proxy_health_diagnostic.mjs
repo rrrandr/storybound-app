@@ -23,7 +23,7 @@ let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  FAIL ' + n + (d ? '  — ' + d : '')); } };
 
-const ORIGIN = 'http://localhost:3000';
+const ORIGIN = process.env.SB_ORIGIN || 'http://localhost:3000';
 const ENDPOINT = ORIGIN + '/api/proxy';
 const DEV_LOG = '_vercel_dev.log';
 // The exact body run 9 sent, loaded from the artefact so the shape and size are the real ones.

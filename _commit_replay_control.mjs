@@ -62,7 +62,7 @@ await page.route('**/api/**', async (route) => {
   }
   return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._commitScene === 'function'
   && typeof window._sealProposal === 'function', { timeout: 30000 });
 t('the shipped window._commitScene and window._sealProposal are present', true);
@@ -144,12 +144,12 @@ await page.evaluate(async () => {
   try { await window._generateLiteraryPlotContract('', '', null, null); } catch (_) {}
 });
 const committedLine = (r) => {
-  const m = String(r).match(/COMMITTED WORLD STATE[^\n]*/);
+  const m = String(r).match(/COMMITTED WORLD STATE — facts already TRUE[^\n]*/);
   return m ? m[0] : '';
 };
 const exact = plannerRequests.filter(r => committedLine(r).indexOf(PLAN.state_change) !== -1);
 const line = plannerRequests.length
-  ? (plannerRequests[0].match(/COMMITTED WORLD STATE[^\n]{0,200}/) || [''])[0] : '';
+  ? (plannerRequests[0].match(/COMMITTED WORLD STATE — facts already TRUE[^\n]{0,300}/) || [''])[0] : '';
 console.log('  ' + line);
 t('the EXACT intended fact text appears IN the COMMITTED WORLD STATE line of the next planner request',
   exact.length >= 1, 'captured ' + plannerRequests.length + ' request(s); line: ' + line);
@@ -188,7 +188,7 @@ await page.evaluate(async () => {
   try { await window._generateLiteraryPlotContract('', '', null, null); } catch (_) {}
 });
 const multiLine = plannerRequests.length
-  ? ((plannerRequests[0].match(/COMMITTED WORLD STATE[^\n]*/) || [''])[0]) : '';
+  ? ((plannerRequests[0].match(/COMMITTED WORLD STATE — facts already TRUE[^\n]*/) || [''])[0]) : '';
 console.log('  ' + multiLine.slice(0, 190));
 t('the multi-span commit reaches ITS OWN next planner request with the exact fact',
   multiLine.indexOf(PLAN.state_change) !== -1,

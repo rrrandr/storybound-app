@@ -33,7 +33,7 @@ const page = await browser.newPage();
 await page.route('**/api/**', async (r) => {
   try { await r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); } catch (_) {}
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._adjudicateSceneProposals === 'function',
   { timeout: 30000 });
 t('the shipped window._adjudicateSceneProposals is present', true);

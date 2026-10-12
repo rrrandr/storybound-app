@@ -86,7 +86,7 @@ await page.route('**/api/**', async (route) => {
   }
   return reply('{}', 'constructed');
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._buildHistoryContinuityBlock === 'function'
   && typeof window._resolveIssueOutline === 'function', { timeout: 30000 });
 await page.evaluate(() => {

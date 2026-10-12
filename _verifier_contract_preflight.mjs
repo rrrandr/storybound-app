@@ -192,7 +192,7 @@ console.log('\n3. the real parse + adjudication path consumes a worst-case reply
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.route('**/api/**', r => r.abort());
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 await page.waitForFunction(() => typeof window._adjudicateSceneProposals === 'function', { timeout: 20000 });
 
 const r = await page.evaluate(({ worstJson, LONG }) => {

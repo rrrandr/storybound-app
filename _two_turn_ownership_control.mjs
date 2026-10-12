@@ -149,7 +149,7 @@ await page.route('**/api/**', async (route) => {
   return reply('{}');
 });
 
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._commitScene === 'function'
   && typeof window._sceneLedgerGet === 'function', { timeout: 30000 });
 
@@ -269,7 +269,7 @@ t('the fact COMMITTED', (turn2.facts || []).length >= 1,
 
 section('4. THE COMMITTED FACT REACHES THE NEXT PLANNER REQUEST');
 const cwLine = (out.planner[out.planner.length - 1] || '')
-  .split(/\\n|\n/).filter(l => /COMMITTED WORLD STATE/.test(l))[0] || '';
+  .split(/\\n|\n/).filter(l => /COMMITTED WORLD STATE — facts already TRUE/.test(l))[0] || '';
 fs.writeFileSync('_audit_out/two_turn/committed_world_state_line.txt', cwLine || '(no line)');
 const factText = ((turn2.facts || [])[0] || {});
 const factStr = String(factText.event || factText.text || factText.fact || factText || '');

@@ -126,7 +126,7 @@ await page.route('**/api/**', async (route) => {
     return reply(JSON.stringify({ beats: [{ kind: 'narration', text: 'The page stayed between them.' }] }), 'grok-4.3');
   return reply('{}', 'constructed');
 });
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.waitForFunction(() => typeof window._resolveIssueOutline === 'function'
   && typeof window._runCGScreenplayGen === 'function', { timeout: 30000 });
 

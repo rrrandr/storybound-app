@@ -18,7 +18,7 @@ const t = (n, c, d) => { if (c) { pass++; console.log('  ok   ' + n); }
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.route('**/api/**', r => r.abort());
-await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+await page.goto((process.env.SB_ORIGIN || (process.env.SB_ORIGIN || 'http://localhost:3000')) + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 await page.waitForFunction(() => typeof window._sealProposal === 'function', { timeout: 20000 });
 
 const installed = await page.evaluate(() => ({
@@ -274,6 +274,36 @@ t('  the ledger is unchanged by the attempt', r.factsAfterProseAttempt === 2,
   'facts=' + r.factsAfterProseAttempt);
 t('  no prose-derived text is in the ledger',
   !r.allFactTexts.some(x => /stripped Julian of his office/.test(x)), JSON.stringify(r.allFactTexts));
+
+// ── THE STATE_CHANGE CONTRACT STILL RECONCILES OUTCOME WITH ENACTMENT ───────────────────────
+// Guard for the reconciliation of 2026-10-12. The live run of that day showed the contract
+// simultaneously demanding a consequence in KNOWLEDGE and ruling that a realization is not a
+// state_change, so three authored rows whose accomplishment was "the PC discovers / realizes /
+// begins suspecting" were each converted into an external event — twice the same already-committed
+// one. These assert the reconciled distinctions are present in the SOURCE that builds the request;
+// they say nothing about whether generated output improved, which only a paid run can show.
+const SRC = (await import('node:fs')).readFileSync('public/app.js', 'utf8');
+console.log('\n── the state_change contract distinguishes outcome from enactment ──');
+t('the OUTCOME / ENACTMENT distinction is stated',
+  /TWO THINGS, KEPT APART/.test(SRC) && /the OUTCOME is what must be true by the end/.test(SRC));
+t('  a change in knowledge or belief is explicitly a legitimate outcome',
+  /The OUTCOME may be a change in KNOWLEDGE or BELIEF/.test(SRC));
+t('  but it must be enacted, not announced',
+  /bare interior report with nothing enacted/.test(SRC));
+t('re-proposing an already-committed event is forbidden',
+  /you have named the CAUSE instead of this scene/.test(SRC)
+  && /THAT EARLIER EVENT IS HISTORY AND DOES NOT HAPPEN AGAIN/.test(SRC));
+t('whose belief moves is preserved — suspicion is not guilt',
+  /DIFFERENT facts/.test(SRC)
+  && /never a finding of another character/.test(SRC));
+t('entry, event and exit must be mutually consistent',
+  /ENTRY, EVENT AND EXIT MUST BE MUTUALLY CONSISTENT/.test(SRC));
+t('the scaffold agrees that a development may establish knowledge',
+  /WHAT A DEVELOPMENT MAY ESTABLISH INCLUDES WHAT SOMEONE NOW KNOWS/.test(SRC)
+  && /AN EARLIER EVENT DOES NOT HAPPEN TWICE/.test(SRC));
+t('the author agrees it must be shown, in POV, and stay hers',
+  /IF THE EXIT STATE IS A CHANGE IN WHAT SOMEONE KNOWS/.test(SRC)
+  && /Stay in the POV the scene opened in/.test(SRC));
 
 console.log('\n' + pass + '/' + (pass + fail) + ' passed');
 process.exit(fail ? 1 : 0);
