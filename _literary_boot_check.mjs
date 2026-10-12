@@ -36,6 +36,21 @@ const t = (label, ok, detail) => {
 };
 const say = (m) => console.log(m);
 
+// ── STAGE 1 CONTROLS ────────────────────────────────────────────────────────────────────────
+// LIVE_PLANNER dispatches exactly ONE real opening-planner call. CEILING is the TOTAL cap for the
+// remaining experiments and PRIOR is the ledger as it stands, so the cap is enforced against real
+// cumulative exposure rather than a per-script allowance.
+import { estimateUsd } from './_fsc_cost_guard.mjs';
+const LIVE_PLANNER = process.env.SB_LIVE_PLANNER === '1';
+const CEILING = Number(process.env.SB_CAP || 0);
+const PRIOR = Number(process.env.SB_PRIOR || 0);
+let plannerDispatched = false, plannerSpend = 0, plannerRetained = 0, plannerReceipt = false;
+let plannerMeta = null;
+if (LIVE_PLANNER && !(CEILING > 0)) {
+  console.error('*** REFUSING: SB_LIVE_PLANNER=1 needs SB_CAP (the approved total cap). ***');
+  process.exit(2);
+}
+
 const CG_AUTHOR = /screenplay-native cinematic-romance writer/i;
 const LIT_AUTHOR = /You are a bestselling romance author/i;
 
@@ -95,13 +110,63 @@ await page.route('**/*', async (route) => {
     } catch (_) {}
   }
 
+  // ── STAGE 1: ONE REAL OPENING-PLANNER CALL (SB_LIVE_PLANNER=1) ────────────────────────────
+  // The ACTUAL outgoing request is priced here, before it leaves — not from an earlier call's
+  // receipt, which is a reference figure for a different request. Exactly one dispatch; no
+  // retry, and the production validator is untouched either way.
+  if (/scene-structure planner for the OPENING scene/i.test(sys) && LIVE_PLANNER) {
+    if (plannerDispatched) {
+      say('  [LIVE-PLANNER] a second opening-planner call was attempted — REFUSED (one call only)');
+      return route.fulfill({ status: 503, contentType: 'application/json',
+        body: '{"error":"one planner call only; no retry"}' });
+    }
+    plannerDispatched = true;
+    const e = estimateUsd(body, body.preferredModel || body.model, url);
+    if (!e || !e.bounded) {
+      say('  [LIVE-PLANNER] REFUSED — cost cannot be bounded: ' + ((e && e.refuseReason) || 'no estimate'));
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unpriceable"}' });
+    }
+    say('  [LIVE-PLANNER] THIS request priced before dispatch: $' + e.estimate.toFixed(6)
+      + ' (model ' + e.model + ' via ' + e.resolvedBy + '; promptTokens≈' + e.promptTokens
+      + ' ESTIMATED at chars/4.0, reserved out≈' + e.outTokens + ')');
+    if (PRIOR + plannerSpend + e.estimate > CEILING) {
+      say('  [LIVE-PLANNER] HALTED BEFORE DISPATCH — $' + (PRIOR + plannerSpend).toFixed(6)
+        + ' + $' + e.estimate.toFixed(6) + ' would exceed the cap $' + CEILING.toFixed(6));
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"cap"}' });
+    }
+    const t0 = Date.now();
+    let res, txt = '';
+    try { res = await route.fetch(); txt = await res.text(); }
+    catch (err) {
+      plannerRetained = e.estimate;
+      say('  [LIVE-PLANNER] DISPATCH FAILED: ' + (err && err.message) + ' — reservation RETAINED');
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"dispatch failed"}' });
+    }
+    const ms = Date.now() - t0;
+    let parsed = {}; try { parsed = JSON.parse(txt); } catch (_) {}
+    const ticks = parsed.usage && parsed.usage.cost_in_usd_ticks;
+    if (typeof ticks === 'number' && ticks > 0) { plannerSpend = ticks * 1e-10; plannerReceipt = true; }
+    else { plannerRetained = e.estimate; }
+    plannerMeta = { ms, status: res.status(), model: parsed.model || null,
+      orchestration: parsed._orchestration || null, usage: parsed.usage || null,
+      estimated: e.estimate, measured: plannerSpend, receipt: plannerReceipt,
+      retained: plannerRetained };
+    fs.writeFileSync(OUT + '/opening_planner_response_raw.json', txt);
+    say('  [LIVE-PLANNER] status=' + res.status() + ' ' + ms + 'ms model=' + (parsed.model || '?')
+      + ' in=' + ((parsed.usage || {}).prompt_tokens ?? '?')
+      + ' out=' + ((parsed.usage || {}).completion_tokens ?? '?')
+      + (plannerReceipt ? ('  receipt $' + plannerSpend.toFixed(6))
+                        : ('  NO RECEIPT — retained $' + plannerRetained.toFixed(6))));
+    return route.fulfill({ status: res.status(), headers: res.headers(), body: txt });
+  }
+
   // THE CORRECTED OPENING-PLANNER FIXTURE takes precedence over the CG-era one, whose five
   // undeclared fields (environment_elements, li_texture_beat, pc_wound_anchor,
   // antagonist_body_callback, stage_contract) made production refuse to author Scene 1. The
   // replacement is DERIVED from the dispatched template's own declared keys
   // (_opening_spine_fixture_from_template.mjs). The production validator is untouched.
   if (/scene-structure planner for the OPENING scene/i.test(sys) && SPINE_FIXTURE) {
-    say('  [FIXTURE] serving the template-derived opening_spine reply');
+    say('  [FIXTURE] serving the template-derived opening_spine reply (labelled fixture, not a plan)');
     return route.fulfill({ status: 200, contentType: 'application/json', body: SPINE_FIXTURE.body });
   }
 
@@ -209,6 +274,22 @@ fs.writeFileSync(OUT + '/supporting_calls.json', JSON.stringify(seen, null, 2));
 
 await browser.close();
 fs.writeFileSync(OUT + '/console.log', CONSOLE.join('\n'));
+if (LIVE_PLANNER) {
+  say('\n── STAGE 1 SPEND (this call, not a reference figure) ──');
+  if (!plannerMeta) say('  the opening-planner call was NOT dispatched (halted, refused or never reached)');
+  else {
+    say('  estimated before dispatch : $' + plannerMeta.estimated.toFixed(6));
+    say('  measured (receipt)        : $' + plannerMeta.measured.toFixed(6)
+      + (plannerMeta.receipt ? '' : '  [NO RECEIPT — retained $' + plannerMeta.retained.toFixed(6) + ']'));
+    say('  latency                   : ' + plannerMeta.ms + 'ms  status=' + plannerMeta.status);
+    say('  provenance                : ' + JSON.stringify(plannerMeta.orchestration));
+    say('  usage                     : ' + JSON.stringify(plannerMeta.usage));
+  }
+  const spent = plannerSpend + plannerRetained;
+  say('  exposure after this stage  : $' + (PRIOR + spent).toFixed(6) + ' of cap $' + CEILING.toFixed(6));
+  fs.writeFileSync(OUT + '/STAGE1_SPEND.json', JSON.stringify({ plannerMeta, plannerSpend,
+    plannerRetained, prior: PRIOR, cap: CEILING, exposureAfter: PRIOR + spent }, null, 2));
+}
 say('\n' + pass + '/' + (pass + fail) + ' checks passed');
 say('output: ' + OUT);
 say('NOTHING WAS GENERATED. Every provider call was intercepted; the author was refused.');

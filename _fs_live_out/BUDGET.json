@@ -1,5 +1,5 @@
 {
-  "receipted": 10.7347009,
+  "receipted": 10.7621779,
   "unresolved": 1.8663661,
   "outstanding": [],
   "runs": [
@@ -131,6 +131,13 @@
       "unresolved": 0,
       "outstandingAtExit": 0,
       "note": "arm_A_current receipted 0.098691 on the exact frozen request; served grok-4.3 via chainEntry grok-4-1-fast-reasoning, effort high, upstreamAttempts 1 — matching arm B, so the pair is VALID. Arm B was reused from the earlier dispatch and NOT re-charged."
+    },
+    {
+      "run": "literary arm 1 — stage 1, one live opening-planner call",
+      "receipted": 0.027477,
+      "unresolved": 0,
+      "outstandingAtExit": 0,
+      "note": "Priced before dispatch at $0.043160 (promptTokens~20009 ESTIMATED chars/4.0); measured receipt $0.027477; grok-4.3, status 200, 20310ms, in 18775 out 916. Reply had ONE fault (pc_opening_fusion); production attempted its single holistic repair call, which the one-call guard refused (503), so Scene 1 was not authored and the arm stopped. Request and response preserved."
     }
   ],
   "authorization": null,
