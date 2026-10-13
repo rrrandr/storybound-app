@@ -1,6 +1,6 @@
 {
   "receipted": 10.8717789,
-  "unresolved": 2.0228061,
+  "unresolved": 2.1480571,
   "outstanding": [],
   "runs": [
     {
@@ -173,6 +173,13 @@
       "unresolved": 0,
       "outstandingAtExit": 0,
       "note": "status 200, 19562ms, finish=stop, upstreamAttempts=1 (containment PROVEN via _noFallback; chain reduced to one entry). chainEntry grok-4-1-fast-reasoning -> served grok-4.3, effort high. prompt 77554 / completion 687 / reasoning 1056. Estimated $0.140364, receipt $0.101166. 454 prose words."
+    },
+    {
+      "run": "literary arm 4 — Claude Haiku 4.5 Scene-1 author (frozen request reused)",
+      "receipted": 0,
+      "unresolved": 0.125251,
+      "outstandingAtExit": 0,
+      "note": "status 200, 30270ms, stop_reason=end_turn, in 87110 / out 1983, thinking off (0 chars), served claude-haiku-4-5-20251001 (pinned, no alias). The isolated anthropic route returns no cost ticks so the $0.125251 reservation is RETAINED; at the published $1/$5 per M the actual is $0.097025. 1125 reader-facing prose words + EXPANSION_A 59 / EXPANSION_B 62, nothing lost after the appendix."
     }
   ],
   "authorization": null,

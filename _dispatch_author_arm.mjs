@@ -24,8 +24,8 @@ const MODEL = process.env.SB_MODEL || null;
 const CAP = Number(process.env.SB_CAP || 0);
 const PRIOR = Number(process.env.SB_PRIOR || 0);
 const DRY = process.env.SB_DRY === '1';
-if (!REQ || !['grok', 'mistral'].includes(ARM)) {
-  console.error('set SB_AUTHOR_REQ and SB_ARM=grok|mistral'); process.exit(2);
+if (!REQ || !['grok', 'mistral', 'anthropic'].includes(ARM)) {
+  console.error('set SB_AUTHOR_REQ and SB_ARM=grok|mistral|anthropic'); process.exit(2);
 }
 if (!DRY && !(CAP > 0)) { console.error('live dispatch needs SB_CAP'); process.exit(2); }
 
@@ -42,6 +42,23 @@ if (ARM === 'grok') {
   url = cap0.url;
   body = JSON.parse(JSON.stringify(frozen));
   body._noFallback = true;   // containment: one upstream attempt, not a three-entry chain
+} else if (ARM === 'anthropic') {
+  url = (cap0.url || '').replace(/\/api\/[a-z-]+$/, '/api/anthropic-proxy');
+  // The route performs Anthropic's required conversion itself: messages with role 'system' are
+  // lifted into the top-level `system` field and the rest mapped to user/assistant turns. So the
+  // FROZEN messages pass through unchanged, roles intact, which is what keeps this arm comparable.
+  //   · model is the pinned allowlisted identifier;
+  //   · max_tokens explicit (the route defaults to 2000);
+  //   · temperature carried across — honoured only because thinking is OFF;
+  //   · thinking_budget_tokens OMITTED => thinking off, per the route's own contract;
+  //   · one upstream fetch, no chain: containment is structural, as with Mistral.
+  body = {
+    messages: frozen.messages,
+    model: MODEL || 'claude-haiku-4-5-20251001',
+    max_tokens: frozen.max_tokens,
+    temperature: frozen.temperature,
+    role: 'PRIMARY_AUTHOR'
+  };
 } else {
   url = (cap0.url || '').replace(/\/api\/[a-z-]+$/, '/api/mistral-proxy');
   // Provider-specific settings, disclosed rather than implied:
@@ -74,6 +91,10 @@ say('max_tokens=' + body.max_tokens + ' temperature=' + body.temperature
 if (ARM === 'grok') {
   say('_noFallback    : ' + (body._noFallback === true)
     + '   (api/proxy.js reduces the chain to ONE entry when set)');
+} else if (ARM === 'anthropic') {
+  say('thinking        : OFF (thinking_budget_tokens omitted, per the route contract)');
+  say('conversion      : system messages -> top-level `system`; turns -> user/assistant (done by the route)');
+  say('containment     : one upstream fetch, single allowlisted model, no chain');
 } else {
   say('reasoning_effort: OMITTED (no Ministral model accepts it)');
   say('containment    : api/mistral-proxy has no model chain and one upstream fetch;'
@@ -112,9 +133,16 @@ const ticks = parsed.usage && parsed.usage.cost_in_usd_ticks;
 const measured = (typeof ticks === 'number' && ticks > 0) ? ticks * 1e-10 : 0;
 const retained = measured ? 0 : e.estimate;
 const orch = parsed._orchestration || null;
+const usage = parsed.usage || null;
+const inTok = usage ? (usage.prompt_tokens ?? usage.input_tokens ?? null) : null;
+const outTok = usage ? (usage.completion_tokens ?? usage.output_tokens ?? null) : null;
 const meta = { arm: ARM, model: body.model || body.preferredModel, url, status, ms, failed,
-  finish: (((parsed.choices || [])[0] || {}).finish_reason) || null,
-  returnedModel: parsed.model || null, orchestration: orch, usage: parsed.usage || null,
+  finish: (ARM === 'anthropic')
+    ? (parsed.stop_reason || null)
+    : ((((parsed.choices || [])[0] || {}).finish_reason) || null),
+  returnedModel: parsed.model || (orch && orch.model) || null,
+  orchestration: orch, usage, inTok, outTok,
+  thinkingChars: (orch && orch.thinking_chars != null) ? orch.thinking_chars : null,
   noFallbackSent: ARM === 'grok' ? (body._noFallback === true) : null,
   upstreamAttempts: orch ? orch.upstreamAttempts : null,
   estimated: e.estimate, measured, retained };
@@ -126,12 +154,18 @@ else {
   say('  status=' + status + '  ' + ms + 'ms  finish=' + meta.finish);
   say('  served model=' + meta.returnedModel + '  upstreamAttempts=' + meta.upstreamAttempts);
   if (orch) say('  orchestration: ' + JSON.stringify(orch));
-  say('  usage: ' + JSON.stringify(meta.usage));
+  say('  usage: ' + JSON.stringify(meta.usage) + '  -> in=' + meta.inTok + ' out=' + meta.outTok);
+  if (meta.thinkingChars != null) say('  thinking chars returned: ' + meta.thinkingChars);
   say('  cost: ' + (measured ? ('receipt $' + measured.toFixed(6))
     : ('NO RECEIPT — retained $' + retained.toFixed(6))));
 }
 // THE PROSE, separated from technical material.
-const content = (((parsed.choices || [])[0] || {}).message || {}).content || '';
+// SHAPE DIFFERS BY ROUTE, and reading the wrong one reports a successful scene as EMPTY.
+// api/anthropic-proxy.js returns { content, thinking, usage:{input_tokens,output_tokens},
+// stop_reason, _orchestration }. Grok/Mistral return OpenAI-style choices[].message.content.
+const content = (ARM === 'anthropic')
+  ? String(parsed.content || '')
+  : ((((parsed.choices || [])[0] || {}).message || {}).content || '');
 fs.writeFileSync(OUT + '/content_raw.txt', content);
 say('\n  raw content chars: ' + content.length);
 say('  output: ' + OUT);

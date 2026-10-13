@@ -48,7 +48,14 @@ export const RATES = {
   // PRICING IT DOES NOT MAKE IT DISPATCHABLE: api/_mistral-governor.js still has no row for it,
   // and a model absent from that table is refused. The account's TPM/RPS from
   // https://admin.mistral.ai/plateforme/limits is the outstanding blocker.
-  'mistral-medium-latest':        { in: 0.0000015,  out: 0.0000075 }
+  'mistral-medium-latest':        { in: 0.0000015,  out: 0.0000075 },
+  // Claude Haiku 4.5 — $1 in / $5 out per M, read from Anthropic's own pricing table
+  // (platform.claude.com/docs/en/about-claude/pricing, 2026-10-13). PINNED identifier, not an
+  // alias: api/anthropic-proxy.js allowlists exactly this one model, so there is no resolution
+  // ambiguity of the kind mistral-medium-latest still carries. 200k context; this experiment's
+  // prompt is ~86k. Cache-write/hit and batch rates exist and are NOT modelled here, so a cached
+  // or batched call would cost LESS than this reservation, never more.
+  'claude-haiku-4-5-20251001':    { in: 0.000001,   out: 0.000005 }
 };
 
 // The most expensive rate in the verified table. NO LONGER a fallback for unknown models — those
@@ -108,6 +115,14 @@ export function resolveModel(requested, url, body) {
     }
     return { model: 'grok-4.3',
       how: 'api/proxy.js _resolveGrokModel collapses every name to 4.3 absent an override' };
+  }
+  // The isolated Anthropic calibration route serves ONE allowlisted model, so the name in the
+  // body is the model served — there is no chain and no default to fall back to. Without this
+  // branch the guard could not resolve the endpoint at all and refused every dispatch to it.
+  if (/anthropic-proxy/.test(endpoint)) {
+    return name && name !== '(unspecified)'
+      ? { model: name, how: 'explicit model on the isolated anthropic calibration route' }
+      : { model: null, how: 'api/anthropic-proxy.js requires an explicit allowlisted model' };
   }
   if (/mistral-proxy/.test(endpoint)) {
     return name && name !== '(unspecified)'
