@@ -277378,7 +277378,25 @@ INCORRECT:
 
     // Pacing rule for scene 1 — intensity no longer controls pacing
     const pacingRule = 'Build atmosphere first. Romantic tension may simmer beneath the surface, but keep the focus on setting and world-building.';
-    const liAppears = Math.random() < 0.25;
+    // ── STAGING DECIDES THIS, NOT A COIN FLIP ───────────────────────────────────────────────
+    // This was `Math.random() < 0.25`, independent of the scene's actual staging — and SIX
+    // instruction blocks below branch on it (7B SPECIFIC FIT ENFORCEMENT, the anchor rules, the
+    // addressing-character rule, the disruption trigger, the failure list). So on roughly three
+    // runs in four the payload asserted "The LI is not on-screen" while the stage contract had
+    // placed him on stage, which is exactly what the captured First Sacrifice request did at
+    // line 1481 alongside the on-stage LI PRESENCE block at 1611.
+    // _scene1LIOnStage is already the authoritative resolution (the stage contract overrides the
+    // romance engine's pick and logs that it does so). When it has been resolved, it decides.
+    // The random draw remains ONLY as the fallback for a scene with no staging answer yet, so
+    // nothing changes on paths that never set it.
+    const liAppears = (state._scene1LIOnStage === true) ? true
+      : (state._scene1LIOnStage === false ? false : (Math.random() < 0.25));
+    try {
+      if (state._scene1LIOnStage === true || state._scene1LIOnStage === false) {
+        console.log('[SCENE1:LI-APPEARS] ' + liAppears + ' — from the resolved staging'
+          + ' (_scene1LIOnStage=' + state._scene1LIOnStage + '), not the 25% draw');
+      }
+    } catch (_) {}
 
     const authorOpeningDirective = state.povMode === 'author5th' ? `
 FATE (5TH PERSON) — POV REGIME — MANDATORY OPENER:
@@ -277863,9 +277881,9 @@ This is a HOT_CRISIS, romance-forward opening: the longer budget is LICENSED ONL
 Total Scene 1 should run ~900–1100 words. The extra length is for STAGED CRISIS MOVEMENT — NOT atmosphere, standing biography, world lore, or interiority. If the scene is not moving by therefore/but, it is too long at ANY length: CUT explanation, ADD consequence.` : `3. EARLY DECISION TARGET (~250 words)
 The decision frame should be forming by word 250. Pressure should be escalating by word 350.
 
-4. HARD LENGTH CAP (~${state._scene1TarotActive ? '550' : '500'} words before decision)
-Total Scene 1 must not exceed ~${state._scene1TarotActive ? '550' : '500'} words BEFORE the decision frame lands.${state._scene1TarotActive ? ' The extra headroom is for the Tarot physical-presence beat + dual-path decision — do not use it for extra atmosphere.' : ''}
-If competing: compress setup, reduce world detail, skip atmosphere. Hook and decision take priority.`}
+4. SETUP BUDGET (~${state._scene1TarotActive ? '550' : '500'} words to reach the decision frame — NOT a cap on the scene)
+Spend no more than ~${state._scene1TarotActive ? '550' : '500'} words getting to the point where the decision frame is FORMING. That is a budget for SETUP, not a limit on the scene: the scene's TOTAL length is set by SCENE LENGTH GUIDANCE below, and this clause never overrides it. Where the closing decision is the LAST PROSE in the scene, everything between the frame forming and that final beat is still scene — the interaction continuing, the other person answering, the cost arriving.${state._scene1TarotActive ? ' The extra headroom is for the Tarot physical-presence beat + dual-path decision — do not use it for extra atmosphere.' : ''}
+If competing: compress setup, reduce world detail, skip atmosphere — never cut the developed interaction that follows. Hook and decision take priority over DESCRIPTION, not over development.`}
 
 5. PRIORITY OVERRIDE
 Hook + decision OVERRIDE:
