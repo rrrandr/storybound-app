@@ -151,6 +151,13 @@ module.exports = async (req, res) => {
       + ' thinkingChars=' + thinkingText.length);
 
     return res.status(200).json({
+      // THE UNTRANSFORMED UPSTREAM REPLY, kept alongside the flattened convenience fields. The
+      // flattening below drops the block structure and, on a reply with no text blocks, leaves
+      // nothing at all to inspect — which is exactly the case that needed diagnosing. The request
+      // id comes from the response headers and is what Anthropic support can trace.
+      _upstreamRaw: data,
+      _upstreamRequestId: upstream.headers.get('request-id')
+        || upstream.headers.get('anthropic-request-id') || null,
       content: contentText,
       thinking: thinkingText || null,
       usage: data.usage || null,

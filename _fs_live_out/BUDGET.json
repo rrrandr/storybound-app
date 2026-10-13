@@ -1,6 +1,6 @@
 {
   "receipted": 10.8717789,
-  "unresolved": 2.7178851,
+  "unresolved": 2.9967191,
   "outstanding": [],
   "runs": [
     {
@@ -194,6 +194,13 @@
       "unresolved": 0.284914,
       "outstandingAtExit": 0,
       "note": "Body VERIFIED provider-free before spending (15/15: thinking.type=between_tools, output_config.effort=high, no tools, no temperature, no manual budget, prompt byte-exact at 345504 chars). Result: status 200, 20656ms, stop_reason=max_tokens, in 130457 / out 2400 with thinking_tokens=2400 AGAIN. Zero content blocks, zero prose. The documented configuration did NOT prevent up-front thinking. Priced from observed usage at published rates: $0.284914. Attempt 2 ($0.284914) preserved as a separate expense."
+    },
+    {
+      "run": "literary arm 5 attempt 4 — Sonnet 5.5 at max_tokens 12000 (PROSE OBTAINED)",
+      "receipted": 0,
+      "unresolved": 0.278834,
+      "outstandingAtExit": 0,
+      "note": "Body re-verified provider-free 15/15 before dispatch; only the ceiling changed, prompt byte-exact at 345504 chars. status 200, 17703ms, stop_reason=end_turn, in 130457 / out 1792 with thinking_tokens=0. Upstream request id req_011CfyYZHGtMb2HDUaHVitXB; untransformed reply saved to upstream_raw.json (1 content block). 770 reader-facing words — the only arm inside the requested 700-870. Priced from observed usage: $0.278834."
     }
   ],
   "authorization": null,

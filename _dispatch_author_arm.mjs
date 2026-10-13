@@ -24,6 +24,9 @@ const MODEL = process.env.SB_MODEL || null;
 const CAP = Number(process.env.SB_CAP || 0);
 const PRIOR = Number(process.env.SB_PRIOR || 0);
 const DRY = process.env.SB_DRY === '1';
+// An explicit output-allowance override. The frozen MESSAGES are never touched by this; only the
+// completion budget changes, and the arm reports that it is no longer an equal-budget comparison.
+const MAXTOK = process.env.SB_MAX_TOKENS ? Number(process.env.SB_MAX_TOKENS) : null;
 if (!REQ || !['grok', 'mistral', 'anthropic'].includes(ARM)) {
   console.error('set SB_AUTHOR_REQ and SB_ARM=grok|mistral|anthropic'); process.exit(2);
 }
@@ -55,7 +58,7 @@ if (ARM === 'grok') {
   body = {
     messages: frozen.messages,
     model: MODEL || 'claude-haiku-4-5-20251001',
-    max_tokens: frozen.max_tokens,
+    max_tokens: MAXTOK || frozen.max_tokens,
     role: 'PRIMARY_AUTHOR'
   };
   // TEMPERATURE IS NOT UNIVERSALLY ACCEPTED HERE, and this is a PROVIDER REQUIREMENT, not a tuning
@@ -103,6 +106,11 @@ say('frozen request : ' + REQ);
 say('endpoint       : ' + url);
 say('messages       : ' + (body.messages || []).length + '  chars ' + msgChars
   + (msgChars === frozenChars ? '  (IDENTICAL to the frozen request)' : '  *** DIFFERS FROM FROZEN ***'));
+if (MAXTOK && MAXTOK !== frozen.max_tokens) {
+  say('*** OUTPUT ALLOWANCE RAISED: ' + frozen.max_tokens + ' -> ' + MAXTOK
+    + ' — this arm is NOT budget-comparable with the others. The requested SCENE LENGTH in the'
+    + ' frozen prompt is unchanged; a bigger ceiling is not permission to write more. ***');
+}
 say('max_tokens=' + body.max_tokens + ' temperature=' + body.temperature
   + ' model=' + (body.model || body.preferredModel || '(endpoint default)'));
 if (ARM === 'grok') {
@@ -190,5 +198,12 @@ const content = (ARM === 'anthropic')
   ? String(parsed.content || '')
   : ((((parsed.choices || [])[0] || {}).message || {}).content || '');
 fs.writeFileSync(OUT + '/content_raw.txt', content);
+if (parsed._upstreamRaw) {
+  fs.writeFileSync(OUT + '/upstream_raw.json', JSON.stringify(parsed._upstreamRaw, null, 2));
+  say('  upstream request id: ' + parsed._upstreamRequestId);
+  say('  untransformed upstream reply: upstream_raw.json  ('
+    + (Array.isArray(parsed._upstreamRaw.content) ? parsed._upstreamRaw.content.length : 0)
+    + ' content block(s))');
+}
 say('\n  raw content chars: ' + content.length);
 say('  output: ' + OUT);

@@ -46,7 +46,7 @@ t('NO manual budget_tokens (not accepted past 4.6)',
 t('NO temperature (rejected as deprecated by this model)', captured.body.temperature === undefined);
 t('NO tools — which is what makes between_tools yield text',
   captured.body.tools === undefined);
-t('max_tokens is the frozen 2400', captured.body.max_tokens === frozen.max_tokens,
+t('max_tokens is what this arm sent', captured.body.max_tokens === sent.max_tokens,
   String(captured.body.max_tokens));
 t('model is the pinned Sonnet id', captured.body.model === 'claude-sonnet-5-5');
 
