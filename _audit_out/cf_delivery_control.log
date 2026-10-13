@@ -1,7 +1,7 @@
 === CAUSAL FOUNDATION DELIVERY CONTROL (provider-free, $0) ===
 Every model response here is CONSTRUCTED in this file. No provider is called.
 
-serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on every path)
+serving the real public/ from http://127.0.0.1:64295 (vercel dev is down; 500 on every path)
 
 
 0. THE RENDERER (window._buildFSCausalFoundationBlock) — tier asymmetry
@@ -23,7 +23,7 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
   ok   the spine request contains Julian's bond price
   ok   the spine request contains FATE'S SEALED PRICE for the open offer
   ok   and it is sent as CAUSE, not as content to narrate
-  ok   spine request bytes: 43822
+  ok   spine request bytes: 42847
 
 2. SCENE SCAFFOLD — read off the wire
   ok   a scene scaffold request was actually sent
@@ -35,7 +35,7 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
   ok   and it does not carry the spine-only account of the concealment either
 
 2b. LITERARY AUTHOR — read off the wire (handleBeginStory, the real opening path)
-      calls=OPENING_PLANNER:83555@proxy STRUCTURE_GENERATOR:357196@proxy SPECIALIST_RENDERER:5360@proxy ?:13643@mistral-proxy SPECIALIST_RENDERER:3384@proxy PRIMARY_AUTHOR:6362@chatgpt-proxy SPECIALIST_RENDERER:3384@proxy SPECIALIST_RENDERER:6699@proxy SPECIALIST_RENDERER:6699@mistral-proxy PRIMARY_AUTHOR:3740@chatgpt-proxy PRIMARY_AUTHOR:4097@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy LINE_EDITOR:4432@mistral-proxy
+      calls=OPENING_PLANNER:83720@proxy STRUCTURE_GENERATOR:362152@proxy SPECIALIST_RENDERER:5360@proxy ?:13643@mistral-proxy SPECIALIST_RENDERER:3384@proxy PRIMARY_AUTHOR:6362@chatgpt-proxy SPECIALIST_RENDERER:3384@proxy SPECIALIST_RENDERER:6699@proxy SPECIALIST_RENDERER:6699@mistral-proxy PRIMARY_AUTHOR:3740@chatgpt-proxy PRIMARY_AUTHOR:4097@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy LINE_EDITOR:4432@mistral-proxy
   ok   an OPENING_PLANNER request was captured off the wire
   ok   the opening planner receives the hidden causes
   ok   the opening planner receives the DO-NOT-PLAN list
@@ -47,15 +47,15 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
   ok   and it is told that knowing is not narrating
   ok   *** BOUNDARY: the author request does NOT contain the sealed price
   ok   *** BOUNDARY: nor the spine-only concealment account
-  ok   author request bytes: 357196
+  ok   author request bytes: 362152
 
 2b2. CONTINUATION CHAIN: scene planner proposal + author for scenes 2-3
-      scene 2 calls=NORMALIZATION:6478 BACK_COVER_SYNOPSIS:2146 STRATEGY_PASS:19840 STRUCTURE_GENERATOR:39375 STRUCTURE_GENERATOR:536196 HONEY_POT_GENERATOR:6160 SPECIALIST_RENDERER:5360 ?:13643 SPECIALIST_RENDERER:3857 PRIMARY_AUTHOR:6362 SPECIALIST_RENDERER:6518 SPECIALIST_RENDERER:3857 LINE_EDITOR:3733 LINE_EDITOR:5496 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6740 SPECIALIST_RENDERER:6740 INTIMACY_SPECIALIST:13383 ?:0 ?:0 ?:0 ?:0 ?:0 ?:0 STRUCTURE_GENERATOR:6164 ?:0 ?:0 ?:0 ?:0
-      scene 3 calls=NORMALIZATION:6478 SPECIALIST_RENDERER:1476 BACK_COVER_SYNOPSIS:2146 STRATEGY_PASS:19885 STRUCTURE_GENERATOR:21996 STRUCTURE_GENERATOR:559317 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 ?:13643 PRIMARY_AUTHOR:2373 SPECIALIST_RENDERER:3857 STRUCTURE_GENERATOR:560175 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6929 SPECIALIST_RENDERER:6929 BACK_COVER_SYNOPSIS:3801 STRUCTURE_GENERATOR:5273 STRUCTURE_GENERATOR:6163
+      scene 2 calls=NORMALIZATION:6478 BACK_COVER_SYNOPSIS:2146 STRATEGY_PASS:19860 STRUCTURE_GENERATOR:39375 STRUCTURE_GENERATOR:540211 HONEY_POT_GENERATOR:6160 SPECIALIST_RENDERER:5360 ?:13643 SPECIALIST_RENDERER:3857 PRIMARY_AUTHOR:6362 SPECIALIST_RENDERER:6518 SPECIALIST_RENDERER:3857 LINE_EDITOR:3733 LINE_EDITOR:5496 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6740 SPECIALIST_RENDERER:6740 ?:0 ?:0 ?:0 ?:0 ?:0 ?:0 STRUCTURE_GENERATOR:6164 ?:0 ?:0 ?:0 ?:0
+      scene 3 calls=NORMALIZATION:6478 SPECIALIST_RENDERER:1476 STRATEGY_PASS:19917 STRUCTURE_GENERATOR:21996 STRUCTURE_GENERATOR:562802 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 ?:13643 PRIMARY_AUTHOR:2373 SPECIALIST_RENDERER:3857 STRUCTURE_GENERATOR:563660 BACK_COVER_SYNOPSIS:2146 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6929 SPECIALIST_RENDERER:6929 BACK_COVER_SYNOPSIS:3797 STRUCTURE_GENERATOR:5273 STRUCTURE_GENERATOR:6163
   ok   scene 2: the SCENE PLANNER proposal request was captured
   ok   scene 2: the planner proposal carries the hidden causes
   ok   scene 2: *** and NOT the sealed price
-  ok   scene 2: the CONTINUATION AUTHOR request was captured (536196 B)
+  ok   scene 2: the CONTINUATION AUTHOR request was captured (540211 B)
   ok   scene 2: it carries the private intent
   ok   scene 2: it carries the disclosure window still in force
   ok   scene 2: *** the OPENING-ONLY deck line is NOT standing here
@@ -63,11 +63,31 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
   ok   scene 3: the SCENE PLANNER proposal request was captured
   ok   scene 3: the planner proposal carries the hidden causes
   ok   scene 3: *** and NOT the sealed price
-  ok   scene 3: the CONTINUATION AUTHOR request was captured (560175 B)
+  ok   scene 3: the CONTINUATION AUTHOR request was captured (563660 B)
   ok   scene 3: it carries the private intent
   ok   scene 3: it carries the disclosure window still in force
   ok   scene 3: *** the OPENING-ONLY deck line is NOT standing here
   ok   scene 3: *** and it does not carry the sealed price
+
+2b3. SCENE 16 — the complete planner and author requests through the real builders
+      scene 16 calls=NORMALIZATION:6500 SPECIALIST_RENDERER:1511 STRATEGY_PASS:19861 STRUCTURE_GENERATOR:21416 STRUCTURE_GENERATOR:553361 NARRATIVE_AUTHOR:4598 ?:3371 BACK_COVER_SYNOPSIS:2168 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 ?:13643 PRIMARY_AUTHOR:2373 SPECIALIST_RENDERER:3857 STRUCTURE_GENERATOR:554219 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6583 SPECIALIST_RENDERER:6583 ?:0 STRUCTURE_GENERATOR:5273 STRUCTURE_GENERATOR:6576
+  ok   a COMPLETE scene-16 author request was captured
+  ok   scene 16: the request agrees it is scene 16
+  ok   *** scene 16: the scenes-1-15 disclosure window is NOT in the request
+  ok   *** scene 16: the positive permission IS in the request
+  ok   *** scene 16: "Nobody may speak the actual hidden truth aloud." is GONE from INVARIANTS
+  ok   *** scene 16: and the released counterpart is present instead
+  ok   *** scene 16: release is PERMISSIBLE, not accomplished
+  ok   *** scene 16: and later knowledge must follow what the page showed
+  ok   *** scene 16: the rite is not described as currently in progress
+  ok   *** scene 16: Lirael's overturned belief is not re-asserted
+  ok   scene 16: and the author is pointed at established history for her beliefs instead
+  ok   scene 16: durable motivation survives (Julian is still protecting that hour)
+  ok   *** scene 16: the sealed price is STILL withheld
+  ok   a COMPLETE scene-16 planner request was captured
+  ok   *** scene 16 planner: the do-not-plan schedule has LAPSED
+  ok   *** scene 16 planner: the seal-open release is present
+  ok   *** scene 16 planner: still no sealed price
 
 2c. LIFECYCLE: the author's disclosure window across scenes 1 / 5 / 16
   ok   scene 1: the window is in force
@@ -98,6 +118,20 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
   ok   *** CONTROL: it carries NONE of the foundation
   ok   all three tiers emit EMPTY for a seedless story (byte-identical path)
 
+3b. GENERATED FOUNDATION: validation and structured windows
+  ok   a complete, windowed foundation IS accepted and stored
+  ok   …and whyNotWishedAway is folded into spine and planning
+  ok   *** REJECTED, nothing stored: a spine-only object (the original defect)
+  ok   *** REJECTED, nothing stored: planning present but author empty
+  ok   *** REJECTED, nothing stored: author present but planning empty
+  ok   *** REJECTED, nothing stored: planning restrictions with no release
+  ok   *** REJECTED, nothing stored: author window with no release
+  ok   *** REJECTED, nothing stored: prose-only windows (a scene number inside a string is not a window)
+  ok   *** REJECTED, nothing stored: a missing field
+  ok   *** REJECTED, nothing stored: a non-object
+  ok   *** a malformed scene number is DROPPED (degrades to always-on, never silently inert)
+  ok   *** an AUTHORED foundation outranks a generated one and is not overwritten
+
 4. SUPERSEDED v1-v3 material
   ok   the seed is reachable for inspection
   ok   superseded string absent from truths/dramaticTruth/causalFoundation: "Teveren"
@@ -110,4 +144,4 @@ serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on
 
 ── wrote _audit_out/cf_spine_request.txt and _audit_out/cf_scaffold_request.txt
 
-=== 83 passed, 0 failed ===
+=== 112 passed, 0 failed ===

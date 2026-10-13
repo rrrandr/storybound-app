@@ -1,13 +1,15 @@
 === CONTRADICTION SCAN OVER COMPLETE REQUESTS (provider-free, $0) ===
 Reads the captures written by _causal_foundation_delivery_control.mjs.
 
-  spine        43822 chars
-  openPlanner  83555 chars
+  s16Author    554219 chars
+  s16Planner   21416 chars
+  spine        42847 chars
+  openPlanner  83720 chars
   scaffold     26406 chars
-  author1      357196 chars
+  author1      362152 chars
   contPlanner2 39375 chars
-  contAuthor2  536196 chars
-  contAuthor3  560175 chars
+  contAuthor2  540211 chars
+  contAuthor3  563660 chars
 
 1. SUPERSEDED INSTRUCTIONS travelling beside their replacements
   ok   absent from every captured request: the twist must be immediate and confined to the room
@@ -31,7 +33,19 @@ Reads the captures written by _causal_foundation_delivery_control.mjs.
   ok   contAuthor3: the prohibition states its expiry scene
   ok   contAuthor3: …and says it binds the READER, not the writer's knowledge
 
+2b. THE UNSEALING SCENE — permission and prohibition cannot coexist
+  ok   *** s16Author: no permanent "nobody may speak the hidden truth" invariant
+  ok   s16Author: the scenes-1-15 window is not in force here
+  ok   *** s16Author: release is stated as PERMISSIBLE, not accomplished
+  ok   *** s16Author: and not as already known
+  ok   *** s16Author: later knowledge follows what the page showed
+  ok   *** s16Author: opening-era circumstances are not asserted as current
+  ok   *** s16Planner: no permanent "nobody may speak the hidden truth" invariant
+  ok   s16Planner: the scenes-1-15 window is not in force here
+
 3. SEALED PRICE containment across every capture
+  ok   *** s16Author does NOT receive the sealed price
+  ok   *** s16Planner does NOT receive the sealed price
   ok   spine DOES receive the sealed price (it is the outline)
   ok   *** openPlanner does NOT receive the sealed price
   ok   *** scaffold does NOT receive the sealed price
@@ -41,6 +55,8 @@ Reads the captures written by _causal_foundation_delivery_control.mjs.
   ok   *** contAuthor3 does NOT receive the sealed price
 
 4. MAD JESSI private truth containment
+  ok   *** s16Author does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** s16Planner does not carry Jessi's private truth (he is not staged in these scenes)
   ok   *** openPlanner does not carry Jessi's private truth (he is not staged in these scenes)
   ok   *** scaffold does not carry Jessi's private truth (he is not staged in these scenes)
   ok   *** author1 does not carry Jessi's private truth (he is not staged in these scenes)
@@ -49,6 +65,8 @@ Reads the captures written by _causal_foundation_delivery_control.mjs.
   ok   *** contAuthor3 does not carry Jessi's private truth (he is not staged in these scenes)
 
 5. SCENE IDENTITY — one request must not claim two different scenes
+  ok   s16Author: states a single scene number (16)
+  ok   s16Planner: states a single scene number (16)
   ok   openPlanner: states a single scene number (1)
   ok   scaffold: states a single scene number (2)
   ok   author1: states a single scene number (1)
@@ -68,4 +86,4 @@ Reads the captures written by _causal_foundation_delivery_control.mjs.
   ok   revelation is allowed to be timely
   ok   *** …and Lirael's years of failure are explained per-attempt, not by the nature of wishing
 
-=== 45 passed, 0 failed ===
+=== 59 passed, 0 failed ===

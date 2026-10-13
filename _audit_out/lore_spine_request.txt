@@ -195,12 +195,6 @@ STORY SHAPE — Layer 3 (the STRUCTURAL shape of the narrative). OWNS the A-PLOT
   - Issue 1 = CONSCRIPTION → STRAIN: external stakes BIND the two into cooperation neither chose; then the forced cooperation cracks under pressure and mismatched aims
   - Issue 2 = CONSOLIDATION: the working unit holds and proves out under a hard test
 
-WORLD ARC — Layer 2 (the WORLD-PRESSURE progression — the systemic / social / environmental field shifting around the couple). OWNS the issueArc.pressureVectors. It is NOT the A-PLOT (the concrete plot events / antagonist moves / clock — those drive the thesis, NOT pressureVectors), NOT the couple, NOT the narrative shape:
-- Wrong Wish: Something granted/won arrives twisted — the world delivers the letter of the desire, not its spirit; the cost surfaces across the run.
-  WORLD-PRESSURE STAGE per issue — this issue's pressureVectors EXPRESS this systemic stage (the world-field shifting), NOT the A-plot's plot events. Traverse in order, never skip:
-  - Issue 1 = GRANTED → FIRST COST: the thing is granted/won; it looks like success; then an early unexpected cost surfaces
-  - Issue 2 = TWIST → FULL PRICE: the granting is revealed as twisted — letter, not spirit; then the true cost comes fully due
-
 (FOUR OWNERS, DISJOINT FIELDS — Story Shape = the issue's structural move (thesis A-half/form, regimePhase, cliff, ending, ambiguity); A-Plot = WHAT happens (the thesis A-half CONTENT, its own milestones/clock); World Arc = the world-pressure progression (pressureVectors); Relationship Ladder = the couple (thesis R-half, issueRelationshipStates/issuePressures). They reinforce; they never write each other's fields.)
 
 RELATIONSHIP LADDER — Layer 1 (what changes between the COUPLE). OWNS the R-PLOT / RELATIONSHIP half of each issueArc.thesis + the R-plot issueRelationshipStates + issuePressures + the intimacy ceiling. It does NOT set the issue's STRUCTURAL move, regimePhase, cliffShape, or endingShape — those belong to the Story Shape. PACING, not a scene plan. Each issue TRAVERSES its rung(s) in order — never skip, never restart attraction from zero; the couple carries everything earned in prior issues:

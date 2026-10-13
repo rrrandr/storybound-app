@@ -15,6 +15,8 @@ const t = (label, ok, detail) => {
 const section = (n) => console.log('\n' + n);
 
 const FILES = {
+  s16Author:    '_audit_out/cf_s16_author_request.txt',
+  s16Planner:   '_audit_out/cf_s16_planner_request.txt',
   spine:        '_audit_out/cf_spine_request.txt',
   openPlanner:  '_audit_out/cf_opening_planner_request.txt',
   scaffold:     '_audit_out/cf_scaffold_request.txt',
@@ -73,6 +75,31 @@ for (const [k, v] of Object.entries(doc)) {
     /THIS WINDOW CLOSES AT SCENE 16/.test(v), 'a prohibition with no stated release');
   t(k + ': …and says it binds the READER, not the writer\'s knowledge',
     /binds only what the READER may be told, never what you may know/.test(v));
+}
+
+// ── 2b. THE REVEAL SCENE MAY NOT ALSO BE FORBIDDEN ──────────────────────────────────────────
+// The sharpest contradiction this scan exists to find, and the one a helper-only test missed: at
+// the unsealing scene the author block PERMITS the reveal while a separate builder's INVARIANTS
+// list still forbids it. Two sources, one request, opposite orders.
+section('2b. THE UNSEALING SCENE — permission and prohibition cannot coexist');
+for (const k of ['s16Author', 's16Planner']) {
+  if (!doc[k]) { t(k + ': capture present', false, FILES[k] + ' missing'); continue; }
+  const v = doc[k];
+  const forbidsAbsolutely = v.includes('Nobody may speak the actual hidden truth aloud');
+  t('*** ' + k + ': no permanent "nobody may speak the hidden truth" invariant', !forbidsAbsolutely,
+    'the seed-context INVARIANTS list is still emitting it with no expiry');
+  t(k + ': the scenes-1-15 window is not in force here', !v.includes('DISCLOSURE WINDOW, SCENES 1-15'));
+  if (k === 's16Author') {
+    t('*** s16Author: release is stated as PERMISSIBLE, not accomplished',
+      /PERMISSIBLE, NOT ACCOMPLISHED/.test(v));
+    t('*** s16Author: and not as already known',
+      /nobody in the story has learned anything until a scene actually delivers it/.test(v));
+    t('*** s16Author: later knowledge follows what the page showed',
+      /treat as known only what the page actually showed/.test(v));
+    t('*** s16Author: opening-era circumstances are not asserted as current',
+      !v.includes('watching a rite move toward that hour')
+      && !v.includes('believes her father took the family deck when he went'));
+  }
 }
 
 // ── 3. THE SEALED PRICE REACHES EXACTLY ONE STAGE ───────────────────────────────────────────

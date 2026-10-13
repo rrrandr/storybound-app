@@ -71,7 +71,9 @@ const M = {
   planDoNot:     'do not plan Augar appearing',
   planRelease:   'THE SEAL IS OPEN FROM THIS SCENE ON',
   planHinge:     'The distinction is SIZE REQUESTED, nothing else',
-  authIntent:    'He is a man watching a rite move toward the worst hour of his life',
+  // DURABLE intent only. "watching a rite move toward…" was an OPENING-ERA circumstance asserted
+  // as a standing fact; it is now windowed to scene 1 and the durable half reads "protecting".
+  authIntent:    'He is a man protecting the worst hour of his life',
   authForbid:    'DISCLOSURE WINDOW, SCENES 1-15',
   authRelease:   'THE WINDOW IS OPEN',
   authOpening:   'THE DECK IS IN THE SASH SHE IS WEARING',
@@ -415,6 +417,83 @@ for (const cap of contCaptures) {
   }
 }
 
+// ═══ 2b3. THE REVEAL SCENE, AS A COMPLETE REQUEST ════════════════════════════════════════════
+// The lifecycle section below exercises the disclosure HELPER. That is not sufficient and it
+// missed a real conflict: a permanent "Nobody may speak the actual hidden truth aloud." was still
+// being emitted by the SEED-CONTEXT builder, so the assembled request both permitted and forbade
+// the reveal. Only a complete request shows that. This drives the real continuation chain at the
+// unsealing scene and reads the whole document.
+section('2b3. SCENE 16 — the complete planner and author requests through the real builders');
+calls.length = 0;
+await page.evaluate((prior) => {
+  const s = window.state, SP = window.StoryPagination;
+  try { SP.clear(); } catch (_) {}
+  try { SP.addPage('<p>' + prior + '</p>', true); } catch (_) {}
+  s._sceneTextRing = [{ text: prior }]; s._priorSceneText = prior;
+  s._isScene1Build = false;
+  delete s._stagedAuthoringSceneIndex;
+  s.turnCount = 14;                     // _currentSceneNumber: turnCount + 2 => scene 16
+  s._cliffhangerContinueAuthorized = true; s._isAdvancingScene = false;
+  s._petitionEmergenceFired = true; s._deckExamineFired = true;
+  s.sceneSkeleton = null; s._skeletonMeta = null; s._scenePlotContract = null;
+  s.profileId = 'cf-ctl-profile'; s._bakedGenesisUnlocked = true;
+  s._issuePurchased = true; s._issuesPurchased = { 1: true };
+  s.renderMode = 'literary'; s.currentEngine = 'literary'; s._stagedBook = false;
+}, 'The inquiry had been sitting for a month and nobody had said the one thing that mattered.');
+await page.evaluate(() => {
+  const a = document.getElementById('actionInput'); if (a) a.value = 'I ask Julian, in front of the inquiry, what he did at the rite.';
+  const d = document.getElementById('dialogueInput'); if (d) d.value = '';
+  const b = document.getElementById('submitBtn'); if (b) { b.disabled = false; b.click(); }
+});
+for (let w = 0; w < 120000; w += 2500) {
+  await page.waitForTimeout(2500);
+  if (calls.some(c => c.bytes > 20000)) break;
+}
+const s16Planner = calls.filter(c => /local_objective|state_change_precondition/i.test(c.joined)).pop();
+const s16Author = calls.filter(c => c.bytes > 20000 && c.role !== 'OPENING_PLANNER'
+  && !/narrative skeletons/i.test(c.joined) && !/CONTINUITY ARCHITECT/i.test(c.joined)
+  && !/local_objective/i.test(c.joined)).pop();
+console.log('      scene 16 calls=' + calls.map(c => (c.role || '?') + ':' + c.bytes).join(' '));
+t('a COMPLETE scene-16 author request was captured', !!s16Author,
+  calls.map(c => (c.role || '?') + ':' + c.bytes).join(' '));
+if (s16Author) {
+  fs.writeFileSync('_audit_out/cf_s16_author_request.txt', s16Author.joined);
+  t('scene 16: the request agrees it is scene 16', /current scene: 16/.test(s16Author.joined));
+  t('*** scene 16: the scenes-1-15 disclosure window is NOT in the request',
+    !s16Author.joined.includes(M.authForbid));
+  t('*** scene 16: the positive permission IS in the request', s16Author.joined.includes(M.authRelease));
+  // THE CONFLICT THIS SECTION EXISTS TO CATCH.
+  t('*** scene 16: "Nobody may speak the actual hidden truth aloud." is GONE from INVARIANTS',
+    !s16Author.joined.includes('Nobody may speak the actual hidden truth aloud'),
+    'the seed-context builder is still emitting it as a permanent invariant');
+  t('*** scene 16: and the released counterpart is present instead',
+    s16Author.joined.includes('NO LONGER FORBIDDEN on the page'));
+  t('*** scene 16: release is PERMISSIBLE, not accomplished',
+    /PERMISSIBLE, NOT ACCOMPLISHED/.test(s16Author.joined)
+    && /nobody in the story has learned anything until a scene actually delivers it/.test(s16Author.joined));
+  t('*** scene 16: and later knowledge must follow what the page showed',
+    /treat as known only what the page actually showed/.test(s16Author.joined));
+  // OPENING-ERA FACTS MUST NOT BE ASSERTED AS CURRENT.
+  t('*** scene 16: the rite is not described as currently in progress',
+    !s16Author.joined.includes('watching a rite move toward that hour'));
+  t('*** scene 16: Lirael\'s overturned belief is not re-asserted',
+    !s16Author.joined.includes('believes her father took the family deck when he went'));
+  t('scene 16: and the author is pointed at established history for her beliefs instead',
+    /her beliefs CHANGE as the story delivers things to her/.test(s16Author.joined));
+  t('scene 16: durable motivation survives (Julian is still protecting that hour)',
+    s16Author.joined.includes('protecting the worst hour of his life'));
+  t('*** scene 16: the sealed price is STILL withheld', !s16Author.joined.includes(M.SEALED_PRICE));
+}
+if (s16Planner) {
+  fs.writeFileSync('_audit_out/cf_s16_planner_request.txt', s16Planner.joined);
+  t('a COMPLETE scene-16 planner request was captured', true);
+  t('*** scene 16 planner: the do-not-plan schedule has LAPSED', !s16Planner.joined.includes(M.planDoNot));
+  t('*** scene 16 planner: the seal-open release is present', s16Planner.joined.includes(M.planRelease));
+  t('*** scene 16 planner: still no sealed price', !s16Planner.joined.includes(M.SEALED_PRICE));
+} else {
+  t('a COMPLETE scene-16 planner request was captured', false, 'none');
+}
+
 // ═══ 2c. DISCLOSURE LIFECYCLE — THE PROHIBITIONS MUST RELEASE ════════════════════════════════
 // The first version of the author tier shipped a block headed "DISCLOSURE LIMITS, ABSOLUTE" with
 // no expiry, so an author at scene 16 was still forbidden to hint at the concealment while the
@@ -441,7 +520,7 @@ t('*** scene 5: the opening-only deck line is GONE (opening facts do not stand)'
 t('*** scene 16: the window has CLOSED — no prohibition on the concealment',
   !a16.includes(M.authForbid));
 t('*** scene 16: and a POSITIVE permission replaces it',
-  a16.includes(M.authRelease) && a16.includes('NOW DELIVERABLE'));
+  a16.includes(M.authRelease) && /PERMISSIBLE, NOT ACCOMPLISHED/.test(a16));
 t('scene 16 still withholds the two later secrets by name',
   /Augar’s survival|Augar's survival/.test(a16) && /price Fate took/.test(a16));
 t('the POV rule never expires (it is a rule, not a secret)',
@@ -490,6 +569,80 @@ const bareTiers = await page.evaluate(() => ({
 }));
 t('all three tiers emit EMPTY for a seedless story (byte-identical path)',
   bareTiers.spine === '' && bareTiers.planning === '' && bareTiers.author === '');
+
+// ═══ 3b. GENERATED FOUNDATIONS — SAME MECHANISM, OR IT IS NOT THE SAME CAPABILITY ════════════
+// The spine authors a foundation for stories with no seeded one. Two things must be true, and
+// neither was at first: the windows must be STRUCTURED (the renderer honours fromScene/untilScene
+// and treats a string as always-on, so "a scene number inside the text" never expires), and a
+// spine-only object must be REJECTED rather than stored — otherwise it reproduces the original
+// defect, with causes held upstream and nothing downstream.
+section('3b. GENERATED FOUNDATION: validation and structured windows');
+const tryAttach = (cf) => page.evaluate((c) => {
+  const s = window.state;
+  s._starterId = null;                       // no authored foundation, so the spine's answer applies
+  s._generatedCausalFoundation = null;
+  const out = window._attachGeneratedCausalFoundation(s, { causalFoundation: c });
+  return { stored: !!s._generatedCausalFoundation, returned: !!out,
+           planning: out ? out.planning.length : 0, author: out ? out.author.length : 0 };
+}, cf);
+const GOOD = {
+  spine: ['A paid a price B is concealing', 'the concealment keeps the record incomplete'],
+  planning: ['the concealment shapes every official response',
+             { untilScene: 9, text: 'do not plan the concealment being discovered' },
+             { fromScene: 10, text: 'the discovery is now available to plan' }],
+  author: ['B is frightened, not knowing',
+           { untilScene: 9, text: 'the reader may not be told that B concealed anything' },
+           { fromScene: 10, text: 'it may now reach the page if the scene plan calls for it' }],
+  whyNotWishedAway: 'the only person who could phrase the question does not know it needs asking',
+};
+const good = await tryAttach(GOOD);
+t('a complete, windowed foundation IS accepted and stored', good.stored && good.returned,
+  JSON.stringify(good));
+t('…and whyNotWishedAway is folded into spine and planning', good.planning === 4,
+  'planning=' + good.planning);
+// REJECTIONS — each must go RED, or the validator is decorative.
+const REJECT = [
+  ['a spine-only object (the original defect)', { spine: ['a cause'] }],
+  ['planning present but author empty', { spine: ['x'], planning: GOOD.planning, author: [] }],
+  ['author present but planning empty', { spine: ['x'], planning: [], author: GOOD.author }],
+  ['planning restrictions with no release', { spine: ['x'], author: GOOD.author,
+    planning: ['a cause', { untilScene: 9, text: 'do not plan it' }] }],
+  ['author window with no release', { spine: ['x'], planning: GOOD.planning,
+    author: ['intent', { untilScene: 9, text: 'do not tell the reader' }] }],
+  ['prose-only windows (a scene number inside a string is not a window)', { spine: ['x'],
+    planning: ['do not plan the discovery until scene 10'],
+    author: ['do not tell the reader until scene 10'] }],
+  ['a missing field', null],
+  ['a non-object', 'a foundation, honestly'],
+];
+for (const [label, cf] of REJECT) {
+  const r = await tryAttach(cf);
+  t('*** REJECTED, nothing stored: ' + label, !r.stored && !r.returned, JSON.stringify(r));
+}
+// A malformed window degrades to always-on rather than silently never applying.
+const sloppy = await page.evaluate(() => {
+  const s = window.state; s._starterId = null; s._generatedCausalFoundation = null;
+  const out = window._attachGeneratedCausalFoundation(s, { causalFoundation: {
+    spine: ['x'],
+    planning: ['c', { untilScene: 9, text: 'r' }, { fromScene: 10, text: 'o' }],
+    author: ['i', { untilScene: '9', text: 'typo: a string, not a number' },
+             { untilScene: 9, text: 'r' }, { fromScene: 10, text: 'o' }],
+  } });
+  const typo = out && out.author.filter(x => x && typeof x === 'object' && /^typo:/.test(x.text))[0];
+  return { ok: !!out, typoHasWindow: !!(typo && 'untilScene' in typo) };
+});
+t('*** a malformed scene number is DROPPED (degrades to always-on, never silently inert)',
+  sloppy.ok && sloppy.typoHasWindow === false, JSON.stringify(sloppy));
+// And an AUTHORED foundation is never overwritten by a generated one.
+const authoredWins = await page.evaluate((c) => {
+  const s = window.state; s._starterId = 'starter_first_sacrifice'; s._generatedCausalFoundation = null;
+  const out = window._attachGeneratedCausalFoundation(s, { causalFoundation: c });
+  const rendered = window._buildFSCausalFoundationBlock(s, 'spine') || '';
+  return { returned: out, stored: !!s._generatedCausalFoundation, usesAuthored: /v4-2026-10-13-augar/.test(rendered) };
+}, GOOD);
+t('*** an AUTHORED foundation outranks a generated one and is not overwritten',
+  authoredWins.returned === null && !authoredWins.stored && authoredWins.usesAuthored,
+  JSON.stringify(authoredWins));
 
 // ═══ 4. SUPERSEDED MATERIAL IS GONE FROM THE SEED ════════════════════════════════════════════
 section('4. SUPERSEDED v1-v3 material');

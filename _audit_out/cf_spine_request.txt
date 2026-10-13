@@ -175,17 +175,11 @@ PAIR DYNAMIC (HARD — Roman 2026-06-01 P1B; the geometry between PC and LI arch
 These three layers (Engine + Shape/Question + Pair Dynamic) are the HIGHEST-AUTHORITY emotional gravity for this run. The runThesis you produce, each issueArc's thesis/ambiguityTargets/pressureVectors/endingShape, the voiceAnchors, the motifBank, and the characterIcebergs all sit DOWNSTREAM of these. If the spine you author could fit a different romance engine, a different pair dynamic, or a different Reader Question without rewriting, the spine has gone blind to its inputs. Rewrite from the engine + pair + question down, not from the A-plot up.
 
 STORY SHAPE — Layer 3 (the STRUCTURAL shape of the narrative). OWNS the A-PLOT / STRUCTURAL half of each issueArc.thesis + the issueArc.regimePhase / cliffShape / endingShape / ambiguityTargets. It does NOT write the relationship half of the thesis (that is the ladder's, also in the R-plot issueRelationshipStates) and NOT the external pressure (that is the world arc's). Do NOT name the shape in prose:
-- Forced Alliance (cooperation before trust)
-  Bind the pair to a shared necessity BEFORE they trust or like each other — the alliance is imposed by stakes, not chosen. Trust is built grudgingly under pressure; romance grows through proven reliability, not declared feeling.
+- Rise → Fall → Rise (gain → collapse → recovery)
+  Let the protagonist GAIN (status/safety/the thing wanted), then collapse it (structural loss, not a stumble), then rebuild into something truer. The fall reframes what the rise was worth.
   STRUCTURAL ROLE per issue — the A-PLOT half of issueArc.thesis IS this structural job (the relationship half is the ladder's). It also sets regimePhase / cliffShape / endingShape / ambiguityTargets. Traverse in order, never skip:
-  - Issue 1 = CONSCRIPTION → STRAIN: external stakes BIND the two into cooperation neither chose; then the forced cooperation cracks under pressure and mismatched aims
-  - Issue 2 = CONSOLIDATION: the working unit holds and proves out under a hard test
-
-WORLD ARC — Layer 2 (the WORLD-PRESSURE progression — the systemic / social / environmental field shifting around the couple). OWNS the issueArc.pressureVectors. It is NOT the A-PLOT (the concrete plot events / antagonist moves / clock — those drive the thesis, NOT pressureVectors), NOT the couple, NOT the narrative shape:
-- Fold Corruption: A creeping world-corruption spreads through people/places the characters love; the romance grows against an encroaching wrongness.
-  WORLD-PRESSURE STAGE per issue — this issue's pressureVectors EXPRESS this systemic stage (the world-field shifting), NOT the A-plot's plot events. Traverse in order, never skip:
-  - Issue 1 = FIRST SIGN → SPREAD: a first small wrongness appears in the world; then the corruption spreads through places and people
-  - Issue 2 = INFESTATION → SATURATION: it takes deep hold; what they love is compromised; then the wrongness is everywhere; the world is changed
+  - Issue 1 = ASCENT → COLLAPSE: the protagonist gains ground — status, safety, or the thing wanted; then a structural loss strips the gain away (not a stumble — a fall)
+  - Issue 2 = RECOVERY: rebuild from the wreckage into a changed, truer position
 
 (FOUR OWNERS, DISJOINT FIELDS — Story Shape = the issue's structural move (thesis A-half/form, regimePhase, cliff, ending, ambiguity); A-Plot = WHAT happens (the thesis A-half CONTENT, its own milestones/clock); World Arc = the world-pressure progression (pressureVectors); Relationship Ladder = the couple (thesis R-half, issueRelationshipStates/issuePressures). They reinforce; they never write each other's fields.)
 

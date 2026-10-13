@@ -134742,15 +134742,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // SCHEDULED and the unsealing scene carries a POSITIVE permission to match.
         author: [
           'PRIVATE INTENT, SO YOU CAN STAGE BEHAVIOUR FAITHFULLY. Holding a secret is not narrating it: you are told these things so the behaviour you write is honest, and what reaches the page is governed by the disclosure window below, which CHANGES AS THE STORY ADVANCES.',
-          'JULIAN is not a mystery man being enigmatic. He is a man watching a rite move toward the worst hour of his life, and what he does about it is small, fast and self-protective. Play him as frightened and competent, never as knowing. He is WRONG about the danger. Canon tell: he lowers his head so his hair curtains his face, and he always stands too still.',
-          'LIRAEL wants AN ANSWER about her father, not a reunion, and that distinction is the engine of her reaction when Seren asks Fate for a person instead. She has looked for years and paid for looking. She believes her father took the family deck when he went.',
+          // DURABLE MOTIVATION vs OPENING-ERA CIRCUMSTANCE (Roman 2026-10-13). The first version
+          // of these two entries described the rite as currently happening and asserted Lirael's
+          // belief about the deck as a standing fact. Both are true at scene 1 and false later:
+          // the rite ends, and the belief is the first thing the discovery damages. A standing
+          // instruction that has quietly expired is worse than none, so the DURABLE half stays
+          // always-on and the opening-era half is windowed below. Evolving beliefs are read from
+          // established history, never re-asserted here.
+          'JULIAN is not a mystery man being enigmatic. He is a man protecting the worst hour of his life, and what he does about it is small, fast and self-protective. Play him as frightened and competent, never as knowing. Canon tell: he lowers his head so his hair curtains his face, and he always stands too still.',
+          'LIRAEL wants AN ANSWER about her father, not a reunion. She has looked for years and paid for looking, in her own memory. For what she currently believes about him, read the established history and the committed facts — her beliefs CHANGE as the story delivers things to her, and this block must never be used to re-assert an earlier one.',
+          { untilScene: 1,
+            text: 'THIS SCENE — Julian is watching a rite move toward that hour, and he is WRONG about the danger it poses to him. Lirael, at this moment, believes her father took the family deck when he went; that belief is the engine of her reaction when Seren asks Fate for a person instead of an answer.' },
           'POV: first person, Lirael, bounded by her senses and her knowledge. She perceives ALIGNMENT, not thoughts, emotions or facts — a trained sense that something does not point at one truth. She cannot read Julian and must not be given information she has no way to have. This one does not expire: it is a POV rule, not a secret.',
           { untilScene: 1,
             text: 'THIS SCENE ONLY — THE DECK IS IN THE SASH SHE IS WEARING, and she does not know. Establish the sash as WEIGHT and as the thing she tightens for composure, never as a container, never a pocket, never a fold, so that feeling it is a discovery rather than a payoff the reader saw coming.' },
           { untilScene: 15,
             text: 'DISCLOSURE WINDOW, SCENES 1-15 — WHAT LIRAEL DOES NOT YET KNOW, SO THE READER DOES NOT EITHER: her father is simply GONE, cause unknown. Within this window do not write, imply or hint that he is alive, that a bargain was made for her, that Julian was present at it, that Julian concealed anything, or that Julian wished anything at the rite. Also do not narrate Fate\'s verdict or name which word bent as an authorial explanation — that is a design note, not prose. THIS WINDOW CLOSES AT SCENE 16; it is a schedule, not a permanent prohibition, and it binds only what the READER may be told, never what you may know.' },
           { fromScene: 16,
-            text: 'THE WINDOW IS OPEN. Julian\'s intervention at the rite and the concealment behind it are NOW DELIVERABLE, and if the scene plan calls for the reveal you are expected to write it rather than keep protecting it. What is still withheld is narrower: Augar\'s survival, and the price Fate took for Julian\'s open offer. Deliver what the plan asks for and withhold only those.' },
+            text: 'THE WINDOW IS OPEN — WHICH MAKES THE REVEAL PERMISSIBLE, NOT ACCOMPLISHED. Julian\'s intervention at the rite and the concealment behind it may now reach the page. They are NOT thereby already known: nobody in the story has learned anything until a scene actually delivers it to them, and release is not a short-cut past the dramatisation. If THIS scene\'s plan calls for the reveal, write it as the event it is — someone says it, or something makes it unavoidable, and it costs what it costs. If the plan does not call for it, it stays unspoken for now and that is not a violation. AFTERWARDS, treat as known only what the page actually showed, to whoever was actually there to learn it. What remains withheld is narrower: Augar\'s survival, and the price Fate took for Julian\'s open offer.' },
         ],
       },
       // CONSTRAINTS — storytelling invariants (not lore, not plot). Scene-gated ones
@@ -134759,7 +134768,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         'Julian must never read as suspicious before Scene 8.',
         'The PC must never consciously suspect Julian before the planner allows it.',
         'No character may infer or state the true explanation before the planned reveal.',
-        'Nobody may speak the actual hidden truth aloud.',
+        // WINDOWED (2026-10-13). As a bare string this was emitted as a PERMANENT invariant and
+        // contradicted the scene-16 reveal the spine plans and the author block permits. It is the
+        // same rule as the line above; what it was missing is the qualifier, so it now has one.
+        { untilScene: 15, text: 'Nobody may speak the actual hidden truth aloud.' },
+        { fromScene: 16, text: 'The sealed truth about Julian\'s intervention is NO LONGER FORBIDDEN on the page. It is not thereby accomplished and it is not already common knowledge: it becomes known only to whoever is actually told, in a scene that actually delivers it.' },
         'The author must never invent additional wish or Fate laws beyond worldTruths.',
         'The author must never depict visible Fate effects.',
         'The crowd’s accusations must always remain logically explainable from publicly observable events.'
@@ -140019,13 +140032,31 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         return null;
       }
       var raw = scaffold && scaffold.causalFoundation;
-      var arr = function (v) { return (Array.isArray(v) ? v : []).map(function (x) {
-        return (x && typeof x === 'object') ? x : String(x || ''); }).filter(function (x) {
-        return (typeof x === 'string') ? x.trim().length > 0 : !!x; }); };
-      if (!raw || typeof raw !== 'object') {
-        try { console.warn('[CAUSAL-FOUNDATION] spine returned no causalFoundation — downstream stages will receive NO causes (reported, not patched)'); } catch (_) {}
+      // ENTRY NORMALISATION. Keeps a plain string as always-on and preserves {fromScene}/
+      // {untilScene} objects in the shape the renderer actually honours. An object whose scene
+      // fields are not numbers is a malformed window: its text is kept but the broken fields are
+      // DROPPED, so a typo degrades to always-on rather than silently never applying.
+      var arr = function (v) {
+        return (Array.isArray(v) ? v : []).map(function (x) {
+          if (x && typeof x === 'object') {
+            var t = String(x.text || '').trim();
+            if (!t) return null;
+            var o = { text: t };
+            if (typeof x.fromScene === 'number' && isFinite(x.fromScene)) o.fromScene = x.fromScene;
+            if (typeof x.untilScene === 'number' && isFinite(x.untilScene)) o.untilScene = x.untilScene;
+            return o;
+          }
+          var sx = String(x || '').trim();
+          return sx ? sx : null;
+        }).filter(Boolean);
+      };
+      var reject = function (why) {
+        try { console.warn('[CAUSAL-FOUNDATION] REJECTED the spine\'s causalFoundation — ' + why
+          + '. Downstream stages receive NO causes; this is reported, never patched, because a '
+          + 'half-built foundation would be treated as settled by every stage that read it.'); } catch (_) {}
         return null;
-      }
+      };
+      if (!raw || typeof raw !== 'object') return reject('the field is missing or not an object');
       var cf = {
         version: 'generated-' + (new Date().toISOString().slice(0, 10)),
         source: 'spine',
@@ -140038,14 +140069,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         cf.spine = cf.spine.concat(['WHY THIS CANNOT SIMPLY BE WISHED AWAY: ' + String(raw.whyNotWishedAway).trim()]);
         cf.planning = cf.planning.concat(['WHY THIS CANNOT SIMPLY BE WISHED AWAY: ' + String(raw.whyNotWishedAway).trim()]);
       }
-      if (!cf.spine.length) {
-        try { console.warn('[CAUSAL-FOUNDATION] spine emitted an EMPTY causalFoundation.spine — treated as absent'); } catch (_) {}
-        return null;
-      }
+      // ── EVERY DOWNSTREAM SECTION IS REQUIRED ────────────────────────────────────────────────
+      // A spine-only object is NOT a usable foundation: it reproduces the original defect exactly
+      // — causes held upstream and unavailable to the stages that stage and write the scenes.
+      if (!cf.spine.length)    return reject('spine is empty');
+      if (!cf.planning.length) return reject('planning is empty, so scene planning would receive no causes');
+      if (!cf.author.length)   return reject('author is empty, so the author would receive no private intent');
+      // ── AND A RESTRICTION MUST BE A SCHEDULE ────────────────────────────────────────────────
+      // At least one windowed entry, with a release, in each scene-scoped tier. Without this the
+      // generated path can still ship permanent prohibitions — the authored path's original bug.
+      var hasUntil = function (rows) { return rows.some(function (r) { return r && typeof r === 'object' && typeof r.untilScene === 'number'; }); };
+      var hasFrom  = function (rows) { return rows.some(function (r) { return r && typeof r === 'object' && typeof r.fromScene === 'number'; }); };
+      if (!hasUntil(cf.planning) || !hasFrom(cf.planning))
+        return reject('planning has no {untilScene} restriction paired with a {fromScene} release — restrictions must be schedules, not permanent bans');
+      if (!hasUntil(cf.author) || !hasFrom(cf.author))
+        return reject('author has no disclosure window with a release — a prohibition that cannot expire can forbid the reveal the outline is built toward');
       s._generatedCausalFoundation = cf;
-      try { console.log('[CAUSAL-FOUNDATION] persisted spine-authored foundation: '
-        + cf.spine.length + ' spine / ' + cf.planning.length + ' planning / ' + cf.author.length
-        + ' author entries, sealedPrice=' + (cf.sealedPrice ? 'yes' : 'no')); } catch (_) {}
+      try {
+        var _w = function (rows) { return rows.filter(function (r) { return r && typeof r === 'object'; }).length; };
+        console.log('[CAUSAL-FOUNDATION] persisted spine-authored foundation: '
+          + cf.spine.length + ' spine / ' + cf.planning.length + ' planning (' + _w(cf.planning) + ' windowed) / '
+          + cf.author.length + ' author (' + _w(cf.author) + ' windowed), sealedPrice='
+          + (cf.sealedPrice ? 'yes' : 'no'));
+      } catch (_) {}
       return cf;
     } catch (_) { return null; }
   }
@@ -140103,8 +140149,34 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         (seed.cast || []).forEach(function (c) { var key = c && (c.name || c.role); var a = key && vc[key] && vc[key].filter(function (x) { return x && typeof x === 'string'; }); if (a && a.length) lines.push('  ' + key + ': ' + a.join('; ')); });
         if (lines.length) out += 'APPEARANCE (locked — deploy as established, never a neutral catalog):\n' + lines.join('\n') + '\n';
       }
+      // ── CONSTRAINTS, WITH STRUCTURED WINDOWS (Roman 2026-10-13) ────────────────────────────
+      // A constraint may be a plain STRING (always-on, filtered by the legacy prose test below)
+      // or an OBJECT {text, fromScene, untilScene} — the same shape the causal foundation uses.
+      // WHY: the prose test keeps any string that does not happen to say "before Scene N", so
+      // 'Nobody may speak the actual hidden truth aloud.' was emitted as a PERMANENT invariant.
+      // It is the same rule as 'No character may infer or state the true explanation before the
+      // planned reveal' with the qualifier missing, and it was still forbidding the revelation at
+      // scene 16 while the spine outlined its delivery and the author block permitted it. One
+      // request cannot both require and forbid the same thing; a sniffed qualifier is not a
+      // lifecycle, so the entry now carries a real one.
       if (seed.constraints && seed.constraints.length) {
-        var always = seed.constraints.filter(function (c) { return c && !/before Scene \d|before the planner|planned reveal/i.test(c); });
+        var _cSceneNo = 1;
+        try {
+          _cSceneNo = (typeof _currentSceneNumber === 'function' && _currentSceneNumber(s)) || 0;
+          if (!_cSceneNo) _cSceneNo = (((s && s.turnCount) || 0) + 1);
+        } catch (_) { _cSceneNo = (((s && s.turnCount) || 0) + 1); }
+        var always = [];
+        (seed.constraints || []).forEach(function (c) {
+          if (!c) return;
+          if (typeof c === 'object') {
+            if (typeof c.fromScene === 'number' && _cSceneNo < c.fromScene) return;
+            if (typeof c.untilScene === 'number' && _cSceneNo > c.untilScene) return;
+            if (c.text) always.push(String(c.text));
+            return;
+          }
+          // Legacy prose gating, unchanged for every other seed.
+          if (!/before Scene \d|before the planner|planned reveal/i.test(c)) always.push(String(c));
+        });
         if (always.length) out += 'INVARIANTS (never violate):\n' + always.map(function (c) { return '  • ' + c; }).join('\n') + '\n';
       }
       return out;
@@ -233187,8 +233259,20 @@ No text, no watermark, no UI elements, share-ready.`;
       '  "causalFoundation": {\n' +
       '    "spine": ["<the COMPLETE private account: what actually happened before the story opens, who did it, what it cost them, who is concealing what from whom, and what each concealment can and cannot reach. Include the things no character and no reader ever learns. 6-12 entries, each a specific causal fact.>"],\n' +
       '    "sealedPrice": "<OMIT unless some character has a hidden cost not yet collected. If present: what it is, when it begins to be taken, and why the character misreads it. This reaches the outline ONLY — never scene planning, never the author, never the reader before its scene.>",\n' +
-      '    "planning": ["<the subset a SCENE PLANNER needs: the causes that shape staging and consequence, plus what must NOT be planned yet AND THE SCENE NUMBER THAT RELEASES EACH RESTRICTION. Every restriction is a schedule, never a permanent ban. 4-8 entries.>"],\n' +
-      '    "author": ["<the subset an AUTHOR needs to stage behaviour honestly, plus the disclosure window: what the reader may not yet be told, and THE SCENE NUMBER AT WHICH THAT WINDOW CLOSES. Knowing a secret is not narrating it, so withhold from the READER, never from the writer. 4-8 entries.>"],\n' +
+      // THE WINDOW SHAPE IS STRUCTURED, NOT PROSE. The renderer honours {fromScene}/{untilScene}
+      // and treats a plain string as always-on — so asking for "a scene number inside the text"
+      // produced restrictions that never expired, which is the exact defect being corrected for
+      // the authored path. Same shape for both, or the generated path is not the same mechanism.
+      '    "planning": [ "<a plain STRING for a cause that always applies>",\n' +
+      '                  { "untilScene": <number>, "text": "<a restriction that STOPS applying after this scene — e.g. what must not be planned yet>" },\n' +
+      '                  { "fromScene": <number>, "text": "<what becomes available to plan FROM this scene on>" } ],\n' +
+      '    // REQUIRED SHAPE: 4-8 entries, and at least one {untilScene} paired with a {fromScene} that releases it.\n' +
+      '    // A restriction with no untilScene is a PERMANENT BAN and will be rejected. Every restriction is a schedule.\n' +
+      '    "author": [ "<a plain STRING for durable private intent — motivation and behaviour that do not expire>",\n' +
+      '                { "untilScene": <number>, "text": "<the DISCLOSURE WINDOW: what the READER may not yet be told, and nothing about what the writer may know. This stops applying after the scene named.>" },\n' +
+      '                { "fromScene": <number>, "text": "<what becomes PERMISSIBLE to put on the page from this scene on. Permissible is not accomplished: the scene must still deliver it.>" } ],\n' +
+      '    // REQUIRED SHAPE: 4-8 entries, same pairing rule. Do NOT state an opening-era circumstance as a durable string:\n' +
+      '    // if a fact is only true early (a rite in progress, a belief the plot will overturn), window it with untilScene.\n' +
       '    "whyNotWishedAway": "<if this is a magical world: the SPECIFIC reason the central problem cannot simply be wished solved, from cost, practice, training, risk, misalignment, conflicting wishes or incomplete knowledge. If a mystery has gone unsolved for years, NAME THE OBSTRUCTION. \'Magic cannot do that\' is not an answer.>"\n' +
       '  },\n') +
       '  "issueArcs": [\n' +

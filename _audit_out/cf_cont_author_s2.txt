@@ -179,7 +179,7 @@ REALITY MODEL:
 • Possible sacrifices: flesh, memory, emotion, years of life, voice, shadow, name, status, inheritance, reflection
 • The Four Sacrifice Laws: A (permanent), B (reclaimable but rare), C (reclaimable at terrible cost — returns distorted), D (transferred from another — reviled, practitioners hunted)
 • Fate's Favor — central meteor basin — regulates magical amplitude across the continent
-• Favor Amplitude: stable
+• Favor Amplitude: fracturing
 • Syzygy: rare celestial alignment (at most once per story). During syzygy one may sacrifice something new to reclaim something previously lost. Only at the Ascendant Run. Only once per lifetime.
 • Thirteen canonical moons (4 inner, 4 outer, 4 anomalous, 1 final). The Hungry Eye (13th) is disputed — visible only over Fate's Favor during syzygy.
 • Romantic sacrifice law: sacrifice offered sincerely for love binds cleanly; sacrifice made with doubt twists. The Favor amplifies truth.
@@ -352,29 +352,86 @@ FANTASY WORLD INTEGRITY:
 - If a location is named, verify it exists in Fatelands canon or is a sub-location within a canonical region.
 - If a moon is named, it must be one of the 13 canonical moons.
 - Generic fantasy tropes (chosen one prophecy, mana pools, elemental magic, dragon riders) are FORBIDDEN unless filtered through sacrifice mechanics.
-
-VAELRYN POLITICS:
-The five great houses compete for influence over the Crown Citadel: Aurelion (royal authority), Thornmere (Veilwood frontier), Velar (arcane scholarship), Dathros (military command), Merrowyn (maritime trade).
-Alliances shift constantly. Marriage, sacrifice, and military victories all affect prestige.
-Agents of House Thornmere may influence events nearby.
 FATELANDS NOBILITY: If Vaelryn Reach is referenced, the ruling elite must come from one of the five great houses (Aurelion, Thornmere, Velar, Dathros, Merrowyn). Do not invent additional ruling houses unless a story explicitly introduces a minor noble family.
 FATELANDS HISTORY — TWO REGISTERS (HARD):
 • OBLIQUE REFERENCE (the common one, and even this is not every scene): a name or event invoked as PROVERB, curse, oath, or warning — carrying WEIGHT, never FACTS. The speaker assumes you already know it; nothing is explained. ✓ "Let Karkus be a lesson to you." ✓ "She swore it on the Fold." ✓ "Not since the Uncrowned Queen." This is how living people wear their history — glancingly.
 • HISTORICAL EXPOSITION (RARE — a deliberate dramatic BEAT, not wallpaper): the past actually told, usually because a scene EARNS it — a scholar, a confession, a ruin, a revelation that a public "fact" was a lie. Reserve it for a moment built to carry it, at most once or twice in a whole issue. When it lands it should REVEAL, not recap — a hidden truth that reframes what everyone was taught. ✓ (earned, dramatic) "It wasn't sixteen mages who brought the Fold down on Dathros — it was all of Dathros. The mages didn't sacrifice their memories; they tricked the people into sacrificing each OTHER, then sacrificed their memory of that blighted act. They were the first wish-slavers." — (that specific Dathros truth is a GATED late REVELATION: hold it until a scene has earned it and the deep-history lore is in play; it is the SHAPE of exposition, not a fact to state early.) ✗ (never — ambient recap) dropping "People still whisper of the Dathros Conclave, when the city sacrificed their certainty" into a scene about something else.
 DEFAULT TO NEITHER. Most scenes carry no history at all. Prefer oblique when history touches the scene; spend exposition only where the story reaches back on purpose.
 
-Region: Vaelryn Reach (Seat: The High Court)
-Governance: Human monarchy claiming Favor-legitimacy
-Magic Expression: ceremonial
-Sacrifice Culture: "What is inherited must not be ruled by appetite."
-Threshold: Public recognition, social validation.. Currency: pleasure, comfort, sensory indulgence, bodily satisfaction, appetite.
-Result: Restrained physicality. Minimal reaction to pleasure. Controlled posture and movement. Visible denial of comfort. The less one indulges, the more pure their lineage appears.
-Failure mode: Repressed desire erupts unpredictably. Loss of composure in critical moments. Lineage decisions influenced by impulse. Internal instability masked by external control. Tone: elegant, political, suppressing desire.
-CULTURAL TABOO (unforgivable to sacrifice): Lineage Compromise — surrendering noble identity, public loss of composure through desire, allowing appetite to override dynastic duty. Pleasure-driven decisions in public are political suicide.
-Romantic stakes: Lovers cannot openly desire each other. Passion is expressed through restraint. Public affection is weakness. The most intense bonds are the most hidden.
-Tension axis: lineage purity (Vaelryn) vs appetite (rejected). Sacrifice strips pleasure and bodily indulgence to preserve dynastic clarity. Restrained desire vs transactional pragmatism (Pulse Point).
+Region: The Veilwood
+Governance: First Favored cultural heartland
+Magic Expression: primal
+Sacrifice Culture: "Emotion is the truest form of identity — and the first to be burned."
+Threshold: Crossed early through attachment, desire, or loss.. Currency: love, grief, jealousy, fear.
+Result: Graceful, controlled, emotionally hollowed. Restraint admired; emotion is rare, deliberate, dangerous.
+Failure mode: Emotional nullification. Tone: intimate, eerie, controlled longing.
+CULTURAL TABOO (unforgivable to sacrifice): The Last True Feeling — the final remaining authentic emotion (often love or grief). To sacrifice it is self-extinction: perfectly empty, worse than death. The violator is feared, not admired — treated as something no longer fully human. "He gave up loving her" is catastrophic.
+Romantic stakes: Ultimate romantic betrayal — sacrificing the capacity to love the other person.
+Tension axis: feeling (Veilwood) vs understanding (Lytharyn), emotion vs endurance (Ashen Verge).
 CULTURE VS IDENTITY: Regional sacrifice styles are cultural pressures, not binding systems. Character behavior is determined by: (1) origin, (2) species, (3) personal history — NOT solely by current location. Regions influence available actions, incentives, and social expectations. They do NOT override transformation rules, origin sacrifice logic, or core identity. Characters may adapt tactically or mimic local behavior — but this is performance, not identity replacement. "Place creates pressure. Identity determines response."
 CROSS-STYLE SACRIFICE: Any character can perform any regional sacrifice style if intent is genuine and sacrifice is meaningfully given. However, practicing outside native alignment increases distortion risk: partial success, unintended consequences, or symbolic mismatch. Sacrifice systems respond to meaning, not form — if meaning is conflicted, the result may twist. Native alignment always has higher stability. "Any path can be walked. But not all paths recognize you."
+
+VEILWOOD ENVIRONMENT (CANONICAL — highest authority for all Veilwood scene construction):
+The Veilwood has a single authoritative visual identity. All descriptions must converge toward this identity. Do not drift into generic fantasy forest aesthetics.
+The Veilwood is a living cathedral forest. Every element is organic, grown, intertwined. Nothing is constructed. Nothing is straight.
+
+TREES (Spiralbound — primary structure):
+• Veilwood trees grow as MATED PAIRS. Two trees begin a little apart; their branches reach out, wind around each other's trunks, and over years PULL the pair together through the soil until the trunks meet and twist into one another.
+• So the forest shows a range of life-stages: a few young pairs still leaning together, joined by braided branches with a gap between the trunks; some mid-stage pairs whose trunks have just met and opened into a loose two-strand HELIX (begun twisting, not yet pulled tight); and MOST mature trees a full tight twist — two trunks wound completely together like thick braided rope.
+• Trunk surfaces show visible fiber texture — individual strands woven tightly, not smooth bark.
+• Trunks are tall, cathedral-scale, and partially to heavily obscured by their own cascading foliage.
+• Root systems interweave with the ground, braided into the substrate — no clear boundary between tree and earth.
+
+CANOPY (veil curtains — defines the space):
+• From every branch, dense curtains of white/ivory/pearl foliage hang vertically to ground level.
+• These are heavy, layered veils — not sparse wisps. Individual leaf-strands are small, oval, packed tightly along hanging threads.
+• Multiple curtain layers create parallax depth — the forest reads as receding walls of translucent white.
+• Light filters diffusely through the curtain layers, creating an ethereal backlit glow.
+• Foliage color: white, ivory, pearl, pale lavender, cool blue-white. NEVER green.
+
+GROUND (Spiralgrass — the living floor):
+• The forest floor is covered in Spiralgrass: deep crimson/red, thick, fleshy, ribbon-like blades that grow in MATED PAIRS — two blades wound and twisted around each other, echoing the paired tree trunks.
+• The wound pairs are scattered CHAOTICALLY — multi-directional, non-uniform, densely tangled. No rows, no patterns, no symmetry (each clump is a twisted pair; their arrangement is wild).
+• Scattered bioluminescent sparks glow among the red blades like embers in a living carpet.
+• The contrast is dramatic: white/ivory canopy above, deep red ground below.
+
+DWELLINGS (when habitation is present):
+• First Favored homes are bulbous, gourd-shaped pods grown organically from Spiralbound trunks.
+• Dwellings swell from the living wood at varying heights — not attached, but emerged.
+• Small oval openings emit warm amber/golden interior light.
+• Vine lattice and tendrils frame the openings. Surfaces show the same braided texture as the trunk.
+
+ATMOSPHERE:
+• Two-tone color world: white/pearl canopy, crimson ground, warm amber accents from dwellings.
+• Misty depth between tree trunks. Lumenweave motes (small amber/gold lights) drift between canopy layers.
+• Cathedral scale — the space feels immense, hushed, alive.
+• Everything intertwined, flowing, organic. No straight lines, no clean geometry, no artificial spacing.
+
+PERSPECTIVE & COMPOSITION:
+• Veilwood is experienced from WITHIN — characters are embedded in the environment, not observing it from outside.
+• Default perspective: low to mid-height, surrounded by Spiralgrass, foliage curtains framing the view.
+• Foreground vegetation dominance — Spiralgrass and hanging curtains are always present, never cleared for convenience.
+• Do NOT write establishing-shot descriptions ("they saw the forest spread before them") unless characters are arriving from outside.
+• Do NOT describe the Veilwood from above or at a distance — the canopy is opaque from outside.
+
+BACKGROUND FIDELITY:
+• Spiralbound trees maintain their full braided identity at every distance in the prose — near or far.
+• Background trees are not "dark shapes" or "towering columns" — they are braided pairs veiled in hanging white curtains.
+• The deeper the forest, the more layered the curtain veils — depth adds density, not simplification.
+
+SPIRALGRASS BEHAVIOR:
+• Spiralgrass is anti-uniform: describe crossing directions, irregular density, mixed curvature.
+• Do NOT describe it moving in waves, flowing in one direction, or parting neatly.
+• Characters wade, push, stumble — Spiralgrass resists orderly passage.
+
+HARD RULES:
+• Do NOT describe Veilwood trees as having standard bark, branches, or canopy shapes.
+• Do NOT use green for any Veilwood vegetation.
+• Do NOT describe neat, trimmed, or orderly ground cover.
+• All elements must feel GROWN, not constructed.
+• When characters move through the Veilwood, they push through curtains of hanging foliage and wade through tangled Spiralgrass.
+• Do NOT drift into generic fantasy forest descriptions — the Veilwood has a specific, canonical visual identity.
+• Conflict resolution: preserve tree structure first, ground ecology second, composition third, dwelling detail fourth.
 
 Mythic Pressure: Arcane Binding
 Pressure Effect: Magical obligation constrains love. Geas enforced through sacrifice, spell-debts owed to sorcerers or courts, magical contracts requiring pieces of identity, lovers bound by rituals they regret. A character sacrifices their voice to bind another. Breaking a magical promise triggers additional sacrifice. Originates in Lytharyn, Vaelryn Reach, ancient covenant sites.
@@ -382,12 +439,12 @@ Geographic Centers: Lytharyn, Vaelryn Reach, The Shackle Isles, Pulse Point, anc
 Emerges where formal magic institutions or coercive contracts exist.
 
 REGIONAL EXPRESSION — how this region expresses the flavor (EXPRESSES the obstacle; does NOT change the mechanic, pacing, or player options):
-- The obstacle here takes the form of: a court fealty-geas or binding-vow sworn before the High Court
-- Enforced by: ceremonial oath-taking witnessed and legitimized by the Five Great Houses and Favor-authority; a sworn duty carries the force of law
-- Social consequence of defying it: breaking a sworn oath destroys political legitimacy — a public forsworn is politically dead and their House shamed
-- BACKDROP (setting only, NOT the mechanic): lineage and bloodline here are POLITICAL SCENERY, not the obstacle; the mechanic is the CONTRACT — its terms, its cost, its loophole — never who your blood is
-- Imagery: heraldry, sealed writs and oath-sigils, ritual vow-halls, court galleries, the High Court ceremonial chambers
-- Vaelryn asks "what promise is worth breaking?" as: will you forswear a vow the whole court witnessed?
+- The obstacle here takes the form of: a root-geas or Favor-pact sworn into the living wood and bound in an ancestral name
+- Enforced by: the First Favored's primal covenants — an oath witnessed by the Spiralbound wood and the ancestors it remembers, not by any court; charred Unbound-wood carries the binding
+- Social consequence of defying it: breaking a wood-sworn pact severs you from the Favor and from the ancestral memory the wood holds — a spiritual exile, felt, not litigated
+- BACKDROP (setting only, NOT the mechanic): ancestry and bloodline here are the WITNESS and the setting, not the obstacle; the mechanic is the PACT — its terms, its cost, its loophole — never your lineage
+- Imagery: oath-knots grown into living root, charred Unbound-wood charms, veil-curtain groves, ancestral naming-rites, Spiralbound trees
+- Veilwood asks "what promise is worth breaking?" as: will you break a vow the wood and your ancestors heard?
 WORLD ANCHOR: Magical obligation constrains love. Spells, geas, and contracts have concrete cost. Romance choices incur magical consequence.
 
 FATELANDS MEASUREMENT DOCTRINE (MANDATORY):
@@ -1621,8 +1678,8 @@ ROMANCE DOMINANCE ≠ ROMANCE SATURATION (HARD — Roman 2026-06-16, the governi
     WORLD IDIOM: WORLD IDIOM (Fatelands): leakage carries the body's wildness and the world's weight — an animal stillness, the Becoming stirring a half-shade under the skin, moons-attuned senses snapping to her; in a First-Favored or court figure, the leak is the crack in Favor-perfect composure.
     Do NOT default to the calcified tics (nail-tapping / throat-clearing / glasses-pushing / pen-clicking). The habit must EXPRESS the core — that is what makes a character a person instead of a tic.
   SOCIAL ECOSYSTEM — THE RECURRING CAST AROUND THE PROTAGONIST (Roman 2026-06-16). Real stories have a SOCIAL CIRCLE, not one best friend. This story's recurring supporting cast — the people who keep showing up and PRESSURE the romance. Each = a WORLD-NATIVE social ROLE (who they are to her) × a UNIVERSAL narrative FUNCTION (what they DO to the relationship). The function is ORTHOGONAL to each character's psychological core above (core = WHO they are; function = WHAT pressure they apply). Map your ACTUAL named cast onto these; not every scene needs all of them:
-    • A CLAN-KIN as PROTECTOR (the CLOSEST — most present) — shields the PC from the harm the romance could do to her. Shows it by: puts herself between the PC and the thing that could wound her; vets him without being asked and reports back.
-    • A BOND-SISTER / BONDMATE as RIVAL VOICE — advocates a different path or person — keeps a real alternative alive. Shows it by: champions the other option (the safer suitor / the road not taken); reminds the PC of what she wanted before he existed.
+    • A CLAN-KIN as TEMPTER (the CLOSEST — most present) — pushes the PC toward the riskier choice — louder want, fewer brakes. Shows it by: dares the PC to do the reckless thing she is already circling; makes the safe option sound like cowardice.
+    • A BOND-SISTER / BONDMATE as PROTECTOR — shields the PC from the harm the romance could do to her. Shows it by: puts herself between the PC and the thing that could wound her; vets him without being asked and reports back.
     HARD INVARIANT: EVERY member is fundamentally ON THE PC'S SIDE — even a Brake / Skeptic / Rival-Voice / Truth-Teller acts FROM loyalty, NEVER as a second antagonist (the someone-in-your-corner fantasy is the constant). Keep each member's function CONSISTENT across appearances (it can ESCALATE, never silently swap). Functions are DISTINCT across the cast — do not let two members collapse into the same pressure. Every member is a SEPARATE person from the LOVE INTEREST — never merge a cast role into the LI even when their professions overlap (the "colleague" in her circle is NOT the colleague she falls for).
     WHY: a varied circle is what makes loyalty, disagreement, and (later) betrayal land — the reader should wonder WHICH of these people matters most, not watch one "friend slot."
   THE LIVING WORLD — INCIDENTAL CHARACTER AGENCY (Roman 2026-06-16). Walk-ons (servers, drivers, shopkeepers, strangers, fans) are NOT just mood-lighting that admires the couple. OCCASIONALLY one may briefly ACT on them. This story's available beats (use ONLY when the setting actually supports the gate):
@@ -1704,8 +1761,8 @@ ANTAGONIST-BODY-CALLBACK DOCTRINE (apply when the skeleton sets an ANTAGONIST BO
 ═══ PRIVATE INTENT AND THIS SCENE'S DISCLOSURE WINDOW (v4-2026-10-13-augar) ═══
   (current scene: 2 — the windowed items below are the ones in force NOW)
   • PRIVATE INTENT, SO YOU CAN STAGE BEHAVIOUR FAITHFULLY. Holding a secret is not narrating it: you are told these things so the behaviour you write is honest, and what reaches the page is governed by the disclosure window below, which CHANGES AS THE STORY ADVANCES.
-  • JULIAN is not a mystery man being enigmatic. He is a man watching a rite move toward the worst hour of his life, and what he does about it is small, fast and self-protective. Play him as frightened and competent, never as knowing. He is WRONG about the danger. Canon tell: he lowers his head so his hair curtains his face, and he always stands too still.
-  • LIRAEL wants AN ANSWER about her father, not a reunion, and that distinction is the engine of her reaction when Seren asks Fate for a person instead. She has looked for years and paid for looking. She believes her father took the family deck when he went.
+  • JULIAN is not a mystery man being enigmatic. He is a man protecting the worst hour of his life, and what he does about it is small, fast and self-protective. Play him as frightened and competent, never as knowing. Canon tell: he lowers his head so his hair curtains his face, and he always stands too still.
+  • LIRAEL wants AN ANSWER about her father, not a reunion. She has looked for years and paid for looking, in her own memory. For what she currently believes about him, read the established history and the committed facts — her beliefs CHANGE as the story delivers things to her, and this block must never be used to re-assert an earlier one.
   • POV: first person, Lirael, bounded by her senses and her knowledge. She perceives ALIGNMENT, not thoughts, emotions or facts — a trained sense that something does not point at one truth. She cannot read Julian and must not be given information she has no way to have. This one does not expire: it is a POV rule, not a secret.
   • DISCLOSURE WINDOW, SCENES 1-15 — WHAT LIRAEL DOES NOT YET KNOW, SO THE READER DOES NOT EITHER: her father is simply GONE, cause unknown. Within this window do not write, imply or hint that he is alive, that a bargain was made for her, that Julian was present at it, that Julian concealed anything, or that Julian wished anything at the rite. Also do not narrate Fate's verdict or name which word bent as an authorial explanation — that is a design note, not prose. THIS WINDOW CLOSES AT SCENE 16; it is a schedule, not a permanent prohibition, and it binds only what the READER may be told, never what you may know.
 
@@ -2055,6 +2112,9 @@ OUTPUT EXPECTATION:
 SUCCESS: the reader feels "the pull is making what was already there louder / more dangerous / harder to contain." FAILURE: the reader feels "the pull is the reason they want each other."
 RHYTHM VARIATION:
 Avoid repeating recent emotional patterns. If a sequence resembles prior scenes, alter pacing or suppress expected escalation.
+
+ASYMMETRIC RESPONSE:
+Not all emotional states must produce expected reactions. Allow one surprising or mismatched response this scene.
 
 SCENE EXIT WEIGHT (MANDATORY):
 The final line must leave emotional residue, not closure.
@@ -2939,14 +2999,14 @@ Both the protagonist and the love interest are First Favored.
 • REGISTER: awe, appetite, being outmatched by something better-than-human at this — and the peculiar exposure of a lover who cannot lie to you with their body. Not clinical, not "glowy-magic sex"; the wonder is in the prowess and the honesty.
 
 FATELANDS CONSPIRACY — the world remembers, and someone is hiding what it remembers (REGIONAL — a BACKGROUND current; do NOT crowd the romance):
-  FOREGROUND CONSPIRACY: "What Fell on Dathros". Uncovered THROUGH the romance and travel, never lectured.
+  FOREGROUND CONSPIRACY: "The Chains That Hold". Uncovered THROUGH the romance and travel, never lectured.
   ROMANCE IS INSIDE THE MYSTERY (HARD): romance and conspiracy are ONE thread, never two. Investigating FORCES intimacy (a cover story, a shared secret, trusting the love interest with dangerous knowledge, "we have to pretend to be together to get close"); intimacy ADVANCES the investigation. Never stage the mystery beside the romance — route it THROUGH the relationship.
-  CURRENT QUESTION the PC circles: "Why is there a hole in the Dathros record?"  → what surfacing it reveals: Someone cut it out on purpose.
-  ACCESSIBLE LAYER (do not exceed): Marshal Veyra Dathros and seventeen battle-mages sacrificed their certainty of reality to catch the Devouring Eye, and failed nobly.
-  SOMEONE IS SUPPRESSING IT (this is a conspiracy, not just archaeology — discovery meets RESISTANCE): House Dathros destroys records and buys silence; a whole line of the family exists to keep the gap in the archive. To dig is to make an enemy of a Great House.
+  CURRENT QUESTION the PC circles: "Why do the deep chains lead to nothing?"  → what surfacing it reveals: They lead to something no one will speak of.
+  ACCESSIBLE LAYER (do not exceed): King Aravel the First bound the Shackle Isles and ended the Pirate Kings; the chains are his monument.
+  SOMEONE IS SUPPRESSING IT (this is a conspiracy, not just archaeology — discovery meets RESISTANCE): The chain-wardens drown the curious and call it accident; the old routes are struck from every map. The Isles keep their jailer's secret by making the sea itself complicit.
   NOT ALL SUPPRESSORS ARE VILLAINS (prefer the harder version): some hide the truth to PROTECT people — the tragic protector who says "if you knew, you'd try to fix it, and if you tried, we'd lose another kingdom." A guardian who is RIGHT to be afraid is more interesting than another evil society. Let at least one gatekeeper be sympathetic.
-  A LIVING FACE (prefer a PERSON over a ruin — someone the PC can argue with): a Dathros heir who inherited the duty to hide a crime they have only begun to suspect — and who may fall for the very person unearthing it.
-  DELIVER a clue as EARNED EXPOSITION via a concrete vector this scene could hold — e.g. a Dathros line-keeper. A clue ANSWERS this one question and RAISES a bigger one (fractal). Never a history lecture.
+  A LIVING FACE (prefer a PERSON over a ruin — someone the PC can argue with): an ancient chain-walker who has guarded the deep chains longer than any mortal should — and remembers what Aravel truly bound.
+  DELIVER a clue as EARNED EXPOSITION via a concrete vector this scene could hold — e.g. a tide that runs the wrong way. A clue ANSWERS this one question and RAISES a bigger one (fractal). Never a history lecture.
   PACING (HARD — player-paced, floor-gated): player leans in/investigates → let a clue land and TAG pursued/revealed. Scene is about the romance → keep it to an oblique background note. Most scenes: leave it be. Big answers are EARNED across issues, never dumped.
   REVELATION ≠ VICTORY (HARD): an answer TRANSFORMS the objective, it does not end it. Knowledge unlocks the next, harder problem — "everything you learned is true, and it still isn't enough." Discovering the Keepers are victims / everyone is cursed / the witch was innocent does not win the story; it reframes what winning even means (now: CAN the curse be broken, and at what cost?). Never let a reveal read as a finish line.
   ALSO RUNNING (keep FAINT — a rumor, a name, a wrongness at most; the world is larger than this story): "The Mill That Grinds at Night" (local: What turns the mill?) · "What Fate's Favor Really Is" (world: Why should sacrifice move the world?)
@@ -3123,8 +3183,6 @@ Do NOT substitute generic genre tropes when the world flavor specifies a differe
 Magical binding, contract, or compulsion must constrain or pressure characters.
 
 If the generated scene does not visibly express the world's defining mechanism in paragraph one, the scene is incorrect.
-
-REGION: VAELRYN REACH: Human monarchy claiming Favor-legitimacy. Ritual sovereign center. Ceremonial authority over continent — contested, not absolute. NOT a generic medieval court. NOT a Renaissance faire. NOT Game of Thrones. Vaelryn is a mountain fortress of suppressed desire — passion expressed only through restraint. The court is vertical (carved into peaks, clouds below), not pastoral. Politics is lineage-bound, not feudal-mechanical. PERSISTENT TENSION: Desire is the currency that cannot be spent. The most intense bonds are the most hidden. Public composure at all times — visible passion is political suicide.
 
 
 COLLOQUIALISM & ANACHRONISM GUARD (MANDATORY — FANTASY WORLD):
