@@ -1,7 +1,7 @@
 === CAUSAL FOUNDATION DELIVERY CONTROL (provider-free, $0) ===
 Every model response here is CONSTRUCTED in this file. No provider is called.
 
-serving the real public/ from http://127.0.0.1:56746 (vercel dev is down; 500 on every path)
+serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on every path)
 
 
 0. THE RENDERER (window._buildFSCausalFoundationBlock) — tier asymmetry
@@ -23,7 +23,7 @@ serving the real public/ from http://127.0.0.1:56746 (vercel dev is down; 500 on
   ok   the spine request contains Julian's bond price
   ok   the spine request contains FATE'S SEALED PRICE for the open offer
   ok   and it is sent as CAUSE, not as content to narrate
-  ok   spine request bytes: 39206
+  ok   spine request bytes: 40460
 
 2. SCENE SCAFFOLD — read off the wire
   ok   a scene scaffold request was actually sent
@@ -35,7 +35,7 @@ serving the real public/ from http://127.0.0.1:56746 (vercel dev is down; 500 on
   ok   and it does not carry the spine-only account of the concealment either
 
 2b. LITERARY AUTHOR — read off the wire (handleBeginStory, the real opening path)
-      calls=OPENING_PLANNER:90814@proxy STRUCTURE_GENERATOR:356717@proxy PRIMARY_AUTHOR:1107@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy
+      calls=OPENING_PLANNER:83444@proxy STRUCTURE_GENERATOR:361728@proxy PRIMARY_AUTHOR:1107@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy
   ok   an OPENING_PLANNER request was captured off the wire
   ok   the opening planner receives the hidden causes
   ok   the opening planner receives the DO-NOT-PLAN list
@@ -47,7 +47,7 @@ serving the real public/ from http://127.0.0.1:56746 (vercel dev is down; 500 on
   ok   and it is told that knowing is not narrating
   ok   *** BOUNDARY: the author request does NOT contain the sealed price
   ok   *** BOUNDARY: nor the spine-only concealment account
-  ok   author request bytes: 356717
+  ok   author request bytes: 361728
 
 3. CONTROL: a story with no causalFoundation (the detector must bite)
   ok   a spine request was still sent without a seed

@@ -53,7 +53,10 @@ const section = (n) => console.log('\n' + n);
 // Markers chosen to be distinctive to ONE tier, so a cross-boundary leak cannot hide behind a
 // phrase that legitimately appears in two places.
 const M = {
-  spineFather:   'he offered MEMORY WITHOUT A PROTECTIVE LIMIT',
+  // Augar now reaches for the memorised rescue formula and leaves its named-amount blank unfilled
+  // (the formula is canon in _buildFatelandsWishSlingingDirective), so the marker is the failure
+  // to bound it rather than the earlier free-standing "without a protective limit" phrasing.
+  spineFather:   "THE FORMULA'S ENTIRE SAFETY IS THE NAMED AMOUNT",
   spineAlive:    'AUGAR IS PHYSICALLY ALIVE',
   spineConceal:  "AUGAR'S SACRIFICE NEVER BECOME PUBLICLY KNOWN",
   spineLimits:   'forgotten name makes you unfindable',

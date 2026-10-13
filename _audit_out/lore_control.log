@@ -1,0 +1,70 @@
+=== WISH-SLINGING + MAD JESSI LORE CONTROL (provider-free, $0) ===
+
+1. GATING — fires on education / tactics / contest, silent otherwise
+  ok   FIRES on a tournament registration
+  ok   FIRES on a student being taught
+  ok   FIRES on a duel
+  ok   FIRES on a repertoire
+  ok   FIRES on an emergency formula
+  ok   FIRES on the Institute
+  ok   *** SILENT on an ordinary breakfast (pays zero tokens)
+  ok   *** SILENT on a quiet walk (pays zero tokens)
+  ok   *** SILENT on grief with no craft in it (pays zero tokens)
+
+2. CANON RECONCILIATION inside the slinging block
+  ok   rhyme is stated to grant NO magical bonus
+  ok   the four repertoire tiers are all present
+  ok   all six formulas are present
+  ok   formula 4 carries its own scope limit (not a mortal-wound treatment)
+  ok   formula 5 is explained as asking to SEE, not to RECEIVE (no-object-from-nothing)
+  ok   formula 6 cannot manufacture willingness (events, never consent)
+  ok   small prices are still real (conservation satisfied, not dodged)
+  ok   the First Favored register is memory/emotion, not hair
+  ok   Roman's "ward my health" is assessed as unbounded, not endorsed
+  ok   Roman's "skill to win" is assessed as WRONG IN LAW (circumstances-not-minds)
+  ok   the rescue formula's bracket is flagged as NOT literal spoken text
+  ok   tournaments do not pool sacrifices and are not free or reversible
+  ok   and no visible wish-duels survive in the sporting context
+
+3. MAD JESSI: public legend vs private truth
+  ok   the public legend is emitted
+  ok   *** BOUNDARY: NO private marker appears without tier "planning"
+  ok   the planning tier adds EVERY private marker
+  ok   the planning tier is strictly longer than the public one
+  ok   *** FAIL-CLOSED on tier="plan"
+  ok   *** FAIL-CLOSED on tier="Planning"
+  ok   *** FAIL-CLOSED on tier=true
+  ok   *** FAIL-CLOSED on tier="spine"
+  ok   the legend is labelled BELIEF, not authoritative narration
+  ok   the conflicting accounts are not to become separate atrocities
+  ok   benevolent wording is blocked as an assassination loophole
+  ok   Jessi is blocked from being a solution to a protagonist's problem
+  ok   and the planning tier requires accounting for earlier search attempts
+  ok   Jessi fires on his own name
+  ok   Jessi fires on his title
+  ok   Jessi fires on the institution that owns his story
+  ok   *** SILENT on an ordinary scene
+  ok   *** SILENT on someone vanishing into a crowd
+  ok   *** SILENT on an ordinary retirement
+  ok   *** SILENT on the word "legend" used loosely
+  ok   *** SILENT on a superlative
+  ok   *** SILENT on an unrelated vanishing
+
+4. "WHY NOT JUST WISH IT SOLVED?" planning check
+  ok   the planning check is emitted
+  ok   it names all seven legitimate sources of difficulty
+  ok   it forbids a blanket prohibition as an answer
+  ok   it requires accounting for the formulas ordinary people know
+  ok   it keeps routine wishes routine
+  ok   and it states the self-defeating shape of complex wishes
+
+5. DELIVERY: the spine request carries the planning check and Jessi's private truth
+  ok   a spine request was sent
+  ok   the spine request carries the "why not wish it solved" check
+  ok   the spine request carries the ordinary-formulas requirement
+  ok   *** the spine request carries Jessi's PRIVATE TRUTH (it is the only stage that may)
+  ok   *** CONTROL: a non-Fantasy spine receives NEITHER the check NOR Jessi
+
+── wrote _audit_out/lore_*.txt
+
+=== 55 passed, 0 failed ===
