@@ -158,7 +158,11 @@ export function estimateUsd(body, model, url) {
   // the newer tokenizer introduced with Opus 4.7, and that IDENTICAL prompt billed 130,457 input
   // tokens on claude-sonnet-5-5 => 2.65 chars/token. Pricing a Claude 5 call at chars/4 understated
   // it by 51% and the real cost came in ABOVE the reservation, which is the one direction this
-  // guard must never fail in. 2.6 is held deliberately below the observed 2.65 so it over-counts.
+  // guard must never fail in. 2.6 sits just under that ONE observation so it over-counts on this
+  // prompt — but it remains an APPROXIMATION, not a guaranteed upper bound: a single sample
+  // establishes nothing universal, and a different prompt (denser markup, other scripts, more
+  // rare tokens) can tokenize below 2.6 chars/token and under-reserve again. Where a model's real
+  // usage for a specific frozen request is already known, price from THAT, not from this.
   const cpt = /^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(String(model || '')) ? 2.6
     : CHARS_PER_TOKEN;
   const promptTokens = Math.ceil(chars / cpt);

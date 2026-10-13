@@ -1,6 +1,6 @@
 {
   "receipted": 10.8717789,
-  "unresolved": 2.4329711,
+  "unresolved": 2.7178851,
   "outstanding": [],
   "runs": [
     {
@@ -187,6 +187,13 @@
       "unresolved": 0.284914,
       "outstandingAtExit": 0,
       "note": "Attempt 1 REJECTED 400 'temperature is deprecated for this model' (usage null, no inference, no charge). Attempt 2 status 200, 21885ms, stop_reason=max_tokens, in 130457 / out 2400 of which thinking_tokens=2400 — ADAPTIVE THINKING CONSUMED THE ENTIRE BUDGET, zero prose returned. Calculated at the published $2/$10 per M: $0.284914, which EXCEEDS the $0.250502 reservation because chars/4 understated Claude 5 tokenization by 51%."
+    },
+    {
+      "run": "literary arm 5 attempt 3 — Sonnet 5.5 with documented between_tools + effort=high",
+      "receipted": 0,
+      "unresolved": 0.284914,
+      "outstandingAtExit": 0,
+      "note": "Body VERIFIED provider-free before spending (15/15: thinking.type=between_tools, output_config.effort=high, no tools, no temperature, no manual budget, prompt byte-exact at 345504 chars). Result: status 200, 20656ms, stop_reason=max_tokens, in 130457 / out 2400 with thinking_tokens=2400 AGAIN. Zero content blocks, zero prose. The documented configuration did NOT prevent up-front thinking. Priced from observed usage at published rates: $0.284914. Attempt 2 ($0.284914) preserved as a separate expense."
     }
   ],
   "authorization": null,

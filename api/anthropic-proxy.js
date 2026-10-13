@@ -43,7 +43,9 @@ module.exports = async (req, res) => {
   try {
     const {
       model, messages, max_tokens, temperature,
-      thinking_budget_tokens,        // explicit opt-in; omitted = thinking OFF
+      thinking_budget_tokens,        // manual budget mode; 4.6 and earlier ONLY
+      thinking_type,                 // Claude 5: 'between_tools' etc. — forwarded verbatim
+      effort,                        // Claude 5: output_config.effort
       role
     } = req.body || {};
 
@@ -81,12 +83,24 @@ module.exports = async (req, res) => {
 
     const body = { model: String(model), max_tokens: maxTokens, messages: turnMsgs };
     if (system) body.system = system;
+    // THREE DISTINCT THINKING CONFIGURATIONS, and the model generation decides which is legal.
+    //   · manual budget (thinking.type 'enabled' + budget_tokens) — 4.6 and earlier only;
+    //   · a Claude 5 thinking.type such as 'between_tools', paired with output_config.effort.
+    //     With NO tools supplied this yields text without up-front thinking, which is the only
+    //     documented way to stop Sonnet 5.5 spending its whole max_tokens on thinking.
+    //     thinking.type 'disabled' is rejected by this model, so it is NOT offered here;
+    //   · neither, which on a Claude 5 model means ADAPTIVE thinking at the model's default
+    //     effort — emphatically NOT "thinking off". Omission is not a setting.
     if (wantThinking) {
       body.thinking = { type: 'enabled', budget_tokens: budget };
       // Extended thinking requires temperature 1; sending anything else is rejected upstream. The
       // caller's temperature is deliberately IGNORED here rather than passed through to fail.
-    } else if (temperature != null) {
-      body.temperature = Number(temperature);
+    } else {
+      if (thinking_type) body.thinking = { type: String(thinking_type) };
+      if (effort) body.output_config = { effort: String(effort) };
+      // Temperature is rejected outright by Sonnet 5.5 ("deprecated for this model"), so it is
+      // forwarded only when the caller actually supplies one.
+      if (temperature != null) body.temperature = Number(temperature);
     }
 
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -130,7 +144,10 @@ module.exports = async (req, res) => {
 
     console.log('[ANTHROPIC-PROXY] ' + String(model) + ' in=' + ((data.usage && data.usage.input_tokens) || 0)
       + ' out=' + ((data.usage && data.usage.output_tokens) || 0)
-      + ' thinking=' + (wantThinking ? ('enabled(' + budget + ')') : 'off')
+      + ' thinkingReq=' + (wantThinking ? ('manual(' + budget + ')')
+          : (thinking_type ? String(thinking_type) : 'unset/default'))
+      + ' thinkingTokens=' + ((data.usage && data.usage.output_tokens_details
+          && data.usage.output_tokens_details.thinking_tokens) ?? 'n/a')
       + ' thinkingChars=' + thinkingText.length);
 
     return res.status(200).json({
@@ -143,9 +160,17 @@ module.exports = async (req, res) => {
         provider: 'anthropic',
         // The model the PROVIDER says it served, not the one we asked for.
         model: data.model || String(model),
-        thinking_enabled: wantThinking,
+        // WHAT WAS ASKED FOR. Reporting `thinking_enabled: false` merely because no manual
+        // budget was supplied was MISLEADING on a Claude 5 model, where the default is adaptive
+        // thinking that bills as output: one such call spent all 2,400 of its max_tokens on
+        // thinking and returned no prose while this field said thinking was off.
+        thinking_requested: wantThinking ? 'manual_budget'
+          : (thinking_type ? String(thinking_type) : 'unset (model default — adaptive on Claude 5)'),
         thinking_budget_tokens: wantThinking ? budget : 0,
-        // Direct evidence thinking actually happened, independent of the requested flag.
+        effort_requested: effort ? String(effort) : null,
+        // WHAT THE PROVIDER SAYS IT DID — the authority, independent of what was requested.
+        thinking_tokens_reported: (data.usage && data.usage.output_tokens_details
+          && data.usage.output_tokens_details.thinking_tokens) ?? null,
         thinking_chars: thinkingText.length,
         timestamp: new Date().toISOString()
       }

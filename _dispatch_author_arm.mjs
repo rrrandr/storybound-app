@@ -65,8 +65,16 @@ if (ARM === 'grok') {
   // billed on that rejection, but the arm does not run either. So temperature is sent only to the
   // models that accept it, and its omission is DISCLOSED rather than silent — a difference in
   // sampling settings between arms that the comparison has to carry openly.
-  if (!/^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(String(body.model))) {
+  const isClaude5 = /^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(String(body.model));
+  if (!isClaude5) {
     body.temperature = frozen.temperature;
+  } else {
+    // THE DOCUMENTED WAY to stop a Claude 5 model spending its whole max_tokens on up-front
+    // thinking. With NO tools in the request, thinking.type 'between_tools' yields text without
+    // up-front thinking. thinking.type 'disabled' is REJECTED by Sonnet 5.5, and the manual
+    // budget_tokens mode is not accepted past the 4.6 generation, so neither is used.
+    body.thinking_type = 'between_tools';
+    body.effort = 'high';
   }
 } else {
   url = (cap0.url || '').replace(/\/api\/[a-z-]+$/, '/api/mistral-proxy');
@@ -101,7 +109,10 @@ if (ARM === 'grok') {
   say('_noFallback    : ' + (body._noFallback === true)
     + '   (api/proxy.js reduces the chain to ONE entry when set)');
 } else if (ARM === 'anthropic') {
-  say('thinking        : budget_tokens OMITTED (manual mode; docs say it is not accepted past 4.6)');
+  say('thinking        : ' + (body.thinking_type
+    ? ('type=' + body.thinking_type + '  effort=' + body.effort
+       + '  (no tools in this request => text without up-front thinking)')
+    : 'budget_tokens OMITTED (manual mode; not accepted past 4.6)'));
   say('temperature     : ' + (body.temperature != null
     ? (body.temperature + ' (accepted by this model)')
     : 'OMITTED — this model rejects it as deprecated (provider requirement, disclosed)'));
