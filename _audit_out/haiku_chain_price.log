@@ -1,0 +1,35 @@
+=== HAIKU CREATIVE CHAIN — PRICED FROM REAL ASSEMBLED REQUESTS (provider-free, $0) ===
+model claude-haiku-4-5-20251001  ·  3.97 chars/token (measured)  ·  $1/M in, $5/M out
+
+STAGE                                  CHARS   IN TOK  OUT TOK  ×N        COST
+──────────────────────────────────────────────────────────────────────────────
+ISSUE SPINE (once per run)             43224    10888     6000   x1    $0.040888
+OPENING PLANNER (scene 1)              84719    21340     2000   x1    $0.031340
+OPENING AUTHOR (scene 1 prose)        370940    93436     3000   x1    $0.108436
+SCENE SCAFFOLD (scenes 2-3)            26655     6715     2000   x2    $0.033430
+SCENE PROPOSAL (scene 2)               39806    10027     2000   x1    $0.020027
+SCENE PROPOSAL (scene 3)               22212     5595     2000   x1    $0.015595
+CONTINUATION AUTHOR (scene 2)         551874   139012     3000   x1    $0.154012
+CONTINUATION AUTHOR (scene 3)         575885   145060     3000   x1    $0.160060
+──────────────────────────────────────────────────────────────────────────────
+PLANNING  (spine · scaffold · proposals)                             $0.141280
+AUTHORING (prose, 3 scenes)                                          $0.422508
+SUBTOTAL (nominal)                                                   $0.563788
+RESERVATION at the guard's 1.2x safety margin                        $0.676546
+  (reasoning multiplier 1.5x NOT applied — this chain runs no reasoning budget)
+
+SUPPORTING ROLES SEEN IN THE SAME CAPTURES (not Haiku, not priced here —
+disclose separately in the run report): LINE_EDITOR, SPECIALIST_RENDERER,
+NARRATIVE_AUTHOR, NORMALIZATION, STRATEGY_PASS, BACK_COVER_SYNOPSIS.
+
+==============================================================================
+REMAINING AUTHORIZATION               $1.732569
+THIS CHAIN, RESERVED                  $0.676546   (39.0% of headroom)
+HEADROOM AFTER                        $1.056023
+==============================================================================
+
+VERDICT: the chain FITS inside the existing authorization.
+
+NOTE ON WHAT DOMINATES: the author requests are ~370-576 KB each because the
+literary payload carries the full bible/style stack. Input is ~145K tokens on the
+largest scene, so cost scales with PROMPT SIZE, not with how much prose is written.
