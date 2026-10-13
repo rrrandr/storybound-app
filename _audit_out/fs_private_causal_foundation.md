@@ -1,205 +1,191 @@
 # FIRST SACRIFICE — PRIVATE CAUSAL FOUNDATION  [SPOILER-BEARING]
-Planning artifact. NOT reader-facing. NOT author-facing in full.
-Resolved 2026-10-13. Supersedes: the "nothing came of it" blank, the
-attention-as-answer version, and my withdrawn shortfall mechanism.
-[C]=canon in code  ·  [P]=story decision resolved here (NOT canon until approved)
+Planning artifact. Rewritten whole 2026-10-13 for internal consistency (v3).
+[C]=canon in code  ·  [P]=story decision resolved here (not canon until approved)
 
-DISCLOSURE IS FOUR CONTRACTS, NOT ONE. The earlier legend said sealed material is
-"never to author/reader before its scene", which repeated the exact mistake this document
-exists to fix. Corrected:
-  ISSUE SPINE ..... EVERYTHING in this file, including the price. It is the outline; it
-                    cannot build toward a reveal it has not been told.
-  SCENE PLANNING .. the hidden causes RELEVANT TO THE SCENES IT IS PLANNING, so the
-                    encounter is constructed from real causes rather than guessed at.
-  AUTHOR .......... enough PRIVATE INTENT to stage behaviour faithfully (what Julian is
-                    doing and why he is afraid), plus EXPLICIT POV AND DISCLOSURE
-                    CONSTRAINTS. Knowing a secret is not narrating it.
-  READER'S PROSE .. bounded by what Lirael can perceive and knows. This is the only tier
-                    where ignorance is the point.
-  REPORTS ......... the exact price stays out of run reports and out of chat. Out of
-                    REPORTS, never out of PLANNING.
+DISCLOSURE IS FOUR CONTRACTS:
+  ISSUE SPINE ..... everything here, price included. An outline cannot build toward a
+                    reveal it has not been told.
+  SCENE PLANNING .. the hidden causes relevant to the scenes being planned.
+  AUTHOR .......... enough PRIVATE INTENT to stage behaviour faithfully, plus explicit
+                    POV and disclosure constraints. Knowing a secret is not narrating it.
+  READER'S PROSE .. bounded by what Lirael perceives and knows. The only ignorant tier.
+  REPORTS ......... the price stays out of reports and chat. Out of REPORTS, never out
+                    of PLANNING.
 
-## LAYER 1 — OBJECTIVE TRUTH (what actually happened; no character knows all of it)
-
-### 1.1 The father
-[C] He walked Dohkar -> Chayr -> Provast. [C] Julian now holds that office.
+## 1.1 THE FATHER — built only from established mechanics
+[C] He walked Dohkar -> Chayr -> Provast; Julian holds that office now.
+[C] app.js:16714, THE BODY IS EDITABLE: "Injuries, disease, dental damage, failing
+    eyesight and unwanted marks are removed by ORDINARY wishing... The currency for a
+    SERIOUS repair is youth and beauty themselves, so surviving something big costs a
+    decade, or the hair, or the face. 'Years' is already listed among the sacrifice
+    currencies in the canon engine."
+[C] app.js:238336: "The customer is the BENEFICIARY; the granter is the WISHER and the
+    one permanently diminished."
 [P] NAME: Teveren (replaceable; no canon name exists).
-[P] WHAT HAPPENED, operationally. When Lirael was a girl, something was going to cost her
-    the path — her life or her standing; the version resolved here is her LIFE: a child's
-    illness or injury that wishcraft could answer but that nobody could pay for honestly.
-    Teveren paid for it. He made the wish himself, as himself, aloud, and NAMED HIS PRICE
-    the way a professional does: not his death, but THE REST OF HIS OWN LIFE — every
-    moment he had left.
-[P] WHAT FATE TOOK, and what that means in practice: exactly what he named. He did not
-    die and was not taken anywhere. HE HAS NO NEXT MOMENT. He is where he was standing,
-    in the moment he was standing in, and nothing further happens to him.
-      Is he somewhere? Yes, but not a place anyone can travel to — he is in no further
-        moment, which is not a location.
-      Can he act? No. Acting requires a next moment, and he has none.
-      Can anyone reach him? Not by looking, searching, scrying or asking Fate to find him
-        — he is not hidden. The ONLY thing that could reach him is a bargain that buys him
-        a moment, which is a later arc's business and deliberately left open.
-      Can he be produced in a clearing? No. This is why Seren's wish cannot deliver him,
-        and why the wish must bend to something else even unassisted.
-      Does he age or die? Neither.
-[P] WHAT HE BOUGHT: Lirael lived, and kept the path. [C] "the path my father had walked
-    and I had never once imagined not walking" — she inherited it, bought, and does not
-    know it was bought.
-[P] WHY SHE LACKS THE TRUTH: he asked the one witness not to tell her, because he did not
-    want her carrying what she cost. [C-adjacent: this is why she wants AN ANSWER and not
-    a person — aboutToHappen (4).]
-[P] JULIAN'S INVOLVEMENT: he was Teveren's Chayr, his subordinate, and the only person
-    present. He caused nothing and prevented nothing. HE HEARD THE EXACT SENTENCE —
-    the wish and the named price, word for word. That is the evidence he carries in his
-    own head, and it is why he alone can expose it.
-[P] WHY HE STILL CONCEALS IT: the promise; that telling her means telling her she cost
-    him everything; and that he took the vacated office, which reads as motive however
-    it actually happened. He has never been sure accepting is different from seeking.
-[P] WHAT EVIDENCE COULD EXPOSE THE TRUTH — all of it ordinary, none of it magical:
-      Julian's own knowledge, and his alignment when the subject is raised;
-      the Institution's unexplained-disappearance file, which has no account in it;
-      the unusual speed of the succession to Provast;
-      and the fact, checkable by anyone who cares to, that Lirael recovered from
-        something nobody paid for on the record.
-[P] AVAILABLE TO EARLY PLANNING. None of the above is withheld from Scenes 1-15 planning.
-    What is withheld from the READER is only what Lirael has not yet perceived.
+[P] THE DANGER: as a girl Lirael took a ruinous wound. Nothing exotic, and nothing that
+    ordinary wishing could not answer — the answer simply cost more than a child had.
+    A serious repair is paid in years, and a child has accumulated none.
+[P] SO HE PAID IT FOR HER, in the established structure: he made the wish HIMSELF, as
+    himself, with Lirael as the beneficiary, and named a proportionate price out of his
+    own life — HIS REMAINING YEARS. Fate took exactly what was named [C: ⑤i FATE TAKES
+    ONLY WHAT WAS OFFERED].
+[P] HIS CONDITION, with NO new mechanic: he had none left, so he died. He had minutes
+    and he used them to get out of sight, into the Veilwood, so that his daughter would
+    not watch it. No body was found. He is DEAD.
+    WITHDRAWN: the "no next moment"/timeless-suspension version. It invented a new world
+    mechanic, raised a reversibility question canon does not answer, and implied a rescue
+    arc. None of that is needed, and this version needs nothing new.
+      Can he be found? No. He is dead and unburied in a forest.
+      Can he be produced in the clearing? No.
+      Is he recoverable later? No. Death is not on the table; History is Order 8.
+      What Lirael wants is therefore exactly what canon says: AN ANSWER, not a person
+      [C: aboutToHappen (4) — she wanted an answer; Seren heard a person].
+[P] JULIAN'S INVOLVEMENT: he was Teveren's Chayr and the only person present. He caused
+    nothing, prevented nothing, and HEARD THE EXACT SENTENCE — the wish and the named
+    price, word for word. That is the whole of his evidence, and why he alone can tell it.
+[P] THE OATH: Teveren asked him never to tell her what she cost. He has kept it her
+    whole adult life. [SEAL]
+[P] WHY HE STILL KEEPS IT: the promise; that telling her means telling her her father
+    died paying for her; and that he took the vacated office, which reads as motive
+    however it happened. He has never been sure accepting differs from seeking.
+[P] WHAT COULD EXPOSE IT, all ordinary: Julian's own account; an Institution file with no
+    account in it; the speed of the succession; and a childhood recovery with no price
+    recorded against anyone. Available to ALL PLANNING STAGES from Scene 1.
 
-### 1.2 The deck, and how it comes back
+## 1.2 THE DECK
 [C] Great-grandmother's tarot deck. [C] "GREAT-GRANDMOTHER, not her grandmother."
-[P] CLASS: a true relic, recognizable on sight to any First Favored, in the company of
-    The Answer and Veilweave and arguably older than either.
-[P] THE MISTAKEN BELIEF, preserved: Lirael has always believed her father took it with
-    him when he went. [P] Its loss shamed the family.
-[P] WHERE IT ACTUALLY IS: IN HER OWN POCKET. It has been there the whole time.
-    WITHDRAWN: the Institution-custody and Julian-caretakership version. Custody of The
-    Answer does not establish custody of every relic, that extension was my inference,
-    and the physical-transfer problem it created does not need solving because THERE IS
-    NO TRANSFER. Nothing is conjured, carried, handed over or moved. She discovers where
-    it has been all along, and Fate's contribution is the DISCOVERY, at this moment.
-[P] THE GARMENT, reconciled with existing clothing canon and adding no costume:
-    [C] First Favored are barefoot in gossamer/Veilweave, never cloaks or boots; the
-    officiating Sacrificiant wears the same sheer tunic as everyone plus ONE ornamented
-    ceremonial SASH (never robes). The sash is the garment. It is the FAMILY'S sash, worn
-    at ceremonial occasions and handed down — ornamented, and ornamented means seams,
-    folds and a sewn fold at the hip that functions as a pocket.
-[P] WHY IT HAS NOT BEEN WORN SINCE: she last wore it at HER OWN First Sacrifice, as a
-    girl, while her father was still present. Today is the first time she has worn it
-    since, because today is the first time she has officiated. Nobody had reason to
-    search a folded ceremonial sash in the intervening years.
-[P] HOW THE DECK GOT THERE — and this is hers, not his: as a girl she took the deck to
-    ask it about her father, or simply because she wanted it near her, and it stayed in
-    the fold when the sash was put away. In the confusion that followed, the family
-    assumed he had taken it. SHE LOST IT, AND SHE LET HIM BE BLAMED. She does not
-    remember doing it; she has believed the family's account her whole life.
-[P] NO TELEGRAPHING: the sash is established early as weight, as the thing she tightens
-    for composure [C: the planner's own self-presentation beat] — never as a container.
-    The fold is not mentioned before she feels it.
-[P] WHAT WITNESSES OBSERVE: a supervising Sacrificiant, mid-accusation, put her hand to
-    her own sash and bring out a relic the assembly can name on sight. They do NOT see it
-    arrive, because it does not arrive.
-[P] WHY IT DOES NOT IDENTIFY JULIAN: nothing of his moves, nothing of his is produced,
-    and the relic is recovered from HER OWN clothing. The only person in the clearing with
-    any reason to connect it to a wish is Julian himself.
-[P] WHY HER EXPLANATION DOES NOT EXPOSE HIM: the honest account she can give — that it is
-    her great-grandmother's, that it was lost when her father went, that she believed he
-    took it — points at her FATHER and at herself. It has no room in it for Julian.
-[P] WHAT IT COSTS HER: the relic her family mourned surfaces from her own pocket in the
-    minute she is accused of manipulating a rite for her own benefit. She looks more
-    implicated, not less, and the true explanation is more humiliating than the charge.
+[P] A true relic, recognizable on sight to any First Favored, in the company of The
+    Answer and Veilweave.
+[P] WHERE IT IS: in the hip fold of the family's ceremonial sash, where SHE put it as a
+    child — into the folded sash in the chest, a child's safest hiding place, after her
+    father went. Then she forgot. She has never worn the sash since; today she wears it
+    for the first time, because today is the first time she officiates.
+    She did NOT wear it as a girl. There is no child-officiant problem: the sash was
+    STORED, and the chest is where she hid things.
+[P] HER BELIEF, sincerely mistaken and preserved: she believes her father took the deck
+    when he went. [P] Its loss shamed the family, and that shame is the family's grief
+    over a lost relic — NOT guilt about blaming him. She does not remember hiding it, so
+    she never knowingly let him be blamed. Removing that claim.
+[P] NO TRANSFER, NO CUSTODY, NO CONJURING. Nothing of Julian's is involved; the earlier
+    Institution-custody and caretakership story is withdrawn entirely, including the
+    phrase "already his" wherever it appeared. Fate's contribution is the DISCOVERY.
+[P] NO TELEGRAPHING: the sash is established as weight and as the thing she tightens for
+    composure, never as a container. The fold goes unmentioned until she feels it.
 
-### 1.3 Seren's wish
-[C] REHEARSED: self-directed, months of work. [C] OFFERING: a memory, named first.
+## 1.3 SEREN'S WISH AND ITS UNASSISTED OUTCOME
+[C] REHEARSED: self-directed, months of work. OFFERING: a memory, named first.
 [C] CHANGED WISH: "so that Lirael may find the one she lost", blurred to spare her.
-[C] MOTIVE: vanity wearing compassion. [C] GOVERNING FAILURE: misalignment of motive.
-[P] ITS UNASSISTED TWIST, CORRECTED. My previous answer swapped Lirael from finder to
-    found, which does not exploit an ambiguity — it reverses the proposition. The sentence
-    names her as the FINDER and she must stay the finder. It also smuggled the
-    public-attention outcome back in, which this direction supersedes.
-    THE HINGE IS "THE ONE", NOT "FIND": the phrase never says the one WHAT. Teveren
-    himself cannot be produced (1.1 — he has no next moment), so the honouring cannot
-    deliver him. What Fate CAN do, immediately, through what is already present and
-    without manifesting anything, is let her find THE ONE WHO KNOWS.
-    CONCRETELY: Julian is standing at the edge, within her sight, at the instant her loss
-    is named aloud in public. [C] alignment-sense is innate to every First Favored and
-    hers is honed enough to guide a rite; [C] Weave-Script is an emotional tell. So the
-    cheapest lawful route is that she READS HIM — turns, at the moment the words land, and
-    finds in his alignment the one fact he has carried for years: that he knows.
-    LAWFUL: Fate arranges the EVENT and the OPPORTUNITY, never his willingness. [C: 238180
-    FATE GOVERNS EVENTS, NEVER CONSENT.] It does not make him confess. It puts her eyes on
-    him in the one second his composure is answering a question about her father.
-    MODEST: to the assembly it is nothing — a supervisor glancing at a guest. Nobody dies,
-    nothing breaks, no career ends on it. [P] POINTABLE: "'the one she lost' — she'd have
-    found the one who knew."
-    AND THIS IS EXACTLY WHY HIS FEAR EXCEEDS THE DANGER. The event is small; HIS exposure
-    is total. He is not preventing a catastrophe, he is preventing being seen. His panic is
-    proportionate to his stake and wildly disproportionate to the wish — which is the whole
-    character point and the reason a blank check is in character.
+[C] MOTIVE: vanity wearing compassion. FAILURE: misalignment of motive.
+[P] THE HINGE IS "THE ONE" — the phrase never says the one WHAT. Lirael remains the
+    FINDER throughout; nothing swaps her into the found.
+[P] THE ACTUAL UNASSISTED OUTCOME, modest and anticlimactic: Teveren is dead and cannot
+    be produced, so the honouring reaches for the nearest thing she has lost and can
+    find. Unassisted that is something small and private — a child's trinket long gone
+    from a pocket, a thing worth nothing. The words are satisfied exactly; the INTENT —
+    Seren's magnificent public kindness — is denied by sheer triviality. The assembly
+    would have watched a grand gesture produce a bead.
+    [P] POINTABLE: "'the one she lost' — she never said the one WHAT."
+    Nobody is harmed. Nothing is exposed. Her father does not come into it.
+[P] WITHDRAWN: "the one who knows". Lirael has not lost Julian, so that reading drops
+    part of the sentence. Also withdrawn: alignment-sense as access to historical fact —
+    [C] "they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a
+    person's desire, intention, sacrifice, and deepest self all point at one truth."
+    It yields suspicion about coherence, never a retrieved fact.
 
-### 1.4 Julian's intervention
-[P] WHY HE MOVES: not because he foresees catastrophe. Because "the one she lost" points
-    at Teveren, and any honouring that reaches toward her father reaches toward HIM. He
-    acts out of fear for his own exposure, dressed to himself as protecting her.
-[P] HIS WISH, his own bargain, his own account: that the loss Fate returns to her be
-    ANOTHER loss, not her father.
-[P] THE BLANK CHECK: in haste and fear he leaves the price OPEN. [C] app.js:238335 names
-    this exactly — "LEAVING THE PRICE OPEN ('take what you will') IS NOT PROFESSIONAL
-    PRACTICE... nobody does it except the desperate, the stupid, and those performing
-    martyrdom for an audience; the room hears it as inviting a demon indoors, and Fate
-    then takes something the wisher would never have offered." He is the first. He knows
-    better. He does it anyway.
+## 1.4 JULIAN'S INTERVENTION
+[P] WHAT HE ACTUALLY HAS: fear, not knowledge. He hears her loss named aloud in public
+    and cannot know what Fate will do with it. HIS FRIGHTENED PREDICTION is that the
+    phrase points where it points — at Teveren — and that any honouring reaching toward
+    her father reaches toward him. THAT PREDICTION IS WRONG, in magnitude and in target.
+    The distinction is load-bearing: the unassisted outcome (1.3) threatens nobody, and
+    he is not preventing a catastrophe. He is preventing being seen, and he is mistaken
+    about the risk.
+[P] HIS WISH, his own bargain and his own account [C: 238180, accounts never merge]: that
+    the loss she finds be another one — something lost ENOUGH TO TURN HER FROM HIM.
+[P] AND "ENOUGH" IS HIS OWN BENDING WORD. A trinket is also "another loss"; what makes
+    the answer enormous is that he asked for something SUFFICIENT to divert her. Fate
+    honoured that exactly, and the nearest sufficient lost thing within reach is the
+    relic in her own sash. So HIS imprecision, under panic, is what upgrades an
+    anticlimax into a public catastrophe. A witness could later point at "enough".
+    NO NEW PRICING LAW. I withdraw "a proportionate price buys a trinket, an open price
+    unlocks a relic" — invented and unnecessary. The open price concerns only WHAT HE
+    PAYS, never the size of the answer.
+[P] THE BLANK CHECK: in haste and fear he leaves the price OPEN. [C: 238335 — "nobody
+    does it except the desperate, the stupid, and those performing martyrdom for an
+    audience; the room hears it as inviting a demon indoors, and Fate then takes
+    something the wisher would never have offered."] He knows better. He does it anyway.
+    The story does not need it to have been the minimum necessary payment; it was
+    reckless, which is the point.
 [P] EXTERNALISED: head lowered so his hair curtains his face [C: his tell], the wish
     TRACED with two fingers inside his own left forearm across the old scar [C: scar over
-    left wrist; trace permitted by app.js:238185]. In the beat after her words land.
-[P] WHAT IT ACTUALLY DOES: Fate answers both bargains separately [C: 238187]. The nearest
-    loss available to return — already present, already in the room, already his — is the
-    deck. It comes back. Spectacularly, publicly, and in the worst possible frame.
-[P] SO HIS INTERVENTION BACKFIRES IN SHAPE, NOT IN FUNCTION: her father stays unexposed,
-    and in exchange the clearing gets the single most conspicuous event it could have had.
+    left wrist; trace permitted, 238185]. In the beat after her words land.
 
-### 1.5 FATE'S PRICE FOR THE BLANK CHECK  [SEAL — not to Julian, not to the reader,
-###      not to the author, not in any run report, until its scene]
-    WHAT IS TAKEN: the oath's keeping. Fate takes his capacity to withhold. He offered
-      "anything", and what he had that Fate recognised as his was the silence itself.
-    WHEN COLLECTED: not at once. Progressively, by occasion — each time the truth is the
-      thing that would serve him, he says more than he meant to.
+## 1.5 FATE'S PRICE FOR THE OPEN OFFER  [SEAL — not to Julian, not to the reader, not to
+##     the author, not in any report, until its scene]
+    WHAT IS TAKEN: the oath's keeping — his capacity to withhold. He offered "anything",
+      and what he held that Fate recognised as his was the silence itself.
+    WHEN: progressively, by occasion. Each time the truth would serve him, he says more
+      than he meant.
     WHY HE DOES NOT RECOGNISE IT: the first symptoms are indistinguishable from his own
       character. [C] The fixed aftermath has him questioning Lirael intimately and
-      inappropriately in public until the Dohkar stops him — he reads that as recklessness
+      inappropriately in public until the Dohkar stops him. He reads that as recklessness
       and attraction. It is the collection beginning.
-    EARLY CONSEQUENCES AVAILABLE WITHOUT THE CAUSE: he volunteers things no officer would;
-      he answers questions he was not asked; he cannot leave a silence alone; each time it
-      costs him standing and he explains it to himself as appetite.
-    HOW THE LATER DISCOVERY REFRAMES IT: he spent the secret to keep the secret. The
-      intervention that protected Teveren's truth guaranteed that Julian would eventually
-      be the one to tell it.
-    NOT INVENTED AT THE REVEAL: resolved here, before Scene 1 is authored.
+    EARLY CONSEQUENCES WITHOUT THEIR CAUSE: he volunteers what no officer would, answers
+      unasked questions, cannot leave a silence alone — each time at a cost to his
+      standing, each time explained to himself as appetite.
+    THE REFRAME: he spent the secret to keep the secret. The intervention that protected
+      Teveren's truth guarantees Julian will be the one who finally tells it.
+    RESOLVED NOW, before Scene 1 is authored. Not invented at the reveal.
 
-## LAYER 2 — WHO KNOWS WHAT (at the END of Scene 1)
-
-  LIRAEL   father gone, cause unknown; believed he took the deck; now holds it again and
-           cannot explain it; accused of shaping and interfering; does NOT know Julian
-           wished, was present at her father's end, or is the deck's caretaker.
-  JULIAN   everything in 1.1, 1.2, 1.4. NOT 1.5 — he does not know what he paid.
+## LAYER 2 — WHO PERCEIVES WHAT, AND WHAT THE CROWD CONCLUDES
+[P] THE CROWD MUST CONNECT THE RELIC TO THE WISH. This is the accusation's engine and it
+    is not hidden: two dozen First Favored hear Seren wish that Lirael find what she
+    lost, feel the wish go WRONG, and then watch Lirael produce a famous missing relic.
+    Of course they connect them. What stays hidden is that a SECOND wish was made at all.
+[P] THE ANOMALY THE DOHKAR VOICES: everyone felt it twist, and what arrived looks like a
+    clean answer. A misaligned wish does not do that. So someone interfered — and the
+    only person positioned to interfere is the supervising Sacrificiant, who moreover
+    broke her seal and moved. [C: aboutToHappen (8) — "ORDINARY HUMAN MISATTRIBUTION...
+    no magical law of touch or transfer exists or is needed."]
+[P] WHY IT DOES NOT POINT AT JULIAN: nothing of his moved, nothing of his was produced,
+    the relic came out of her own clothing, and the honest account she can give — her
+    great-grandmother's deck, lost when her father went, which she believed he took —
+    points at her father and at herself, with no room in it for him.
+  LIRAEL   father gone, cause unknown; believed he took the deck; now holds it and cannot
+           explain it; accused. Does NOT know Julian wished, was present, or is bound.
+  JULIAN   1.1, 1.2 (that it is lost, not where), 1.4. NOT 1.5.
   SEREN    only that her wish went wrong. [C] "Seren never realizes any of this."
-  DOHKAR   the misalignment, the anomaly, the charge. Not the cause.
-  ASSEMBLY the loose wording, the wrongness, the relic, the accusation.
-  READER   Layer 1.1 partially (father gone, Lirael's belief), 1.3 fully, the deck's
-           return as event. NOT Julian's wish, oath, caretakership, or price.
+  DOHKAR   misalignment, anomaly, charge. Not the cause.
+  READER   father gone and Lirael's mistaken belief; 1.3 fully; the discovery as event.
+           NOT Julian's wish, oath or price.
 
-## LAYER 3 — DISCLOSURE SCHEDULE (what may be learned when)
-  S1      the wish, the misalignment, the anomaly voiced by the Dohkar, the deck found and
-          recognized, Lirael's explanation linking it to her father, the charge, the
-          reading, The Answer, the questioning, the interruption, then the OAS choice.
-  S2-15   consequences only: the inquiry, the deck's provenance contested, Julian saying
-          too much and paying for it, Lirael's belief about her father eroding.
-  S16     julian_counter_wish [C, unsealsAtScene 16] — the intervention and the oath.
-  LATER   1.5, the price. NOT at 16. Its discovery is its own event.
+## LAYER 3 — DISCLOSURE BY SCENE
+  S1     wish · misalignment · the Dohkar's anomaly · the discovery and recognition ·
+         her explanation linking it to her father · the charge · Julian's reading ·
+         The Answer · the questioning · the interruption · then the OAS choice.
+  S2-15  consequences only: the inquiry; the deck's provenance contested; Julian saying
+         too much and paying for it; her belief about her father eroding.
+  S16    julian_counter_wish [C, unsealsAtScene 16] — the intervention and the oath.
+  LATER  1.5. Its discovery is its own event, not part of S16.
 
-## LAYER 4 — WHAT CHANGES IN THE SHIPPED MATERIAL (proposed, not yet applied)
-  · beats 13-14: replace the attention-as-answer with the ANOMALY plus the DECK.
-  · the deck closer: remove "I didn't remember bringing it." Its return is an event now.
-  · ledgerLine / sceneSummary: "nothing came of it" is superseded — the anomaly is that
-    the expected result did not arrive AND a relic came back instead.
-  · obligations: "the words are already honoured" -> the honouring took a form no one
-    can account for.
-  · truths[] / dramaticTruth: currently consumed by NOTHING (verified). Must be wired.
+## LAYER 4 — SHIPPED MATERIAL TO RECONCILE (proposed, not applied)
+  · beats 13-14: the anomaly plus the discovery, replacing attention-as-answer.
+  · the deck closer: remove "I didn't remember bringing it" — the return is an event now.
+  · ledgerLine / sceneSummary: "nothing came of it" superseded; the anomaly is that the
+    twist was felt and what arrived looks like an answer.
+  · obligations: "the words are already honoured" -> honoured in a form nobody can account for.
+  · truths[] / dramaticTruth: ZERO consumers today (verified). Must be wired.
+  · app.js:138545: stale comment calling the spine "per-issue GRAVITY only", contradicted
+    by its own prompt at :232819-232820.
+
+## SELF-CHECK AGAINST THE APPROVED SEQUENCE
+  no new world mechanics          ✓ father uses the body/years economy + granter structure
+  nothing conjured or transferred ✓ the deck was always in her sash
+  Lirael stays the FINDER         ✓ 1.3
+  alignment-sense not psychic     ✓ withdrawn
+  crowd connects wish to relic    ✓ Layer 2, and it drives the charge
+  Julian's fear ≠ real danger     ✓ 1.4, his prediction is wrong
+  no invented pricing law         ✓ withdrawn; "enough" does the work
+  no conscious blame by Lirael    ✓ 1.2, she does not remember
+  no Julian-custody residue       ✓ "already his" removed
+  price resolved before Scene 1   ✓ 1.5, and kept out of reports
