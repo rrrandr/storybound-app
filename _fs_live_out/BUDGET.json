@@ -1,5 +1,5 @@
 {
-  "receipted": 10.7660319,
+  "receipted": 10.7706129,
   "unresolved": 1.8663661,
   "outstanding": [],
   "runs": [
@@ -145,6 +145,13 @@
       "unresolved": 0,
       "outstandingAtExit": 0,
       "note": "Repair priced before dispatch at $0.016023 from the saved request; measured receipt $0.003854; grok-4.3, status 200, 11476ms, in 2003 out 46. It returned a correct fix for NO_CONTACT, but validation then failed on a DIFFERENT fault the repair was not scoped to touch: environment_plus.beat carries object O4's own record name, 'the gossamer band tied across the Sacrificiant\\'s mouth', and the person validator reads 'Sacrificiant' as a person not in the story. Arm stopped; no second repair, no rewriting."
+    },
+    {
+      "run": "literary arm 1 — one repair call under the clarified contract (planner REPLAYED)",
+      "receipted": 0.004581,
+      "unresolved": 0,
+      "outstandingAtExit": 0,
+      "note": "Priced before dispatch at $0.016550; measured receipt $0.004581; grok-4.3, status 200, 11090ms, in 2308 out 87. Returned the COMPLETE pc_opening_fusion member (character, placement, character_angle, beat) with {TARGET} preserved and contact established. Validation PASSED; the clean literary author request was captured with author dispatch blocked."
     }
   ],
   "authorization": null,
