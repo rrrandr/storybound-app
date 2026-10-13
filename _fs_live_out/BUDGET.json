@@ -1,6 +1,6 @@
 {
   "receipted": 10.7706129,
-  "unresolved": 1.8663661,
+  "unresolved": 2.0066101,
   "outstanding": [],
   "runs": [
     {
@@ -152,6 +152,13 @@
       "unresolved": 0,
       "outstandingAtExit": 0,
       "note": "Priced before dispatch at $0.016550; measured receipt $0.004581; grok-4.3, status 200, 11090ms, in 2308 out 87. Returned the COMPLETE pc_opening_fusion member (character, placement, character_angle, beat) with {TARGET} preserved and contact established. Validation PASSED; the clean literary author request was captured with author dispatch blocked."
+    },
+    {
+      "run": "literary arm 1 — Grok Scene-1 author, ABORTED at the harness boundary",
+      "receipted": 0,
+      "unresolved": 0.140244,
+      "outstandingAtExit": 0,
+      "note": "Priced $0.140244 and dispatched; playwright route.fetch timed out at its 30s default while the author generation needs 45-90s. NO response, NO receipt, NO scene. Whether the upstream call completed and was billed is UNKNOWN - the healthy :3001 server does not write to _vercel_dev.log - so the reservation is RETAINED as unresolved exposure rather than forgiven. Harness timeout raised to 300s."
     }
   ],
   "authorization": null,

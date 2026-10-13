@@ -51,6 +51,8 @@ const REPLAY_PLANNER = process.env.SB_REPLAY_PLANNER || null;
 const REPLAY_BODY = REPLAY_PLANNER ? fs.readFileSync(REPLAY_PLANNER, 'utf8') : null;
 const LIVE_REPAIR = process.env.SB_LIVE_REPAIR === '1';
 const REPLAY_REPAIR = process.env.SB_REPLAY_REPAIR || null;
+const LIVE_AUTHOR = process.env.SB_LIVE_AUTHOR === '1';
+let authorDispatched = false, authorSpend = 0, authorRetained = 0, authorMeta = null;
 const REPLAY_REPAIR_BODY = REPLAY_REPAIR ? fs.readFileSync(REPLAY_REPAIR, 'utf8') : null;
 const EXPECT_FAULT = process.env.SB_EXPECT_FAULT || 'NO_CONTACT';
 let repairDispatched = false, repairSpend = 0, repairRetained = 0, repairReceipt = false;
@@ -100,8 +102,50 @@ await page.route('**/*', async (route) => {
     if (!litReq) {
       litReq = body;
       fs.writeFileSync(OUT + '/literary_author_request.json', JSON.stringify({ url, body }, null, 2));
-      say('  [CAPTURED] the LITERARY author request arrived — refusing it, nothing is generated');
+      say('  [CAPTURED] the LITERARY author request arrived');
     }
+    // ── ONE LIVE AUTHOR CALL (SB_LIVE_AUTHOR=1) ───────────────────────────────────────────
+    // Priced from THIS outgoing request before it leaves; one dispatch only; the raw response is
+    // written to disk BEFORE anything parses or reads it.
+    if (LIVE_AUTHOR && !authorDispatched) {
+      authorDispatched = true;
+      const e = estimateUsd(body, body.preferredModel || body.model, url);
+      if (!e || !e.bounded) {
+        say('  [AUTHOR] REFUSED — unpriceable: ' + ((e && e.refuseReason) || 'no estimate'));
+        return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unpriceable"}' });
+      }
+      say('  [AUTHOR] priced before dispatch: $' + e.estimate.toFixed(6) + ' as ' + e.model
+        + ' (promptTokens~' + e.promptTokens + ' ESTIMATE chars/4.0, reserved out~' + e.outTokens + ')');
+      if (PRIOR + e.estimate > CEILING) {
+        say('  [AUTHOR] HALTED BEFORE DISPATCH — would exceed the cap $' + CEILING.toFixed(6));
+        return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"cap"}' });
+      }
+      const t0 = Date.now();
+      let res, txt = '';
+      try { res = await route.fetch({ timeout: 300000 }); txt = await res.text(); }
+      catch (err) {
+        authorRetained = e.estimate;
+        say('  [AUTHOR] DISPATCH FAILED: ' + (err && err.message) + ' — reservation RETAINED');
+        return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"dispatch failed"}' });
+      }
+      fs.writeFileSync(OUT + '/ARM_author_response_raw.json', txt);
+      const ms = Date.now() - t0;
+      let parsed = {}; try { parsed = JSON.parse(txt); } catch (_) {}
+      const ticks = parsed.usage && parsed.usage.cost_in_usd_ticks;
+      if (typeof ticks === 'number' && ticks > 0) authorSpend = ticks * 1e-10; else authorRetained = e.estimate;
+      authorMeta = { ms, status: res.status(), model: parsed.model || null,
+        orchestration: parsed._orchestration || null, usage: parsed.usage || null,
+        finish: (((parsed.choices || [])[0] || {}).finish_reason) || null,
+        estimated: e.estimate, measured: authorSpend, retained: authorRetained };
+      fs.writeFileSync(OUT + '/ARM_author_meta.json', JSON.stringify(authorMeta, null, 2));
+      say('  [AUTHOR] status=' + res.status() + ' ' + ms + 'ms model=' + (parsed.model || '?')
+        + ' finish=' + authorMeta.finish
+        + ' in=' + ((parsed.usage || {}).prompt_tokens ?? '?')
+        + ' out=' + ((parsed.usage || {}).completion_tokens ?? '?')
+        + (authorSpend ? ('  receipt $' + authorSpend.toFixed(6)) : ('  NO RECEIPT — retained $' + authorRetained.toFixed(6))));
+      return route.fulfill({ status: res.status(), headers: res.headers(), body: txt });
+    }
+    say('  [AUTHOR] dispatch blocked — refusing (nothing is generated)');
     return route.fulfill({ status: 503, contentType: 'application/json',
       body: '{"error":"author call withheld by the literary boot check"}' });
   }
@@ -161,7 +205,7 @@ await page.route('**/*', async (route) => {
     }
     const t0 = Date.now();
     let res, txt = '';
-    try { res = await route.fetch(); txt = await res.text(); }
+    try { res = await route.fetch({ timeout: 300000 }); txt = await res.text(); }
     catch (err) {
       repairRetained = e.estimate;
       say('  [REPAIR] DISPATCH FAILED: ' + (err && err.message) + ' — reservation RETAINED');
@@ -213,7 +257,7 @@ await page.route('**/*', async (route) => {
     }
     const t0 = Date.now();
     let res, txt = '';
-    try { res = await route.fetch(); txt = await res.text(); }
+    try { res = await route.fetch({ timeout: 300000 }); txt = await res.text(); }
     catch (err) {
       plannerRetained = e.estimate;
       say('  [LIVE-PLANNER] DISPATCH FAILED: ' + (err && err.message) + ' — reservation RETAINED');
