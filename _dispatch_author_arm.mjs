@@ -56,9 +56,18 @@ if (ARM === 'grok') {
     messages: frozen.messages,
     model: MODEL || 'claude-haiku-4-5-20251001',
     max_tokens: frozen.max_tokens,
-    temperature: frozen.temperature,
     role: 'PRIMARY_AUTHOR'
   };
+  // TEMPERATURE IS NOT UNIVERSALLY ACCEPTED HERE, and this is a PROVIDER REQUIREMENT, not a tuning
+  // choice. Haiku 4.5 takes it; Sonnet 5.5 rejects the request outright with
+  //   400 "`temperature` is deprecated for this model."
+  // (observed, request_id req_011CfyW4G5QFpTuUQMApm4dc). Nothing is generated and nothing is
+  // billed on that rejection, but the arm does not run either. So temperature is sent only to the
+  // models that accept it, and its omission is DISCLOSED rather than silent — a difference in
+  // sampling settings between arms that the comparison has to carry openly.
+  if (!/^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(String(body.model))) {
+    body.temperature = frozen.temperature;
+  }
 } else {
   url = (cap0.url || '').replace(/\/api\/[a-z-]+$/, '/api/mistral-proxy');
   // Provider-specific settings, disclosed rather than implied:
@@ -92,7 +101,10 @@ if (ARM === 'grok') {
   say('_noFallback    : ' + (body._noFallback === true)
     + '   (api/proxy.js reduces the chain to ONE entry when set)');
 } else if (ARM === 'anthropic') {
-  say('thinking        : OFF (thinking_budget_tokens omitted, per the route contract)');
+  say('thinking        : budget_tokens OMITTED (manual mode; docs say it is not accepted past 4.6)');
+  say('temperature     : ' + (body.temperature != null
+    ? (body.temperature + ' (accepted by this model)')
+    : 'OMITTED — this model rejects it as deprecated (provider requirement, disclosed)'));
   say('conversion      : system messages -> top-level `system`; turns -> user/assistant (done by the route)');
   say('containment     : one upstream fetch, single allowlisted model, no chain');
 } else {

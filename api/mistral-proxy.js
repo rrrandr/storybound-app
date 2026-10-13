@@ -20,6 +20,11 @@
 // Model allowlist — only these Mistral models may be used
 const ALLOWED_MISTRAL_MODELS = [
   'mistral-medium-latest',
+  // The PINNED Medium 3.5 snapshot, from Mistral's published model list. Admitted alongside the
+  // alias rather than replacing it because what `-latest` resolves to is NOT documented anywhere
+  // public — there is no alias-to-version table — so an experiment that needs a known model must
+  // name the pin. Production callers are untouched and still use the alias.
+  'mistral-medium-3-5-26-04',
   'mistral-large-latest',
   'mistral-small-latest',
   'mistral-small-2603',   // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-23)

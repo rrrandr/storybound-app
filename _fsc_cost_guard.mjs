@@ -55,7 +55,15 @@ export const RATES = {
   // ambiguity of the kind mistral-medium-latest still carries. 200k context; this experiment's
   // prompt is ~86k. Cache-write/hit and batch rates exist and are NOT modelled here, so a cached
   // or batched call would cost LESS than this reservation, never more.
-  'claude-haiku-4-5-20251001':    { in: 0.000001,   out: 0.000005 }
+  'claude-haiku-4-5-20251001':    { in: 0.000001,   out: 0.000005 },
+  // Claude Sonnet 5.5 — $2 in / $10 out per M (platform.claude.com pricing table, 2026-10-13).
+  // A DATELESS id that is its own pinned snapshot, per the models overview, so naming it is not
+  // an alias assumption. 1M context, 128k max output. Adaptive thinking is on by default and its
+  // tokens bill as OUTPUT, so the guard's reasoning multiplier matters more here than for Haiku.
+  'claude-sonnet-5-5':            { in: 0.000002,   out: 0.00001 },
+  // Mistral Medium 3.5, PINNED — same published $1.50/$7.50 as the alias row above, but keyed to
+  // an identifier whose resolution is known rather than assumed.
+  'mistral-medium-3-5-26-04':     { in: 0.0000015,  out: 0.0000075 }
 };
 
 // The most expensive rate in the verified table. NO LONGER a fallback for unknown models — those
@@ -145,7 +153,15 @@ export function resolveModel(requested, url, body) {
 export function estimateUsd(body, model, url) {
   const res = resolveModel(model || (body && body.model), url, body);
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
-  const promptTokens = Math.ceil(chars / CHARS_PER_TOKEN);
+  // THE DENSER CLAUDE 5 TOKENIZER. chars/4.0 held for Grok, Mistral and Haiku 4.5 (the same frozen
+  // 345,504-char prompt billed 87,110 input tokens => 3.97 chars/token). The Claude 5 family uses
+  // the newer tokenizer introduced with Opus 4.7, and that IDENTICAL prompt billed 130,457 input
+  // tokens on claude-sonnet-5-5 => 2.65 chars/token. Pricing a Claude 5 call at chars/4 understated
+  // it by 51% and the real cost came in ABOVE the reservation, which is the one direction this
+  // guard must never fail in. 2.6 is held deliberately below the observed 2.65 so it over-counts.
+  const cpt = /^claude-(sonnet|opus|haiku|fable|mythos)-5/.test(String(model || '')) ? 2.6
+    : CHARS_PER_TOKEN;
+  const promptTokens = Math.ceil(chars / cpt);
   const maxOut = Number(body.max_tokens) || UNKNOWN_MAX_TOKENS;
   const outTokens = Math.ceil(maxOut * REASONING_MULT);
 
@@ -173,7 +189,7 @@ export function estimateUsd(body, model, url) {
   return { bounded: true, estimate, raw, promptChars: chars, promptTokens, outTokens,
     model: res.model, resolvedBy: res.how, rates: r,
     explicitMaxTokens: Number(body.max_tokens) || null,
-    assumptions: { CHARS_PER_TOKEN, REASONING_MULT, SAFETY_MARGIN, ASSUME_NO_CACHE } };
+    assumptions: { CHARS_PER_TOKEN: cpt, REASONING_MULT, SAFETY_MARGIN, ASSUME_NO_CACHE } };
 }
 
 // ── CHAINED RESERVATION (Roman 2026-09-30) ────────────────────────────────────────────────────
@@ -324,10 +340,21 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   t('and is still refused at the $0.06 cap',
     guardDispatch(noBudget, { model: MODEL, cap: 0.06 }).allowed === false);
   const unknownModel = estimateUsd(mk(252045, 8000), 'some-model-we-have-never-priced');
-  t('an UNKNOWN model is priced at the worst rate in the table, not a default',
-    unknownModel.rates.in === WORST_RATE.in && unknownModel.rates.out === WORST_RATE.out);
-  t('an unknown model is never cheaper than the known one',
-    unknownModel.estimate >= real.estimate);
+  // STALE SINCE 2026-10-05 and failing: these two asserted the OLD behaviour, where an unlisted
+  // model fell back to WORST_RATE and was priced. That fallback was deliberately removed because
+  // WORST_RATE is only the Grok rate, so a dearer model was UNDER-reserved and dispatched anyway.
+  // The contract now is to refuse. Asserting the current, stronger behaviour instead.
+  t('an UNKNOWN model is REFUSED, not priced at some other model\'s rate',
+    unknownModel.bounded === false && unknownModel.estimate === Infinity);
+  t('and the refusal says why rather than failing silently',
+    /not in the verified rate table|could not be resolved/.test(unknownModel.refuseReason || ''));
+  // The denser Claude 5 tokenizer, measured on the frozen literary prompt (345,504 chars):
+  // Haiku 4.5 billed 87,110 input tokens, Sonnet 5.5 billed 130,457 for the SAME text.
+  const c5 = estimateUsd(mk(345504, 2400), 'claude-sonnet-5-5', '/api/anthropic-proxy');
+  t('a Claude 5 model is priced on the denser tokenizer, not chars/4',
+    c5.promptTokens >= 130457, c5.promptTokens + ' tokens');
+  t('and that reservation now covers the real billed cost',
+    c5.estimate >= 130457 * 0.000002 + 2400 * 0.00001, '$' + c5.estimate.toFixed(6));
 
   // The simulated runner above proves the guard's logic. This proves the REAL paid runner is
   // actually gated by it — an unused guard would pass every assertion above and still overspend.

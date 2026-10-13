@@ -19,7 +19,13 @@
 // Only models this calibration is allowed to measure. A name outside this list is refused rather
 // than resolved to something else — the whole point of the route.
 const ALLOWED_ANTHROPIC_MODELS = [
-  'claude-haiku-4-5-20251001'    // Claude Haiku 4.5 — canon-auditor calibration candidate
+  'claude-haiku-4-5-20251001',   // Claude Haiku 4.5 — canon-auditor calibration candidate
+  'claude-sonnet-5-5'            // Claude Sonnet 5.5 — literary author comparison arm.
+  // NOTE, and it differs from Haiku 4.5: Sonnet 5.5 has ADAPTIVE thinking (docs default effort
+  // `high`), and the manual thinking.type 'enabled' + budget_tokens mode this route implements is
+  // documented as NOT ACCEPTED on models after the 4.6 generation. So a caller must leave
+  // thinking_budget_tokens unset for this model; the route already omits the field when it is,
+  // which is the only configuration that reaches Sonnet 5.5 without an upstream rejection.
 ];
 
 // Extended thinking has a documented floor of 1024 budget tokens, and max_tokens must exceed the

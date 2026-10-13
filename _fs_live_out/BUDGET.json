@@ -1,6 +1,6 @@
 {
   "receipted": 10.8717789,
-  "unresolved": 2.1480571,
+  "unresolved": 2.4329711,
   "outstanding": [],
   "runs": [
     {
@@ -180,6 +180,13 @@
       "unresolved": 0.125251,
       "outstandingAtExit": 0,
       "note": "status 200, 30270ms, stop_reason=end_turn, in 87110 / out 1983, thinking off (0 chars), served claude-haiku-4-5-20251001 (pinned, no alias). The isolated anthropic route returns no cost ticks so the $0.125251 reservation is RETAINED; at the published $1/$5 per M the actual is $0.097025. 1125 reader-facing prose words + EXPANSION_A 59 / EXPANSION_B 62, nothing lost after the appendix."
+    },
+    {
+      "run": "literary arm 5 — Claude Sonnet 5.5 Scene-1 author (frozen request reused)",
+      "receipted": 0,
+      "unresolved": 0.284914,
+      "outstandingAtExit": 0,
+      "note": "Attempt 1 REJECTED 400 'temperature is deprecated for this model' (usage null, no inference, no charge). Attempt 2 status 200, 21885ms, stop_reason=max_tokens, in 130457 / out 2400 of which thinking_tokens=2400 — ADAPTIVE THINKING CONSUMED THE ENTIRE BUDGET, zero prose returned. Calculated at the published $2/$10 per M: $0.284914, which EXCEEDS the $0.250502 reservation because chars/4 understated Claude 5 tokenization by 51%."
     }
   ],
   "authorization": null,
