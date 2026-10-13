@@ -1,6 +1,6 @@
 {
-  "receipted": 10.7706129,
-  "unresolved": 2.0066101,
+  "receipted": 10.8717789,
+  "unresolved": 2.0228061,
   "outstanding": [],
   "runs": [
     {
@@ -159,6 +159,20 @@
       "unresolved": 0.140244,
       "outstandingAtExit": 0,
       "note": "Priced $0.140244 and dispatched; playwright route.fetch timed out at its 30s default while the author generation needs 45-90s. NO response, NO receipt, NO scene. Whether the upstream call completed and was billed is UNKNOWN - the healthy :3001 server does not write to _vercel_dev.log - so the reservation is RETAINED as unresolved exposure rather than forgiven. Harness timeout raised to 300s."
+    },
+    {
+      "run": "literary arm 2 — Ministral 8B Scene-1 author (frozen request reused)",
+      "receipted": 0,
+      "unresolved": 0.016196,
+      "outstandingAtExit": 0,
+      "note": "status 200, 24511ms, finish=stop, prompt_tokens 86548 / completion 1432, served ministral-8b-2512. Mistral returns no cost ticks so the $0.016196 reservation is RETAINED; at published rates ($0.15/M both ways) the actual is ~$0.013197. 884 prose words. reasoning_effort omitted; mistral-proxy has no chain and one upstream fetch."
+    },
+    {
+      "run": "literary arm 1 — Grok Scene-1 author, re-dispatch with _noFallback",
+      "receipted": 0.101166,
+      "unresolved": 0,
+      "outstandingAtExit": 0,
+      "note": "status 200, 19562ms, finish=stop, upstreamAttempts=1 (containment PROVEN via _noFallback; chain reduced to one entry). chainEntry grok-4-1-fast-reasoning -> served grok-4.3, effort high. prompt 77554 / completion 687 / reasoning 1056. Estimated $0.140364, receipt $0.101166. 454 prose words."
     }
   ],
   "authorization": null,
