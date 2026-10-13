@@ -288007,7 +288007,26 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             var _classifiedS1 = _classifySkeletonFaults(_validation.faults);
             if (_skeletonRepairEligible(_classifiedS1)) {
               _repairAttempted = true;
-              var _repairReqS1 = _buildSkeletonRepairRequest(_validation.rawEnvelope, _validation.faults, _classifiedS1);
+              // ── THE REQUEST AND THE MERGE MUST SHOW THE MODEL THE SAME THING ──────────────
+              // The merge was moved to rawEnvelopePristine, but this builder was still handed
+              // rawEnvelope — so "EACH MEMBER YOU MUST RETURN, EXACTLY AS YOU SENT IT LAST TIME"
+              // rendered the ENGINE's version: the canonical object name in place of {TARGET},
+              // plus engine-added environment_target / environment_axis the model never wrote.
+              // The new PLACEHOLDER RULE then told it to preserve a {TARGET} its own "original"
+              // no longer contained, and the merge would have judged the reply against the
+              // pristine member. One representation for both, or the instruction is a trap.
+              //
+              // IF THE PRISTINE SNAPSHOT IS MISSING, SAY SO AND DO NOT REPAIR. Falling back to
+              // the mutated envelope is what produced the trap; a repair built on it would be
+              // asked to satisfy a rule its input contradicts, so the honest outcome is to leave
+              // the original fault standing and let validation fail on its own terms.
+              if (!_validation.rawEnvelopePristine) {
+                try { console.warn('[SCENE1:SKELETON:REPAIR] SKIPPED — no pristine (pre-substitution)'
+                  + ' envelope is available, and the engine-modified one must not be presented to the'
+                  + ' model as its own previous answer. The original fault stands.'); } catch (_) {}
+                throw new Error('repair skipped: pristine model-authored envelope unavailable');
+              }
+              var _repairReqS1 = _buildSkeletonRepairRequest(_validation.rawEnvelopePristine, _validation.faults, _classifiedS1);
               try { console.log('[SCENE1:SKELETON:REPAIR] attempting ONE holistic repair — ' + _repairReqS1.askFor.join(', ')); } catch (_) {}
               var _repairRawcS1 = await _doRepairScaffoldCall(_repairReqS1.user);
               var _repairParsedS1 = _tryParseScaffold(_repairRawcS1);
@@ -288019,7 +288038,9 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 // corrected model-authored fields; splicing them into the mutated envelope would
                 // carry the engine's canonical-name substitution back into the revalidated plan and
                 // reproduce the same false invented-person fault.
-                var _mergeBaseS1 = _validation.rawEnvelopePristine || _validation.rawEnvelope;
+                // Guaranteed present: the builder above refuses to repair without it, so there is
+                // no silent fallback to the engine-modified envelope on either side any more.
+                var _mergeBaseS1 = _validation.rawEnvelopePristine;
                 var _mergedS1 = _applySkeletonRepairStrict(_mergeBaseS1, _repairSkeletonS1, _repairReqS1.askFor, _classifiedS1.characters);
                 if (_mergedS1.rejected) {
                   try { console.error('[SCENE1:SKELETON:REPAIR_SCOPE_VIOLATION] out-of-scope key(s): ' + _mergedS1.tamperAttempted.join(', ')); } catch (_) {}
