@@ -38,7 +38,17 @@ export const RATES = {
   'gpt-4-turbo':                  { in: 0.00001,    out: 0.00003   },
   'mistral-small-latest':         { in: 0.00000015, out: 0.0000006 },
   'mistral-small-2603':           { in: 0.00000015, out: 0.0000006 },
-  'ministral-8b-2512':            { in: 0.00000015, out: 0.00000015 }
+  'ministral-8b-2512':            { in: 0.00000015, out: 0.00000015 },
+  // Mistral Medium 3.5 — $1.50 in / $7.50 out per M, read from Mistral's own pricing page
+  // (docs.mistral.ai/inference/pricing, 2026-10-13), which lists the concrete identifier as
+  // mistral-medium-3-5-26-04. THIS KEY IS THE ALIAS, because api/mistral-proxy.js's allowlist
+  // admits only 'mistral-medium-latest' and not the pinned version — so the figure assumes the
+  // alias resolves to Medium 3.5 on this account. That assumption is the one remaining risk in
+  // the price, and it is stated rather than hidden.
+  // PRICING IT DOES NOT MAKE IT DISPATCHABLE: api/_mistral-governor.js still has no row for it,
+  // and a model absent from that table is refused. The account's TPM/RPS from
+  // https://admin.mistral.ai/plateforme/limits is the outstanding blocker.
+  'mistral-medium-latest':        { in: 0.0000015,  out: 0.0000075 }
 };
 
 // The most expensive rate in the verified table. NO LONGER a fallback for unknown models — those
@@ -54,7 +64,10 @@ export const WORST_RATE = {
 // some other model's rate. api/mistral-proxy.js:103 defaults to mistral-medium-latest, so this is
 // a reachable path, not a hypothetical.
 export const UNPRICED_MODELS = [
-  'mistral-medium-latest', 'mistral-large-latest', 'mistral-small'
+  // mistral-medium-latest REMOVED 2026-10-13: its rate is now published above, sourced from
+  // Mistral's pricing page. It is still not dispatchable — the governor has no limits row — but
+  // that is an ADMISSION gap, not a pricing one, and conflating the two understated what was known.
+  'mistral-large-latest', 'mistral-small'
 ];
 
 // HOW A DISPATCH'S EFFECTIVE MODEL IS DECIDED, including proxy defaults:
