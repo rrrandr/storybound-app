@@ -1,0 +1,69 @@
+=== CAUSAL FOUNDATION DELIVERY CONTROL (provider-free, $0) ===
+Every model response here is CONSTRUCTED in this file. No provider is called.
+
+serving the real public/ from http://127.0.0.1:56746 (vercel dev is down; 500 on every path)
+
+
+0. THE RENDERER (window._buildFSCausalFoundationBlock) — tier asymmetry
+  ok   spine tier is emitted and carries the sealed price
+  ok   planning tier is emitted and does NOT carry the sealed price
+  ok   author tier is emitted and does NOT carry the sealed price
+  ok   an unrecognised tier name returns EMPTY rather than guessing
+  ok   the opening-only deck line is present at turnCount 0
+  ok   and GONE once scenes have been authored (turnCount 4), while the limits remain
+
+1. ISSUE SPINE — read off the wire
+  ok   a spine request was actually sent
+  ok   the spine request contains the father's unbounded memory offer
+  ok   the spine request contains that Augar is alive
+  ok   the spine request contains the concealment wish
+  ok   the spine request contains the concealment's explicit LIMITS
+  ok   the spine request contains the "she lost" wording hinge
+  ok   the spine request contains what was already tried, and why it failed
+  ok   the spine request contains Julian's bond price
+  ok   the spine request contains FATE'S SEALED PRICE for the open offer
+  ok   and it is sent as CAUSE, not as content to narrate
+  ok   spine request bytes: 39206
+
+2. SCENE SCAFFOLD — read off the wire
+  ok   a scene scaffold request was actually sent
+  ok   the scaffold request contains the hidden causes
+  ok   the scaffold request contains the DO-NOT-PLAN list
+  ok   the scaffold request contains the wording distinction it must honour
+  ok   the scaffold is told to stage CONSEQUENCES, not disclose causes
+  ok   *** BOUNDARY: the scaffold request does NOT contain the sealed price
+  ok   and it does not carry the spine-only account of the concealment either
+
+2b. LITERARY AUTHOR — read off the wire (handleBeginStory, the real opening path)
+      calls=OPENING_PLANNER:90814@proxy STRUCTURE_GENERATOR:356717@proxy PRIMARY_AUTHOR:1107@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy
+  ok   an OPENING_PLANNER request was captured off the wire
+  ok   the opening planner receives the hidden causes
+  ok   the opening planner receives the DO-NOT-PLAN list
+  ok   *** BOUNDARY: the opening planner does NOT receive the sealed price
+  ok   an OUTGOING AUTHOR request was captured off the wire
+  ok   the author request carries the private intent about Julian
+  ok   the author request carries the ABSOLUTE disclosure prohibitions
+  ok   the author request carries the opening-only deck placement (turnCount 0)
+  ok   and it is told that knowing is not narrating
+  ok   *** BOUNDARY: the author request does NOT contain the sealed price
+  ok   *** BOUNDARY: nor the spine-only concealment account
+  ok   author request bytes: 356717
+
+3. CONTROL: a story with no causalFoundation (the detector must bite)
+  ok   a spine request was still sent without a seed
+  ok   *** CONTROL: it carries NONE of the foundation
+  ok   all three tiers emit EMPTY for a seedless story (byte-identical path)
+
+4. SUPERSEDED v1-v3 material
+  ok   the seed is reachable for inspection
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "Teveren"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "already his"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "COUNTERS it"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "remaining years as the named price"
+  ok   dramaticTruth now states the Augar causal chain
+  ok   truths no longer say Julian countered the misalignment
+  ok   causalFoundation is version-stamped
+
+── wrote _audit_out/cf_spine_request.txt and _audit_out/cf_scaffold_request.txt
+
+=== 47 passed, 0 failed ===
