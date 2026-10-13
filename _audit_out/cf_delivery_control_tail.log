@@ -1,0 +1,30 @@
+  ok   and it is sent as CAUSE, not as content to narrate
+  ok   spine request bytes: 40131
+
+2. SCENE SCAFFOLD — read off the wire
+  ok   a scene scaffold request was actually sent
+  ok   the scaffold request contains the hidden causes
+  ok   the scaffold request contains the DO-NOT-PLAN list
+  ok   the scaffold request contains the wording distinction it must honour
+  ok   the scaffold is told to stage CONSEQUENCES, not disclose causes
+  ok   *** BOUNDARY: the scaffold request does NOT contain the sealed price
+  ok   and it does not carry the spine-only account of the concealment either
+
+3. CONTROL: a story with no causalFoundation (the detector must bite)
+  ok   a spine request was still sent without a seed
+  ok   *** CONTROL: it carries NONE of the foundation
+  ok   all three tiers emit EMPTY for a seedless story (byte-identical path)
+
+4. SUPERSEDED v1-v3 material
+  ok   the seed is reachable for inspection
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "Teveren"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "already his"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "COUNTERS it"
+  ok   superseded string absent from truths/dramaticTruth/causalFoundation: "remaining years as the named price"
+  ok   dramaticTruth now states the Augar causal chain
+  ok   truths no longer say Julian countered the misalignment
+  ok   causalFoundation is version-stamped
+
+── wrote _audit_out/cf_spine_request.txt and _audit_out/cf_scaffold_request.txt
+
+=== 35 passed, 0 failed ===

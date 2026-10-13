@@ -16,25 +16,35 @@
   ok   the four repertoire tiers are all present
   ok   all six formulas are present
   ok   formula 4 carries its own scope limit (not a mortal-wound treatment)
-  ok   formula 5 is explained as asking to SEE, not to RECEIVE (no-object-from-nothing)
-  ok   formula 6 cannot manufacture willingness (events, never consent)
-  ok   small prices are still real (conservation satisfied, not dodged)
+  ok   formula 5 rules out materialisation ONLY, leaving ordinary routes open
+  ok   *** and "to my hand" is explicitly sound wording, answered by a handover
+  ok   formula 6 forbids manufactured willingness but ALLOWS an arranged encounter
+  ok   *** and that is called a real, usually sufficient answer
+  ok   small prices are real, with no fixed ceiling asserted
   ok   the First Favored register is memory/emotion, not hair
-  ok   Roman's "ward my health" is assessed as unbounded, not endorsed
-  ok   Roman's "skill to win" is assessed as WRONG IN LAW (circumstances-not-minds)
+  ok   *** all eight are cultural sayings, none graded safe or foolish by authorship
+  ok   "ward my health" is described as loose and workable, not as a failure
+  ok   "skill to win" states the LIMIT without declaring the wish useless
+  ok   *** and allows an IMMEDIATE, ordinary fulfilment
+  ok   *** the pin is sized, not condemned
   ok   the rescue formula's bracket is flagged as NOT literal spoken text
   ok   tournaments do not pool sacrifices and are not free or reversible
   ok   and no visible wish-duels survive in the sporting context
 
 3. MAD JESSI: public legend vs private truth
   ok   the public legend is emitted
-  ok   *** BOUNDARY: NO private marker appears without tier "planning"
+  ok   *** BOUNDARY: no private marker in an untiered emission
   ok   the planning tier adds EVERY private marker
   ok   the planning tier is strictly longer than the public one
+  ok   *** an AUTHOR staging a NAMED Jessi receives the private truth
+  ok   *** …and receives it WITH its disclosure constraint, not instead of it
+  ok   *** an AUTHOR whose scene merely mentions Lytharyn gets the LEGEND ONLY
+  ok   the planning tier does NOT carry the author-facing staging preamble
   ok   *** FAIL-CLOSED on tier="plan"
   ok   *** FAIL-CLOSED on tier="Planning"
   ok   *** FAIL-CLOSED on tier=true
   ok   *** FAIL-CLOSED on tier="spine"
+  ok   *** FAIL-CLOSED: tier author WITHOUT him named gets no truth
   ok   the legend is labelled BELIEF, not authoritative narration
   ok   the conflicting accounts are not to become separate atrocities
   ok   benevolent wording is blocked as an assassination loophole
@@ -56,7 +66,9 @@
   ok   it forbids a blanket prohibition as an answer
   ok   it requires accounting for the formulas ordinary people know
   ok   it keeps routine wishes routine
-  ok   and it states the self-defeating shape of complex wishes
+  ok   *** revelation is NOT given a standing delay
+  ok   *** and "it only buys an adventure" is named as a forbidden blanket
+  ok   *** a long-unsolved mystery must name its obstruction
 
 5. DELIVERY: the spine request carries the planning check and Jessi's private truth
   ok   a spine request was sent
@@ -67,4 +79,4 @@
 
 ── wrote _audit_out/lore_*.txt
 
-=== 55 passed, 0 failed ===
+=== 67 passed, 0 failed ===

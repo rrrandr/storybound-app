@@ -1,5 +1,5 @@
 {
- "_key": "ctl-outline|1|10|10|2|||ct-|cf0|ov",
+ "_key": "ctl-outline|1|10|10|2|||ct-|cf0|ov|ar|h|d|sph85f340fb-1330/1330|plnone|as|ps",
  "issueIndex": 1,
  "bounds": {
   "issueIndex": 1,
@@ -8,11 +8,20 @@
   "mode": "cg",
   "source": "ISSUE_PRICING",
   "rowSupply": null,
+  "authoredThrough": null,
   "mapping": null,
   "first": 1,
   "last": 10
  },
  "sceneNow": 2,
+ "outlineCoverage": {
+  "rowsResolved": 3,
+  "authoredRowsPresent": false,
+  "spineRowsInWindow": 3,
+  "arcPresent": true,
+  "arcHasSceneOutline": true,
+  "status": "covered"
+ },
  "label": "Issue 1 — the audit",
  "thesis": "Whether she will sign what she knows is false",
  "horizon": null,
@@ -20,6 +29,8 @@
  "decisions": [],
  "overturned": [],
  "overturnedWhy": {},
+ "prereqsAtRisk": [],
+ "prereqsAtRiskWhy": {},
  "commitEvidence": {
   "through": null,
   "facts": 0
@@ -28,8 +39,11 @@
   {
    "n": 1,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "not_written",
-   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "deliveryEvidence": "no committed fact, no assessment, and no history note identifies scene 1",
    "verifiedFacts": null,
    "overturnedBy": null,
    "status": "not_written",
@@ -49,6 +63,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -57,6 +73,9 @@
   {
    "n": 2,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -78,6 +97,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -86,6 +107,9 @@
   {
    "n": 3,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -107,6 +131,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],

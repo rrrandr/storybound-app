@@ -1,5 +1,5 @@
 {
- "_key": "ctl-outline|1|10|10|4|||ct-|cf0|ov",
+ "_key": "ctl-outline|1|10|10|4|||ct-|cf0|ov|ar|h|d|spnone|plhbe74db80-34412/34412|as|ps",
  "issueIndex": 1,
  "bounds": {
   "issueIndex": 1,
@@ -8,18 +8,29 @@
   "mode": "cg",
   "source": "ISSUE_PRICING",
   "rowSupply": 20,
+  "authoredThrough": 20,
   "mapping": {
    "rowSupply": 20,
    "nativeMode": "literary",
    "mode": "cg",
    "per": 10,
    "issuesSpanned": 2,
-   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s); this issue is rows 1-10"
+   "authoredThrough": 20,
+   "authoredRowsInThisIssue": 10,
+   "note": "20 authored rows / 10 scenes per cg issue = 2 issue(s) of authored material; THIS issue is scenes 1-10 whatever the plan authored"
   },
   "first": 1,
   "last": 10
  },
  "sceneNow": 4,
+ "outlineCoverage": {
+  "rowsResolved": 10,
+  "authoredRowsPresent": true,
+  "spineRowsInWindow": 0,
+  "arcPresent": false,
+  "arcHasSceneOutline": false,
+  "status": "covered"
+ },
  "label": "Issue 1",
  "thesis": null,
  "horizon": 1,
@@ -27,6 +38,8 @@
  "decisions": [],
  "overturned": [],
  "overturnedWhy": {},
+ "prereqsAtRisk": [],
+ "prereqsAtRiskWhy": {},
  "commitEvidence": {
   "through": null,
   "facts": 0
@@ -35,8 +48,11 @@
   {
    "n": 1,
    "kind": "independent",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "not_written",
-   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "deliveryEvidence": "no committed fact, no assessment, and no history note identifies scene 1",
    "verifiedFacts": null,
    "overturnedBy": null,
    "status": "not_written",
@@ -64,6 +80,8 @@
    },
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -72,8 +90,11 @@
   {
    "n": 2,
    "kind": "conditional",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "not_written",
-   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "deliveryEvidence": "no committed fact, no assessment, and no history note identifies scene 2",
    "verifiedFacts": null,
    "overturnedBy": null,
    "status": "not_written",
@@ -101,6 +122,8 @@
    },
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -109,8 +132,11 @@
   {
    "n": 3,
    "kind": "independent",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "not_written",
-   "deliveryEvidence": "no committed fact, no assessment, and no record this scene was produced",
+   "deliveryEvidence": "no committed fact, no assessment, and no history note identifies scene 3",
    "verifiedFacts": null,
    "overturnedBy": null,
    "status": "not_written",
@@ -138,6 +164,8 @@
    },
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -146,6 +174,9 @@
   {
    "n": 4,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -167,6 +198,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": [
     {
      "choice": "run",
@@ -186,6 +219,9 @@
   {
    "n": 5,
    "kind": "independent",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -209,6 +245,8 @@
     "prereq:investigation_open"
    ],
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -217,6 +255,9 @@
   {
    "n": 6,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -238,6 +279,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -246,6 +289,9 @@
   {
    "n": 7,
    "kind": "independent",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -267,6 +313,8 @@
    "decision": null,
    "dependsOn": null,
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -275,6 +323,9 @@
   {
    "n": 8,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -298,6 +349,8 @@
     "prereq:julian_act_concealed"
    ],
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -306,6 +359,9 @@
   {
    "n": 9,
    "kind": "convergence",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -330,6 +386,8 @@
     "prereq:investigation_open"
    ],
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],
@@ -338,6 +396,9 @@
   {
    "n": 10,
    "kind": "conditional",
+   "alreadyWritten": null,
+   "alreadyDelivered": null,
+   "alreadyDeliveredBy": null,
    "delivery": "planned",
    "deliveryEvidence": "not yet generated",
    "verifiedFacts": null,
@@ -361,6 +422,8 @@
     "prereq:julian_act_concealed"
    ],
    "brokenPrereqs": null,
+   "prereqsAtRisk": null,
+   "prereqsAtRiskWhy": null,
    "routes": null,
    "activeRoute": null,
    "withheld": [],

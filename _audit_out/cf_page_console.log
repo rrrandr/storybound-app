@@ -1,0 +1,1200 @@
+log: [ORCHESTRATION] Storybound AI Orchestration Client initialized
+log: [BAKED] starter-scenes.js loaded — 3 package(s), 2 still PLACEHOLDER: starter_the_first_taste, starter_glass_house
+log: [GN DEV] Dev tools IIFE executing...
+log: %c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+log: [FATE] DOMContentLoaded — initializing
+warning: Supabase not configured. Couple mode disabled.
+log: [BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+log: [CONTENT REGISTER] FULL_WEB (full) — platform: web
+log: %c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+log: %c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+log: [Phase1LI] UI wired (collapse cover + name-input reactivity)
+log: %c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+log: %c[STORYBOUND TELEMETRY] Console helpers ready: copyConsole() → copy all captured logs (last 5000) copyConsole({filter:"NIL"})→ copy filtered subset copyConsole({limit:50}) → copy last N lines dumpNILState() → print + copy current NIL/ERA/OAS state clearConsoleBuffer() → wipe the ring buffer color: 
+log: %c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+log: [GEMMA_TURN] Turn-based collaborative system initialized.
+log: [GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+log: [NMD] Seeded Volume 1 with Entry 1.
+log: %c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+log: %c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+log: %c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+log: %c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+log: %c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+log: %c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+log: %c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+log: [CG:HELPERS] ready=true
+log: [STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+log: [ModeCards] Initialized 4 mode cards
+log: [Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+log: [Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+log: [Corridor] Stored 2 elements for stage: authorship
+log: [Corridor] Stored 3 elements for stage: identity
+log: [Corridor] Stored 3 elements for stage: playermask
+log: [Corridor] Stored 3 elements for stage: storybeau
+log: [Corridor] Stored 1 elements for stage: world
+log: [Corridor] Stored 1 elements for stage: tone
+log: [Corridor] Stored 1 elements for stage: pressure
+log: [Corridor] Stored 3 elements for stage: pov
+log: [Corridor] Stored 2 elements for stage: length
+log: [Corridor] Stored 2 elements for stage: dynamic
+log: [Corridor] Stored 1 elements for stage: beginstory
+warning: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+log: [Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+log: [Authorship] Choice reset
+log: [Corridor] Authorship mount: Reset authorship choice for re-selection
+log: [Corridor] DOM updated. Mounted row 0: authorship
+log: [Ghost Steps] Initialized 8 ghost step placeholders
+log: [DSP] Hidden — stage authorship
+log: [Corridor Nav] Navigation affordances initialized
+log: [Corridor] Initialization complete. Active row: 0
+log: [Corridor] Row store initialized with 11 stages
+log: [ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+log: [GOOD_REASONS] Mechanic + library variant system initialized.
+log: [REINCARNATION] System initialized
+log: [FATE_EVENT] System initialized. Active: false
+log: [PROMO] Seasonal promotions initialized. Active: none
+log: [DevHUD] Dev HUD ready — press ` to toggle
+log: [BOOT] Complete — flushed 0 deferred task(s)
+log: [PACT:FLIP] routeToLegalAcceptance called — isReaccept: false
+log: [PACT:FLIP] showScreen(legalGate) — cards found: 3 | already flipped: false
+log: [SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=0, left=0, viewport=720
+log: [BETA] geo_gate_decision {"country":null,"signal":"ip","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+log: [EMIT] FS_CAUSAL_FOUNDATION_SPINE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+log: [FF-CANON-AUTH] false reason=nonff
+log: [EMIT] FS_CAUSAL_FOUNDATION_SPINE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- _buildCGScaffold <- window.__buildCGScaffold text=""
+log: [EMIT] MAD_JESSI gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=2 scene=1 via=_buildMadJessiDirective <- _buildCGScaffold <- window.__buildCGScaffold text=" "
+log: [STORY-SPINE] shape=FORCED_ALLIANCE worldArc=FOLD_CORRUPTION world=fatelands tier=fling
+log: [CG:SCAFFOLD] output allowance 8250 tokens — ESTIMATE for 2 cg issue(s) × 10 rows = 20 rows, model=gpt-4o-mini
+log: [TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+log: [TEMPT:CRACKLE] segmented into 2 discrete crackles
+log: [PACT:FLIP] flip-tick @400ms — cards live: 3
+log: [PACT:FLIP] flipped card 0 pact=tos | classList now: pact-card pact-card-tos flipped
+log: [BIBLE-ARTIFACT] pc first attempt for this story
+log: [BIBLE-ARTIFACT] pc -> committed (attempt 1)
+log: [TIER0] pc body bible derived locally from seed — zero live calls (2 facet(s) merged into portfolio)
+log: [BIBLE-ARTIFACT] li first attempt for this story
+log: [BIBLE-ARTIFACT] li -> committed (attempt 1)
+log: [TIER0] li body bible derived locally from seed (partial — 2 field(s) cited) — zero live calls
+log: [ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+log: [ISSUE-OUTLINE:MAP] 20 authored rows / 10 scenes per cg issue = 2 issue(s) of authored material; THIS issue is scenes 1-10 whatever the plan authored (plan authored for literary)
+log: [ISSUE-OUTLINE] issue=1 rows 1-10 (cg, 10/issue, 20 authored) kinds={"independent":4,"conditional":2,"convergence":4} delivery={"not_written":1,"planned":9} horizon=1 overturned=none cliff=plan (issue boundary row 10)
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=2 via=_buildFSCausalFoundationBlock <- _generateSceneSkeleton <- async <anonymous>:337:30 text=""
+log: [SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael's standing is at risk and the cost is still uncounted."
+log: [SKELETON:ROUTE] ministral-8b-2512: SERVED
+log: [SKELETON:CAUSAL] OK — 2 developments, 1 of 1 causally linked
+log: [SKELETON:STAGE] scene 1 — physical=[] · total=1 (intent — probe will overwrite with observed reality)
+log: [SKELETON:STAGE-CONTRACT] scene 2 — REJECTED (no_valid_participants) — C+ stays fail-closed
+log: [SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael's standing is at risk and the cost is still uncounted."
+log: [SKELETON:CPLUS] scene 2 — no Character+ (no authoritative stage (participants_inferred)); the scene proceeds
+log: [SKELETON:EPLUS] scene 2 — target "the spiralgrass" NOT resolved (NO_INVENTORY, inventory=none); E+ absent, never invented
+log: [SKELETON] Generated for scene 1 {_builtForScene: 2, causal_outline: Array(2), causal_outline_note: 2 developments, 1 of 1 causally linked, environment_anchor: the ceremony clearing, structural_pacing: measured}
+log: [BeginStory] handleBeginStory() called
+log: %c[DEV] Issue purchase faked locally: -60F (issue=1) → 9999939 color:#ffd700
+log: [DECK_MANDATE] OFF — state.fateAnchorPresent is falsy (resolveFateAnchor() may not have been called for this story)
+log: [BeginStory] DEBUG state.picks: {"world":"Fantasy","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Arcane Binding","dynamic":"Enemies","era":null,"pov":"First","worldSubtype":"arcane_binding","length":"taste","pcSpecies":"First Favored","liSpecies":"First Favored","identit
+log: [BeginStory] DEBUG state.archetype: {"primary":"SPELLBINDER","modifier":null}
+log: [BeginStory] DEBUG state.mode: solo state.storyLength: fling
+log: [BeginStory] Past _beginStoryInProgress guard, entering main flow
+log: [OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)
+log: [ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"cf-ctl","isNewStory":true,"isContinuation":false,"en
+log: [FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"vaelryn_reach","fantasy_magic_cost_model":"no_cost_high_corruption","fantasy_power_legitimacy":"arcane_meritocracy","fantasy_political_pressure":"external_monster_threat","fantasy_favor_amplitude":"stable"}
+log: [FANTASY_CORE] Fatelands region bound: vaelryn_reach {seat: The High Court, governance: Human monarchy claiming Favor-legitimacy, status: Ritual sovereign center, reality: null, magicBias: ceremonial}
+log: [CONSPIRACY] tracks selected — local="haunted_mill" regional="dathros" (background) world="fates_favor" region=vaelryn_reach
+log: [CONSPIRACY-AUDIT] REGIONAL selected (this feeds the A-plot skeleton) REGIONAL: What Fell on Dathros [stage 1/4, layer=public] False objective : Why is there a hole in the Dathros record? Invalidates : that Lost Dathros is simply a noble tragedy, honestly recorded Reveal : Someone cut it out on purp
+log: [SPECIES] PC = declared_seed: First Favored
+log: [SPECIES:PREGEN] LI species resolved pre-Scene-1: First Favored · source=declared_seed
+log: [BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999939, subscribed: true}
+log: [EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=arcane_binding)
+log: [Modifier] No secondary assigned (75% path)
+log: [BeginStory] All validation passed — proceeding to story generation
+log: [BeginStory] Story mode: participatory
+log: [VISUAL_CANON] Story visual style seeded: {paletteFamily: autumnal amber and forest depth, lightingLanguage: enchanted bioluminescence as ambient fill, textureStyle: ethereal — soft focus, light bloom, dreamy atmospheric diffusion, compositionBias: environmental storytelling — wide establishing shot
+log: [READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
+log: [FATE] initFateCards called
+log: [FATE] Bind flags reset — ready for rebind
+log: [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+log: [FATE] Rebinding existing cards
+log: [FATE] Existing cards rebound: 5
+log: [FATE] initFateCards bound
+log: [COVER:BEGIN] Showing CSS 3D white book placeholder
+log: [BeginStory] Phase 2 complete — starting loader and API calls
+log: [Sparkle] Stopped emitter: guidedFateSparkles
+log: [FATE-VISUALS] guided-fate full-screen sparkles torn down at story begin
+log: [DEV:StoryGen] world: Fantasy | tone: Earnest | genre: Billionaire → powerRole: Arcane Sovereign | powerFrame: Ruler | intensity: Steamy
+log: [DEV:WorldResolve] world: Fantasy | genre: Billionaire → powerFrame: Ruler | prehistoricForbid: false
+log: [COLD-GATE] hot-first-draft override: _hot=true · temp=HOT_CRISIS · turn=0 → INJECTED (system, top of prose-stack)
+log: [ROMANCE-ENGINE] "Enemies" + "arcane_binding" → COLLISION · acquaintance=KNOWN_ADVERSARY · scene1Presence=PROXY · validSet=[COLLISION,LOOMING_PRESENCE,SHARED_HISTORY] · set default
+log: [LI-ARRIVAL] DEFERRED (engine=?, deferIntent=true, recent=DEFERRED)
+log: [PAIR-DYNAMIC] resolved — OPEN_VEIN × SPELLBINDER · engine=COLLISION · acq=KNOWN_ADVERSARY · scene1Presence=PROXY · encounter=MET · (OPEN_VEIN) INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling ...
+log: [CANONICAL-CHARACTERS] (commit@pre-bible) LI: name="Julian" · mask=SPELLBINDER · source=seed · committed=✓
+log: [LIT:SPINE] P2 awaiter — no character Bibles to fire (pc=y li=y, pcFn=function liFn=function)
+log: [TIER0] PAIR_BOND suppressed pre-page — no paid call before the reader sees Scene 1
+log: [TIER0] R_PLOT suppressed pre-page — no multi-Issue relationship rail before the reader's first choice; Scene 2 plans from posture/seed/stage/continuity state instead
+log: [A-PLOT:SEEDED] derived from STARTER_PLANS.starter_first_sacrifice (20 scenes; force="the presiding Dohkar") — generator NOT called
+log: [ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+log: [LIT:SPINE] antagonist Bible (0ms) — antag=n (not eligible / shape C / unnamed)
+log: [TIER0] WOUND_LI_INTEGRATION_AUDIT suppressed pre-page — sampling/telemetry, not story delivery
+log: [SPINE] flavor=arcane_binding · spine=GENERIC (gpt-4o-mini)
+log: [TIER0] CG_SCAFFOLD deferred — literary Tier-0 Scene 1, no paid CG-authority call before first page
+log: [FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: false, world: Fantasy}
+log: [STORYPASS] Eligibility computed at creation: true (length: fling )
+log: [STORY:SHAPE] Snapshot stored: {world: Fantasy, genre: Billionaire, tone: Earnest, dynamic: Enemies, pov: First}
+log: [EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=1271 scene=1 via=_buildFatelandsWishCoreDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:278091:515 <- handleBeginStory text=" the presiding Dohkar Lirael must choose — break
+log: [EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=true gateTextChars=1271 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:278091:629 <- handleBeginStory text=" the presiding Dohkar Lirael must choose
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- handleBeginStory text=""
+log: [SCENE1:PATTERN-GATE] region-particular opener → vaelryn
+log: [SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_vaelryn; summons/social/reckoning shapes suppressed)
+log: [SCENE1:FP] saved opening fingerprint: region_vaelryn — recent: [region_vaelryn]
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [CRISIS] category=INTIMATE_BETRAYAL (dedicated persistent cursor — no repeat until all 6 cycle)
+log: [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+log: [SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
+log: [ONBOARD_WINDOW] story count → 1 (ordinal 1; window covers stories 1-3)
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+log: [PREF-RESOLVE] axis=demand_hint mode=full_probe value=- confidence=0.00 reason=onboarding_keep_axis_visible
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [S1_ONBOARDING] ON — story-start count=0 (rule: 0 or 2; 0=Story 1, 1=Story 2, 2=Story 3, 3+=past onboarding) · host-independent
+startGroup: STORYBOUND FINAL PROMPT PAYLOAD
+log: {mode: solo, tier: subscribed, fourAxis: Object, archetype: Object, ancestry: Object}
+endGroup: console.groupEnd
+log: STORYBOUND VALIDATION PASSED - Proceeding to model call
+log: [TITLE:PRE] Title already exists, skipping: The First Sacrifice
+log: [ANT-BODY-BIBLE] skipped — shape=?, antagonist=the presiding Dohkar
+log: [PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+log: [SCENE1:ROMANCE-PACKET] derived · shape=anticipation · engine=COLLISION · fixations=0
+log: [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+log: [SCENE1:FACT-MANIFEST] fm:4b2e0641-259 · 7 fact(s) · story=cf-ctl
+warning: [SCENE1:CPLUS:NO-OWNED-EVIDENCE] 1 candidate(s) have no owned pressure evidence in this scene (Julian) — manifest fm:4b2e0641-259. They are not offered; the scene plans without them. This is a C+ coverage failure, never a story failure.
+log: [SCENE1:CPLUS:OPTIONS] 10 grounded option(s) across 2 candidate(s) · starved: 1
+warning: [CPLUS:CANON] 9 latent protection(s) had no author-safe phrasing and were omitted from the creative view — the deterministic gate and the private auditor still hold them
+log: [SCENE1:CPLUS:CANON] C+ continuity coverage — canon-bearing=4 creatively-protected=1 auditor-only=3 unrenderable-latent-facets=9 — 3 subject(s) have latent C+ facets with no author-safe protection FROM THIS PROJECTION; those facets are semantically UNRESOLVED until the canon auditor is enabled. This
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+log: [SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- _buildScene1Scaffold <- async handleBeginStory text=""
+log: [SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)
+log: [MODEL-SERVED] requested=grok-4.3 served=constructed (cost priced at requested rates)
+log: [SCENE1:PLANNER:USAGE] {"route":"/api/proxy","requested":"grok-4.3","effort":"none","served":"constructed","usage":{"prompt_tokens":10,"completion_tokens":10,"cost_in_usd_ticks":0},"attempt":1,"at":1791934705901}
+log: [SCENE1:PLANNER:ATTEMPTS] 1 (no retry)
+log: [SCENE1:ENVELOPE] spine contract declares 18 field(s)
+log: [SCENE1:CPLUS:BRIDGE] Seren · OPT-1 · this act is how compassion genuine requires audience needs goodness surfaces, and this scene is the case where observed people whose approval wants
+log: [SCENE1:CPLUS:BRIDGE] the presiding Dohkar · OPT-6 · this act is how routine ceremony rarely deserves attention makes surfaces, and this scene is the case where performed times
+log: [SCENE1:CPLUS:CARDINALITY] 2 assigned of 2 offered — pressure, not headcount · regime=fully-covered sourced=3/3
+log: [SCENE1:FUSION:OK] concrete interaction ("sets") with the assigned target ("carpet"); a following interpretive clause does not invalidate it
+log: [SCENE1:CPLUS:SYNTH] "Lirael" accounting entry synthesised — first_mention, no angle, fulfilled_by=pc_opening_fusion (the planner is never asked for her angle; pc_opening_fusion.character_angle is the only one)
+log: [SCENE1:ANCHOR:DERIVED] 4 staged anchor(s) derived from their one source (PC ← pc_opening_fusion.beat; everyone else ← their character_plus angle)
+log: [SCENE1:SKELETON] C+ 3/4 assigned [Lirael, Seren, the presiding Dohkar] · E+ the deep-crimson carpet of braided mated-pair spiralgrass underfoot/ritual · fusion Lirael+the carpet
+log: [PRESSURE-SOURCE] type=institutional source="she understands the wish has already begun to cost her something she cannot name"
+log: [HOOK-OBJECT] required=true value="the band"
+log: [SCENE-WANT:MODE] SELF — "to hold the answer steady"
+log: [SCENE1:STAGE] physical=[Julian, Seren, the presiding Dohkar] · phone=[] · total=4
+warning: [SCENE1:CAST] on-page=3 [Julian, Seren, the presiding Dohkar] · referenced=0 [] · named-besides-LI=2 ⟹ ✗ STAGING BLOAT — the SCAFFOLDER put >1 interlocutor on stage (Scene 1 wants PC + ONE). This one is the scaffolder.
+log: [HEROINE-PROFILE] pc_career="shrine witness" (heroine default)
+log: [PREF-RESOLVE] axis=demand_hint mode=full_probe value=- confidence=0.00 reason=onboarding_keep_axis_visible
+log: [DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=institutional
+log: [SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): "Say it plainly — or let it show without words?"
+log: [SCENE1:SCAFFOLD] built in 61ms | hook="the band" pc=shrine witness setting=a Veilwood ceremony clearing shape=magical_or_physical_anomaly echo=false micro=@1 "Say it plainly — or let it show without words?" variety=guarded deck=frame-owned(deferred)
+log: [SCENE1:SCAFFOLD:TEXTURE] scene_want: "to hold the answer steady" interlocutor_placement: "The Dohkar stands between" li_texture_beat: (empty — Haiku set null OR LI is on-stage) pc_wound_anchor: (skipped — no pcWound on state.aPlot) pc_self_presentation_beat: "decision" pc_body_callback: "decision" 
+log: [SCENE1:PROMPT-SIZES] total=288878c(~72220t) | sysPrompt(prose stack)=150105c · introPrompt=79837c · scaffold=24014c · appendix=34922c · picturability=0c → window._promptMassAudit() for the sysPrompt section breakdown
+log: [ADAPTIVE LENGTH] {sceneIndex: 0, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
+log: [SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)
+log: [CONTRACT:COND] completion condition front-loaded (7 must-satisfy obligations)
+log: [SCENE1:SKELETON:DELIVERED] 9803 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)
+warning: [STORY-GEN-DEBUG] scene1-heavy exceeds soft limit: 357195 chars (limit: 50000)
+error: [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
+error: Error: zero-api-violation at callChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:294833:29) at handleBeginStory (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:290687:26)
+log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
+log: [MODEL-SERVED] requested=grok-4-1-fast-reasoning served=constructed (cost priced at requested rates)
+log: [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}
+log: [TIER0] post-author semantic edits (Grok de-calc editor + Mistral mechanical repair) deferred — reader sees the author's actual output
+log: [PACT:FLIP] flipped card 1 pact=privacy | classList now: pact-card pact-card-privacy flipped
+warning: [PURPLE-LENS:REJECT] length drift (2666→673); kept as-authored
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+warning: [PROSE:SCRUB:CHARACTER-INVISIBLE] 3 named character(s) appearing 2+ times with ZERO physical descriptor anywhere in the scene: Seren (×11), Kesh (×10), Maren (×10). The reader cannot see them. CHARACTER VISIBILITY mandate (in META-USE) is being violated.
+warning: [PROSE:CAST] 3 named actor(s) besides PC + LI in the PROSE: [Seren, Kesh, Maren] ⟹ ✗ OVER CAP — the rule is MAX ONE (PC + LI + one other). The scaffold-manifest cap [SCENE1:CAST] only sees Haiku-staged characters and missed these; Sonnet introduced them freely. Role-noun all but one ("her sister" / 
+warning: [PROSE:SCRUB:WITHIN-SCENE-RESTATEMENT] 75% content-word overlap between two sentences — likely a wound/key-moment restated verbatim within the scene: 1. "Lirael turned toward the moment while the hall held its breath." 2. "Kesh turned toward the matter while the hall held its breath." Once-per-scene
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=476 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH:NAMES] 1 person(s) [Seren] · source=scraper(evidence+≥2) · rejected 3: [Kesh×10, Set×1, Maren×10]
+log: [ONE-BREATH] obligation-anchors=1 (roles: [] · names: [Seren]) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=0 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 0× — present-adversary plan; presence is correct (WARN: 0 mentions — a known adversary who never appears as a force is the failure here).
+log: [SCENE-WANT] present — inferred want: "to hold the answer steady" · matched tokens: [answer]
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 1 run(s) scanned (1 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] silence_counted 1/1 (100%) — counted / measured silence ⟹ ✗ STOCK PHRASE — the reader recognizes Storybound, not the character.
+log: [PROSE:CANONICAL] scar 0/1 (0%) — scar reference (default-female-PC detail)
+log: [PROSE:CANONICAL] collarbone_throat_line 0/1 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/1 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/1 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/1 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/1 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/1 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/1 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/1 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/1 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/1 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/1 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/1 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/1 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/1 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/1 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/1 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/1 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/1 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/1 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/1 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/1 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(1): silence_counted · watch(0): — (note: only 1 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+log: [UNAVAILABILITY:MANIFESTATION] 1 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+log: [PARAGRAPH OWNERSHIP] scene1 full 6 paragraphs (heuristic) ¶ 1 PLOT · Setting "Lirael turned toward the moment while the hall held …" ¶ 2 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 3 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 4 NEUTR· — "Lirael turned 
+log: [LIT-LITE REP] full scene: 1 canonical chip(s) [silence_counted]
+log: [DESC:LEDGER] issue=cf-ctl:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+log: [CONTRACT:START] first draft satisfies 0/4 CRITICAL
+log: [CONTRACT] validate-only (default; set window._contractRepairOff=false to restore the pen) unmet=7
+log: [CONTRACT:LOOP 1] +0w · satisfied [] · CRITICAL remaining 4 · efficiency n/a
+warning: [CONTRACT:LOOP] no improvement (4→4) — aborting
+log: [CONTRACT:DONE] CRITICAL 0/4 satisfied · +0c across 1 continuation(s)
+log: [SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).
+log: [SCENE1-GATE] All checks passed on first attempt.
+log: [SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).
+log: [SCENE1:VAL] {outcome: pass, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}
+log: [MICRO-CHOICE:SNAPSHOT] pass source=normalized
+log: [SCENE1-FRAME] verbatim mandated closer is already the final beat and the deck appears nowhere earlier — frame compliant, no mutation
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=true
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=reflow callsite=dialogue-reflow
+warning: [REFLOW] discarded — mistral changed PROSE, not just reformatting/numbers (490 words dropped, 87 added; number-format words ignored). REMOVED: lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael turned turned turned turned turned turned turned turned turned turned turned tur
+log: [ToneDrift] Scene 1 validation failed (validate-only, no regen): [TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)]
+log: [ToneDrift] Metrics: found 0 markers, need 2
+log: [FinalChecklist:Scene1] All checks passed
+log: [SCENE1-FRAME] verbatim mandated closer is already the final beat and the deck appears nowhere earlier — frame compliant, no mutation
+log: [LI-FIRST-CONVO] scene 1 — LI on-page; intensity axis unlocked (event-driven)
+log: [AXIS:SCHEDULE] Demand ............ S1 (opening) GR ................ pending — awaiting first desire-coded LI Reverie ........... pending — after first GR Intensity ......... S2 (first LI dialogue) Recurring GR ...... pending
+log: [SCENE-DYNAMICS] turn=0 body=41 reused=0 dialogue=2 action=0 decision=1 interrupt=0 reloc=0 env=1 once=0
+log: [SCENE1-FRAME] verbatim mandated closer is already the final beat and the deck appears nowhere earlier — frame compliant, no mutation
+warning: [GEN-FAIL:PC-DESCRIPTION:FINAL] PC "Lirael" (first-person narrator) has NO image-defining self-anchor (build/hair/described-face) anywhere in the scene. The reader cannot SEE her. BATCH RATE: 1/1 final-prose runs PC-unpicturable. [tracked, NOT repaired]
+log: [GEN-FAIL:SETTING:FINAL] ~ partial: light present, MATERIAL missing — below the {material + light} floor. FLOOR MET 0/1.
+log: [WISH-DEMO] cycle incomplete (0/3 signals: wish=false omen=false sacrifice=false) → milestone NOT set (will re-demo)
+log: [TitlePipeline] Path: new_story | Mode: object_ownership | Local: true
+log: [TitlePipeline] Using local structured title: Lirael's Crown at the Window
+log: [TitleValidation] PASS — Mode: null
+log: [ArcTitle] SKIP — starter book has a locked pre-written title
+error: [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
+error: Error: zero-api-violation at callChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:294833:29) at _synChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:292607:36) at handleBeginStory (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuatio
+log: [WORKING-TITLE] Applied Fate signature: "The First Sacrifice" → "Fate Keeps an Appointment"
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 0
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=89 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=2 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 1× — present-adversary plan; presence is correct.
+warning: [SCENE-WANT] absent — inferred want: "to hold the answer steady" · no content tokens found in first 250 words. Tokens checked: [hold, answer, steady]. Roman desire-bridge test failed at the prose layer.
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 2 run(s) scanned (2 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] scar 1/2 (50%) — scar reference (default-female-PC detail) ⟹ ⚠ recurring chip.
+warning: [PROSE:CANONICAL] silence_counted 1/2 (50%) — counted / measured silence ⟹ ⚠ recurring chip.
+log: [PROSE:CANONICAL] collarbone_throat_line 0/2 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/2 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/2 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/2 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/2 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/2 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/2 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/2 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/2 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/2 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/2 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/2 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/2 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/2 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/2 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/2 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/2 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/2 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/2 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/2 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/2 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(0): — · watch(2): scar, silence_counted (note: only 2 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+log: [UNAVAILABILITY:MANIFESTATION] 2 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+warning: [SYNOPSIS] Validation failed (bad_start (must begin as a complete sentence)), retry 1/3
+error: [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
+error: Error: zero-api-violation at callChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:294833:29) at _synChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:292607:36) at handleBeginStory (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuatio
+warning: [SIGNATURE-PHRASES] extractor: JSON parse failed: Unexpected non-whitespace character after JSON at position 2 (line 1 column 3)
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 0
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=89 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=2 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 1× — present-adversary plan; presence is correct.
+warning: [SCENE-WANT] absent — inferred want: "to hold the answer steady" · no content tokens found in first 250 words. Tokens checked: [hold, answer, steady]. Roman desire-bridge test failed at the prose layer.
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 3 run(s) scanned (3 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] scar 2/3 (67%) — scar reference (default-female-PC detail) ⟹ ⚠ recurring chip.
+log: [PROSE:CANONICAL] silence_counted 1/3 (33%) — counted / measured silence
+log: [PROSE:CANONICAL] collarbone_throat_line 0/3 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/3 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/3 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/3 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/3 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/3 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/3 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/3 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/3 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/3 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/3 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/3 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/3 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/3 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/3 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/3 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/3 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/3 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/3 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/3 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/3 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(0): — · watch(1): scar (note: only 3 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+warning: [PROSE:CANONICAL:FAST-LANE] "arcanebinding" (3 runs) — flavor-banned even though global <75%: scar 67%
+log: [PROSE:UNKNOWN-REPEAT] 10 un-catalogued phrase(s) recurring across 3 recent runs (log-only):
+log:  • "understands the wish has already begun" — 2 run(s)
+log:  • "wish has already begun to cost" — 2 run(s)
+log:  • "already begun to cost her something" — 2 run(s)
+log:  • "cost her something she cannot name" — 2 run(s)
+log:  • "cannot name antagonistorantiforce the assembly milestones" — 2 run(s)
+log:  • "name antagonistorantiforce the assembly milestones scenes" — 2 run(s)
+log:  • "antagonistorantiforce the assembly milestones scenes timelinelength" — 2 run(s)
+log:  • "private hope she understands the wish" — 2 run(s)
+log:  • "something she cannot name defining anecdote" — 2 run(s)
+log:  • "cannot name defining anecdote she understands" — 2 run(s)
+log: [UNAVAILABILITY:MANIFESTATION] 3 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+warning: [SYNOPSIS] Validation failed (bad_start (must begin as a complete sentence)), retry 2/3
+error: [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
+error: Error: zero-api-violation at callChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:294833:29) at _synChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:292607:36) at handleBeginStory (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuatio
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 0
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=89 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=2 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 1× — present-adversary plan; presence is correct.
+warning: [SCENE-WANT] absent — inferred want: "to hold the answer steady" · no content tokens found in first 250 words. Tokens checked: [hold, answer, steady]. Roman desire-bridge test failed at the prose layer.
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 4 run(s) scanned (4 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] scar 3/4 (75%) — scar reference (default-female-PC detail) ⟹ ✗ STOCK PHRASE — the reader recognizes Storybound, not the character.
+log: [PROSE:CANONICAL] silence_counted 1/4 (25%) — counted / measured silence
+log: [PROSE:CANONICAL] collarbone_throat_line 0/4 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/4 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/4 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/4 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/4 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/4 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/4 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/4 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/4 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/4 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/4 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/4 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/4 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/4 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/4 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/4 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/4 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/4 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/4 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/4 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/4 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(1): scar · watch(0): — (note: only 4 full-prose run(s) yet — numbers firm up as the corpus fills; play more to replace phrase-bootstrap rows.)
+warning: [PROSE:CANONICAL:FAST-LANE] "arcanebinding" (4 runs) — flavor-banned even though global <75%: scar 75%
+log: [PHRASE:AUTO-CANDIDATE] phrase="understands the wish has already begun" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="understands the wish has already begun" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="wish has already begun to cost" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="wish has already begun to cost" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="already begun to cost her something" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="already begun to cost her something" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="cost her something she cannot name" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="cost her something she cannot name" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="cannot name antagonistorantiforce the assembly milestones" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="cannot name antagonistorantiforce the assembly milestones" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="name antagonistorantiforce the assembly milestones scenes" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="name antagonistorantiforce the assembly milestones scenes" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="antagonistorantiforce the assembly milestones scenes timelinelength" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="antagonistorantiforce the assembly milestones scenes timelinelength" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="private hope she understands the wish" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="private hope she understands the wish" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="something she cannot name defining anecdote" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="something she cannot name defining anecdote" reason=signature(distinctive)
+log: [PHRASE:AUTO-CANDIDATE] phrase="cannot name defining anecdote she understands" runs=3 body=0 score=signature(distinctive)
+log: [PHRASE:AUTO-PROMOTE] phrase="cannot name defining anecdote she understands" reason=signature(distinctive)
+log: [PROSE:UNKNOWN-REPEAT] 10 un-catalogued phrase(s) recurring across 4 recent runs · 10 AUTO-PROMOTED to the phrase-ledger ban (≥3 runs):
+log:  • ⛔BANNED "understands the wish has already begun" — 3 run(s)
+log:  • ⛔BANNED "wish has already begun to cost" — 3 run(s)
+log:  • ⛔BANNED "already begun to cost her something" — 3 run(s)
+log:  • ⛔BANNED "cost her something she cannot name" — 3 run(s)
+log:  • ⛔BANNED "cannot name antagonistorantiforce the assembly milestones" — 3 run(s)
+log:  • ⛔BANNED "name antagonistorantiforce the assembly milestones scenes" — 3 run(s)
+log:  • ⛔BANNED "antagonistorantiforce the assembly milestones scenes timelinelength" — 3 run(s)
+log:  • ⛔BANNED "private hope she understands the wish" — 3 run(s)
+log:  • ⛔BANNED "something she cannot name defining anecdote" — 3 run(s)
+log:  • ⛔BANNED "cannot name defining anecdote she understands" — 3 run(s)
+log: [UNAVAILABILITY:MANIFESTATION] 4 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+warning: [SYNOPSIS] Validation failed (bad_start (must begin as a complete sentence)), retry 3/3
+error: [BAKED:ZERO-API VIOLATION] a model call fired while the free baked Scene 1 was open (starter=starter_first_sacrifice). Guard the new call site with _bakedFreeSceneActive(). Stack:
+error: Error: zero-api-violation at callChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:294833:29) at _synChat (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:292607:36) at handleBeginStory (http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuatio
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+warning: [PHRASE-LEDGER:LEAK] 4 banned phrase(s) slipped through scene 1 (now re-banked as reskins):
+warning:  • banned "cost her something she cannot name" → written "cost her something she cannot name"
+warning:  • banned "already begun to cost her something" → written "already begun to cost her something"
+warning:  • banned "wish has already begun to cost" → written "wish has already begun to cost"
+warning:  • banned "understands the wish has already begun" → written "understands the wish has already begun"
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 0
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=89 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=2 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH] obligation-anchors=0 (roles: [] · names: []) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=1 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 1× — present-adversary plan; presence is correct.
+warning: [SCENE-WANT] absent — inferred want: "to hold the answer steady" · no content tokens found in first 250 words. Tokens checked: [hold, answer, steady]. Roman desire-bridge test failed at the prose layer.
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 5 run(s) scanned (5 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] scar 4/5 (80%) — scar reference (default-female-PC detail) ⟹ ✗ STOCK PHRASE — the reader recognizes Storybound, not the character.
+log: [PROSE:CANONICAL] silence_counted 1/5 (20%) — counted / measured silence
+log: [PROSE:CANONICAL] collarbone_throat_line 0/5 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/5 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/5 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/5 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/5 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/5 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/5 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/5 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/5 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/5 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/5 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/5 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/5 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/5 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/5 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/5 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/5 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/5 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/5 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/5 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/5 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(1): scar · watch(0): —
+warning: [PROSE:CANONICAL:FAST-LANE] "arcanebinding" (5 runs) — flavor-banned even though global <75%: scar 80%
+log: [PROSE:UNKNOWN-REPEAT] 10 un-catalogued phrase(s) recurring across 5 recent runs (log-only):
+log:  • "understands the wish has already begun" — 4 run(s)
+log:  • "wish has already begun to cost" — 4 run(s)
+log:  • "already begun to cost her something" — 4 run(s)
+log:  • "cost her something she cannot name" — 4 run(s)
+log:  • "cannot name antagonistorantiforce the assembly milestones" — 4 run(s)
+log:  • "name antagonistorantiforce the assembly milestones scenes" — 4 run(s)
+log:  • "antagonistorantiforce the assembly milestones scenes timelinelength" — 4 run(s)
+log:  • "private hope she understands the wish" — 4 run(s)
+log:  • "something she cannot name defining anecdote" — 4 run(s)
+log:  • "cannot name defining anecdote she understands" — 4 run(s)
+log: [UNAVAILABILITY:MANIFESTATION] 5 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+log: [TIER0] VOICE_ANCHOR suppressed pre-page — no paid call before the reader sees Scene 1
+log: [PROSE:LENGTH-CAP] target=6000 actual=2782 pass (under cap)
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:scene1-edit
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=false — desire absent from the opening (deferred to a later beat?); HOT romance-forward wants the wanting in the first 250 words
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+warning: [PHRASE-LEDGER:LEAK] 4 banned phrase(s) slipped through scene 1 (now re-banked as reskins):
+warning:  • banned "cost her something she cannot name" → written "cost her something she cannot name"
+warning:  • banned "already begun to cost her something" → written "already begun to cost her something"
+warning:  • banned "wish has already begun to cost" → written "wish has already begun to cost"
+warning:  • banned "understands the wish has already begun" → written "understands the wish has already begun"
+warning: [CHEAP-EDIT] scene1-edit DRIFTED (len 2782→673 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+log: [LINE-EDIT] SEMANTIC label "scene1-edit" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.
+log: [SINGLE-CRISIS:ENFORCE] fired=false primary=the crisis the scene opens inside removed=[] → after=0 families []
+log: [PROSE:CAST-ENFORCE] fired=true kept=[PC, Julian, Seren] deferred=[Kesh, Maren] (repaired — re-named cast unnamed; shipped scene enforced)
+log: [SCENE1:GRAVITY:REPAIR] skipped — load-enforcement already compressed business this scene.
+log: [STAGED:INTERCEPT-CHECK] standard mount — _isStagedMode(): false | renderMode: literary | _stagedAwaitingProse: undefined | _stagedScene1Initiated: undefined
+log: [FORMAT:AUDIT] source=scene1-pre-final-normalize fused=0
+log: [FORMAT:FINAL-NORMALIZE] fired=false (no fused boundaries)
+log: [FORMAT:AUDIT] source=scene1-mount fused=0
+log: [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+log: [CANON:SEQUENCE] scene 1 — initial:auditor_not_enabled · status=unresolved · dispatches=0
+log: [LORE-LEDGER] scene 1 · candidates=0 glossed=0 ledger=0
+log: [SCENE-AMB] baked Scene 1 → neutral_quiet (packaged; classifier suppressed)
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [TIER0] CHARACTER_DISCLOSURE_EXTRACTION suppressed pre-page — no paid call before the reader sees Scene 1
+log: [NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)
+log: [SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+warning: [LEDGER:CLIPPED] ledger field is 1149 chars against a limit of 300 — 849 characters were REMOVED from the committed record, and the next scene will never see them: "for the cost first. (B) Seren names her offering ALOUD as dialogue — her earliest memory — and the assembly settles, because this is co
+log: [SCENE-LEDGER] +p1 kind=scene issue=1 uid=pg:c7de7ddc-808a-4c4e-903f-fc5c783e09cc planned="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 doe"
+log: [SCENE-COST] Finalized: $0.0002 | type: literary | text $0.0002 | image $0.0000 | cumulative $0.0002
+log: [SCENE-COST] LLM calls: 16 (grok:2 other:5 gpt:9)
+log: [SCENE-BUDGET:COUNT] scene=cf-ctl:0 repair=1 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=1/4) skipped=[] provenance=repair
+log: [SCENE-COST] by category: prose+spine $0.0000 ×4 · STORY-SETUP (one-time, amortized) $0.0001 ×1 · audits (instrumentation) $0.0001 ×10
+log: [SCENE-COST] Scene-1 MARGINAL (excl. one-time story-setup): $0.0002 — the $0.0001 setup is paid ONCE and amortizes across the whole run.
+log: [LITE-COST] HEAVY scene 1 · provider=gpt · prose+spine $0.0000 · audits $0.0001 (DEV instrumentation — PROD gates to ~5%) · setup $0.0001 (one-time, off per-scene budget)
+log: [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0000 vs 10¢ SAFETY CEILING → ✓ under ceiling (10¢ headroom) [heavy is primary now — LITE will be lower on input] · expected/issue cost = window._issueCOGS()
+log: [SCENE-AUDIT] {"sc":0,"ms":274,"ttft":0,"ttftProse":164,"spend":{"initial":0.00007,"regens":0,"setup":0.00004,"audits":0.00005,"wasted":0,"total":0.00016},"hitPct":0,"regens":0,"gates":""}
+log: [STORY:READY] Scene 1 text mounted — story ready for display
+log: [SETTING-IMG:READY] Setting image loaded — ready for display
+log: [FATE-WISH] demo first-choice spread: 5 cards, wishCards=1 (cap 1), authored non-wish=4
+log: [FATE] dealFateCards complete — cards bound
+log: [FATE] initFateCards called
+log: [FATE] Bind flags reset — ready for rebind
+log: [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+log: [FATE] Rebinding existing cards
+log: [FATE] Existing cards rebound: 5
+log: [FATE] initFateCards bound
+log: [DEBUG PAGE STATE] cover setTimeout: _bookPageIndex= 0 coverMode= PHASE_1_FORGED
+log: [COVER:v1] Skipping PHASE_1_FORGED fallback — Minimal Cover owns cover
+log: [PACT:FLIP] flipped card 2 pact=adult | classList now: pact-card pact-card-adult flipped
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [TIER0] CHARACTER_DISCLOSURE_EXTRACTION suppressed pre-page — no paid call before the reader sees Scene 1
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [FATE:ENGAGEMENT] submit#1 mode=literary | reliance=0.00 (0clicks/1submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+log: [OWNERSHIP] scene 0 — lead=-0.5 (obj=0 rel=0.5) | unset → mixed
+log: [AGENCY] engaged (act: 41 ch, dia: 0 ch)
+log: [SOUND] AudioContext unlocked, state: running
+log: [PLAYER-IMPACT] turn 0 — score=0 mustReact=false
+log: [PROMPT-PROFILE] STRATEGY_PASS · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 0
+log: [ST-CONSTRAINT] scene: 1 storyLength: fling allowed: ST1-ST1 llm: undefined final: ST1
+warning: [STRATEGY_PASS] Missing top-level keys: power_vector_shift, world_artifact_to_surface, tone_pressure, petition
+log: [PASS_ROUTING] Tier 3, ST: ST1, complexity: 2, reason: ST1/ST6
+log: [DIRECTIVES] Persistent directive cache refreshed (scene 0 )
+warning: [NARRATIVE] state.callbackLedger had non-array shape (legacy foreshadow-seed corruption) — resetting to []
+log: [SUBMISSION-PROVENANCE] scene 2 - card none (no selection) - attempt cpAttemptId:cpa:a4e34b1c
+log: [COMMIT-SCENE:SKIP] plan-scene=0 reason=no-prior-transition
+log: [SCENE-INTENT] 1 seeded milestone(s) re-derived from the effective scene row
+log: [SCENE-ASSIGNMENT] scene=2 source=plan-scene setting=null event="Lirael's standing is at risk and the cost is still uncounted."
+log: [PLAN-SPINE] scene=2 OBJECTIVE from authored spine: ""
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- _generateLiteraryPlotContract <- HTMLButtonElement.<anonymous> text=""
+log: [FSC-RECONCILE] requiredTruth — suppressed 1: "The price has not yet been named." (no atom: an unresolved seed possibility, not a sealed cost)
+log: [FSC-RECONCILE] exitState — suppressed 2: "RESOLVED: the words came true and everyone c" (twist.words_honoured covers the words; no atom establishes that the mechanism is legible); "the cost is still uncounted." (no atom: an unresolved seed possibility, not a sealed cost)
+log: [FSC-RECONCILE] requiredTruth — suppressed 1: "The price has not yet been named." (no atom: an unresolved seed possibility, not a sealed cost)
+log: [FSC-RECONCILE] exitState — suppressed 2: "RESOLVED: the words came true and everyone c" (twist.words_honoured covers the words; no atom establishes that the mechanism is legible); "the cost is still uncounted." (no atom: an unresolved seed possibility, not a sealed cost)
+log: [TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning
+warning: [OBJECTIVE:REJECTED] scene 2 — reserved event price_identified (scene 3): no status declared; reserved event julian_counter_wish (scene 16): no status declared; reserved event julian_obscuring_wishes (scene 16): no status declared; aftermath truth twist_manifested: no status declared; aftermath trut
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [SCENE-FRAME] Stashing Scene 2 (Petition) mandate frame
+log: [ISSUE-OUTLINE:MAP] 20 authored rows / 20 scenes per literary issue = 1 issue(s) of authored material; THIS issue is scenes 1-20 whatever the plan authored
+log: [ISSUE-OUTLINE] issue=1 rows 1-20 (literary, 20/issue, 20 authored) kinds={"independent":6,"conditional":5,"convergence":9} delivery={"not_written":1,"planned":19} horizon=1 overturned=none cliff=plan (issue boundary row 20)/2 branches, selected=none
+log: [PYRAMID] Scene 1 [RelationalFocus]: 8/12 directives (ARC:3 REL:1 ENERGY:1 WORLD:2 VOICE:1) (4 dropped by global cap)
+log: [DOOM] Generated: "bound by an oath that forbids attachment" (resonance: duty, world: Fantasy)
+log: [LI:GESTURE] Hierarchy assigned: primary=ring_twist | secondary=thumb_to_lip | rare=jaw_tendon(intimate)
+log: [COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
+log: [COMMITTED-TRUTH:SEED] about=hidden_bloodline family=identity_collapse truth="The protagonist carries a magical lineage they do not know about." pool-size=7
+log: [ADAPTIVE LENGTH] {sceneIndex: 0, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
+log: [EMIT] WISH_AUTHORING_CORE gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=224 scene=1 via=_buildFatelandsWishCoreDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:1009 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael mus
+log: [EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=224 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:1121 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lira
+log: [EMIT] WISH_SLINGING gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=224 scene=1 via=_buildFatelandsWishSlingingDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:3217 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael must 
+log: [EMIT] MAD_JESSI gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=224 scene=1 via=_buildMadJessiDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:3316 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael must choose — break pr
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=pc missing=age,height,build,hair,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+warning: [FIELD-FORWARD:WARN] mode=literary_compact side=li missing=age,height,build,hair,eye_color,signature_feature — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.
+log: [SOCIAL-ECO] cast (2, shape=FORCED_ALLIANCE arch=OPEN_VEIN wound=?): a clan-kin→PROTECTOR | a bond-sister / bondmate→RIVAL_VOICE
+log: [TIER-ROUTE] scene 1 → HEAVY (tier HEAVY) → HEAVY prompt
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- HTMLButtonElement.<anonymous> text=""
+warning: [STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 536133 chars (limit: 50000)
+log: [DIRECTIVE-SIZES] fullSys=536133c(~134033t) sysPrompt=150105c sceneDirectives=12988c unmeasured(turn-literal+picturability+act/dia)=205438c | top: scene1Contract=49843 fatelandsCognitive=36200 intentTransmutation=17604 inl:literaryCraft=11669 inl:mode1Whisper=7989 literarySceneMandate=7185 turn:inst
+log: [PROMPT-TIER] scene 1 → HEAVY (route=HEAVY) · reasons=scene1_seed · actual=134033t projected=134033t savings=0t (0.0%)
+log: [PROMPT-TIER:ROLLUP] scenes=1 (HEAVY=1 GROK=0 LITE=0) · actual=134k projected=134k savings=0.0k (0.0%)
+log: [PROMPT-TIER:MASS-BY-TIER] HEAVY after 1 scene(s)
+log:  1. scene1Contract avg=12.5k max=12.5k total=12.5k
+log:  2. fatelandsCognitive avg=9.1k max=9.1k total=9.1k [always-kept]
+log:  3. intentTransmutation avg=4.4k max=4.4k total=4.4k [always-kept]
+log:  4. inl:literaryCraft avg=2.9k max=2.9k total=2.9k [always-kept]
+log:  5. inl:mode1Whisper avg=2.0k max=2.0k total=2.0k
+log:  6. literarySceneMandate avg=1.8k max=1.8k total=1.8k [always-kept]
+log:  7. turn:instructionBlock avg=1.7k max=1.7k total=1.7k [always-kept]
+log:  8. inl:liAttractionTexture avg=1.5k max=1.5k total=1.5k [always-kept]
+log:  9. inl:signaturePhraseBan avg=1.2k max=1.2k total=1.2k [always-kept]
+log:  10. persistentCache avg=975t max=975t total=975t [always-kept]
+log:  11. inl:liPrivateExplanation avg=828t max=828t total=828t [always-kept]
+log:  12. storyPullEnforcement avg=748t max=748t total=748t
+log:  13. inl:aPlotPressure avg=724t max=724t total=724t [always-kept]
+log:  14. inl:goalRelationshipPrinciple avg=707t max=707t total=707t [always-kept]
+log:  15. inl:phraseMarker avg=579t max=579t total=579t [always-kept]
+log: [CACHE:ROUTE] story=cf-ctl turn=0 route=HEAVY builtHeavyFullSys=536133c sentSystem=536133c (HEAVY fullSys)
+log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
+log: [MODEL-SERVED] requested=grok-4-1-fast-reasoning served=constructed (cost priced at requested rates)
+log: [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}
+log: [TIER0] post-author semantic edits (Grok de-calc editor + Mistral mechanical repair) deferred — reader sees the author's actual output
+error: [HONEY-POT] Generation failed (story continues without honey-pot): Honey-pot output missing required fields
+warning: [PURPLE-LENS:REJECT] length drift (2666→673); kept as-authored
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+warning: [PROSE:SCRUB:CHARACTER-INVISIBLE] 3 named character(s) appearing 2+ times with ZERO physical descriptor anywhere in the scene: Seren (×11), Kesh (×10), Maren (×10). The reader cannot see them. CHARACTER VISIBILITY mandate (in META-USE) is being violated.
+warning: [PROSE:CAST] 3 named actor(s) besides PC + LI in the PROSE: [Seren, Kesh, Maren] ⟹ ✗ OVER CAP — the rule is MAX ONE (PC + LI + one other). The scaffold-manifest cap [SCENE1:CAST] only sees Haiku-staged characters and missed these; Sonnet introduced them freely. Role-noun all but one ("her sister" / 
+warning: [PROSE:SCRUB:WITHIN-SCENE-RESTATEMENT] 75% content-word overlap between two sentences — likely a wound/key-moment restated verbatim within the scene: 1. "Lirael turned toward the moment while the hall held its breath." 2. "Kesh turned toward the matter while the hall held its breath." Once-per-scene
+log: [PHRASE-MARKER] mode=literary scene=1 markers_emitted=0 markers_harvested=0 scene_words=476 markers_per_1k_words=0
+log: [TIER0] PREWRITE_HINT_EXPANSION suppressed pre-page — no paid call before the reader sees Scene 1 (click-time emergency fallback still available)
+log: [OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=0 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=0 · protagonist-distress-share=0% · external-plot-share=0% [v2 in-motion-aware heurist
+log: [SINGLE-CRISIS] 0 catastrophe family ⟹ ✓ one fire.
+log: [ONE-BREATH:NAMES] 1 person(s) [Seren] · source=scraper(evidence+≥2) · rejected 3: [Kesh×10, Set×1, Maren×10]
+log: [ONE-BREATH] obligation-anchors=1 (roles: [] · names: [Seren]) · catastrophe-families=0 ⟹ ✓ summarizable in one breath.
+warning: [CRISIS→LI] bridge=ENEMIES engine=COLLISION · LI-oriented=0% · self-analysis=0% · logistics=0% · LI-loudness=0 refs / 0 attachment-charged ⟹ ✗ LI did not become emotionally LOUDER during the crisis (≤1 reference). [The crisis is the accelerant; the LI must be the FIRE — Roman 2026-06-04]
+log: [CRISIS→LI:FLAVOR] bridge=ENEMIES flavor=unclassified · recent-for-this-bridge=[] (family has 6 members) ⟹ ✓ (watching for single-member dominance within the engine).
+warning: [CRISIS:AGENCY] type=BEFELL · stance=PASSIVE · agency-verbs=0 ⟹ ⚠ VICTIM DRIFT: the crisis happened TO her and she only reacts (no agency verbs). Healthy HOT_CRISIS needs a MIX of befell / caused / chosen. Watch across the batch — emotional MOMENTUM and PASSIVE SUFFERING look alike in numbers but fe
+log: [SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [SCENE1:COLLISION-LI-PRESENCE] COLLISION/ONSTAGE + Julian named 0× — present-adversary plan; presence is correct (WARN: 0 mentions — a known adversary who never appears as a force is the failure here).
+log: [SCENE-WANT] present — inferred want: "to hold the answer steady" · matched tokens: [answer]
+log: [SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.
+log: [PROSE:CANONICAL] 6 run(s) scanned (6 full-prose · 0 phrase-bootstrap). Presence-per-run; ≥75% = generator fingerprint, ≥50% = recurring chip.
+warning: [PROSE:CANONICAL] scar 4/6 (67%) — scar reference (default-female-PC detail) ⟹ ⚠ recurring chip.
+log: [PROSE:CANONICAL] silence_counted 2/6 (33%) — counted / measured silence
+log: [PROSE:CANONICAL] collarbone_throat_line 0/6 (0%) — collarbone / throat-line self-presentation (calcified PC delta — Roman 2026-06-04)
+log: [PROSE:CANONICAL] hair_loose 0/6 (0%) — hair coming loose / strand falling / tucking hair behind ear (calcified hair tell — was an untracked blind spot, Roman 2026-06-17)
+log: [PROSE:CANONICAL] restless_hands 0/6 (0%) — restless hands / fingers / knuckles / tongue / teeth (nervous-tic body)
+log: [PROSE:CANONICAL] repetition_tic 0/6 (0%) — count-escalated nervous tic ("three times, then three more… always three")
+log: [PROSE:CANONICAL] cuff_adjust 0/6 (0%) — cuff / sleeve / collar adjustment
+log: [PROSE:CANONICAL] unasked_question 0/6 (0%) — "a question I hadn't asked" (answered/asked-unasked)
+log: [PROSE:CANONICAL] fox_unasked 0/6 (0%) — LI answers a question not asked (Fox tic — the new "walks away")
+log: [PROSE:CANONICAL] fear_denial 0/6 (0%) — fear-denial ("nothing to do with fear")
+log: [PROSE:CANONICAL] permission_marked 0/6 (0%) — permission to be marked / seen / claimed
+log: [PROSE:CANONICAL] pulse_jump 0/6 (0%) — pulse / heart jump OR go uneven (Roman 2026-06-10: "gone uneven" was slipping the old regex)
+log: [PROSE:CANONICAL] eyes_went_flat 0/6 (0%) — eyes / gaze "went flat" / "flat and unreadable" (unreadable-flatness tell — Roman 2026-06-10)
+log: [PROSE:CANONICAL] ringed_iris 0/6 (0%) — eyes "ringed (darker) at the iris/rim" OR "perpetual/faint squint" (calcified LI eye-detail — Roman 2026-06-10)
+log: [PROSE:CANONICAL] cliche_jaw 0/6 (0%) — stock romance-hero jaw ("chiselled / razor-sharp / granite / cut-glass / square jaw", "jaw that could cut glass", "chiselled features") — the "grey-green of faces" (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_cheekbones 0/6 (0%) — stock romance-hero cheekbones ("high / sharp / razor / knife-edge / blade / cut-glass cheekbones", "cheekbones you could cut yourself on") (Roman 2026-06-17)
+log: [PROSE:CANONICAL] cliche_piercing_gaze 0/6 (0%) — stock "piercing" eyes/gaze/stare (calcified romance-hero look — Roman 2026-06-17)
+log: [PROSE:CANONICAL] earned_through_discipline 0/6 (0%) — "the one thing on my body I hadn't earned through discipline" (PC self-presentation calcification — Roman 2026-06-10)
+log: [PROSE:CANONICAL] voice_drop 0/6 (0%) — voice drops (half a step)
+log: [PROSE:CANONICAL] taking_up_space 0/6 (0%) — taking up space / sidewalk (calcified — Roman 2026-06-08)
+log: [PROSE:CANONICAL] something_landed 0/6 (0%) — "something real almost landed"
+log: [PROSE:CANONICAL] left_behind 0/6 (0%) — left-behind / abandonment echo
+log: [PROSE:CANONICAL] answered_unasked_generic 0/6 (0%) — "answered/said the thing I hadn't said" (deflection via reading her)
+log: [PROSE:CANONICAL] SUMMARY — stock(0): — · watch(1): scar
+warning: [PROSE:CANONICAL:FAST-LANE] "arcanebinding" (6 runs) — flavor-banned even though global <75%: scar 67%
+log: [PROSE:UNKNOWN-REPEAT] 10 un-catalogued phrase(s) recurring across 6 recent runs (log-only):
+log:  • "understands the wish has already begun" — 4 run(s)
+log:  • "wish has already begun to cost" — 4 run(s)
+log:  • "already begun to cost her something" — 4 run(s)
+log:  • "cost her something she cannot name" — 4 run(s)
+log:  • "cannot name antagonistorantiforce the assembly milestones" — 4 run(s)
+log:  • "name antagonistorantiforce the assembly milestones scenes" — 4 run(s)
+log:  • "antagonistorantiforce the assembly milestones scenes timelinelength" — 4 run(s)
+log:  • "private hope she understands the wish" — 4 run(s)
+log:  • "something she cannot name defining anecdote" — 4 run(s)
+log:  • "cannot name defining anecdote she understands" — 4 run(s)
+log: [UNAVAILABILITY:MANIFESTATION] 6 run(s) scanned, 0 carry avoidance. Aggregate: 0 absence vs 0 deflection → absence share = 0% ✓
+log: [DECISION] _repairLIRelationalValue ENTERED
+log: [DECISION] _repairLIPicturability ENTERED
+log: [PC-PICT] VALIDATE-ONLY (default) — reporting, not writing.
+log: [DECISION] _repairInterlocutorPicturability ENTERED
+log: [LINE-EDIT:PRIMITIVE] semantic passName "?" — pen off by default; returning input unchanged.
+log: [LINE-EDIT:PRIMITIVE] semantic passName "?" — pen off by default; returning input unchanged.
+log: [DECISION] _repairCalcifiedMoves ENTERED
+log: [EDITORIAL:TIER] scene 0 tier=premium lensBudget=2
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=true
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [SCENE2:BASELINE] not set — Scene 1 did not fully invert (wanting=false desire=? bleed=0 crisis=social-or-other)
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 19 banned phrase(s) leaked.
+warning: [LENS:REJECT] scene 0 — drift (len 2666→673 or opening moved); kept as-authored
+log: [EDITORIAL:REPAIR] premium → extra de-calc sweep
+log: [DECISION] _repairCalcifiedMoves ENTERED
+log: [PARAGRAPH OWNERSHIP] scene1 full 6 paragraphs (heuristic) ¶ 1 PLOT · Setting "Lirael turned toward the moment while the hall held …" ¶ 2 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 3 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 4 NEUTR· — "Lirael turned 
+log: [LIT-LITE REP] full scene: 1 canonical chip(s) [silence_counted]
+log: [DESC:LEDGER] issue=cf-ctl:1 scene=2 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+warning: [FlavorPhysics] Scene lacks world mechanic evidence, regenerating once: Scene does not express flavor physics for "arcane_binding". Expected keywords: binding, spell, contract, geas, magical...
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:flavor-physics
+log: [PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 19 banned phrase(s) leaked.
+warning: [CHEAP-EDIT] flavor-physics DRIFTED (len 2666→673 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+log: [LINE-EDIT] SEMANTIC label "flavor-physics" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.
+log: [ToneDrift] Turn validation failed (validate-only, no regen): [TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)]
+log: [ToneDrift] Metrics: found 0 markers, need 2
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: false, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 0, desire: false, resistance: true, player: true, uncertainty: false}
+warning: [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly demands, c
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=line_edit callsite=cheap-edit:tension-gate
+warning: [CHEAP-EDIT] tension-gate DRIFTED (len 2666→673 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.
+log: [LINE-EDIT] SEMANTIC label "tension-gate" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: false, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 0, desire: false, resistance: true, player: true, uncertainty: false}
+error: [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly de
+log: [PACING AUDIT] WARN: scene_too_short (476 < 700)
+log: [PACING AUDIT] {sceneIndex: 0, wordCount: 476, firstMicroExpressionPosition: -1, firstChoicePosition: -1, wordCountBeforeChoice: 476}
+log: [HOOK AUDIT] ═══ Scene 0 ═══
+log:  HOOK_STATUS: FAIL (NONE)
+log:  ANTI_ADDICTION: PASS 
+log:  PRESSURE_LEVEL: LOW
+log:  ESCALATION_PHASE: CONSEQUENCE (expected: test, aligned: false)
+log:  DECISION_QUALITY: NONE
+log:  RESOLUTION: HELD
+log:  VARIABILITY: SLIGHTLY_MECHANICAL
+log:  ENERGY_LEVEL: HIGH
+log:  OVERALL: FAIL
+warning:  ISSUES: no valid hook
+log:  WARNINGS: low pressure; slightly mechanical; phase mismatch (expected test, detected CONSEQUENCE)
+log: [HOOK AUDIT] Severity: CRITICAL
+log: [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+log: [STORYTURN] advance HELD by pacing window: scene=2 storyLength=fling current=ST1 window-ceiling=ST1 (raw advance wanted ST2)
+log: [LIT:ST] Storyturn advanced to ST1 (dynamic: fling, scene 1)
+log: [HIDDEN-TRUTH:SUPPRESS] committedTruth seeded; emergent system stays inactive this story
+debug: [EMG] Emotional gradient: 1.5600 | trend: neutral
+log: [RPM] Stage: attraction (scene 1)
+warning: [FOREGROUND:STORY] Scene 2 validator: FAIL [MICRO-EXPRESSION COUNT: a "intensity" micro-expres… one <<MICRO_EXPRESSION>> ... <<CONTINUE>> block., ENDING STRUCTURE: final paragraph contains resolut…The decision must remain UNRESOLVED at scene end., ENDING STRUCTURE: missing the ALMOST beat — the te…b
+log: [MOMENTUM] curious (7 signals, scene 1)
+log: [ROMANCE:PLACEHOLDER] 0 — clean
+log: [ROMANCE:SATURATION] OK — 0 attraction beat(s) (0/1k words). Relationship-gravity channels should carry it; attraction prose is the minority tool.
+log: [ROMANCE:RUMINATION] 0 — OK
+log: [CHARACTER:LI-CONTAMINATION] 0 — clean
+log: [CRISIS:STALL] OK — 1 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+log: [SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+log: [SCENE-FRAME] Appended mandated closer (turn path).
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 1
+log: [CORRIDOR] scene 1 — maintained (storyturn-advanced:→ST1)
+log: [MEMORY] Extracted for scene 1
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=reflow callsite=dialogue-reflow
+warning: [REFLOW] discarded — mistral changed PROSE, not just reformatting/numbers (497 words dropped, 87 added; number-format words ignored). REMOVED: lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael turned turned turned turned turned turned turned turned turned turned turned tur
+log: [SCENE-DYNAMICS] turn=1 body=40 reused=40 dialogue=3 action=0 decision=1 interrupt=0 reloc=0 env=1 once=0
+log: [WISH] no fragment captured — neutral fallback composed
+log: [FORMAT:AUDIT] source=turn-pre-final-normalize fused=0
+log: [FORMAT:FINAL-NORMALIZE] fired=false (no fused boundaries)
+log: [FORMAT:AUDIT] source=turn-path fused=0
+warning: [PROSE:DEDUP] turn removed 30 verbatim-duplicate sentence(s) within the scene
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [LORE-LEDGER] scene 2 · candidates=0 glossed=0 ledger=0
+log: [SCENE-LEDGER] +p2 kind=scene issue=1 uid=pg:7ce96265-b640-467a-9dd3-8ba599b5376a planned="Lirael's standing is at risk and the cost is still uncounted"
+log: [WHISPERS] Skipped literary post-mount whispers — mandated closer scene (must be the last beat)
+log: [ENGAGEMENT:SCENE] {dwellMs: 177, idleMs: 1, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}
+log: [ENGAGEMENT KPI] {microExprInteractionRate: 0%, avgTimeToFirstInteraction: 0.0s, dropOffBeforeChoiceRate: 0%, choiceCompletionRate: 0%, totalScenes: 1}
+log: [RELSHAPE] raw input — act=initiated tension=held desire=hidden reciprocity=na register=grounded | recept=na own=na presence=na vuln=na | prior(pc=female,li=male) (scene 1, v0-heuristic)
+log: [CHARACTER MEMORY] {characterId: SPELLBINDER, affinity: -0.02, respect: 0.05, tension: 0.00, repeatCount: 1}
+log: [SCENE-COST] Finalized: $0.0001 | type: literary | text $0.0001 | image $0.0000 | cumulative $0.0004
+log: [SCENE-COST] LLM calls: 6 (gpt:3 grok:2 other:1)
+log: [SCENE-BUDGET:COUNT] scene=cf-ctl:1 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+log: [SCENE-COST] by category: prose+spine $0.0000 ×2 · audits (instrumentation) $0.0000 ×2
+log: [LITE-COST] HEAVY scene 2 · classifier→HEAVY/HEAVY · provider=gpt · prose+spine $0.0000 · audits $0.0000 (DEV instrumentation — PROD gates to ~5%) · setup $0.0000 (one-time, off per-scene budget)
+log: [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0000 vs 10¢ SAFETY CEILING → ✓ under ceiling (10¢ headroom) [heavy is primary now — LITE will be lower on input] · expected/issue cost = window._issueCOGS()
+log: [SCENE-AUDIT] {"sc":0,"ms":145,"ttft":0,"ttftProse":0,"spend":{"initial":0.00009,"regens":0,"setup":0,"audits":0.00001,"wasted":0,"total":0.0001},"hitPct":0,"regens":0,"gates":""}
+log: %c === NARRATIVE DIAGNOSTICS === color: #c9a84c; font-weight: bold; font-size: 14px
+log: POV LAYER N/A Influence: N/A Standard 3rd person
+log: WORLD LAYER FAIL Influence: NONE No signals for arcane_binding
+log: DIRECTIVES Active: [] Suppressed: [] Influence: NONE
+log: SIGNATURE STYLE NONE Influence: NONE None
+log: COINCIDENCE NONE Influence: NONE 
+log: RHYTHM NONE Influence: NONE No rhythm
+log: FATE ECHO NONE Influence: NONE 
+log: MOMENT SIGNIFICANCE YES Location: Paragraph 2/4 Influence: WEAK
+log:  STRUCTURALLY BROKEN | Primary: World layer missing | Secondary: None
+log: [VISION] Milestone vision triggered: intro
+log: [IMAGE:SANITIZE] length: 8546 → 8574
+log: [IMAGE:NORMALIZE] density: 5 → 1 (early scene cap)
+log: [IMAGE:PURGE] removed: explicit, sex
+log: [LIT-SETTING] Photoreal symbolic path — suppressing 4o comic rewrite + artist refs + golden-master enforcement + comic style suffix
+log: [VIZ:TONE] No visual ontology for tone: Earnest — using Genre style
+log: [4O] Skipped for literary setting image — keeping the photoreal symbolic prompt (no comic rewrite)
+log: [IMAGE:SPECIES-ANCHOR] Detected "first_favored" — 1 anchor(s): species_sheet
+log: [IMAGE:SPECIES-ANCHOR] Total: 1 anchors (upstream: 0, species: 1) across first_favored
+log: [ENDER-BOND:SCENE-TYPE] neutral
+log: [ENDER-BOND:GOLDEN-MASTER] Authoritative style source + 6 supporting anchors (SUBORDINATED — species anatomy active)
+log: [ENDER_BOND:GM-SUBORDINATED] Species anatomy anchors present — style authority demoted to RENDERING SURFACE only (anatomy + fabric + costume + surface = species-canon-locked)
+log: [WORLD-ANCHOR] vaelryn_reach
+log: [MOMENT_CACHE] MISS — caching for scene 1 (v1.0)
+log: [SMART-CLAMP:PROTECTED] 18623 → 13594 (prefix:13489, suffix:0)
+log: [IMG PROMPT] (13594 chars) PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HARD CONSTRAINT — overrides any subject-matter cues from reference images): Fantasy
+log: [SMART-CLAMP:PROTECTED] 18623 → 13594 (prefix:13489, suffix:0)
+log: [SMART-CLAMP:PROTECTED] 18623 → 13594 (prefix:13489, suffix:0)
+log: [IMAGE:TIER] hero → Gemini → BFL → BFL-Kontext → OpenAI
+warning: [IMAGE-GEN] {"provider":"Gemini","context":"vision_milestone","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-1
+warning: [IMAGE-GEN] {"provider":"Gemini","context":"vision_milestone","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-10-13T23:38:28.013Z"}
+log: [GEMINI:ENTRY] intent=scene | visualMeta.artistKey=ender_bond | promptLen=13594
+log: [GEMINI:LIT-SETTING] Text-only photoreal — artist golden-master refs suppressed
+log: [GEMINI:PREFIX] No references — text-only rendering
+log: [FATE:STAGE-DIAG] turnCount=1 · scenes.length=n/a · _scene1OnStagePhysical=[Julian,Seren,the presiding Dohkar] (3) · _scene1OnPhone=[] · _lastProbeOnStagePhysical=[] · _scene1Active=true
+log: [FATE:STAGE-MANIFEST] using scene1-scaffold: present=[Julian, Seren, the presiding Dohkar] — regex extraction skipped
+log: [FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=– · axis-lead=– · fateOAS=–
+log: [FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: temptation, storybeau: Julian, otherCharactersPresent: Array(2), verdict: TARGET_LOCKED_TO_STORYBEAU}
+log: [FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(3)}
+log: [FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: confession, storybeau: Julian, otherCharactersPresent: Array(2), verdict: TARGET_LOCKED_TO_STORYBEAU}
+log: [FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(3)}
+log: [FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: boundary, storybeau: Julian, otherCharactersPresent: Array(2), verdict: TARGET_LOCKED_TO_STORYBEAU}
+log: [FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(3)}
+log: [FATE:AUTHORITY] Triangle guard active — Storybeau enforced {cardId: reversal, storybeau: Julian, otherCharactersPresent: Array(2), verdict: TARGET_LOCKED_TO_STORYBEAU}
+log: [FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: true, sceneCharacters: Array(3)}
+log: [FATE] templated wish candidates suppressed — this Book authors its own card slots
+log: [FATE] dealFateCards complete — cards bound
+log: [FATE] initFateCards called
+log: [FATE] Bind flags reset — ready for rebind
+log: [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+log: [FATE] Rebinding existing cards
+log: [FATE] Existing cards rebound: 5
+log: [FATE] initFateCards bound
+log: [SCENE_CONTEXT] Updated for scene 1
+warning: [SCENE-AMB] classifier returned unknown tag: {"goal":"she understands the wish has already begun to cost her something she cannot name","antagonistorantiforce":"the assembly","milestones":[],"scenes":[],"timelinelength":20,"characters":[],"name":"julian","distinguishing_feature":"a burn scar","priva
+warning: [Gemini] No image in response | attempt 1
+log: [GEMINI:LIT-SETTING] Text-only photoreal — artist golden-master refs suppressed
+log: [GEMINI:PREFIX] No references — text-only rendering
+warning: [Gemini] No image in response | attempt 2
+warning: [IMAGE-GEN] {"provider":"Gemini","context":"vision_milestone","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-
+warning: [IMAGE-GEN] {"provider":"BFL","context":"vision_milestone","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-10-1
+warning: [IMAGE-GEN] {"provider":"BFL","context":"vision_milestone","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-10-13T23:38:28.103Z"}
+log: [BFL:REF] Literary setting image — refs suppressed (text-only photoreal)
+warning: [BFL] Prompt truncated from 13594 to 5000 chars
+log: [DECK-LEAK:CACHE-SOURCE] BFL call | model=flux-2-pro-preview | input_images=0 prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…louds drifting below, sharp sunlight on 
+log: [BFL] Request: {model: flux-2-pro-preview, promptLength: 5000, images: 0, size: 1792x1024, health: healthy}
+warning: [BFL] Attempt 1 failed (flux-2-pro-preview): BFL returned no task ID or polling_url
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [NPC:AUTO-EXTRACT] registered 1 name(s) from prose: Seren
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [TIERED:characterDisclosure] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+warning: [BFL] Retry failed (flux-2-pro-preview): BFL returned no task ID or polling_url
+warning: [BFL] Falling back to flux-2-klein-9b-preview
+warning: [IMAGE-GEN] {"provider":"BFL","context":"vision_milestone","reached":false,"blockedBy":"Other","status":"FAILED","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2026-10-13T
+warning: [IMAGE-GEN] {"provider":"BFL-Kontext","context":"vision_milestone","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"2
+warning: [IMAGE-GEN] {"provider":"BFL-Kontext","context":"vision_milestone","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-10-13T23:38:28.414Z"}
+warning: [BFL] Prompt truncated from 13594 to 5000 chars
+log: [DECK-LEAK:CACHE-SOURCE] BFL call | model=flux-2-pro | input_images=0 prompt-fingerprint: PRIMARY DIRECTIVE: Depict the scene exac…louds drifting below, sharp sunlight on 
+log: [BFL] Request: {model: flux-2-pro, promptLength: 5000, images: 0, size: 1792x1024, health: healthy}
+warning: [BFL] Attempt 1 failed (flux-2-pro): BFL returned no task ID or polling_url
+log: [CHAR-LEDGER] @scene 1 — tracking: 
+log: [CPLUS:LEDGER] committed pg:7ce96265-b640-467a-9dd3-8ba599b5376a — spent=0 unverified=0 appearances=0
+warning: [BFL] Retry failed (flux-2-pro): BFL returned no task ID or polling_url
+warning: [BFL] Falling back to flux-2-klein-9b-preview
+warning: [IMAGE-GEN] {"provider":"BFL-Kontext","context":"vision_milestone","reached":false,"blockedBy":"Other","status":"FAILED","promptLength":13594,"promptPreview":"PRIMARY DIRECTIVE: Depict the scene exactly as described. Scene and anatomy rules are authoritative. SUBJECT MATTER (HAR...","timestamp":"202
+warning: [IMAGE-GEN] {"provider":"OpenAI","context":"vision_milestone","reached":true,"blockedBy":"None","status":"ATTEMPTING","promptLength":12133,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-1
+warning: [IMAGE-GEN] {"provider":"OpenAI","context":"vision_milestone","reached":false,"blockedBy":"None","status":"META","promptLength":21,"promptPreview":"styleAuthority: Genre","timestamp":"2026-10-13T23:38:28.720Z"}
+warning: [OpenAI] No image in response | attempt 1
+warning: [OpenAI] No image in response | attempt 2
+warning: [IMAGE-GEN] {"provider":"OpenAI","context":"vision_milestone","reached":false,"blockedBy":"NoOutput","status":"FAILED","promptLength":12133,"promptPreview":"PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. This scene must visually match prior pan...","timestamp":"2026-
+warning: [IMAGE:PIPELINE] All providers failed for context=vision_milestone | lastError: BFL returned no task ID or polling_url
+warning: [IMAGE:PIPELINE] Chain: Gemini → BFL → BFL-Kontext → OpenAI
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [TIERED:characterDisclosure] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+log: [FATE:ENGAGEMENT] submit#2 mode=literary | reliance=0.00 (0clicks/2submits) | distinctThisTurn=0 | pauseAfterClick=- | hedging=no
+log: [SCENE-COST] Cleared (scene failed / aborted)
+log: [OWNERSHIP] scene 1 — lead=-0.5 (obj=0 rel=0.5) | unset → mixed
+log: [AGENCY] engaged (act: 41 ch, dia: 0 ch)
+log: [WOUND] Style: pursue | Affinity: {"avoidant":0,"selfDestructive":0,"control":0.25,"burdened":0} | confidence: 0.25 | signal: control
+log: [PLAYER-IMPACT] turn 1 — score=0 mustReact=false
+log: [MODEL-SERVED] requested=grok-4-1-fast-non-reasoning served=constructed (cost priced at requested rates)
+log: [PROMPT-PROFILE] STRATEGY_PASS · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 1
+log: [ST-CONSTRAINT] scene: 2 storyLength: fling allowed: ST1-ST1 llm: undefined final: ST1
+warning: [STRATEGY_PASS] Missing top-level keys: power_vector_shift, world_artifact_to_surface, tone_pressure, petition
+log: [PASS_ROUTING] Tier 3, ST: ST1, complexity: 2, reason: ST1/ST6
+log: [SALIENCE] scene 1 — 1/1 placed, cutoff=1.90 1. ✓ motif score=1.90 "letter"
+log: [SUBMISSION-PROVENANCE] scene 3 - card none (no selection) - attempt cpAttemptId:cpa:25d4d764
+log: [COMMIT-SCENE:SKIP] plan-scene=1 reason=no-prior-transition
+log: [SCENE-ASSIGNMENT] scene=3 source=plan-scene setting="threshold"(inferred) event="THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is"
+log: [SPINE-STAGING] compiled → setting="threshold" cast=["Lirael","Julian","Seren"]
+log: [SPINE-STAGING] environment_anchor ← "the threshold" at SELECTION (always-live; was: "")
+log: [PLAN-SPINE] scene=3 OBJECTIVE from authored spine: "THE PRICE AND THE THRESHOLD — step 7, then escalation. IN THIS ORDER: (A) The sacrifice is taken or identified"
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=2 via=_buildFSCausalFoundationBlock <- _generateLiteraryPlotContract <- HTMLButtonElement.<anonymous> text=""
+log: [FSC-RECONCILE] exitState — suppressed 1: "RESOLVED: the price is known and the persona" (unmapped clause asserting a cost or a visible cause)
+log: [TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning
+log: [EVENT-SLOTS] scene=1 actor="the presiding Dohkar" action="serves formal notice of investigation" target="Lirael" exit="Lirael is formally under investigation and restricted"
+log: [SEAL] prop:1:1 turn=1 storyScene=3(caller) posture=none fact="Lirael is formally under investigation and restricted"
+log: [CONTINUATION:DISABLED] scene=1 — _continuationProposalSchema is not explicitly true; proposal ignored, nothing written
+log: [STAGE-ISSUER] scene 3 — no present cast in the reply; skipping stage issuance (state_change/plot-contract unaffected)
+log: [PLOT-CONTRACT:ENABLED] true
+log: [COMMITTED-STATE] scene=1 facts=0 proposed="Lirael is formally under investigation and restricted" (pending until delivery)
+log: [STATE-CHANGE] scene=1 move=""
+log: [STATE-CHANGE:EVENT] scene=1 :: Lirael is formally under investigation and restricted
+log: [STATE-CHANGE:PRECOND] Lirael has not yet been told her conduct is under investigation
+log: [STATE-CHANGE:FORCES] whether to sign the acknowledgement or refuse it
+log: [STATE-CHANGE:OBSERVABLE] scene=1 event-is-observable=true
+log: [STATE-CHANGE:BRANCHES] A="" B=""
+log: [STATE-CHANGE:SPECIFICITY] scene=1 GENERIC distinctive-tokens-in-event=0/50 ⚠ THEME-COLLAPSE
+log: [MILESTONE-TRANSITION] scene=1 transition=INIT prev="" current="THE PRICE AND THE THRESHOLD — step 7, then es"
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame
+log: [PLOT-CONTRACT:DIRECTIVE] scene=1 mode=state_change
+log: [ISSUE-OUTLINE:MAP] 20 authored rows / 20 scenes per literary issue = 1 issue(s) of authored material; THIS issue is scenes 1-20 whatever the plan authored
+log: [ISSUE-OUTLINE] issue=1 rows 1-20 (literary, 20/issue, 20 authored) kinds={"independent":6,"conditional":5,"convergence":9} delivery={"not_written":2,"planned":18} horizon=1 overturned=none cliff=plan (issue boundary row 20)/2 branches, selected=none
+log: [VOICE] Profile initialized for Julian (SPELLBINDER)
+log: [PYRAMID] Scene 2 [EnvGrounding]: 8/12 directives (ARC:3 REL:1 ENERGY:0 WORLD:3 VOICE:1) (4 dropped by global cap)
+log: [ADAPTIVE LENGTH] {sceneIndex: 1, commitmentScore: 1, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
+log: [FF-CANON-AUTH] false reason=nonff
+log: [EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=1948 scene=2 via=_buildFatelandsWishCoreDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:1009 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael mus
+log: [EMIT] WISH_ADJUDICATION gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=1948 scene=2 via=_buildFatelandsWishAdjudicationDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:1121 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lir
+log: [EMIT] WISH_SLINGING gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=1948 scene=2 via=_buildFatelandsWishSlingingDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:3217 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael must
+log: [EMIT] MAD_JESSI gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=1948 scene=2 via=_buildMadJessiDirective <- http://127.0.0.1:63758/app.js?v=20261013i-lifecycle-and-continuation:323929:3316 <- HTMLButtonElement.<anonymous> text=" the presiding Dohkar Lirael must choose — break p
+log: [A-PLOT] Milestone triggered at scene 1: undefined — THE WISH — steps 1-4 of the twist sequence ONLY.
+log: [SCENE2:OBJECTIVE-ENFORCE] fired=false (A-plot not procedural/fix-prone; continuity directive only)
+log: [TIER-ROUTE] scene 2 → HEAVY (tier HEAVY) → HEAVY prompt
+warning: [LEDGER:CLIPPED] plannedEvent is 615 chars against a limit of 300 — 315 characters were REMOVED from the committed record, and the next scene will never see them: "warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2's accusation. (C) Julian's position shifts — a constra
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=2 via=_buildFSCausalFoundationBlock <- HTMLButtonElement.<anonymous> text=""
+warning: [STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 559254 chars (limit: 50000)
+log: [DIRECTIVE-SIZES] fullSys=559254c(~139814t) sysPrompt=150105c sceneDirectives=18836c unmeasured(turn-literal+picturability+act/dia)=202245c | top: scene1Contract=49843 fatelandsCognitive=45603 intentTransmutation=17604 literarySceneMandate=12194 inl:literaryCraft=11359 inl:mode1Whisper=7989 turn:ins
+log: [PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=tempt_fate · actual=139814t projected=139814t savings=0t (0.0%)
+log: [PROMPT-TIER:ROLLUP] scenes=2 (HEAVY=2 GROK=0 LITE=0) · actual=274k projected=274k savings=0.0k (0.0%)
+log: [PROMPT-TIER:MASS-BY-TIER] HEAVY after 2 scene(s)
+log:  1. scene1Contract avg=12.5k max=12.5k total=24.9k
+log:  2. fatelandsCognitive avg=10.2k max=11.4k total=20.5k [always-kept]
+log:  3. intentTransmutation avg=4.4k max=4.4k total=8.8k [always-kept]
+log:  4. inl:literaryCraft avg=2.9k max=2.9k total=5.8k [always-kept]
+log:  5. literarySceneMandate avg=2.4k max=3.0k total=4.8k [always-kept]
+log:  6. inl:mode1Whisper avg=2.0k max=2.0k total=4.0k
+log:  7. turn:instructionBlock avg=1.8k max=2.0k total=3.7k [always-kept]
+log:  8. inl:liAttractionTexture avg=1.5k max=1.5k total=3.0k [always-kept]
+log:  9. inl:signaturePhraseBan avg=1.2k max=1.2k total=2.4k [always-kept]
+log:  10. persistentCache avg=975t max=975t total=1.9k [always-kept]
+log:  11. inl:liPrivateExplanation avg=828t max=828t total=1.7k [always-kept]
+log:  12. inl:aPlotPressure avg=787t max=850t total=1.6k [always-kept]
+log:  13. storyPullEnforcement avg=748t max=748t total=1.5k
+log:  14. inl:goalRelationshipPrinciple avg=707t max=707t total=1.4k [always-kept]
+log:  15. inl:phraseMarker avg=579t max=579t total=1.2k [always-kept]
+log: [CACHE:ROUTE] story=cf-ctl turn=1 route=HEAVY builtHeavyFullSys=559254c sentSystem=559254c (HEAVY fullSys)
+log: [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
+log: [MODEL-SERVED] requested=grok-4-1-fast-reasoning served=constructed (cost priced at requested rates)
+log: [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}
+log: [PROMPT-PROFILE] narrative_author · grok-4-1-fast-reasoning · prompt=10 reasoning=0 visible=10 · turn 1
+log: [XAI-LEDGER] narrative_author · grok-4-1-fast-reasoning · effort=provider-default / unconfigured prompt=10 cached=UNKNOWN visible=10 reasoning=UNKNOWN
+log: [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4-1-fast-reasoning servedModel=constructed reasoning=false reasoningTokens=0
+log: [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=10 reasoning=0 visible=10 · turn 1
+warning: [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+log: [PROMPT-PROFILE] mistral_small_repair · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 1
+warning: [PURPLE-LENS:REJECT] length drift (2666→673); kept as-authored
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+warning: [PROSE:SCRUB:CHARACTER-INVISIBLE] 3 named character(s) appearing 2+ times with ZERO physical descriptor anywhere in the scene: Seren (×11), Kesh (×10), Maren (×10). The reader cannot see them. CHARACTER VISIBILITY mandate (in META-USE) is being violated.
+warning: [PROSE:CAST] 3 named actor(s) besides PC + LI in the PROSE: [Seren, Kesh, Maren] ⟹ ✗ OVER CAP — the rule is MAX ONE (PC + LI + one other). The scaffold-manifest cap [SCENE1:CAST] only sees Haiku-staged characters and missed these; Sonnet introduced them freely. Role-noun all but one ("her sister" / 
+warning: [PROSE:SCRUB:WITHIN-SCENE-RESTATEMENT] 75% content-word overlap between two sentences — likely a wound/key-moment restated verbatim within the scene: 1. "Lirael turned toward the moment while the hall held its breath." 2. "Kesh turned toward the matter while the hall held its breath." Once-per-scene
+log: [PHRASE-MARKER] mode=literary scene=2 markers_emitted=0 markers_harvested=0 scene_words=476 markers_per_1k_words=0
+log: [PREWRITE] author_appendix=false fallback_generated=false
+log: [DECISION] _repairLIRelationalValue ENTERED
+log: [DECISION] _repairLIPicturability ENTERED
+log: [PC-PICT] VALIDATE-ONLY (default) — reporting, not writing.
+log: [DECISION] _repairInterlocutorPicturability ENTERED
+log: [LINE-EDIT:PRIMITIVE] semantic passName "?" — pen off by default; returning input unchanged.
+log: [LINE-EDIT:PRIMITIVE] semantic passName "?" — pen off by default; returning input unchanged.
+log: [DECISION] _repairCalcifiedMoves ENTERED
+log: [LENS:SKIP] scene 1 — budget 0 (scarcity: the default is no lens)
+log: [PARAGRAPH OWNERSHIP] scene2 full 6 paragraphs (heuristic) ¶ 1 PLOT · Setting "Lirael turned toward the moment while the hall held …" ¶ 2 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 3 NEUTR· — "Lirael turned toward the moment while the hall held …" ¶ 4 NEUTR· — "Lirael turned 
+log: [LIT-LITE REP] full scene: 1 canonical chip(s) [silence_counted]
+log: [DESC:LEDGER] issue=cf-ctl:1 scene=3 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+warning: [FlavorPhysics] Second failure — allowing with warning: Scene does not express flavor physics for "arcane_binding". Expected keywords: binding, spell, contract, geas, magical...
+log: [ToneDrift] Turn validation failed (validate-only, no regen): [TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)]
+log: [ToneDrift] Metrics: found 0 markers, need 2
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: false, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 1, desire: false, resistance: true, player: true, uncertainty: false}
+warning: [TENSION GATE] Attempt 1/1 (FORCE INJECT) — reasons: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly demands, c
+log: [SCENE1:GRAVITY] LI=Julian → UNKNOWN (0%, kind: NONE, register: ?) · dominant: · dist: · 
+log: [DESIRE:OPENING] first250=true
+log: [WOUND→SOURCE] wound-source has no presence in this scene (LI Julian 0%) — clean by absence.
+log: [OWNERSHIP:HOLD] scene 2 — Julian gravity 0% (Scene-1 0%) · ownership held.
+log: [RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=IN_PERSON · li_gravity=? (0%) · ledger size 1
+log: [PHRASE-LEDGER:AUDIT] scene 2 clean — 0 of 19 banned phrase(s) leaked.
+log: [MODEL-SERVED] requested=grok-4-1-fast-reasoning served=constructed (cost priced at requested rates)
+log: [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}
+log: [PROMPT-PROFILE] narrative_author · grok-4-1-fast-reasoning · prompt=10 reasoning=0 visible=10 · turn 1
+log: [XAI-LEDGER] narrative_author · grok-4-1-fast-reasoning · effort=provider-default / unconfigured prompt=10 cached=UNKNOWN visible=10 reasoning=UNKNOWN
+log: [MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=grok-4-1-fast-reasoning servedModel=constructed reasoning=false reasoningTokens=0
+log: [GROK-LIT] Grok de-calc editor: 0/0 surgical fixes applied (~0 tok rewritten, not whole-scene)
+log: [PROMPT-PROFILE] repair · mistral-small-latest · prompt=10 reasoning=0 visible=10 · turn 1
+warning: [REPAIR] Mistral-small repair via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini
+log: [PROMPT-PROFILE] mistral_small_repair · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 1
+warning: [PURPLE-LENS:REJECT] length drift (2666→673); kept as-authored
+log: [GROK-LIT] purple-lens applied to Small-authored prose
+log: [TENSION GATE] VALIDATE-ONLY (default) — low tension detected; reporting, not re-authoring. Restore with window._tensionPenOff = false.
+log: [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: false, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
+log: [TENSION AUDIT] {scene: 1, desire: false, resistance: true, player: true, uncertainty: false}
+error: [TENSION GATE] HARD_FAIL after 1 attempts — accepting scene: [NO_ACTIVE_DESIRE: no character wants something NOW, NO_UNCERTAINTY: outcome is predetermined or trivial, NO_EARLY_ANCHOR: no character reacts to or addresses the player within first 180 words, NO_FORCING_FUNCTION: no character directly de
+log: [PACING AUDIT] WARN: scene_too_short (476 < 700)
+log: [PACING AUDIT] {sceneIndex: 1, wordCount: 476, firstMicroExpressionPosition: -1, firstChoicePosition: -1, wordCountBeforeChoice: 476}
+log: [HOOK AUDIT] ═══ Scene 1 ═══
+log:  HOOK_STATUS: FAIL (NONE)
+log:  ANTI_ADDICTION: PASS 
+log:  PRESSURE_LEVEL: LOW
+log:  ESCALATION_PHASE: CONSEQUENCE (expected: consequence, aligned: true)
+log:  DECISION_QUALITY: NONE
+log:  RESOLUTION: HELD
+log:  VARIABILITY: SLIGHTLY_MECHANICAL
+log:  ENERGY_LEVEL: HIGH
+log:  OVERALL: FAIL
+warning:  ISSUES: no valid hook
+log:  WARNINGS: low pressure; slightly mechanical
+log: [HOOK AUDIT] Severity: CRITICAL
+log: [HOOK ENFORCEMENT] Skipping regen — tension gate already corrected this scene
+log: [STORYTURN] advance HELD by pacing window: scene=3 storyLength=fling current=ST1 window-ceiling=ST1 (raw advance wanted ST2)
+log: [LIT:ST] Storyturn advanced to ST1 (dynamic: fling, scene 2)
+debug: [EMG] Emotional gradient: 0.4400 | trend: neutral
+warning: [FOREGROUND:STORY] Scene 3 validator: FAIL [ENDING STRUCTURE: final paragraph contains resolut…The decision must remain UNRESOLVED at scene end., ENDING STRUCTURE: missing the ALMOST beat — the te…between temptation and the unresolved final beat., STAKES CLARITY: the stakes of the final action are…n
+log: [MOMENTUM] curious (7 signals, scene 2)
+log: [ROMANCE:PLACEHOLDER] 0 — clean
+log: [ROMANCE:SATURATION] OK — 0 attraction beat(s) (0/1k words). Relationship-gravity channels should carry it; attraction prose is the minority tool.
+log: [ROMANCE:RUMINATION] 0 — OK
+log: [CHARACTER:LI-CONTAMINATION] 0 — clean
+log: [CRISIS:STALL] OK — 1 crisis-advance marker(s), attraction 0/1k. The crisis must keep moving THROUGH the relationship, not park behind attraction prose.
+log: [MOMENTUM] Auto-recovery triggered (momentum: 0)
+log: [SCENE-FRAME] petition closer: no <<WISH:>> emitted, neutral fallback used.
+log: [SCENE-FRAME] Appended mandated closer (turn path).
+log: [PROMPT-PROFILE] PRIMARY_AUTHOR · gpt-4o-mini · prompt=10 reasoning=0 visible=10 · turn 2
+log: [CORRIDOR] scene 2 — maintained (milestone-advanced(1/20))
+log: [MEMORY] Extracted for scene 2
+log: [MODEL-ROUTE:PROSE] provider=mistral-small task=reflow callsite=dialogue-reflow
+warning: [REFLOW] discarded — mistral changed PROSE, not just reformatting/numbers (533 words dropped, 83 added; number-format words ignored). REMOVED: lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael lirael turned turned turned turned turned turned turned turned turned turned turned tur
+log: [SCENE-DYNAMICS] turn=2 body=40 reused=40 dialogue=3 action=0 decision=1 interrupt=0 reloc=0 env=1 once=0
+log: [WISH] no fragment captured — neutral fallback composed
+log: [FORMAT:AUDIT] source=turn-pre-final-normalize fused=0
+log: [FORMAT:FINAL-NORMALIZE] fired=false (no fused boundaries)
+log: [FORMAT:AUDIT] source=turn-path fused=0
+warning: [PROSE:DEDUP] turn cross-scene removed 43 sentence(s) repeated verbatim from the prior scene
+log: [PROSE:ENUMERATION] pass
+log: [PROSE:QUOTE-MASH] pass
+log: [LORE-LEDGER] scene 3 · candidates=0 glossed=0 ledger=0
+log: [SCENE-LEDGER] +p3 kind=scene issue=1 uid=pg:78d55193-b814-42d5-aafb-082cce6e258b planned="THE PRICE AND THE THRESHOLD — step 7, then escalation. IN TH"
+log: [WHISPERS] Skipped literary post-mount whispers — mandated closer scene (must be the last beat)
+log: [ENGAGEMENT:SCENE] {dwellMs: 194, idleMs: 1, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}
+log: [ENGAGEMENT KPI] {microExprInteractionRate: 0%, avgTimeToFirstInteraction: 0.0s, dropOffBeforeChoiceRate: 0%, choiceCompletionRate: 0%, totalScenes: 2}
+log: [PRESSURE ENGINE] {romance: 0.52, power: 0.58, conflict: 0.50, uncertainty: 0.53, scene: 2}
+log: [RELSHAPE] raw input — act=initiated tension=held desire=hidden reciprocity=na register=grounded | recept=na own=na presence=na vuln=na | prior(pc=female,li=male) (scene 2, v0-heuristic)
+log: [CHARACTER MEMORY] {characterId: SPELLBINDER, affinity: -0.05, respect: 0.12, tension: 0.00, repeatCount: 2}
+log: [ADAPTIVE TUNING] {paceScalar: 0.97, hookScalar: 0.97, densityScalar: 1.03, scene: 2, storyMode: participatory}
+log: [COMMITTED-TRUTH:SEED-REF] kw="blood" → "A sword raised to a blood-red sky, lightning arcing down from the clouds (or may…"
+log: [SCENE-COST] Finalized: $0.0004 | type: grok | text $0.0003 | image $0.0000 | cumulative $0.0008
+log: [SCENE-COST] LLM calls: 14 (grok:6 gpt:5 other:3)
+log: [SCENE-BUDGET:COUNT] scene=cf-ctl:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+log: [SCENE-COST] by category: prose+spine $0.0002 ×8 · audits (instrumentation) $0.0001 ×3
+log: [LITE-COST] HEAVY scene 3 · classifier→HEAVY/HEAVY · provider=grok · prose+spine $0.0002 · audits $0.0001 (DEV instrumentation — PROD gates to ~5%) · setup $0.0000 (one-time, off per-scene budget)
+log: [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0002 vs 10¢ SAFETY CEILING → ✓ under ceiling (10¢ headroom) [heavy is primary now — LITE will be lower on input] · expected/issue cost = window._issueCOGS()
+log: [SCENE-AUDIT] {"sc":1,"ms":188,"ttft":0,"ttftProse":4,"spend":{"initial":0.00023,"regens":0,"setup":0,"audits":0.00005,"wasted":0,"total":0.00028},"hitPct":0,"regens":0,"gates":""}
+log: %c === NARRATIVE DIAGNOSTICS === color: #c9a84c; font-weight: bold; font-size: 14px
+log: POV LAYER N/A Influence: N/A Standard 3rd person
+log: WORLD LAYER FAIL Influence: NONE No signals for arcane_binding
+log: DIRECTIVES Active: [] Suppressed: [SUBTEXT_CONFLICT] Influence: NONE
+log: SIGNATURE STYLE NONE Influence: NONE None
+log: COINCIDENCE NONE Influence: NONE 
+log: RHYTHM NONE Influence: NONE No rhythm
+log: FATE ECHO NONE Influence: NONE 
+log: MOMENT SIGNIFICANCE N/A Location: Too short Influence: N/A
+log:  STRUCTURALLY BROKEN | Primary: World layer missing | Secondary: None
+log: [FATE:STAGE-DIAG] turnCount=2 · scenes.length=n/a · _scene1OnStagePhysical=[Julian,Seren,the presiding Dohkar] (3) · _scene1OnPhone=[] · _lastProbeOnStagePhysical=[] · _scene1Active=false
+log: [FATE:STAGE-MANIFEST] using probe@turn1: present=[] — regex extraction skipped
+log: [FATE-CARDS:PLOT-CTX] archetype=SPELLBINDER · ST=ST1 · intimacy=false · aplot="Lirael must choose — break protocol for " · truth=hidden_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=– · axis-lead=– · fateOAS=–
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: temptation, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: Julian, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: confession, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: confession, resolvedTarget: Julian, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: boundary, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: boundary, resolvedTarget: Julian, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic) {cardId: reversal, interlocutor: null, presentCharacters: Array(0)}
+log: [FATE:AUTHORITY] Card target resolved {cardId: reversal, resolvedTarget: Julian, isStorybeau: false, sceneCharacters: Array(0)}
+log: [FATE] templated wish candidates suppressed — this Book authors its own card slots
+log: [FATE] dealFateCards complete — cards bound
+log: [FATE] initFateCards called
+log: [FATE] Bind flags reset — ready for rebind
+log: [FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+log: [FATE] Rebinding existing cards
+log: [FATE] Existing cards rebound: 5
+log: [FATE] initFateCards bound
+log: [SCENE_CONTEXT] Updated for scene 2
+warning: [BACK-COVER-SYNOPSIS] Generated blurb does NOT use the Storybound Fate-opening signature. Accepting but flagging: {"goal":"she understands the wish has already begun to cost her something she ca
+log: [BACK-COVER-SYNOPSIS] Generated (673 chars): {"goal":"she understands the wish has already begun to cost her something she ca...
+log: [CHAR-LEDGER] @scene 1 — tracking: 
+log: [CPLUS:LEDGER] committed pg:d93c21ee-a17c-4a7d-adf5-2272c411717b — spent=0 unverified=0 appearances=0
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}
+log: [ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}
+log: [READER-MODE] OFF — present-tense play resumes
+log: [DECK_MANDATE] ON — story onboard count=0 (need 0 or 2; 0=Story 1, 1=Story 2 palate-cleanser, 2=Story 3, 3+=past onboarding)
+log: [TEMPT:EMERGENCE] literary — scroll trigger armed (no Submit gate)
+log: [TIERED:characterDisclosure] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
+log: [CHAR-LEDGER] @scene 2 — tracking: 
+log: [CPLUS:LEDGER] committed pg:78d55193-b814-42d5-aafb-082cce6e258b — spent=0 unverified=0 appearances=0
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=5 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=16 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=5 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=16 via=_buildFSCausalFoundationBlock <- eval <- UtilityScript.evaluate text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_SPINE gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- Array.map text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_PLANNING gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- Array.map text=""
+log: [EMIT] FS_CAUSAL_FOUNDATION_AUTHOR gate=OPEN spineLoadBearing=YES openWithoutSpine=false gateTextChars=0 scene=1 via=_buildFSCausalFoundationBlock <- eval <- Array.map text=""
+log: [FF-CANON-AUTH] false reason=nonff
+log: [EMIT] MAD_JESSI gate=closed spineLoadBearing=no openWithoutSpine=false gateTextChars=80 scene=1 via=_buildMadJessiDirective <- _buildCGScaffold <- window.__buildCGScaffold text=" Lirael must choose — break protocol for her ward, or protect her own"
+log: [CG:SCAFFOLD] output allowance 14250 tokens — ESTIMATE for 2 literary issue(s) × 20 rows = 40 rows, model=gpt-4o-mini
+log: [TIERED:scaffold] attempt 1 tier=primary provider=mistral model=ministral-8b-2512

@@ -1,8 +1,8 @@
 {
  "source": "api/_mistral-governor.js MODEL_LIMITS + reservationFor",
- "requestBytes": 21857,
+ "requestBytes": 25429,
  "maxTokens": 3800,
- "reservation": 25857,
+ "reservation": 29449,
  "limitsSource": "https://admin.mistral.ai/plateforme/limits",
  "limitsReadOn": "2026-09-04",
  "candidates": [

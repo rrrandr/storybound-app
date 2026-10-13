@@ -68,11 +68,17 @@ DISCLOSURE IS FOUR CONTRACTS:
     IMPOSSIBLE"). Fate does not return a price it has taken.
 
 ## 1.2 JULIAN'S INVOLVEMENT, AND WHY IT IS CULPABLE
-[P] HE WAS AUGAR'S CHAYR, and present. The Chayr's office at a bargain is exactly this:
-    HOLD THE LIMIT. Make the senior man bound his offer before he speaks it. That is
-    what a second is for.
-[P] HE DID NOT. Under time pressure, with the girl bleeding, he let an unbounded offer
-    go — and, in the version of the memory he cannot stop rehearsing, he said HURRY.
+[P] HE WAS AUGAR'S CHAYR, he was the only other person there, and Augar — reaching for a
+    formula whose whole protection is the amount he names (1.5a) — looked to him.
+    NARROWED 2026-10-13: I had written that holding a wisher's limit IS the Chayr's office
+    at a bargain. That promoted a useful, specific failure into a GENERAL INSTITUTIONAL
+    RULE, which nothing established — a formula having a variable in it does not define a
+    profession's duties across the Fatelands. It is now what it should always have been:
+    A RESOLVED CIRCUMSTANCE OF THAT HOUR. In that room, with that man, with the girl
+    bleeding, Julian was the one who could have said "name the amount". Downstream text
+    must not state that the office requires it; the seed says so explicitly.
+[P] HE DID NOT. Under time pressure he let an unbounded offer go — and, in the version of
+    the memory he cannot stop rehearsing, he said HURRY.
     He will never be certain whether he said it. Nobody else can tell him, because the
     only other person there spent the capacity to remember it.
     This is the load-bearing fact of his character: Julian's catastrophe is not malice.
@@ -158,22 +164,28 @@ and naming its exact seam is what makes eventual exposure credible rather than g
 [C] REHEARSED: self-directed, months of work. OFFERING: a memory, named first.
 [C] CHANGED WISH: that Lirael "FIND THE ONE SHE LOST", blurred to spare her.
 [C] MOTIVE: vanity wearing compassion. FAILURE: misalignment of motive.
-[P] THE HINGE IS "THE ONE SHE LOST", and it has TWO hinges, not one:
-      "THE ONE" never says the one WHAT.
-      "SHE LOST" requires that LIRAEL did the losing.
-    The second hinge is what keeps the plot from collapsing, so it is stated plainly:
-    the deck was not lost BY Lirael. It was lost TO her — her father had it and the man
-    who knew where it went stopped existing (1.5). A child's trinket, forgotten out of a
-    pocket, she lost herself. Fate reads the words.
+[P] THE HINGE IS "THE ONE", which never says the one WHAT. That is the whole of it.
+    WITHDRAWN 2026-10-13 — THE SECOND "HINGE" WAS AN INVENTED LAW. I had claimed that
+    "SHE LOST" requires Lirael to have done the losing, and that the deck therefore fails
+    the phrase because it was lost TO her rather than BY her. That is not canon and it is
+    not how the words work: a person says "I lost my father" without having misplaced
+    him, and an heirloom is something she lost even though someone else put it away. The
+    distinction was then repeated as mandatory plot logic in the spine and the scaffold,
+    which is worse than inventing it once. Removed from both tiers, from the memo, and
+    from the author's instructions; the delivery control asserts its absence everywhere.
 [P] THE UNASSISTED OUTCOME — modest, anticlimactic, and PRIVATE PLANNING ONLY; it never
-    happens on the delivered page: Augar-as-himself is a collected payment and cannot be
-    returned (1.1), and Fate delivers no person into a clearing in any case [C: NO OBJECT
-    FROM NOTHING]. So the honouring reaches the nearest thing Lirael HERSELF lost and can
-    find — something small and private, worth nothing. The words are satisfied exactly;
-    Seren's magnificent public kindness is denied by sheer triviality. The assembly would
-    have watched a grand gesture produce a bead.
+    happens on the delivered page. It is A RESOLVED STORY DECISION, not the output of a
+    rule, and it does not need one: Augar-as-himself is a collected payment and cannot be
+    returned (1.1), Fate delivers no person into a clearing [C: NO OBJECT FROM NOTHING],
+    and among the readings that remain HER WORDS DEMAND NO MAGNITUDE AT ALL. So the
+    honouring lands small — something private she has lost and can find, worth nothing.
+    The words are satisfied exactly; Seren's magnificent public kindness is denied by
+    sheer triviality. The assembly would have watched a grand gesture produce a bead.
       POINTABLE: "'the one she lost' — she never said the one WHAT."
       Nobody harmed. Nothing exposed. Her father does not come into it.
+      AND THE CONTRAST WITH JULIAN SURVIVES WITHOUT THE LAW: it was never that his
+      phrasing unlocked a different CATEGORY of object. It is that HE ASKED FOR SIZE and
+      she did not (1.6).
 [P] WITHDRAWN: "the one who knows" (Lirael has not lost Julian, so that reading drops
     part of the sentence), and alignment-sense as access to fact — [C] "they do NOT read
     thoughts or emotions — they perceive ALIGNMENT." It yields suspicion about
@@ -214,12 +226,14 @@ and naming its exact seam is what makes eventual exposure credible rather than g
     the risk. He does NOT know the harmless outcome in advance, and could not.
 [P] HIS WISH, his own account: that the loss she finds be ANOTHER one — something lost
     ENOUGH TO TURN HER FROM HIM.
-[P] "ENOUGH" IS HIS OWN BENDING WORD. A trinket is also "another loss"; what makes the
-    answer enormous is that he asked for something SUFFICIENT to divert her. And his
-    wording carries no "she lost" clause (1.4), so unlike Seren's it can reach a thing
-    lost TO her. The nearest sufficient lost thing within reach is the relic in her own
+[P] "ENOUGH" IS HIS OWN BENDING WORD, AND IT IS THE ONLY MECHANISM NEEDED. A trinket is
+    also "another loss"; what makes the answer enormous is that he asked for something
+    SUFFICIENT to divert her. He introduced a MAGNITUDE REQUIREMENT that Seren's phrase
+    never carried, and the nearest lost thing that satisfies it is the relic in her own
     sash. His imprecision under panic is what upgrades an anticlimax into a public
     catastrophe. A witness could later point at "enough".
+    (The withdrawn "she lost" clause played no part in this and is not needed here: the
+    difference between the two wishes is SIZE REQUESTED, not category of object.)
     NO PRICING LAW IS INVOLVED. The size of the answer follows from the WORDS, not from
     what he offered. "An open price unlocks a relic" stays withdrawn.
 [P] THE BLANK CHECK: in haste and fear he leaves the price OPEN — the same failure as

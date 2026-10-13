@@ -1,50 +1,50 @@
 [
  {
-  "url": "http://localhost:3000/api/proxy",
+  "url": "http://localhost:3001/api/proxy",
   "role": "STRUCTURE_GENERATOR",
   "model": "grok-4-1-fast-non-reasoning",
-  "bytes": 16444
+  "bytes": 18175
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-8b-2512",
-  "bytes": 21857
+  "bytes": 25429
  },
  {
-  "url": "http://localhost:3000/api/proxy",
+  "url": "http://localhost:3001/api/proxy",
   "role": "STRUCTURE_GENERATOR",
   "model": "grok-4-1-fast-reasoning",
-  "bytes": 250243
+  "bytes": 251824
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-8b-2512",
-  "bytes": 21993
+  "bytes": 25565
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-3b-2512",
-  "bytes": 21993
+  "bytes": 25565
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-8b-2512",
-  "bytes": 21993
+  "bytes": 25565
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-3b-2512",
-  "bytes": 21993
+  "bytes": 25565
  },
  {
-  "url": "http://localhost:3000/api/mistral-proxy",
+  "url": "http://localhost:3001/api/mistral-proxy",
   "role": "PROMPT_PREPROCESSOR",
   "model": "ministral-8b-2512",
-  "bytes": 22059
+  "bytes": 25631
  }
 ]

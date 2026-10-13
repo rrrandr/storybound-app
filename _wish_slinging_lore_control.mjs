@@ -87,19 +87,41 @@ t('all six formulas are present', ['Warm my kettle', 'Steady feet upon this stai
   'Let my cry find someone near'].every(has));
 t('formula 4 carries its own scope limit (not a mortal-wound treatment)',
   has('It says SHALLOW') && has('not a treatment for a mortal wound'));
-t('formula 5 is explained as asking to SEE, not to RECEIVE (no-object-from-nothing)',
-  has('asks to SEE, not to RECEIVE') && has('conjures and carries nothing'));
-t('formula 6 cannot manufacture willingness (events, never consent)',
-  has('never arrange that they CHOOSE TO HELP') && has('never says WHO'));
-t('small prices are still real (conservation satisfied, not dodged)',
-  has('GONE FROM THE GIVER'));
+// CORRECTED 2026-10-13. The first version of these assertions locked in categorical bans that
+// canon does not support: that "to my hand" would be unlawful, that Fate can never arrange help,
+// that a skill wish is always useless, and that a pin is always an insulting price. Canon sets
+// LIMITS (no materialisation, no manufactured consent, no installed mastery) and the limits leave
+// every ordinary route open. These now assert the limit AND the opening.
+t('formula 5 rules out materialisation ONLY, leaving ordinary routes open',
+  has('The ONE thing ruled out is materialisation') && has('EVERY ORDINARY ROUTE REMAINS OPEN')
+  && has('hands it over'));
+t('*** and "to my hand" is explicitly sound wording, answered by a handover',
+  has('"to my hand" would be perfectly sound wording too'));
+t('formula 6 forbids manufactured willingness but ALLOWS an arranged encounter',
+  has('cannot MANUFACTURE a willingness') && has('arrange the ENCOUNTER')
+  && has('would freely choose to help'));
+t('*** and that is called a real, usually sufficient answer',
+  has('a real and usually sufficient answer'));
+t('small prices are real, with no fixed ceiling asserted',
+  has('GONE FROM THE GIVER') && has('CULTURE AND PROPORTION RATHER THAN A FIXED CEILING')
+  && !has('pay for trivial aid and nothing more'));
 t('the First Favored register is memory/emotion, not hair',
   has('FIRST FAVORED INSTRUCTION RUNS ON MEMORY AND EMOTION'));
-t("Roman's \"ward my health\" is assessed as unbounded, not endorsed",
-  has('WARD MY HEALTH') && has('Both halves are unbounded'));
-t("Roman's \"skill to win\" is assessed as WRONG IN LAW (circumstances-not-minds)",
-  has('WRONG IN LAW') && has('FATE DOES NOT INSTALL SKILL')
-  && has('start of an adventure and never a shortcut'));
+t('*** all eight are cultural sayings, none graded safe or foolish by authorship',
+  has('CULTURAL SAYINGS, NOT A GRADED CURRICULUM')
+  && has('None is certified safe and none is a joke')
+  && !has('neither belongs in a curriculum') && !has('THE RHYME EVERY STUDENT UNLEARNS'));
+t('"ward my health" is described as loose and workable, not as a failure',
+  has('WARD MY HEALTH') && has('Workable and loose')
+  && has('not one that fails') && !has('a folk charm is what it is'));
+t('"skill to win" states the LIMIT without declaring the wish useless',
+  has('a LIMIT, not a verdict') && has('does not install mastery'));
+t('*** and allows an IMMEDIATE, ordinary fulfilment',
+  has('may be IMMEDIATE and ordinary') && has('A quick, real answer is available')
+  && !has('an insult of an offering'));
+t('*** the pin is sized, not condemned',
+  has('a SMALL offering, which pairs with a small ask')
+  && has('not a fixed rule that a pin can never buy anything'));
 t('the rescue formula\'s bracket is flagged as NOT literal spoken text',
   has('never words containing a literal placeholder') && has('THE BLANK IS THE SAFETY'));
 t('tournaments do not pool sacrifices and are not free or reversible',
@@ -116,17 +138,39 @@ const plan = await jessi('', { force: true, tier: 'planning' });
 fs.writeFileSync('_audit_out/lore_mad_jessi_public.txt', pub);
 fs.writeFileSync('_audit_out/lore_mad_jessi_planning.txt', plan);
 t('the public legend is emitted', pub.length > 1500, 'len=' + pub.length);
-t('*** BOUNDARY: NO private marker appears without tier "planning"',
+t('*** BOUNDARY: no private marker in an untiered emission',
   PRIVATE_MARKERS.every(m => !pub.includes(m)),
   PRIVATE_MARKERS.filter(m => pub.includes(m)).join(' | '));
 t('the planning tier adds EVERY private marker', PRIVATE_MARKERS.every(m => plan.includes(m)));
 t('the planning tier is strictly longer than the public one', plan.length > pub.length);
-// Tier typos must fail CLOSED. 'plan', 'Planning', true — none of these may unlock the truth.
+
+// ── THE AUTHOR WHO HAS TO STAGE HIM (corrected 2026-10-13) ──────────────────────────────────
+// My first version gated the truth to planning alone, reasoning that an author who sees it has
+// spent the reveal. That contradicts the principle established in the same work: knowing a secret
+// is not narrating it. A writer staging an unremarkable old man who IS Jessi cannot write him
+// honestly while believing he is nobody. So: named in the scene -> the writer is told, WITH the
+// constraint. Merely adjacent -> nothing.
+const authorNamed = await jessi('The old man at the back of the hall was called Jessi.', { tier: 'author' });
+const authorAdjacent = await jessi('She had trained at Lytharyn for six years.', { tier: 'author' });
+t('*** an AUTHOR staging a NAMED Jessi receives the private truth',
+  PRIVATE_MARKERS.every(m => authorNamed.includes(m)));
+t('*** …and receives it WITH its disclosure constraint, not instead of it',
+  authorNamed.includes('YOU ARE BEING TOLD THIS BECAUSE YOU MAY HAVE TO WRITE HIM')
+  && authorNamed.includes('unless THIS scene’s plan explicitly calls for it')
+  || authorNamed.includes("unless THIS scene's plan explicitly calls for it"));
+t('*** an AUTHOR whose scene merely mentions Lytharyn gets the LEGEND ONLY',
+  authorAdjacent.length > 1500 && PRIVATE_MARKERS.every(m => !authorAdjacent.includes(m)));
+t('the planning tier does NOT carry the author-facing staging preamble',
+  !plan.includes('YOU ARE BEING TOLD THIS BECAUSE YOU MAY HAVE TO WRITE HIM'));
+// Tier typos still fail CLOSED.
 for (const bad of [{ tier: 'plan' }, { tier: 'Planning' }, { tier: true }, { tier: 'spine' }]) {
   const out = await jessi('', Object.assign({ force: true }, bad));
   t('*** FAIL-CLOSED on tier=' + JSON.stringify(bad.tier),
     PRIVATE_MARKERS.every(m => !out.includes(m)));
 }
+const authorUnnamed = await jessi('a tournament was announced', { tier: 'author' });
+t('*** FAIL-CLOSED: tier author WITHOUT him named gets no truth',
+  PRIVATE_MARKERS.every(m => !authorUnnamed.includes(m)));
 t('the legend is labelled BELIEF, not authoritative narration',
   pub.includes('this is BELIEF, not authoritative narration'));
 t('the conflicting accounts are not to become separate atrocities',
@@ -171,8 +215,17 @@ t('it requires accounting for the formulas ordinary people know',
   chk.includes('ACCOUNT FOR THE FORMULAS ORDINARY PEOPLE ACTUALLY KNOW')
   && chk.includes('IGNORING AN AVAILABLE REMEDY IS A PLOT HOLE UNLESS THE SCENE EXPLAINS IT'));
 t('it keeps routine wishes routine', chk.includes('ROUTINE WISHES STAY ROUTINE'));
-t('and it states the self-defeating shape of complex wishes',
-  chk.includes('DEFEAT THE SHORTCUT’S OWN PURPOSE') || chk.includes("DEFEAT THE SHORTCUT'S OWN PURPOSE"));
+// CORRECTED: the first version asserted "revelation buys an adventure, not an answer", which is
+// the blanket explanation this very section exists to forbid, wearing a different hat. A welcomed
+// Order-3 wish usually works, and a long-unsolved mystery has to EARN its delay.
+t('*** revelation is NOT given a standing delay',
+  chk.includes('A WELCOMED ORDER-3 WISH USUALLY WORKS')
+  && chk.includes('an event can be IMMEDIATE and ordinary')
+  && !chk.includes('buys an ADVENTURE, not an answer'));
+t('*** and "it only buys an adventure" is named as a forbidden blanket',
+  chk.includes('Do NOT use "it only buys an adventure" as a standing explanation'));
+t('*** a long-unsolved mystery must name its obstruction',
+  chk.includes('needs a NAMED OBSTRUCTION, not the nature of wishing'));
 
 // ═══ 5. THE SPINE ACTUALLY RECEIVES THEM ═════════════════════════════════════════════════════
 section('5. DELIVERY: the spine request carries the planning check and Jessi\'s private truth');

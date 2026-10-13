@@ -1,0 +1,71 @@
+=== CONTRADICTION SCAN OVER COMPLETE REQUESTS (provider-free, $0) ===
+Reads the captures written by _causal_foundation_delivery_control.mjs.
+
+  spine        43822 chars
+  openPlanner  83555 chars
+  scaffold     26406 chars
+  author1      357196 chars
+  contPlanner2 39375 chars
+  contAuthor2  536196 chars
+  contAuthor3  560175 chars
+
+1. SUPERSEDED INSTRUCTIONS travelling beside their replacements
+  ok   absent from every captured request: the twist must be immediate and confined to the room
+  ok   absent from every captured request: a father who is found and immediately leaves (contradicts Augar being unreachable)
+  ok   absent from every captured request: "nothing came of it" (the wish now produces the deck)
+  ok   absent from every captured request: the invented wording law, phrasing 1
+  ok   absent from every captured request: the invented wording law, phrasing 2
+  ok   absent from every captured request: the invented wording law, phrasing 3
+  ok   absent from every captured request: an instruction to preserve the shrug verbatim
+  ok   absent from every captured request: an instruction to preserve the shrug verbatim (straight quote)
+  ok   absent from every captured request: an explanation of the shrug's meaning to the author
+  ok   absent from every captured request: revelation given a standing delay
+  ok   absent from every captured request: a universal Chayr duty to bound an offer
+  ok   absent from every captured request: a permanent disclosure prohibition
+
+2. PROHIBITION vs PLAN — no request may forbid what it also requires
+  ok   author1: the prohibition states its expiry scene
+  ok   author1: …and says it binds the READER, not the writer's knowledge
+  ok   contAuthor2: the prohibition states its expiry scene
+  ok   contAuthor2: …and says it binds the READER, not the writer's knowledge
+  ok   contAuthor3: the prohibition states its expiry scene
+  ok   contAuthor3: …and says it binds the READER, not the writer's knowledge
+
+3. SEALED PRICE containment across every capture
+  ok   spine DOES receive the sealed price (it is the outline)
+  ok   *** openPlanner does NOT receive the sealed price
+  ok   *** scaffold does NOT receive the sealed price
+  ok   *** author1 does NOT receive the sealed price
+  ok   *** contPlanner2 does NOT receive the sealed price
+  ok   *** contAuthor2 does NOT receive the sealed price
+  ok   *** contAuthor3 does NOT receive the sealed price
+
+4. MAD JESSI private truth containment
+  ok   *** openPlanner does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** scaffold does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** author1 does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** contPlanner2 does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** contAuthor2 does not carry Jessi's private truth (he is not staged in these scenes)
+  ok   *** contAuthor3 does not carry Jessi's private truth (he is not staged in these scenes)
+
+5. SCENE IDENTITY — one request must not claim two different scenes
+  ok   openPlanner: states a single scene number (1)
+  ok   scaffold: states a single scene number (2)
+  ok   author1: states a single scene number (1)
+  ok   contPlanner2: states a single scene number (2)
+  ok   contAuthor2: states a single scene number (2)
+  ok   contAuthor3: states a single scene number (3)
+
+6. OPENING-ONLY facts must not stand as continuation instructions
+  ok   *** contAuthor2: "THE DECK IS IN THE SASH SHE IS WEA…" is not standing
+  ok   *** contAuthor2: "THIS SCENE ONLY — THE DECK…" is not standing
+  ok   *** contAuthor3: "THE DECK IS IN THE SASH SHE IS WEA…" is not standing
+  ok   *** contAuthor3: "THIS SCENE ONLY — THE DECK…" is not standing
+
+7. The planning check and the story's own causes do not contradict
+  ok   the spine is told a long mystery needs a named obstruction
+  ok   *** …and this story actually supplies one, so the rule is satisfiable
+  ok   revelation is allowed to be timely
+  ok   *** …and Lirael's years of failure are explained per-attempt, not by the nature of wishing
+
+=== 45 passed, 0 failed ===

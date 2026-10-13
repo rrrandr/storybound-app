@@ -89,7 +89,7 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 [PASS_ROUTING] Tier 3, ST: ST1, complexity: 1, reason: ST1/ST6
 [DIRECTIVES] Persistent directive cache refreshed (scene 1 )
 [NARRATIVE] state.callbackLedger had non-array shape (legacy foreshadow-seed corruption) — resetting to []
-[SUBMISSION-PROVENANCE] scene 3 - card none (no selection) - attempt cpAttemptId:cpa:fb2a0604
+[SUBMISSION-PROVENANCE] scene 3 - card none (no selection) - attempt cpAttemptId:cpa:0eb6e584
 [COMMIT-SCENE:SKIP] plan-scene=1 reason=no-prior-transition
 [TIERED:scenePlanner] attempt 1 tier=primary provider=grok model=grok-4-1-fast-non-reasoning
 [PLANNER:GROUNDING] REJECTED before the author — the proposed event declares no mechanism_grounding — every event must state either "ordinary" (it needs no special capability) or the specific world truth, stage affordance, or established canon that makes it possible
@@ -111,41 +111,39 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 [ISSUE-OUTLINE:COVERAGE] issue 1: ABSENT — no authored rows and no spine sceneOutline rows cover scenes 1-20
 [ISSUE-OUTLINE] issue=1 rows 1-20 (literary, 20/issue) kinds={} delivery={} horizon=none overturned=none cliff=ABSENT
 [PYRAMID] Scene 2 [EnvGrounding]: 8/12 directives (ARC:3 REL:1 ENERGY:0 WORLD:3 VOICE:1) (4 dropped by global cap)
-[HUMAN_ANCHOR] Generated: "endows a scholarship in a name no one connects to him" (quiet_goodness, Modern) [CONTRADICTION]
+[HUMAN_ANCHOR] Generated: "covers the night shift for a building security guard’s family emergencies, routed through payroll" (quiet_goodness, Modern) [CONTRADICTION]
 [DOOM] Generated: "witness protection identity that must remain secret" (resonance: sacrifice, world: Modern)
-[LI:GESTURE] Hierarchy assigned: primary=cufflink_twist | secondary=jaw_tendon | rare=thumb_to_lip(intimate)
+[LI:GESTURE] Hierarchy assigned: primary=cufflink_twist | secondary=ring_twist | rare=jaw_tendon(intimate)
 [COMMITTED-TRUTH:DEV-FORCE] gate bypassed (localhost/dev or __forceCommittedTruth=true)
-[COMMITTED-TRUTH:SEED] about=family_bloodline family=hidden_identity/identity_history truth="The protagonist is heir to something the LI's company was built around acquiring." pool-size=8
+[COMMITTED-TRUTH:SEED] about=engineered_setup family=fate_compression truth="The protagonist was vetted as a candidate; nothing about her arrival in his world was chance." pool-size=8
 [ADAPTIVE LENGTH] {sceneIndex: 1, commitmentScore: 0, storyMode: participatory, densityScalar: 1.00, targetRange: 700-870}
-[SCENE1_MODE] orbit_entry (derived from liArrival=FROM_START)
+[SCENE1_MODE] collision_entry (derived from liArrival=FROM_START)
 [FF-CANON-AUTH] false reason=nonff
-[LOW-AGENCY] explicit beat injected (interruption by another character, count 1/3, scene 1)
-[HUMOR-SIG] primary=deadpan_absurdity (archetype=BEAUTIFUL_RUIN)
-[BILLIONAIRE_ATTRACTION] Injecting attraction model | mode: orbit_entry | turn: 1
-[BILLIONAIRE_FIXATION] Entered Stage 1 (GLITCH) at turn 1 | max stage: 7
+[LOW-AGENCY] explicit beat injected (silent observation, count 1/3, scene 1)
+[HUMOR-SIG] primary=rare_withheld + dry_precision (archetype=BEAUTIFUL_RUIN)
 [PHRASE-LEDGER] seeded 9 starter cooldown item(s).
 [TIER-ROUTE] scene 2 → HEAVY (tier HEAVY) → HEAVY prompt
-[STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 199164 chars (limit: 50000)
-[DIRECTIVE-SIZES] fullSys=199164c(~49791t) sysPrompt=0c sceneDirectives=15687c unmeasured(turn-literal+picturability+act/dia)=38203c | top: scene1Contract=65248  intentTransmutation=17561  inl:literaryCraft=11419  inl:liAttractionTexture=5932  billionaireAttraction=4575  persistentCache=3899  inl:signaturePhraseBan=3740  turn:instructionBlock=3546  inl:liPrivateExplanation=3333  billionairePerception=3312  storyPullEnforcement=2988  inl:liInitiative=2969  grievanceFormation=2801  inl:liSocialProof=2747  humorSignature=2315  inl:phraseMarker=2314  literarySceneMandate=2232  liVoiceRegister=2193  billionaireFixation=2149  pursuitStyle=1771  antiEcho=1663  liSignatureGesture=1637  nearMiss=1483  fatelandsCognitive=1418  scar=1401
-[PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=scene1_seed · safety=context_missing(bibles) · actual=49791t projected=49791t savings=0t (0.0%)
-[PROMPT-TIER:ROLLUP] scenes=1 (HEAVY=1 GROK=0 LITE=0) · actual=50k projected=50k savings=0.0k (0.0%)
+[STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 179888 chars (limit: 50000)
+[DIRECTIVE-SIZES] fullSys=179888c(~44972t) sysPrompt=0c sceneDirectives=15687c unmeasured(turn-literal+picturability+act/dia)=38203c | top: scene1Contract=55837  intentTransmutation=17561  inl:literaryCraft=11419  inl:liAttractionTexture=5932  persistentCache=3899  inl:signaturePhraseBan=3740  turn:instructionBlock=3546  inl:liPrivateExplanation=3333  storyPullEnforcement=2988  inl:liInitiative=2969  grievanceFormation=2801  inl:liSocialProof=2747  humorSignature=2501  inl:phraseMarker=2314  literarySceneMandate=2232  liVoiceRegister=2193  pursuitStyle=1771  antiEcho=1663  liSignatureGesture=1637  nearMiss=1483  fatelandsCognitive=1418  scar=1401  lowAgency=1267  craftRhythmLayer=1111  inl:regime=912
+[PROMPT-TIER] scene 2 → HEAVY (route=HEAVY) · reasons=scene1_seed · safety=context_missing(bibles) · actual=44972t projected=44972t savings=0t (0.0%)
+[PROMPT-TIER:ROLLUP] scenes=1 (HEAVY=1 GROK=0 LITE=0) · actual=45k projected=45k savings=0.0k (0.0%)
 [PROMPT-TIER:MASS-BY-TIER] HEAVY after 1 scene(s)
-  1. scene1Contract avg=16.3k max=16.3k total=16.3k
+  1. scene1Contract avg=14.0k max=14.0k total=14.0k
   2. intentTransmutation avg=4.4k max=4.4k total=4.4k [always-kept]
   3. inl:literaryCraft avg=2.9k max=2.9k total=2.9k [always-kept]
   4. inl:liAttractionTexture avg=1.5k max=1.5k total=1.5k [always-kept]
-  5. billionaireAttraction avg=1.1k max=1.1k total=1.1k [always-kept]
-  6. persistentCache avg=975t max=975t total=975t [always-kept]
-  7. inl:signaturePhraseBan avg=935t max=935t total=935t [always-kept]
-  8. turn:instructionBlock avg=887t max=887t total=887t [always-kept]
-  9. inl:liPrivateExplanation avg=833t max=833t total=833t [always-kept]
-  10. billionairePerception avg=828t max=828t total=828t [always-kept]
-  11. storyPullEnforcement avg=747t max=747t total=747t
-  12. inl:liInitiative avg=742t max=742t total=742t [always-kept]
-  13. grievanceFormation avg=700t max=700t total=700t
-  14. inl:liSocialProof avg=687t max=687t total=687t [always-kept]
-  15. humorSignature avg=579t max=579t total=579t [always-kept]
-[CACHE:ROUTE] story=twoturn-1791762209768 turn=1 route=HEAVY builtHeavyFullSys=199164c sentSystem=199164c (HEAVY fullSys)
+  5. persistentCache avg=975t max=975t total=975t [always-kept]
+  6. inl:signaturePhraseBan avg=935t max=935t total=935t [always-kept]
+  7. turn:instructionBlock avg=887t max=887t total=887t [always-kept]
+  8. inl:liPrivateExplanation avg=833t max=833t total=833t [always-kept]
+  9. storyPullEnforcement avg=747t max=747t total=747t
+  10. inl:liInitiative avg=742t max=742t total=742t [always-kept]
+  11. grievanceFormation avg=700t max=700t total=700t
+  12. inl:liSocialProof avg=687t max=687t total=687t [always-kept]
+  13. humorSignature avg=625t max=625t total=625t [always-kept]
+  14. inl:phraseMarker avg=579t max=579t total=579t [always-kept]
+  15. literarySceneMandate avg=558t max=558t total=558t [always-kept]
+[CACHE:ROUTE] story=twoturn-1791787572353 turn=1 route=HEAVY builtHeavyFullSys=179888c sentSystem=179888c (HEAVY fullSys)
 [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
 [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}
 [PROMPT-PROFILE] narrative_author · constructed · prompt=10 reasoning=0 visible=10 · turn 1
@@ -176,7 +174,7 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
   neutral                 0%
   ── desire+relationship 0%  ·  LI-as-object 0%  ·  procedural+self 100%
   ⚠ desire+relationship < 20% — the scene is NOT owned by wanting him.
-[DESC:LEDGER] issue=twoturn-1791762209768:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
+[DESC:LEDGER] issue=twoturn-1791787572353:1 scene=1 · eyeColor=0/1 greySilver=0/1 widowsPeak=0/1 pcHair=0/1 chandelier/ballroom=0/2 galaEntrance=0/2 events=[] · this scene +{"liEyeColor":0,"liGreySilver":0,"widowsPeak":0,"pcHair":0,"chandeliersBallroom":0,"galaEntrance":0}
 [ToneDrift] Turn validation failed (validate-only, no regen): [TONE_DRIFT: Prose lacks basic emotional presence (Earnest baseline)]
 [ToneDrift] Metrics: found 0 markers, need 2
 [PRESSURE QUALITY] {hasStakes: false, hasAsymmetry: false, hasUncertainty: false, hasEmotionalCharge: false, hasDemand: false}
@@ -218,7 +216,6 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 [HIDDEN-TRUTH:SUPPRESS] committedTruth seeded; emergent system stays inactive this story
 [EMG] Emotional gradient: 0.0000 | trend: neutral
 [FOREGROUND:STORY] Scene 3 validator: FAIL [ENDING STRUCTURE: final paragraph lacks a physical…/ brush / hover / etc.) — ending is not embodied., STAKES CLARITY: the stakes of the final action are…nguage ("This decides it", "It won't be undone")., FINAL ACTION VERB: last sentence has no physical, …nothing to act on. Add a physical or speech beat.]
-[FIXATION_TRIGGER] default (no tag): REINFORCED | rupture: false | streak: 0 | reason: (none)
 [ROMANCE:PLACEHOLDER] 0 — clean
 [ROMANCE:SATURATION] OK — 0 attraction beat(s) (0/1k words). Relationship-gravity channels should carry it; attraction prose is the minority tool.
 [ROMANCE:RUMINATION] 0 — OK
@@ -233,8 +230,8 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 [PROSE:ENUMERATION] pass
 [PROSE:QUOTE-MASH] pass
 [LORE-LEDGER] scene 3 · candidates=0 glossed=0 ledger=0
-[SCENE-LEDGER] +p3 kind=scene issue=1 uid=pg:7e2f1077-efc1-436e-b94f-498db5135b65 planned=none
-[ENGAGEMENT:SCENE] {dwellMs: 179, idleMs: 10, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}
+[SCENE-LEDGER] +p3 kind=scene issue=1 uid=pg:f9408921-124b-4540-833d-d7f34cef9507 planned=none
+[ENGAGEMENT:SCENE] {dwellMs: 187, idleMs: 8, scrolledWithoutClicking: false, nudgeFired: false, mode: participatory}
 [ENGAGEMENT KPI] {microExprInteractionRate: 0%, avgTimeToFirstInteraction: 0.0s, dropOffBeforeChoiceRate: 0%, choiceCompletionRate: 0%, totalScenes: 1}
 [PRESSURE ENGINE] {romance: 0.52, power: 0.50, conflict: 0.50, uncertainty: 0.60, scene: 2}
 [RELSHAPE] raw input — act=participated tension=held desire=hidden reciprocity=na register=grounded | recept=na own=na presence=na vuln=na | prior(pc=female,li=male) (scene 2, v0-heuristic)
@@ -242,11 +239,11 @@ The AudioContext was not allowed to start. It must be resumed (or created) after
 [ADAPTIVE TUNING] {paceScalar: 0.97, hookScalar: 0.98, densityScalar: 1.03, scene: 2, storyMode: participatory}
 [SCENE-COST] Finalized: $0.0001 | type: literary | text $0.0001 | image $0.0000 | cumulative $0.0001
 [SCENE-COST] LLM calls: 13 (gpt:6 other:7)
-[SCENE-BUDGET:COUNT] scene=twoturn-1791762209768:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
+[SCENE-BUDGET:COUNT] scene=twoturn-1791787572353:2 repair=0 polish=0 fallback=0 regen=0 cosmetic=0/2 (conditional spent=0/4) skipped=[] provenance=original
 [SCENE-COST] by category: prose+spine $0.0001 ×10
 [LITE-COST] HEAVY scene 3 · classifier→HEAVY/HEAVY · provider=gpt · prose+spine $0.0001 · audits $0.0000 (DEV instrumentation — PROD gates to ~5%) · setup $0.0000 (one-time, off per-scene budget)
 [LITE-COST] → PROD marginal (audits gated, no dual shadow): $0.0001 vs 10¢ SAFETY CEILING → ✓ under ceiling (10¢ headroom)  [heavy is primary now — LITE will be lower on input]  · expected/issue cost = window._issueCOGS()
-[SCENE-AUDIT] {"sc":1,"ms":141,"ttft":0,"ttftProse":0,"spend":{"initial":0.0001,"regens":0,"setup":0,"audits":0,"wasted":0,"total":0.0001},"hitPct":0,"regens":0,"gates":""}
+[SCENE-AUDIT] {"sc":1,"ms":149,"ttft":0,"ttftProse":0,"spend":{"initial":0.0001,"regens":0,"setup":0,"audits":0,"wasted":0,"total":0.0001},"hitPct":0,"regens":0,"gates":""}
 %c
 === NARRATIVE DIAGNOSTICS ===
  color: #c9a84c; font-weight: bold; font-size: 14px
@@ -261,7 +258,7 @@ MOMENT SIGNIFICANCE  N/A      Location: Too short  Influence: N/A
 
 MOSTLY INTEGRATED | Primary: Shallow compliance (signature) | Secondary: None
 [FATE:STAGE-DIAG] turnCount=2 · scenes.length=0 · _scene1OnStagePhysical=null/undefined · _scene1OnPhone=null/undefined · _lastProbeOnStagePhysical=null/undefined · _scene1Active=false
-[FATE-CARDS:PLOT-CTX] archetype=BEAUTIFUL_RUIN · ST=ST1 · intimacy=false · aplot=– · truth=family_bloodline · grievances=0 · callbacks=0 · scars=0 · gravity=– · axis-lead=– · fateOAS=–
+[FATE-CARDS:PLOT-CTX] archetype=BEAUTIFUL_RUIN · ST=ST1 · intimacy=false · aplot=– · truth=engineered_setup · grievances=0 · callbacks=0 · scars=0 · gravity=– · axis-lead=– · fateOAS=–
 [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: temptation, presentCharacters: Array(3)}
 [FATE:AUTHORITY] Card target resolved {cardId: temptation, resolvedTarget: , isStorybeau: false, sceneCharacters: Array(3)}
 [FATE:AUTHORITY] Romantic card invoked without Storybeau — using fallback {cardId: confession, presentCharacters: Array(3)}
@@ -297,9 +294,9 @@ MOSTLY INTEGRATED | Primary: Shallow compliance (signature) | Secondary: None
 [ST-CONSTRAINT] scene: 3 storyLength: soulmates allowed: ST1-ST1 llm: undefined final: ST1
 [STRATEGY_PASS] Missing top-level keys: power_vector_shift, world_artifact_to_surface, tone_pressure, petition
 [PASS_ROUTING] Tier 3, ST: ST1, complexity: 1, reason: ST1/ST6
-[SUBMISSION-PROVENANCE] scene 4 - card none (no selection) - attempt cpAttemptId:cpa:9c9770b0
+[SUBMISSION-PROVENANCE] scene 4 - card none (no selection) - attempt cpAttemptId:cpa:2e62f7b7
 [COMMIT-SCENE:SCENE] turnCounter=1 storyScene=3 (the handoff) — page ownership is looked up by storyScene, never by the counter
-[COMMIT-SCENE:PROSE] narrowed to the bound unit page pg:7e2f1077-efc1-436e-b94f-498db5135b65: 350 -> 288 chars
+[COMMIT-SCENE:PROSE] narrowed to the bound unit page pg:f9408921-124b-4540-833d-d7f34cef9507: 350 -> 288 chars
 [VERIFIER-INPUT] scene=1 prose_len=288 head="The presiding Dohkar served her notice in the gap between the trunks. " tail="e acknowledgement because refusing it would have been its own offence."
 [TIERED:runtimeCommitVerifier] attempt 1 tier=primary provider=mistral model=ministral-8b-2512
 [PACT:FLIP] flip-tick @400ms — cards live: 3
@@ -343,12 +340,12 @@ MOSTLY INTEGRATED | Primary: Shallow compliance (signature) | Secondary: None
 [ADAPTIVE LENGTH] {sceneIndex: 2, commitmentScore: 1, storyMode: participatory, densityScalar: 1.03, targetRange: 721-896}
 [FF-CANON-AUTH] false reason=nonff
 [TIER-ROUTE] scene 3 → HEAVY (tier HEAVY) → HEAVY prompt
-[STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 196641 chars (limit: 50000)
-[DIRECTIVE-SIZES] fullSys=196641c(~49160t) sysPrompt=0c sceneDirectives=13659c unmeasured(turn-literal+picturability+act/dia)=36670c | top: scene1Contract=65248  intentTransmutation=17561  inl:literaryCraft=11419  turn:instructionBlock=7551  inl:liAttractionTexture=5932  persistentCache=3899  inl:signaturePhraseBan=3740  inl:liPrivateExplanation=3333  billionairePerception=3312  storyPullEnforcement=2988  inl:liInitiative=2969  grievanceFormation=2801  inl:liSocialProof=2747  humorSignature=2315  inl:phraseMarker=2314  literarySceneMandate=2222  liVoiceRegister=2193  billionaireFixation=2149  antiEcho=1663  liSignatureGesture=1637  pursuitStyle=1554  nearMiss=1483  fatelandsCognitive=1418  scar=1401  craftRhythmLayer=1111
-[PROMPT-TIER] scene 3 → HEAVY (route=HEAVY) · reasons=scene1_seed · safety=context_missing(bibles) · actual=49160t projected=49160t savings=0t (0.0%)
-[PROMPT-TIER:ROLLUP] scenes=2 (HEAVY=2 GROK=0 LITE=0) · actual=99k projected=99k savings=0.0k (0.0%)
+[STORY-GEN-DEBUG] turn-generation-fullSys exceeds soft limit: 181724 chars (limit: 50000)
+[DIRECTIVE-SIZES] fullSys=181724c(~45431t) sysPrompt=0c sceneDirectives=13283c unmeasured(turn-literal+picturability+act/dia)=36294c | top: scene1Contract=55837  intentTransmutation=17561  inl:literaryCraft=11419  turn:instructionBlock=7551  inl:liAttractionTexture=5932  persistentCache=3899  inl:signaturePhraseBan=3740  inl:liPrivateExplanation=3333  storyPullEnforcement=2988  inl:liInitiative=2969  grievanceFormation=2801  inl:liSocialProof=2747  humorSignature=2501  inl:phraseMarker=2314  literarySceneMandate=2222  liVoiceRegister=2193  antiEcho=1663  liSignatureGesture=1637  pursuitStyle=1554  nearMiss=1483  fatelandsCognitive=1418  scar=1401  craftRhythmLayer=1111  inl:regime=912  inl:frictionMarker=695
+[PROMPT-TIER] scene 3 → HEAVY (route=HEAVY) · reasons=scene1_seed · safety=context_missing(bibles) · actual=45431t projected=45431t savings=0t (0.0%)
+[PROMPT-TIER:ROLLUP] scenes=2 (HEAVY=2 GROK=0 LITE=0) · actual=90k projected=90k savings=0.0k (0.0%)
 [PROMPT-TIER:MASS-BY-TIER] HEAVY after 2 scene(s)
-  1. scene1Contract avg=16.3k max=16.3k total=32.6k
+  1. scene1Contract avg=14.0k max=14.0k total=27.9k
   2. intentTransmutation avg=4.4k max=4.4k total=8.8k [always-kept]
   3. inl:literaryCraft avg=2.9k max=2.9k total=5.7k [always-kept]
   4. inl:liAttractionTexture avg=1.5k max=1.5k total=3.0k [always-kept]
@@ -356,13 +353,13 @@ MOSTLY INTEGRATED | Primary: Shallow compliance (signature) | Secondary: None
   6. persistentCache avg=975t max=975t total=1.9k [always-kept]
   7. inl:signaturePhraseBan avg=935t max=935t total=1.9k [always-kept]
   8. inl:liPrivateExplanation avg=833t max=833t total=1.7k [always-kept]
-  9. billionairePerception avg=828t max=828t total=1.7k [always-kept]
-  10. storyPullEnforcement avg=747t max=747t total=1.5k
-  11. inl:liInitiative avg=742t max=742t total=1.5k [always-kept]
-  12. grievanceFormation avg=700t max=700t total=1.4k
-  13. inl:liSocialProof avg=687t max=687t total=1.4k [always-kept]
-  14. humorSignature avg=579t max=579t total=1.2k [always-kept]
-  15. inl:phraseMarker avg=579t max=579t total=1.2k [always-kept]
-[CACHE:ROUTE] story=twoturn-1791762209768 turn=2 route=HEAVY builtHeavyFullSys=196641c sentSystem=196641c (HEAVY fullSys)
+  9. storyPullEnforcement avg=747t max=747t total=1.5k
+  10. inl:liInitiative avg=742t max=742t total=1.5k [always-kept]
+  11. grievanceFormation avg=700t max=700t total=1.4k
+  12. inl:liSocialProof avg=687t max=687t total=1.4k [always-kept]
+  13. humorSignature avg=625t max=625t total=1.3k [always-kept]
+  14. inl:phraseMarker avg=579t max=579t total=1.2k [always-kept]
+  15. literarySceneMandate avg=557t max=558t total=1.1k [always-kept]
+[CACHE:ROUTE] story=twoturn-1791787572353 turn=2 route=HEAVY builtHeavyFullSys=181724c sentSystem=181724c (HEAVY fullSys)
 [MODEL] Literary prose → requested=grok-4-1-fast-reasoning (Grok author [served model logged as MODEL:SERVED] + Grok de-calc editor + Haiku repair — Sonnet/Opus cost-deprecated)
 [GROK-LIT] author = grok/grok-4-1-fast-reasoning — cache {"eligible":true,"observed":"miss","cachedTokens":0,"promptTokens":10}

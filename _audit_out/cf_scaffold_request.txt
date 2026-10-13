@@ -44,14 +44,15 @@ VEILWOOD GEOGRAPHY (canon, and this scene is in the Veilwood — HARD):
 ═══ HIDDEN CAUSES BEHIND THIS SCENE (private planning context, v4-2026-10-13-augar) ═══
 These are the real causes of what happens here. They are NOT events to stage and NOT information
 to disclose — they are why the staged events take the shape they do. Stage the CONSEQUENCES.
+  (current scene: 2 — the windowed items below are the ones in force NOW)
   • Lirael's father AUGAR is ALIVE, with no memory of her or of himself, because he paid unbounded memory for an Order 1 wish that saved her life as a girl. Nobody present knows this. It is not revealed in this issue; it is the gravity under every scene.
   • JULIAN was present at that bargain, failed in his office to make Augar bound the offer, and afterwards wished the SACRIFICE out of the public record at the price of his own attachment to the man. He feels nothing for Augar and remembers everything. He acts in this issue to protect that, not to protect anyone.
   • LIRAEL has spent years of her own MEMORY on revelation wishes looking for her father — each one answered as an opportunity that then failed to close in an ordinary way. She can no longer clearly recall his face. She wants AN ANSWER, not a person. Scenes may stage the cost of that habit; they must not resolve the search.
   • THE DECK has been in an overlooked fold of the family's stored ceremonial sash for fifteen years, where Augar put it. Lirael wears the sash today for the first time because she officiates today. Nothing conjures, transports or hands it over — the only event is the DISCOVERY, and she is the one who finds it.
-  • SEREN'S WORDING: "the one SHE lost" requires that Lirael did the losing, which the deck fails and a child's trinket satisfies. JULIAN'S wording carries no such clause and asks for a loss "ENOUGH" to divert her, which is why the answer is a relic. Any scene that adjudicates or re-examines the wish must honour this distinction, and a witness may point at "enough".
+  • THE WORDING THAT MATTERS: Seren asked that Lirael find "the one she lost" and specified NO magnitude, so nothing in her phrase called for a large answer. Julian asked for a loss "ENOUGH" to divert her, and that single word is what made the answer a relic. The distinction is SIZE REQUESTED, nothing else — there is no rule here about who did the losing, and a scene must not invent one. A witness may point at "enough".
   • THE CROWD openly connects the relic to the wish — that connection IS the charge. Lirael is the OBVIOUS suspect because she broke her seal, moved, and holds the benefit; she is not the only person who could have wished. What stays hidden is that a second wish was made at all.
   • CONSEQUENCES AVAILABLE TO PLAN WITHOUT EXPOSING THE SOLUTION: the inquiry and the deck's contested provenance; Julian saying more than he means and paying for it in standing; Lirael's belief that her father took the deck beginning to erode; and the first hint that no bargain was ever recorded against anyone. Each is a consequence of the hidden causes and discloses none of them.
-  • DO NOT PLAN: Augar appearing, being found, being named, or being recovered; Julian's intervention being witnessed, suspected or confessed before its sealed scene; or any scene that makes the concealment publicly known. Exposure, when it comes, comes through PRIVATE RECOGNITION, because that is the one thing the concealment wish cannot reach.
+  • WHILE THE REVEAL IS STILL SEALED (scenes 1-15): do not plan Augar appearing, being found, being named or being recovered, and do not plan Julian's intervention being witnessed, suspected or confessed. THIS IS A SCHEDULE, NOT A PERMANENT BAN — the sealed event unseals at scene 16 and this instruction stops applying then.
 THIS SCENE'S PURPOSE WITHIN THE ISSUE (the causal_outline must DELIVER this, not decorate it):
   WHY IT FOLLOWS WHAT CAME BEFORE (THEREFORE): The wish has already twisted in front of the assembly, and scene 1 ended on Lirael's decision about whether to break protocol for Seren.
   WHAT MUST BE TRUE BY THE END: RESOLVED: the words came true and everyone can see how. NEW PROBLEM: Lirael's standing is at risk and the cost is still uncounted.
@@ -61,7 +62,7 @@ Relationship: developing | Phase: strangers
 Tension: building | Trust: unknown
 ST: ST1
 Location: unknown
-World: Modern
+World: Fantasy
 Protagonist: Lirael | Love interest: Julian — last scene staging: NOT IN_PERSON
 Prior scene's staging (most recent): (no prior staging captured)
 Player intent: null / null

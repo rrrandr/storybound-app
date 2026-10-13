@@ -1,7 +1,7 @@
 === CAUSAL FOUNDATION DELIVERY CONTROL (provider-free, $0) ===
 Every model response here is CONSTRUCTED in this file. No provider is called.
 
-serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on every path)
+serving the real public/ from http://127.0.0.1:63758 (vercel dev is down; 500 on every path)
 
 
 0. THE RENDERER (window._buildFSCausalFoundationBlock) — tier asymmetry
@@ -9,8 +9,8 @@ serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on
   ok   planning tier is emitted and does NOT carry the sealed price
   ok   author tier is emitted and does NOT carry the sealed price
   ok   an unrecognised tier name returns EMPTY rather than guessing
-  ok   the opening-only deck line is present at turnCount 0
-  ok   and GONE once scenes have been authored (turnCount 4), while the limits remain
+  ok   the opening-only deck line is present at the OPENING
+  ok   and GONE by scene 5, while the disclosure window remains
 
 1. ISSUE SPINE — read off the wire
   ok   a spine request was actually sent
@@ -23,7 +23,7 @@ serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on
   ok   the spine request contains Julian's bond price
   ok   the spine request contains FATE'S SEALED PRICE for the open offer
   ok   and it is sent as CAUSE, not as content to narrate
-  ok   spine request bytes: 40460
+  ok   spine request bytes: 43822
 
 2. SCENE SCAFFOLD — read off the wire
   ok   a scene scaffold request was actually sent
@@ -35,7 +35,7 @@ serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on
   ok   and it does not carry the spine-only account of the concealment either
 
 2b. LITERARY AUTHOR — read off the wire (handleBeginStory, the real opening path)
-      calls=OPENING_PLANNER:83444@proxy STRUCTURE_GENERATOR:361728@proxy PRIMARY_AUTHOR:1107@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy PRIMARY_AUTHOR:539@chatgpt-proxy
+      calls=OPENING_PLANNER:83555@proxy STRUCTURE_GENERATOR:357196@proxy SPECIALIST_RENDERER:5360@proxy ?:13643@mistral-proxy SPECIALIST_RENDERER:3384@proxy PRIMARY_AUTHOR:6362@chatgpt-proxy SPECIALIST_RENDERER:3384@proxy SPECIALIST_RENDERER:6699@proxy SPECIALIST_RENDERER:6699@mistral-proxy PRIMARY_AUTHOR:3740@chatgpt-proxy PRIMARY_AUTHOR:4097@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1396@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy PRIMARY_AUTHOR:3172@chatgpt-proxy ?:11650@mistral-proxy SPECIALIST_RENDERER:1869@proxy PRIMARY_AUTHOR:4369@chatgpt-proxy LINE_EDITOR:4432@mistral-proxy
   ok   an OPENING_PLANNER request was captured off the wire
   ok   the opening planner receives the hidden causes
   ok   the opening planner receives the DO-NOT-PLAN list
@@ -47,7 +47,51 @@ serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on
   ok   and it is told that knowing is not narrating
   ok   *** BOUNDARY: the author request does NOT contain the sealed price
   ok   *** BOUNDARY: nor the spine-only concealment account
-  ok   author request bytes: 361728
+  ok   author request bytes: 357196
+
+2b2. CONTINUATION CHAIN: scene planner proposal + author for scenes 2-3
+      scene 2 calls=NORMALIZATION:6478 BACK_COVER_SYNOPSIS:2146 STRATEGY_PASS:19840 STRUCTURE_GENERATOR:39375 STRUCTURE_GENERATOR:536196 HONEY_POT_GENERATOR:6160 SPECIALIST_RENDERER:5360 ?:13643 SPECIALIST_RENDERER:3857 PRIMARY_AUTHOR:6362 SPECIALIST_RENDERER:6518 SPECIALIST_RENDERER:3857 LINE_EDITOR:3733 LINE_EDITOR:5496 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6740 SPECIALIST_RENDERER:6740 INTIMACY_SPECIALIST:13383 ?:0 ?:0 ?:0 ?:0 ?:0 ?:0 STRUCTURE_GENERATOR:6164 ?:0 ?:0 ?:0 ?:0
+      scene 3 calls=NORMALIZATION:6478 SPECIALIST_RENDERER:1476 BACK_COVER_SYNOPSIS:2146 STRATEGY_PASS:19885 STRUCTURE_GENERATOR:21996 STRUCTURE_GENERATOR:559317 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 ?:13643 PRIMARY_AUTHOR:2373 SPECIALIST_RENDERER:3857 STRUCTURE_GENERATOR:560175 NARRATIVE_AUTHOR:4598 ?:3371 PRIMARY_AUTHOR:3371 SPECIALIST_RENDERER:5360 PRIMARY_AUTHOR:7660 SPECIALIST_RENDERER:6929 SPECIALIST_RENDERER:6929 BACK_COVER_SYNOPSIS:3801 STRUCTURE_GENERATOR:5273 STRUCTURE_GENERATOR:6163
+  ok   scene 2: the SCENE PLANNER proposal request was captured
+  ok   scene 2: the planner proposal carries the hidden causes
+  ok   scene 2: *** and NOT the sealed price
+  ok   scene 2: the CONTINUATION AUTHOR request was captured (536196 B)
+  ok   scene 2: it carries the private intent
+  ok   scene 2: it carries the disclosure window still in force
+  ok   scene 2: *** the OPENING-ONLY deck line is NOT standing here
+  ok   scene 2: *** and it does not carry the sealed price
+  ok   scene 3: the SCENE PLANNER proposal request was captured
+  ok   scene 3: the planner proposal carries the hidden causes
+  ok   scene 3: *** and NOT the sealed price
+  ok   scene 3: the CONTINUATION AUTHOR request was captured (560175 B)
+  ok   scene 3: it carries the private intent
+  ok   scene 3: it carries the disclosure window still in force
+  ok   scene 3: *** the OPENING-ONLY deck line is NOT standing here
+  ok   scene 3: *** and it does not carry the sealed price
+
+2c. LIFECYCLE: the author's disclosure window across scenes 1 / 5 / 16
+  ok   scene 1: the window is in force
+  ok   scene 1: the opening-only deck placement is present
+  ok   scene 5: the window is STILL in force
+  ok   *** scene 5: the opening-only deck line is GONE (opening facts do not stand)
+  ok   *** scene 16: the window has CLOSED — no prohibition on the concealment
+  ok   *** scene 16: and a POSITIVE permission replaces it
+  ok   scene 16 still withholds the two later secrets by name
+  ok   the POV rule never expires (it is a rule, not a secret)
+  ok   every tier states the current scene so the window is legible
+  ok   planning at scene 5: the do-not-plan schedule applies
+  ok   *** planning at scene 16: the schedule has lapsed and the seal is open
+
+2d. REMOVED: the "lost BY her versus lost TO her" requirement
+  ok   absent from every tier: "lost BY"
+  ok   absent from every tier: "lost TO her"
+  ok   absent from every tier: "SHE LOST\" requires"
+  ok   absent from every tier: "requires that Lirael did the losing"
+  ok   absent from every tier: "nearest thing Lirael HERSELF lost"
+  ok   absent from every tier: "no \"she lost\" clause"
+  ok   the spine states the contrast as SIZE REQUESTED instead
+  ok   and explicitly denies that a who-did-the-losing rule exists
+  ok   the planning tier states the same, without the law
 
 3. CONTROL: a story with no causalFoundation (the detector must bite)
   ok   a spine request was still sent without a seed
@@ -66,4 +110,4 @@ serving the real public/ from http://127.0.0.1:57991 (vercel dev is down; 500 on
 
 ── wrote _audit_out/cf_spine_request.txt and _audit_out/cf_scaffold_request.txt
 
-=== 47 passed, 0 failed ===
+=== 83 passed, 0 failed ===
