@@ -21,16 +21,28 @@ PROVENANCE, stated per standing requirement:
   4 Lirael is sealed and forbidden, and the wish is about her, so moving will look
     like self-dealing. She moves anyway: tears the band, speaks, tries to get Seren
     to restate it.
-  5 The words finish first. FATE ANSWERS. Nothing manifests. The literal words come
-    true by an ordinary-looking route, and someone present can name which word bent.
-  6 The Dohkar names the mechanism. The charges follow: the wish was shaped for its
-    supervisor's benefit, and the supervisor broke her seal.
-  7 Julian, present and unmoved at the edge throughout, moves only now.
+  5 The words finish first. The wish BENDS, perceptibly — and then STOPS, short of
+    whatever it was turning into. NOTHING comes of it: nothing found, nothing taken,
+    no outcome the assembly can point at. NO ONE CAN SAY WHY IT STOPPED.
+    (Corrected per 3f1212c6, "opening corrected to Roman's canon direction". The
+    earlier attention-honouring version is superseded; see fs_causal_foundation.md §1.)
+  6 The Dohkar names the bent word and charges Lirael — with shaping the wish for her
+    own benefit and with interfering — on his own ordinary logic: everyone felt it
+    twist, the supervising Sacrificiant would have felt it first, so the one who could
+    have interfered is the one who did.
+  7 THE HANDOFF, in full, and none of it may be omitted or compressed to a step
+    forward. Julian comes in from the edge; states his reading aloud, that Lirael is
+    aligned with her own innocence; PLACES THE ANSWER IN HER HAND (the Institution's,
+    in his keeping, hers only for the questioning); and OPENS THE QUESTIONING before
+    the assembly. The intimate interrogation is required fixed aftermath; the Dohkar
+    interrupts it as grossly inappropriate; the inquiry is claimed. ONLY THEN does the
+    OAS's run-or-remain choice arrive.
 
 ## WHAT THE SCENE MUST DELIVER
-  · THE TURN ITSELF, not its announcement. Fate's answer must HAPPEN on the page and
-    be legible as an answer. A scene that says Fate answered and defers the
-    consequence has not delivered the scene.
+  · THE TURN ITSELF, not its announcement. The bending and the STOPPING must both
+    HAPPEN on the page and be legible. A scene that says the wish went wrong and
+    defers everything else has not delivered the scene. What must NOT be delivered is
+    an OUTCOME: nothing is found and nothing is taken.
   · The answer arrives through what is ALREADY REAL. No apparition, no summoned
     figure, no light, no display, no darkening grass, no weather.
   · The POV never leaves Lirael.
@@ -61,11 +73,20 @@ micro-expression pair, Seren's and the Dohkar's specific lines, and the
 character-plus / environment-plus material. Everything in THE FIXED SPINE is given.
 
 ## WHAT I WOULD CHANGE IN THE PROMPTS (smallest, still unimplemented)
-  1 OPENING-PLANNER: state that the scene's turn is FIXED and already determined,
-    and that the closing beat hands off to the OAS — so the planner authors no fork
-    and never describes the PC as able to prevent the event. This single edit drains
-    all five contaminated fields, because all five are downstream of "propose a
-    decision the PC makes".
+  1 OPENING-PLANNER, SCOPED TO THIS STORY — not a general ban on Scene-1 choices.
+    The condition is a story whose opening is a FIXED package (First Sacrifice is),
+    and the instruction applies only there: the scene's turn is already determined and
+    the closing beat hands off to the OAS, so no fork is authored and the PC is never
+    described as able to prevent the event. Stories without a fixed opening keep their
+    Scene-1 choices untouched.
+    AND I WITHDRAW "one edit drains all five". That was a claim, not a check. Each
+    contaminated field must be verified individually against the regenerated plan:
+      decision_beat · reader_state.believes · reader_state.wondering · scene_mission
+      · scene_want
+    plus the OUTGOING instructions that consume them — the author request's
+    decision/closing block and the jsonRequirement that names the fields. The
+    verification is: regenerate, then read all five plus both consumers, and show
+    them. Not assert.
   2 SCENE-1 VALIDATOR: reject an opening whose closing beat offers the PC a choice
     to prevent an event the plan marks as having happened.
   3 NOTHING ELSE. No Wishcraft rules in any prompt, no new warning layer, no beat
