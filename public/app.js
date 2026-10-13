@@ -138307,7 +138307,18 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     var acceptedKeys = Object.keys(env).filter(function (k) { return !members[k]; });
     if (acceptedKeys.length) {
       lines.push('ACCEPTED, UNCHANGED CONTEXT (already correct — do not repeat these in your reply; they stay exactly as they are):');
-      acceptedKeys.forEach(function (k) { lines.push('  - ' + k + ': ' + JSON.stringify(env[k]).slice(0, 400)); });
+      // COMPLETE OR OMITTED, NEVER SLICED. This was JSON.stringify(...).slice(0, 400), which cut
+      // a long member mid-field and handed the model malformed JSON as its "accepted context".
+      // A value that will not fit is named and withheld instead, which is intelligible; half an
+      // object is not.
+      acceptedKeys.forEach(function (k) {
+        var j = null;
+        try { j = JSON.stringify(env[k]); } catch (_) { j = null; }
+        if (j == null) return;
+        if (j.length <= 1200) lines.push('  - ' + k + ': ' + j);
+        else lines.push('  - ' + k + ': (unchanged and correct; withheld here only for length —'
+          + ' it stays exactly as it is, and you must NOT return it)');
+      });
       lines.push('');
     }
     var askFor = [];
@@ -138318,6 +138329,39 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       lines.push('For character_plus, repair ONLY these named entries (return the full character_plus array, but every entry not named here must be copied back VERBATIM, unchanged): ' + classified.characters.join(', '));
       askFor.push('character_plus');
     }
+    // ── THE MERGE REPLACES WHOLE MEMBERS, SO SAY SO, AND SHOW THE MEMBER ────────────────────────
+    // _applySkeletonRepair does `out[key] = resp[key]` for pc_opening_fusion / fusion /
+    // environment_plus: whole-member replacement. The request used to exclude the faulting member
+    // from the context entirely (acceptedKeys filters it out) and ask only for "the named fields,
+    // corrected" — so a model that returned just the faulting field was answering the question it
+    // was asked, and the merge then dropped every sibling field. Measured on the literary arm of
+    // 2026-10-12: the repair returned {"pc_opening_fusion":{"beat":...}} and validation then failed
+    // with 'pc_opening_fusion.character is "(empty)"'. That is a contract mismatch, not simply
+    // model noncompliance.
+    // The contract is UNCHANGED — still whole-member replacement, still the same scope. What
+    // changes is that the member, its fields and the placeholder rule are now stated.
+    var _wholeMembers = askFor.filter(function (k) { return k !== 'character_plus'; });
+    if (_wholeMembers.length) {
+      lines.push('');
+      lines.push('EACH MEMBER YOU MUST RETURN, EXACTLY AS YOU SENT IT LAST TIME:');
+      _wholeMembers.forEach(function (k) {
+        var j = null;
+        try { j = JSON.stringify(env[k]); } catch (_) { j = null; }
+        lines.push('  ' + k + ': ' + (j == null ? '(absent from your previous response)' : j));
+      });
+      lines.push('');
+      lines.push('WHOLE-MEMBER REPLACEMENT (HARD — this is how your reply is applied): the engine'
+        + ' REPLACES each member named above with exactly what you return. It does NOT merge field'
+        + ' by field. So return the COMPLETE member — every field it already had — with the fields'
+        + ' that were not at fault copied back UNCHANGED, and only the named fault corrected. A'
+        + ' member returned with only the faulting field in it DELETES its other fields and fails'
+        + ' validation on the very next pass.');
+      lines.push('PLACEHOLDER RULE (HARD): wherever the member you sent contained the literal'
+        + ' {TARGET}, your corrected member must still contain {TARGET} — exactly once, in the same'
+        + ' field. The record names that object, not you: writing the object\'s name in place of the'
+        + ' placeholder is a fault, and the engine substitutes the canonical name itself afterwards.');
+    }
+    lines.push('');
     lines.push('Return ONLY a JSON object containing exactly these top-level keys, corrected: ' + askFor.join(', ') + '. Do not include stage, cast, mission, reader posture, canon, or any other field — they are not yours to return.');
     return { user: lines.join('\n'), askFor: askFor };
   }
@@ -165241,8 +165285,19 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
 
       var _liPresenceBlock = state._scene1LIOnStage
           ? '\nLI PRESENCE (HARD — ON STAGE THIS SCENE):\n' +
-            'The love interest IS physically present in this scene. Their entrance — and the immediate dynamic with the protagonist — is the inciting collision.\n' +
-            'This is the rarer Scene 1 shape (~10%): a charged in-person encounter. Treat it accordingly: the LI must arrive specifically, not as ambient background. Their presence must alter the scene\'s gravity from the moment they appear.\n'
+            // PRESENCE IS NOT TIMING, AND TIMING IS NOT CAUSATION (2026-10-13).
+            // This block used to assert that the LI's entrance IS the inciting collision and that
+            // the scene is "a charged in-person encounter". Three different claims were collapsed
+            // into one: that he appears during the scene, that he is there from its first moment,
+            // and that his arrival causes the crisis. First Sacrifice is the counter-example its
+            // own package already encodes — the crisis is the rite and the bent wish, and Julian
+            // arrives late (his image is the FOURTH of four, and his interrogation is the OAS that
+            // follows). The assembled payload consequently told the author both that his entrance
+            // was the inciting collision and, in the want rule, that the scene must work without
+            // him appearing. Removed at source rather than overridden further down.
+            'The love interest IS physically present in this scene — he appears on the page, not only in thought, mention, message or reputation.\n' +
+            'WHEN he appears is set by the STAGING AND THE SCENE PLAN, never by this block. Presence somewhere in the scene does NOT mean presence from its first line, and his arrival is NOT automatically the scene\'s inciting event. If the plan places him late, the scene opens and builds its own crisis without him, and he arrives at the moment the plan gives him — that is the correct shape, not a weaker one.\n' +
+            'What presence DOES require: when he is on the page he arrives SPECIFICALLY rather than as ambient background, and his being there changes what the protagonist can do next.\n'
           : '\nLI PRESENCE (HARD — OFF STAGE THIS SCENE):\n' +
             'The love interest must NOT physically appear in this scene. The LI may only be present via:\n' +
             '- mention in dialogue with another character\n' +
@@ -288688,7 +288743,15 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // planner fields that fed it are gone with it.
           (readerState ? '• READER-STATE CONTRACT (ACCEPTANCE CRITERIA — a plan you must SATISFY, not decoration. Stop planning what happens; deliver what the READER UNDERSTANDS after what happens. If the prose violates this progression, rewrite the PROSE, not the plan). After the opening, a first-time reader must —\n   ↳ KNOW: ' + (readerState.knows || '(the concrete physical situation)') + '\n   ↳ BELIEVE: ' + (readerState.believes || '(what is at stake)') + '\n   ↳ still be WONDERING (keep this alive — world-mystery is good): ' + (readerState.wondering || '(a deeper world-mystery)') + '\n   ↳ NEVER be confused about (HARD): ' + (readerState.must_not_confuse || 'who is acting, what physical event is occurring, why the next action follows') + '\n   World MYSTERY is encouraged; PHYSICAL ambiguity is forbidden.\n' : '') +
           // ── SCENE WANT — Roman Desire Bridge Phase 1 (2026-06-01) ──
-          (sceneWant ? '• SCENE WANT (REQUIRED — Roman 2026-06-01, audit-driven). What she WANTS IN THIS SCENE, derived from her private_hope and scoped to this room. The smallest bridge between her story-level secret hope and the prose: ' + sceneWant + '\n   ↳ The first 250 words MUST make this want LEGIBLE — a reader of the opening should be able to complete: "she wants ______." If the LI is offstage, keep him physically OFFSTAGE (never "and then he walked in") — but do NOT keep the DESIRE offstage: under HOT_CRISIS + romance-forward the want is DESIRE-PRESSURE (see the SCENE WANT direction above), and his EFFECT ON HER — her body, her attention, what she nearly does because of him — MUST own the opening. Do NOT defer the wanting to a later remembered beat (li_texture_beat); the opening\'s emotional temperature is the wanting, not the crisis-analysis.\n   ↳ HOW IT SURFACES (any combination): (a) a physical orientation toward the want (she sits a certain way, holds the folder a certain way, watches the door, lingers at the threshold of a sentence she did not finish); (b) an INTERIOR sentence that names the wanting in her own voice ("I wanted Kess to notice without making me say it" / "I would have given the whole afternoon for someone to take this off my desk"); (c) a small behavior that BETRAYS the want (she leaves the question half-asked, she does not correct the assumption, she holds the silence one beat longer than the conversation needs); (d) an embodied resistance to the wanting (she catches herself doing the wanting and pulls back). At least ONE of these must land in the first 250 words.\n   ↳ FORBIDDEN — these are plot wants, not scene wants: "she wanted to uncover the truth" / "she wanted to solve the audit" / "she wanted to win the case" / "she wanted to recover the drive." Those restate the A-plot goal. The scene_want is romance-facing — about being seen / being carried / being chosen / being let alone / being asked / being trusted / being noticed — derived from her private_hope.\n   ↳ FORBIDDEN — the want must be achievable in THIS scene without the LI appearing. If your rendering of the want requires "and then he walked in," REWRITE. The LI need not APPEAR (presence) — but the want MAY point AT him (direction), per the romance engine: ' + _swFacingPlain + '\n   ↳ CAUSALITY: removing the SCENE WANT from your draft should make the scene feel like a procedural — "person doing thing." Removing the A-plot should leave the wanting still legible. If both are removable and the scene still works, the architecture is upside down.\n' : '') +
+          (sceneWant ? '• SCENE WANT (REQUIRED — Roman 2026-06-01, audit-driven). What she WANTS IN THIS SCENE, derived from her private_hope and scoped to this room. The smallest bridge between her story-level secret hope and the prose: ' + sceneWant + '\n   ↳ The first 250 words MUST make this want LEGIBLE — a reader of the opening should be able to complete: "she wants ______." If the LI is offstage, keep him physically OFFSTAGE (never "and then he walked in") — but do NOT keep the DESIRE offstage: under HOT_CRISIS + romance-forward the want is DESIRE-PRESSURE (see the SCENE WANT direction above), and his EFFECT ON HER — her body, her attention, what she nearly does because of him — MUST own the opening. Do NOT defer the wanting to a later remembered beat (li_texture_beat); the opening\'s emotional temperature is the wanting, not the crisis-analysis.\n   ↳ HOW IT SURFACES (any combination): (a) a physical orientation toward the want (she sits a certain way, holds the folder a certain way, watches the door, lingers at the threshold of a sentence she did not finish); (b) an INTERIOR sentence that names the wanting in her own voice ("I wanted Kess to notice without making me say it" / "I would have given the whole afternoon for someone to take this off my desk"); (c) a small behavior that BETRAYS the want (she leaves the question half-asked, she does not correct the assumption, she holds the silence one beat longer than the conversation needs); (d) an embodied resistance to the wanting (she catches herself doing the wanting and pulls back). At least ONE of these must land in the first 250 words.\n   ↳ FORBIDDEN — these are plot wants, not scene wants: "she wanted to uncover the truth" / "she wanted to solve the audit" / "she wanted to win the case" / "she wanted to recover the drive." Those restate the A-plot goal. The scene_want is romance-facing — about being seen / being carried / being chosen / being let alone / being asked / being trusted / being noticed — derived from her private_hope.\n' +
+          // HE IS ON STAGE, so "achievable without the LI appearing" contradicts the staging —
+          // and the assembled payload carried it directly alongside the LI PRESENCE block. The
+          // requirement underneath it survives: the want is HERS and she acts on it, instead of
+          // waiting for his entrance to answer it.
+          (state._scene1LIOnStage === true
+            ? '   ↳ THE WANT IS HERS, NOT HIS ARRIVAL. He IS present in this scene, so the want may involve him directly. What it may NOT do is wait for his entrance to satisfy it: never write the want as resolved by "and then he walked in." She acts on it herself — whether he is already in the room or arrives at the moment the plan gives him. The want MAY point AT him (direction), per the romance engine: '
+            : '   ↳ FORBIDDEN — the want must be achievable in THIS scene without the LI appearing. If your rendering of the want requires "and then he walked in," REWRITE. The LI need not APPEAR (presence) — but the want MAY point AT him (direction), per the romance engine: ')
+          + _swFacingPlain + '\n   ↳ CAUSALITY: removing the SCENE WANT from your draft should make the scene feel like a procedural — "person doing thing." Removing the A-plot should leave the wanting still legible. If both are removable and the scene still works, the architecture is upside down.\n' : '') +
           // 2026-05-31 (Roman): PC Body Bible callback — peppered self-image
           // bon-mots. Sits separately from the structural pc_self_presentation
           // beat; both are required (different jobs: anchor vs recurrence).
