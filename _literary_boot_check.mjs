@@ -50,6 +50,8 @@ const PRIOR = Number(process.env.SB_PRIOR || 0);
 const REPLAY_PLANNER = process.env.SB_REPLAY_PLANNER || null;
 const REPLAY_BODY = REPLAY_PLANNER ? fs.readFileSync(REPLAY_PLANNER, 'utf8') : null;
 const LIVE_REPAIR = process.env.SB_LIVE_REPAIR === '1';
+const REPLAY_REPAIR = process.env.SB_REPLAY_REPAIR || null;
+const REPLAY_REPAIR_BODY = REPLAY_REPAIR ? fs.readFileSync(REPLAY_REPAIR, 'utf8') : null;
 const EXPECT_FAULT = process.env.SB_EXPECT_FAULT || 'NO_CONTACT';
 let repairDispatched = false, repairSpend = 0, repairRetained = 0, repairReceipt = false;
 let repairMeta = null, repairFaultMatched = null;
@@ -129,6 +131,10 @@ await page.route('**/*', async (route) => {
     repairFaultMatched = usr.indexOf(EXPECT_FAULT) !== -1;
     fs.writeFileSync(OUT + '/ARM1_repair_request_assembled.json', JSON.stringify({ url, body }, null, 2));
     say('  [REPAIR] assembled; expected fault "' + EXPECT_FAULT + '" present: ' + repairFaultMatched);
+    if (REPLAY_REPAIR_BODY) {
+      say('  [REPLAY] serving the SAVED repair response — the paid repair call is NOT repeated');
+      return route.fulfill({ status: 200, contentType: 'application/json', body: REPLAY_REPAIR_BODY });
+    }
     if (!LIVE_REPAIR) {
       say('  [REPAIR] not authorised in this run — refusing');
       return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"repair not authorised"}' });

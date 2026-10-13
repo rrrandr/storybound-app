@@ -286525,6 +286525,34 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             }
           }
         } catch (_invOuter) { if (_invOuter && _invOuter._scene1SkeletonFatal) throw _invOuter; }
+        // ── THE MODEL'S OWN WORDS, SNAPSHOTTED BEFORE THE ENGINE REWRITES THEM ──────────────────
+        // Everything below this line replaces {TARGET} with the RECORD'S canonical object name and
+        // adds engine-resolved fields (target, environment_target, environment_axis). That is
+        // correct, and it happens AFTER the identity scan on purpose — the scan must judge what the
+        // MODEL wrote, not what we substituted.
+        //
+        // But the repair path re-runs this whole pipeline on the envelope it got back, and that
+        // envelope is the MUTATED one. So on the second pass the identity scan read our own
+        // substitution as model-authored text. Measured on the literary arm of 2026-10-12: the
+        // planner wrote "{TARGET} sits across her mouth" (zero occurrences of any person name), the
+        // engine substituted object O4's record name "the gossamer band tied across the
+        // Sacrificiant's mouth", and revalidation then failed with 'the plan introduces 2 person(s)
+        // who are not in this story: "Sacrificiant"' — two occurrences of one role noun in two
+        // fields, in text no model ever produced.
+        //
+        // This snapshot is the fix's whole mechanism: the pre-substitution envelope is preserved so
+        // the repair can reconstruct a GENUINELY raw-response-equivalent plan, exactly as its own
+        // comment says it intends to. No check is weakened, no name is whitelisted, and the
+        // substitution itself is unchanged.
+        var _pristineEnvelope = null, _pristineSkelRaw = null;
+        try {
+          _pristineEnvelope = JSON.parse(JSON.stringify(_envelope));
+          _pristineSkelRaw = (_pristineEnvelope && typeof _pristineEnvelope.scene_skeleton === 'object')
+            ? _pristineEnvelope.scene_skeleton
+            : ((_pristineEnvelope && _pristineEnvelope.opening_spine
+                && typeof _pristineEnvelope.opening_spine.scene_skeleton === 'object')
+                ? _pristineEnvelope.opening_spine.scene_skeleton : null);
+        } catch (_) { _pristineEnvelope = null; _pristineSkelRaw = null; }
         // ── CONTRACT v2: NOW the selected ids become the seed's own text, for every downstream reader ──
         try {
           if (_v2 && _v2.pending) {
@@ -287824,7 +287852,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
               // is never written — but settling that gate is a FINAL-outcome side effect now, not
               // this function's job; the call site does it exactly once, after repair is
               // resolved one way or the other, never here and never twice.
-              return { ok: false, faults: _faults.slice(), rawEnvelope: _skelRaw, fullPlan: _parse.plan };
+              // The PRISTINE pair travels with the mutated one. Callers that want to show the
+              // reader what went wrong keep using rawEnvelope/fullPlan; the repair path, which
+              // re-validates, must use the pristine pair or it judges our own substitution as the
+              // model's text. Null only if the snapshot itself failed, and the repair path checks.
+              return { ok: false, faults: _faults.slice(), rawEnvelope: _skelRaw, fullPlan: _parse.plan,
+                rawEnvelopePristine: _pristineSkelRaw, fullPlanPristine: _pristineEnvelope };
             }
           }
             // Validation passed — but the chain is NOT yet committed. A scaffold builder
@@ -287927,7 +287960,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 _validation = { ok: false, faults: ['repair response failed to parse: ' + (_repairParsedS1.error || 'unknown')] };
               } else {
                 var _repairSkeletonS1 = (_repairParsedS1.plan && _repairParsedS1.plan.scene_skeleton) || _repairParsedS1.plan || {};
-                var _mergedS1 = _applySkeletonRepairStrict(_validation.rawEnvelope, _repairSkeletonS1, _repairReqS1.askFor, _classifiedS1.characters);
+                // MERGE INTO THE MODEL'S OWN ENVELOPE, not the substituted one. The repair returns
+                // corrected model-authored fields; splicing them into the mutated envelope would
+                // carry the engine's canonical-name substitution back into the revalidated plan and
+                // reproduce the same false invented-person fault.
+                var _mergeBaseS1 = _validation.rawEnvelopePristine || _validation.rawEnvelope;
+                var _mergedS1 = _applySkeletonRepairStrict(_mergeBaseS1, _repairSkeletonS1, _repairReqS1.askFor, _classifiedS1.characters);
                 if (_mergedS1.rejected) {
                   try { console.error('[SCENE1:SKELETON:REPAIR_SCOPE_VIOLATION] out-of-scope key(s): ' + _mergedS1.tamperAttempted.join(', ')); } catch (_) {}
                   _validation = { ok: false, faults: ['REPAIR_SCOPE_VIOLATION: repair response returned out-of-scope key(s): ' + _mergedS1.tamperAttempted.join(', ')] };
@@ -287935,9 +287973,32 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                   // Reconstruct a full raw-response-equivalent: the ORIGINAL full plan, with ONLY
                   // the repaired scene_skeleton fields spliced in, then re-run the IDENTICAL
                   // parse->reconcile->validate->derive pipeline from scratch — never a shortcut.
-                  var _repairedFullPlanS1 = JSON.parse(JSON.stringify(_validation.fullPlan || {}));
-                  if (_repairedFullPlanS1.opening_spine) _repairedFullPlanS1.opening_spine.scene_skeleton = _mergedS1.envelope;
-                  else _repairedFullPlanS1.scene_skeleton = _mergedS1.envelope;
+                  //
+                  // "RAW-RESPONSE-EQUIVALENT" MEANS PRE-SUBSTITUTION. fullPlan carries the engine's
+                  // own {TARGET} -> canonical-object-name substitution, so reconstructing from it
+                  // fed our text back through the invented-person scan as if the model had written
+                  // it. The pristine snapshot is what this line always meant; fullPlan remains the
+                  // fallback for the case where snapshotting failed, which preserves today's
+                  // behaviour rather than inventing a new failure mode.
+                  var _repairedFullPlanS1 = JSON.parse(JSON.stringify(
+                    _validation.fullPlanPristine || _validation.fullPlan || {}));
+                  // SPLICE INTO EXACTLY ONE PLACE. The envelope normaliser may already have moved
+                  // scene_skeleton from opening_spine to the top level, and the pristine snapshot
+                  // is taken after that move — so writing unconditionally into opening_spine left
+                  // TWO skeletons and the next pass refused to choose between them. Write where the
+                  // plan actually carries it, and leave no duplicate behind.
+                  if (Object.prototype.hasOwnProperty.call(_repairedFullPlanS1, 'scene_skeleton')) {
+                    _repairedFullPlanS1.scene_skeleton = _mergedS1.envelope;
+                    if (_repairedFullPlanS1.opening_spine
+                        && typeof _repairedFullPlanS1.opening_spine === 'object') {
+                      try { delete _repairedFullPlanS1.opening_spine.scene_skeleton; } catch (_) {}
+                    }
+                  } else if (_repairedFullPlanS1.opening_spine
+                             && typeof _repairedFullPlanS1.opening_spine === 'object') {
+                    _repairedFullPlanS1.opening_spine.scene_skeleton = _mergedS1.envelope;
+                  } else {
+                    _repairedFullPlanS1.scene_skeleton = _mergedS1.envelope;
+                  }
                   _validation = _tryValidateOpeningSkeletonFromRaw(JSON.stringify(_repairedFullPlanS1));
                 }
               }
