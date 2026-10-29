@@ -19,6 +19,10 @@ import fs from 'fs';
 import { installSession, configBody, isAuthOrigin, installEntitledProfileStub, verifySubscriptionBody } from './_test_session_env.mjs';
 
 const DIR = '_cg_ground_truth_census_out';
+// CLEARED EACH RUN. The directory survived failed runs, so after the entrance-affordance change
+// aborted this harness before any CG request, Sep-16 artifacts were still sitting here and read
+// as current CG coverage. A run's output directory now contains only that run's output.
+try { fs.rmSync(DIR, { recursive: true, force: true }); } catch (_) {}
 fs.mkdirSync(DIR, { recursive: true });
 
 const results = [];
@@ -173,8 +177,26 @@ await page.route('**/api/**', async route => {
     const rec = { url, model: body?.model, max_tokens: body?.max_tokens, temperature: body?.temperature,
       sysHead: String((body?.messages?.find(m => m.role === 'system') || {}).content || '').slice(0, 200),
       usrHead: String((body?.messages?.find(m => m.role === 'user') || {}).content || '').slice(0, 200), stack };
+    // ── KEEP THE WHOLE BODY, NOT A 200-CHAR HEAD (2026-10-28) ──
+    // An undeclared call is still a real outgoing request built by real source. Recording only
+    // sysHead/usrHead meant the CG path's author-scale calls — the three _authorFullScenePolicy
+    // tiers reached through the OAS Say/Do entrance — left nothing that could be checked against
+    // the prompt source. The full system+user text is written per call so a later check reads the
+    // request that was actually assembled. Still blocked: nothing is forwarded.
+    const _un = blockedUnknown.length;
+    const _sys = String((body?.messages?.find(m => m.role === 'system') || {}).content || '');
+    const _usr = String((body?.messages?.find(m => m.role === 'user') || {}).content || '');
+    rec.dump = `undeclared_${_un}_${p.replace(/[^a-z0-9]+/gi, '_')}.txt`;
+    rec.sysLen = _sys.length; rec.usrLen = _usr.length;
+    try {
+      fs.writeFileSync(DIR + '/' + rec.dump,
+        `=== UNDECLARED MODEL CALL (BLOCKED, NOT FORWARDED)\n=== url=${url} model=${body?.model} `
+        + `max_tokens=${body?.max_tokens} temperature=${body?.temperature}\n=== stack: ${stack}\n\n`
+        + `=== SYSTEM (${_sys.length} chars) ===\n${_sys}\n\n=== USER (${_usr.length} chars) ===\n${_usr}\n`);
+    } catch (_) {}
     blockedUnknown.push(rec);
-    console.error('[UNDECLARED] ' + url + ' mt=' + body?.max_tokens + ' t=' + body?.temperature);
+    console.error('[UNDECLARED] ' + url + ' mt=' + body?.max_tokens + ' t=' + body?.temperature
+      + ' sys=' + _sys.length + ' usr=' + _usr.length + ' -> ' + rec.dump);
     console.error('             stack: ' + stack.replace(/\n/g, ' | '));
     return route.fulfill({ status: 599, contentType: 'application/json', body: JSON.stringify({ error: 'UNDECLARED_MODEL_ROLE', blocked: true }) });
   }
@@ -280,6 +302,21 @@ ok('First Sacrifice STARTER_STORIES entry found', expected.found, JSON.stringify
 console.log('  [EXPECTED] render_mode (live from app) = ' + JSON.stringify(expected.render_mode));
 if (!expected.found) { await browser.close(); process.exit(1); }
 
+// ── DISMISS THE CHROME THAT NOW SITS OVER THE MENU (2026-10-28) ──
+// This harness predates the splash overlay and the promo dev banner, both of which intercept
+// pointer events on #burgerBtn: Playwright reported "<img id=splashTitle …> from
+// <div id=splashOverlay> subtree intercepts pointer events", then the same for
+// <button data-promo-action=dismiss> in #promoDevBanner, and the click timed out. They are
+// dismissed through the page's OWN controls where one exists, and otherwise hidden — no state
+// writes, no mode override, and the launch sequence below is unchanged.
+await page.evaluate(() => {
+  try { document.querySelector('#promoDevBanner [data-promo-action="dismiss"]')?.click(); } catch (_) {}
+  for (const sel of ['#splashOverlay', '#promoDevBanner']) {
+    try { const el = document.querySelector(sel); if (el) el.style.display = 'none'; } catch (_) {}
+  }
+});
+await page.waitForTimeout(300);
+
 // ── STEP 1: launch ONLY via the real Library -> Read -> baked OAS -> Go path. NO state writes. ──
 const burgerVisible = await page.evaluate(() => { const b = document.getElementById('burgerBtn'); return !!(b && b.getClientRects().length > 0); });
 if (burgerVisible) {
@@ -298,11 +335,58 @@ await page.click('.library-book[data-story-id="starter_first_sacrifice"]');
 await page.waitForTimeout(800);
 await page.click('#zoomReadBtn');
 await page.waitForTimeout(4000);
-const oasBtnVisible = await page.evaluate(() => !!document.getElementById('bakedOASEnterBtn') && document.getElementById('bakedOASEnterBtn').getClientRects().length > 0);
-ok('baked OAS entry button visible', oasBtnVisible);
+// ── TWO ENTRANCE AFFORDANCES, NOT ONE (2026-10-06 product change) ──
+// This harness drove #bakedOASEnterBtn, the standalone "Continue". app.js:152702 now renders
+// that ONLY for packages without `oasHandoff.oasEntrance`; where the entrance is declared, the
+// authored page ends on an open question and the reader's own Say/Do submission IS the OAS's
+// first turn (#bakedOASSay / #bakedOASDo / #bakedOASSubmitBtn, app.js:152728). First Sacrifice
+// now declares one, so the old button is never in the DOM and the run stopped before any CG
+// request was made. Whichever affordance the package actually renders is used; a package with
+// neither is still a hard failure.
+const entrance = await page.evaluate(() => {
+  const vis = (id) => { const el = document.getElementById(id); return !!(el && el.getClientRects().length > 0); };
+  if (vis('bakedOASEnterBtn')) return 'continue';
+  if (vis('bakedOASSubmitBtn')) return 'sayDo';
+  return null;
+});
+console.log('  [ENTRANCE] baked OAS entrance affordance = ' + JSON.stringify(entrance));
+const oasBtnVisible = !!entrance;
+// OBSERVE THE PAGE BEFORE GUESSING AT A NEW SELECTOR. When the entry button is not visible,
+// dump what IS on screen — whether the element is absent or merely hidden, and every visible
+// button id/text — so the next step is read off the real DOM instead of another guess.
+if (!oasBtnVisible) {
+  const diag = await page.evaluate(() => {
+    const el = document.getElementById('bakedOASEnterBtn');
+    const vis = (n) => n.getClientRects().length > 0;
+    return {
+      entryBtn: el ? { present: true, visible: vis(el),
+        display: getComputedStyle(el).display, visibility: getComputedStyle(el).visibility,
+        parentHidden: !!(el.closest('[hidden]') || el.closest('.hidden')),
+        parentId: el.parentElement && el.parentElement.id } : { present: false },
+      visibleButtons: [...document.querySelectorAll('button,[role="button"]')].filter(vis)
+        .slice(0, 40).map((b) => ({ id: b.id || null, cls: b.className || null,
+          txt: (b.textContent || '').trim().slice(0, 40) })),
+      overlays: [...document.querySelectorAll('[class*=overlay],[class*=modal],[id*=Overlay],[id*=Modal]')]
+        .filter(vis).map((o) => o.id || o.className).slice(0, 15),
+      zoomOpen: !!document.querySelector('.library-zoom, #libraryZoom, [class*=zoom]'),
+    };
+  });
+  fs.writeFileSync(DIR + '/oas_entry_diag.json', JSON.stringify(diag, null, 2));
+  console.log('  [DIAG] wrote ' + DIR + '/oas_entry_diag.json');
+  console.log('  [DIAG] entryBtn: ' + JSON.stringify(diag.entryBtn));
+  console.log('  [DIAG] overlays: ' + JSON.stringify(diag.overlays));
+}
+ok('baked OAS entrance affordance visible', oasBtnVisible, JSON.stringify({ entrance }));
 if (!oasBtnVisible) { await browser.close(); process.exit(1); }
 
-await page.click('#bakedOASEnterBtn');
+if (entrance === 'continue') {
+  await page.click('#bakedOASEnterBtn');
+} else {
+  // The reader's answer to the authored page's open question. This is the OAS's first turn, so
+  // it is a real submission through the product's own control — not a state write.
+  await page.fill('#bakedOASDo', 'she stays where she is and lets him finish the question');
+  await page.click('#bakedOASSubmitBtn');
+}
 await page.waitForTimeout(1000);
 const goBtnVisible = await page.evaluate(() => { const el = document.getElementById('buGoBtn'); return !!(el && el.getClientRects().length > 0); });
 ok('Genesis gate #buGoBtn visible', goBtnVisible);
