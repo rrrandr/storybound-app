@@ -89,9 +89,43 @@ const RECOVERY_BY_MODE = {
   none: null,
 };
 
+
+// ── SHAPE-FAITHFUL PC-BODY-BIBLE FIXTURE (test data, clearly labelled) ────────────────────
+// The production consumer is _generatePCBodyBibleUncached: it dispatches
+// _callTieredProvider('pcBodyBible', …) and reads `data.content` as a JSON STRING, then parses
+// the fields below. This fixture returns exactly that envelope and exactly those fields, so the
+// reply travels the REAL creation → merge → persistence path. Nothing is planted into state and
+// no completion flag is forced.
+//
+// EVERY VALUE BELOW IS INVENTED TEST DATA. It is not canon, not a player choice and not a
+// model's portrait; it exists only to prove the wiring carries individual appearance through.
+const PC_BIBLE_FIXTURE = {
+  age: '31', ancestry: '',
+  height: '[FIXTURE] a little above average height',
+  build: '[FIXTURE] narrow-shouldered, long through the forearms',
+  hair: '[FIXTURE] dark coral, coarse and heavy, worn twisted up off the neck for work',
+  complexion: '[FIXTURE] deep teal with a colder cast along the jaw',
+  face: '[FIXTURE] a long, serious face that reads older in profile than head-on',
+  signature_feature: '[FIXTURE] the flat of her left hand, burn-marked pale from years of kiln work',
+  visual_anchor: { focus: 'the hands', detail: '[FIXTURE] she keeps them half-closed when she is not using them' },
+  second_celebrated_feature: '[FIXTURE] a low, unhurried voice that does not rise when she is contradicted',
+  stress_tic: '[FIXTURE] turns a ring once around her finger',
+  desire_tell: '[FIXTURE] goes still instead of leaning in',
+  impatience_tell: '[FIXTURE] answers the question before it finishes',
+  confidence_tell: '[FIXTURE] sets both hands flat and waits',
+  vulnerability_tell: '[FIXTURE] looks at her own hands',
+  emotional_weather: '[FIXTURE] contained, with the weather showing late',
+};
+const isPcBibleRequest = (both) => /"signature_feature": "<the ONE thing worth celebrating/.test(both)
+  || /PC BODY BIBLE/i.test(both) && /"complexion":/.test(both);
+
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();
 const page = await ctx.newPage();
+const bibleLog = [];
+let pcBibleRespondedAt = 0, authorBuiltAt = 0;
+page.on('console', (m) => { const t = m.text();
+  if (/PC-BODY-BIBLE|BIBLE-ARTIFACT|BIBLE-APPEARANCE|BIBLE-READY|PHYSICAL-CANON|BEHAV-CANON|APPEARANCE-CANON|SKELETON\] shared boundary/i.test(t)) bibleLog.push(t); });
 
 // THE CHECKPOINT IS INSTALLED UNCHANGED. An earlier version of this harness pre-inserted scene
 // 6's verdict into the delivery log; it no longer does. The turn's own commit pass assesses scene
@@ -191,12 +225,21 @@ await ctx.route('**/*', async (route) => {
       `=== CONTINUATION AUTHOR · role=${role} · model=${b && b.model}\n\n`
       + `=== SYSTEM (${sys.length} chars) ===\n${sys}\n\n=== USER (${usr.length} chars) ===\n${usr}\n`);
     authorReqs.push({ sys, usr, role, file: fname });
+    if (!authorBuiltAt) authorBuiltAt = Date.now();
     rec.door = 'AUTHOR(captured+aborted)';
     doors.push({ door: 'AUTHOR(captured+aborted)', role });
     return route.abort();
   }
 
   // ── EVERY OTHER DOOR, answered from a labelled fixture ────────────────────────────────
+  if (isPcBibleRequest(both)) {
+    // DELAYED ON PURPOSE (SB_BIBLE_DELAY_MS, default 6000). An immediate reply cannot distinguish
+    // "the author waited for completion" from "completion happened to finish first".
+    const _d = Number(process.env.SB_BIBLE_DELAY_MS || 6000);
+    await new Promise((r) => setTimeout(r, _d));
+    pcBibleRespondedAt = Date.now();
+    return give(JSON.stringify(PC_BIBLE_FIXTURE), 'PC_BODY_BIBLE(FIXTURE, delayed ' + _d + 'ms)', 'gpt-4o-mini');
+  }
   if (/canonicalization and normalization engine for Storybound|archetypal distillation/.test(both)) {
     return give(JSON.stringify({ canonical_instruction: usr.slice(0, 120), changed: false,
       rejection_reason: null, substitutions: [] }), 'NORMALIZATION');
@@ -386,6 +429,7 @@ try {
   }, askedRowLive).catch(() => ({}));
   globalThis.__src = srcData;
   fs.writeFileSync(OUT + '/SOURCE_PROBE.json', JSON.stringify(srcData, null, 2));
+  fs.writeFileSync(OUT + '/BIBLE_CONSOLE.log', bibleLog.join('\n'));
   fs.writeFileSync(OUT + '/DISPOSITIONS.json', JSON.stringify(after, null, 2));
   fs.writeFileSync(OUT + '/CALLS.json', JSON.stringify(calls, null, 2));
   globalThis.__after = after;
@@ -537,6 +581,36 @@ if (!authorReqs.length) {
   }
   fs.writeFileSync(OUT + '/AUTHOR_ASSIGNMENT_BLOCK.txt',
     (t.split('THIS SCENE\'S PURPOSE WITHIN')[1] || t).slice(0, 12000));
+}
+
+section('F — DID THE AUTHOR REQUEST WAIT FOR COMPLETION?');
+const reuseLines = bibleLog.filter((l) => /shared boundary: reusing cached/.test(l));
+const genLines = bibleLog.filter((l) => /shared boundary: generated/.test(l));
+const readyLines = bibleLog.filter((l) => /\[BIBLE-READY\]/.test(l));
+note('skeleton boundary', genLines.length + ' generated · ' + reuseLines.length + ' reused');
+note('readiness awaited', readyLines.length + ' time(s)');
+if (reuseLines.length) {
+  check('SKELETON REUSE (reached legitimately, validator not forced): readiness still ran and the'
+    + ' author request still carried the committed appearance',
+    readyLines.length > 0 && authorReqs.length > 0
+    && /\[FIXTURE\] dark coral/.test((authorReqs[authorReqs.length - 1].sys || '')),
+    reuseLines[0].slice(0, 120));
+} else {
+  inconclusive('skeleton reuse was exercised',
+    'this run only generated skeletons (' + genLines.length + '); the same-scene reuse branch was '
+    + 'not reached, so it stays unverified');
+}
+note('pc-bible fixture answered at', pcBibleRespondedAt ? new Date(pcBibleRespondedAt).toISOString() : '(never)');
+note('first author request built at', authorBuiltAt ? new Date(authorBuiltAt).toISOString() : '(never)');
+check('the author request was built AFTER the delayed completion answered — it waited',
+  !!pcBibleRespondedAt && !!authorBuiltAt && authorBuiltAt > pcBibleRespondedAt,
+  'responded ' + pcBibleRespondedAt + ' vs author ' + authorBuiltAt);
+if (authorReqs.length) {
+  const t = (authorReqs[authorReqs.length - 1].sys || '') + (authorReqs[authorReqs.length - 1].usr || '');
+  check('…and the committed appearance is in that request',
+    /\[FIXTURE\] dark coral/.test(t) && /burn-marked pale/.test(t));
+  check('…with the foundation preserved beside it',
+    /CORE CONTRADICTION/.test(t) && !/Age: 31/.test(t));
 }
 
 section('SCOPE AND PROVIDER-FREE ATTESTATION');

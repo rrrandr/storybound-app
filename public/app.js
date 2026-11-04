@@ -67413,32 +67413,35 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       var s = window.state; if (!s) return '';
       var turn = s.turnCount || 0;
       if (turn < 1) return '';
-      var pc = s.pcBodyBible || {}, li = s.liBodyBible || {}, ag = s.antagonistBodyBible || {};
-      function anchors(b) {
-        return [b.signature_feature, b.hair, b.eye_color, b.mouth_quality,
-                [b.height, b.build].filter(Boolean).join('/')].filter(Boolean).slice(0, 4);
-      }
-      var liA = anchors(li), pcA = anchors(pc), agA = anchors(ag);
-      if (!liA.length && !pcA.length && !agA.length) return '';
+      // NO PER-CHARACTER ESTABLISHMENT CLAIM IS MADE HERE (Roman 2026-11-04). This block used to
+      // assert, for any character whose BIBLE had values, that the reader had already been given
+      // their portrait — so a character with a full bible and no published description was told
+      // "do NOT re-describe" and could never be introduced. A later attempt to ground the same
+      // claim in state.descLedger was also wrong: those regexes cannot say WHOSE appearance they
+      // matched (see _resolveAppearanceMode's header). The block now carries ONLY the feature-level
+      // repetition hints the detector can actually support, and makes no claim about whether any
+      // character has been described.
       var liName = s.loveInterestName || 'the love interest';
       var pcName = (s.identity && (s.identity.displayPlayerName || s.identity.playerName)) || s.playerName || 'the protagonist';
-      var agName = (ag && (ag.name || ag.display_name)) || s.antagonistName || '';
+      // `ag` was removed with the bible-anchored gate; the antagonist name comes from state.
+      var agName = (s.antagonistBodyBible && (s.antagonistBodyBible.name
+        || s.antagonistBodyBible.display_name)) || s.antagonistName || '';
       var L = [];
       L.push('\n\nESTABLISHED DESCRIPTIONS — DO NOT RE-INTRODUCE (HARD — Roman 2026-06-08; observed live: the SAME features re-rendered near-verbatim every scene — "the silver at his temple", "the ringed iris", "his fingers tracing a glass", "she made herself smaller" — which reads as a calcified tic, not continuity).');
-      L.push('The reader was given these portraits already. They are ON THE PAGE as of the opening. This is scene ' + (turn + 1) + ' — the reader can already picture them.');
+      L.push('These are PHRASINGS already used in this issue. Vary the wording if a feature comes up again. This list says nothing about who the reader can or cannot already picture.');
       // APPEARANCE LOCK (Roman 2026-06-19): name WHO is established, NOT the descriptor values —
       // re-printing "pale gray eyes / silver at the temples" here (even to FORBID them) re-primes
       // the exact string the model then recycles (measured: this directive leaked 6 values/scene).
       // The established appearance lives in the story-so-far; the model reads it from there.
-      if (liA.length) L.push('  • ' + liName + '\'s appearance was established earlier — read it from the story so far; do NOT re-list or re-describe it.');
-      if (pcA.length) L.push('  • ' + pcName + '\'s appearance was established earlier — read it from the story so far; do NOT re-list or re-describe it.');
-      if (agA.length && agName) L.push('  • ' + agName + '\'s appearance was established earlier — read it from the story so far; do NOT re-list or re-describe it.');
+      L.push('  • Give a character on the page concrete physical grounding whenever the moment can carry it — enough for the reader to picture and recognise them. Afterwards, selective reminders and newly relevant details, not the portrait again.');
       L.push('RULES:');
-      L.push('  • Do NOT re-introduce or re-catalog an established feature as if the reader is meeting it for the first time. Re-describing the same hair / eyes / build / temple / scar / posture each scene is the #1 repetition tic — it is the failure this block exists to kill.');
+      L.push('  • THE DISTINCTION IS SIMPLE. Establish enough concrete appearance for the reader to picture and recognise a character. After that, selective reminders and newly relevant details — not the same catalogue again.');
+
+      L.push('  • FIRST PERSON IS NOT BODILESS. The protagonist\'s appearance may emerge through action, interaction and bodily experience — what her hands are doing, what someone reacts to, what she notices about herself only because the moment forces it. Do not stage a mirror, an inventory of her own features, or someone\'s attraction in order to deliver it.');
       L.push('  • The ~2-scene body cadence (in the Body Bible block) means RE-GROUND, not RE-DESCRIBE. To re-ground: EITHER deploy an established feature AS A TELL fused into present action (never a neutral restatement), OR surface a DIFFERENT, not-yet-used item from the pc_keenly_notices basket. Default to NEW observed behavioral detail over repeating the introduction.');
       L.push('  • A signature fixation (his temple, her ring) MAY recur across the arc — but as a glancing one- or two-word reference at most, only when the beat earns it, and NEVER re-explained as if new. If you find yourself writing the full descriptive clause again, cut it.');
       L.push('  • PROP / POSITION CONTINUITY: track what the protagonist is physically holding / wearing / where it is, within and across the scene. Do NOT contradict it (observed: the tarot deck "against her ribs / in her pocket" and then "in her hand" two sentences later). If it moved, show the move.');
-      try { var _bud = (typeof _descBudgetLines === 'function') ? _descBudgetLines() : []; if (_bud.length) { L.push('PER-ISSUE BUDGET — these were ESTABLISHED earlier this issue; now alias / imply / SUPPRESS (do NOT restate):'); _bud.forEach(function (x) { L.push('  • ' + x); }); } } catch (_) {}
+      try { var _bud = (typeof _descBudgetLines === 'function') ? _descBudgetLines() : []; if (_bud.length) { L.push('REPEATED PHRASINGS THIS ISSUE — vary the wording if the feature comes up again. These are phrase counts, not a record of who has been described:'); _bud.forEach(function (x) { L.push('  \u2022 ' + x); }); } } catch (_) {}
       return L.join('\n');
     } catch (_) { return ''; }
   }
@@ -67559,10 +67562,23 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
   function _descBudgetLines() {
     var out = []; try {
       var L = window.state && window.state.descLedger; if (!L) return out;
-      if (L.liEyeColor >= _DESC_BUDGETS.liEyeColor) out.push('his eye color — already named this issue: do NOT state the color again unless an intimate close-up earns it.');
-      if (L.liGreySilver >= _DESC_BUDGETS.liGreySilver) out.push('the grey/silver at his hair/temple — already established: a glancing one- or two-word reference at most, never re-described.');
-      if (L.widowsPeak >= _DESC_BUDGETS.widowsPeak) out.push("his widow's peak — already established: do not restate.");
-      if (L.pcHair >= _DESC_BUDGETS.pcHair) out.push("the protagonist's hair color — already established: do not re-catalog it.");
+      // ── PHRASE SHAPES, NOT PEOPLE (Roman 2026-11-04) ────────────────────────────────────
+      // These four counters were reported as facts about particular characters — "the
+      // protagonist's hair color — already established: do not re-catalog it" — and then used to
+      // PROHIBIT describing them. The detectors cannot support either half. `pcHair` matched
+      // JULIAN's "the fall of black hair" in the preserved paid run, so the prohibition landed on
+      // LIRAEL, who the same regex would miss if she said "my black hair". They are repetition
+      // hints about WORDING and are now phrased as that: vary the phrasing, with no claim about
+      // whose appearance it was and no instruction to withhold a description.
+      var _shape = function (k, label) {
+        if (L[k] >= _DESC_BUDGETS[k]) {
+          out.push('"' + label + '" \u2014 used ' + L[k] + '\u00d7 already; phrase it differently if it recurs.');
+        }
+      };
+      _shape('liEyeColor', 'his <colour> eyes');
+      _shape('liGreySilver', 'the grey/silver at his hair or temple');
+      _shape('widowsPeak', "widow's peak");
+      _shape('pcHair', 'her/the <colour> hair');
       if (L.chandeliersBallroom >= _DESC_BUDGETS.chandeliersBallroom) out.push('chandeliers / ballroom glamour — already set: vary or suppress; do not re-establish the venue sparkle.');
       var evs = Object.keys(L.eventNames || {});
       if (evs.length) out.push('the event ("' + evs[0] + '") — named already: use an alias now ("the gala" / "the benefit" / "the floor"), not the full name.');
@@ -71265,6 +71281,40 @@ function _buildCharacterPlusShared(opts) {
   // of WRITE them. The CADENCE DELTAS are static doctrine and ride along (also stable). The
   // surrounding prose-discipline DOCTRINE (notice-filter / source-weighting / shape-banks)
   // stays in the per-turn tail — it contains per-story _rotatingExemplars and isn't hoisted.
+  // ══ BIBLE READINESS, AWAITED BEFORE THE PROFILES ARE READ (Roman 2026-11-04) ══════════════
+  // THE ORDERING DEFECT. The continuation builds _persistentStableTail — which calls
+  // _buildBodyBibleCanonBlock() and so reads the profiles — and then assembles fullSys, BEFORE
+  // _generateSceneSkeleton runs and awaits the bible kickoff. Those are local strings: a cache
+  // cleared afterwards cannot change them, which is why clearing one had no effect. Worse, when a
+  // valid skeleton is REUSED the kickoff never runs at all, so readiness never happened.
+  //
+  // This is the same kickoff, awaited at the right time. It adds no new generator and no early
+  // planning: _bodyBibleOnce's own duplicate-call protection and ownership tokens still decide
+  // whether anything is actually dispatched, so calling this when the bibles are already complete
+  // is a no-op.
+  async function _ensureBodyBiblesReady(s) {
+    try {
+      s = s || window.state; if (!s) return;
+      var jobs = [];
+      var incomplete = (typeof window._pcAppearanceRepairEligible === 'function')
+        ? window._pcAppearanceRepairEligible(s.pcBodyBible) : false;
+      if (typeof window._generatePCBodyBible === 'function' && (!s.pcBodyBible || incomplete)) {
+        jobs.push(window._generatePCBodyBible());
+      }
+      if (typeof window._generateLIBodyBible === 'function' && !s.liBodyBible) jobs.push(window._generateLIBodyBible());
+      if (typeof window._generateAntagonistBodyBible === 'function' && !s.antagonistBodyBible) jobs.push(window._generateAntagonistBodyBible());
+      if (!jobs.length) return;
+      try { console.log('[BIBLE-READY] awaiting ' + jobs.length + ' bible job(s) BEFORE the '
+        + 'continuation reads the profiles' + (incomplete ? ' (pc appearance incomplete)' : '')); } catch (_) {}
+      await Promise.all(jobs);
+      try { console.log('[BIBLE-READY] complete — assembly may now read the profiles'); } catch (_) {}
+    } catch (e) {
+      try { console.warn('[BIBLE-READY] failed, assembly continues with what is present: '
+        + (e && e.message)); } catch (_) {}
+    }
+  }
+  try { window._ensureBodyBiblesReady = _ensureBodyBiblesReady; } catch (_) {}
+
   function _buildBodyBibleCanonBlock() {
     try {
       var _pcB = (typeof window._renderPCBodyBibleCompact === 'function') ? window._renderPCBodyBibleCompact() : '';
@@ -101373,7 +101423,7 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       // exists. Antagonist generator self-gates on shape A/B + named.
       try {
         var _bks = [];
-        if (typeof window._generatePCBodyBible === 'function' && !state.pcBodyBible) _bks.push(window._generatePCBodyBible());
+        if (typeof window._generatePCBodyBible === 'function' && (!state.pcBodyBible || (typeof window._pcAppearanceRepairEligible === 'function' && window._pcAppearanceRepairEligible(state.pcBodyBible)))) _bks.push(window._generatePCBodyBible());
         if (typeof window._generateLIBodyBible === 'function' && !state.liBodyBible) _bks.push(window._generateLIBodyBible());
         if (typeof window._generateAntagonistBodyBible === 'function' && !state.antagonistBodyBible) _bks.push(window._generateAntagonistBodyBible());
         if (_bks.length) await Promise.all(_bks);
@@ -243236,7 +243286,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // ship's awaiter log never fired in observed-live runs.
       try {
         var _spineBks = [];
-        if (typeof _generatePCBodyBible === 'function' && !s.pcBodyBible) _spineBks.push(_generatePCBodyBible());
+        if (typeof _generatePCBodyBible === 'function' && (!s.pcBodyBible || (typeof window._pcAppearanceRepairEligible === 'function' && window._pcAppearanceRepairEligible(s.pcBodyBible)))) _spineBks.push(_generatePCBodyBible());
         if (typeof _generateLIBodyBible === 'function' && !s.liBodyBible) _spineBks.push(_generateLIBodyBible());
         if (typeof _generateAntagonistBodyBible === 'function' && !s.antagonistBodyBible) _spineBks.push(_generateAntagonistBodyBible());
         if (_spineBks.length) {
@@ -253474,7 +253524,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // (Bibles read aPlot.antagonistShape / pcWound / etc).
     try {
       var _cgBks = [];
-      if (typeof window._generatePCBodyBible === 'function' && !state.pcBodyBible) _cgBks.push(window._generatePCBodyBible());
+      if (typeof window._generatePCBodyBible === 'function' && (!state.pcBodyBible || (typeof window._pcAppearanceRepairEligible === 'function' && window._pcAppearanceRepairEligible(state.pcBodyBible)))) _cgBks.push(window._generatePCBodyBible());
       if (typeof window._generateLIBodyBible === 'function' && !state.liBodyBible) _cgBks.push(window._generateLIBodyBible());
       if (typeof window._generateAntagonistBodyBible === 'function' && !state.antagonistBodyBible) _cgBks.push(window._generateAntagonistBodyBible());
       if (_cgBks.length) await Promise.all(_cgBks);
@@ -282417,8 +282467,76 @@ Generate the synopsis now.` }
         aplotGoal: (s.aPlot && s.aPlot.goal) ? String(s.aPlot.goal) : ''
       };
     }
+    // INDIVIDUAL APPEARANCE = the fields a reader needs to picture a specific person. `age` and
+    // `ancestry` are deliberately NOT in this set: an adulthood statement is not an appearance.
+    // ALIGNED WITH THE RESPONSE CONTRACT (Roman 2026-11-04, corrected). `eye_color` was in this
+    // set but _generatePCBodyBibleUncached never REQUESTS it — its JSON schema asks for age,
+    // ancestry, height, build, hair, complexion, face, signature_feature, visual_anchor,
+    // second_celebrated_feature and the tells. A required field the generator cannot return makes
+    // completion fire forever, so the required set is exactly the physical fields it requests.
+    var _PC_APPEARANCE_FIELDS = ['hair', 'complexion', 'height', 'build', 'face',
+      'signature_feature'];
+    function _pcAppearanceMissing(b) {
+      if (!b || typeof b !== 'object') return _PC_APPEARANCE_FIELDS.slice();
+      return _PC_APPEARANCE_FIELDS.filter(function (f) {
+        var v = b[f];
+        return !(v && String(v).trim().length > 1);
+      });
+    }
+    // EXPOSED: the kickoff CALL SITES are the other half of the creation/reuse boundary, and they
+    // guard on `!state.pcBodyBible` alone — so a psychology-only bible is non-null, the generator
+    // is never entered, and the gate inside it cannot run. They consult this instead.
+    // ── A PARTIAL RESPONSE IS RECORDED, NOT RETRIED EVERY TURN (Roman 2026-11-04) ───────
+    // `_pcAppearanceIncomplete` states the honest truth about the record and is used for
+    // reporting. ELIGIBILITY is a different question: once a repair has been attempted, a record
+    // that is still missing a field must NOT re-dispatch on every subsequent turn. The attempt is
+    // stamped on the bible (`_apprRepair`), so the record stays honestly incomplete while
+    // automatic regeneration stops. A retry is then the existing explicit refresh path — a
+    // fingerprint change takes _bibleArtifactBefore's EXPLICIT REFRESH branch as it always did.
+    function _pcAppearanceRepairEligible(b) {
+      if (!b || typeof b !== 'object') return true;
+      if (b._apprRepair) return false;
+      return _pcAppearanceIncomplete(b);
+    }
+    function _pcAppearanceIncomplete(b) {
+      // FIELD-WISE, NOT ALL-OR-NOTHING, AND NOT A QUOTA (Roman 2026-11-04, corrected).
+      // The first version only fired when EVERY individual field was missing, which let a record
+      // carrying one physical value — the paid checkpoint's `age`, an adulthood statement — count
+      // as a usable appearance. There is also no threshold here: the question is never "are there
+      // enough features", it is "is this specific field absent". Any absent field is completed and
+      // every present one survives the merge untouched, so a portrait the player or canon shaped
+      // is never regenerated — only the gaps beside it are filled.
+      return _pcAppearanceMissing(b).length > 0;
+    }
+
+    try {
+      window._pcAppearanceIncomplete = _pcAppearanceIncomplete;
+      window._pcAppearanceMissing = _pcAppearanceMissing;
+      window._pcAppearanceRepairEligible = _pcAppearanceRepairEligible;
+    } catch (_) {}
+
     async function _generatePCBodyBible() {
       var storyId = String((window.state && window.state.storyId) || '');
+      // ── REPAIR INTENT IS DECIDED BEFORE ANY LEDGER BRANCH (Roman 2026-11-04, corrected) ──
+      // This used to be set inside the reuse-committed and Tier-0 branches, so the
+      // "EXPLICIT REFRESH — declared inputs changed" path skipped it entirely: generation ran and
+      // the whole generated bible committed, replacing the existing psychology. Whether this call
+      // is a REPAIR is a property of the record on disk, not of which ledger branch is taken, so
+      // it is decided here and the commit-point merge honours it on every path.
+      try {
+        var _exist = window.state && window.state.pcBodyBible;
+        if (_exist && _pcAppearanceRepairEligible(_exist)) {
+          window.state._pcAppearanceCompletion = { startedAt: Date.now(),
+            preserved: Object.keys(_exist),
+            priorValues: Object.assign({}, _exist),
+            missing: _pcAppearanceMissing(_exist) };
+          console.warn('[BIBLE-APPEARANCE] this call is an APPEARANCE REPAIR, not a refresh — '
+            + 'missing [' + _pcAppearanceMissing(_exist).join(',') + '], preserving ['
+            + Object.keys(_exist).join(',') + '] whichever ledger branch is taken');
+        } else if (window.state) {
+          window.state._pcAppearanceCompletion = null;   // a genuine full refresh commits whole
+        }
+      } catch (_) {}
       var fp = _bibleFingerprint(_pcBibleFingerprintInputs());
       // MIGRATION (a story saved before this ledger existed already has state.pcBodyBible set with
       // no ledger record at all): treat the existing value as authoritative and backfill a
@@ -282429,7 +282547,27 @@ Generate the synopsis now.` }
         return window.state.pcBodyBible;
       }
       var gate = _bibleArtifactBefore('pc', storyId, fp);
-      if (gate.decision === 'reuse-committed' && window.state && window.state.pcBodyBible) return window.state.pcBodyBible;
+      // ── A PSYCHOLOGY-ONLY BIBLE IS NOT A FINISHED BIBLE (Roman 2026-11-04) ──────────────
+      // THE DEFECT, measured on the preserved paid checkpoint: pcBodyBible held
+      // {core_contradiction, wound, current_crisis} and NOTHING physical, yet both the
+      // reuse-committed gate above and the Tier-0 commit below returned it as complete, so the
+      // live appearance generation was never reached and the author got psychology with no person
+      // attached. 'age' alone does not count: an adulthood statement is not an appearance.
+      // "Player-named" is not evidence the player supplied or reserved a trait either — the seed's
+      // PC record simply does not specify hair, skin or signature, and nothing asked the player.
+      //
+      // WHAT THIS DOES: it lets the EXISTING generator run for the missing physical fields only.
+      // Psychology, plot, player selections and any physical value already present are preserved
+      // and merged back over whatever generation returns, so nothing established is discarded and
+      // the character is never regenerated wholesale. One pass per story, not per scene.
+      if (gate.decision === 'reuse-committed' && window.state && window.state.pcBodyBible) {
+        if (!_pcAppearanceRepairEligible(window.state.pcBodyBible)) return window.state.pcBodyBible;
+        try { console.warn('[BIBLE-APPEARANCE] pc bible is committed but carries no individual'
+          + ' appearance (' + _pcAppearanceMissing(window.state.pcBodyBible).join(',')
+          + ' missing) — completing those fields through the existing generator; everything already'
+          + ' set is preserved'); } catch (_) {}
+        // (repair intent already captured at the top of _generatePCBodyBible)
+      }
       // TIER 0 — SEEDED FIRST PAGE: for a fixed starter with sufficient seed cPlusFacets, derive
       // the foundation LOCALLY instead of firing a live call. Only takes this path when there is
       // no already-committed bible for this story (respects the same "generate once" contract
@@ -282442,13 +282580,35 @@ Generate the synopsis now.` }
             _t0Bible._tier0 = { origin: 'seed_adapter', mergedFacetIds: _t0Commit.mergedFacetIds, at: Date.now() };
             window.state.pcBodyBible = _t0Bible;
             _bibleArtifactCommitted('pc', storyId);   // same ledger transition the live path uses
+            // SAME GATE AS THE REUSE PATH. The seed adapter produces psychology and plot; if it
+            // supplied no individual appearance, fall through to the live generator for those
+            // fields rather than returning a bible that has no person in it.
+            if (_pcAppearanceRepairEligible(window.state.pcBodyBible)) {
+              try { console.warn('[BIBLE-APPEARANCE] the Tier-0 seed adapter committed a pc bible'
+                + ' with no individual appearance (' + _pcAppearanceMissing(window.state.pcBodyBible).join(',')
+                + ' missing) — continuing to the existing generator for those fields only'); } catch (_) {}
+              // ── CAPTURE THE FOUNDATION TIER-0 JUST CREATED (Roman 2026-11-04, corrected) ──
+              // The top-of-function capture ran when NO bible existed, so it cleared repair
+              // intent. Tier-0 then created and committed the psychological foundation and fell
+              // through here with nothing captured — so the generated bible committed WHOLE and
+              // the foundation Tier-0 had just derived from the seed was lost. The earlier comment
+              // claiming it was already captured was wrong. It is captured here, from the record
+              // Tier-0 actually wrote.
+              window.state._pcAppearanceCompletion = { startedAt: Date.now(), viaTier0: true,
+                preserved: Object.keys(window.state.pcBodyBible || {}),
+                priorValues: Object.assign({}, window.state.pcBodyBible),
+                missing: _pcAppearanceMissing(window.state.pcBodyBible) };
+            } else {
             try { console.log('[TIER0] pc body bible derived locally from seed — zero live calls (' + (_t0Commit.mergedFacetIds || []).length + ' facet(s) merged into portfolio)'); } catch (_) {}
             return window.state.pcBodyBible;
+            }
           }
           try { console.warn('[TIER0] pc seed adapter produced a bible but validator/commit rejected it (' + _t0Commit.reason + ') — falling through to live generation'); } catch (_) {}
         }
       }
       var result = await _bodyBibleOnce('pc', _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())), _generatePCBodyBibleUncached);
+      // (the appearance-only merge now happens at the commit point inside
+      //  _generatePCBodyBibleUncached, so it cannot be bypassed by a ledger branch.)
       // Re-check ownership AFTER the await, not just before it started: a newer attempt (explicit
       // refresh) may have superseded this one WHILE it was in flight. Only the attempt that is
       // STILL current when it resolves may commit; a superseded one's result is discarded here too
@@ -284034,6 +284194,52 @@ Generate the synopsis now.` }
           }
         } catch (_pcbErr) { try { console.warn('[BEHAV-CANON] pc gate call failed: ' + (_pcbErr && _pcbErr.message)); } catch (_) {} }
         if (!_bodyBibleStillOwned('pc', _keyAtRequest, _bibleOwnershipToken('pc', _bodyBibleScopeKey(_pcBibleSubject())))) return null;
+        // ── AN APPEARANCE REPAIR ADMITS ONLY APPEARANCE (Roman 2026-11-04) ─────────────────
+        // The merge used to live in the OUTER _generatePCBodyBible, after this assignment — so the
+        // generated bible was committed whole first, and the resume run took the
+        // "EXPLICIT REFRESH — declared inputs changed" ledger branch which never reached that
+        // merge at all. Generation occurred, but nothing established that the existing foundation
+        // survived it. The merge is therefore done HERE, before the commit, on every branch.
+        //
+        // WHEN A COMPLETION IS IN FLIGHT, the prior record is the base and ONLY the physical fields
+        // it was missing are taken from the generated candidate. Newly generated psychology, plot
+        // and behavioural material is DISCARDED by this path — a repair is not a refresh. A
+        // genuinely requested full refresh carries no _pcAppearanceCompletion and commits whole.
+        try {
+          var _comp = window.state && window.state._pcAppearanceCompletion;
+          if (_comp && _comp.priorValues && !_comp.finishedAt) {
+            var _base = Object.assign({}, _comp.priorValues);
+            var _admitted = [], _refused = [];
+            (_comp.missing || []).forEach(function (f) {
+              var v = bible[f];
+              if (v && String(v).trim().length > 1) { _base[f] = v; _admitted.push(f); }
+            });
+            Object.keys(bible).forEach(function (k) {
+              if (_base[k] === undefined && (_comp.missing || []).indexOf(k) === -1) _refused.push(k);
+            });
+            _comp.finishedAt = Date.now();
+            _comp.admitted = _admitted;
+            _comp.refusedFromRepair = _refused;
+            var _stillMissing = _pcAppearanceMissing(_base);
+            _base._apprRepair = { at: Date.now(), admitted: _admitted,
+              stillMissing: _stillMissing, viaTier0: !!_comp.viaTier0,
+              note: _stillMissing.length
+                ? 'PARTIAL: the generator returned no value for these. The record is honestly '
+                  + 'incomplete and will NOT auto-retry; an explicit refresh is the retry path.'
+                : 'complete' };
+            if (_stillMissing.length) {
+              try { console.warn('[BIBLE-APPEARANCE] PARTIAL completion — still missing ['
+                + _stillMissing.join(',') + ']. Recorded on the bible; no automatic retry.'); } catch (_) {}
+            }
+            bible = _base;
+            try {
+              console.log('[BIBLE-APPEARANCE] appearance-only repair: admitted ['
+                + _admitted.join(',') + '] · foundation preserved ['
+                + Object.keys(_comp.priorValues).join(',') + '] · refused from this repair ['
+                + _refused.join(',') + ']');
+            } catch (_) {}
+          }
+        } catch (_) {}
         window.state.pcBodyBible = bible;
         try {
           console.log('[PC-BODY-BIBLE] generated for ' + pcName + ':',
@@ -285660,6 +285866,874 @@ var _APPR_FIELDS = [
     ];
     return lines[Math.floor(Math.random() * lines.length)];
   }
+  // ══ APPEARANCE RECONCILIATION — AUTHORITATIVE CANON INTO THE BIBLE (Roman 2026-11-04) ═════
+  // THE DEFECT. The preserved paid checkpoint's pcBodyBible held {core_contradiction, wound,
+  // current_crisis} and its liBodyBible held {restraint_tell, focus_tell} — psychology and plot,
+  // ZERO physical fields — while the seed's visualCanon carried a complete portrait for Julian
+  // (deep slate-blue skin, long black hair past the jaw, silver Weave-Script, small rounded ears,
+  // a scar over the left wrist) and species canon for the PC. So the author received bible
+  // doctrine with no individual appearance in it, and the one authoritative record went unused.
+  //
+  // WHAT THIS DOES. Copies the EXISTING canon lines into the bible's physical fields, by keyword,
+  // keeping the seed's own wording. It does not generate a portrait and it cannot create a
+  // competing one: a field already present is never overwritten, so player choices and anything
+  // previously committed win. Species-wide lines are carried under `species_canon` for every
+  // member of that species rather than being mistaken for an individual feature.
+  //
+  // IT PERSISTS WITH THE STORY because it writes the bible objects state already saves.
+  // MAP ONLY WHERE THE MEANING FITS, AND DISCARD NOTHING. The first version keyword-matched each
+  // canon line into the first field whose word appeared in it, first-match-wins: "AN ADULT WOMAN"
+  // became the PC's BUILD, "small rounded human ears" took signature_feature and Julian's wrist
+  // scar was dropped, and the Weave-Script vanished because complexion was already filled.
+  // Now: a line is placed only when its SUBJECT is the destination attribute, at most one line per
+  // field, and every line — placed or not — is preserved verbatim under `visual_canon` so nothing
+  // is lost. Field names are the canonical ones from _APPR_FIELDS so _apprFactLine reads them.
+  var _APPR_CANON_RULES = [
+    { field: 'hair',              re: /\b(hair|braid|curls|dreadlocks)\b/i },
+    { field: 'complexion',        re: /\b(skin hue|skin tone|\bskin\b|complexion|pallor)\b/i },
+    { field: 'eye_color',         re: /\b(eyes?|pupils?|iris)\b/i },
+    { field: 'height',            re: /\b(tall|short|height|stature|broad through)\b/i },
+    { field: 'age',               re: /\b(adult (man|woman)|middle years|year-old|aged)\b/i },
+    { field: 'voice',             re: /\b(voice|speaks|accent)\b/i },
+    { field: 'signature_feature', re: /\b(scar|birthmark|weave-script)\b/i },
+  ];
+  function _apprCanonLines(seed, key) {
+    try {
+      var vc = (seed && seed.visualCanon) || null;
+      if (!vc) return null;
+      var a = vc[key];
+      return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'string' && x.trim().length > 3; }) : null;
+    } catch (_) { return null; }
+  }
+  function _reconcileBibleAppearance(s, which) {
+    try {
+      s = s || window.state; if (!s) return null;
+      var key = which === 'li' ? 'liBodyBible' : 'pcBodyBible';
+      var bible = s[key];
+      if (!bible || typeof bible !== 'object') return null;
+      if (bible._apprReconciled) return bible;
+      var seed = (typeof _activeSeed === 'function') ? _activeSeed(s) : null;
+      if (!seed) return bible;
+      var castName = which === 'li' ? (s.loveInterestName || 'LI') : 'PC';
+      var own = _apprCanonLines(seed, castName) || (which === 'li' ? _apprCanonLines(seed, 'LI') : null) || [];
+      var species = null;
+      try {
+        (seed.cast || []).forEach(function (c) {
+          if (c && String(c.role) === (which === 'li' ? 'LI' : 'PC')) species = c.species || null;
+        });
+      } catch (_) {}
+      var sp = _apprCanonLines(seed, species) || [];
+      // EVERY LINE IS KEPT, placed or not. This is the authoritative record and it is delivered.
+      if (!bible.visual_canon) bible.visual_canon = own.slice();
+      if (sp.length && !bible.species_visual_canon) bible.species_visual_canon = sp.slice();
+      var filled = [], keptExisting = [], unplaced = [];
+      own.forEach(function (lnText) {
+        var placed = null;
+        for (var i = 0; i < _APPR_CANON_RULES.length; i++) {
+          if (!_APPR_CANON_RULES[i].re.test(lnText)) continue;
+          var f = _APPR_CANON_RULES[i].field;
+          if (bible[f]) { if (keptExisting.indexOf(f) === -1) keptExisting.push(f); continue; }
+          bible[f] = lnText; filled.push(f); placed = f; break;
+        }
+        if (!placed) unplaced.push(lnText.slice(0, 50));
+      });
+      bible._apprReconciled = { at: Date.now(), from: 'seed.visualCanon[' + castName + ']',
+        filled: filled, keptExisting: keptExisting, notPlacedButPreserved: unplaced.length,
+        canonLines: own.length, speciesLines: sp.length, species: species || null };
+      try {
+        console.log('[APPEARANCE-CANON] ' + key + ' ← seed.visualCanon[' + castName + ']: '
+          + own.length + ' line(s) preserved under visual_canon, ' + filled.length + ' placed in '
+          + '[' + filled.join(',') + ']'
+          + (keptExisting.length ? ', kept existing [' + keptExisting.join(',') + ']' : '')
+          + ', ' + unplaced.length + ' preserved without a field'
+          + (sp.length ? ', ' + sp.length + ' species line(s)' : ''));
+      } catch (_) {}
+      return bible;
+    } catch (_) { return null; }
+  }
+  try { window._reconcileBibleAppearance = _reconcileBibleAppearance; } catch (_) {}
+
+  // ── THE RECORD'S PRONOUNS vs THE ESTABLISHED IDENTITY (Roman 2026-11-04) ─────────────────
+  // MEASURED on the preserved paid checkpoint: antagonistBodyBible carries Veyra Solin's full
+  // portrait (height, build, hair, complexion, eyes, voice, hands) and 30 male pronouns against
+  // 19 female, while aPlot.antagonistSubject names her "Veyra Solin" and the prose treats her as
+  // female. The author was handed a record that contradicts the character, and the published
+  // scenes dodged it by calling her "the reader" five times in two sentences rather than risk a
+  // pronoun. The record is NOT discarded (it is the only portrait she has) and NOT silently
+  // rewritten (that would invent canon); the conflict is NAMED at delivery, with her established
+  // identity, so the facts can be read as hers.
+  // ── THE IDENTITY RECORD IS THE AUTHORITY, AND THE RECORD GETS CORRECTED ─────────────────
+  // Veyra Solin's identity lives at _relationshipLedger.entities[aPlot.antagonistSubject
+  // .canonicalId]: label "Veyra Solin", kind plot_role, with her own cPlusFacets and guardrails.
+  // Those fields carry 21 she/her and 0 he/him, so her gender is established THERE — not guessed
+  // from a field name and not counted across arbitrary text.
+  //
+  // Her antagonistBodyBible, generated separately, wrote ten character-owned fields with male
+  // pronouns ("the way he taps his fingers", "his lap") while its PHYSICAL facts are valid for her
+  // — tall and broad through the chest needs no alteration to fit a woman. So the physical record
+  // is preserved untouched and the contradictory references are CORRECTED, which is the repair; a
+  // warning beside contradictory instructions is not.
+  //
+  // THE CORRECTION USES HER NAME, NOT "her". Several of these fields describe what LIRAEL notices
+  // about her ("the way his fingers twitch when she hesitates"), so turning "his" into "her" would
+  // make both women the same pronoun inside one sentence. The name is unambiguous.
+  function _apprIdentityFromLedger(s, canonicalId) {
+    try {
+      var ents = (s && s._relationshipLedger && s._relationshipLedger.entities) || null;
+      var e = (ents && canonicalId) ? ents[canonicalId] : null;
+      if (!e) return null;
+      var own = JSON.stringify([e.authorProfile || {}, e.label || '', e.aliases || []]);
+      var fem = (own.match(/\b(she|her|hers)\b/gi) || []).length;
+      var masc = (own.match(/\b(he|his|him)\b/gi) || []).length;
+      if (fem === 0 && masc === 0) return { name: e.label || null, gender: null, fem: 0, masc: 0 };
+      return { name: e.label || null, gender: (fem > masc ? 'female' : 'male'), fem: fem, masc: masc,
+        source: '_relationshipLedger.entities[' + canonicalId + '].authorProfile' };
+    } catch (_) { return null; }
+  }
+  var _APPR_OWNED_SKIP = { name: 1, display_name: 1, archetype: 1, _apprReconciled: 1,
+    _provenance: 1, visual_canon: 1, species_visual_canon: 1 };
+  function _apprCorrectOwnedPronouns(bible, ident) {
+    try {
+      if (!bible || !ident || !ident.gender || !ident.name) return null;
+      var nm = String(ident.name).split(/\s+/)[0];
+      var wrong = ident.gender === 'female'
+        ? [[/\bhis\b/g, nm + "'s"], [/\bHis\b/g, nm + "'s"], [/\bhe\b/g, nm], [/\bHe\b/g, nm],
+           [/\bhim\b/g, nm], [/\bhimself\b/g, 'herself']]
+        : [[/\bher\b/g, nm + "'s"], [/\bHer\b/g, nm + "'s"], [/\bshe\b/g, nm], [/\bShe\b/g, nm],
+           [/\bherself\b/g, 'himself']];
+      var changed = [];
+      var fix = function (v) {
+        var out = v, hit = false;
+        wrong.forEach(function (r) { if (r[0].test(out)) { hit = true; out = out.replace(r[0], r[1]); } });
+        return hit ? out : null;
+      };
+      Object.keys(bible).forEach(function (k) {
+        if (_APPR_OWNED_SKIP[k]) return;
+        var v = bible[k];
+        if (typeof v === 'string') { var f = fix(v); if (f) { bible[k] = f; changed.push(k); } }
+        else if (Array.isArray(v)) {
+          var any = false;
+          var arr = v.map(function (x) { if (typeof x !== 'string') return x; var f = fix(x); if (f) { any = true; return f; } return x; });
+          if (any) { bible[k] = arr; changed.push(k); }
+        } else if (v && typeof v === 'object') {
+          var anyO = false, o = {};
+          Object.keys(v).forEach(function (kk) {
+            var vv = v[kk];
+            if (typeof vv === 'string') { var f2 = fix(vv); if (f2) { anyO = true; o[kk] = f2; return; } }
+            o[kk] = vv;
+          });
+          if (anyO) { bible[k] = o; changed.push(k); }
+        }
+      });
+      if (!changed.length) return null;
+      bible._apprIdentityCorrected = { at: Date.now(), name: ident.name, gender: ident.gender,
+        source: ident.source, fields: changed };
+      try {
+        console.log('[APPEARANCE-IDENTITY] ' + ident.name + ' established ' + ident.gender
+          + ' by ' + ident.source + ' (' + ident.fem + ' she/her vs ' + ident.masc + ' he/him); '
+          + 'corrected contradictory references in ' + changed.length + ' field(s): '
+          + changed.join(',') + '. Physical facts unchanged.');
+      } catch (_) {}
+      return bible;
+    } catch (_) { return null; }
+  }
+  function _apprReconcileAntagonistIdentity(s) {
+    try {
+      s = s || window.state; if (!s) return null;
+      var b = s.antagonistBodyBible;
+      if (!b || b._apprIdentityCorrected) return b || null;
+      var cid = ((s.aPlot || {}).antagonistSubject || {}).canonicalId || null;
+      var ident = _apprIdentityFromLedger(s, cid);
+      if (!ident || !ident.gender) return b;
+      if (!b.name && ident.name) b.name = ident.name;
+      _apprCorrectOwnedPronouns(b, ident);
+      return b;
+    } catch (_) { return null; }
+  }
+  try { window._apprReconcileAntagonistIdentity = _apprReconcileAntagonistIdentity; } catch (_) {}
+
+  function _apprIdentityNote(bible, name, pronounHint) {
+    try {
+      if (!bible || !pronounHint) return '';
+      var blob = JSON.stringify(bible);
+      var male = (blob.match(/\b(his|he|him)\b/gi) || []).length;
+      var female = (blob.match(/\b(her|she|hers)\b/gi) || []).length;
+      var wantFemale = /female|she|her/i.test(pronounHint);
+      var conflict = wantFemale ? male > 0 : female > 0;
+      if (!conflict) return '';
+      return '\n  ‼ THIS RECORD CONTRADICTS THE CHARACTER IT DESCRIBES. '
+        + (name ? name + ' is' : 'This character is') + ' established as '
+        + (wantFemale ? 'FEMALE' : 'MALE') + ', and the physical facts above are hers'
+        + (wantFemale ? '' : ' his') + ' — but the record was written with '
+        + (wantFemale ? male + ' male' : female + ' female') + ' pronoun(s) in it. Read every '
+        + 'physical fact as belonging to ' + (name || 'this character') + ' and use '
+        + (wantFemale ? 'she/her' : 'he/him') + '. Do NOT invent a second character to fit the '
+        + 'pronouns, and do NOT avoid naming ' + (name || 'her') + ' to dodge the conflict.';
+    } catch (_) { return ''; }
+  }
+  try { window._apprIdentityNote = _apprIdentityNote; } catch (_) {}
+
+
+  // ══ BODY-BIBLE RENDERERS, AVAILABLE WITHOUT BEGINNING A STORY (Roman 2026-11-04) ══════════
+  // THE DEFECT. These renderers and their helpers were declared INSIDE handleBeginStory and
+  // exported to window from there, so they existed only after a NEW story was begun. The body
+  // bible block calls them behind `typeof === 'function'`, so on a fresh-page RESUME — where
+  // continueStory restores the story without running that initialisation — all three were
+  // undefined and the block emitted NOTHING. The author received prompt text referring to a
+  // "PC Body Bible" while no bible section was in the packet at all.
+  //
+  // THE FIX IS A MOVE, NOT NEW CODE. The cluster is hoisted verbatim to module scope so the
+  // exports happen at load. Nothing calls opening generation and no character is regenerated:
+  // the renderers read whatever bibles state already holds, which on a resume is what the save
+  // restored. _apprFactLine and _pcCommittedFoundationForPrompt were already module-scope.
+    function _liOnPageThisScene(s) {
+      try {
+        var staged = (s.sceneSkeleton && s.sceneSkeleton.staged_characters) || [];
+        // CANONICAL LI (Roman 2026-07-30): read the LI name through the single accessor, not the
+        // scattered fields — so on-page detection uses the committed identity, not a stale/placeholder.
+        var _canonLIName = (typeof window.getCanonicalLoveInterest === 'function') ? (window.getCanonicalLoveInterest(s).name || '') : (s.partnerName || s.liName || s.loveInterestName || '');
+        var liName = String(_canonLIName).toLowerCase().split(/\s+/)[0];
+        if (Array.isArray(staged) && staged.length && liName) {
+          for (var i = 0; i < staged.length; i++) {
+            var c = staged[i] || {}; var nm = String(c.name || '').toLowerCase();
+            if (nm && (nm.indexOf(liName) >= 0 || (nm.split(/\s+/)[0] && liName.indexOf(nm.split(/\s+/)[0]) >= 0))) {
+              return String(c.presence_mode || '').toUpperCase() === 'IN_PERSON';
+            }
+          }
+          return false; // skeleton staged a cast and the LI isn't in it → offstage this scene
+        }
+      } catch (_) {}
+      // No skeleton (opening scene before skeleton, or skeleton failed): scene-1 presence on turn 0, else assume he can appear.
+      var turn = (typeof s.turnCount === 'number') ? s.turnCount : 0;
+      if (turn <= 0) { var p = String((s.pairDynamic && s.pairDynamic.scene1Presence) || (s.romanceEnginePlan && s.romanceEnginePlan.scene1Presence) || '').toUpperCase(); return p === 'ONSTAGE' || p === 'IN_PERSON'; }
+      return true;
+    }
+    function _antagonistOnPageThisScene(s) {
+      try {
+        var staged = (s.sceneSkeleton && s.sceneSkeleton.staged_characters) || [];
+        var ag = s.antagonistBodyBible || {};
+        var agName = String((s.aPlot && s.aPlot.antagonistOrAntiForce) || ag.name || ag.display_name || s.antagonistName || '').toLowerCase().split(/\s+/)[0];
+        if (Array.isArray(staged) && staged.length && agName && agName.length > 2) {
+          for (var i = 0; i < staged.length; i++) {
+            var c = staged[i] || {}; var nm = String(c.name || '').toLowerCase();
+            if (nm && (nm.indexOf(agName) >= 0 || (nm.split(/\s+/)[0] && agName.indexOf(nm.split(/\s+/)[0]) >= 0))) {
+              return String(c.presence_mode || '').toUpperCase() === 'IN_PERSON';
+            }
+          }
+          return false; // skeleton staged a cast and the antagonist isn't IN_PERSON → keep establishing
+        }
+      } catch (_) {}
+      return false; // no confident on-page signal → don't lock yet (antagonist appears intermittently)
+    }
+    // ── FIXED CANON IS NOT DELIVERED DESCRIPTION (Roman 2026-11-04) ────────────────────────
+    // TWO DEFECTS, BOTH WITHDRAWN HERE.
+    //
+    // (1) THE ORIGINAL: a character went to LOCK — "appearance is ESTABLISHED & LOCKED, do NOT
+    //     re-describe" — on a SCENE COUNTER plus a populated bible. The PC was worst:
+    //     `_apprEstablished.pc` was set unconditionally on the first call, so a story whose first
+    //     call happened at turn > 0 (a resume, or simply a later scene) locked her appearance
+    //     having never been in establish mode. A bible, an opening having occurred and a scene
+    //     index are not evidence that a reader received a description.
+    //
+    // (2) MY FIRST CORRECTION, ALSO WRONG: it promoted state.descLedger into portrait authority.
+    //     Those regexes do not identify WHOSE appearance they matched. `pcHair` is
+    //     /\b(?:her|the)\s+(?:[a-z-]+\s+){0,2}(?:black|brown|...)\s*hair\b/ — in the preserved paid
+    //     run it was incremented by JULIAN's "the fall of black hair" and would have been read as
+    //     evidence that LIRAEL had been described, while "my black hair" misses it entirely. A
+    //     correctly attributed hair match would still establish one feature, never a portrait, and
+    //     "not detected" never means "never described".
+    //
+    // SO NO WHOLE-CHARACTER LOCK FIRES HERE. There is no reliable per-character evidence of
+    // delivered description in this codebase, and the honest consequence is that a lock which
+    // suppresses an introduction is not supported. What the lock existed to protect — a consistent
+    // portrait, not re-rendered verbatim every scene — is served instead by the two things that
+    // ARE sound: the canonical values are supplied compactly so appearance cannot drift, and
+    // repetition is bounded at FEATURE level by _descBudgetLines, which counts phrase shapes in
+    // published prose and is labelled as exactly that.
+    //
+    // THE STALE FLAGS ARE NOT TRUSTED. `_apprEstablished` in a saved story was written by rule (1),
+    // so it is a derived artifact of the defect and not evidence of anything. It is ignored here
+    // and no longer written.
+    var _APPR_MODE_RULE = 'canon-always-supplied/v2';
+    function _resolveAppearanceMode(s) {
+      var turn = (typeof s.turnCount === 'number') ? s.turnCount : 0;
+      // THE SAVED CACHE IS A RESULT OF THE OLD RULE, NOT A MEMO OF THIS ONE. The paid checkpoint
+      // carries _apprModeCache {turn:3, mode:{pc:'lock',li:'lock'}}; resuming at that same turn
+      // returned it verbatim and the corrected behaviour below was never reached. A cache is only
+      // honoured when it was written by THIS rule.
+      if (s._apprModeCache && s._apprModeCache.turn === turn && s._apprModeCache.mode
+          && s._apprModeCache.rule === _APPR_MODE_RULE) return s._apprModeCache.mode;
+      // SUPPLY THE CANON, EVERY TURN. 'establish' here means the renderers emit the character's
+      // stable physical values — it is NOT an instruction to introduce anyone afresh. Whether a
+      // description is owed is a judgement the author makes from the page; what this guarantees is
+      // that the values are present so the portrait cannot drift when one IS written.
+      var mode = { pc: 'establish', li: 'establish', antagonist: 'establish' };
+      try {
+        if (s._apprEstablished && (s._apprEstablished.pc || s._apprEstablished.li
+            || s._apprEstablished.antagonist) && s._apprStaleFlagsLogged !== turn) {
+          console.log('[APPEARANCE-MODE] a saved _apprEstablished flag is present ('
+            + JSON.stringify(s._apprEstablished) + ') and is IGNORED: it was derived from the '
+            + 'scene-counter rule, not from any record of delivered description');
+          s._apprStaleFlagsLogged = turn;
+        }
+      } catch (_) {}
+      s._apprModeCache = { turn: turn, mode: mode, rule: _APPR_MODE_RULE };
+      return mode;
+    }
+    // ══ A LOCK REMINDER IS NOT THE FACTS THE LOCK REFERS TO (Roman 2026-10-21) ═══════════
+    // THE DEFECT THIS FIXES. This block used to say the appearance "was established earlier in
+    // this story and is FIXED canon — read it from the STORY SO FAR for continuity", and the
+    // three literary renderers return ONLY this block when locked, discarding every value. The
+    // STORY SO FAR is a 1,400-character prose tail (app.js:73329; 3,000 on famous-fate), so a
+    // portrait established in scene 1 has scrolled out of it by scene 2 or 3. The author was
+    // being told to honour a lock and pointed at a window that could not contain it.
+    //
+    // THE TWO THINGS ARE NOW SEPARATE, which is the whole point:
+    //   CONTINUITY FACTS — supplied whenever the character is involved, so the lock is
+    //     honourable. Compact: the stable identity fields only, one line.
+    //   DESCRIPTION INSTRUCTION — unchanged, and still says not to re-list or restate.
+    // Receiving a character's hair colour is not an instruction to mention their hair.
+    // ══ THE REAL SCHEMA, AND WHOLE FACTS (Roman 2026-10-21) ════════════════════════════
+    // TWO DEFECTS THIS FIXES, both reproduced in review:
+    //  (1) it read `b.eyes`. The bibles use `eye_color` (78 occurrences in this file against 14
+    //      for `eyes:`), so every real eye colour silently vanished while a fixture shaped with
+    //      `eyes` passed. Field ALIASES are read in order now, and the regression asserts against
+    //      real-schema records rather than a convenient fixture.
+    //  (2) it cut each fact at 90 characters, which can amputate a qualifier or a condition
+    //      ("warm underfoot even in shade" -> "warm underfoot even in sh"). COMPACT THE
+    //      SELECTION, NOT THE MEANING: fewer fields, each one whole. Only a runaway field is
+    //      trimmed, and the trim says so in the text so no reader of the prompt is misled.
+    function _apprLockBlock(label, name, bible) {
+      var facts = _apprFactLine(bible);
+      return label + ' ' + name + ' — APPEARANCE ESTABLISHED & LOCKED. ' + name + '\'s physical appearance (eye colour, hair, build, signature features) was established earlier in this story and is FIXED canon.'
+        + (facts
+            ? '\n  CONTINUITY FACTS (so you can honour the lock — THESE ARE FOR CONSISTENCY, NOT A PROMPT TO DESCRIBE: receiving them is not an instruction to mention them, and a scene that mentions none of them is correct): ' + facts
+            : '\n  CONTINUITY FACTS: NONE AVAILABLE TO THIS REQUEST, AND THAT IS NOT THE SAME AS NONE EXISTING. Three different situations look alike here and only one of them licenses anything: UNSPECIFIED (nothing was ever authored — there is genuinely nothing to be consistent with); NOT RECOVERED (a record exists or existed and this session could not read it — anything you write may contradict it, so write nothing that would); KNOWN EMPTY (the record was checked and is empty on purpose). THIS REQUEST CANNOT TELL YOU WHICH. So: do NOT invent a portrait to fill the gap, and do not treat the silence as permission.')
+        + '\n  DO NOT re-list, re-introduce, or restate appearance values, and do NOT alter them. Surface a physical feature again when it is genuinely earned THIS scene — newly noticed, plot-relevant, or emotionally meaningful — and never as a re-listing of the same fixed phrase. THE READER MUST STILL BE ABLE TO PICTURE THIS PERSON: if they could not, a fresh concrete impression is earned, and this rule does not forbid it. What is forbidden is the repeated wording, not the reminding. The per-scene ROTATION directive decides WHICH feature, if any, is worth words; a scene with no physical re-description is fine.';
+    }
+    function _renderPCBodyBibleCompact() {
+      // RECONCILE FIRST. Fills missing physical fields from the seed's authoritative visualCanon
+      // without overwriting anything already set, and writes them onto the bible state saves.
+      try { if (typeof _reconcileBibleAppearance === 'function') _reconcileBibleAppearance(window.state, 'pc'); } catch (_) {}
+      var b = (window.state && window.state.pcBodyBible) || null;
+      if (!b) return '';
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — for a fixed-starter
+      // story, every PC psychological/foundation field this literary main-path block renders
+      // must come from the committed portfolio, never mutable raw pcBodyBible. Physical/
+      // appearance fields and tells (stress_tic etc.) below are unaffected — out of scope, same
+      // as the precedent set for _renderBiblesAsCGDirectives. See _pcCommittedFoundationForPrompt.
+      var _cf15f = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
+      var pcName = (window.state && (window.state.playerName || window.state.pcName)) || 'the protagonist';
+      if (_resolveAppearanceMode(window.state).pc === 'lock') return _apprLockBlock('PROTAGONIST', pcName, b);
+      var lines = ['PROTAGONIST BODY BIBLE (per-story canon — the prose should reference these naturally across the arc; pepper, do not dump):'];
+      lines.push('  ATTRACTION + SIGNATURE DOCTRINE (HARD — Roman 2026-06-04 v2). The reader meets HER body too — first-person does NOT mean bodiless. Choose 3-5 CORE attraction anchors from the Bible fields (hair / lips / eyes / smile / curves / waist / legs / voice / skin / scent) — consensus-attractive, NOT quirks/collarbones/wrists — and treat them as RECURRING SIGNATURES (the reader remembers 3-5, not 40). On her first meaningful self-presentation give a CONCENTRATED impression (one major visual + one body + one sensory), not a catalogue; revisit the SAME anchors across the arc in evolving form (objective → subjective → emotional). WALLPAPER TEST (CORRECTED): a feature fails ONLY if it gives NEITHER attraction NOR character — ATTRACTION ALONE is sufficient; characterization is a BONUS. Keep at least one CHARACTER anchor (a revealing trait/behavior) too; may fuse, need not. NOT-A-CATALOG ≠ NO-DESCRIPTION (HARD forward-reference — Roman 2026-06-30): "not a catalogue" bans the CLINICAL-LIST shape, it does NOT exempt you from rendering. The reader MUST still be able to PICTURE her — give the concentrated, desire-coded image. Skipping or thinning the physical render to "avoid cataloguing" is itself a failure (see the picturability RECONCILING rule).');
+      // Mirror of the LI 3-5 designation, sized at HALF (Roman 2026-06-04): she is the
+      // POV character, so give her 2-3 recurring anchors, not a full portrait — the
+      // reader inhabits her, over-describing the camera is odd. Deterministic from
+      // stable Bible fields → the same few recur across the arc, no new state.
+      try {
+        var _pcT2re = /\b(scar|scarred|wrist|collarbones?|birthmark|tattoo|freckles?|moles?|dimples?|knuckles?)\b/i;
+        var _pcClean = function (v) { return String(v).replace(/\s+/g, ' ').trim().slice(0, 80); };
+        var _pcTier1 = [b.hair, [b.height, b.build].filter(Boolean).join(', '), b.complexion];
+        var _pcWild = [b.signature_feature, b.second_celebrated_feature].filter(function (v) { return v && String(v).trim().length > 1; });
+        var _pcWildT1 = _pcWild.filter(function (v) { return !_pcT2re.test(v); });
+        var _pcWildT2 = _pcWild.filter(function (v) { return _pcT2re.test(v); });
+        var _pcAnchors = [];
+        _pcWildT1.concat(_pcTier1).forEach(function (v) { if (v && String(v).trim().length > 1 && _pcAnchors.length < 3) _pcAnchors.push(_pcClean(v)); });
+        if (_pcAnchors.length < 2) { _pcWildT2.slice(0, 1).forEach(function (v) { if (_pcAnchors.length < 3) _pcAnchors.push(_pcClean(v)); }); }
+        if (_pcAnchors.length >= 2) {
+          lines.push('  >>> HER 2-3 RECURRING ANCHORS (Tier-1 only; LIGHTER touch than the LI — she is the POV; surface these same few across the arc, do NOT inventory her, do NOT lead with quirks): ' + _pcAnchors.map(function (a, i) { return (i + 1) + ') ' + a; }).join('   ') + '.');
+        }
+      } catch (_) {}
+      if (b.age)               lines.push('  Age: ' + b.age + ' (LOCKED — calibrate body description, life history, voice, and emotional weather to this exact age; do NOT shift toward a more romance-friendly default)'); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
+      if (b.ancestry)          lines.push('  Ancestry: ' + b.ancestry + ' (heritage informs appearance, naming, and light cultural-memory details across the arc; do NOT change setting or make the story PRIMARILY about heritage)'); // Phase 2 contemporary contract
+      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
+      if (b.hair)              lines.push('  Hair: ' + b.hair);
+      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
+      if (b.signature_feature)        lines.push('  Signature feature (worth celebrating, surface every ~2 scenes, alternating with the LI): ' + b.signature_feature);
+      if (b.second_celebrated_feature) lines.push('  Second celebrated feature: ' + b.second_celebrated_feature);
+      if (b.stress_tic)         lines.push('  Stress tic: ' + b.stress_tic);
+      if (b.desire_tell)        lines.push('  Desire tell: ' + b.desire_tell);
+      if (b.impatience_tell)    lines.push('  Impatience tell: ' + b.impatience_tell);
+      if (b.confidence_tell)    lines.push('  Confidence tell: ' + b.confidence_tell);
+      if (b.vulnerability_tell) lines.push('  Vulnerability tell: ' + b.vulnerability_tell);
+      // Roman 2026-06-01 — EMOTIONAL CLIMATE. The narrator narrates every
+      // line; these three fields color the prose from line 1 onward, NOT
+      // as stated facts but as TEXTURE. Sonnet must read weather +
+      // contradiction + private_hope as the lens her observations pass
+      // through, not as facts to declare.
+      if (!_cf15f && b.emotional_weather) lines.push('  EMOTIONAL WEATHER (her default climate — the lens her narration passes through on every line; color narration TEXTURE with this, never state it as fact): ' + b.emotional_weather);
+      var _cc15f = _cf15f ? _cf15f.core_contradiction : b.core_contradiction;
+      if (_cc15f) lines.push('  CORE CONTRADICTION (the central tension that makes her readable across the arc — the shape readers come back to): ' + _cc15f);
+      var _ph15f = _cf15f ? _cf15f.private_hope : b.private_hope;
+      if (_ph15f) lines.push('  PRIVATE HOPE (what she secretly wants but has not let herself name — the desire-engine of the romance arc; what this LI could fulfill or fail to fulfill): ' + _ph15f);
+      if (b.signature_habits)   lines.push('  Signature habits (recurring non-physical micro-behaviors — surface these across the arc, the reader recognizes her by these): ' + b.signature_habits);
+      if (!_cf15f && b.li_keenly_aware_of) lines.push('  LI is keenly aware of: ' + b.li_keenly_aware_of);
+      // Roman 2026-06-04: CURRENT CRISIS — the EVENT in motion, structured.
+      // Rendered ONLY on HOT openings (it is the opening + the Crisis→LI bridge
+      // source); omitted on COLD stories so it does not push a crisis opening.
+      // Graceful: skips legacy string-form current_crisis (object only).
+      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — event/immediate_fear/
+      // refusal/li_complication are PCV_DURABLE_FIELDS (validated, committed); for a fixed
+      // starter they come from _cf15f, never raw b.current_crisis. time_since_impact/
+      // hottest_emotion/immediate_want are NOT validated fields at all (no claim-kind, no commit
+      // path exists for them) — out of scope here, same as physical fields, left unchanged.
+      try {
+        if ((window.state && window.state._openingTemperature) === 'HOT_CRISIS' && b.current_crisis && typeof b.current_crisis === 'object') {
+          var _cc = b.current_crisis;
+          var _ccParts = [];
+          var _ccEvent = _cf15f ? _cf15f.current_crisis_event : _cc.event;
+          var _ccFear = _cf15f ? _cf15f.current_fear : _cc.immediate_fear;
+          var _ccRefusal = _cf15f ? _cf15f.refusal : _cc.refusal;
+          var _ccLiComp = _cf15f ? _cf15f.li_complication : _cc.li_complication;
+          if (_ccEvent)              _ccParts.push('EVENT: ' + _ccEvent);
+          if (_cc.time_since_impact) _ccParts.push('TIME SINCE IMPACT: ' + _cc.time_since_impact);
+          if (_cc.hottest_emotion)   _ccParts.push('HOTTEST EMOTION: ' + _cc.hottest_emotion);
+          if (_cc.immediate_want)    _ccParts.push('IMMEDIATE WANT: ' + _cc.immediate_want);
+          if (_ccFear)               _ccParts.push('IMMEDIATE FEAR: ' + _ccFear);
+          if (_ccRefusal)            _ccParts.push('REFUSAL (the line she defends — her agency under duress): ' + _ccRefusal);
+          if (_ccLiComp)             _ccParts.push('LI COMPLICATION (why he matters in THIS moment — the Crisis→LI bridge source): ' + _ccLiComp);
+          if (_ccParts.length) lines.push('  CURRENT CRISIS (HOT opening — what is literally on fire RIGHT NOW; OPEN INSIDE this EVENT, in progress, never as reflection): \n    ' + _ccParts.join('\n    '));
+        }
+      } catch (_) {}
+      try { if (typeof _auditFieldForwarding === 'function' && typeof _bibleFieldsForMode === 'function') _auditFieldForwarding(b, _bibleFieldsForMode('literary_compact', { side: 'pc' })); } catch (_) {}
+      try {
+        if (Array.isArray(b.visual_canon) && b.visual_canon.length) lines.push('  AUTHORITATIVE VISUAL CANON (verbatim, do not contradict): ' + b.visual_canon.slice(0, 6).join(' \u00b7 '));
+        if (Array.isArray(b.species_visual_canon) && b.species_visual_canon.length) lines.push('  SPECIES CANON (true of every member of this people): ' + b.species_visual_canon.slice(0, 4).join(' \u00b7 '));
+      } catch (_) {}
+      return lines.join('\n');
+    }
+    window._renderPCBodyBibleCompact = _renderPCBodyBibleCompact;
+
+    // ── BIBLE VERBATIM PIN (Roman 2026-06-01 Phase 2 character-signature regime) ──
+    // When the planner's pc_body_callback / li_body_callback string fires a
+    // SPECIFIC TELL (stress_tic / desire_tell / focus_tell / etc.), the prose
+    // must use the EXACT Bible value, not a fresh-generated variation.
+    // Otherwise the planner picks "stress_tic fires this scene" but Sonnet
+    // writes a fresh stress gesture, and the character has no recurring
+    // signature. This helper parses the callback string, extracts the tell
+    // field name, looks up the literal Bible value, and emits a HARD pinning
+    // clause. Caller injects the output into the prose-gen system prompt
+    // alongside the existing callback directive.
+    //
+    // role: 'pc' or 'li'; callbackStr: planner's pc_body_callback / li_body_callback
+    // (e.g. "beat 2 — stress_tic: she rolls the pen between her fingers").
+    function _buildBibleVerbatimPinDirective(role, callbackStr) {
+      try {
+        if (!callbackStr) return '';
+        var s = window.state || {};
+        var bible = role === 'li' ? (s.liBodyBible || null) : (s.pcBodyBible || null);
+        if (!bible) return '';
+        // Detect which Bible field the callback names. Order matters — more
+        // specific fields first. The callback often includes underscored
+        // field names like "stress_tic" or " — stress tic " (planner sometimes
+        // strips the underscore). Match both forms.
+        var fieldMap = role === 'li'
+          ? [ ['focus_tell',       /\bfocus[_ ]tell\b/i],
+              ['restraint_tell',   /\brestraint[_ ]tell\b/i],
+              ['interest_tell',    /\binterest[_ ]tell\b/i],
+              ['frustration_tell', /\bfrustration[_ ]tell\b/i],
+              ['desire_tell',      /\bdesire[_ ]tell\b/i],
+              ['signature_feature',/\bsignature[_ ]feature\b/i],
+              ['second_celebrated_feature', /\bsecond[_ ]celebrated\b/i] ]
+          : [ ['stress_tic',         /\bstress[_ ]tic\b/i],
+              ['desire_tell',        /\bdesire[_ ]tell\b/i],
+              ['impatience_tell',    /\bimpatience[_ ]tell\b/i],
+              ['confidence_tell',    /\bconfidence[_ ]tell\b/i],
+              ['vulnerability_tell', /\bvulnerability[_ ]tell\b/i],
+              ['signature_feature',  /\bsignature[_ ]feature\b/i],
+              ['second_celebrated_feature', /\bsecond[_ ]celebrated\b/i] ];
+        var matched = null;
+        for (var i = 0; i < fieldMap.length; i++) {
+          if (fieldMap[i][1].test(callbackStr)) { matched = fieldMap[i][0]; break; }
+        }
+        if (!matched) return '';
+        var locked = bible[matched];
+        if (!locked || typeof locked !== 'string' || !locked.trim()) return '';
+        var roleLabel = role === 'li' ? 'LI' : 'PC';
+        var subject = role === 'li' ? 'his' : 'her';
+        var fieldLabel = matched.replace(/_/g, ' ');
+        // Roman 2026-06-03 second pass: the verbatim pin (HARD, no variation)
+        // was over-recurring. Observed live across 4 consecutive plays: the
+        // Bible-locked tic ("pressed my tongue hard against the roof of my
+        // mouth, holding it there for exactly five counts" / "face narrowed
+        // at the hinge") rendered IDENTICALLY every scene → calcified into
+        // Storybound signature, not character signature. PROSE:CANONICAL
+        // restless_hands hit 77-83% across runs as STOCK PHRASE.
+        //
+        // Loosened to ANCHOR-CONSISTENT, PHRASING-VARIED. The character
+        // signature concept stays — the SAME anatomical site + the SAME
+        // mechanic recur — but Sonnet can vary surface phrasing so the
+        // reader recognizes the character without recognizing the
+        // boilerplate. Example:
+        //   • Bible: "pressed her tongue hard against the roof of her mouth,
+        //     holding it there for exactly five counts"
+        //   • Scene 1: "she pressed her tongue against the roof of her mouth
+        //     and counted to five before answering"
+        //   • Scene 2: "her tongue went to the roof of her mouth — the old
+        //     five-count, automatic now"
+        //   • Scene 3: "the small private press of tongue against palate, the
+        //     count she would never admit she still kept"
+        // Same anatomical anchor (tongue → roof of mouth), same mechanic
+        // (counted hold), different surface every time.
+        return '\n   ↳ ' + roleLabel + ' BIBLE ANCHOR PIN (HARD — Roman 2026-06-03 character-signature regime, loosened from verbatim). The callback above fires ' + subject + ' ' + fieldLabel + '. The Bible\'s LOCKED ' + fieldLabel + ' is: "' + locked + '". This is a PERSISTENT CHARACTER SIGNATURE — same gesture across the whole arc — but surface PHRASING varies per scene so it does not calcify into boilerplate.\n      RECURRENCE RULE: preserve the ANATOMICAL ANCHOR (which body part, what site) AND the MECHANIC (what is done — press / count / turn / twist / pull / hold). VARY the surface phrasing each scene — sentence shape, register, the small details around the core gesture. The reader should recognize the same character-tic across scenes (same site, same mechanic) without recognizing the same SENTENCE.\n      FORBIDDEN: (a) substituting a DIFFERENT site (Bible says tongue, prose says lip — that breaks the signature); (b) substituting a DIFFERENT mechanic (Bible says counted hold, prose says nervous flicker — also breaks the signature); (c) rendering the SAME sentence verbatim across multiple scenes (this is what calcifies; the audit reads it as stock phrase); (d) ESCALATING or REPEATING the tic WITHIN a single scene (Roman 2026-06-04) — state it ONCE, one clean instance, NEVER multiplied ("tapped three times, then three more, then three more. Always three. Always the same finger." is the failure). If the Bible mechanic carries a COUNT, name the count ONCE; do not re-count, re-tap, or reinforce it with "always X / always the same Y." One instance per scene is the SIGNATURE; three-to-five is a mannerism the reader recognizes as the machine. The anchor (body part + mechanic) is the SIGNATURE; the surface phrasing is THE WRITING.\n';
+      } catch (_) { return ''; }
+    }
+    window._buildBibleVerbatimPinDirective = _buildBibleVerbatimPinDirective;
+
+    // LI BODY BIBLE generator (Roman 2026-05-31). Mirror of PC Body Bible —
+    // per-story stable LI canon so the protagonist has plenty of specific
+    // things to notice and admire, and so the LI doesn't drift across the
+    // arc (eyes, height, hair). The field schema is optimized for "things
+    // the PC notices about him" — voice quality, hands, mouth, the way he
+    // holds things, his bearing — instead of the PC's interiority registers.
+    // One Haiku call per story (~$0.005); cached on state.liBodyBible.
+    // FAIL-SAFE: any error → returns null → li_body_callback fields silently
+    // omit but the rest of the prose path continues unchanged.
+
+    function _renderLIBodyBibleCompact() {
+      try { if (typeof _reconcileBibleAppearance === 'function') _reconcileBibleAppearance(window.state, 'li'); } catch (_) {}
+      var b = (window.state && window.state.liBodyBible) || null;
+      if (!b) return '';
+      var liName = (window.state && window.state.loveInterestName) ? window.state.loveInterestName : 'the love interest';
+      if (_resolveAppearanceMode(window.state).li === 'lock') return _apprLockBlock('LOVE INTEREST', liName, b);
+      // OFFSTAGE / REMEMBERED LI (Roman 2026-06-24 source surgery): when he is not
+      // physically on-page, do NOT emit the full physical first-impression catalog —
+      // that establish-mode payload IS the measured offstage Scene-1 dump. Give ONE
+      // charged physical anchor + the BEHAVIORAL / anecdote fields the memory beat
+      // actually needs (a remembered VERB, not a face cluster). Counts as PARTIAL
+      // establishment: once used, later offstage mentions get a value-free reminder,
+      // never a re-dump. The IN-PERSON first establishment (below) is left intact —
+      // he still earns a real 2–3 aspect impression when he is actually on-page.
+      try {
+        var _sLI = window.state || {};
+        if (typeof _liOnPageThisScene === 'function' && !_liOnPageThisScene(_sLI)) {
+          // Turn-aware partial establishment: this renderer is called MULTIPLE times
+          // per scene (scaffold + prose tail). Gate on TURN, not a boolean — within the
+          // same scene every call returns the one-anchor payload (consistent); only a
+          // STRICTLY LATER scene downgrades to the value-free reminder. (The boolean
+          // version tripped within-scene: the scaffold set it, then the prose call got
+          // the weaker lock block and the model free-wheeled into a cluster.)
+          var _curTurn = (typeof _sLI.turnCount === 'number') ? _sLI.turnCount : 0;
+          if (_sLI._liOffstageAnchorTurn != null && _sLI._liOffstageAnchorTurn < _curTurn) return _apprLockBlock('LOVE INTEREST', liName, b);
+          _sLI._liOffstageAnchorTurn = _curTurn;
+          var _hasV = function (v) { return v && String(v).trim().length > 1 && String(v).trim().toLowerCase() !== 'null'; };
+          var _charged = [b.eye_color, b.mouth_quality, b.voice_quality, b.signature_feature].filter(_hasV)[0] || 'his face';
+          var off = ['LOVE INTEREST — ' + liName + ' is OFFSTAGE / REMEMBERED this scene (a message, a name, a memory, a consequence — NOT physically present). Do NOT establish his body bible and do NOT cluster physical features here. Give exactly ONE charged physical anchor, ridden INTO the live beat, plus the behavioral memory below — a remembered VERB, never a head-to-jaw face catalog. Full visual establishment waits until he is actually on-page.'];
+          off.push('  THE ONE PHYSICAL ANCHOR (charged, not a catalog entry — the single thing she cannot put down): ' + _charged + '. No second feature; NO height+build+eyes+hair+mouth cluster.');
+          if (_hasV(b.signature_behavior))       off.push('  Signature behavior (VERB-shape for the memory): ' + b.signature_behavior);
+          if (_hasV(b.deflection_pattern))       off.push('  Deflection pattern (how he avoids being read): ' + b.deflection_pattern);
+          if (_hasV(b.attraction_manifestation)) off.push('  Attraction manifestation (his care for her AS ACTION, not appearance): ' + b.attraction_manifestation);
+          if (_hasV(b.defining_anecdote))        off.push('  DEFINING ANECDOTE (load-bearing whenever the prose remembers him): ' + b.defining_anecdote);
+          if (Array.isArray(b.desire_register_exemplars) && b.desire_register_exemplars.length) {
+            off.push('  GOOD desire-register shapes (imitate the LEVEL OF SPECIFICITY, not the wording): ' + b.desire_register_exemplars.slice(0, 2).map(function (e, i) { return (i + 1) + ') ' + e; }).join('  '));
+          }
+          try {
+            var _eng = String((_sLI.pairDynamic && _sLI.pairDynamic.romanceEngine) || (_sLI.romanceEnginePlan && _sLI.romanceEnginePlan.engine) || (_sLI.aPlot && _sLI.aPlot.romanceEngine) || '').toUpperCase();
+            if (_eng === 'SHARED_HISTORY' || _eng === 'LOOMING_PRESENCE') off.push('  ⇧ DESIRE-BEARING ENGINE: the remembered VERB comes from WANTING (attraction_manifestation / voice / anecdote), never from decoding his strategy.');
+          } catch (_) {}
+          return off.join('\n') + '\n';
+        }
+      } catch (_) {}
+      var lines = ['LOVE INTEREST BODY BIBLE (per-story canon — ' + liName + '). USAGE (Roman 2026-06-04, supersedes the old "pepper across the arc" framing that was reducing him to a single detail): on his FIRST appearance OR first meaningful MEMORY this scene, the PROSE OWES a CONCENTRATED first impression (see ANCHOR DOCTRINE below — ~2-3 sentences, the core attraction anchors). AFTER that first impression, pepper the SAME anchors across the arc. Two failures, both real: DUMPING a head-to-toe catalogue (bad) AND under-describing him to one detail like "a bespoke suit" so the reader cannot picture him (also bad — this is the current failure). The first impression is NOT optional and NOT deferrable to a later scene:'];
+      lines.push('  ATTRACTION + SIGNATURE DOCTRINE (HARD — Roman 2026-06-04 v2). A romance lead needs BOTH attraction (why he is physically desirable) AND character (who he is) — SEPARATE jobs, neither suppresses the other. The failure to fix is OVERCORRECTION away from physical attraction: he is mentioned many times, the reader understands him, but never receives a strong physical image. That is not how successful romance works.');
+      lines.push('    • CORE ATTRACTION ANCHORS — ROMANCE ANCHOR HIERARCHY (Roman 2026-06-04). TIER 1 (the default pool — choose from these WHENEVER available): shoulders / jaw / mouth / eyes / hair / hands / voice / build / height-presence / scent. TIER 2 (character flavor — scar / tattoo / freckles / birthmark / collarbone / wrist / mole / dimple): use ONLY to SUPPLEMENT Tier 1, NEVER as the whole attraction package. Choose 3-5 from THIS LI\'s Bible fields, Tier-1 FIRST; do NOT lead with a quirk just because the Bible made it the signature_feature. These 3-5 become RECURRING SIGNATURES for the arc — the reader should remember 3-5, not 40.');
+      lines.push('    • FIRST-APPEARANCE RULE (or first meaningful MEMORY if he is offstage): spend ~2-3 sentences on a CONCENTRATED first impression — roughly ONE major visual + ONE body feature + ONE sensory (voice / scent / presence). A first impression, NOT a police-sketch inventory. GOOD: "Broad shoulders stretching his suit jacket. Dark hair that looked like he had run a hand through it minutes ago. A voice that seemed capable of turning bad news into a promise." BAD: height + weight + eye-color + hair-color + build + clothing as a full catalogue. The goal is ATTRACTION, not a character sheet.');
+      lines.push('    • RECURRING + EVOLVING: revisit the SAME 3-5 anchors across the arc in CHANGING form, never the same phrasing twice. EARLY = objective ("broad shoulders / dark hair"). MIDDLE = subjective ("shoulders she could not stop noticing / hair she wanted to touch"). LATE = emotional ("shoulders that felt like safety / a voice that settled her nerves"). Same anchor, deepening meaning — the attraction anchor BECOMES relationship meaning.');
+      lines.push('    • WALLPAPER TEST (CORRECTED — Roman 2026-06-04): a feature fails ONLY when it contributes NEITHER attraction NOR characterization. ATTRACTION ALONE IS SUFFICIENT reason for a feature to exist — "broad shoulders / strong jaw / dark hair" as part of a first impression are ATTRACTION, not wallpaper. Characterization is a BONUS, not a requirement. Dead wallpaper = "blue eyes, broad shoulders, dark hair" listed with no purpose and no impression.');
+      lines.push('    • CHARACTER ANCHOR (also wanted, across the arc): a revealing trait / behavior / mannerism (signature_behavior / deflection_pattern / a tell). MAY fuse with an attraction anchor (strongest) but need not. OFFSTAGE MEMORY: still carry a physical attraction anchor + a behavior; a character revelation is bonus.');
+      lines.push('    • SUCCESS: after his first appearance the reader can answer "why is he attractive?" in ONE sentence; after ten scenes the reader still pictures the SAME man — because 3-5 anchors recurred in fresh forms, NOT because 40 features were introduced.');
+      // Designate the 3-5 recurring anchors ONCE, deterministically, from the
+      // consensus-attractive Bible fields in priority order (Roman 2026-06-04). The
+      // Bible is stable, so this selection is identical every scene → the SAME 3-5
+      // recur across the arc without new state. Quirk fields (collarbone/wrist/tic)
+      // are deliberately NOT in this pool.
+      try {
+        // ROMANCE ANCHOR HIERARCHY (Roman 2026-06-04). Recurrence is not enough —
+        // the picker must PRIORITIZE Tier-1 (consensus-attractive) over Tier-2 quirks,
+        // or a stable-but-wrong set ("collarbone / wrist / scar") recurs every scene.
+        var _tier2re = /\b(scar|scarred|wrist|collarbones?|birthmark|tattoo|freckles?|moles?|dimples?|knuckles?)\b/i;
+        var _clean = function (v) { return String(v).replace(/\s+/g, ' ').trim().slice(0, 90); };
+        // Guaranteed-anatomical fields are Tier-1 by construction.
+        var _tier1 = [[b.height, b.build].filter(Boolean).join(', '), b.mouth_quality, b.eye_color, b.hair, b.voice_quality, b.hands_quality];
+        // Free-text celebrated features are wildcards: Tier-1 if mainstream, else Tier-2 supplement.
+        var _wild = [b.signature_feature, b.second_celebrated_feature].filter(function (v) { return v && String(v).trim().length > 1; });
+        var _wildT1 = _wild.filter(function (v) { return !_tier2re.test(v); });
+        var _wildT2 = _wild.filter(function (v) { return _tier2re.test(v); });
+        var _anchors = [];
+        // Tier-1 first: mainstream celebrated feature, then guaranteed anatomy.
+        _wildT1.concat(_tier1).forEach(function (v) { if (v && String(v).trim().length > 1 && _anchors.length < 5) _anchors.push(_clean(v)); });
+        // Tier-2 supplements ONLY if Tier-1 came up short, and never more than one.
+        if (_anchors.length < 3) { _wildT2.slice(0, 1).forEach(function (v) { if (_anchors.length < 5) _anchors.push(_clean(v)); }); }
+        if (_anchors.length >= 3) {
+          lines.push('  >>> THIS LI\'s 3-5 RECURRING ATTRACTION ANCHORS (Tier-1 consensus-attractive, picked for you — use THESE same anchors across the whole arc, but render at most 2 of them in any single passage — 3+ stacked together is the cluster dump; distribute them across the action (one presence/body, one face/eyes/mouth, one psychology/movement), do NOT invent a new body part each scene, do NOT lead with quirks like scar / wrist / collarbone): ' + _anchors.map(function (a, i) { return (i + 1) + ') ' + a; }).join('   ') + '.');
+        }
+      } catch (_) {}
+      // INTIMACY ANCHOR (Roman 2026-06-04 — OPTIONAL; the relationship-specific anchor:
+      // the thing one dismisses, the other cherishes). Distinct from the consensus
+      // attraction anchors above. Renders ONLY when a self_conscious_feature exists, so
+      // it never forces the "my nose is too big / no it isn\'t" Hallmark beat.
+      try {
+        var _liSC = b.self_conscious_feature;
+        var _pcSC = ((window.state && window.state.pcBodyBible) || {}).self_conscious_feature;
+        var _has = function (v) { return v && String(v).trim().length > 3 && String(v).trim().toLowerCase() !== 'null'; };
+        if (_has(_liSC) || _has(_pcSC)) {
+          lines.push('  INTIMACY ANCHOR DOCTRINE (Roman 2026-06-04 — the RELATIONSHIP-SPECIFIC anchor; consensus hotness gets the reader IN, this is what makes THEIR attraction feel unique — only this couple sees it this way). HARD CRAFT: it is NOT a self-esteem lesson and NOT reassurance — NEVER "no, you\'re beautiful" / "I love your [feature]." The lover\'s response is DESIRE or a LOADED OBSERVATION that makes the dismissed feature MEAN something (e.g. "you\'re the only person in Manhattan who doesn\'t know how to lie with her face" / "I haven\'t stopped thinking about your body since I met you" / she cannot stop looking at the scar when he is trying NOT to show emotion). No speech, no lesson — desire, or weight. Surface it sparingly; it deepens when it recurs.');
+          if (_has(_pcSC)) lines.push('    • SHE dismisses: ' + String(_pcSC).replace(/\s+/g, ' ').trim() + ' — ' + liName + ' is drawn to exactly THAT (desire / loaded observation, never reassurance).');
+          if (_has(_liSC)) lines.push('    • HE dismisses: ' + String(_liSC).replace(/\s+/g, ' ').trim() + ' — the PC becomes unable to look away from exactly THAT (charged, loaded — never pity, never reassurance).');
+        }
+      } catch (_) {}
+      if (b.age)               lines.push('  Age: ' + b.age + ' (LOCKED — calibrate body description, voice, and behavioral history to this exact age; do NOT shift toward a more romance-friendly default)'); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
+      if (b.ancestry)          lines.push('  Ancestry: ' + b.ancestry + ' (heritage informs appearance, naming, and light cultural-memory details; does NOT change setting)'); // Phase 2 contemporary contract
+      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
+      if (b.hair)              lines.push('  Hair: ' + b.hair);
+      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
+      if (b.eye_color)         lines.push('  Eyes: ' + b.eye_color);
+      if (b.voice_quality)     lines.push('  Voice: ' + b.voice_quality);
+      if (b.hands_quality)     lines.push('  Hands: ' + b.hands_quality);
+      if (b.mouth_quality)     lines.push('  Mouth: ' + b.mouth_quality);
+      if (b.holding_style)     lines.push('  Holding style (what he does with objects): ' + b.holding_style);
+      if (b.signature_feature)         lines.push('  Signature feature (PC notices every ~2 scenes, alternating with herself): ' + b.signature_feature);
+      if (b.second_celebrated_feature) lines.push('  Second celebrated feature: ' + b.second_celebrated_feature);
+      if (b.focus_tell)        lines.push('  Focus tell: ' + b.focus_tell);
+      if (b.restraint_tell)    lines.push('  Restraint tell: ' + b.restraint_tell);
+      if (b.interest_tell)     lines.push('  Interest tell (her specifically): ' + b.interest_tell);
+      if (b.frustration_tell)  lines.push('  Frustration tell: ' + b.frustration_tell);
+      if (b.desire_tell)       lines.push('  Desire tell (desire-coded, not power-coded): ' + b.desire_tell);
+      if (b.signature_habits)  lines.push('  Signature habits (recurring non-physical micro-behaviors — the reader recognizes him by these across the arc): ' + b.signature_habits);
+      // Roman 2026-06-01 — BEHAVIORAL anchors. These are the load-bearing
+      // fields when the prose remembers him. Photograph test applies: any
+      // LI memory must contain a VERB pulled from this set, not a
+      // descriptor of his face or sleeves or watch.
+      if (b.signature_behavior)      lines.push('  Signature behavior (how he moves through the world — VERB-shape, archetype-anchored): ' + b.signature_behavior);
+      if (b.deflection_pattern)      lines.push('  Deflection pattern (how he avoids being read): ' + b.deflection_pattern);
+      if (b.attraction_manifestation) lines.push('  Attraction manifestation (what his care for the PC looks like AS ACTION — not as feeling, not as appearance): ' + b.attraction_manifestation);
+      // MEMORY-SOURCE PRIORITY for desire-bearing engines (Roman 2026-06-06, lightweight #2 —
+      // promote/demote, NOT full suppression). The LI-texture audit kept measuring ~72% of his
+      // offstage memories drawn from the STRATEGIST fields even on a wanted engine → he read as a
+      // clever operator, not a wanted man, and the prose-layer reweight (buildNoticeFilter) did not
+      // bind. Reassert the priority at the SOURCE pipe: wanting fields up, strategist fields down.
+      try {
+        var _liEng = String((window.state && ((window.state.pairDynamic && window.state.pairDynamic.romanceEngine) || (window.state.romanceEnginePlan && window.state.romanceEnginePlan.engine) || (window.state.aPlot && window.state.aPlot.romanceEngine))) || '').toUpperCase();
+        if (_liEng === 'SHARED_HISTORY' || _liEng === 'LOOMING_PRESENCE') {
+          lines.push('  ⇧⇩ MEMORY-SOURCE PRIORITY (this engine is DESIRE-BEARING — he is WANTED, not decoded): when the prose REMEMBERS or ANTICIPATES him, draw the VERB from the PROMOTED fields ↑ attraction_manifestation / desire_register_exemplars / voice / defining_anecdote (moments of WANTING, where HER body answers). The STRATEGIST fields ↓ signature_behavior / deflection_pattern are DEMOTED — at most ONE memory in the whole scene may turn on them, and it must land as something she WANTS PAST (his evasion maddening because she wants the man behind it), NEVER cold admiration of his cleverness. If more than one memory turns on his strategy/control, he has become an operator she is decoding instead of a man she wants.');
+        }
+      } catch (_) {}
+      // Roman 2026-06-03 (second pass — sliced): signature_kink chain is NO
+      // LONGER surfaced in this shared compact renderer. The chain has
+      // different LEVELS of specificity that matter for different consumers:
+      //   • Spine needs deprivation + hunger (the WHY across issues).
+      //   • Scaffold needs attraction_pattern + pcUnknowinglySatisfies
+      //     (what HE KEEPS NOTICING moment-to-moment).
+      //   • Per-scene directive (buildAPlotPressureDirective KINK-FIT BEAT)
+      //     uses the whole chain.
+      // Piping the whole chain into the shared renderer bloated both spine
+      // and scaffold prompts with fields they did not need. Each consumer
+      // now slices the chain itself from state.liBodyBible.signature_kink.
+      // Roman 2026-06-01 anti-recursion — emotional_weather + secondary_anecdote
+      // force a Bible to feel like a SPECIFIC man, not a portable type.
+      if (b.emotional_weather) lines.push('  Emotional weather (his default climate — what he carries into rooms BEFORE the plot interacts with him): ' + b.emotional_weather);
+      if (b.defining_anecdote)       lines.push('  DEFINING ANECDOTE (the SPECIFIC story the PC could tell about him — the load-bearing source whenever the prose remembers him): ' + b.defining_anecdote);
+      if (b.secondary_anecdote_different_register) lines.push('  SECONDARY ANECDOTE (different life-domain from the defining anecdote — proves he is a specific man, not a one-anecdote type): ' + b.secondary_anecdote_different_register);
+      if (b.pc_keenly_notices) lines.push('  PC keenly notices (rotate through this basket): ' + b.pc_keenly_notices);
+      // 2026-05-31 (Roman): tuned GOOD exemplars — replace what used to be
+      // 4 sites of duplicated generic exemplar bank. Sonnet draws shapes
+      // from HERE; universal BAD bans + craft doctrine stay in the prompt
+      // layer (calibrated, not story-specific).
+      if (Array.isArray(b.desire_register_exemplars) && b.desire_register_exemplars.length) {
+        lines.push('  GOOD desire-register shapes (per-story TUNED to this LI — imitate the LEVEL OF SPECIFICITY, not the wording):');
+        b.desire_register_exemplars.forEach(function(ex, i){ lines.push('    ' + (i + 1) + '. ' + ex); });
+      }
+      // Slice B: surface the rolling AVOID list — last N callbacks the
+      // planner used, so the next scene rotates to a different anchor.
+      try {
+        var _used = (window.state && Array.isArray(window.state._biblePcKeenlyUsed)) ? window.state._biblePcKeenlyUsed : [];
+        if (_used.length) {
+          lines.push('  RECENT NOTICING CALLBACKS (last ' + _used.length + ' — pick a DIFFERENT Bible-field anchor this scene; do NOT recycle the same focus):');
+          _used.forEach(function(c, i){ lines.push('    ↻ ' + (_used.length - i) + ' scene(s) ago: ' + c); });
+        }
+      } catch (_) {}
+      try { if (typeof _auditFieldForwarding === 'function' && typeof _bibleFieldsForMode === 'function') _auditFieldForwarding(b, _bibleFieldsForMode('literary_compact', { side: 'li' })); } catch (_) {}
+      try {
+        if (Array.isArray(b.visual_canon) && b.visual_canon.length) lines.push('  AUTHORITATIVE VISUAL CANON (verbatim, do not contradict): ' + b.visual_canon.slice(0, 6).join(' \u00b7 '));
+        if (Array.isArray(b.species_visual_canon) && b.species_visual_canon.length) lines.push('  SPECIES CANON (true of every member of this people): ' + b.species_visual_canon.slice(0, 4).join(' \u00b7 '));
+      } catch (_) {}
+      return lines.join('\n');
+    }
+    window._renderLIBodyBibleCompact = _renderLIBodyBibleCompact;
+    function _bibleFieldsForMode(mode, opts) {
+      try {
+        opts = opts || {};
+        var side = opts.side;
+        if (!mode || !side) return null;
+        var modeMap = BIBLE_MODE_PROFILES[mode];
+        if (!modeMap || !modeMap[side]) return null;
+        var sideProfile = modeMap[side];
+        // core: profile coreOverride wins over CORE_LOCKED (lets feature_rotation
+        // and established_lock declare reduced cores per Roman's explicit calls)
+        var core = sideProfile.coreOverride || CORE_LOCKED[side] || [];
+        var modeSpecific = sideProfile.modeSpecific || [];
+        // dedupe core + modeSpecific into include
+        var seen = {}, include = [];
+        core.forEach(function (f) { if (!seen[f]) { seen[f] = 1; include.push(f); } });
+        modeSpecific.forEach(function (f) { if (!seen[f]) { seen[f] = 1; include.push(f); } });
+        // required: core fields are required by default (warn if missing in bible)
+        return {
+          mode: mode,
+          side: side,
+          core: core,
+          modeSpecific: modeSpecific,
+          include: include,
+          required: core.slice(),
+          excludedByDesign: sideProfile.excludedByDesign || []
+        };
+      } catch (_) { return null; }
+    }
+    window._bibleFieldsForMode = _bibleFieldsForMode;
+
+    /**
+     * Schema-vs-profile invariant audit. Compares the bible's POPULATED fields
+     * AND the schema's KNOWN fields against the mode profile. Emits three
+     * classes of log:
+     *   FIELD-FORWARD:WARN — required field is missing from bible at fwd time
+     *   FIELD-FORWARD:INFO — intentionally-excluded fields confirmed
+     *   FIELD-FORWARD:ERROR — schema field not in include AND not in excluded
+     *     (this is the alarm Roman 2026-06-11 specified — catches the next age
+     *     bug at code-review time without needing a separate audit)
+     *
+     * Called by structured serializers AFTER forwarding. No-op if invariants pass.
+     */
+    function _auditFieldForwarding(bible, profile) {
+      try {
+        if (!profile || !profile.side) return;
+        var schema = BIBLE_SCHEMA_FIELDS[profile.side] || [];
+
+        // ERROR 1 — STATIC drift: schema fields unaccounted for in this profile
+        // Catches: someone added a field to BIBLE_SCHEMA_FIELDS but forgot to
+        // update the mode profile.
+        var unaccountedInSchema = schema.filter(function (f) {
+          return profile.include.indexOf(f) === -1 && profile.excludedByDesign.indexOf(f) === -1;
+        });
+        if (unaccountedInSchema.length) {
+          console.error('[FIELD-FORWARD:ERROR:STATIC] mode=' + profile.mode + ' side=' + profile.side +
+            ' unaccounted=' + unaccountedInSchema.join(',') +
+            ' — schema added field(s) that this profile neither includes nor excludes. ' +
+            'Update BIBLE_MODE_PROFILES[' + profile.mode + '].' + profile.side + ' to account for the new field(s).');
+        }
+
+        // ERROR 2 — RUNTIME drift: bible JSON contains keys neither the schema
+        // enumeration NOR the profile knows about. Roman 2026-06-11 canary
+        // strengthening: closes the gap where someone adds a field to the
+        // LLM-facing JSON schema in _generate{PC,LI,Antagonist}BodyBible
+        // WITHOUT updating BIBLE_SCHEMA_FIELDS. Without this branch, the
+        // bible-vs-anything drift slips through both layers silently.
+        if (bible && typeof bible === 'object') {
+          var bibleKeys = Object.keys(bible).filter(function (k) {
+            // Skip internal / cache / underscore-prefixed fields; they're not
+            // schema fields, they're harness/state metadata.
+            return k && k[0] !== '_';
+          });
+          var unaccountedInBible = bibleKeys.filter(function (f) {
+            return schema.indexOf(f) === -1 &&
+                   profile.include.indexOf(f) === -1 &&
+                   profile.excludedByDesign.indexOf(f) === -1;
+          });
+          if (unaccountedInBible.length) {
+            // Downgraded error→warn (Roman 2026-06-17): this branch can't tell a
+            // HARMLESS LLM-invented field (the bible generator — Haiku — adds an
+            // unprompted key like "wound_secondary"; it's never forwarded, so it's
+            // inert noise) from a real code change. LLM hallucinations are expected
+            // and must NOT error. Pure code-level drift is still caught hard by
+            // ERROR 1 (:STATIC) above (BIBLE_SCHEMA_FIELDS vs profile, no LLM).
+            console.warn('[FIELD-FORWARD:WARN:RUNTIME] mode=' + profile.mode + ' side=' + profile.side +
+              ' unaccounted_in_bible=' + unaccountedInBible.join(',') +
+              ' — bible has field(s) in neither BIBLE_SCHEMA_FIELDS nor this profile. Usually a benign ' +
+              'LLM-invented field (ignored, never forwarded). ONLY act if YOU just added this field to the ' +
+              '_generate{PC,LI,Antagonist}BodyBible JSON schema — then register it in BIBLE_SCHEMA_FIELDS + profiles.');
+          }
+        }
+
+        // WARN — required field missing from bible at forwarding time
+        if (bible) {
+          var missing = profile.required.filter(function (f) {
+            var v = bible[f];
+            return v === undefined || v === null || v === '' ||
+              (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0);
+          });
+          if (missing.length) {
+            console.warn('[FIELD-FORWARD:WARN] mode=' + profile.mode + ' side=' + profile.side +
+              ' missing=' + missing.join(',') +
+              ' — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.');
+          }
+        }
+      } catch (_) {}
+    }
+    function _renderAntagonistBodyBibleCompact() {
+      // CORRECT THE RECORD BEFORE DELIVERING IT (see _apprReconcileAntagonistIdentity).
+      try { if (typeof _apprReconcileAntagonistIdentity === 'function') _apprReconcileAntagonistIdentity(window.state); } catch (_) {}
+      var b = (window.state && window.state.antagonistBodyBible) || null;
+      if (!b) return '';
+      var ap = (window.state && window.state.aPlot) || {};
+      // THE NAME IS IN THE PLOT RECORD, NOT ON THE BIBLE. antagonistName was null in the preserved
+      // run while aPlot.antagonistSubject.proper_name held "Veyra Solin", so the author was given a
+      // portrait with no one attached to it.
+      var _subj = ap.antagonistSubject || {};
+      var antName = (_subj.proper_name || b.name || b.display_name
+        || window.state.antagonistName || ap.antagonistOrAntiForce || 'the antagonist').toString();
+      if (_resolveAppearanceMode(window.state).antagonist === 'lock') return _apprLockBlock('ANTAGONIST', antName, b);
+      var antShape = (ap.antagonistShape || '').toString().toUpperCase();
+      var shapeLbl = (antShape === 'A') ? 'shape A — wound-source IS antagonist (intimate menace)'
+                    : (antShape === 'B') ? 'shape B — agent of the wound (proxy menace)'
+                    : '';
+      // Resolve archetype label from taxonomy for prompt readability.
+      var _archEntry = null;
+      try { _archEntry = (_ANTAGONIST_ARCHETYPES || []).filter(function(a){ return a.key === b.archetype; })[0] || null; } catch (_) {}
+      var _archLbl = _archEntry ? (_archEntry.label + ' — ' + _archEntry.register) : (b.archetype || 'unspecified');
+      var lines = ['ANTAGONIST BODY BIBLE (stable per-story canon — ' + antName + (shapeLbl ? '; ' + shapeLbl : '') + '. THREAT register: the PC notices this body as too close / too sure / too pleased — NEVER as a wanted thing. Pepper, do not dump.):'];
+      if (b.archetype)           lines.push('  Archetype: ' + _archLbl);
+      if (b.archetype_signature) lines.push('  Archetype signature (how it lands in THIS antagonist): ' + b.archetype_signature);
+      // SPURNED_EX gets explicit crossed-wire callout at the top — Sonnet
+      // must understand this villain registers on the desire axis, not the
+      // pure-threat axis. Don't quietly inline this under signature.
+      if (b.archetype === 'SPURNED_EX') {
+        lines.push('  ⚠ CROSSED-WIRE VILLAIN — desire-coded menace. The PC\'s body trained on this exact register; she has to override it consciously, scene after scene.');
+        if (b.ex_romance_archetype) lines.push('    Ex\'s romance archetype (now soured): ' + b.ex_romance_archetype);
+        if (b.corrupted_warmth_tell) lines.push('    Corrupted-warmth tell (read TWICE — reminds of wanting AND warns of danger): ' + b.corrupted_warmth_tell);
+      }
+      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
+      if (b.hair)              lines.push('  Hair: ' + b.hair);
+      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
+      if (b.eye_color)         lines.push('  Eyes: ' + b.eye_color);
+      if (b.signature_feature) lines.push('  Signature feature (PC keeps clocking): ' + b.signature_feature);
+      if (b.voice_quality)     lines.push('  Voice (control register): ' + b.voice_quality);
+      if (b.hands_quality)     lines.push('  Hands: ' + b.hands_quality);
+      if (b.eyes_register)     lines.push('  Eyes register (what KIND of attention): ' + b.eyes_register);
+      if (b.proximity_default) lines.push('  Proximity default: ' + b.proximity_default);
+      if (b.pc_keeps_noticing) lines.push('  PC keeps noticing (rotating threat basket): ' + b.pc_keeps_noticing);
+      if (b.targeting_tell)    lines.push('  Targeting tell ("I have decided you are my problem"): ' + b.targeting_tell);
+      if (b.control_tell)      lines.push('  Control tell (who is in charge of the room): ' + b.control_tell);
+      if (b.pleasure_tell)     lines.push('  Pleasure tell (enjoying her discomfort): ' + b.pleasure_tell);
+      if (b.escalation_tell)   lines.push('  Escalation tell (right before they push further): ' + b.escalation_tell);
+      if (b.softness_seam)     lines.push('  Softness seam (the ONE uncalculated tell that makes them human — small, not a redemption): ' + b.softness_seam);
+      // Slice B: AVOID list — last antagonist callbacks used.
+      try {
+        var _used = (window.state && Array.isArray(window.state._bibleAntKeepsUsed)) ? window.state._bibleAntKeepsUsed : [];
+        if (_used.length) {
+          lines.push('  RECENT ANTAGONIST NOTICING CALLBACKS (last ' + _used.length + ' — pick a DIFFERENT threat-basket anchor this scene; do NOT recycle):');
+          _used.forEach(function(c, i){ lines.push('    ↻ ' + (_used.length - i) + ' scene(s) ago: ' + c); });
+        }
+      } catch (_) {}
+      // THE PRESERVED AUTHORITATIVE CANON, delivered rather than merely stored.
+      try {
+        if (Array.isArray(b.visual_canon) && b.visual_canon.length) {
+          lines.push('  AUTHORITATIVE VISUAL CANON (verbatim, do not contradict): '
+            + b.visual_canon.slice(0, 6).join(' \u00b7 '));
+        }
+      } catch (_) {}
+      return lines.join('\n');
+    }
+    window._renderAntagonistBodyBibleCompact = _renderAntagonistBodyBibleCompact;
+
   async function handleBeginStory() {
     console.log('[BeginStory] handleBeginStory() called');
     // A NEW AUTHORING ATTEMPT. Every artefact this turn produces is stamped with it.
@@ -287628,7 +288702,7 @@ INCORRECT:
       try { if (typeof commitCanonicalLoveInterest === 'function') commitCanonicalLoveInterest(state, { at: 'pre-bible' }); } catch (_eCanonLI) { try { console.warn('[CANONICAL-LI] pre-bible commit threw:', _eCanonLI && _eCanonLI.message); } catch (__) {} }
       try {
         var _spineBks = [];
-        if (typeof window._generatePCBodyBible === 'function' && !state.pcBodyBible) _spineBks.push(window._generatePCBodyBible());   // SCOPE FIX 2026-09-10 (§41)
+        if (typeof window._generatePCBodyBible === 'function' && (!state.pcBodyBible || (typeof window._pcAppearanceRepairEligible === 'function' && window._pcAppearanceRepairEligible(state.pcBodyBible)))) _spineBks.push(window._generatePCBodyBible());   // SCOPE FIX 2026-09-10 (§41)
         if (typeof window._generateLIBodyBible === 'function' && !state.liBodyBible) _spineBks.push(window._generateLIBodyBible());
         // Famous Fate character contract — pins facts/behavior/social-reality/
         // world-laws once per story so scenes can't forget a power, break a world-
@@ -289381,440 +290455,6 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     // concrete appearance ONCE (first on-page appearance), thereafter emit a VALUE-FREE lock
     // rule and let the story-so-far + the rotation directive carry continuity. The structured
     // bibles stay in state (window._getAppearanceCanon) for continuity validators.
-    function _liOnPageThisScene(s) {
-      try {
-        var staged = (s.sceneSkeleton && s.sceneSkeleton.staged_characters) || [];
-        // CANONICAL LI (Roman 2026-07-30): read the LI name through the single accessor, not the
-        // scattered fields — so on-page detection uses the committed identity, not a stale/placeholder.
-        var _canonLIName = (typeof window.getCanonicalLoveInterest === 'function') ? (window.getCanonicalLoveInterest(s).name || '') : (s.partnerName || s.liName || s.loveInterestName || '');
-        var liName = String(_canonLIName).toLowerCase().split(/\s+/)[0];
-        if (Array.isArray(staged) && staged.length && liName) {
-          for (var i = 0; i < staged.length; i++) {
-            var c = staged[i] || {}; var nm = String(c.name || '').toLowerCase();
-            if (nm && (nm.indexOf(liName) >= 0 || (nm.split(/\s+/)[0] && liName.indexOf(nm.split(/\s+/)[0]) >= 0))) {
-              return String(c.presence_mode || '').toUpperCase() === 'IN_PERSON';
-            }
-          }
-          return false; // skeleton staged a cast and the LI isn't in it → offstage this scene
-        }
-      } catch (_) {}
-      // No skeleton (opening scene before skeleton, or skeleton failed): scene-1 presence on turn 0, else assume he can appear.
-      var turn = (typeof s.turnCount === 'number') ? s.turnCount : 0;
-      if (turn <= 0) { var p = String((s.pairDynamic && s.pairDynamic.scene1Presence) || (s.romanceEnginePlan && s.romanceEnginePlan.scene1Presence) || '').toUpperCase(); return p === 'ONSTAGE' || p === 'IN_PERSON'; }
-      return true;
-    }
-    function _antagonistOnPageThisScene(s) {
-      try {
-        var staged = (s.sceneSkeleton && s.sceneSkeleton.staged_characters) || [];
-        var ag = s.antagonistBodyBible || {};
-        var agName = String((s.aPlot && s.aPlot.antagonistOrAntiForce) || ag.name || ag.display_name || s.antagonistName || '').toLowerCase().split(/\s+/)[0];
-        if (Array.isArray(staged) && staged.length && agName && agName.length > 2) {
-          for (var i = 0; i < staged.length; i++) {
-            var c = staged[i] || {}; var nm = String(c.name || '').toLowerCase();
-            if (nm && (nm.indexOf(agName) >= 0 || (nm.split(/\s+/)[0] && agName.indexOf(nm.split(/\s+/)[0]) >= 0))) {
-              return String(c.presence_mode || '').toUpperCase() === 'IN_PERSON';
-            }
-          }
-          return false; // skeleton staged a cast and the antagonist isn't IN_PERSON → keep establishing
-        }
-      } catch (_) {}
-      return false; // no confident on-page signal → don't lock yet (antagonist appears intermittently)
-    }
-    function _resolveAppearanceMode(s) {
-      var turn = (typeof s.turnCount === 'number') ? s.turnCount : 0;
-      s._apprEstablished = s._apprEstablished || {};
-      // Memoize per turn so every renderer call in one scene returns the SAME mode and the
-      // establish→lock flip fires exactly once.
-      if (s._apprModeCache && s._apprModeCache.turn === turn && s._apprModeCache.mode) return s._apprModeCache.mode;
-      var mode = { pc: 'lock', li: 'lock', antagonist: 'lock' };
-      // PC = first-person narrator: establish on the opening scene, lock thereafter.
-      if (!s._apprEstablished.pc) {
-        if (turn <= 0) { mode.pc = 'establish'; }
-        s._apprEstablished.pc = true; // either established now (turn 0) or resumed mid-thread → story-so-far carries her
-      }
-      // LI = establish the FIRST scene he is physically on-page; keep his values available until then.
-      if (!s._apprEstablished.li) {
-        mode.li = 'establish';
-        if (_liOnPageThisScene(s)) s._apprEstablished.li = true; // established this scene → lock from next; if still offstage, keep values available
-      }
-      // Antagonist = establish the FIRST scene he is physically on-page (threat register, intermittent);
-      // keep values available until then (conservative: only locks on a confident IN_PERSON match).
-      if (!s._apprEstablished.antagonist) {
-        mode.antagonist = 'establish';
-        if (_antagonistOnPageThisScene(s)) s._apprEstablished.antagonist = true;
-      }
-      s._apprModeCache = { turn: turn, mode: mode };
-      return mode;
-    }
-    // ══ A LOCK REMINDER IS NOT THE FACTS THE LOCK REFERS TO (Roman 2026-10-21) ═══════════
-    // THE DEFECT THIS FIXES. This block used to say the appearance "was established earlier in
-    // this story and is FIXED canon — read it from the STORY SO FAR for continuity", and the
-    // three literary renderers return ONLY this block when locked, discarding every value. The
-    // STORY SO FAR is a 1,400-character prose tail (app.js:73329; 3,000 on famous-fate), so a
-    // portrait established in scene 1 has scrolled out of it by scene 2 or 3. The author was
-    // being told to honour a lock and pointed at a window that could not contain it.
-    //
-    // THE TWO THINGS ARE NOW SEPARATE, which is the whole point:
-    //   CONTINUITY FACTS — supplied whenever the character is involved, so the lock is
-    //     honourable. Compact: the stable identity fields only, one line.
-    //   DESCRIPTION INSTRUCTION — unchanged, and still says not to re-list or restate.
-    // Receiving a character's hair colour is not an instruction to mention their hair.
-    // ══ THE REAL SCHEMA, AND WHOLE FACTS (Roman 2026-10-21) ════════════════════════════
-    // TWO DEFECTS THIS FIXES, both reproduced in review:
-    //  (1) it read `b.eyes`. The bibles use `eye_color` (78 occurrences in this file against 14
-    //      for `eyes:`), so every real eye colour silently vanished while a fixture shaped with
-    //      `eyes` passed. Field ALIASES are read in order now, and the regression asserts against
-    //      real-schema records rather than a convenient fixture.
-    //  (2) it cut each fact at 90 characters, which can amputate a qualifier or a condition
-    //      ("warm underfoot even in shade" -> "warm underfoot even in sh"). COMPACT THE
-    //      SELECTION, NOT THE MEANING: fewer fields, each one whole. Only a runaway field is
-    //      trimmed, and the trim says so in the text so no reader of the prompt is misled.
-    function _apprLockBlock(label, name, bible) {
-      var facts = _apprFactLine(bible);
-      return label + ' ' + name + ' — APPEARANCE ESTABLISHED & LOCKED. ' + name + '\'s physical appearance (eye colour, hair, build, signature features) was established earlier in this story and is FIXED canon.'
-        + (facts
-            ? '\n  CONTINUITY FACTS (so you can honour the lock — THESE ARE FOR CONSISTENCY, NOT A PROMPT TO DESCRIBE: receiving them is not an instruction to mention them, and a scene that mentions none of them is correct): ' + facts
-            : '\n  CONTINUITY FACTS: NONE AVAILABLE TO THIS REQUEST, AND THAT IS NOT THE SAME AS NONE EXISTING. Three different situations look alike here and only one of them licenses anything: UNSPECIFIED (nothing was ever authored — there is genuinely nothing to be consistent with); NOT RECOVERED (a record exists or existed and this session could not read it — anything you write may contradict it, so write nothing that would); KNOWN EMPTY (the record was checked and is empty on purpose). THIS REQUEST CANNOT TELL YOU WHICH. So: do NOT invent a portrait to fill the gap, and do not treat the silence as permission.')
-        + '\n  DO NOT re-list, re-introduce, or restate appearance values, and do NOT alter them. Surface a physical feature again when it is genuinely earned THIS scene — newly noticed, plot-relevant, or emotionally meaningful — and never as a re-listing of the same fixed phrase. THE READER MUST STILL BE ABLE TO PICTURE THIS PERSON: if they could not, a fresh concrete impression is earned, and this rule does not forbid it. What is forbidden is the repeated wording, not the reminding. The per-scene ROTATION directive decides WHICH feature, if any, is worth words; a scene with no physical re-description is fine.';
-    }
-    function _renderPCBodyBibleCompact() {
-      var b = (window.state && window.state.pcBodyBible) || null;
-      if (!b) return '';
-      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — for a fixed-starter
-      // story, every PC psychological/foundation field this literary main-path block renders
-      // must come from the committed portfolio, never mutable raw pcBodyBible. Physical/
-      // appearance fields and tells (stress_tic etc.) below are unaffected — out of scope, same
-      // as the precedent set for _renderBiblesAsCGDirectives. See _pcCommittedFoundationForPrompt.
-      var _cf15f = (typeof _pcCommittedFoundationForPrompt === 'function') ? _pcCommittedFoundationForPrompt(window.state) : null;
-      var pcName = (window.state && (window.state.playerName || window.state.pcName)) || 'the protagonist';
-      if (_resolveAppearanceMode(window.state).pc === 'lock') return _apprLockBlock('PROTAGONIST', pcName, b);
-      var lines = ['PROTAGONIST BODY BIBLE (per-story canon — the prose should reference these naturally across the arc; pepper, do not dump):'];
-      lines.push('  ATTRACTION + SIGNATURE DOCTRINE (HARD — Roman 2026-06-04 v2). The reader meets HER body too — first-person does NOT mean bodiless. Choose 3-5 CORE attraction anchors from the Bible fields (hair / lips / eyes / smile / curves / waist / legs / voice / skin / scent) — consensus-attractive, NOT quirks/collarbones/wrists — and treat them as RECURRING SIGNATURES (the reader remembers 3-5, not 40). On her first meaningful self-presentation give a CONCENTRATED impression (one major visual + one body + one sensory), not a catalogue; revisit the SAME anchors across the arc in evolving form (objective → subjective → emotional). WALLPAPER TEST (CORRECTED): a feature fails ONLY if it gives NEITHER attraction NOR character — ATTRACTION ALONE is sufficient; characterization is a BONUS. Keep at least one CHARACTER anchor (a revealing trait/behavior) too; may fuse, need not. NOT-A-CATALOG ≠ NO-DESCRIPTION (HARD forward-reference — Roman 2026-06-30): "not a catalogue" bans the CLINICAL-LIST shape, it does NOT exempt you from rendering. The reader MUST still be able to PICTURE her — give the concentrated, desire-coded image. Skipping or thinning the physical render to "avoid cataloguing" is itself a failure (see the picturability RECONCILING rule).');
-      // Mirror of the LI 3-5 designation, sized at HALF (Roman 2026-06-04): she is the
-      // POV character, so give her 2-3 recurring anchors, not a full portrait — the
-      // reader inhabits her, over-describing the camera is odd. Deterministic from
-      // stable Bible fields → the same few recur across the arc, no new state.
-      try {
-        var _pcT2re = /\b(scar|scarred|wrist|collarbones?|birthmark|tattoo|freckles?|moles?|dimples?|knuckles?)\b/i;
-        var _pcClean = function (v) { return String(v).replace(/\s+/g, ' ').trim().slice(0, 80); };
-        var _pcTier1 = [b.hair, [b.height, b.build].filter(Boolean).join(', '), b.complexion];
-        var _pcWild = [b.signature_feature, b.second_celebrated_feature].filter(function (v) { return v && String(v).trim().length > 1; });
-        var _pcWildT1 = _pcWild.filter(function (v) { return !_pcT2re.test(v); });
-        var _pcWildT2 = _pcWild.filter(function (v) { return _pcT2re.test(v); });
-        var _pcAnchors = [];
-        _pcWildT1.concat(_pcTier1).forEach(function (v) { if (v && String(v).trim().length > 1 && _pcAnchors.length < 3) _pcAnchors.push(_pcClean(v)); });
-        if (_pcAnchors.length < 2) { _pcWildT2.slice(0, 1).forEach(function (v) { if (_pcAnchors.length < 3) _pcAnchors.push(_pcClean(v)); }); }
-        if (_pcAnchors.length >= 2) {
-          lines.push('  >>> HER 2-3 RECURRING ANCHORS (Tier-1 only; LIGHTER touch than the LI — she is the POV; surface these same few across the arc, do NOT inventory her, do NOT lead with quirks): ' + _pcAnchors.map(function (a, i) { return (i + 1) + ') ' + a; }).join('   ') + '.');
-        }
-      } catch (_) {}
-      if (b.age)               lines.push('  Age: ' + b.age + ' (LOCKED — calibrate body description, life history, voice, and emotional weather to this exact age; do NOT shift toward a more romance-friendly default)'); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
-      if (b.ancestry)          lines.push('  Ancestry: ' + b.ancestry + ' (heritage informs appearance, naming, and light cultural-memory details across the arc; do NOT change setting or make the story PRIMARILY about heritage)'); // Phase 2 contemporary contract
-      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
-      if (b.hair)              lines.push('  Hair: ' + b.hair);
-      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
-      if (b.signature_feature)        lines.push('  Signature feature (worth celebrating, surface every ~2 scenes, alternating with the LI): ' + b.signature_feature);
-      if (b.second_celebrated_feature) lines.push('  Second celebrated feature: ' + b.second_celebrated_feature);
-      if (b.stress_tic)         lines.push('  Stress tic: ' + b.stress_tic);
-      if (b.desire_tell)        lines.push('  Desire tell: ' + b.desire_tell);
-      if (b.impatience_tell)    lines.push('  Impatience tell: ' + b.impatience_tell);
-      if (b.confidence_tell)    lines.push('  Confidence tell: ' + b.confidence_tell);
-      if (b.vulnerability_tell) lines.push('  Vulnerability tell: ' + b.vulnerability_tell);
-      // Roman 2026-06-01 — EMOTIONAL CLIMATE. The narrator narrates every
-      // line; these three fields color the prose from line 1 onward, NOT
-      // as stated facts but as TEXTURE. Sonnet must read weather +
-      // contradiction + private_hope as the lens her observations pass
-      // through, not as facts to declare.
-      if (!_cf15f && b.emotional_weather) lines.push('  EMOTIONAL WEATHER (her default climate — the lens her narration passes through on every line; color narration TEXTURE with this, never state it as fact): ' + b.emotional_weather);
-      var _cc15f = _cf15f ? _cf15f.core_contradiction : b.core_contradiction;
-      if (_cc15f) lines.push('  CORE CONTRADICTION (the central tension that makes her readable across the arc — the shape readers come back to): ' + _cc15f);
-      var _ph15f = _cf15f ? _cf15f.private_hope : b.private_hope;
-      if (_ph15f) lines.push('  PRIVATE HOPE (what she secretly wants but has not let herself name — the desire-engine of the romance arc; what this LI could fulfill or fail to fulfill): ' + _ph15f);
-      if (b.signature_habits)   lines.push('  Signature habits (recurring non-physical micro-behaviors — surface these across the arc, the reader recognizes her by these): ' + b.signature_habits);
-      if (!_cf15f && b.li_keenly_aware_of) lines.push('  LI is keenly aware of: ' + b.li_keenly_aware_of);
-      // Roman 2026-06-04: CURRENT CRISIS — the EVENT in motion, structured.
-      // Rendered ONLY on HOT openings (it is the opening + the Crisis→LI bridge
-      // source); omitted on COLD stories so it does not push a crisis opening.
-      // Graceful: skips legacy string-form current_crisis (object only).
-      // AUTHORITY BOUNDARY (Roman, corrective follow-up #15, 2026-09-15) — event/immediate_fear/
-      // refusal/li_complication are PCV_DURABLE_FIELDS (validated, committed); for a fixed
-      // starter they come from _cf15f, never raw b.current_crisis. time_since_impact/
-      // hottest_emotion/immediate_want are NOT validated fields at all (no claim-kind, no commit
-      // path exists for them) — out of scope here, same as physical fields, left unchanged.
-      try {
-        if ((window.state && window.state._openingTemperature) === 'HOT_CRISIS' && b.current_crisis && typeof b.current_crisis === 'object') {
-          var _cc = b.current_crisis;
-          var _ccParts = [];
-          var _ccEvent = _cf15f ? _cf15f.current_crisis_event : _cc.event;
-          var _ccFear = _cf15f ? _cf15f.current_fear : _cc.immediate_fear;
-          var _ccRefusal = _cf15f ? _cf15f.refusal : _cc.refusal;
-          var _ccLiComp = _cf15f ? _cf15f.li_complication : _cc.li_complication;
-          if (_ccEvent)              _ccParts.push('EVENT: ' + _ccEvent);
-          if (_cc.time_since_impact) _ccParts.push('TIME SINCE IMPACT: ' + _cc.time_since_impact);
-          if (_cc.hottest_emotion)   _ccParts.push('HOTTEST EMOTION: ' + _cc.hottest_emotion);
-          if (_cc.immediate_want)    _ccParts.push('IMMEDIATE WANT: ' + _cc.immediate_want);
-          if (_ccFear)               _ccParts.push('IMMEDIATE FEAR: ' + _ccFear);
-          if (_ccRefusal)            _ccParts.push('REFUSAL (the line she defends — her agency under duress): ' + _ccRefusal);
-          if (_ccLiComp)             _ccParts.push('LI COMPLICATION (why he matters in THIS moment — the Crisis→LI bridge source): ' + _ccLiComp);
-          if (_ccParts.length) lines.push('  CURRENT CRISIS (HOT opening — what is literally on fire RIGHT NOW; OPEN INSIDE this EVENT, in progress, never as reflection): \n    ' + _ccParts.join('\n    '));
-        }
-      } catch (_) {}
-      try { if (typeof _auditFieldForwarding === 'function' && typeof _bibleFieldsForMode === 'function') _auditFieldForwarding(b, _bibleFieldsForMode('literary_compact', { side: 'pc' })); } catch (_) {}
-      return lines.join('\n');
-    }
-    window._renderPCBodyBibleCompact = _renderPCBodyBibleCompact;
-
-    // ── BIBLE VERBATIM PIN (Roman 2026-06-01 Phase 2 character-signature regime) ──
-    // When the planner's pc_body_callback / li_body_callback string fires a
-    // SPECIFIC TELL (stress_tic / desire_tell / focus_tell / etc.), the prose
-    // must use the EXACT Bible value, not a fresh-generated variation.
-    // Otherwise the planner picks "stress_tic fires this scene" but Sonnet
-    // writes a fresh stress gesture, and the character has no recurring
-    // signature. This helper parses the callback string, extracts the tell
-    // field name, looks up the literal Bible value, and emits a HARD pinning
-    // clause. Caller injects the output into the prose-gen system prompt
-    // alongside the existing callback directive.
-    //
-    // role: 'pc' or 'li'; callbackStr: planner's pc_body_callback / li_body_callback
-    // (e.g. "beat 2 — stress_tic: she rolls the pen between her fingers").
-    function _buildBibleVerbatimPinDirective(role, callbackStr) {
-      try {
-        if (!callbackStr) return '';
-        var s = window.state || {};
-        var bible = role === 'li' ? (s.liBodyBible || null) : (s.pcBodyBible || null);
-        if (!bible) return '';
-        // Detect which Bible field the callback names. Order matters — more
-        // specific fields first. The callback often includes underscored
-        // field names like "stress_tic" or " — stress tic " (planner sometimes
-        // strips the underscore). Match both forms.
-        var fieldMap = role === 'li'
-          ? [ ['focus_tell',       /\bfocus[_ ]tell\b/i],
-              ['restraint_tell',   /\brestraint[_ ]tell\b/i],
-              ['interest_tell',    /\binterest[_ ]tell\b/i],
-              ['frustration_tell', /\bfrustration[_ ]tell\b/i],
-              ['desire_tell',      /\bdesire[_ ]tell\b/i],
-              ['signature_feature',/\bsignature[_ ]feature\b/i],
-              ['second_celebrated_feature', /\bsecond[_ ]celebrated\b/i] ]
-          : [ ['stress_tic',         /\bstress[_ ]tic\b/i],
-              ['desire_tell',        /\bdesire[_ ]tell\b/i],
-              ['impatience_tell',    /\bimpatience[_ ]tell\b/i],
-              ['confidence_tell',    /\bconfidence[_ ]tell\b/i],
-              ['vulnerability_tell', /\bvulnerability[_ ]tell\b/i],
-              ['signature_feature',  /\bsignature[_ ]feature\b/i],
-              ['second_celebrated_feature', /\bsecond[_ ]celebrated\b/i] ];
-        var matched = null;
-        for (var i = 0; i < fieldMap.length; i++) {
-          if (fieldMap[i][1].test(callbackStr)) { matched = fieldMap[i][0]; break; }
-        }
-        if (!matched) return '';
-        var locked = bible[matched];
-        if (!locked || typeof locked !== 'string' || !locked.trim()) return '';
-        var roleLabel = role === 'li' ? 'LI' : 'PC';
-        var subject = role === 'li' ? 'his' : 'her';
-        var fieldLabel = matched.replace(/_/g, ' ');
-        // Roman 2026-06-03 second pass: the verbatim pin (HARD, no variation)
-        // was over-recurring. Observed live across 4 consecutive plays: the
-        // Bible-locked tic ("pressed my tongue hard against the roof of my
-        // mouth, holding it there for exactly five counts" / "face narrowed
-        // at the hinge") rendered IDENTICALLY every scene → calcified into
-        // Storybound signature, not character signature. PROSE:CANONICAL
-        // restless_hands hit 77-83% across runs as STOCK PHRASE.
-        //
-        // Loosened to ANCHOR-CONSISTENT, PHRASING-VARIED. The character
-        // signature concept stays — the SAME anatomical site + the SAME
-        // mechanic recur — but Sonnet can vary surface phrasing so the
-        // reader recognizes the character without recognizing the
-        // boilerplate. Example:
-        //   • Bible: "pressed her tongue hard against the roof of her mouth,
-        //     holding it there for exactly five counts"
-        //   • Scene 1: "she pressed her tongue against the roof of her mouth
-        //     and counted to five before answering"
-        //   • Scene 2: "her tongue went to the roof of her mouth — the old
-        //     five-count, automatic now"
-        //   • Scene 3: "the small private press of tongue against palate, the
-        //     count she would never admit she still kept"
-        // Same anatomical anchor (tongue → roof of mouth), same mechanic
-        // (counted hold), different surface every time.
-        return '\n   ↳ ' + roleLabel + ' BIBLE ANCHOR PIN (HARD — Roman 2026-06-03 character-signature regime, loosened from verbatim). The callback above fires ' + subject + ' ' + fieldLabel + '. The Bible\'s LOCKED ' + fieldLabel + ' is: "' + locked + '". This is a PERSISTENT CHARACTER SIGNATURE — same gesture across the whole arc — but surface PHRASING varies per scene so it does not calcify into boilerplate.\n      RECURRENCE RULE: preserve the ANATOMICAL ANCHOR (which body part, what site) AND the MECHANIC (what is done — press / count / turn / twist / pull / hold). VARY the surface phrasing each scene — sentence shape, register, the small details around the core gesture. The reader should recognize the same character-tic across scenes (same site, same mechanic) without recognizing the same SENTENCE.\n      FORBIDDEN: (a) substituting a DIFFERENT site (Bible says tongue, prose says lip — that breaks the signature); (b) substituting a DIFFERENT mechanic (Bible says counted hold, prose says nervous flicker — also breaks the signature); (c) rendering the SAME sentence verbatim across multiple scenes (this is what calcifies; the audit reads it as stock phrase); (d) ESCALATING or REPEATING the tic WITHIN a single scene (Roman 2026-06-04) — state it ONCE, one clean instance, NEVER multiplied ("tapped three times, then three more, then three more. Always three. Always the same finger." is the failure). If the Bible mechanic carries a COUNT, name the count ONCE; do not re-count, re-tap, or reinforce it with "always X / always the same Y." One instance per scene is the SIGNATURE; three-to-five is a mannerism the reader recognizes as the machine. The anchor (body part + mechanic) is the SIGNATURE; the surface phrasing is THE WRITING.\n';
-      } catch (_) { return ''; }
-    }
-    window._buildBibleVerbatimPinDirective = _buildBibleVerbatimPinDirective;
-
-    // LI BODY BIBLE generator (Roman 2026-05-31). Mirror of PC Body Bible —
-    // per-story stable LI canon so the protagonist has plenty of specific
-    // things to notice and admire, and so the LI doesn't drift across the
-    // arc (eyes, height, hair). The field schema is optimized for "things
-    // the PC notices about him" — voice quality, hands, mouth, the way he
-    // holds things, his bearing — instead of the PC's interiority registers.
-    // One Haiku call per story (~$0.005); cached on state.liBodyBible.
-    // FAIL-SAFE: any error → returns null → li_body_callback fields silently
-    // omit but the rest of the prose path continues unchanged.
-
-    function _renderLIBodyBibleCompact() {
-      var b = (window.state && window.state.liBodyBible) || null;
-      if (!b) return '';
-      var liName = (window.state && window.state.loveInterestName) ? window.state.loveInterestName : 'the love interest';
-      if (_resolveAppearanceMode(window.state).li === 'lock') return _apprLockBlock('LOVE INTEREST', liName, b);
-      // OFFSTAGE / REMEMBERED LI (Roman 2026-06-24 source surgery): when he is not
-      // physically on-page, do NOT emit the full physical first-impression catalog —
-      // that establish-mode payload IS the measured offstage Scene-1 dump. Give ONE
-      // charged physical anchor + the BEHAVIORAL / anecdote fields the memory beat
-      // actually needs (a remembered VERB, not a face cluster). Counts as PARTIAL
-      // establishment: once used, later offstage mentions get a value-free reminder,
-      // never a re-dump. The IN-PERSON first establishment (below) is left intact —
-      // he still earns a real 2–3 aspect impression when he is actually on-page.
-      try {
-        var _sLI = window.state || {};
-        if (typeof _liOnPageThisScene === 'function' && !_liOnPageThisScene(_sLI)) {
-          // Turn-aware partial establishment: this renderer is called MULTIPLE times
-          // per scene (scaffold + prose tail). Gate on TURN, not a boolean — within the
-          // same scene every call returns the one-anchor payload (consistent); only a
-          // STRICTLY LATER scene downgrades to the value-free reminder. (The boolean
-          // version tripped within-scene: the scaffold set it, then the prose call got
-          // the weaker lock block and the model free-wheeled into a cluster.)
-          var _curTurn = (typeof _sLI.turnCount === 'number') ? _sLI.turnCount : 0;
-          if (_sLI._liOffstageAnchorTurn != null && _sLI._liOffstageAnchorTurn < _curTurn) return _apprLockBlock('LOVE INTEREST', liName, b);
-          _sLI._liOffstageAnchorTurn = _curTurn;
-          var _hasV = function (v) { return v && String(v).trim().length > 1 && String(v).trim().toLowerCase() !== 'null'; };
-          var _charged = [b.eye_color, b.mouth_quality, b.voice_quality, b.signature_feature].filter(_hasV)[0] || 'his face';
-          var off = ['LOVE INTEREST — ' + liName + ' is OFFSTAGE / REMEMBERED this scene (a message, a name, a memory, a consequence — NOT physically present). Do NOT establish his body bible and do NOT cluster physical features here. Give exactly ONE charged physical anchor, ridden INTO the live beat, plus the behavioral memory below — a remembered VERB, never a head-to-jaw face catalog. Full visual establishment waits until he is actually on-page.'];
-          off.push('  THE ONE PHYSICAL ANCHOR (charged, not a catalog entry — the single thing she cannot put down): ' + _charged + '. No second feature; NO height+build+eyes+hair+mouth cluster.');
-          if (_hasV(b.signature_behavior))       off.push('  Signature behavior (VERB-shape for the memory): ' + b.signature_behavior);
-          if (_hasV(b.deflection_pattern))       off.push('  Deflection pattern (how he avoids being read): ' + b.deflection_pattern);
-          if (_hasV(b.attraction_manifestation)) off.push('  Attraction manifestation (his care for her AS ACTION, not appearance): ' + b.attraction_manifestation);
-          if (_hasV(b.defining_anecdote))        off.push('  DEFINING ANECDOTE (load-bearing whenever the prose remembers him): ' + b.defining_anecdote);
-          if (Array.isArray(b.desire_register_exemplars) && b.desire_register_exemplars.length) {
-            off.push('  GOOD desire-register shapes (imitate the LEVEL OF SPECIFICITY, not the wording): ' + b.desire_register_exemplars.slice(0, 2).map(function (e, i) { return (i + 1) + ') ' + e; }).join('  '));
-          }
-          try {
-            var _eng = String((_sLI.pairDynamic && _sLI.pairDynamic.romanceEngine) || (_sLI.romanceEnginePlan && _sLI.romanceEnginePlan.engine) || (_sLI.aPlot && _sLI.aPlot.romanceEngine) || '').toUpperCase();
-            if (_eng === 'SHARED_HISTORY' || _eng === 'LOOMING_PRESENCE') off.push('  ⇧ DESIRE-BEARING ENGINE: the remembered VERB comes from WANTING (attraction_manifestation / voice / anecdote), never from decoding his strategy.');
-          } catch (_) {}
-          return off.join('\n') + '\n';
-        }
-      } catch (_) {}
-      var lines = ['LOVE INTEREST BODY BIBLE (per-story canon — ' + liName + '). USAGE (Roman 2026-06-04, supersedes the old "pepper across the arc" framing that was reducing him to a single detail): on his FIRST appearance OR first meaningful MEMORY this scene, the PROSE OWES a CONCENTRATED first impression (see ANCHOR DOCTRINE below — ~2-3 sentences, the core attraction anchors). AFTER that first impression, pepper the SAME anchors across the arc. Two failures, both real: DUMPING a head-to-toe catalogue (bad) AND under-describing him to one detail like "a bespoke suit" so the reader cannot picture him (also bad — this is the current failure). The first impression is NOT optional and NOT deferrable to a later scene:'];
-      lines.push('  ATTRACTION + SIGNATURE DOCTRINE (HARD — Roman 2026-06-04 v2). A romance lead needs BOTH attraction (why he is physically desirable) AND character (who he is) — SEPARATE jobs, neither suppresses the other. The failure to fix is OVERCORRECTION away from physical attraction: he is mentioned many times, the reader understands him, but never receives a strong physical image. That is not how successful romance works.');
-      lines.push('    • CORE ATTRACTION ANCHORS — ROMANCE ANCHOR HIERARCHY (Roman 2026-06-04). TIER 1 (the default pool — choose from these WHENEVER available): shoulders / jaw / mouth / eyes / hair / hands / voice / build / height-presence / scent. TIER 2 (character flavor — scar / tattoo / freckles / birthmark / collarbone / wrist / mole / dimple): use ONLY to SUPPLEMENT Tier 1, NEVER as the whole attraction package. Choose 3-5 from THIS LI\'s Bible fields, Tier-1 FIRST; do NOT lead with a quirk just because the Bible made it the signature_feature. These 3-5 become RECURRING SIGNATURES for the arc — the reader should remember 3-5, not 40.');
-      lines.push('    • FIRST-APPEARANCE RULE (or first meaningful MEMORY if he is offstage): spend ~2-3 sentences on a CONCENTRATED first impression — roughly ONE major visual + ONE body feature + ONE sensory (voice / scent / presence). A first impression, NOT a police-sketch inventory. GOOD: "Broad shoulders stretching his suit jacket. Dark hair that looked like he had run a hand through it minutes ago. A voice that seemed capable of turning bad news into a promise." BAD: height + weight + eye-color + hair-color + build + clothing as a full catalogue. The goal is ATTRACTION, not a character sheet.');
-      lines.push('    • RECURRING + EVOLVING: revisit the SAME 3-5 anchors across the arc in CHANGING form, never the same phrasing twice. EARLY = objective ("broad shoulders / dark hair"). MIDDLE = subjective ("shoulders she could not stop noticing / hair she wanted to touch"). LATE = emotional ("shoulders that felt like safety / a voice that settled her nerves"). Same anchor, deepening meaning — the attraction anchor BECOMES relationship meaning.');
-      lines.push('    • WALLPAPER TEST (CORRECTED — Roman 2026-06-04): a feature fails ONLY when it contributes NEITHER attraction NOR characterization. ATTRACTION ALONE IS SUFFICIENT reason for a feature to exist — "broad shoulders / strong jaw / dark hair" as part of a first impression are ATTRACTION, not wallpaper. Characterization is a BONUS, not a requirement. Dead wallpaper = "blue eyes, broad shoulders, dark hair" listed with no purpose and no impression.');
-      lines.push('    • CHARACTER ANCHOR (also wanted, across the arc): a revealing trait / behavior / mannerism (signature_behavior / deflection_pattern / a tell). MAY fuse with an attraction anchor (strongest) but need not. OFFSTAGE MEMORY: still carry a physical attraction anchor + a behavior; a character revelation is bonus.');
-      lines.push('    • SUCCESS: after his first appearance the reader can answer "why is he attractive?" in ONE sentence; after ten scenes the reader still pictures the SAME man — because 3-5 anchors recurred in fresh forms, NOT because 40 features were introduced.');
-      // Designate the 3-5 recurring anchors ONCE, deterministically, from the
-      // consensus-attractive Bible fields in priority order (Roman 2026-06-04). The
-      // Bible is stable, so this selection is identical every scene → the SAME 3-5
-      // recur across the arc without new state. Quirk fields (collarbone/wrist/tic)
-      // are deliberately NOT in this pool.
-      try {
-        // ROMANCE ANCHOR HIERARCHY (Roman 2026-06-04). Recurrence is not enough —
-        // the picker must PRIORITIZE Tier-1 (consensus-attractive) over Tier-2 quirks,
-        // or a stable-but-wrong set ("collarbone / wrist / scar") recurs every scene.
-        var _tier2re = /\b(scar|scarred|wrist|collarbones?|birthmark|tattoo|freckles?|moles?|dimples?|knuckles?)\b/i;
-        var _clean = function (v) { return String(v).replace(/\s+/g, ' ').trim().slice(0, 90); };
-        // Guaranteed-anatomical fields are Tier-1 by construction.
-        var _tier1 = [[b.height, b.build].filter(Boolean).join(', '), b.mouth_quality, b.eye_color, b.hair, b.voice_quality, b.hands_quality];
-        // Free-text celebrated features are wildcards: Tier-1 if mainstream, else Tier-2 supplement.
-        var _wild = [b.signature_feature, b.second_celebrated_feature].filter(function (v) { return v && String(v).trim().length > 1; });
-        var _wildT1 = _wild.filter(function (v) { return !_tier2re.test(v); });
-        var _wildT2 = _wild.filter(function (v) { return _tier2re.test(v); });
-        var _anchors = [];
-        // Tier-1 first: mainstream celebrated feature, then guaranteed anatomy.
-        _wildT1.concat(_tier1).forEach(function (v) { if (v && String(v).trim().length > 1 && _anchors.length < 5) _anchors.push(_clean(v)); });
-        // Tier-2 supplements ONLY if Tier-1 came up short, and never more than one.
-        if (_anchors.length < 3) { _wildT2.slice(0, 1).forEach(function (v) { if (_anchors.length < 5) _anchors.push(_clean(v)); }); }
-        if (_anchors.length >= 3) {
-          lines.push('  >>> THIS LI\'s 3-5 RECURRING ATTRACTION ANCHORS (Tier-1 consensus-attractive, picked for you — use THESE same anchors across the whole arc, but render at most 2 of them in any single passage — 3+ stacked together is the cluster dump; distribute them across the action (one presence/body, one face/eyes/mouth, one psychology/movement), do NOT invent a new body part each scene, do NOT lead with quirks like scar / wrist / collarbone): ' + _anchors.map(function (a, i) { return (i + 1) + ') ' + a; }).join('   ') + '.');
-        }
-      } catch (_) {}
-      // INTIMACY ANCHOR (Roman 2026-06-04 — OPTIONAL; the relationship-specific anchor:
-      // the thing one dismisses, the other cherishes). Distinct from the consensus
-      // attraction anchors above. Renders ONLY when a self_conscious_feature exists, so
-      // it never forces the "my nose is too big / no it isn\'t" Hallmark beat.
-      try {
-        var _liSC = b.self_conscious_feature;
-        var _pcSC = ((window.state && window.state.pcBodyBible) || {}).self_conscious_feature;
-        var _has = function (v) { return v && String(v).trim().length > 3 && String(v).trim().toLowerCase() !== 'null'; };
-        if (_has(_liSC) || _has(_pcSC)) {
-          lines.push('  INTIMACY ANCHOR DOCTRINE (Roman 2026-06-04 — the RELATIONSHIP-SPECIFIC anchor; consensus hotness gets the reader IN, this is what makes THEIR attraction feel unique — only this couple sees it this way). HARD CRAFT: it is NOT a self-esteem lesson and NOT reassurance — NEVER "no, you\'re beautiful" / "I love your [feature]." The lover\'s response is DESIRE or a LOADED OBSERVATION that makes the dismissed feature MEAN something (e.g. "you\'re the only person in Manhattan who doesn\'t know how to lie with her face" / "I haven\'t stopped thinking about your body since I met you" / she cannot stop looking at the scar when he is trying NOT to show emotion). No speech, no lesson — desire, or weight. Surface it sparingly; it deepens when it recurs.');
-          if (_has(_pcSC)) lines.push('    • SHE dismisses: ' + String(_pcSC).replace(/\s+/g, ' ').trim() + ' — ' + liName + ' is drawn to exactly THAT (desire / loaded observation, never reassurance).');
-          if (_has(_liSC)) lines.push('    • HE dismisses: ' + String(_liSC).replace(/\s+/g, ' ').trim() + ' — the PC becomes unable to look away from exactly THAT (charged, loaded — never pity, never reassurance).');
-        }
-      } catch (_) {}
-      if (b.age)               lines.push('  Age: ' + b.age + ' (LOCKED — calibrate body description, voice, and behavioral history to this exact age; do NOT shift toward a more romance-friendly default)'); // Roman 2026-06-11 Phase 2a-lite: CORE_LOCKED identity field
-      if (b.ancestry)          lines.push('  Ancestry: ' + b.ancestry + ' (heritage informs appearance, naming, and light cultural-memory details; does NOT change setting)'); // Phase 2 contemporary contract
-      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
-      if (b.hair)              lines.push('  Hair: ' + b.hair);
-      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
-      if (b.eye_color)         lines.push('  Eyes: ' + b.eye_color);
-      if (b.voice_quality)     lines.push('  Voice: ' + b.voice_quality);
-      if (b.hands_quality)     lines.push('  Hands: ' + b.hands_quality);
-      if (b.mouth_quality)     lines.push('  Mouth: ' + b.mouth_quality);
-      if (b.holding_style)     lines.push('  Holding style (what he does with objects): ' + b.holding_style);
-      if (b.signature_feature)         lines.push('  Signature feature (PC notices every ~2 scenes, alternating with herself): ' + b.signature_feature);
-      if (b.second_celebrated_feature) lines.push('  Second celebrated feature: ' + b.second_celebrated_feature);
-      if (b.focus_tell)        lines.push('  Focus tell: ' + b.focus_tell);
-      if (b.restraint_tell)    lines.push('  Restraint tell: ' + b.restraint_tell);
-      if (b.interest_tell)     lines.push('  Interest tell (her specifically): ' + b.interest_tell);
-      if (b.frustration_tell)  lines.push('  Frustration tell: ' + b.frustration_tell);
-      if (b.desire_tell)       lines.push('  Desire tell (desire-coded, not power-coded): ' + b.desire_tell);
-      if (b.signature_habits)  lines.push('  Signature habits (recurring non-physical micro-behaviors — the reader recognizes him by these across the arc): ' + b.signature_habits);
-      // Roman 2026-06-01 — BEHAVIORAL anchors. These are the load-bearing
-      // fields when the prose remembers him. Photograph test applies: any
-      // LI memory must contain a VERB pulled from this set, not a
-      // descriptor of his face or sleeves or watch.
-      if (b.signature_behavior)      lines.push('  Signature behavior (how he moves through the world — VERB-shape, archetype-anchored): ' + b.signature_behavior);
-      if (b.deflection_pattern)      lines.push('  Deflection pattern (how he avoids being read): ' + b.deflection_pattern);
-      if (b.attraction_manifestation) lines.push('  Attraction manifestation (what his care for the PC looks like AS ACTION — not as feeling, not as appearance): ' + b.attraction_manifestation);
-      // MEMORY-SOURCE PRIORITY for desire-bearing engines (Roman 2026-06-06, lightweight #2 —
-      // promote/demote, NOT full suppression). The LI-texture audit kept measuring ~72% of his
-      // offstage memories drawn from the STRATEGIST fields even on a wanted engine → he read as a
-      // clever operator, not a wanted man, and the prose-layer reweight (buildNoticeFilter) did not
-      // bind. Reassert the priority at the SOURCE pipe: wanting fields up, strategist fields down.
-      try {
-        var _liEng = String((window.state && ((window.state.pairDynamic && window.state.pairDynamic.romanceEngine) || (window.state.romanceEnginePlan && window.state.romanceEnginePlan.engine) || (window.state.aPlot && window.state.aPlot.romanceEngine))) || '').toUpperCase();
-        if (_liEng === 'SHARED_HISTORY' || _liEng === 'LOOMING_PRESENCE') {
-          lines.push('  ⇧⇩ MEMORY-SOURCE PRIORITY (this engine is DESIRE-BEARING — he is WANTED, not decoded): when the prose REMEMBERS or ANTICIPATES him, draw the VERB from the PROMOTED fields ↑ attraction_manifestation / desire_register_exemplars / voice / defining_anecdote (moments of WANTING, where HER body answers). The STRATEGIST fields ↓ signature_behavior / deflection_pattern are DEMOTED — at most ONE memory in the whole scene may turn on them, and it must land as something she WANTS PAST (his evasion maddening because she wants the man behind it), NEVER cold admiration of his cleverness. If more than one memory turns on his strategy/control, he has become an operator she is decoding instead of a man she wants.');
-        }
-      } catch (_) {}
-      // Roman 2026-06-03 (second pass — sliced): signature_kink chain is NO
-      // LONGER surfaced in this shared compact renderer. The chain has
-      // different LEVELS of specificity that matter for different consumers:
-      //   • Spine needs deprivation + hunger (the WHY across issues).
-      //   • Scaffold needs attraction_pattern + pcUnknowinglySatisfies
-      //     (what HE KEEPS NOTICING moment-to-moment).
-      //   • Per-scene directive (buildAPlotPressureDirective KINK-FIT BEAT)
-      //     uses the whole chain.
-      // Piping the whole chain into the shared renderer bloated both spine
-      // and scaffold prompts with fields they did not need. Each consumer
-      // now slices the chain itself from state.liBodyBible.signature_kink.
-      // Roman 2026-06-01 anti-recursion — emotional_weather + secondary_anecdote
-      // force a Bible to feel like a SPECIFIC man, not a portable type.
-      if (b.emotional_weather) lines.push('  Emotional weather (his default climate — what he carries into rooms BEFORE the plot interacts with him): ' + b.emotional_weather);
-      if (b.defining_anecdote)       lines.push('  DEFINING ANECDOTE (the SPECIFIC story the PC could tell about him — the load-bearing source whenever the prose remembers him): ' + b.defining_anecdote);
-      if (b.secondary_anecdote_different_register) lines.push('  SECONDARY ANECDOTE (different life-domain from the defining anecdote — proves he is a specific man, not a one-anecdote type): ' + b.secondary_anecdote_different_register);
-      if (b.pc_keenly_notices) lines.push('  PC keenly notices (rotate through this basket): ' + b.pc_keenly_notices);
-      // 2026-05-31 (Roman): tuned GOOD exemplars — replace what used to be
-      // 4 sites of duplicated generic exemplar bank. Sonnet draws shapes
-      // from HERE; universal BAD bans + craft doctrine stay in the prompt
-      // layer (calibrated, not story-specific).
-      if (Array.isArray(b.desire_register_exemplars) && b.desire_register_exemplars.length) {
-        lines.push('  GOOD desire-register shapes (per-story TUNED to this LI — imitate the LEVEL OF SPECIFICITY, not the wording):');
-        b.desire_register_exemplars.forEach(function(ex, i){ lines.push('    ' + (i + 1) + '. ' + ex); });
-      }
-      // Slice B: surface the rolling AVOID list — last N callbacks the
-      // planner used, so the next scene rotates to a different anchor.
-      try {
-        var _used = (window.state && Array.isArray(window.state._biblePcKeenlyUsed)) ? window.state._biblePcKeenlyUsed : [];
-        if (_used.length) {
-          lines.push('  RECENT NOTICING CALLBACKS (last ' + _used.length + ' — pick a DIFFERENT Bible-field anchor this scene; do NOT recycle the same focus):');
-          _used.forEach(function(c, i){ lines.push('    ↻ ' + (_used.length - i) + ' scene(s) ago: ' + c); });
-        }
-      } catch (_) {}
-      try { if (typeof _auditFieldForwarding === 'function' && typeof _bibleFieldsForMode === 'function') _auditFieldForwarding(b, _bibleFieldsForMode('literary_compact', { side: 'li' })); } catch (_) {}
-      return lines.join('\n');
-    }
-    window._renderLIBodyBibleCompact = _renderLIBodyBibleCompact;
     // CONTINUITY-RECORD API (Roman 2026-06-19): the distilled structured appearance canon,
     // available to continuity validators WITHOUT surfacing descriptor values into the prose
     // prompt every scene (which is what calcifies them — see APPEARANCE ESTABLISHMENT GATING).
@@ -290110,113 +290750,6 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
      * @returns {object|null} { mode, side, core, modeSpecific, include,
      *   required, excludedByDesign } or null if mode/side not supported
      */
-    function _bibleFieldsForMode(mode, opts) {
-      try {
-        opts = opts || {};
-        var side = opts.side;
-        if (!mode || !side) return null;
-        var modeMap = BIBLE_MODE_PROFILES[mode];
-        if (!modeMap || !modeMap[side]) return null;
-        var sideProfile = modeMap[side];
-        // core: profile coreOverride wins over CORE_LOCKED (lets feature_rotation
-        // and established_lock declare reduced cores per Roman's explicit calls)
-        var core = sideProfile.coreOverride || CORE_LOCKED[side] || [];
-        var modeSpecific = sideProfile.modeSpecific || [];
-        // dedupe core + modeSpecific into include
-        var seen = {}, include = [];
-        core.forEach(function (f) { if (!seen[f]) { seen[f] = 1; include.push(f); } });
-        modeSpecific.forEach(function (f) { if (!seen[f]) { seen[f] = 1; include.push(f); } });
-        // required: core fields are required by default (warn if missing in bible)
-        return {
-          mode: mode,
-          side: side,
-          core: core,
-          modeSpecific: modeSpecific,
-          include: include,
-          required: core.slice(),
-          excludedByDesign: sideProfile.excludedByDesign || []
-        };
-      } catch (_) { return null; }
-    }
-    window._bibleFieldsForMode = _bibleFieldsForMode;
-
-    /**
-     * Schema-vs-profile invariant audit. Compares the bible's POPULATED fields
-     * AND the schema's KNOWN fields against the mode profile. Emits three
-     * classes of log:
-     *   FIELD-FORWARD:WARN — required field is missing from bible at fwd time
-     *   FIELD-FORWARD:INFO — intentionally-excluded fields confirmed
-     *   FIELD-FORWARD:ERROR — schema field not in include AND not in excluded
-     *     (this is the alarm Roman 2026-06-11 specified — catches the next age
-     *     bug at code-review time without needing a separate audit)
-     *
-     * Called by structured serializers AFTER forwarding. No-op if invariants pass.
-     */
-    function _auditFieldForwarding(bible, profile) {
-      try {
-        if (!profile || !profile.side) return;
-        var schema = BIBLE_SCHEMA_FIELDS[profile.side] || [];
-
-        // ERROR 1 — STATIC drift: schema fields unaccounted for in this profile
-        // Catches: someone added a field to BIBLE_SCHEMA_FIELDS but forgot to
-        // update the mode profile.
-        var unaccountedInSchema = schema.filter(function (f) {
-          return profile.include.indexOf(f) === -1 && profile.excludedByDesign.indexOf(f) === -1;
-        });
-        if (unaccountedInSchema.length) {
-          console.error('[FIELD-FORWARD:ERROR:STATIC] mode=' + profile.mode + ' side=' + profile.side +
-            ' unaccounted=' + unaccountedInSchema.join(',') +
-            ' — schema added field(s) that this profile neither includes nor excludes. ' +
-            'Update BIBLE_MODE_PROFILES[' + profile.mode + '].' + profile.side + ' to account for the new field(s).');
-        }
-
-        // ERROR 2 — RUNTIME drift: bible JSON contains keys neither the schema
-        // enumeration NOR the profile knows about. Roman 2026-06-11 canary
-        // strengthening: closes the gap where someone adds a field to the
-        // LLM-facing JSON schema in _generate{PC,LI,Antagonist}BodyBible
-        // WITHOUT updating BIBLE_SCHEMA_FIELDS. Without this branch, the
-        // bible-vs-anything drift slips through both layers silently.
-        if (bible && typeof bible === 'object') {
-          var bibleKeys = Object.keys(bible).filter(function (k) {
-            // Skip internal / cache / underscore-prefixed fields; they're not
-            // schema fields, they're harness/state metadata.
-            return k && k[0] !== '_';
-          });
-          var unaccountedInBible = bibleKeys.filter(function (f) {
-            return schema.indexOf(f) === -1 &&
-                   profile.include.indexOf(f) === -1 &&
-                   profile.excludedByDesign.indexOf(f) === -1;
-          });
-          if (unaccountedInBible.length) {
-            // Downgraded error→warn (Roman 2026-06-17): this branch can't tell a
-            // HARMLESS LLM-invented field (the bible generator — Haiku — adds an
-            // unprompted key like "wound_secondary"; it's never forwarded, so it's
-            // inert noise) from a real code change. LLM hallucinations are expected
-            // and must NOT error. Pure code-level drift is still caught hard by
-            // ERROR 1 (:STATIC) above (BIBLE_SCHEMA_FIELDS vs profile, no LLM).
-            console.warn('[FIELD-FORWARD:WARN:RUNTIME] mode=' + profile.mode + ' side=' + profile.side +
-              ' unaccounted_in_bible=' + unaccountedInBible.join(',') +
-              ' — bible has field(s) in neither BIBLE_SCHEMA_FIELDS nor this profile. Usually a benign ' +
-              'LLM-invented field (ignored, never forwarded). ONLY act if YOU just added this field to the ' +
-              '_generate{PC,LI,Antagonist}BodyBible JSON schema — then register it in BIBLE_SCHEMA_FIELDS + profiles.');
-          }
-        }
-
-        // WARN — required field missing from bible at forwarding time
-        if (bible) {
-          var missing = profile.required.filter(function (f) {
-            var v = bible[f];
-            return v === undefined || v === null || v === '' ||
-              (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0);
-          });
-          if (missing.length) {
-            console.warn('[FIELD-FORWARD:WARN] mode=' + profile.mode + ' side=' + profile.side +
-              ' missing=' + missing.join(',') +
-              ' — required field(s) missing from bible at forwarding time. Bible generation likely incomplete.');
-          }
-        }
-      } catch (_) {}
-    }
     window._auditFieldForwarding = _auditFieldForwarding;
 
     /**
@@ -294740,57 +295273,6 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     }
     window._getRPlotIssueContext = _getRPlotIssueContext;
 
-    function _renderAntagonistBodyBibleCompact() {
-      var b = (window.state && window.state.antagonistBodyBible) || null;
-      if (!b) return '';
-      var ap = (window.state && window.state.aPlot) || {};
-      var antName = (ap.antagonistOrAntiForce || 'the antagonist').toString();
-      if (_resolveAppearanceMode(window.state).antagonist === 'lock') return _apprLockBlock('ANTAGONIST', antName, b);
-      var antShape = (ap.antagonistShape || '').toString().toUpperCase();
-      var shapeLbl = (antShape === 'A') ? 'shape A — wound-source IS antagonist (intimate menace)'
-                    : (antShape === 'B') ? 'shape B — agent of the wound (proxy menace)'
-                    : '';
-      // Resolve archetype label from taxonomy for prompt readability.
-      var _archEntry = null;
-      try { _archEntry = (_ANTAGONIST_ARCHETYPES || []).filter(function(a){ return a.key === b.archetype; })[0] || null; } catch (_) {}
-      var _archLbl = _archEntry ? (_archEntry.label + ' — ' + _archEntry.register) : (b.archetype || 'unspecified');
-      var lines = ['ANTAGONIST BODY BIBLE (stable per-story canon — ' + antName + (shapeLbl ? '; ' + shapeLbl : '') + '. THREAT register: the PC notices this body as too close / too sure / too pleased — NEVER as a wanted thing. Pepper, do not dump.):'];
-      if (b.archetype)           lines.push('  Archetype: ' + _archLbl);
-      if (b.archetype_signature) lines.push('  Archetype signature (how it lands in THIS antagonist): ' + b.archetype_signature);
-      // SPURNED_EX gets explicit crossed-wire callout at the top — Sonnet
-      // must understand this villain registers on the desire axis, not the
-      // pure-threat axis. Don't quietly inline this under signature.
-      if (b.archetype === 'SPURNED_EX') {
-        lines.push('  ⚠ CROSSED-WIRE VILLAIN — desire-coded menace. The PC\'s body trained on this exact register; she has to override it consciously, scene after scene.');
-        if (b.ex_romance_archetype) lines.push('    Ex\'s romance archetype (now soured): ' + b.ex_romance_archetype);
-        if (b.corrupted_warmth_tell) lines.push('    Corrupted-warmth tell (read TWICE — reminds of wanting AND warns of danger): ' + b.corrupted_warmth_tell);
-      }
-      if (b.height || b.build) lines.push('  Build: ' + [b.height, b.build].filter(Boolean).join(', '));
-      if (b.hair)              lines.push('  Hair: ' + b.hair);
-      if (b.complexion)        lines.push('  Complexion: ' + b.complexion);
-      if (b.eye_color)         lines.push('  Eyes: ' + b.eye_color);
-      if (b.signature_feature) lines.push('  Signature feature (PC keeps clocking): ' + b.signature_feature);
-      if (b.voice_quality)     lines.push('  Voice (control register): ' + b.voice_quality);
-      if (b.hands_quality)     lines.push('  Hands: ' + b.hands_quality);
-      if (b.eyes_register)     lines.push('  Eyes register (what KIND of attention): ' + b.eyes_register);
-      if (b.proximity_default) lines.push('  Proximity default: ' + b.proximity_default);
-      if (b.pc_keeps_noticing) lines.push('  PC keeps noticing (rotating threat basket): ' + b.pc_keeps_noticing);
-      if (b.targeting_tell)    lines.push('  Targeting tell ("I have decided you are my problem"): ' + b.targeting_tell);
-      if (b.control_tell)      lines.push('  Control tell (who is in charge of the room): ' + b.control_tell);
-      if (b.pleasure_tell)     lines.push('  Pleasure tell (enjoying her discomfort): ' + b.pleasure_tell);
-      if (b.escalation_tell)   lines.push('  Escalation tell (right before they push further): ' + b.escalation_tell);
-      if (b.softness_seam)     lines.push('  Softness seam (the ONE uncalculated tell that makes them human — small, not a redemption): ' + b.softness_seam);
-      // Slice B: AVOID list — last antagonist callbacks used.
-      try {
-        var _used = (window.state && Array.isArray(window.state._bibleAntKeepsUsed)) ? window.state._bibleAntKeepsUsed : [];
-        if (_used.length) {
-          lines.push('  RECENT ANTAGONIST NOTICING CALLBACKS (last ' + _used.length + ' — pick a DIFFERENT threat-basket anchor this scene; do NOT recycle):');
-          _used.forEach(function(c, i){ lines.push('    ↻ ' + (_used.length - i) + ' scene(s) ago: ' + c); });
-        }
-      } catch (_) {}
-      return lines.join('\n');
-    }
-    window._renderAntagonistBodyBibleCompact = _renderAntagonistBodyBibleCompact;
 
     // locked structure. This moves the regen loop OFF the expensive model.
     // FAIL-SAFE: any error / unparseable output → returns '' → the prose path
@@ -294820,7 +295302,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // SCOPE FIX (2026-09-10, integration audit §41): the generators are defined inside an IIFE that closes before this
           // function; the bare names were `typeof === 'undefined'` here, so the Scene-1 literary path NEVER generated PC/LI bibles.
           // The window-exposed generators are the ones the CG path already uses (224587–224589).
-          if (typeof window._generatePCBodyBible === 'function' && !window.state.pcBodyBible) _bibleKickoffs.push(window._generatePCBodyBible());
+          if (typeof window._generatePCBodyBible === 'function' && (!window.state.pcBodyBible || (typeof window._pcAppearanceRepairEligible === 'function' && window._pcAppearanceRepairEligible(window.state.pcBodyBible)))) _bibleKickoffs.push(window._generatePCBodyBible());
           if (typeof window._generateLIBodyBible === 'function' && !window.state.liBodyBible) _bibleKickoffs.push(window._generateLIBodyBible());
           if (typeof window._generateAntagonistBodyBible === 'function' && !window.state.antagonistBodyBible) _bibleKickoffs.push(window._generateAntagonistBodyBible());
           if (_bibleKickoffs.length) await Promise.all(_bibleKickoffs);
@@ -336013,6 +336495,10 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       // _billionaireAttractionBlock (reads turnCount, app.js:186752) — were POISONING the
       // segment (one varying byte → the whole 1h prefix re-writes every scene). They moved to
       // the per-turn tail (after _CACHE_SENTINEL). Paired with orchestration's 1h-on-first-two.
+      // READINESS BEFORE THE FIRST READ. _persistentStableTail calls _buildBodyBibleCanonBlock()
+      // on the next line, so this is the last point at which a completed appearance can still
+      // reach the author this turn. Runs whether or not a skeleton is later reused.
+      if (typeof _ensureBodyBiblesReady === 'function') await _ensureBodyBiblesReady(state);
       const _persistentStableTail = _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireFixationBlock + _billionairePerceptionBlock + (typeof _buildBodyBibleCanonBlock === 'function' ? _buildBodyBibleCanonBlock() : '') + (typeof _buildBiblesProseDoctrineBlock === 'function' ? _buildBiblesProseDoctrineBlock(state.sysPrompt || '') : '') + (typeof _buildSkeletonDoctrineBlock === 'function' ? _buildSkeletonDoctrineBlock() : '');
       // state.sysPrompt, not _sysForTurn: that variable is assigned further down (~333137) and is
       // this same string with the Scene-1 ARCH LAWS title swapped, which touches none of the three

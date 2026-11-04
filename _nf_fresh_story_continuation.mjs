@@ -19,10 +19,44 @@ import { chromium } from 'playwright-core';
 import { configBody, isAuthOrigin, installSession, makeSession, installEntitledProfileStub }
   from './_test_session_env.mjs';
 
-const OUT = '/Users/romantsukerman/storybound-app/_nf_fresh_continuation_out';
-try { fs.rmSync(OUT, { recursive: true, force: true }); } catch (_) {}
+// Control mode writes to its OWN directory: both modes clear their output at startup, so running
+// them concurrently had the ordinary run's rmSync delete the control run's captures mid-flight
+// (seen as an ENOENT on a file the control had just written).
+// UNIQUE PER RUN. Separate ordinary/control directories still let a later run of the same mode
+// delete an earlier run's captures, which is how a control run lost files it had just written.
+// A run id makes every run's artifacts immutable once written; LATEST is a convenience pointer.
+const RUN_ID = new Date().toISOString().replace(/[:.]/g, '-') + '_' + process.pid;
+const OUT_ROOT = '/Users/romantsukerman/storybound-app/'
+  + (process.env.NF_CG === '1' ? '_nf_cg_delivery_out'
+    : process.env.NF_SCAFFOLD_V2 === '1' ? '_nf_scaffold_control_out' : '_nf_fresh_continuation_out');
+const OUT = OUT_ROOT + '/run_' + RUN_ID;
 fs.mkdirSync(OUT, { recursive: true });
+try {
+  const latest = OUT_ROOT + '/LATEST';
+  try { fs.unlinkSync(latest); } catch (_) {}
+  fs.symlinkSync(OUT, latest, 'dir');
+} catch (_) {}
 
+// ── STALE-PREFIX vs CURRENT-PLAN CONTROL (NF_SCAFFOLD_V2=1) ──
+// In control mode the scaffold door answers with V1-marked values, production saves a prefix
+// carrying V1, and after the resume the plan is replaced with V2 before the turn is submitted.
+// The question is whether suppression discards the CURRENT plan just because a scaffold heading
+// already exists in the frozen prefix. Off by default, so the ordinary run is unchanged.
+const CTRL = process.env.NF_SCAFFOLD_V2 === '1';
+// ── ORDINARY CG MODE (NF_CG=1) ──
+// Launches through handleBeginGraphicNovel — the production entry the corridor's
+// #beginGraphicNovelBtn invokes (app.js:179323 / 181797) — instead of the baked OAS showcase,
+// which is the only staged STARTER and routes its first turn into the intimacy dialogue. Reuses
+// this harness's whole fixture chain so the doors are already answered correctly.
+const CG = process.env.NF_CG === '1';
+const SEEDED = process.env.NF_SEEDED === '1';
+// ── LATER CONTINUATION (NF_LATER=1) ──
+// Drives TWO turns on the fresh story: the first is answered so the scene completes, the second
+// is captured. Verifies that a later scene — not just the first continuation — receives the
+// corrected instructions, which an exact-text transform's failure to match can never show.
+const LATER = process.env.NF_LATER === '1';
+let firstContinuationAnswered = 0, laterArmed = false;
+const TAG = CTRL ? 'V1 ' : '';
 const PC = 'Nadia', LI = 'Julian';
 const CRISIS = 'her private photographs are going up on the venue screen while the room watches';
 const BEAT = 'The photographs are on the venue screen and Nadia has not moved.';
@@ -55,12 +89,47 @@ const SKEL = {
     { beat: 'she decides whether to stay in it', link: 'therefore', from: 2 }],
 };
 
+
+// ── SHAPE-FAITHFUL PC-BODY-BIBLE FIXTURE (test data, clearly labelled) ────────────────────
+// The production consumer is _generatePCBodyBibleUncached: it dispatches
+// _callTieredProvider('pcBodyBible', …) and reads `data.content` as a JSON STRING, then parses
+// the fields below. This fixture returns exactly that envelope and exactly those fields, so the
+// reply travels the REAL creation → merge → persistence path. Nothing is planted into state and
+// no completion flag is forced.
+//
+// EVERY VALUE BELOW IS INVENTED TEST DATA. It is not canon, not a player choice and not a
+// model's portrait; it exists only to prove the wiring carries individual appearance through.
+const PC_BIBLE_FIXTURE = {
+  age: '31', ancestry: '',
+  height: '[FIXTURE] a little above average height',
+  build: '[FIXTURE] narrow-shouldered, long through the forearms',
+  hair: '[FIXTURE] dark coral, coarse and heavy, worn twisted up off the neck for work',
+  complexion: '[FIXTURE] deep teal with a colder cast along the jaw',
+  face: '[FIXTURE] a long, serious face that reads older in profile than head-on',
+  signature_feature: '[FIXTURE] the flat of her left hand, burn-marked pale from years of kiln work',
+  visual_anchor: { focus: 'the hands', detail: '[FIXTURE] she keeps them half-closed when she is not using them' },
+  second_celebrated_feature: '[FIXTURE] a low, unhurried voice that does not rise when she is contradicted',
+  stress_tic: '[FIXTURE] turns a ring once around her finger',
+  desire_tell: '[FIXTURE] goes still instead of leaning in',
+  impatience_tell: '[FIXTURE] answers the question before it finishes',
+  confidence_tell: '[FIXTURE] sets both hands flat and waits',
+  vulnerability_tell: '[FIXTURE] looks at her own hands',
+  emotional_weather: '[FIXTURE] contained, with the weather showing late',
+};
+const isPcBibleRequest = (both) => /"signature_feature": "<the ONE thing worth celebrating/.test(both)
+  || /PC BODY BIBLE/i.test(both) && /"complexion":/.test(both);
+
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();
 const page = await ctx.newPage();
-const caps = [], doors = [], logs = [], faults = [], bibleRouting = [], failures = [];
+const caps = [], doors = [], logs = [], faults = [], bibleRouting = [], failures = [], calls = [];
 let PHASE = 'OPENING';
+// Which continuation turn a call belongs to. Without this, turn 1's calls and turn 2's calls
+// both read as 'CONTINUATION' and a per-continuation cost cannot be derived from the inventory.
+let TURN_NO = 0;
 const STATIC = /\/api\/(geo|csp-report|beta-events|bug-report-awards)\b/;
+const IMAGE = /\/api\/(image|bfl-kontext|visualize-flux|grok-image|dashscope-image|img-proxy|cine-styled-manifest|mouth-approve|verify-anatomy)\b/;
+const imageCalls = [];
 const LOCAL = { '/api/consume-fortune': { success: true, fortunesRemaining: 9999 },
                 '/api/refund-fortune':  { success: true, fortunesRemaining: 9999 } };
 // SET BEFORE ANY PAGE SCRIPT RUNS. The deck onboarding mandate arms during render, so assigning
@@ -86,6 +155,15 @@ await page.route('**/api/**', async (route) => {
   if (/\/api\/config\b/.test(url)) return route.fulfill({ status: 200, contentType: 'application/json', body: configBody() });
   if (isAuthOrigin(req.url())) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
   if (STATIC.test(url)) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  // ── IMAGE PROVIDERS ARE BLOCKED, NOT FORWARDED ──
+  // CG is image-heavy. These are answered locally with a 1x1 data URL so the render can proceed
+  // without any image-provider call leaving the browser, and every such call is recorded.
+  if (IMAGE.test(url)) {
+    imageCalls.push({ phase: PHASE, url });
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==',
+        images: [{ url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==' }] }) });
+  }
   const k = Object.keys(LOCAL).find((x) => url.startsWith(x));
   if (k) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LOCAL[k]) });
   let b = null; try { b = JSON.parse(req.postData() || '{}'); } catch (_) {}
@@ -94,9 +172,29 @@ await page.route('**/api/**', async (route) => {
   const usr = String((msgs.find((m) => m.role === 'user') || {}).content || '');
   const role = String((b && b.role) || '?');
   const both = sys + usr;
+  // The author door is identified by the prompt's own content, never by a role label: the
+  // opening prose call arrives as role=STRUCTURE_GENERATOR without author:true.
+  const isAuthorRequestShape = (b && b.author === true)
+    || /THIS IS THE LAST PROSE IN THE SCENE|YOU ARE WRITING AS S\. TORY BOUND|STORYBOUND ARCHITECTURE LAWS/i.test(both);
+  // ── COST INVENTORY: EVERY MODEL-ROUTE REQUEST, WITH ITS REAL PAYLOAD ──
+  // Priced later by the harness's own estimateUsd (chars + max_tokens + model), not by call
+  // counts: 34 opening calls versus 10 continuation calls says nothing about relative cost,
+  // because the payloads differ by an order of magnitude. `answered` separates a call that
+  // completed normally from one this harness deliberately ABORTS to capture it — an abort makes
+  // production retry across provider tiers, so those extra attempts are capture-induced and must
+  // not be billed to a normal run.
+  const callRec = { phase: PHASE, turn: TURN_NO, role, url, chars: both.length,
+    sys: sys.length, usr: usr.length,
+    max_tokens: (b && b.max_tokens) || null, model: (b && b.model) || null,
+    author: !!isAuthorRequestShape, answered: false, door: null };
+  calls.push(callRec);
   const give = (payload, door) => { doors.push({ phase: PHASE, door, role, answered: true });
+    callRec.answered = true; callRec.door = door;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(envelope(url, b, payload)) }); };
 
+  if (isPcBibleRequest(both)) {
+    return give(JSON.stringify(PC_BIBLE_FIXTURE), 'PC_BODY_BIBLE(shape-faithful FIXTURE)', 'gpt-4o-mini');
+  }
   if (/canonicalization and normalization engine for Storybound/.test(both)) {
     return give(JSON.stringify({ canonical_instruction: 'she asks him what he already knows',
       changed: false, rejection_reason: null }), 'NORMALIZATION');
@@ -202,13 +300,27 @@ await page.route('**/api/**', async (route) => {
   if (/narrative skeletons for fiction scenes|CAUSAL_OUTLINE/.test(both)) {
     return give(JSON.stringify(SKEL), 'SKELETON');
   }
-  const isAuthor = (b && b.author === true)
-    || /THIS IS THE LAST PROSE IN THE SCENE|YOU ARE WRITING AS S\. TORY BOUND|STORYBOUND ARCHITECTURE LAWS/i.test(both);
-  if (isAuthor && both.length > 40000) {
+
+  if (isAuthorRequestShape && both.length > 40000) {
     if (PHASE === 'OPENING') {
       // ANSWERED so Scene 1 completes and PRODUCTION saves the story itself.
       doors.push({ phase: PHASE, door: 'AUTHOR(answered to let production save)', role, answered: true });
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(envelope(url, b, PROSE)) });
+    }
+    // ── LATER-CONTINUATION MODE (NF_LATER=1) ──
+    // A no-match on the preserved save proves nothing about later scenes, so this answers the
+    // FIRST continuation's author instead of capturing it, letting the turn complete and
+    // turnCount advance. The SECOND continuation is the one captured, and the scope assertions
+    // then run against a genuinely later scene of the fresh, current-source story.
+    if (LATER && PHASE === 'CONTINUATION' && !laterArmed) {
+      firstContinuationAnswered++;
+      // ONE call per turn when it is ANSWERED: a captured-and-aborted request makes production
+      // retry across all three provider tiers, which is why earlier runs showed three. Arming
+      // after the first answered call means the SECOND turn is the one captured.
+      laterArmed = true;
+      doors.push({ phase: PHASE, door: 'AUTHOR(answered to advance to a later scene)', role, answered: true });
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify(envelope(url, b, PROSE)) });
     }
     const n = caps.length + 1;
     const name = `fresh_continuation_author__${role}__${n}.txt`;
@@ -300,6 +412,68 @@ await page.route('**/api/**', async (route) => {
   // Aborting this left "[A-PLOT] Init failed (story continues without A-plot)" and the scaffold
   // builder then threw on a null it expected the A-plot to fill. Shape copied from the opening
   // harness fixture that 99 captures already exercise.
+  // ── THE CG SCREENPLAY DOOR: THE DELIVERY THIS MODE EXISTS TO CAPTURE ──
+  // app.js:242586's system prompt opens "You are a screenplay-native cinematic-romance writer",
+  // built by _buildCGScreenplaySystemPrompt and dispatched from _runCGScreenplayGen
+  // (app.js:252309) during a staged scene advance. Captured and ABORTED — this is the outgoing
+  // request, not a builder render.
+  if (/screenplay-native cinematic-romance writer/.test(both)) {
+    const name = `cg_screenplay_request__${role}__${caps.length + 1}.txt`;
+    fs.writeFileSync(OUT + '/' + name,
+      `=== ORDINARY CG SCREENPLAY REQUEST (captured at the transport, aborted)\n`
+      + `=== role=${role} model=${b && b.model} url=${url}\n\n`
+      + `=== SYSTEM (${sys.length} chars) ===\n${sys}\n\n=== USER (${usr.length} chars) ===\n${usr}\n`);
+    caps.push({ role, sys: sys.length, usr: usr.length, file: name, kind: 'CG_SCREENPLAY' });
+    doors.push({ phase: PHASE, door: 'CG_SCREENPLAY(captured)', role, answered: false });
+    return route.abort();
+  }
+
+  // ── THE FATE-CARD DOOR, IN ITS OWN DELIMITER FORMAT ──
+  // generateFatePreviewsBatch does NOT parse JSON: app.js:324076 splits the reply by line and by
+  // '|||', taking the card label then action then dialogue for the five cards at app.js:324050.
+  // Blocking it produced "[FATE:BATCH] Failed … UNDECLARED_MODEL_ROLE" and stalled the turn.
+  if (/\|\|\|/.test(both) && /temptation|boundary|confession|reversal|silence/i.test(both)) {
+    return give([
+      'temptation|||she lets the silence run one beat too long|||"Say that again."',
+      'boundary|||she puts the glass down between them|||"Not here."',
+      'confession|||she admits she read the message|||"I saw it before you did."',
+      'reversal|||she asks him the question he was about to ask|||"Why did you stay?"',
+      'silence|||she answers nothing and holds his look|||""',
+    ].join('\n'), 'FATE_BATCH');
+  }
+
+  // ── THE STORY-SCAFFOLD DOOR, ANSWERED WITH A POPULATED FIXTURE ──
+  // app.js:239234 _buildCGScaffold asks a CONTINUITY ARCHITECT for the run's gravity and the
+  // per-issue plan, then app.js:240597 stores the parsed result on state.cgScaffold and
+  // _renderCGScaffoldBlock renders it. Answering HERE means production does the parsing, the
+  // storing and the rendering — the same transport-boundary interception every other door in
+  // this harness uses. Nothing is written onto application state by hand, which is why an
+  // earlier attempt to set state.cgScaffold directly was simply overwritten by this generator.
+  // The values are distinctive strings so the checks can assert that each one REACHES the
+  // outgoing request, rather than only that nothing is duplicated.
+  if (/CONTINUITY ARCHITECT for a serialized/.test(both)) {
+    return give(JSON.stringify({
+      runThesis: CTRL ? 'V1 she STAYS in the room and makes the room answer for it'
+        : 'a woman who keeps choosing the room she was humiliated in',
+      thematicDirection: CTRL ? 'V1 the story resolves INSIDE this venue; she never leaves it'
+        : 'exposure stops being done to her and becomes something she does',
+      visualThesis: 'screens and glass give way to paper and hands',
+      worldPhysics: 'reputation moves faster than correction',
+      hiddenPressure: 'who sent the photographs, never resolved on the page',
+      socialGeometry: 'public rooms are safer for her than private ones',
+      permittedAnomalyStyle: 'coincidence is allowed once and never explained',
+      issueArcs: [
+        { issueLabel: 'Issue 1 — opening orbit',
+          thesis: 'she stays in the room and makes the room answer for it',
+          ambiguityTargets: ['who benefited from the leak', 'whether Julian knew'],
+          pressureVectors: ['the guest list narrowing', 'her own silence becoming a position'] },
+        { issueLabel: 'Issue 2 — the correction',
+          thesis: 'the correction costs more than the exposure did',
+          ambiguityTargets: ['what she traded for the retraction'],
+          pressureVectors: ['favours called in'] },
+      ],
+    }), 'STORY_SCAFFOLD');
+  }
   if (/antagonistOrAntiForce|namedClock|milestones/.test(both)) {   // body-bible door is handled ABOVE
     const miles = [1, 2, 3].map((i) => ({ atScene: i + 1, atPercent: i * 25,
       kind: i === 1 ? 'setup' : (i === 2 ? 'first_complication' : 'crisis'),
@@ -347,24 +521,155 @@ await page.goto('http://localhost:3000/', { waitUntil: 'commit', timeout: 60000 
 await page.waitForFunction(() => window.state && window.handleBeginStory, null, { timeout: 180000 });
 
 // ── PRODUCTION SETUP, THEN PRODUCTION'S OWN SAVE ──
-await page.evaluate(({ pc, li }) => {
+await page.evaluate(({ pc, li, cg, seeded }) => {
   const S = window.state;
   Object.assign(S, {
-    world: 'Modern', worldSubtype: 'small_town', flavor: 'Billionaire', dynamic: 'Enemies',
+    // In SEEDED mode the world must match the authored seed. An earlier run set a Modern story's
+    // picks and then activated the Fatelands seed by key, so Lirael (seed PC) and Nadia (fixture
+    // PC) arrived in the same request with both worlds present — that verifies a receiving path,
+    // not a representative story.
+    ...(seeded
+      ? { world: 'Fantasy', worldSubtype: 'the_veilwood', flavor: 'Fatelands', dynamic: 'SHARED_HISTORY',
+          _starterSeedId: 'starter_first_sacrifice', _starterId: 'starter_first_sacrifice' }
+      : { world: 'Modern', worldSubtype: 'small_town', flavor: 'Billionaire', dynamic: 'Enemies' }),
     archetype: { primary: 'BEAUTIFUL_RUIN', modifier: null },
     name: pc, playerName: pc, loveInterestName: li, partnerName: li,
     loveInterest: 'Male', liGender: 'male', playerMask: 'OPEN_VEIN', pov: 'first_person',
     storyLength: 'taste', tier: 'novella', access: 'sub', subscribed: true, fortunes: 9999999,
     intensity: 'Steamy', identity: { playerName: pc, partnerName: li },
+    // In CG mode the pre-launch state stays LITERARY: handleBeginGraphicNovel sets
+    // currentEngine='graphic' and renderMode='staged_story_mode' itself (app.js:181816), and a
+    // guard asserts the literary engine on the way in — presetting graphic tripped it with
+    // "[GN:GUARD] Engine mismatch — expected: literary actual: graphic" and no door ever opened.
     renderMode: 'literary', currentEngine: 'literary', storyModality: 'literary',
     turnCount: 0, _skipCorridorValidation: true, storypassEligible: true,
   });
   S.picks = { world: S.world, worldSubtype: S.worldSubtype, flavor: S.flavor, dynamic: S.dynamic,
               tone: 'Earnest', pov: 'First', length: 'taste', identity: S.identity };
-}, { pc: PC, li: LI });
+}, { pc: SEEDED ? 'Lirael' : PC, li: LI, cg: CG, seeded: SEEDED });
 
-try { await Promise.race([page.evaluate(() => window.handleBeginStory()),
+// ── SEEDED CG (NF_CG=1 NF_SEEDED=1) ──
+// The restriction caveat is driven by the ACTIVE SEED's cast: _apprSourcesFor reads
+// `(seed && seed.cast)` and then `entry.cPlusForbiddenImplications` (app.js:282595/282698). A
+// fresh Modern story has no seed, so zero appearance rows and no caveat is CORRECT there and
+// proves nothing about the delivery condition. The First Sacrifice starter's cast carries real
+// cPlusForbiddenImplications (app.js:136941/136989/137164), so launching that starter through
+// production's own _launchStarterStory activates the seed and exercises the condition.
+if (CG && process.env.NF_SEEDED === '1') {
+  const seeded = await page.evaluate(async () => {
+    // _activeSeed is a FUNCTION of state (app.js:282593 calls _activeSeed(st)), and production
+    // resolves the seed by key from state (app.js:230959: STARTER_SEEDS[state._starterSeedId]).
+    // Reading window._activeSeed as a value returned a function, whose .cast is undefined — which
+    // is why an earlier run reported castCount 0 and looked like a seed without restrictions.
+    const S = window.state;
+    S._starterSeedId = 'starter_first_sacrifice';
+    S._starterId = S._starterId || 'starter_first_sacrifice';
+    const seed = (typeof window._activeSeed === 'function') ? window._activeSeed(S) : null;
+    const cast = (seed && seed.cast) || [];
+    return { ok: true, seedPresent: !!seed, castCount: cast.length,
+      withRestrictions: cast.filter((c) => c && (c.cPlusForbiddenImplications || c.forbidden)).length,
+      seedKeys: Object.keys(window.STARTER_SEEDS || {}) };
+  });
+  console.log('SEEDED CG LAUNCH: ' + JSON.stringify(seeded));
+  if (!seeded.ok) failures.push('seeded CG launch failed: ' + seeded.why);
+  else if (!seeded.withRestrictions) failures.push('the active seed carries no cast restrictions — '
+    + 'the caveat condition cannot be exercised by this fixture');
+}
+try { await Promise.race([page.evaluate((cg) => (cg && typeof window.handleBeginGraphicNovel === 'function')
+                            ? window.handleBeginGraphicNovel() : window.handleBeginStory(), CG),
                           new Promise((r) => setTimeout(r, 240000))]); } catch (_) {}
+
+// ── DRIVE THE DOCUMENTED CG PIPELINE ──
+// app.js:179324 states the contract: handleBeginGraphicNovel() → #gnStyleSelector → #gnCoverView
+// → #gnReader, and app.js:179333 that currentEngine ('graphic') is the ONLY field routing it.
+// An earlier attempt clicked whatever buttons happened to be visible and found an identity/auth
+// screen; this follows the declared screens instead, selecting the FIRST offered style card
+// (app.js:182050 binds '#gnStyleSelector .gn-selector-card') as a normal fixture option.
+if (CG) {
+  const screenState = () => page.evaluate(() => {
+    const vis = (id) => { const el = document.getElementById(id); return !!(el && el.getClientRects().length > 0); };
+    return { engine: (window.state || {}).currentEngine, renderMode: (window.state || {}).renderMode,
+      styleSel: vis('gnStyleSelector'), coverView: vis('gnCoverView'), reader: vis('gnReader'),
+      authGate: vis('btn-auth-submit'),
+      styleCards: document.querySelectorAll('#gnStyleSelector .gn-selector-card').length };
+  });
+  console.log('  [CG-SCREENS] after entry: ' + JSON.stringify(await screenState()));
+  // The style selector mounts asynchronously: immediately after the entry it reported
+  // styleSel:false with four cards already in the DOM, and was visible one step later. Waiting
+  // for the declared screen rather than sampling once.
+  try {
+    await page.waitForFunction(() => {
+      const el = document.getElementById('gnStyleSelector');
+      return !!(el && el.getClientRects().length > 0
+        && document.querySelector('#gnStyleSelector .gn-selector-card'));
+    }, null, { timeout: 60000 });
+    console.log('  [CG-SCREENS] #gnStyleSelector is up');
+  } catch (_) { console.log('  [CG-SCREENS] #gnStyleSelector never became visible'); }
+  for (let step = 1; step <= 8; step++) {
+    if (caps.some((c) => c.kind === 'CG_SCREENPLAY')) break;
+    const did = await page.evaluate(() => {
+      const vis = (el) => !!(el && el.getClientRects().length > 0);
+      // ── THE PC LOOK MODAL IS THE INPUT THE PIPELINE WAITS ON ──
+      // The trace named it exactly: "[CG:SCREENPLAY] PC Look modal opened — waiting for user".
+      // Until it is answered, _runCGScreenplayGen never dispatches, which is why the reader
+      // mounted empty and no model door opened. Answered with a normal fixture description and
+      // the modal's own Skip control as a fallback (app.js:52280-52281).
+      // Skip opens a CONFIRMATION first (_confirmSkipRender → #skipRenderWarnModal), so the
+      // confirm has to be answered before the PC Look modal closes. Clicking Skip repeatedly
+      // without it just re-opened the same warning. "Skip anyway" keeps this a no-render fixture.
+      const warn = document.querySelector('#skipRenderWarnModal [data-act="skip"]');
+      if (vis(warn)) { warn.click(); return 'pc-look:skip-confirmed'; }
+      const lookGen = document.getElementById('pcLookGenerateBtn');
+      const lookSkip = document.getElementById('pcLookSkipBtn');
+      if (vis(lookGen) || vis(lookSkip)) {
+        const ta = document.getElementById('pcLookInput');
+        if (ta) { ta.value = 'dark hair pinned up, clay under the nails, a crooked eyetooth';
+          ta.dispatchEvent(new Event('input', { bubbles: true })); }
+        if (vis(lookSkip)) { lookSkip.click(); return 'pc-look:skip'; }
+        lookGen.click(); return 'pc-look:generate';
+      }
+      const card = [...document.querySelectorAll('#gnStyleSelector .gn-selector-card')].filter(vis)[0];
+      if (card) { card.click(); return 'style-card'; }
+      const inCover = document.getElementById('gnCoverView');
+      if (vis(inCover)) {
+        // The cover's control is #gnBeginReading, labelled "Open" — read off the DOM, since a
+        // begin/read/start/continue/enter text filter does not match it.
+        const go = (vis(document.getElementById('gnBeginReading')) && document.getElementById('gnBeginReading'))
+          || [...inCover.querySelectorAll('button')].filter(vis)
+            .find((b) => /begin|read|start|continue|enter|open/i.test((b.textContent || '')));
+        if (go) { go.click(); return 'cover:' + (go.textContent || '').trim().slice(0, 24); }
+      }
+      const rd = document.getElementById('gnReader');
+      if (vis(rd)) {
+        const btn = document.getElementById('submitBtn');
+        if (vis(btn)) { const a = document.getElementById('actionInput');
+          if (a) a.value = 'she turns to face him'; btn.disabled = false; btn.click(); return 'reader-submit'; }
+        // The GN reader has its own controls; report them rather than assuming #submitBtn.
+        const rinv = [...rd.querySelectorAll('button,[role="button"],input,textarea')].filter(vis)
+          .slice(0, 16).map((b) => (b.id ? '#' + b.id : '') + (b.className ? '.' + String(b.className).split(' ')[0] : '')
+            + '«' + (b.textContent || b.placeholder || '').trim().slice(0, 18) + '»');
+        return 'READER ' + JSON.stringify(rinv);
+      }
+      // Nothing matched: report what IS on the current declared screen so the next step is read
+      // off the real DOM instead of guessed.
+      const host = vis(document.getElementById('gnCoverView')) ? document.getElementById('gnCoverView')
+        : vis(document.getElementById('gnReader')) ? document.getElementById('gnReader') : document.body;
+      const inv = [...host.querySelectorAll('button,[role="button"],a[href="#"],input[type="submit"]')]
+        .filter(vis).slice(0, 14).map((b) => (b.id ? '#' + b.id : '') + (b.className ? '.' + String(b.className).split(' ')[0] : '')
+          + '«' + (b.textContent || '').trim().slice(0, 20) + '»');
+      return 'NONE ' + JSON.stringify(inv);
+    });
+    console.log('  [CG-STEP ' + step + '] ' + (did || 'no declared control available')
+      + '  screens=' + JSON.stringify(await screenState()));
+    if (!did || String(did).startsWith('NONE')) break;
+    // A bare reader with no controls is expected until the PC Look modal is answered; keep going.
+    await page.waitForTimeout(10000);
+  }
+  const cgCap = caps.filter((c) => c.kind === 'CG_SCREENPLAY');
+  console.log('  [CG] screenplay requests captured: ' + cgCap.length
+    + '   image-provider calls blocked locally: ' + imageCalls.length);
+  cgCap.forEach((c) => console.log('      ' + c.file + '  sys ' + c.sys + ' + usr ' + c.usr));
+}
 
 const saved = await page.evaluate(() => {
   try {
@@ -402,7 +707,38 @@ if (saved.present && saved.storyId) {
       hasSubmit: !!document.getElementById('submitBtn') };
   }, saved.storyId);
   console.log('RESUME OF THE FRESH SAVE: ' + JSON.stringify(resumed));
+  // ── CONTROL: the prefix now holds V1; make the CURRENT plan V2 ──
+  // Installed through production's own authoritative home for the spine (app.js:69733 assigns
+  // st.cgScaffold from an adopted handoff), after the resume has finished restoring state. This
+  // is the divergence the suppression has to survive: same heading, different plan.
+  if (CTRL) {
+    const ctl = await page.evaluate(() => {
+      const S = window.state;
+      // INCOMPATIBLE WITH V1, not a reworded version of it. V1 says she stays inside the venue
+      // and the story resolves there; V2 says she leaves before the room finishes looking and the
+      // venue is never returned to. Both cannot be current requirements, so an outgoing request
+      // that presents them as equally in force is a defect the sentinel-value version could not
+      // detect.
+      const v2 = {
+        runThesis: 'V2 she LEAVES before the room finishes looking and never returns to the venue',
+        thematicDirection: 'V2 the story resolves ANYWHERE BUT this venue; the room is abandoned in scene two',
+        worldPhysics: 'V2 a correction outruns the rumour exactly once',
+        hiddenPressure: 'V2 who kept the second copy, never resolved',
+        issueArcs: [{ issueLabel: 'Issue 1', thesis: 'V2 she refuses the room and the room loses its hold',
+          ambiguityTargets: ['V2 what she traded for the retraction'] }],
+      };
+      try { S.cgScaffold = v2; } catch (_) {}
+      const sp = String(S.sysPrompt || '');
+      return { currentIsV2: String((S.cgScaffold || {}).runThesis || '').indexOf('V2 ') === 0,
+        prefixHasV1: sp.indexOf('V1 she STAYS in the room') !== -1,
+        prefixHasV2: sp.indexOf('V2 she LEAVES before the room') !== -1 };
+    });
+    console.log('CONTROL — stale prefix vs current plan: ' + JSON.stringify(ctl));
+    if (!ctl.prefixHasV1) failures.push('control: the saved prefix does not carry V1');
+    if (!ctl.currentIsV2) failures.push('control: V2 is not the current plan');
+  }
   if (resumed && resumed.ok && resumed.hasSubmit) {
+    TURN_NO = 1;
     submitted = await page.evaluate(async () => {
       // IMMEDIATELY BEFORE THE CLICK. Profile hydration against the stubbed backend keeps
       // re-setting tier=free / fortunes=0 after resume, and the turn is then refused at the
@@ -417,9 +753,35 @@ if (saved.present && saved.storyId) {
       await new Promise((r) => setTimeout(r, 180000));
       return 'clicked';
     });
+    // ── SECOND TURN, so the captured request belongs to a LATER scene ──
+    if (LATER) {
+      TURN_NO = 2;
+      const second = await page.evaluate(async () => {
+        const S = window.state;
+        S.subscribed = true; S.tier = 'novella'; S.access = 'sub'; S.fortunes = 9999999;
+        S.storypassEligible = true; window._forceDeckMandate = false;
+        const before = S.turnCount;
+        const btn = document.getElementById('submitBtn');
+        if (!btn || !btn.getClientRects().length) return { ok: false, why: 'no submit control', before };
+        const a = document.getElementById('actionInput'); if (a) a.value = 'she asks him the question she has been saving';
+        btn.disabled = false; btn.click();
+        await new Promise((r) => setTimeout(r, 180000));
+        return { ok: true, before, after: window.state.turnCount };
+      });
+      console.log('LATER-SCENE TURN: ' + JSON.stringify(second));
+      if (!second.ok) failures.push('later-scene turn not submitted: ' + second.why);
+      // turnCount CANNOT advance here: the later turn's author request is captured and aborted,
+      // so the turn never completes. What establishes "later scene" is that the FIRST turn did
+      // complete — turnCount was already >= 1 when this submit was made.
+      else if (!(second.before >= 1)) {
+        failures.push(`the first continuation did not complete (turnCount ${second.before}), so the `
+          + 'captured request is not a later scene');
+      }
+    }
   }
 }
 await browser.close();
+fs.writeFileSync(OUT + '/COST_INVENTORY.json', JSON.stringify(calls, null, 2));
 fs.writeFileSync(OUT + '/RESULT.json', JSON.stringify({ saved, resumed, submitted, caps, doors, logs }, null, 2));
 
 const P = console.log;
@@ -444,6 +806,145 @@ if (caps.length) {
     ['sensory', 'mean-nothing clause kept', { s: 'mean nothing by themselves', min: 1 }],
     ['sensory', 'anchors pointer says ABOVE', { s: 'sensory anchors listed above', min: 1 }],
     ['sensory', 'stale "listed below" gone', { s: 'sensory anchors listed below', exp: 0 }],
+
+    // ── C+ REGIONS: ONE COPY EACH, COMPLETE ──
+    // Per-path ownership replaced three emitters of the same teaching spine. Each region is
+    // asserted BY ITS CONTENT as well as its heading, because a region carrying extra
+    // scene-specific material is not interchangeable with a generic copy: if ownership ever
+    // resolves to the wrong emitter, the heading count stays right while the content goes
+    // missing, and only these content assertions would catch it.
+    ['cplus', 'spine: WHO GETS CHARACTER+ once', { s: '═══ WHO GETS CHARACTER+', exp: 1 }],
+    ['cplus', 'spine: not-a-love-interest-feature kept', { s: 'This is NOT a love-interest feature', min: 1 }],
+    ['cplus', 'spine: EMOTIONAL PHYSICS once', { s: '═══ EMOTIONAL PHYSICS: REACTIONS HAVE CAUSES ═══', exp: 1 }],
+    ['cplus', 'spine: its three ✓ exemplars kept', { s: 'His hand tightened around the glass because he', min: 1 }],
+    ['cplus', 'spine: gesture-is-never-the-point kept', { s: 'The gesture is never the point', min: 1 }],
+    ['cplus', 'spine: REFLEX TELLS once', { s: 'REFLEX TELLS (a hand tightening', exp: 1 }],
+    ['cplus', 'spine: its ✗/✓ heel pair kept', { s: 'My heel lifted once from the packed earth', min: 1 }],
+    ['cplus', 'spine: OBJECT TELLS kept', { s: 'OBJECT TELLS (a ring, a scar, a weapon, a coat)', min: 1 }],
+    ['cplus', 'spine: WHEN IT FIRES AGAIN once', { s: 'WHEN IT FIRES AGAIN (not every mention', exp: 1 }],
+    ['cplus', 'spine: RECURRENCE BUDGET kept', { s: 'RECURRENCE BUDGET', min: 1 }],
+    ['cplus', 'spine: NEVER RESTATE AN INSIGHT kept', { s: 'NEVER RESTATE AN INSIGHT — BUT DO RETURN TO ONE', min: 1 }],
+    ['cplus', 'povLens: BEHAVIORAL DEMONSTRATION once', { s: '═══ BEHAVIORAL DEMONSTRATION (HARDEST', exp: 1 }],
+    ['cplus', 'povLens: the brutal test kept', { s: 'The brutal test: did the archetype DO SOMETHING', min: 1 }],
+    ['cplus', 'povLens: no-live-interaction qualification kept',
+      { s: 'archetype manifestation does NOT require live present-time interaction', min: 1 }],
+    ['cplus', 'visFloor: CHARACTER VISIBILITY once',
+      { s: 'CHARACTER VISIBILITY (HARD): EVERY named character', exp: 1 }],
+    ['cplus', 'visFloor: WHAT COUNTS kept', { s: 'WHAT COUNTS (HARD): within 1–2 sentences', min: 1 }],
+    ['cplus', 'visFloor: PC OWNS HER BODY kept', { s: 'PC OWNS HER BODY', min: 1 }],
+    ['cplus', 'visFloor: GOLD STANDARD exemplar kept',
+      { s: 'GOLD STANDARD = relational + physical together', min: 1 }],
+
+    // ── CONTINUATION SCOPE: OPENING-ONLY OUT, ENDURING TEACHING IN ──
+    // Each of these was judged by what the section REQUIRES, not by whether it says "Scene 1".
+    // The enduring half is asserted present; the opening-scoped half is asserted gone. If the
+    // re-scope ever over-reaches, the "kept" rows fail — which is the direction that matters.
+    ...(LATER ? [['scope', 'the Scene-1 contract block is absent on a later scene',
+      { s: 'SCENE 1 OPENING CONTRACT', exp: 0 }]] : []),
+    ['scope', 'opening hook timing removed',
+      { s: 'Within the first 150–200 words, the protagonist must FACE A DECISION', exp: 0 }],
+    ['scope', 'the decision requirement itself is KEPT',
+      { s: 'the protagonist must FACE A DECISION (not merely feel tension)', min: 1 }],
+    ['scope', 'DECISION QUALITY floor KEPT', { s: 'DECISION QUALITY (stakes floor — HARD)', min: 1 }],
+    ['scope', 'risk-of-loss criterion KEPT', { s: 'RISK OF LOSS (relational, reputational, material, physical)', min: 1 }],
+    ['scope', 'irreversibility criterion KEPT', { s: 'IRREVERSIBLE CONSEQUENCE', min: 1 }],
+    ['scope', 'DECISION VISIBILITY KEPT', { s: 'DECISION VISIBILITY (HARD)', min: 1 }],
+    ['scope', 'opening beat-order passage removed',
+      { s: 'CORRECT PATTERN — what Scene 1 should sound like', exp: 0 }],
+    ['scope', 'its "plot enters AFTERWARD" instruction removed',
+      { s: 'The plot enters AFTERWARD', exp: 0 }],
+    ['scope', 'the ANTI-PATTERN failure shape KEPT',
+      { s: 'ANTI-PATTERN — the observed failure shape', min: 1 }],
+    ['scope', 'the reader question KEPT', { s: 'What is going to happen with THEM?', min: 1 }],
+    ['scope', 'its NOT-form KEPT', { s: 'What is going to happen with the trust', min: 1 }],
+    ['scope', 'reader-question heading re-scoped',
+      { s: 'THE QUESTION THE READER MUST KEEP ASKING:', min: 1 }],
+    ['scope', 'old opening-deliverable heading gone',
+      { s: 'BY END OF SCENE 1 THE READER SHOULD BE WONDERING', exp: 0 }],
+    ['scope', 'reality consistency KEPT in full',
+      { s: 'Respect real-world constraints: weight, strength, timing, spatial geometry', min: 1 }],
+    ['scope', 'its implausible-action rule KEPT',
+      { s: 'rewrite it realistically rather than asking the reader to suspend disbelief', min: 1 }],
+    ['scope', 'reality-consistency heading re-scoped', { s: 'REALITY CONSISTENCY (HARD):', min: 1 }],
+    ['scope', 'its false Scene-1 scope gone', { s: 'REALITY CONSISTENCY (SCENE 1 — HARD)', exp: 0 }],
+    ['scope', 'world-specificity invariant KEPT', { s: 'GENERIC FAILURE RULE (GLOBAL INVARIANT', min: 1 }],
+    ['scope', 'its test re-scoped to this scene', { s: 'If this scene could exist UNCHANGED', min: 1 }],
+
+    // ── SCAFFOLD: WHAT SUPPRESSING THE TAIL COPY MUST NOT COST ──
+    // Checking "one header and one END marker" only proved the orphan was gone, not that the
+    // scaffold's CONTENT survived. These assert the fields the author actually needs from it:
+    // the run's gravity, the per-issue plan, and the world-behaviour rules. Each is checked for
+    // presence AND for being delivered once, so neither the suppression nor the stale-needle fix
+    // can quietly take the plan with it. A scaffold with no populated fields renders nothing at
+    // all now, so an empty-scaffold fixture legitimately reports 0 — which is why the harness
+    // reports the count rather than demanding one blindly.
+    ['scaffold', 'banner count', { s: '═══ STORY SCAFFOLD', max: CTRL ? 2 : 1 }],
+    ['scaffold', 'END marker count', { s: '═══ END SCAFFOLD ═══', max: CTRL ? 2 : 1 }],
+    // In control mode a second scaffold block is required, and each keeps its own authority
+    // instruction — that is the structural-boundary fix, not duplication.
+    ['scaffold', 'authority sentence count',
+      { s: 'SCAFFOLD AUTHORITY: GRAVITATIONAL, NOT PRESCRIPTIVE', max: CTRL ? 2 : 1 }],
+    // POSITIVE PRESERVATION, BY VALUE. "At most once" is only a duplication check and passes
+    // when everything is lost, so every populated field is asserted to arrive EXACTLY once: its
+    // actual value must reach the outgoing request (preservation) and must not be repeated
+    // (the tail copy really was suppressed). The scaffold is supplied through the production
+    // _buildCGScaffold door above, so these values travelled the real parse/store/render path.
+    ...(CTRL ? [] : [['scaffold', 'run thesis value reaches the request',
+      { s: 'keeps choosing the room she was humiliated in', exp: 1 }]]),
+    ...(CTRL ? [] : [['scaffold', 'thematic direction value reaches the request',
+      { s: 'exposure stops being done to her and becomes something she does', exp: 1 }]]),
+    ['scaffold', 'visual thesis value reaches the request',
+      { s: 'screens and glass give way to paper and hands', exp: 1 }],
+    ['scaffold', 'world physics value reaches the request',
+      { s: 'reputation moves faster than correction', exp: 1 }],
+    ['scaffold', 'hidden pressure value reaches the request',
+      { s: 'who sent the photographs, never resolved on the page', exp: 1 }],
+    ['scaffold', 'social geometry value reaches the request',
+      { s: 'public rooms are safer for her than private ones', exp: 1 }],
+    ['scaffold', 'issue 1 plan reaches the request',
+      { s: 'she stays in the room and makes the room answer for it', exp: 1 }],
+    ['scaffold', 'issue 1 ambiguity target reaches the request', { s: 'whether Julian knew', exp: 1 }],
+    ['scaffold', 'issue 2 plan reaches the request',
+      { s: 'the correction costs more than the exposure did', exp: 1 }],
+    ['scaffold', 'issue 2 ambiguity target reaches the request',
+      { s: 'what she traded for the retraction', min: 1 }],
+    ['scaffold', 'ISSUE ARCS header count', { s: 'ISSUE ARCS:', max: CTRL ? 2 : 1 }],
+    ['scaffold', 'WORLD BEHAVIOR rules count',
+      { s: 'WORLD BEHAVIOR (ambient rules shaping how characters feel + act', max: CTRL ? 2 : 1 }],
+    ['scaffold', 'no banner without its authority sentence', { pairedWith: true }],
+
+    // ── THE COGNITIVE-INTERFERENCE LADDER: COMMON TEACHING ONCE, QUALIFICATIONS IN PLACE ──
+    // The offstage doctrine and the Scene-1 contract shared LEVEL 1/2/3 and THE TEST verbatim;
+    // the ON-STAGE callback doctrine has its own exemplars and its own TEST and is NOT a copy.
+    // So the shared five are asserted ONCE, the on-stage set is asserted as still present and
+    // distinct, and each scope-specific qualification is asserted against the circumstance it
+    // belongs to — a saving that detached a qualification from its scope would pass a count check
+    // and fail these.
+    ['ladder', 'shared rung LEVEL 1 delivered once',
+      { s: '✗ LEVEL 1 — EXPOSITION: "He was attentive."', exp: 1 }],
+    ['ladder', 'shared rung LEVEL 2 delivered once',
+      { s: '⚠ LEVEL 2 — NEUTRAL MICRO-SCENE: "I remembered how kind he was to the waiter."', exp: 1 }],
+    ['ladder', 'shared rung LEVEL 3 delivered once',
+      { s: '✓ LEVEL 3 — ATTRACTION-PRESENT: "I remembered the way he', exp: 1 }],
+    ['ladder', 'shared THE TEST delivered once',
+      { s: 'THE TEST: read your remembered moment.', exp: 1 }],
+    ['ladder', 'the offstage site cross-references instead of repeating',
+      { s: 'LEVELS 1–3 of the ladder are stated once earlier in this prompt', min: 1 }],
+    ['ladder', 'and points at the same TEST', { s: 'THE TEST is the one stated with the ladder above.', min: 1 }],
+    // SCOPE-SPECIFIC MATERIAL — each must survive, attached to its own circumstance.
+    ['ladder', 'offstage: memory LEVEL 4 variant for SHARED_HISTORY',
+      { s: 'LEVEL 4 — COGNITIVE INTERFERENCE (memory variant — for SHARED_HISTORY)', min: 1 }],
+    ['ladder', 'offstage: stranger variant for COLLISION / LOOMING_PRESENCE',
+      { s: 'STRANGER-COMPATIBLE VARIANT', min: 1 }],
+    ['ladder', 'offstage: the fake-history failure mode named',
+      { s: 'Level-4-by-fake-history failure mode', min: 1 }],
+    ['ladder', 'on-stage: its own LEVEL 1 exemplar kept',
+      { s: 'LEVEL 1 — EXPOSITION: "He had elegant hands."', min: 1 }],
+    ['ladder', 'on-stage: its own TEST kept', { s: 'cause her to MISS something', min: 1 }],
+    ['ladder', 'on-stage: its acquaintance LEVEL 4 variant kept',
+      { s: 'COGNITIVE INTERFERENCE (acquaintance variant)', min: 1 }],
+    ['ladder', 'Scene-1: ATTRACTION-PATTERN ANCHORING kept',
+      { s: 'ATTRACTION-PATTERN ANCHORING', min: 1 }],
 
     // WITHHELD CORE — the locked variant contract was delivered byte-identically twice in one
     // request (once inside the carried state.sysPrompt, once re-emitted by the turn builder).
@@ -556,13 +1057,114 @@ if (caps.length) {
   let group = null, pass = 0;
   for (const [g, label, rule] of CHECKS) {
     if (g !== group) { group = g; P(`  ${g.toUpperCase()}`); }
+    // `pairedWith` is the scaffold's orphan check: a banner must never ship without the authority
+    // sentence that belongs under it, which is exactly the defect the stale guard produced.
+    if (rule.pairedWith) {
+      const banners = n('═══ STORY SCAFFOLD');
+      const authority = n('SCAFFOLD AUTHORITY: GRAVITATIONAL, NOT PRESCRIPTIVE');
+      const ok2 = banners === authority;
+      if (ok2) pass++; else failures.push(`${g}: ${label} — ${banners} banner(s) but ${authority} authority sentence(s)`);
+      P(`    ${ok2 ? '✓' : '✗'} ${label.padEnd(52)} ${banners}/${authority} (must match)`);
+      continue;
+    }
+    // ── LATER CONTINUATIONS DO NOT RECEIVE THIS BLOCK AT ALL ──
+    // Measured on turn 2 of the fresh story: every row of this group reads 0, including
+    // requirements this work never touched (risk-of-loss, ANTI-PATTERN). So the Scene-1 contract
+    // block is emitted on the FIRST continuation only — where turnCount is still 0 and the
+    // builder reads it as scene 1 — and never on later scenes. The "KEPT" rows therefore cannot
+    // be asserted on a later scene; they are reported for the record, while the opening-only rows
+    // stay hard assertions because their absence is still required.
+    if (LATER && (g === 'ownership'
+        || (g === 'ladder' && /Scene-1|cross-references|points at the same TEST/.test(label)))) {
+      const cb = n(rule.s);
+      P(`    ·  ${label.padEnd(52)} ${String(cb).padStart(2)} (inside the Scene-1 block, absent on later scenes)`);
+      pass++;
+      continue;
+    }
+    if (LATER && g === 'scope' && !('exp' in rule)) {
+      const c0 = n(rule.s);
+      P(`    ·  ${label.padEnd(52)} ${String(c0).padStart(2)} (not delivered on later scenes at all)`);
+      pass++;
+      continue;
+    }
     const c = n(rule.s);
-    const ok = ('exp' in rule) ? c === rule.exp : c >= rule.min;
-    if (ok) pass++; else failures.push(`${g}: ${label} — found ${c}, expected ${'exp' in rule ? rule.exp : '>=' + rule.min}`);
+    const ok = ('exp' in rule) ? c === rule.exp
+      : ('max' in rule) ? c <= rule.max : c >= rule.min;
+    if (ok) pass++; else failures.push(`${g}: ${label} — found ${c}, expected ${'exp' in rule ? rule.exp : 'max' in rule ? '<=' + rule.max : '>=' + rule.min}`);
     P(`    ${ok ? '✓' : '✗'} ${label.padEnd(52)} ${String(c).padStart(2)}`
-      + ('exp' in rule ? ` (exactly ${rule.exp})` : ` (at least ${rule.min})`));
+      + ('exp' in rule ? ` (exactly ${rule.exp})`
+        : 'max' in rule ? ` (at most ${rule.max})` : ` (at least ${rule.min})`));
   }
   P(`\n  ${pass}/${CHECKS.length} consolidated-requirement checks passed on the delivered request.`);
+
+  // ── CONTROL VERDICT ──
+  // V1 may legitimately still appear: it is frozen into the saved prompt and cannot be rewritten.
+  // What must not happen is V2 — the CURRENT plan — being dropped because a scaffold heading
+  // already exists in that prefix. A heading-only guard fails exactly here.
+  if (CTRL) {
+    P('\n  STALE-PREFIX vs CURRENT-PLAN CONTROL (incompatible assignments):');
+    const cfails = [];
+    const C = (label, ok, detail) => { if (!ok) cfails.push('control: ' + label + (detail ? ' — ' + detail : ''));
+      P(`    ${ok ? '✓' : '✗'} ${label.padEnd(52)}${detail ? ' ' + detail : ''}`); };
+
+    // 1. The CURRENT plan must reach the author.
+    C('V2 run thesis (current) reaches the author', n('V2 she LEAVES before the room') >= 1,
+      String(n('V2 she LEAVES before the room')));
+    C('V2 thematic direction reaches the author', n('V2 the story resolves ANYWHERE BUT this venue') >= 1,
+      String(n('V2 the story resolves ANYWHERE BUT this venue')));
+    C('V2 issue plan reaches the author', n('V2 she refuses the room') >= 1, String(n('V2 she refuses the room')));
+
+    // 2. The author must be able to tell which plan governs. V1 is frozen into the saved prompt
+    //    and cannot be removed, so the requirement is that it is explicitly marked obsolete.
+    const v1n = n('V1 she STAYS in the room');
+    const supersede = n('SUPERSEDES THE EARLIER SCAFFOLD');
+    const governs = n('THE PLAN BELOW IS THE CURRENT ONE AND GOVERNS');
+    C('the current plan is declared to govern', governs >= 1, String(governs));
+    C('the earlier one is named a SUPERSEDED PLAN', n('is a SUPERSEDED PLAN') >= 1,
+      String(n('is a SUPERSEDED PLAN')));
+    // Supersession must replace PLANNING INSTRUCTIONS only. A planned event is not an event, so it
+    // must not read as invalidating published story events, lore or character facts.
+    C('supersession scope is confined to planning', n('this replaces PLANNING INSTRUCTIONS ONLY') >= 1,
+      String(n('this replaces PLANNING INSTRUCTIONS ONLY')));
+    C('published events are protected', n('does not invalidate anything that has already happened') >= 1,
+      String(n('does not invalidate anything that has already happened')));
+    C('lore and character facts are protected', n('does not touch established lore, world facts or character facts') >= 1,
+      String(n('does not touch established lore, world facts or character facts')));
+    C('a plan is not an event', n('never an event that did not occur') >= 1,
+      String(n('never an event that did not occur')));
+    C('the word "obsolete history" is gone', n('OBSOLETE history') === 0, String(n('OBSOLETE history')));
+    C('a supersession banner is present when V1 is', v1n === 0 || supersede >= 1, `V1×${v1n} supersede×${supersede}`);
+    C('both assignments are NOT presented as current', !(v1n >= 1 && governs === 0),
+      `V1×${v1n} governs×${governs}`);
+
+    // 3. Structural boundaries: every scaffold banner must have its own authority + END, so the
+    //    author can see where each plan starts and stops.
+    const banners = n('═══ STORY SCAFFOLD');
+    const authority = n('SCAFFOLD AUTHORITY: GRAVITATIONAL');
+    const ends = n('═══ END SCAFFOLD ═══');
+    C('every banner keeps its authority instruction', banners === authority, `${banners} banner(s) / ${authority} authority`);
+    C('every banner keeps its closing marker', banners === ends, `${banners} banner(s) / ${ends} END`);
+
+    // 4. Nothing unrelated may be swallowed into a scaffold block: between a banner and its END
+    //    there must be no instruction that belongs to another section.
+    const FOREIGN = ['SCENE LENGTH GUIDANCE', 'SCENE 1 OPENING CONTRACT', 'WITHHELD CORE',
+                     'CHARACTER VISIBILITY (HARD)', 'EMOTIONAL PHYSICS'];
+    let swallowed = [];
+    let idx = 0;
+    for (let k = 0; k < banners; k++) {
+      const bAt = t.indexOf('═══ STORY SCAFFOLD', idx);
+      if (bAt === -1) break;
+      const eAt = t.indexOf('═══ END SCAFFOLD ═══', bAt);
+      idx = (eAt === -1 ? bAt + 1 : eAt + 1);
+      if (eAt === -1) { swallowed.push('block ' + (k + 1) + ' has no END'); continue; }
+      const inner = t.slice(bAt, eAt);
+      for (const f of FOREIGN) if (inner.indexOf(f) !== -1) swallowed.push(`block ${k + 1} contains "${f}"`);
+    }
+    C('no unrelated instruction inside a scaffold block', swallowed.length === 0, swallowed.join('; ') || 'clean');
+
+    cfails.forEach((f) => failures.push(f));
+    P(`    ·  V1 (stale, frozen into the saved prompt)         ${v1n}`);
+  }
 } else {
   P('\nNO CONTINUATION AUTHOR REQUEST. Doors by phase:');
   const agg = {}; doors.forEach((d) => { const k = d.phase + ' ' + d.door + (d.door === 'OTHER' ? ':' + d.role : ''); agg[k] = (agg[k] || 0) + 1; });
