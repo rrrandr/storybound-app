@@ -267,7 +267,36 @@ module.exports = async function handler(req, res) {
 
     let finalMessages = [...messages];
 
-    if (role === 'NORMALIZATION') {
+    // ── WHICH NORMALIZATION AXIS IS THIS ──────────────────────────────────────────────────
+    // Two of the axes on this role carry the OPPOSITE contract from the rest. player_action and
+    // player_dialogue must come back as the reader's own instruction, preserved, with any change
+    // DECLARED span by span against a permitted mapping — the frontend sends that contract as its
+    // own system message (RUNTIME_NORMALIZATION_PROMPT) and the page's guard validates the answer
+    // against it. The archetypal-distillation prompt below instructs the exact opposite: one
+    // non-narrative mythic fragment or an {archetype, burden, tension} object, and never the
+    // input. Prepending it to a reader turn told the provider to do two contradictory things in
+    // one call, and nothing in the reply could satisfy both, so the reply was refused downstream
+    // and the reader's turn fell back to raw every time. So it is scoped out HERE, at the provider
+    // boundary, for those two axes only — every other axis keeps it exactly as before, and the
+    // "exactly ONE system message per request" rule noted below now actually holds on both paths.
+    const READER_PRESERVATION_AXES = new Set(['player_action', 'player_dialogue']);
+    let normAxis = typeof req.body?.axis === 'string' ? req.body.axis : null;
+    if (!normAxis) {
+      // Older callers put the axis only inside the JSON user payload.
+      for (let i = messages.length - 1; i >= 0 && !normAxis; i--) {
+        const m = messages[i];
+        if (!m || m.role !== 'user' || typeof m.content !== 'string') continue;
+        try {
+          const p = JSON.parse(m.content);
+          if (p && typeof p.axis === 'string') normAxis = p.axis;
+        } catch (_) { /* not a JSON payload */ }
+      }
+    }
+
+    if (role === 'NORMALIZATION' && READER_PRESERVATION_AXES.has(normAxis)) {
+      console.log(`[CHATGPT-PROXY] NORMALIZATION axis "${normAxis}" — reader-preservation contract;`
+        + ' archetypal-distillation system prompt NOT prepended');
+    } else if (role === 'NORMALIZATION') {
       const modeGuidance = {
         couple: `MODE: COUPLE
 For dialogue with cultural quotes:

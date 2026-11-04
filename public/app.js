@@ -780,8 +780,31 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
   // Single-word incidental uses ("that was so fucking good") don't fire.
   // The combination is what reliably triggers gpt refusal.
   var _EXPLICIT_ANATOMY_RE = /\b(cock|pussy|cunt|tits?|nipples?|clit|dick|asshole|breasts?|labia|vulva|penis|vagina|nuts|balls|throat|mouth)\b/i;
-  var _EXPLICIT_ACT_RE     = /\b(fuck|fucking|fucks|suck|sucking|sucks|lick|licking|licks|swallow|swallowing|eat|eating|eats|ride|riding|rides|pound|pounding|pounds|stroke|stroking|strokes|finger|fingering|fingers|deepthroat|gag|gagging|spread|spreads|spreading|stuff|stuffing|cum|come|inside|enter|enters|entering|impale|impales)\b/i;
-  var _EXPLICIT_PHRASE_RE  = /\b(fuck\s+(me|my|him|her|them)|ride\s+(me|him|her|them|hard|slow)|take\s+me\s+hard|come\s+(inside|in\s+me|on\s+me|in\s+my|on\s+my)|in(side)?\s+(me|my)|spread\s+(me|my)|deepthroat)\b/i;
+  // ── CANDIDATE D (2026-10-30): ORDINARY LANGUAGE IS NOT AN EXPLICIT REQUEST ─────
+  // The two-signal structure is UNCHANGED (anatomy AND an act, or a phrase pattern),
+  // and ANATOMY above is left exactly as it was. Only what counts as each changed.
+  //
+  // Measured defect this fixes: the old PHRASE pattern carried a bare
+  // `in(side)?\s+(me|my)` alternative, so "the deck is inside my pack" and
+  // "inside my house" routed a plain location phrase to the explicit workflow with
+  // no second signal at all. The old ACT set also carried ordinary verbs
+  // (finger/fingers, eat, come, inside, ride, stroke, spread, swallow, gag), so any
+  // one of them promoted a single anatomy word: "her fingers brushed my mouth"
+  // fired on fingers+mouth, and medical/injury/insult/descriptive prose fired the
+  // same way ("could not swallow for the pain" + "throat").
+  //
+  // ACTS ONLY in the narrowed set. An earlier draft wrongly included `cock`, which
+  // is ANATOMY: one word then supplied both signals and the two-signal rule
+  // collapsed, firing on "a complete cock about the whole thing". `suck`/`lick`
+  // stay because they must still co-occur with an anatomy term — "sucked the air
+  // through her teeth" and "the cat licked its paw" carry none.
+  //
+  // Coverage is the hand-written corpus in _nf_register_regex_controls.mjs (40
+  // ordinary/medical/injury/insult/descriptive controls, 0 false positives; 9/9
+  // genuinely explicit retained). That bounds those classes, NOT reader input in
+  // general. Lexical only — no model classifier was added.
+  var _EXPLICIT_ACT_RE     = /\b(fuck\w*|suck\w*|lick\w*|deepthroat\w*|cum|cums|cumming|creampie|rimming|blowjob|handjob)\b/i;
+  var _EXPLICIT_PHRASE_RE  = /\b(fuck\s+(me|my|him|her|them)|ride\s+(me|him|her|them)\s+(hard|slow)|take\s+me\s+hard|come\s+(in|inside|on)\s+(me|my|him|her|them)|spread\s+(me|my)\s+(legs|thighs)|deepthroat)\b/i;
   function _detectExplicitUserInput(userSay, userDo) {
     var combined = ((userSay || '') + ' ' + (userDo || '')).trim();
     if (!combined) return false;
@@ -16750,6 +16773,14 @@ Propaganda mode UNLOCKED (rare): Institutional antagonist may use stronger ideol
     // THE SACRIFICIANT RITE (Roman, wired 2026-08-10) — culture-level rule for ANY official First Sacrifice
     // (the starter_first_sacrifice seed renders one INSTANCE of this; this is the reusable canon).
     sacrificiant_rite: {
+      // RITE AGE (Roman 2026-10-31, AUTHORITATIVE — was 16 for everyone).
+      // ⚠ DELIVERY NOTE: this object currently has NO code consumer. The header above records it
+      // as prose+CG, but a grep finds no reader — so changing it alone changes no prompt. The
+      // DELIVERED statement of this rule is in STARTER_SEEDS.starter_first_sacrifice.worldTruths,
+      // which reaches both the literary author and the CG screenplay prompt (measured). This entry
+      // is the shared reference record; keep the two in step, and do not assume an edit here ships.
+      age: "A girl makes her First Sacrifice at TWELVE, a boy at THIRTEEN. Settled custom, uniform across the Fatelands. The rite has a floor at all because younger minds are too unformed to wish safely; the ONE-YEAR DIFFERENCE between the two ages has no stated reason and no biological, developmental or doctrinal justification for it is to be invented. How the world regards the difference socially is UNDECIDED and must not be asserted either way.",
+      graduant_is_a_child: "The youth at the centre of the rite is twelve or thirteen and is categorically outside romance and intimacy in every content mode — no attraction, embodiment, desire-register or admiring physical description applies to them, ever. This was equally true when the rite age was written as sixteen: the graduant has always been a minor, and the adult content stack should never have been able to reach them. The exclusion is SEXUAL AND ROMANTIC ONLY — the graduant keeps full characterisation: own wants, agency, complexity, nonsexual affection and real relationships.",
       role: "A SACRIFICIANT is whoever supervises a First Sacrifice — one whose misalignment-sense is honed enough to guide the rite (First Favored preferred; trained humans/Kwisheen possible).",
       seal: "For any official rite the Sacrificiant is ceremonially SEALED: a gossamer BAND drawn across the mouth and tied behind the head (JUST CLOTH — no orb, no bead, no gag; part of their ceremonial sash), because a supervisor bolstering the wish with one of their OWN would be a ruinous breach. Their cries/speech are MUFFLED behind the cloth; emotion reads through the eyes and body. CG draws the band in for the duration of the rite; a clean identity anchor omits it.",
       vestments: "Otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH — never robes."
@@ -18402,8 +18433,26 @@ For the reader's own turn (player_action / player_dialogue):
 {
   "canonical_instruction": "string — the reader's text, unchanged unless IP or legibility required a change",
   "changed": true | false,
+  "substitutions": [ { "from": "string — the exact span of the reader's text you replaced",
+                       "to": "string — what you put in its place (NEVER empty)",
+                       "why": "string — why that span could not stand" } ],
   "rejection_reason": "string | null — only when you returned the text unchanged because you could not comply"
 }
+The "substitutions" list is REQUIRED whenever canonical_instruction differs from user_text in any way, and
+must account for the difference COMPLETELY: replacing every "from" with its "to" in the reader's
+text has to reproduce canonical_instruction exactly, character for character. Nothing outside
+those spans may change — not a word, not a comma. An omitted, partial or inaccurate list means the
+reader's own text is used instead of yours, so a change you cannot declare this precisely is a
+change not worth making: return the text unchanged instead. Return [] when nothing changed.
+The payload carries "permitted_substitutions" for these two axes: the spans of THIS reader's text
+that may be replaced, each with the exact values permitted for it. That list is the whole of what
+you may do. Every "from" must be one of those spans, character for character and nothing larger —
+never a phrase that contains the name along with the reader's own words — and every "to" must be
+one of that span's permitted values, copied exactly. You may not write a replacement of your own,
+and you may not replace a span the list does not carry, however recognizable it looks. When the
+list is empty, or when what needs changing is not in it, return the reader's text UNCHANGED with
+"changed": false and a rejection_reason. A replacement outside that list is discarded and the
+reader's own words are used.
 Do NOT return primary_subtype, secondary_subtype, confidence_level or any other field on these two
 axes. A classification object is never a valid answer to a reader's turn.
 
@@ -18452,6 +18501,17 @@ For ancestry:
           context_signals
       };
 
+      // THE READER'S OWN TURN: the two axes whose contract is PRESERVATION, not distillation.
+      // They travel with the permitted mapping for this very text (see _normPermittedSubstitutions
+      // ~app.js:18900) so the layer never has to invent a replacement, and the gate that reads the
+      // answer accepts nothing else. The axis also rides TOP-LEVEL, because /api/chatgpt-proxy
+      // decides there whether the archetypal-distillation system prompt belongs on this call.
+      const _NORM_READER_AXES = ['player_action', 'player_dialogue'];
+      const _isReaderAxis = _NORM_READER_AXES.indexOf(axis) !== -1;
+      if (_isReaderAxis) {
+          payload.permitted_substitutions = _normPermittedSubstitutions(user_text, state);
+      }
+
       // Determine normalization role based on axis
       // FIXED: Always use 'NORMALIZATION' role to trigger backend system prompt
       const normalizationRole = 'NORMALIZATION';
@@ -18468,6 +18528,7 @@ For ancestry:
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                   role: normalizationRole,
+                  axis: axis,
                   mode: state.mode || 'solo',
                   model: 'gpt-4o-mini',
                   messages: [
@@ -18614,7 +18675,429 @@ For ancestry:
       || /\?/.test(s)                                               // a question of someone
       || /\b(please|tell me|don't|do not|let me)\b/i.test(s);
   }
-  function usableDialogue(candidate, raw, logWhy) {
+  // ── AN UNDECLARED CHANGE IS NOT A JUSTIFIED ONE (Roman 2026-11-02) ──────────────────────
+  // MEASURED, run_2026-11-02T19-03-47-893Z, scene 6 (response_r107_NORMALIZATION_200.json):
+  //     submitted : "… in front of these people. Seren — two more questions and then your morning, I swear it."
+  //     returned  : "… in front of these people. — two more questions and then your morning, I swear it."
+  //     its own self-report : {"changed": false, "rejection_reason": null}
+  // The speech-act check above passed it, CORRECTLY by its own terms: the result still carries
+  // "you", "I" and "my", so a line addressed to nobody is not what came back. The ward's name was
+  // deleted and the em dash left dangling, and the scene then misattributed the line.
+  //
+  // THE FIRST ATTEMPT AT THIS COUNTED CAPITALISED VOCATIVES. That was a guess dressed as a check,
+  // and it was holed both ways: "I need you, Seren, to answer me." → "I need you to answer me."
+  // passed it (mid-clause appositive, not sentence-initial), "Seren, I need …" → "Please, I need …"
+  // passed it (one capitalised-word-plus-comma replaced another), and a legitimate substitution
+  // carrying a hyphenated surname ("Veyra Solin-Dathros, …") was REJECTED. Counting capitalised
+  // expressions never established that the addressee survived.
+  //
+  // SO AN UNDECLARED EDIT HAS NO CLAIM. `changed:false` is a statement that the reader's wording
+  // came back intact; where the text differs, that statement is false and the reader's words are
+  // used. There were 7 such calls in the run, including the one above.
+  //
+  // AND A DECLARED EDIT IS NOT AUTHORIZATION EITHER (Roman 2026-11-02, second correction). The
+  // first version of this accepted `changed:true` as proof of a legitimate substitution. All FIVE
+  // declared changes in that run damaged the cast:
+  //   r36  changed:true, "protected name — removed recognizable name"
+  //        "Seren, look at me."                  → "Look at me."        (the ward, deleted)
+  //   r58  changed:true, "protected/IP names — removed identifiable names"
+  //        "…toward Julian… beside Seren…"       → "…toward the target… beside the other character…"
+  //   r80  changed:true, no reason   "take Julian's wrist"  → "take the wrist"
+  //   r196 changed:true, no reason   "nearest Julian… look up at him" → "nearest the other character… at them"
+  //   r34  changed:true, no reason   "whether the Dohkar approves" → "whether the order … is approved"
+  // Julian and Seren are this story's own closed cast. Nothing about them is protected, and the
+  // reason strings are simply false. Removing them changes whom the reader addresses or acts upon,
+  // which is the same damage as the undeclared case wearing a justification.
+  //
+  // SO THE TEST IS THE STORY'S OWN CANONICAL NAMES, read from the sources the rest of the stack
+  // already uses (_activeSeed(s).cast[].name, playerName / partnerName / loveInterestName, and the
+  // FF canon set where a famous-fate contract is active). A cast name the reader used must still be
+  // there. That is a membership test against authoritative data, not another name-count regex, and
+  // it needs no model call.
+  //
+  // WHAT THIS DELIBERATELY DOES NOT DO: validate a substitution. A starter seed's cast entries carry
+  // `name` and no alias field, and the normalization layer returns no record of WHICH name it
+  // replaced WITH WHAT — so there is nothing to check a replacement against. With today's contract
+  // the only safe answer for a lost cast name is the reader's own words. THE SMALLEST CONTRACT
+  // CHANGE that would allow a genuinely validated one: have the layer return
+  // `substitutions: [{from, to, why}]`, and accept only when no `from` is a story cast name AND
+  // reverse-applying the list reproduces the reader's text exactly — identity and surrounding
+  // wording both checked, with no guessing. That is a schema change to an existing call, not a new
+  // stage, and it is NOT implemented here.
+  function _normUndeclaredEdit(report, got, raw) {
+    if (!report || typeof report !== 'object') return false;   // no report: behaviour unchanged
+    if (report.changed !== false) return false;                // handled by the cast test instead
+    return String(got) !== String(raw == null ? '' : raw);
+  }
+  // The story's own cast, from the sources already in use elsewhere in this file.
+  function _normStoryCastNames(s) {
+    const out = [];
+    try {
+      s = s || (typeof window !== 'undefined' ? window.state : null) || {};
+      const add = (n) => {
+        n = String(n == null ? '' : n).trim();
+        if (!n) return;
+        // Single tokens only: a cast name is matched word-for-word, and splitting "Veyra Solin"
+        // into parts is what lets a surname-only reference still count as the same person.
+        n.split(/\s+/).forEach((w) => {
+          w = w.replace(/[^\p{L}\p{N}'’-]/gu, '');
+          if (w.length > 2 && out.indexOf(w) === -1) out.push(w);
+        });
+      };
+      add(s.playerName); add(s.partnerName); add(s.loveInterestName);
+      const seedFn = (typeof window !== 'undefined' && typeof window._activeSeed === 'function')
+        ? window._activeSeed : (typeof _activeSeed === 'function' ? _activeSeed : null);
+      const seed = seedFn ? seedFn(s) : null;
+      if (seed && Array.isArray(seed.cast)) seed.cast.forEach((c) => add(c && (c.name || c.canonicalName)));
+      if (typeof _ffCanonNameSet === 'function' && s.fateMode === 'famous_fate') {
+        Object.keys(_ffCanonNameSet(s) || {}).forEach(add);
+      }
+    } catch (_) {}
+    return out;
+  }
+  // ── A TITLE IS AN IDENTITY TOO (Roman 2026-11-02, third correction) ─────────────────────
+  // Testing the first version of this against the RUN'S OWN SAVED STATE — not a hand-built stub —
+  // rejected five of the six damaging calls and ACCEPTED one. r34, declared changed:true with no
+  // reason, on the reader's action:
+  //     submitted : "…whether the Dohkar approves of the order I am answering in."
+  //     returned  : "…whether the order I am answering in is approved."
+  // `lost` was empty, because the Dohkar is not a NAME: this story's closed cast is Julian and
+  // Seren, and its presiding authorities are deliberately unnamed role-holders. The reader named
+  // the person whose approval she was pointedly not seeking; the layer removed the person and left
+  // a passive clause. Same damage as a deleted name, invisible to a name test.
+  //
+  // NO NEW LIST. `_CHAR_TITLES` (~app.js:33027) is the file's existing title alternation and
+  // already contains Dohkar; it is what the naming directive resolves titled references with. A
+  // title is counted only when CAPITALISED in the reader's text, which is the signal that it is a
+  // reference to a person rather than the common noun ("the Dohkar" counts, "my mother's ring"
+  // does not) — the same membership shape as the cast test, not a new heuristic.
+  function _normLostAddressees(raw, got, s) {
+    const lost = [];
+    const R = String(raw == null ? '' : raw), G = String(got == null ? '' : got);
+    const gone = (tok, flags) => {
+      const re = new RegExp('(?<![\\p{L}\\p{N}])' + tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        + '(?![\\p{L}\\p{N}])', flags);
+      return re.test(R) && !re.test(G);
+    };
+    try {
+      for (const n of _normStoryCastNames(s)) if (gone(n, 'iu')) lost.push(n);
+    } catch (_) {}
+    try {
+      // The alternation is a regex source string; its members are read out of it rather than
+      // restated here, so this cannot drift from the list the rest of the file uses.
+      const titles = String(typeof _CHAR_TITLES !== 'undefined' ? _CHAR_TITLES : '')
+        .replace(/^\(\?:/, '').replace(/\)$/, '').split('|')
+        .map((x) => x.replace(/\\\./g, '.').trim()).filter((x) => /^[A-Z]/.test(x));
+      for (const t of titles) {
+        if (lost.indexOf(t) === -1 && gone(t, 'u')) lost.push(t);   // case-SENSITIVE: a title, not the noun
+      }
+    } catch (_) {}
+    return lost;
+  }
+  // ── THE INSTRUCTION, NOT JUST ITS NAMES (Roman 2026-11-02, fourth correction) ───────────
+  // The identity tests above protect WHO the reader addressed. They say nothing about WHAT she
+  // told them to do, so this passed:
+  //     "I do not take Julian's hand"  →  "I take Julian's hand"
+  //
+  // TWO EARLIER ATTEMPTS BOTH GUESSED. (1) Reversibility: "I take" ↔ "I do not take" is
+  // reversible too. (2) A polarity invariant plus "every changed region must be anchored on a
+  // capitalised token that is absent from the result" — that constrains what was REMOVED and
+  // leaves the REPLACEMENT free. Measured against the run's own saved state, all three of these
+  // passed it and were reported as "1 name substitution(s), nothing else changed":
+  //     "I hand the deck to Gandalf and wait."  → "I hand the deck to the grey pilgrim and
+  //                                                kneel at his feet and wait."   (an invented act)
+  //     "I ask Gandalf, then wait."             → "I ask, then wait."             (deleted, not replaced)
+  //     "I will meet you on Monday and wait."   → "…on Friday and wait."          (a different day)
+  // Capitalisation never established that a token was a protected name, and equal negation counts
+  // never established that the meaning survived.
+  //
+  // SO NOTHING IS INFERRED HERE ANY MORE. The layer must DECLARE its replacements on the existing
+  // call — `substitutions: [{from, to, why}]`, now in the output format this prompt states for
+  // these two axes — and the check is CONSTRUCTIVE: apply the declared list to the reader's own
+  // text and require the result to equal what came back, character for character. Everything
+  // outside a declared span is preserved BY CONSTRUCTION, there is no diff heuristic left to hole,
+  // and an undeclared edit of any kind leaves the reader's instruction standing.
+  //
+  // A DECLARATION IS STILL NOT PERMISSION, AND NEITHER IS THE SHAPE OF THE EDIT. Two holes in the
+  // first version of this gate, both measured against the saved state:
+  //     "I hand the deck to Gandalf and wait."  —  from "Gandalf", to "the grey pilgrim and kneel".
+  //         Five words, inside any cap, and still an invented act.
+  //     "I ask Gandalf to wait, then leave."    —  from "Gandalf to wait", to "the grey pilgrim to
+  //         follow". The IP test found Gandalf ANYWHERE INSIDE the declared span, so a span that
+  //         carried the reader's own instruction along with the name passed as "a name".
+  // Neither is answered by a smaller cap or a cleverer reading of the replacement. Both come from
+  // the same two freedoms: the replacement text was the model's to write, and the span was the
+  // model's to draw.
+  //
+  // SO BOTH ENDS ARE CLOSED SETS NOW, read out of the two tables this page already keeps:
+  //   · THE SPAN must be, in its entirety, a recognised replaceable identifier. The whole trimmed
+  //     `from` has to match an IP_PATTERNS entry END TO END (non-context, >= _NORM_IP_MIN) — not
+  //     merely contain one — and every word of it has to be a word this page can map.
+  //   · THE REPLACEMENT must BE one of that identifier's approved values: NAME_TRANSFORMS
+  //     (~app.js:19075) per word, or ARCHETYPE_TRANSFORMS for a mapped concept. Not model-written
+  //     text that fits a budget. "the grey pilgrim" is not in the table; what this page approves
+  //     for gandalf is Galdric, Galden, Greyward.
+  //   · A `from` that is not in the reader's text at a word boundary, or that never applies, is a
+  //     list that does not describe the edit, and the edit is refused.
+  //   · No `from` may name this story's own people — cast identity is not substitutable.
+  //   · `to` must be non-empty and carry a letter or digit: a deletion is not a substitution.
+  // WHERE NO PERMITTED MAPPING EXISTS THE READER'S INPUT IS RETAINED, unchanged.
+  //
+  // WHAT THAT MADE REDUNDANT, deliberately deleted rather than kept on as a second opinion: the
+  // word cap, the negation test on `to`, the "introduces a cast name" test on `to`, and the
+  // whole-text polarity invariant. Every one of them was a guess about arbitrary replacement text,
+  // and there is no arbitrary replacement text left to guess about — `to` is now a literal drawn
+  // from a table in this file, and the constructive pass proves nothing outside the spans moved.
+  //
+  // THE COST, STATED PLAINLY: a protected name that IP_PATTERNS carries but the mapping does not
+  // (neo, voldemort, moriarty…) cannot be substituted here at all, and the reader's own words are
+  // then used — which leaves that name in the text for the IP machinery elsewhere to handle. That
+  // is the direction this guard is meant to fail in: the reader's text is always a valid
+  // instruction. So that a layer never has to invent a value, the permitted mapping FOR THE
+  // READER'S OWN TEXT is sent with the request — `permitted_substitutions`, built by
+  // _normPermittedSubstitutions below from the same two tables this gate reads.
+  function _normWordRe(tok, flags) {
+    return new RegExp('(?<![\\p{L}\\p{N}])' + String(tok).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      + '(?![\\p{L}\\p{N}])', flags);
+  }
+  // The story's own people, by the same two memberships the identity tests use: cast names from
+  // authoritative state, and titles read out of _CHAR_TITLES, counted only when CAPITALISED.
+  function _normNamesIn(text, s) {
+    const hit = [];
+    try {
+      for (const n of _normStoryCastNames(s)) if (_normWordRe(n, 'iu').test(text)) hit.push(n);
+    } catch (_) {}
+    try {
+      const titles = String(typeof _CHAR_TITLES !== 'undefined' ? _CHAR_TITLES : '')
+        .replace(/^\(\?:/, '').replace(/\)$/, '').split('|')
+        .map((x) => x.replace(/\\\./g, '.').trim()).filter((x) => /^[A-Z]/.test(x));
+      for (const t of titles) if (hit.indexOf(t) === -1 && _normWordRe(t, 'u').test(text)) hit.push(t);
+    } catch (_) {}
+    return hit;
+  }
+  // ── "PERMITTED" MUST MEAN SOMETHING OTHER THAN "THE MODEL SAID SO" ─────────────────────
+  // A declaration alone would still let a declared span mean anything: "I will meet you on Monday"
+  // → "…on Friday", declared as one substitution, preserves everything outside its span and reads
+  // as a name-for-name swap. Nothing in the shape of the edit says Monday was not a protected name.
+  //
+  // SO BOTH ENDS READ THE PAGE'S OWN TABLES — IP_PATTERNS (~app.js:19053) for what counts as a
+  // protected identifier, at the threshold the normalization prompt itself states for a
+  // substitution (HIGH confidence, >= 0.65; below that the prompt's own rule is to return the text
+  // unchanged), and NAME_TRANSFORMS / ARCHETYPE_TRANSFORMS (~app.js:19075) for what that identifier
+  // is permitted to become. This adds NO list and NO new policy: it reads the ones already there.
+  const _NORM_IP_MIN = 0.65;
+  // Containment — "is there a protected name anywhere in here". Kept because other callers ask
+  // that question, and NOT what the substitution gate asks: a span that CONTAINS Gandalf can also
+  // contain "to wait", and replacing it replaces the instruction.
+  function _normProtectedConfidence(span) {
+    const t = String(span || '');
+    let best = 0;
+    try {
+      const pats = (typeof IP_PATTERNS !== 'undefined' && Array.isArray(IP_PATTERNS)) ? IP_PATTERNS : [];
+      for (const p of pats) {
+        if (!p || !p.pattern || p.isContext) continue;   // a world marker is not a person's name
+        if (p.pattern.test(t) && Number(p.confidence) > best) best = Number(p.confidence);
+      }
+    } catch (_) {}
+    return best;
+  }
+  // IDENTITY — the whole span must BE the identifier, end to end. This is what the gate asks.
+  function _normProtectedSpanConfidence(span) {
+    const t = String(span || '').trim();
+    if (!t) return 0;
+    let best = 0;
+    try {
+      const pats = (typeof IP_PATTERNS !== 'undefined' && Array.isArray(IP_PATTERNS)) ? IP_PATTERNS : [];
+      for (const p of pats) {
+        if (!p || !p.pattern || p.isContext) continue;
+        const re = new RegExp(p.pattern.source, String(p.pattern.flags || '').replace(/[gy]/g, ''));
+        const m = re.exec(t);
+        if (m && m.index === 0 && m[0].length === t.length && Number(p.confidence) > best) {
+          best = Number(p.confidence);
+        }
+      }
+    } catch (_) {}
+    return best;
+  }
+  // ── AN APPROVED VALUE CAN STILL BE THE WRONG NAME IN THIS STORY (Roman, 2026-11-03) ────
+  // The mapping tables are GLOBAL and this story's cast is not. With a partner named Greyward —
+  // one of the three values this page approves for gandalf — both guards accepted:
+  //     "I tell Greyward to wait and ask Gandalf to follow me."
+  //  →  "I tell Greyward to wait and ask Greyward to follow me."
+  // Approved, declared, applied exactly, and it MERGES TWO PEOPLE. The earlier "introduces a cast
+  // name" test would not have caught it either: it only looked at names ABSENT from the reader's
+  // text, and Greyward was in it. So the test is collision with cast IDENTITY, wherever that name
+  // already stands.
+  // It is applied in BOTH places, because either alone is a hole: the advertised list must not
+  // offer a colliding value, and the gate must refuse one even if a reply proposes it anyway.
+  // If every approved value for a span collides, NO SAFE REPLACEMENT REMAINS and the reader's
+  // input is retained — the same direction every other refusal here fails in.
+  function _normCastCollision(value, s) {
+    try { return _normNamesIn(String(value || ''), s); } catch (_) { return []; }
+  }
+  // The APPROVED VALUES for a span, from this page's own mapping tables — the per-word alternatives
+  // in NAME_TRANSFORMS (every word of the span must be mapped; a span with one unmapped word is not
+  // an identifier this page can replace) or the single mapped phrase in ARCHETYPE_TRANSFORMS, minus
+  // any value that collides with this story's own cast.
+  // An empty list means "no permitted mapping", which means the reader's input is retained.
+  // `s` omitted ⇒ the live state (fail closed). Pass null for the unfiltered global table.
+  function _normMappedReplacements(span, s) {
+    const st = (s === undefined) ? ((typeof window !== 'undefined') ? window.state : null) : s;
+    const safe = (list) => (st ? list.filter((v) => !_normCastCollision(v, st).length) : list);
+    const t = String(span || '').trim();
+    if (!t) return [];
+    try {
+      const arch = (typeof ARCHETYPE_TRANSFORMS !== 'undefined') ? ARCHETYPE_TRANSFORMS : null;
+      const akey = t.toLowerCase();
+      if (arch && Object.prototype.hasOwnProperty.call(arch, akey)) {
+        const r = arch[akey] && arch[akey].replacement;
+        return r ? safe([String(r)]) : [];
+      }
+    } catch (_) {}
+    try {
+      const nt = (typeof NAME_TRANSFORMS !== 'undefined') ? NAME_TRANSFORMS : null;
+      if (!nt) return [];
+      const words = t.split(/\s+/).filter(Boolean);
+      if (!words.length || words.length > 3) return [];   // a name, not a phrase
+      let combos = [''];
+      for (const w of words) {
+        const key = w.toLowerCase().replace(/[^\p{L}\p{N}'’\-]/gu, '');
+        const opts = nt[key];
+        if (!Array.isArray(opts) || !opts.length) return [];
+        const next = [];
+        for (const sofar of combos) for (const o of opts) next.push(sofar ? sofar + ' ' + o : String(o));
+        combos = next;
+      }
+      return safe(combos);
+    } catch (_) {}
+    return [];
+  }
+  // WHAT THE LAYER IS ALLOWED TO PROPOSE FOR THIS TEXT, sent with the request so a substitution
+  // never has to be invented: every span of the reader's own words that is an identifier end to
+  // end, with the values this page approves for it IN THIS STORY — a value that collides with the
+  // cast is never advertised. Empty list ⇒ there is nothing to substitute.
+  function _normPermittedSubstitutions(text, s) {
+    const t = String(text || '');
+    if (!t.trim()) return [];
+    const out = [], seen = Object.create(null);
+    try {
+      const pats = (typeof IP_PATTERNS !== 'undefined' && Array.isArray(IP_PATTERNS)) ? IP_PATTERNS : [];
+      for (const p of pats) {
+        if (!p || !p.pattern || p.isContext) continue;
+        if (Number(p.confidence) < _NORM_IP_MIN) continue;
+        const re = new RegExp(p.pattern.source, 'gi');
+        let m;
+        while ((m = re.exec(t)) !== null) {
+          const span = String(m[0]);
+          const k = span.toLowerCase();
+          if (seen[k]) continue;
+          seen[k] = true;
+          // Cast-colliding values are filtered out by _normMappedReplacements; a span whose every
+          // approved value collides is not advertised at all.
+          const allowed = _normMappedReplacements(span, s);
+          if (allowed.length) out.push({ from: span, permitted_to: allowed });
+          if (re.lastIndex === m.index) re.lastIndex++;
+        }
+      }
+    } catch (_) {}
+    return out;
+  }
+  function _normSubstitutionOnly(raw, got, s, report) {
+    const R = String(raw == null ? '' : raw), G = String(got == null ? '' : got);
+    if (R === G) return { ok: true, why: 'identical — the reader’s own words came back' };
+    const subs = (report && typeof report === 'object' && Array.isArray(report.substitutions))
+      ? report.substitutions : null;
+    if (!subs || !subs.length) {
+      return { ok: false, why: 'the text differs from the reader’s and the layer declared no'
+        + ' substitutions — there is nothing to validate the change against' };
+    }
+    const pairs = [];
+    for (const sub of subs) {
+      const from = (sub && sub.from != null) ? String(sub.from) : '';
+      const to = (sub && sub.to != null) ? String(sub.to) : '';
+      if (!from.trim()) return { ok: false, why: 'a declared substitution names no "from"' };
+      if (!to.trim() || !/[\p{L}\p{N}]/u.test(to)) {
+        return { ok: false, why: 'the declared replacement for "' + from
+          + '" is empty — a deletion is not a substitution' };
+      }
+      if (from === to) {
+        return { ok: false, why: 'a declared substitution replaces "' + from + '" with itself' };
+      }
+      if (!_normWordRe(from, 'u').test(R)) {
+        return { ok: false, why: '"' + from + '" is not in the reader’s text, so the declared list'
+          + ' does not describe this edit' };
+      }
+      const fromNames = _normNamesIn(from, s);
+      if (fromNames.length) {
+        return { ok: false, why: 'the declaration replaces "' + from + '", which names this story’s'
+          + ' own people (' + fromNames.join(', ') + ') — character identity is not substitutable' };
+      }
+      // THE SPAN, END TO END — not a span that merely contains an identifier.
+      const conf = _normProtectedSpanConfidence(from);
+      if (conf < _NORM_IP_MIN) {
+        return { ok: false, why: 'the span "' + from + '" is not, in its entirety, an identifier'
+          + ' this page recognises'
+          + (conf ? ' at the confidence a substitution needs (' + conf + ' < ' + _NORM_IP_MIN + ')'
+                  : ' — no IP_PATTERNS entry IS this span' + (_normProtectedConfidence(from)
+                      ? ', it only CONTAINS one, so replacing it would replace the reader’s'
+                        + ' instruction along with the name' : ''))
+          + ' — a declared replacement is not permission on its own' };
+      }
+      // THE REPLACEMENT, FROM THE PAGE'S OWN MAPPING — not text the model wrote.
+      const approved = _normMappedReplacements(from, null);   // the global table, unfiltered
+      if (!approved.length) {
+        return { ok: false, why: 'this page keeps no approved replacement for "' + from + '"'
+          + ' (nothing in NAME_TRANSFORMS or ARCHETYPE_TRANSFORMS), so there is no permitted'
+          + ' substitution to make and the reader’s words stand' };
+      }
+      // AND SAFE IN THIS STORY — the same exclusion the advertised list applies, enforced here so
+      // a reply cannot reach past that list and merge two people.
+      const allowed = _normMappedReplacements(from, s);
+      if (!allowed.length) {
+        return { ok: false, why: 'every approved replacement for "' + from + '" collides with this'
+          + ' story’s own cast (' + approved.map((a) => a + ' → '
+            + _normCastCollision(a, s).join('/')).join('; ') + '), so no safe replacement remains'
+          + ' and the reader’s words stand' };
+      }
+      const want = to.trim().toLowerCase();
+      if (!allowed.some((a) => String(a).trim().toLowerCase() === want)) {
+        const collides = approved.some((a) => String(a).trim().toLowerCase() === want)
+          ? _normCastCollision(to, s) : [];
+        return { ok: false, why: collides.length
+          ? 'the replacement "' + to + '" is in the global mapping for "' + from + '" but names this'
+            + ' story’s own people (' + collides.join(', ') + ') — substituting it would merge two'
+            + ' characters'
+          : 'the replacement for "' + from + '" is not one this page approves: "' + to + '"'
+            + ' (approved here: ' + allowed.join(', ') + ')' };
+      }
+      pairs.push({ from: from, to: to });
+    }
+    // ONE LEFT-TO-RIGHT PASS, longest `from` first so no pair can rewrite another pair's output,
+    // and the result must BE the returned text.
+    pairs.sort((a, b) => b.from.length - a.from.length);
+    const byFrom = Object.create(null);
+    pairs.forEach((p) => { byFrom[p.from] = p.to; });
+    const alt = pairs.map((p) => p.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const used = Object.create(null);
+    let built = null;
+    try {
+      built = R.replace(new RegExp('(?<![\\p{L}\\p{N}])(' + alt + ')(?![\\p{L}\\p{N}])', 'gu'),
+        (m) => { used[m] = true; return byFrom[m]; });
+    } catch (e) {
+      return { ok: false, why: 'the declared list could not be applied: ' + (e && e.message) };
+    }
+    const unused = pairs.filter((p) => !used[p.from]).map((p) => p.from);
+    if (unused.length) {
+      return { ok: false, why: 'declared substitution(s) that never applied: ' + unused.join(', ') };
+    }
+    if (built !== G) {
+      return { ok: false, why: 'applying the declared substitutions to the reader’s text does not'
+        + ' reproduce what came back, so something outside the declared spans changed —'
+        + ' declared result was "' + built.slice(0, 160) + '"' };
+    }
+    return { ok: true, why: pairs.length + ' approved substitution(s), applied and reproduced exactly' };
+  }
+  function usableDialogue(candidate, raw, report) {
     const first = usableNormalizedInput(candidate, raw, 'dialogue');
     if (first === String(raw == null ? '' : raw)) return first;     // already fell back
     if (_normIsSpeechAct(raw) && !_normIsSpeechAct(first)) {
@@ -18624,11 +19107,64 @@ For ancestry:
       } catch (_) {}
       return String(raw == null ? '' : raw);
     }
+    if (_normUndeclaredEdit(report, first, raw)) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] dialogue — the layer reported changed:false while'
+          + ' returning text that differs from the reader’s; an undeclared edit is not a justified'
+          + ' substitution, so the reader’s own words are used. got="' + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
+    const lost = _normLostAddressees(raw, first, (typeof window !== 'undefined' ? window.state : null));
+    if (lost.length) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] dialogue — the reader addressed or named '
+          + lost.join(', ') + ' and the result does not; these are this story’s own cast, so the'
+          + ' removal is not a protected-name substitution however it was declared ('
+          + 'changed=' + String(report && report.changed) + ', reason='
+          + JSON.stringify((report && report.rejection_reason) || null) + '). Using the reader’s'
+          + ' own words. got="' + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
+    const subD = _normSubstitutionOnly(raw, first, (typeof window !== 'undefined' ? window.state : null), report);
+    if (!subD.ok) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] dialogue — ' + subD.why
+          + '; only name substitutions are permitted, so the reader’s own words are used.'
+          + ' got="' + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
     return first;
   }
-  function usableAction(candidate, raw) {
+  function usableAction(candidate, raw, report) {
     const first = usableNormalizedInput(candidate, raw, 'action');
     if (first === String(raw == null ? '' : raw)) return first;
+    // The same declaration rule. Every self-contradiction measured in the run was on the dialogue
+    // axis, but the action axis is reached by the same call and carries the same exposure; its
+    // overlap test below only fires on GROSS loss of the player's content words.
+    if (_normUndeclaredEdit(report, first, raw)) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] action — the layer reported changed:false while'
+          + ' returning text that differs from the reader’s; using their own text. got="'
+          + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
+    // r58 and r196 were ACTION calls: "toward Julian" → "toward the target", "beside Seren" →
+    // "beside the other character". The overlap test below cannot see them, because replacing two
+    // names leaves well over a third of the content words standing.
+    const lostAct = _normLostAddressees(raw, first, (typeof window !== 'undefined' ? window.state : null));
+    if (lostAct.length) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] action — the reader acted on ' + lostAct.join(', ')
+          + ' and the result does not name them; this story’s own cast is not a protected name,'
+          + ' however the change was declared (changed=' + String(report && report.changed)
+          + '). Using the reader’s own text. got="' + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
     const ov = _normOverlap(raw, first);
     if (ov < 0.34) {
       try {
@@ -18638,9 +19174,25 @@ For ancestry:
       } catch (_) {}
       return String(raw == null ? '' : raw);
     }
+    const subA = _normSubstitutionOnly(raw, first, (typeof window !== 'undefined' ? window.state : null), report);
+    if (!subA.ok) {
+      try {
+        console.warn('[NORMALIZATION:REJECTED] action — ' + subA.why
+          + '; only name substitutions are permitted, so the reader’s own text is used.'
+          + ' got="' + first.slice(0, 120) + '"');
+      } catch (_) {}
+      return String(raw == null ? '' : raw);
+    }
     return first;
   }
   try { if (typeof window !== 'undefined') {
+    window._normStoryCastNames = _normStoryCastNames; window._normLostAddressees = _normLostAddressees;
+    window._normSubstitutionOnly = _normSubstitutionOnly;
+    window._normProtectedConfidence = _normProtectedConfidence;
+    window._normProtectedSpanConfidence = _normProtectedSpanConfidence;
+    window._normCastCollision = _normCastCollision;
+    window._normMappedReplacements = _normMappedReplacements;
+    window._normPermittedSubstitutions = _normPermittedSubstitutions;
     window.usableDialogue = usableDialogue; window.usableAction = usableAction;
   } } catch (_) {}
 
@@ -31664,7 +32216,13 @@ function buildTarotOnboardingDirective(opts) {
       var _hotPD = (!state.turnCount) && (function(){ try { return String((typeof _pickOpeningTemperature === 'function' ? _pickOpeningTemperature(state) : state._openingTemperature) || '').toUpperCase() === 'HOT_CRISIS'; } catch(_) { return false; } })();
       return '\nPROSE DENSITY — THE CONDUCTOR (read FIRST; it governs every description & perception system below):\n' +
         '  The directives that follow — world sensory texture, emotional atmosphere, character impression / description / context — are INSTRUMENTS, not obligations to fire every beat. Each is individually restrained, but if they ALL play at once the prose turns "writerly": self-aware, over-curated, PERMANENTLY HEIGHTENED — and the reader loses contrast. PLAINNESS IS NEGATIVE SPACE: real scenes need dead air, functional dialogue, neutral observation, procedural movement — beats where the prose simply STOPS interpreting. The more loaded the instruments, the more the plain beats matter.\n' +
-        '  EXEMPT FROM THIS BUDGET — THE PLACE-ESTABLISHMENT FLOOR (Roman 2026-07-14, meta-audit c/④): grounding the reader in WHERE the scene physically happens — the room or place, its dominant materials, and the quality of light' + (_hotPD ? ' (on this HOT-CRISIS open, delivered THROUGH the live action — a place rendered by the person acting in it — NOT front-loaded before the crisis)' : ', within the first ~2 paragraphs') + ' — is NOT an interpretive layer and is NOT rationed by charge. Even a LOW-charge scene MUST establish the place concretely (a named surface/material + the light). The budget below governs INTERPRETIVE / loaded strokes (metaphor, symbolism, emotional weather), never this baseline physical grounding — and likewise never the people-picturability floor (both are required regardless of charge). Suppress the interpreting, not the seeing.\n' +
+        // ── THE PLACE REQUIREMENT IS STATED ONCE (2026-10-29) ─────────────────────────────
+        // ESTABLISH THE PLACE (HARD) at app.js:~31552 already states the requirement in the same
+        // words — the room/place, its dominant MATERIALS and the quality of its LIGHT — and both
+        // reach the same request. What is UNIQUE here is the exemption itself: that this floor is
+        // not an interpretive layer, is not rationed by charge, and applies even to a LOW-charge
+        // scene. So this points at the requirement and keeps only what it adds.
+        '  EXEMPT FROM THIS BUDGET — THE PLACE-ESTABLISHMENT FLOOR (Roman 2026-07-14, meta-audit c/④): the place requirement stated under ESTABLISH THE PLACE above' + (_hotPD ? ' (on this HOT-CRISIS open, delivered THROUGH the live action — a place rendered by the person acting in it — NOT front-loaded before the crisis)' : ', within the first ~2 paragraphs') + ' — is NOT an interpretive layer and is NOT rationed by charge. Even a LOW-charge scene MUST establish the place concretely (a named surface/material + the light). The budget below governs INTERPRETIVE / loaded strokes (metaphor, symbolism, emotional weather), never this baseline physical grounding — and likewise never the people-picturability floor (both are required regardless of charge). Suppress the interpreting, not the seeing.\n' +
         '  EVERY SCENE OWES A PLACE RE-ANCHOR, CONTINUATIONS INCLUDED (Roman 2026-08-23 \u2014 measured: grounding fired in scene 1 and collapsed in every continuation, leaving characters talking in front of a green screen). The reader does not carry physical space forward between scenes the way the story state does. Early in EVERY scene, give one concrete anchor: a material or surface, the quality of light, the air or weather, a sound, a distance, or the way bodies are arranged in the space. Props held by people do not count \u2014 a band at a mouth and grass under one foot are objects, not a place.\n' +
         '  RE-ANCHOR, DO NOT RECAP. Never repeat the establishing description. Show what is DIFFERENT about the place now that the situation has changed: \u201cThe interrogation room had white walls, a metal table, a camera in the corner.\u201d \u2192 three scenes later \u2192 \u201cThe camera\u2019s red light had been blinking for three hours. She had stopped looking at it.\u201d Same room, new experience, and the second one costs a sentence.\n' +
         '  GAUGE THIS SCENE\'S CHARGE, then ration the interpretive layers:\n' +
@@ -68996,15 +69554,24 @@ window._auditMutation = function (owner, before, after) {
     L.push('');
     L.push('WHAT THIS WRITER BELIEVES: people are known by what they choose to show, not by what they feel. Places keep what happened to them. The reader is trusted to draw the conclusion, always.');
     L.push('');
-    // ── TWO HEADINGS, ONE DEMAND (2026-10-28 prose consolidation) ───────────────────────
-    // CLARITY IS THE FLOOR and THE SHAPE TO WATCH FOR both existed to stop prose the reader has
-    // to decode, and both delivered the phrase “the bend his to mend”. Merged into one heading.
-    // Every requirement survives: first-read legibility; conclusion-vs-sentence; the named shape
-    // with all four instances; the “occasionally one earns its place” qualification; the ✗/✓ pair
-    // verbatim; the PARAPHRASE TEST; and the compression/riddles/rhyme line. What went is the
-    // second telling of what the shape is — the ✗ line no longer re-explains the phrase the
-    // heading above it has just named and listed.
-    L.push('CLARITY IS THE FLOOR, AND IT IS NOT NEGOTIABLE. Every sentence must land on the FIRST read, at speed. If a reader has to go back to work out what it says, it has failed \u2014 however good it sounds. Trusting the reader means letting them draw the CONCLUSION; it never means making them decode the SENTENCE.\n  THE SHAPE TO WATCH FOR \u2014 ABSTRACT NOUN + POSSESSIVE ABSTRACTION: \u201cthe bend his to mend\u201d, \u201cthe burden became his to carry\u201d, \u201cthe wound was hers to heal\u201d, \u201cthe darkness in him answered\u201d. These sound weighty and say almost nothing on a first pass. Occasionally one earns its place; as a default habit it is the failure.\n  \u2717 \u201cHe had walked because staying would have made the bend his to mend.\u201d \u2014 the rhyme is doing the work a clear statement should do.\n  \u2713 \u201cHe left because if he stayed, fixing it would have become his job.\u201d \u2014 the same thought, understood at speed.\n  THE PARAPHRASE TEST: if you cannot restate the sentence plainly in your head as you write it, the reader cannot either \u2014 write the plain version instead. Compression, riddles, inversions and internal rhyme are not depth; they are a toll charged to the reader.');
+    // ── ONE PARAGRAPH REPLACES THE CLARITY STACK (Roman 2026-11-04) ─────────────────────
+    // WHAT WENT: the CLARITY IS THE FLOOR heading with its named shape, its ✗/✓ pair, the
+    // PARAPHRASE TEST and the compression/riddles/rhyme line; and the separate THE SENTENCES
+    // heading. Together they said the same thing three times — land on the first read — and the
+    // rhythm instruction lived apart from it, so cadence and clarity read as competing demands.
+    // WHAT REPLACES THEM: one paragraph that states the target as BOTH at once, clear meaning
+    // with musical cadence. This is a REPLACEMENT, not a layer: the long wording is deleted
+    // rather than kept underneath, and this block gets shorter.
+    // WHAT IS PRESERVED EXPLICITLY: guarded, formal and indirect characters; First Favored
+    // register; vivid imagery; and the distinction a mystery actually needs — withholding is
+    // about what is REVEALED, never about whether a sentence can be understood.
+    // WORLD-NEUTRAL BY CONSTRUCTION (Roman 2026-11-04). _buildAuthorVoiceSTB is the SHARED author
+    // voice for every story, so a Fatelands instruction here reached billionaire, cyberpunk and
+    // post-apocalyptic runs and told them to adopt a species register that does not exist in them.
+    // The clarity-and-cadence target is general; the First Favored sentence belongs in the
+    // world/species-gated cultural builder and now lives there (_buildFirstFavoredDirective).
+    L.push('Write in clear, musical prose. Meaning should be understandable on the first reading; rhythm comes from varied sentence lengths, emphasis and natural repetition. Characters may be guarded, formal or indirect while their questions, accusations and refusals remain intelligible. Preserve vivid imagery, but keep the action and thought easy to follow.');
+    L.push('WITHHOLDING IS ABOUT WHAT IS REVEALED, NOT ABOUT WHETHER A SENTENCE CAN BE UNDERSTOOD. Subtext, evasion and information kept back are all available and welcome \u2014 a character may refuse to answer, answer partly, or answer in a way that hides the rest. What a mystery never requires is a sentence the reader has to decode.');
     L.push('MEANING FIRST, FEELING SECOND \u2014 the A/50 order:');
     L.push('  \u2713 \u201cHe left because staying would have meant answering for what happened.\u201d then \u201cShe hated that she understood why.\u201d \u2014 the fact lands, then the feeling lands on top of it.');
     L.push('  \u2713 \u201cShe had money now. It had not made her generous, and she knew people were waiting to see whether it would.\u201d');
@@ -69018,7 +69585,6 @@ window._auditMutation = function (owner, before, after) {
     L.push('  THE UNDERLYING PATTERN IS NOT SEDUCTION \u2014 IT IS A PRACTISED WAY OF ENTERING A ROOM. Show the habit, whatever it is: \u201cThe duke came in already apologising, which was how everyone knew he was about to ask for something.\u201d \u00b7 \u201cMara brought three knives to dinner and needed one.\u201d \u00b7 \u201cThe old captain sat with his back to the wall, even at his daughter\u2019s wedding.\u201d All four do the same job.');
     L.push('  \u2713 \u201cShe said yes before she had finished deciding, and spent the walk home defending it to herself.\u201d');
     L.push('  Each is immediately legible AND emotionally loaded. That combination is the target \u2014 not one or the other.');
-    L.push('THE SENTENCES: plain, concrete, unhurried. Short ones carry the weight; the long one arrives when something changes. Sensation before feeling — the cold of the ring first, then what it means. Never two figures of speech in a paragraph. Never name a feeling an action could show.');
     L.push('');
     L.push('PEOPLE — write the choice, not the diagnosis:');
     L.push('  ✗ “She was insecure.”  ✗ “Julian was proud and hated seeming weak.”  ✗ “He was afraid.”');
@@ -69229,6 +69795,19 @@ try { if (typeof window !== 'undefined') window._cpDoctrineExcerptForRepair = _c
 
 function _buildCharacterPlusShared(opts) {
     opts = opts || {};
+    // ── THE SPINE IS GATEABLE (2026-10-28) ──────────────────────────────────────────────
+    // opts.povLens / visFloor / stateful cover 84 of this function's 440 lines. The other ~356
+    // — WHO GETS CHARACTER+, the E+ contract, EMOTIONAL PHYSICS, REFLEX TELLS, WHEN IT FIRES
+    // AGAIN and the rest of the teaching text — were UNGATED, so every caller emitted them in
+    // full. Measured on a current-source continuation: EMOTIONAL PHYSICS and REFLEX TELLS each
+    // arrived THREE times while the visFloor heading arrived once, and a block cannot outnumber
+    // its own region's heading — which is what exposed the spine as the real duplicate.
+    // opts.spine === false suppresses exactly what the spine chunks pushed, by remembering the
+    // array length at each chunk's start and truncating back to it, so nested forEach pushes
+    // inside a chunk are covered too and nothing else in the function is disturbed. The DEFAULT
+    // is ON: a caller that passes nothing behaves exactly as before.
+    var _spineOn = opts.spine !== false;
+    var _spineMark = 0;
     var lines = [];
     var pcName = '', pcArch = '';
     try { var _st = (typeof state !== 'undefined') ? state : window.state;
@@ -69291,6 +69870,7 @@ function _buildCharacterPlusShared(opts) {
     }
     }
     lines.push('');
+  _spineMark = lines.length;   // ── spine chunk 1 opens (the teaching bulk) ──
   lines.push('═══ WHO GETS CHARACTER+ — EVERY NAMED OR STORY-IMPORTANT PERSON ═══');
   lines.push('This is NOT a love-interest feature. It is what stops everyone else becoming a labelled NPC. A concierge, a presiding Dohkar, a ward, a guard with two lines — if they are named or they matter, their FIRST meaningful appearance owes the reader one non-obvious truth.');
   lines.push('  ✗ \u201cThe concierge sneered.\u201d   ✓ He mispronounced \u201cconcierge\u201d every time — a small rebellion against a title he thought too important to belong to other people. He sneered because he took contempt for a kind of rank.');
@@ -69564,12 +70144,14 @@ function _buildCharacterPlusShared(opts) {
   lines.push('');
 
   }
+  if (!_spineOn) lines.length = _spineMark;   // ── spine chunk 1 closes ──
   if (opts.visFloor !== false) {
     lines.push('CHARACTER VISIBILITY (HARD): EVERY named character in the prose owns a physical description — including ones you introduce yourself (a roommate, a colleague, a stranger). The directive layer cannot anticipate them; ownership of description is yours regardless.');
     lines.push('  WHAT COUNTS (HARD): within 1–2 sentences of a named character appearing, surface at least ONE of — HAIR (color + length OR how worn); AGE or range; BUILD / HEIGHT; CLOTHING register or a specific garment; POSTURE; a specific FACIAL DETAIL (mole / scar / asymmetry / mouth / eyes); JEWELRY / GLASSES / a worn object; an OBSERVED body-gesture. Relational placement ("my roommate of three years") and behavioural traits ("she was sharp") are NOT description. The reader must SEE them within ~30 words.');
     lines.push('  PC OWNS HER BODY: alone on stage, she still gets the self-presentation beat (scaffold 5d) — a concrete in-scene action + body anchor + self-aware register. Voice / interior is not body; the reader leaves having seen her in the room.');
     lines.push('  GOLD STANDARD = relational + physical together: "Calista — my roommate of three years, freckles and a permanent crease from squinting at law-school reading — slid the photograph across." The placement says who she is to the PC; the anchor says who she is in the room.');
     }
+    _spineMark = lines.length;   // ── spine chunk 2 opens (availability + emotional physics) ──
     // OBSERVATION MUST BE CAMERA-PLAUSIBLE. Banning individual body parts has failed repeatedly —
     // ban the heel and the model moves to the sole, ban glow on hands and it moves to the sigil.
     // The defect is not feet; it is FAKE OMNISCIENCE: a first-person narrator reporting private
@@ -69602,6 +70184,8 @@ function _buildCharacterPlusShared(opts) {
     lines.push('THE CAUSE NEED NOT BE ADJACENT. It may sit in the scene, in what the reader already knows of this person, or in something revealed later — "Julian set the cup down untouched" can be explained three scenes on, and is stronger for the wait. What is forbidden is a detail with NO cause anywhere: one that exists only as a generic emotional indicator. Withholding a cause is mystery; having none is decoration.');
     lines.push('SENSORY AND ENVIRONMENTAL detail is NOT governed here — that is Environment+, above. This law is about bodies and handled objects only.');
     }
+
+    if (!_spineOn) lines.length = _spineMark;   // ── spine chunk 2 closes ──
 
     // STATEFUL — skipped for the CACHED build. Everything above is law and byte-stable across a
     // story; what follows changes every scene and would invalidate the prompt prefix each turn.
@@ -69752,6 +70336,15 @@ function _buildCharacterPlusShared(opts) {
       for (var i = 0; i < blocks.length; i++) {
         var b = blocks[i], k = b.trim();
         if (k.length < 120) { kept.push(b); continue; }
+        // ── STRUCTURAL BOUNDARIES ARE NEVER REDUNDANT (2026-10-29) ──
+        // A block carrying a closing marker CLOSES A DIFFERENT BLOCK each time it appears, so it
+        // is positional, not informational. Dropping it as a duplicate leaves the block it was
+        // meant to terminate unterminated: measured in the stale-plan control, a request with two
+        // STORY SCAFFOLD renders arrived with 2 banners and only 1 "SCAFFOLD AUTHORITY … / END
+        // SCAFFOLD" block, because that trailer is byte-identical in both renders. The author then
+        // cannot tell where the second plan ends. Any block containing an END marker, or the
+        // authority instruction that travels with it, is exempt from duplicate removal.
+        if (/\u2550{3}\s*END\b/.test(k) || /SCAFFOLD AUTHORITY:/.test(k)) { kept.push(b); continue; }
         // (a) already in the part of THIS request assembled before this tail
         if (hay && hay.indexOf(k) !== -1) { nPrefix++; chars += b.length; continue; }
         // (b) repeated inside this same tail — two emitters in one concatenation
@@ -69780,7 +70373,11 @@ function _buildCharacterPlusShared(opts) {
   }
   try { if (typeof window !== 'undefined') window._buildCharacterPlusStateful = _buildCharacterPlusStateful; } catch (_) {}
 
-  function buildNoticeFilterDirective() {
+  // `cpOpts` lets the CALLER decide which C+ regions this directive's embedded copy carries, so
+  // ownership is settled where it is knowable — at the assembly point — rather than guessed here.
+  // Omitting it keeps the historic behaviour exactly ({visFloor:false}), which matters because
+  // this function is window-exposed and called with no arguments elsewhere (_ignition_probe.mjs).
+  function buildNoticeFilterDirective(cpOpts) {
     try {
       var s = window.state || {};
       var aplot = s.aPlot || {};
@@ -69811,7 +70408,7 @@ function _buildCharacterPlusShared(opts) {
           lines.push('');
         }
       } catch (_) {}
-      try { var _cpsLens = (typeof _buildCharacterPlusShared === 'function') ? _buildCharacterPlusShared({ visFloor: false }) : '';
+      try { var _cpsLens = (typeof _buildCharacterPlusShared === 'function') ? _buildCharacterPlusShared(cpOpts || { visFloor: false }) : '';
             if (_cpsLens) lines.push(_cpsLens.replace(/^\n+|\n+$/g, '')); } catch (_) {}
       // _pcProfile was declared inside the span now owned by _buildCharacterPlusShared;
       // later sections here still read it, so re-establish it locally (same expression).
@@ -70755,7 +71352,36 @@ function _buildCharacterPlusShared(opts) {
   // buildAPlotPressureDirective is gated by opts.skipBiblesDoctrine so the literary
   // turn path does not double-emit. CG / intimacy / spec paths (no stableTail) still
   // emit it inline. ~8.2k tok off every literary scene-2+ rewrite.
-  function _buildBiblesProseDoctrineBlock() {
+  // ── EXPLICIT PER-PATH OWNERSHIP OF THE C+ REGIONS (2026-10-28) ────────────────────────
+  // This function emitted the shared C+ block TWICE — once through buildNoticeFilterDirective's
+  // embed and once directly, sixteen lines apart — and on the literary turn path the carried
+  // state.sysPrompt holds a third copy from _cplusLaws. Measured per path on current-source
+  // captures: the OPENING delivers each region once, the CONTINUATION delivered EMOTIONAL
+  // PHYSICS and REFLEX TELLS three times, and CG OAS twice.
+  //
+  // `alreadyIn` is the text this request has already assembled, which is the only thing that can
+  // decide ownership — and it is read, never assumed:
+  //   · literary turn path passes _sysForTurn, so whatever the prefix already owns is not re-sent;
+  //   · a RESUMED OLD SAVE whose frozen prefix predates a region reports it ABSENT, so the region
+  //     is emitted here and nothing is lost — the failure mode that matters more than duplication;
+  //   · CG / intimacy / spec callers pass nothing, so they own every region themselves.
+  // Each region is matched by its own first line, so a path that carries one region but not
+  // another gets exactly the missing ones.
+  function _buildBiblesProseDoctrineBlock(alreadyIn) {
+    var _alreadyHas = function (marker) {
+      try { return typeof alreadyIn === 'string' && alreadyIn.indexOf(marker) !== -1; } catch (_) { return false; }
+    };
+    // Own a region only if the request does not already carry it.
+    var _ownSpine = !_alreadyHas('═══ WHO GETS CHARACTER+');
+    var _ownPov   = !_alreadyHas('═══ BEHAVIORAL DEMONSTRATION');
+    var _ownVis   = !_alreadyHas('CHARACTER VISIBILITY (HARD): EVERY named character');
+    try {
+      if (!_ownSpine || !_ownPov || !_ownVis) {
+        console.log('[CPLUS:OWNERSHIP] this request already carries:'
+          + (_ownSpine ? '' : ' spine') + (_ownPov ? '' : ' povLens') + (_ownVis ? '' : ' visFloor')
+          + ' — not re-emitting those here');
+      }
+    } catch (_) {}
     try {
       var a = window.state && window.state.aPlot;
       if (!a || !a.goal) return '';
@@ -70769,7 +71395,12 @@ function _buildCharacterPlusShared(opts) {
       var lines = [];
       lines.push('═══ CHARACTER BIBLES — STABLE PER-STORY CANON ═══');
       try {
-        var _noticeFilter = (typeof buildNoticeFilterDirective === 'function') ? buildNoticeFilterDirective() : '';
+        // The embed carries povLens ONLY, and only when this request does not already have it.
+        // The spine, visFloor and stateful belong to the direct call below, so the two emitters
+        // inside this one function can no longer both ship the same teaching text.
+        var _noticeFilter = (typeof buildNoticeFilterDirective === 'function')
+          ? buildNoticeFilterDirective({ visFloor: false, stateful: false, spine: false, povLens: _ownPov })
+          : '';
         if (_noticeFilter) {
           lines.push(_noticeFilter);
           lines.push('');
@@ -70785,7 +71416,7 @@ function _buildCharacterPlusShared(opts) {
       }
       lines.push('  • REGISTER (match the engine): SHARED_HISTORY → REMEMBERED (she hears how he would say it; remembers him specifically himself — a Fox: flippant, charming, a joke a half-second early — AND remembers WANTING him, present-tense desire in HER body; ache allowed but not the only colour). LOOMING → ANTICIPATED (the him she has built from reputation; imagined behaviour, not a remembered event). COLLISION → ADVERSARIAL (his moves, his voice in the opposing brief; present-tense hostile, not tender).');
       lines.push('  • ARCHETYPE FIDELITY (HARD): the remembered / anticipated / adversarial behaviour must match his archetype — but archetype is NOT strategist-dominance; his DESIRABILITY is part of it (a Dark Vice is wanted-and-dangerous; a Fox is charming-and-wanted). On a desire-bearing engine pull the archetype THROUGH attraction_manifestation / desire_register first and let signature_behavior COLOUR it. A nobly-silent Fox is one betrayal; an all-evasion-no-wanting Fox is the other — a chess piece, not a man she aches for. (a)+(b) still applies, with the observed detail now REMEMBERED / IMAGINED / INFERRED.');
-      try { var _cpsVis = (typeof _buildCharacterPlusShared === 'function') ? _buildCharacterPlusShared({ povLens: false }) : '';
+      try { var _cpsVis = (typeof _buildCharacterPlusShared === 'function') ? _buildCharacterPlusShared({ povLens: false, visFloor: _ownVis, spine: _ownSpine }) : '';
             if (_cpsVis) lines.push(_cpsVis.replace(/^\n+|\n+$/g, '')); } catch (_) {}
       lines.push('WANTING vs APPRECIATING: APPRECIATION ALONE IS NOT ROMANCE. "He is tall, composed, respected, powerful" is characterisation; SOMETIMES the noticing must cross into wanting — she likes looking at him, his voice affects her, proximity is difficult, she resents how attractive she finds him, she has to deliberately redirect her attention. This is a QUALITY bar, not a frequency quota: no ratio to hit, no requirement that a beat land in a named body part, and no obligation to convert every observation into hunger.');
       lines.push('  Paired exemplars (a fresh seeded subset each story) — same material, both registers; match the WANTING register:');
@@ -70902,7 +71533,17 @@ function _buildCharacterPlusShared(opts) {
       // from one cached prompt (no flag-toggle / reload). On window (not state) so it
       // never bloats the Supabase snapshot.
       try { window._liTexDoctrineVariants = { full: _LI_TEX_DOCTRINE_FULL, compact: _LI_TEX_DOCTRINE_COMPACT }; } catch (_) {}
-      d += _liTexUseCompact ? _LI_TEX_DOCTRINE_COMPACT : _LI_TEX_DOCTRINE_FULL;
+      // ── THE OFFSTAGE SECTION NO LONGER SHIPS FROM THE STABLE TAIL (Roman 2026-11-01) ────
+      // It used to be appended here unconditionally, inside the per-STORY stable tail, where the
+      // CURRENT scene's skeleton does not exist yet (it resolves at app.js:334560). So its own
+      // stated condition — "when the skeleton sets an LI TEXTURE BEAT" — could not be consulted,
+      // and an earlier attempt to gate it here read OPENING flags and suppressed the doctrine on
+      // continuations where it was needed.
+      //
+      // Both variants remain stashed on window._liTexDoctrineVariants just above, and the
+      // selection now happens AFTER the current skeleton is validated or generated. ONLY this
+      // offstage section moved: the ONSTAGE doctrine and every other stable block are untouched,
+      // and the shared definitions they use are unchanged.
 
       // ANTI-ENUMERATION / NO QUOTE-MASHING (Roman 2026-06-13) — the desire-register
       // was rendering as stacked inventories ("the way X… the way Y… the way Z" /
@@ -72933,6 +73574,42 @@ HARD LIMITS: Effects must destabilize systems, not annihilate them. Regime bends
     // deck-as-image surface. Prose-mode deck mentions stay intact.
     if (mode === 'gn') return '';
 
+    // ── SEED-SCOPED SUPPRESSION IN PROSE MODE TOO (Roman 2026-10-31) ──────────────
+    // GN mode has been off since 2026-05-13, but prose mode still asked for "ONE
+    // moment where the tarot deck produces a clear, memorable signal" on every
+    // Petition/Tempt. In a story whose seed has CLOSED the deck as a subject, that is
+    // renewed narrative emphasis on the object during the player's own mechanical
+    // use — the one thing the deck direction says a mechanic must not require.
+    //
+    // THROUGHOUT, NOT PAST A WINDOW (corrected 2026-10-31 after review). A first
+    // version kept this directive alive inside the seed's scene-1/2 window, which
+    // measured at 803 / 529 / 496 chars still demanding a narrated deck signal in
+    // exactly the two scenes whose allowance is ONLY a discovery and a brief
+    // acknowledgment. The authored opening already owns the discovery, and the
+    // acknowledgment is not a licence for a second signal, a handling beat or an
+    // object moment. So a seed that declares `sceneOne.deckSubjectClosedAfterScene`
+    // suppresses this directive in EVERY scene, the window included. The window
+    // still governs the CG foreground question, which is a different one.
+    //
+    // WHAT THIS DOES AND DOES NOT TOUCH: this function only ever RETURNS PROMPT TEXT.
+    // Every caller appends the result to a prompt string and none branches on it, so
+    // an empty return shortens a prompt and changes nothing about how a Petition or a
+    // Tempt resolves. That is a claim about this code path, not a test of the Fate
+    // mechanic — the gameplay effects are not exercised here.
+    // Any seed that declares nothing keeps every directive below byte-for-byte.
+    try {
+      var _dtSeed = (typeof _activeSeed === 'function') ? _activeSeed(window.state) : null;
+      var _dtClose = _dtSeed && _dtSeed.sceneOne ? _dtSeed.sceneOne.deckSubjectClosedAfterScene : null;
+      if (typeof _dtClose === 'number' && _dtClose >= 0) {
+        try {
+          console.log('[DECK_TRACE] OFF (' + eventType + ', prose) — this seed closes the deck as a'
+            + ' narrative subject, so no scene gets a narrated deck signal. The prompt is shorter;'
+            + ' the Fate event resolves exactly as before.');
+        } catch (_) {}
+        return '';
+      }
+    } catch (_) {}
+
     if (eventType === 'tempt') {
       // Foreground — clear, memorable, unmissable
       if (mode === 'gn') {
@@ -72997,6 +73674,9 @@ Examples (use ONE, vary across scenes):
 - A corner of a card catches the light at an odd angle.
 One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\n`;
   }
+  // Exposed so a provider-free check can assert what this builds, the same way
+  // window._buildCGScreenplaySystemPrompt is exposed for prompt assertions.
+  try { window._buildDeckTraceDirective = _buildDeckTraceDirective; } catch (_) {}
 
   // ═══════════════════════════════════════════════════════════════════════
   // PREMISE PROTECTION — Fate-invocation-only guard
@@ -90993,7 +91673,12 @@ Attraction should not move in a straight line. Closeness creates vulnerability o
       if (Math.random() > 0.60) return '';
       if (!_canActivateDirective()) return '';
 
-      return `\n\nPROSE CADENCE: Vary sentence rhythm and paragraph structure. Occasionally use a very short sentence for emphasis. Follow short sentences with a longer reflective sentence. Allow paragraph breaks around emotional beats. Avoid repeating identical sentence length patterns. Maintain natural narrative voice. Do not change story events. Focus only on rhythm and pacing of prose.`;
+      // REPLACED, NOT STACKED (Roman 2026-11-04). This block said the rhythm half of what the
+      // author-voice paragraph now says in one place ("rhythm comes from varied sentence lengths,
+      // emphasis and natural repetition"), and saying it twice in different words is how cadence
+      // came to read as a separate demand from clarity. One short line remains for the callers
+      // that are not on the author-voice path, so they are not left with nothing.
+      return `\n\nPROSE CADENCE: vary sentence length and paragraph shape; let a short sentence carry an emphasis and a longer one carry a change. Do not alter story events.`;
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -100514,6 +101199,117 @@ Return ONLY numbered beats. No prose. No dialogue.` }
    * Generated via beat planner API; reused until invalidated by phase/storyturn/location/explicitAuth change.
    * Includes environment_anchor for physical scene grounding.
    */
+  // ── STRUCTURED BODY CALLBACKS MUST SURVIVE PARSING (Roman 2026-11-01) ───────────────────
+  // The three *_body_callback fields were read with `(parsed.X || '').toString()`. The planner
+  // returns an OBJECT — measured: { beat: "beat 2", feature: "signature_feature (the crooked
+  // front tooth)", sketch: "the crooked tooth catches the light as she steps forward…" } — so
+  // toString() produced the literal string "[object Object]", which the skeleton then STORED and
+  // the author's directive delivered verbatim ("per the planner's pick: [object Object]", twice
+  // in one preserved request). A real planner selection was destroyed at the parse boundary.
+  // The interlocutor field already had an /^\[object\s/ guard; these three did not.
+  //
+  // A STRING value passes through UNCHANGED (the supported shape). Selection logic, the Bibles
+  // and all callback teaching are untouched — this is a delivery repair, not a feature change.
+  function _sbRenderBodyCallback(v) {
+    try {
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (typeof v !== 'object') return String(v);
+      var seen = {}, out = [];
+      var say = function (label, key) {
+        var t = v[key];
+        if (t == null) return;
+        t = String(t).trim();
+        if (!t || seen[t]) return;
+        seen[t] = 1;
+        out.push(label + ': ' + t);
+      };
+      say('beat', 'beat'); say('feature', 'feature'); say('tell', 'tell'); say('sketch', 'sketch');
+      Object.keys(v).forEach(function (k) {
+        if (/^(beat|feature|tell|sketch)$/.test(k)) return;
+        var t = v[k];
+        if (typeof t !== 'string') return;
+        t = t.trim();
+        if (!t || seen[t]) return;
+        seen[t] = 1;
+        out.push(k + ': ' + t);
+      });
+      return out.length ? out.join(' — ') : '';
+    } catch (_) { return ''; }
+  }
+  window._sbRenderBodyCallback = _sbRenderBodyCallback;
+
+  // ── EXTRACTED TO A NAMED FUNCTION (Roman 2026-11-02) ──────────────────────────────────
+  // The body below was an anonymous IIFE inside the skeleton prompt template, so the exact
+  // text it delivers could not be captured by a provider-free control — only the helpers
+  // feeding it could. It is moved out VERBATIM and called from the same place; same inputs,
+  // same output, now observable as window._buildSceneAssignmentBlock(state, sceneNum).
+  function _buildSceneAssignmentBlock(state, _optSceneNum) { try {
+  // ═══ SCENE ASSIGNMENT → SKELETON (Roman 2026-08-16) ═══════════════════════════════════════════
+  // The skeleton generator used to be built ONLY from previous context, so its environment_anchor
+  // kept describing the PREVIOUS location and the assigned event was repaired afterwards by parsing
+  // the goal sentence for a place (measured 0/20 on authored plans). The event now arrives BEFORE
+  // generation — the ordering trace (2026-08-16) proved selection already runs first. The skeleton's
+  // job is to make the assigned event PHYSICALLY EXECUTABLE without contradicting established state.
+  var _sfn = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment : window._selectSceneAssignment;
+  var _cfn = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber : window._currentSceneNumber;
+  var _a = state._sceneAssignment || ((_sfn && _cfn) ? _sfn(state, _optSceneNum || _cfn(state)) : null);
+  if (!_a || !_a.event) return '';
+  var L = ['ASSIGNED EVENT (this scene MUST make this physically executable): ' + _a.event];
+  // ── A TEXT PARSE IS NOT A MANDATE (Roman 2026-11-02) ────────────────────────────────────
+  // `_a.setting` has two very different origins and this line used to flatten them into one
+  // word: "given". An AUTHORED row supplies a setting; where it does not, _selectSceneAssignment
+  // falls back to _spineStagingFromEvent, a deterministic phrase reader over the event sentence,
+  // and marks the result `_settingInferred`. In run_2026-11-02T19-03-47 scene 4 that parse
+  // returned "ceremony clearing" from "At Lirael's small ceramics stall OUTSIDE the ceremony
+  // clearing" — and this line then told the generator the anchor MUST be that place.
+  //
+  // The parse is useful and stays, as a READING offered next to the complete sentence, which the
+  // generator already has on the ASSIGNED EVENT line above and is the thing qualified to
+  // interpret it. What it no longer does is outrank that sentence. Fixing the parser's specific
+  // errors does not make its guesses authoritative: it still mis-reads "Not in the archive,
+  // Lirael waits in the clearing" and a meeting proposed "at his stall tomorrow", and a parser
+  // that can be wrong about the sentence must not be able to overrule it.
+  if (_a.setting && !_a._settingInferred) {
+    L.push('REQUIRED SETTING (given — environment_anchor MUST be this place, not the previous scene\'s): ' + _a.setting);
+  } else if (_a.setting) {
+    L.push('SETTING: not supplied. Read from the assigned event sentence above by a text parser, which may be wrong: "'
+      + _a.setting + '". The SENTENCE is authoritative, not this reading — if they disagree, follow the sentence.'
+      + ' Choose a continuity-valid place where this event CAN happen.');
+  } else {
+    L.push('SETTING: not specified — choose a continuity-valid place where this event CAN happen.');
+  }
+  // A SCANNED MENTION IS NOT A PRESENCE REQUIREMENT (Roman 2026-11-02). Labelling it inside the
+  // MUST BE PRESENT line left it a presence requirement with a footnote. _spineStagingFromEvent
+  // builds this list by looking for known cast names in the event TEXT, so "rehearsing what she
+  // will say to Dorian" puts Dorian on stage. It is now a separate, non-binding line.
+  if (_a.participants && _a.participants.length) {
+    if (_a._participantsInferred) {
+      L.push('NAMED IN THE EVENT SENTENCE (scanned by the text parser — a MENTION, which is NOT a'
+        + ' presence requirement; decide presence from the sentence itself): ' + _a.participants.join(', '));
+    } else {
+      L.push('MUST BE PRESENT: ' + _a.participants.join(', '));
+    }
+  }
+  if (_a.props && _a.props.length) L.push('MUST BE PHYSICALLY PRESENT (props): ' + _a.props.join(', '));
+  // CURRENT-STATE CONSTRAINTS: absence is as binding as presence. Observed defect (V3, 2026-08-15):
+  // the skeleton staged Julian onstage after he had left with the relic, and a downstream pass then
+  // renamed him "the stranger" to paper over it.
+  var _absent = [];
+  try { (state._departedCharacters || []).forEach(function (n) { if (n) _absent.push(String(n)); }); } catch (_) {}
+  try {
+    var _pl = (state._priorSceneText || '') + '';
+    [state.loveInterestName, state.partnerName].filter(Boolean).forEach(function (n) {
+      var re = new RegExp(n + '[^.]{0,60}\\b(left|gone|departed|walked out|rode out)\\b', 'i');
+      if (re.test(_pl) && _absent.indexOf(n) === -1) _absent.push(n);
+    });
+  } catch (_) {}
+  if (_absent.length) L.push('ALREADY ABSENT — do NOT stage onstage unless the assigned event explicitly brings them back: ' + _absent.join(', '));
+  L.push('You may decide unspecified staging (crowd, weather, arrangement, concealment). You may NOT substitute a different location, cast, or action for the assigned event.');
+  return L.join('\n');
+  } catch (_) { return ''; } }
+  try { window._buildSceneAssignmentBlock = _buildSceneAssignmentBlock; } catch (_) {}
+
   function _isSkeletonValid(opts) {
       if (state.volatility_window?.active) return false; // Tempt Fate volatility forces fresh skeleton
       if (!state.sceneSkeleton || !state._skeletonMeta) return false;
@@ -100760,38 +101556,7 @@ World: ${state.picks?.world || 'unknown'}
 Protagonist: ${state.playerName || '(unnamed)'} | Love interest: ${_liName || '(unnamed)'}${_liName ? ' — last scene staging: ' + (_liOnStagePrior ? 'IN_PERSON' : 'NOT IN_PERSON') : ''}
 Prior scene's staging (most recent): ${_priorStagedLine}
 Player intent: ${act} / ${dia}
-${(function(){ try {
-  // ═══ SCENE ASSIGNMENT → SKELETON (Roman 2026-08-16) ═══════════════════════════════════════════
-  // The skeleton generator used to be built ONLY from previous context, so its environment_anchor
-  // kept describing the PREVIOUS location and the assigned event was repaired afterwards by parsing
-  // the goal sentence for a place (measured 0/20 on authored plans). The event now arrives BEFORE
-  // generation — the ordering trace (2026-08-16) proved selection already runs first. The skeleton's
-  // job is to make the assigned event PHYSICALLY EXECUTABLE without contradicting established state.
-  var _sfn = (typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment : window._selectSceneAssignment;
-  var _cfn = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber : window._currentSceneNumber;
-  var _a = state._sceneAssignment || ((_sfn && _cfn) ? _sfn(state, _optSceneNum || _cfn(state)) : null);
-  if (!_a || !_a.event) return '';
-  var L = ['ASSIGNED EVENT (this scene MUST make this physically executable): ' + _a.event];
-  if (_a.setting) L.push('REQUIRED SETTING (given — environment_anchor MUST be this place, not the previous scene\'s): ' + _a.setting);
-  else L.push('SETTING: not specified — choose a continuity-valid place where this event CAN happen.');
-  if (_a.participants && _a.participants.length) L.push('MUST BE PRESENT: ' + _a.participants.join(', '));
-  if (_a.props && _a.props.length) L.push('MUST BE PHYSICALLY PRESENT (props): ' + _a.props.join(', '));
-  // CURRENT-STATE CONSTRAINTS: absence is as binding as presence. Observed defect (V3, 2026-08-15):
-  // the skeleton staged Julian onstage after he had left with the relic, and a downstream pass then
-  // renamed him "the stranger" to paper over it.
-  var _absent = [];
-  try { (state._departedCharacters || []).forEach(function (n) { if (n) _absent.push(String(n)); }); } catch (_) {}
-  try {
-    var _pl = (state._priorSceneText || '') + '';
-    [state.loveInterestName, state.partnerName].filter(Boolean).forEach(function (n) {
-      var re = new RegExp(n + '[^.]{0,60}\\b(left|gone|departed|walked out|rode out)\\b', 'i');
-      if (re.test(_pl) && _absent.indexOf(n) === -1) _absent.push(n);
-    });
-  } catch (_) {}
-  if (_absent.length) L.push('ALREADY ABSENT — do NOT stage onstage unless the assigned event explicitly brings them back: ' + _absent.join(', '));
-  L.push('You may decide unspecified staging (crowd, weather, arrangement, concealment). You may NOT substitute a different location, cast, or action for the assigned event.');
-  return L.join('\n');
-} catch (_) { return ''; } })()}
+${_buildSceneAssignmentBlock(state, _optSceneNum)}
 ${(function(){ try { var _pir = state._playerImpactRead; if (!_pir || (!_pir.mustReact && !_pir.fate)) return ''; var _l = 'PLAYER MOVE TO STAGE AROUND (the scene must react to this, not ignore it' + (_pir.class && _pir.class.length ? '; class: ' + _pir.class.join(', ') : '') + '): did "' + ((_pir.raw && _pir.raw.do) || '').replace(/"/g,"'").slice(0,140) + '"' + (((_pir.raw && _pir.raw.say)) ? ' / said "' + _pir.raw.say.replace(/"/g,"'").slice(0,140) + '"' : '') + (_pir.fate ? ' / FATE(' + _pir.fate.cardType + '): "' + String(_pir.fate.text).replace(/"/g,"'").slice(0,140) + '"' : ''); _l += '. Stage the characters/place this move implies — e.g. if the player summoned, called, or moved toward someone, reflect that person\'s presence_mode; if the player fled or refused, reflect the changed room.'; return _l; } catch(_) { return ''; } })()}
 ${state.recentEnvironmentAnchors?.length ? `AVOID these recent anchors: ${state.recentEnvironmentAnchors.join('; ')}` : ''}
 ${(function(){ try { var _p = (typeof window._buildPlanningRomanceContext === 'function') ? window._buildPlanningRomanceContext(state) : ''; return _p || ''; } catch (_) { return ''; } })()}
@@ -100913,9 +101678,57 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
               }
               // interlocutor_placement: null-tolerant + canonical-null
               // strings ("null", "none", "n/a", "alone") collapse to ''.
-              let _interlocPlace = (parsed.interlocutor_placement || '').toString().trim();
+              //
+              // ── THE STRUCTURED FORM IS NOT A STRING (measured 2026-10-31) ─────────────────
+              // The contract asks for one string. ministral-8b returned a MAP keyed by the
+              // issued refs instead, and `.toString()` turned it into the literal text
+              // "[object Object]" — which is what scene 4 of the preserved Sol/Haiku run
+              // delivered to the author, under an "(HARD)" heading:
+              //   INTERLOCUTOR ON FIRST MENTION (HARD): … [object Object]
+              // The planner's own text was CORRECT and offstage-shaped ("Julian — the man who
+              // demanded review … the Dohkar's voice carries his name like a weight"); the
+              // coercion is what destroyed it. So: accept the map, resolve WHICH ref it names,
+              // and keep that ref so the renderer can gate on the person's actual presence.
+              // Never let an object reach the prompt as its own type name.
+              let _interlocPlace = '';
+              let _interlocRef = '';
+              (function () {
+                  var raw = parsed.interlocutor_placement;
+                  if (raw == null) return;
+                  if (typeof raw === 'string') { _interlocPlace = raw.trim(); return; }
+                  if (typeof raw !== 'object') { _interlocPlace = String(raw).trim(); return; }
+                  // {ref|name, text|tell|placement} — a single structured entry.
+                  var _oneRef = (raw.ref || raw.name || '').toString().trim();
+                  var _oneTxt = (raw.text || raw.tell || raw.placement || '').toString().trim();
+                  if (_oneTxt) { _interlocRef = _oneRef; _interlocPlace = _oneTxt; return; }
+                  // { "<ref>": "<text>", … } — the measured shape. Prefer whoever the stage
+                  // actually puts in the room or on a line; an offstage entry is kept only when
+                  // it is the sole one, and the renderer below decides what to do with it.
+                  var _modeOf = {};
+                  _stagedNorm.forEach(function (c) { _modeOf[c.name] = c.presence_mode; });
+                  var _entries = Object.keys(raw)
+                      .map(function (k) { return { ref: k, txt: (raw[k] == null ? '' : String(raw[k]).trim()) }; })
+                      .filter(function (e) { return e.txt && e.txt.toLowerCase() !== 'null'; });
+                  if (!_entries.length) return;
+                  var _rank = { IN_PERSON: 0, ON_PHONE: 1 };
+                  _entries.sort(function (a, b) {
+                      var ra = _rank[_modeOf[a.ref]], rb = _rank[_modeOf[b.ref]];
+                      return (ra === undefined ? 2 : ra) - (rb === undefined ? 2 : rb);
+                  });
+                  _interlocRef = _entries[0].ref;
+                  _interlocPlace = _entries[0].txt;
+                  try {
+                      console.log('[SKELETON:INTERLOCUTOR] structured placement resolved to ref "'
+                          + _interlocRef + '" (' + (_modeOf[_interlocRef] || 'UNSTAGED') + ')'
+                          + (_entries.length > 1 ? ' from ' + _entries.length + ' entries' : ''));
+                  } catch (_) {}
+              })();
+              if (/^\[object\s/.test(_interlocPlace)) {
+                  try { console.warn('[SKELETON:INTERLOCUTOR] discarding an uncoercible placement value — nothing delivered'); } catch (_) {}
+                  _interlocPlace = ''; _interlocRef = '';
+              }
               const _ipLower = _interlocPlace.toLowerCase();
-              if (_ipLower === 'null' || _ipLower === 'none' || _ipLower === 'n/a' || _ipLower === 'no interlocutor' || _ipLower === 'alone') _interlocPlace = '';
+              if (_ipLower === 'null' || _ipLower === 'none' || _ipLower === 'n/a' || _ipLower === 'no interlocutor' || _ipLower === 'alone') { _interlocPlace = ''; _interlocRef = ''; }
               let _liTexture = (parsed.li_texture_beat || '').toString().trim();
               const _ltLower = _liTexture.toLowerCase();
               if (_ltLower === 'null' || _ltLower === 'none' || _ltLower === 'n/a') _liTexture = '';
@@ -100923,21 +101736,21 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
               // Rotates across the arc so the reader gets ~1-2 reminders per
               // issue of her standout features + her tells fire under their
               // own triggers.
-              let _pcBodyCallback = (parsed.pc_body_callback || '').toString().trim();
+              let _pcBodyCallback = _sbRenderBodyCallback(parsed.pc_body_callback).trim();
               const _pbcLower2 = _pcBodyCallback.toLowerCase();
               if (_pbcLower2 === 'null' || _pbcLower2 === 'none' || _pbcLower2 === 'n/a' || _pbcLower2 === 'skip') _pcBodyCallback = '';
               // 2026-05-31 (Roman): LI Body Bible callback for Scene 2+.
               // When LI is on-stage IN_PERSON or ON_PHONE, the PC notices ONE
               // specific thing about him this scene; rotates across the
               // pc_keenly_notices basket OR a tell fires.
-              let _liBodyCallback = (parsed.li_body_callback || '').toString().trim();
+              let _liBodyCallback = _sbRenderBodyCallback(parsed.li_body_callback).trim();
               const _lbcLower2 = _liBodyCallback.toLowerCase();
               if (_lbcLower2 === 'null' || _lbcLower2 === 'none' || _lbcLower2 === 'n/a' || _lbcLower2 === 'skip') _liBodyCallback = '';
               // 2026-05-31 (Roman): Antagonist Body Bible callback for
               // Scene 2+. Fires only when antagonist is IN_PERSON; threat
               // register. Most scenes the antagonist is OFFSTAGE_REFERENCED
               // or ON_PHONE — set null then.
-              let _antBodyCallback = (parsed.antagonist_body_callback || '').toString().trim();
+              let _antBodyCallback = _sbRenderBodyCallback(parsed.antagonist_body_callback).trim();
               const _abcLower2 = _antBodyCallback.toLowerCase();
               if (_abcLower2 === 'null' || _abcLower2 === 'none' || _abcLower2 === 'n/a' || _abcLower2 === 'skip') _antBodyCallback = '';
               // Slice B: track callback strings for cross-scene rotation.
@@ -100960,11 +101773,21 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
               var _spineAnchor = '';
               try {
                 // ASSIGNMENT FIRST (Roman 2026-08-16); _spineStaging is the compatibility fallback.
-                var _aSet = (state._sceneAssignment && state._sceneAssignment.setting)
-                  || (state._spineStaging && state._spineStaging.setting) || '';
+                // SUPPLIED ONLY (Roman 2026-11-02) — the same boundary as the selection-time write
+                // at ~app.js:106431. A setting the text parser read off the event sentence reaches
+                // the generator as a labelled reading; it does not overwrite the anchor, because
+                // the anchor is a HARD first-sentence command and the parser can be wrong about
+                // the sentence it came from. `_spineStaging` is ALWAYS a parse (it is this
+                // function's output), so it no longer feeds this write at all.
+                var _asgA = state._sceneAssignment;
+                var _aSet = (_asgA && _asgA.setting && !_asgA._settingInferred) ? _asgA.setting : '';
                 if (_aSet) {
                   _spineAnchor = 'the ' + _aSet;
-                  console.log('[SPINE-STAGING] environment_anchor ← "' + _spineAnchor + '" (was: "' + String(anchor || '').slice(0, 60) + '")');
+                  console.log('[SPINE-STAGING] environment_anchor ← "' + _spineAnchor + '" (SUPPLIED; was: "' + String(anchor || '').slice(0, 60) + '")');
+                } else {
+                  var _parsedSet = (_asgA && _asgA.setting) || (state._spineStaging && state._spineStaging.setting) || '';
+                  if (_parsedSet) console.log('[SPINE-STAGING] environment_anchor NOT overwritten — "'
+                    + _parsedSet + '" is a text-parser reading, not supplied staging');
                 }
               } catch (_) {}
               var _causalNorm = null, _causalWhy = 'absent from the response';
@@ -101000,6 +101823,20 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                   causal_outline: _causalNorm,
                   causal_outline_note: _causalWhy,
                   environment_anchor: _spineAnchor || (anchorRepeated ? '' : anchor),
+                  // WHICH SCENE THIS ANCHOR WAS PRODUCED FOR (Roman 2026-11-02). Without it
+                  // buildSkeletonDirective cannot tell a fresh anchor from one carried over
+                  // from the previous scene, and issued the HARD first-sentence command for
+                  // both. A carried anchor is stale staging; see the emitter.
+                  // THE SCENE NUMBER IS THE IDENTITY. _optSceneNum and _currentSceneNumber share one
+                  // scale; turnCount does not (measured on the run's own restored state: turnCount 2
+                  // while _currentSceneNumber(state) is 4). environment_anchor_turn below is recorded
+                  // as PROVENANCE only — the emitter does not read it, because a matching secondary
+                  // counter must never rescue a scene stamp that disagrees.
+                  environment_anchor_for: (_optSceneNum
+                    || ((typeof _currentSceneNumber === 'function') ? _currentSceneNumber(state) : null)
+                    || null),
+                  environment_anchor_turn: (state.turnCount != null ? state.turnCount : null),
+                  environment_anchor_src: (_spineAnchor ? 'supplied-setting' : 'generated'),
                   structural_pacing: parsed.structural_pacing || 'measured escalation',
                   narrative_density: parsed.narrative_density || 'moderate',
                   dialogue_ratio: parsed.dialogue_ratio || 'balanced',
@@ -101007,6 +101844,10 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                   tension_rhythm: parsed.tension_rhythm || 'rising with pauses',
                   staged_characters: _stagedNorm,
                   interlocutor_placement: _interlocPlace,
+                  // WHICH person the placement is about, when the planner said so. The renderer
+                  // needs it to decide between the IN_PERSON, ON_PHONE and offstage directives;
+                  // '' means unattributed and the renderer falls back to the staged roster.
+                  interlocutor_ref: _interlocRef,
                   li_texture_beat: _liTexture,
                   pc_body_callback: _pcBodyCallback,
                   li_body_callback: _liBodyCallback,
@@ -101550,11 +102391,46 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       const _isMalePC = (_pcg === 'male');
       let directive = `\n\nNarrative skeleton for this scene:`;
       if (sk.environment_anchor) {
+          // ── A CARRIED ANCHOR IS STALE STAGING, NOT A MANDATE (Roman 2026-11-02) ──────────
+          // This emitter had two modes and chose between them on ONE question: is the prior scene
+          // still live? It never asked whether the anchor belongs to THIS scene. So an anchor
+          // produced for the previous scene was issued as "the first sentence must originate from
+          // this" — and that is the channel through which the contradictory clearing mandate
+          // survived the scene-4 repair: the assignment block stopped naming the clearing, and
+          // this line went on commanding an opening in it.
+          // The fix does NOT hand the text parser the anchor instead; nothing here invents or
+          // replaces a place. A stale anchor is DEMOTED to the deferred form that already exists,
+          // so the scene may still use the detail without being told to open on it, and the
+          // assigned event sentence is left as the only thing describing where the scene is.
+          let _anchorStale = false, _anchorFor = null;
+          try {
+            const _csn = (typeof _currentSceneNumber === 'function')
+              ? _currentSceneNumber(state) : (typeof window !== 'undefined' && window._currentSceneNumber
+                  ? window._currentSceneNumber(state) : null);
+            _anchorFor = sk.environment_anchor_for != null ? Number(sk.environment_anchor_for) : null;
+            // ONE TARGET-SCENE IDENTITY (Roman 2026-11-02, corrected). The first version accepted a
+            // match on EITHER the stamped scene number or the stamped turn count, because a test of
+            // mine had set turnCount to the scene number it then asked for — so the scene stamp
+            // disagreed and the turn stamp "rescued" it. That rescue is exactly what must not exist:
+            // it lets an anchor explicitly produced for scene 4 pass as current for scene 6 whenever
+            // the turn counts happen to line up. The scene number is the only identity consulted.
+            // environment_anchor_turn stays recorded as provenance and is NOT read here.
+            // BOTH WRITERS STAMP THIS SCALE: the generator (~app.js:101571) uses
+            // `_optSceneNum || _currentSceneNumber(state)`, and the selection-time override
+            // (~app.js:106662) uses `_planSceneNum`, which is `(turnCount||0)+2` — the same
+            // expression _currentSceneNumber uses. And turnCount++ happens at app.js:337410, AFTER
+            // the request is assembled, so generation and this emitter see one value within a turn.
+            // Unknown provenance is stale: an anchor that cannot say which scene it was made for has
+            // not established that it was made for this one.
+            _anchorStale = !(_anchorFor != null && _csn != null && Number(_csn) === _anchorFor);
+          } catch (_) { _anchorStale = true; }
           if (state._sceneLiveContinuation) {
               // The prior scene ended mid-moment (see SCENE CONTINUATION) — do NOT
               // force an establishing-shot opening, which is what makes scenes reset
               // to a fresh morning. The anchor becomes a later texture beat instead.
               directive += `\n\nSCENE ENVIRONMENT ANCHOR (DEFERRED — this scene continues a live moment; do NOT open from this anchor): a physical detail to weave in LATER, once the ongoing moment is underway: ${sk.environment_anchor}`;
+          } else if (_anchorStale) {
+              directive += `\n\nSCENE ENVIRONMENT ANCHOR (CARRIED OVER — produced for ${_anchorFor == null ? 'an unrecorded scene' : 'scene ' + _anchorFor}, not for this one; do NOT open from it and do NOT treat it as this scene's location): a physical detail you MAY weave in later if it is still true: ${sk.environment_anchor}`;
           } else {
               directive += `\n\nSCENE ENVIRONMENT ANCHOR:\nThe scene must begin from this physical object or phenomenon: ${sk.environment_anchor}\nThe first sentence must originate from this anchor before introducing character movement or dialogue.`;
           }
@@ -101744,9 +102620,73 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
           if (_phone.length)    directive += `  • ON_PHONE (audible only via call/voice channel; NOT physically present; the protagonist CANNOT hand them an object, show them a screen, exchange a glance, share physical space, or place them anywhere in the room): ${_phone.join(', ')}\n`;
           if (_offstage.length) directive += `  • OFFSTAGE_REFERENCED (named or thought of but not actually present): ${_offstage.join(', ')}\n`;
           directive += `  Any prose that puts an ON_PHONE character in physical proximity (leaning over, reaching across, the touch of a hand, the lean of a shoulder, sharing a screen) is a STAGING FAILURE — re-stage them on the phone, or move them IN_PERSON only if they explicitly walk in.\n`;
+          // ── THIS LIST IS THE ONLY THING THAT PUTS A BODY IN THE ROOM (2026-10-31) ──────
+          // Measured on scene 4 of the preserved run: Julian was correctly listed
+          // OFFSTAGE_REFERENCED here and was still written on stage with physical business
+          // (fingers flexing, a lowered head, a cracked knuckle). The same request carried his
+          // CHARACTER DESIRES ("wants to seduce — teasing, charged dialogue"), his EMOTIONAL
+          // BEATS ("defensive_withdrawal … physical distance") and the previous scene's final
+          // line ("Julian waited as a witness now"). None of those is a staging authority, and
+          // the author had nothing telling it so at the point where the roster is given.
+          if (_offstage.length) {
+              directive += `  THE LIST ABOVE IS THE WHOLE OF WHO HAS A BODY HERE (HARD). The standing material elsewhere in this request — a character's DESIRES, their EMOTIONAL BEATS, a remembered tell, the previous scene's closing tableau — describes people, not the room. It does NOT place anyone in it, and an OFFSTAGE_REFERENCED character stays out of it even when the scene turns entirely on them: no gesture, no posture, no held gaze, no body reacting, nothing handed to or taken from them, and nobody speaks to them on the page. They may be named, quoted from an earlier occasion, remembered, and addressed in her thoughts. If this scene truly needs one of them present, that is a STAGING conflict to resolve by writing them as absent — never by walking them in.\n`;
+          }
       }
+      // ── THE SUB-DIRECTIVES ARE NOT UNCONDITIONAL (2026-10-31) ─────────────────────────
+      // Both the IN_PERSON and the ON_PHONE branches used to be emitted on every scene that
+      // had any placement at all, so a scene whose only named interlocutor was explicitly
+      // offstage still received "IN_PERSON interlocutor — FUSED COMBO-DESCRIPTOR (HARD) …
+      // the reader must be able to picture this person's FACE". Measured: that is what
+      // scene 4 sent about Julian while listing him OFFSTAGE_REFERENCED four lines above.
+      // Emit the branch the CURRENT stage contract supports, and nothing else.
+      var _ilcMode = '';
       if (sk.interlocutor_placement) {
-          directive += `\nINTERLOCUTOR ON FIRST MENTION (HARD): realize this on the FIRST time the named character speaks or acts: ${sk.interlocutor_placement}\n  ↳ IN_PERSON interlocutor — FUSED COMBO-DESCRIPTOR (HARD, Roman 2026-06-08): NAME + RELATIONSHIP + one descriptor that FUSES a VISUALIZABLE PHYSICAL FEATURE to a trait in a single stroke, so the reader can SEE the person. A pure behavioral tell with no visual anchor FAILS — "his mouth set in that way that meant he'd decided" gives the reader no face. ✓ "His perpetually squinting eyes refused to meet mine." / "She had the apologetic stoop of someone used to being the tallest in the room." / "His knuckles were scarred white and he kept them flat on the table like he was holding it down." The feature must be concrete and picturable (squinting eyes / stoop / scarred knuckles / heavy jaw / a hairline in retreat / a wrestler's neck / sun-cracked hands), with the trait riding ON it. PRIORITIZE THE FACE (HARD, Roman 2026-06-09): the descriptor MUST include at least one FACE/HEAD anchor — eyes, brow, the hairline or hair, the line of the jaw or mouth, skin/complexion, or apparent age. Posture, build, or clothing ALONE (a stoop, a blazer, broad shoulders, tapping nails) is a SILHOUETTE, not a FACE — the reader must be able to picture this person's face, not just their outline. ANY character who SUSTAINS a multi-beat conversation (not just first mention) must carry at least this ONE combo-descriptor — it is not optional for a real scene participant. (This is separate from the MAX-ONE-NAME cap: role-noun the INCIDENTAL names; a sustained interlocutor is a kept role and earns the descriptor.)\n  ↳ ON_PHONE interlocutor: the protagonist cannot see her, but the SAME texture obligation applies in a different form — render her through a REMEMBERED detail (a habit / tell the PC has learned to read: "the quiet inhalation Lina always took right before she said the part nobody wanted to hear"), a HEARD-THROUGH-LINE cue (the click of a heel on marble bleeding into the audio), or a PROJECTED behavioral inference (the careful pause where she rehearsed the sentence before saying it). Naming + job WITHOUT sensory or behavioral coloration is the same failure as bare "she said."\n`;
+          try {
+              var _ilcRoster = Array.isArray(sk.staged_characters) ? sk.staged_characters : [];
+              var _ilcRef = (sk.interlocutor_ref || '').toString().trim();
+              var _ilcRow = null;
+              if (_ilcRef) {
+                  _ilcRow = _ilcRoster.filter(function (c) { return c && c.name === _ilcRef; })[0] || null;
+              }
+              if (!_ilcRow) {
+                  // Unattributed placement: match on a name the text actually contains, so a
+                  // roster entry decides the mode rather than the position of the directive.
+                  _ilcRow = _ilcRoster.filter(function (c) {
+                      if (!c || !c.name) return false;
+                      var bare = String(c.name).replace(/^[a-z_]+:/, '').replace(/_/g, ' ').trim();
+                      if (!bare || bare === 'self') return false;
+                      try {
+                          return new RegExp('\\b' + bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i')
+                              .test(String(sk.interlocutor_placement));
+                      } catch (_) { return false; }
+                  })[0] || null;
+              }
+              _ilcMode = _ilcRow ? String(_ilcRow.presence_mode || '') : '';
+              // Still unresolved, and the stage puts NOBODY but the protagonist in the room:
+              // asserting an IN_PERSON interlocutor then invents the body the roster withheld.
+              if (!_ilcMode) {
+                  var _pcTok = ((state.playerName || '').split(/\s+/)[0] || '').toLowerCase();
+                  var _anyBody = _ilcRoster.some(function (c) {
+                      if (!c || c.presence_mode !== 'IN_PERSON') return false;
+                      var bare = String(c.name || '').replace(/^[a-z_]+:/, '').trim().toLowerCase();
+                      if (bare === 'self') return false;
+                      return !(_pcTok && bare.split(/\s+/)[0] === _pcTok);
+                  });
+                  if (_ilcRoster.length && !_anyBody) _ilcMode = 'OFFSTAGE_REFERENCED';
+              }
+              console.log('[SKELETON:INTERLOCUTOR] directive mode = ' + (_ilcMode || 'UNRESOLVED')
+                  + (_ilcRef ? ' (ref "' + _ilcRef + '")' : ' (matched by name)'));
+          } catch (_) { _ilcMode = ''; }
+      }
+      if (sk.interlocutor_placement && _ilcMode === 'OFFSTAGE_REFERENCED') {
+          // The placement is about someone the stage keeps out of the room. Deliver the
+          // planner's own text — it is still useful colour for how he is spoken of — with the
+          // obligation it actually carries, and WITHOUT the face/body instruction.
+          directive += `\nINTERLOCUTOR (REFERENCED, NOT PRESENT — HARD): this person is OFFSTAGE_REFERENCED in the staged list above. The planner's note on how they figure here: ${sk.interlocutor_placement}\n  ↳ Realize it the first time they are NAMED, not the first time they "speak or act" — they do neither on this page. Give them texture through how they are spoken OF: the way the people in the room say the name, what the protagonist remembers of them in the moment, a habit of theirs she reads into someone else's wording. Do NOT give them a face in the room, a gesture, a posture, a held look, or any physical business — the FUSED COMBO-DESCRIPTOR obligation does not apply to an absent person, and meeting it would stage them. Their absence may itself be the thing the scene is about.\n`;
+      } else if (sk.interlocutor_placement && _ilcMode === 'ON_PHONE') {
+          directive += `\nINTERLOCUTOR ON FIRST MENTION (HARD — this person is ON_PHONE, audible only): realize this on the FIRST time they speak: ${sk.interlocutor_placement}\n  ↳ ON_PHONE interlocutor: the protagonist cannot see them, but the SAME texture obligation applies in a different form — render them through a REMEMBERED detail (a habit / tell the PC has learned to read: "the quiet inhalation Lina always took right before she said the part nobody wanted to hear"), a HEARD-THROUGH-LINE cue (the click of a heel on marble bleeding into the audio), or a PROJECTED behavioral inference (the careful pause where she rehearsed the sentence before saying it). Naming + job WITHOUT sensory or behavioral coloration is the same failure as bare "she said." Do NOT give them a FACE the protagonist can see, and do NOT place them anywhere in the room.\n`;
+      } else if (sk.interlocutor_placement) {
+          directive += `\nINTERLOCUTOR ON FIRST MENTION (HARD): realize this on the FIRST time the named character speaks or acts: ${sk.interlocutor_placement}\n  ↳ IN_PERSON interlocutor — FUSED COMBO-DESCRIPTOR (HARD, Roman 2026-06-08): NAME + RELATIONSHIP + one descriptor that FUSES a VISUALIZABLE PHYSICAL FEATURE to a trait in a single stroke, so the reader can SEE the person. A pure behavioral tell with no visual anchor FAILS — "his mouth set in that way that meant he'd decided" gives the reader no face. ✓ "His perpetually squinting eyes refused to meet mine." / "She had the apologetic stoop of someone used to being the tallest in the room." / "His knuckles were scarred white and he kept them flat on the table like he was holding it down." The feature must be concrete and picturable (squinting eyes / stoop / scarred knuckles / heavy jaw / a hairline in retreat / a wrestler's neck / sun-cracked hands), with the trait riding ON it. PRIORITIZE THE FACE (HARD, Roman 2026-06-09): the descriptor MUST include at least one FACE/HEAD anchor — eyes, brow, the hairline or hair, the line of the jaw or mouth, skin/complexion, or apparent age. Posture, build, or clothing ALONE (a stoop, a blazer, broad shoulders, tapping nails) is a SILHOUETTE, not a FACE — the reader must be able to picture this person's face, not just their outline. ANY character who SUSTAINS a multi-beat conversation (not just first mention) must carry at least this ONE combo-descriptor — it is not optional for a real scene participant. (This is separate from the MAX-ONE-NAME cap: role-noun the INCIDENTAL names; a sustained interlocutor is a kept role and earns the descriptor.)\n`;
       }
       if (sk.li_texture_beat) {
           // LI-side pronoun set follows PC gender: male PC → female LI default → her/she.
@@ -102316,15 +103256,51 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
   // deliberately CONSERVATIVE: it only fires on an explicit "<preposition> the <place-noun>" phrase, and returns
   // null otherwise, leaving existing behavior untouched rather than guessing.
   var _SPINE_PLACE_NOUNS = /(market|stall|bazaar|archive|stacks|library|chamber|passage|corridor|tunnel|hall|alcove|clearing|harbor|harbour|dock|quay|street|square|gate|courtyard|temple|tower|bridge|forest|wood|path|room|cell|vault|crypt|chapel|kitchen|garden|balcony|terrace|stair|landing|threshold|shrine|camp|ward|yard)/i;
+  // ── TWO MEASURED DEFECTS IN THE PHRASE READER (Roman 2026-11-02) ────────────────────────
+  // run_2026-11-02T19-03-47-893Z, scene 4. The assignment event read:
+  //     "At Lirael's small ceramics stall outside the ceremony clearing, Julian requests access
+  //      to the sash for a non-destructive examination."
+  // This function returned setting "ceremony clearing" — the one place the sentence says the
+  // scene is NOT. From there the chain was faithful and wrong all the way down: the ledger
+  // stamped it (_sceneLedgerStamp), the STAGING line presented it as "supplied by the scene
+  // assignment — treat as given", the skeleton generator was handed it as REQUIRED SETTING
+  // (~app.js:100999) and the selection-time override rewrote environment_anchor to
+  // "the ceremony clearing" (~app.js:106257). Three channels agreed because one fed all three;
+  // the row's own prose was the only one that still said "stall", and nothing read it.
+  //
+  // (1) `outside` WAS IN THE LOCATIVE LIST. "outside the X" EXCLUDES X. It is now a NEGATIVE
+  //     preposition: it disqualifies its own phrase instead of supplying it. Only that candidate
+  //     is skipped — "in the archive outside the city" still resolves to the archive — and a
+  //     sentence whose ONLY locative is a negation yields no setting, which is correct: knowing
+  //     where a scene is not does not say where it is.
+  // (2) A POSSESSIVE PROPER NOUN WAS NOT A DETERMINER. The determiner set was
+  //     (the|a|an|his|her|their), so "at Lirael's … stall" could never match and the true place
+  //     was invisible to the reader that then latched onto the negated one.
+  // Still deterministic, still no LLM in this path, still conservative: it fires only on an
+  // explicit "<locative preposition> <determiner> <place-noun phrase>" and returns null otherwise.
+  var _SPINE_LOCATIVE_PREPS = 'in|at|inside|within|behind|through|into|beneath|under|across|near|beside|along';
+  var _SPINE_NEGATIVE_PREPS = 'outside|beyond';
   function _spineStagingFromEvent(text, knownCast) {
     try {
       var t = String(text || ''); if (!t) return null;
-      var out = { setting: null, cast: [] };
-      // explicit locative phrase: "behind a market stall", "into the archives", "in a crowded marketplace"
-      var re = /\b(?:in|at|inside|within|behind|through|into|beneath|under|across|near|beside|outside|along)\s+(?:the|a|an|his|her|their)\s+([a-z][\w'’-]*(?:\s+[a-z][\w'’-]*){0,3})/gi, m;
+      var out = { setting: null, cast: [], settingFrom: null, parsed: true };
+      // explicit locative phrase: "behind a market stall", "into the archives", "at Lirael's stall"
+      var re = new RegExp('\\b(' + _SPINE_LOCATIVE_PREPS + '|' + _SPINE_NEGATIVE_PREPS + ')'
+        + '\\s+(?:the|a|an|his|her|their|its|[A-Za-z][\\w\'’-]*[\'’]s)'
+        + '\\s+([a-z][\\w\'’-]*(?:\\s+[a-z][\\w\'’-]*){0,3})', 'gi');
+      var negRe = new RegExp('^(?:' + _SPINE_NEGATIVE_PREPS + ')$', 'i');
+      var cutRe = new RegExp('^(?:' + _SPINE_LOCATIVE_PREPS + '|' + _SPINE_NEGATIVE_PREPS + ')$', 'i');
+      var m;
       while ((m = re.exec(t))) {
-        var phrase = String(m[1]).replace(/[.,;:!?]+$/, '').trim();
-        if (_SPINE_PLACE_NOUNS.test(phrase)) { out.setting = phrase; break; }
+        if (negRe.test(m[1])) continue;                 // "outside the clearing" is not the clearing
+        // The 0-3 trailing words can run past the noun phrase into the NEXT prepositional phrase
+        // ("small ceramics stall outside"), so the phrase ends at the first preposition word.
+        var words = String(m[2]).replace(/[.,;:!?]+$/, '').trim().split(/\s+/);
+        var cut = words.findIndex(function (w) { return cutRe.test(w); });
+        var phrase = (cut > 0 ? words.slice(0, cut) : words).join(' ').replace(/[.,;:!?]+$/, '').trim();
+        if (phrase && _SPINE_PLACE_NOUNS.test(phrase)) {
+          out.setting = phrase; out.settingFrom = m[1].toLowerCase() + ' …'; break;
+        }
       }
       (knownCast || []).forEach(function (n) {
         if (n && new RegExp('\\b' + String(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(t)) out.cast.push(n);
@@ -103659,6 +104635,13 @@ function _buildAuthorFloorDirective(s) {
     }
     return false;
   }
+  // Dev handles so a provider-free control can drive the REAL accept gates — these two decide
+  // whether any assessment, in either direction, is believed. Pure predicates; no production
+  // caller reads them off window.
+  try {
+    window.__hasUsableEvidence = function (x) { return _hasUsableEvidence(x); };
+    window.__evidenceVerifies = function (x, prose) { return _evidenceVerifies(x, prose); };
+  } catch (_) {}
   // The spans of an evidence value, for logging and for the anchor check's shared rule.
   function _evidenceSpans(x) {
     if (typeof x === 'string') return x.trim() ? [x] : [];
@@ -104170,6 +105153,240 @@ function _buildAuthorFloorDirective(s) {
   }
   try { window._commitTargetUnusable = _commitTargetUnusable; } catch (_) {}
 
+  // ══ WHICH ROWS A SCENE'S PROSE IS ASSESSED AGAINST (Roman 2026-11-03) ═══════════════════════
+  // TWO MEASURED DEFECTS, both in run_2026-11-02T19-03-47-893Z_29351 (ten scenes, provider-free
+  // reading of its own artifacts):
+  //
+  // (1) THE LIST WAS BUILT FROM THE WRONG SOURCE. It read _activePlan(s).scenes —
+  //     STARTER_PLANS[s._starterId] (~app.js:144955) — while that run's ASSIGNMENTS came from the
+  //     generated scaffold, the authored rows having been withheld. So the list was empty for all
+  //     ten scenes: zero [MILESTONE-WATCH] lines and zero _milestoneDeliveries records, while
+  //     prereq_watch — same block, but reading the same plan object's `prerequisites`, which
+  //     survived — ran sixteen times. Any story whose rows are GENERATED rather than authored,
+  //     which is every non-starter story, had an inert milestone watch. The rows now come from
+  //     _resolveIssueOutline, which is what _selectSceneAssignment reads, so what can be credited
+  //     and what can be assigned cannot disagree about which rows exist.
+  //
+  // (2) THE LIST LOOKED ONLY FORWARD. The guard was "tgt <= _asScene → discard (only a LATER row
+  //     can be delivered early)". Early delivery is real and is recorded; LATE delivery had no
+  //     producer anywhere, so a row left outstanding at its own scene could never afterwards be
+  //     credited, no matter what a later scene put on the page. Combined with an ordinal-keyed
+  //     assignment that never re-offers an earlier row, the owed set could only grow: by scene 10
+  //     that run's author packet carried all nine prior rows as not-established.
+  //
+  // WHAT THIS DOES NOT DO: it does not retire anything, and it does not decide what a scene should
+  // do about an outstanding row. It makes LATE COMPLETION REPRESENTABLE — nothing more. Retirement
+  // for a narrative reason is a separate disposition and is deliberately NOT written here; in
+  // particular `superseded` on these records already means "the prose this was read from was
+  // revised" (_revalidateAssessments, ~app.js:105029) and must not be made to mean anything else.
+  // ── THE TARGET IS THE WHOLE OBLIGATION (Roman 2026-11-03, second correction) ─────────────
+  // The first version of this sent text.slice(0, 180) while an ACCEPTED answer credits the ENTIRE
+  // row. Row 6 of the ten-scene run is 279 characters, and the part past 180 is the part that
+  // makes it worth writing: the argument turning briefly funny, and Julian staying attentive when
+  // nobody is watching him. A verifier asked about the first 180 characters could answer
+  // "delivered" truthfully and complete a development nobody asked about.
+  // SO NO TARGET IS EVER TRUNCATED. The request is bounded by HOW MANY obligations it carries —
+  // whole entries, named in the log when they do not fit — never by cutting one short. Bounding
+  // the count asks fewer questions; cutting the text asks the wrong question.
+  //
+  // ── ELIGIBILITY IS CHECKED ON BOTH SOURCES (same correction) ──────────────────────────────
+  // The authored branch set resolved:null, so the overturned-row exclusion silently did not apply
+  // to authored rows. Rows now come from _resolveIssueOutline — which is where authored precedence
+  // is implemented (an authored goal wins over the generated row, branch already resolved), so
+  // preferring it preserves that precedence rather than bypassing it — and the overturned set is
+  // read from _outlineOverturnedPrereqs, which answers for a row whatever its source. The authored
+  // plan is still read directly as a fallback for the case where the resolver yields nothing.
+  // ── WHAT THE CHARACTER BUDGET IS, EXACTLY ─────────────────────────────────────────────────
+  // It bounds the FORWARD (early-delivery) entries. A still-owed BACKWARD entry is counted against
+  // it first, so it displaces forward rows — but a backward entry is never itself dropped, so the
+  // total text a request carries CAN exceed this number and this is NOT a hard limit on the
+  // request. That is deliberate: a recovery question is worth more than an early-delivery warning,
+  // and silently dropping the obligation the scene most likely bears on would be the same class of
+  // mistake as cutting its text.
+  var _MW_FORWARD_CHAR_BUDGET = 4200;
+  var _MW_TARGET_CHAR_BUDGET = _MW_FORWARD_CHAR_BUDGET;      // old name, kept for callers
+  function _milestoneWatchRows(s, wScene, opts) {
+    s = s || window.state;
+    opts = opts || {};
+    var MW_MAX = Number(opts.max) > 0 ? Number(opts.max) : 12;
+    var BACK_MAX = Number(opts.backMax) >= 0 ? Number(opts.backMax) : 2;
+    var BUDGET = Number(opts.charBudget) > 0 ? Number(opts.charBudget) : _MW_FORWARD_CHAR_BUDGET;
+    var out = { forward: [], backward: [], source: 'none', rowsSeen: 0, dropped: [], budget: null };
+    wScene = Number(wScene);
+    var rows = [];
+    // ── THE DECLARATION TRAVELS WITH THE ROW (Roman 2026-11-03, third correction) ───────────
+    // The resolver returns the RESOLVED assignment — text, kind, delivery, branch — and it does not
+    // carry `eventMarkers`/`reservedEvents`, which are declared on the AUTHORITATIVE row (the
+    // authored plan row, else the generated spine row) and read there by _resolveIssueOutline
+    // itself (~app.js:144682). Mapping resolver-first therefore set both to null for every row, and
+    // the "declared rows first" priority below — which exists so a row that has DECLARED the event
+    // belonging to it keeps its place under the request cap — silently matched nothing.
+    // So the declaration is looked up from that same authoritative row, BY ROW NUMBER, and only the
+    // declaration: the assignment text and the eligibility still come from the resolver, no goal is
+    // restored from the plan, and nothing new is declared here.
+    var _declaredFor = (function () {
+      var byPlan = {}, bySpine = {};
+      try {
+        var _apl = (typeof _activePlan === 'function') ? _activePlan(s) : null;
+        ((_apl && Array.isArray(_apl.scenes)) ? _apl.scenes : []).forEach(function (p) {
+          if (p && Number(p.n) > 0) byPlan[Number(p.n)] = p; });
+      } catch (_) {}
+      try {
+        // The SAME arc the resolver reads, chosen the same way, so a row number cannot be matched
+        // against a different issue's outline.
+        var _arcs = (s && s.cgScaffold && Array.isArray(s.cgScaffold.issueArcs)) ? s.cgScaffold.issueArcs : [];
+        var _bd = (typeof _issueOutlineBounds === 'function') ? _issueOutlineBounds(s) : null;
+        var _arc = _arcs.length
+          ? ((_bd && _arcs[_bd.issueIndex - 1]) || _arcs[_arcs.length - 1] || null) : null;
+        ((_arc && Array.isArray(_arc.sceneOutline)) ? _arc.sceneOutline : []).forEach(function (q) {
+          if (q && Number(q.n) > 0) bySpine[Number(q.n)] = q; });
+      } catch (_) {}
+      var _arr = function (v) { return (Array.isArray(v) && v.length) ? v : null; };
+      return function (n) {
+        var p = byPlan[n] || null, q = bySpine[n] || null;
+        var pm = _arr(p && p.eventMarkers), pr = _arr(p && p.reservedEvents);
+        var qm = _arr(q && (q.event_markers || q.eventMarkers)), qr = _arr(q && (q.reserved_events || q.reservedEvents));
+        var em = [].concat(pm || [], qm || []).map(String);
+        var re = [].concat(pr || [], qr || []);
+        return { eventMarkers: em.length ? em : null, reservedEvents: re.length ? re : null,
+          declaredBy: (pm || pr) ? ('authored plan row ' + n) : ((qm || qr) ? ('generated spine row ' + n) : null) };
+      };
+    })();
+    try {
+      var rioFn = (typeof _resolveIssueOutline === 'function') ? _resolveIssueOutline
+        : (typeof window !== 'undefined' ? window._resolveIssueOutline : null);
+      var rio = rioFn ? rioFn(s, {}) : null;
+      rows = ((rio && Array.isArray(rio.scenes)) ? rio.scenes : [])
+        .filter(function (r) { return r && Number(r.n) > 0 && String(r.accomplishes || '').trim(); })
+        .map(function (r) {
+          var d = _declaredFor(Number(r.n));
+          return { n: Number(r.n), text: String(r.accomplishes).trim(),
+            eventMarkers: d.eventMarkers, reservedEvents: d.reservedEvents,
+            declaredBy: d.declaredBy, resolved: r }; });
+      if (rows.length) out.source = 'resolved issue outline (the assignment\'s own source, authored rows first)';
+    } catch (_) { rows = []; }
+    if (!rows.length) {
+      try {
+        var plan = (typeof _activePlan === 'function') ? _activePlan(s) : null;
+        if (plan && Array.isArray(plan.scenes) && plan.scenes.length) {
+          rows = plan.scenes.filter(function (r) { return r && Number(r.n) > 0 && String(r.goal || '').trim(); })
+            .map(function (r) {
+              var d2 = _declaredFor(Number(r.n));
+              return { n: Number(r.n), text: String(r.goal).trim(),
+                eventMarkers: d2.eventMarkers, reservedEvents: d2.reservedEvents,
+                declaredBy: d2.declaredBy,
+                dependsOn: r.dependsOn || null, resolved: null }; });
+          if (rows.length) out.source = 'authored plan rows (the resolver returned none)';
+        }
+      } catch (_) {}
+    }
+    out.rowsSeen = rows.length;
+    if (!rows.length || !(wScene > 0)) return out;
+
+    // RETIRED ROWS ARE NOT WATCHED, whichever source they came from. A row whose prerequisite was
+    // invalidated is already overturned; asking whether it was delivered is asking about an
+    // assignment the story has dropped.
+    var overturned = [];
+    try { overturned = (typeof _outlineOverturnedPrereqs === 'function')
+      ? (_outlineOverturnedPrereqs(s) || []) : []; } catch (_) { overturned = []; }
+    // _outlineOverturnedPrereqs returns PREREQUISITE IDS, not row numbers. A resolved row already
+    // carries the intersection as kind:'overturned'; on the fallback path the row's own declared
+    // dependencies are intersected here, the same way the resolver does it (~app.js:144549).
+    var _retired = function (r) {
+      // A ROW RETIRED BY A RECORDED DISPOSITION IS NOT WATCHED EITHER. The owed set already
+      // excluded it while this list went on asking whether it had been delivered — two consumers
+      // disagreeing about the same row's status.
+      try {
+        var _rd = (typeof _recoveryDispositionFor === 'function') ? _recoveryDispositionFor(s, r.n) : null;
+        if (_rd && _rd.disposition === 'retire' && _rd.established) return true;
+      } catch (_) {}
+      if (r.resolved) return r.resolved.kind === 'overturned';
+      try {
+        var dep = [].concat(Array.isArray(r.dependsOn) ? r.dependsOn : [],
+          Array.isArray(r.depends_on) ? r.depends_on : []).map(String);
+        return dep.some(function (d) { return overturned.indexOf(d) !== -1; });
+      } catch (_) { return false; }
+    };
+    var _spent = 0;
+    var _fits = function (r) {
+      if (_spent + r.text.length <= BUDGET) { _spent += r.text.length; return true; }
+      out.dropped.push(r.n);
+      return false;
+    };
+
+    // BACKWARD FIRST — the rows this story still owes, NEAREST FIRST. They are charged against the
+    // forward budget before any forward row is, so they displace forward rows; they are EXEMPT from
+    // it themselves and are never dropped, which is why the budget is not a hard limit on the whole
+    // request. Nearest because the prose being assessed is most likely to bear on what was just
+    // attempted. This bounds WHAT IS ASKED; it is not a priority ruling about what a scene should do.
+    var _backSpent = 0;
+    if (BACK_MAX > 0) {
+      try {
+        var ev = (typeof _outlineCommitEvidence === 'function') ? _outlineCommitEvidence(s) : null;
+        if (ev && typeof _outlineDeliveryStatus === 'function') {
+          var earlier = rows.filter(function (r) { return r.n < wScene && !_retired(r); })
+            .sort(function (a, b) { return b.n - a.n; });
+          for (var i = 0; i < earlier.length && out.backward.length < BACK_MAX; i++) {
+            var r2 = earlier[i];
+            var del = null;
+            try { del = _outlineDeliveryStatus(s, r2.n, ev, wScene); } catch (_) { del = null; }
+            if (!del) continue;
+            if (del.status !== 'assessed_not_delivered' && del.status !== 'partially_verified') continue;
+            _spent += r2.text.length;                       // charged, but EXEMPT — never dropped
+            _backSpent += r2.text.length;
+            out.backward.push({ n: r2.n, text: r2.text, back: true, owedAs: del.status,
+              verifiedFacts: (del.verifiedFacts || []).map(function (f) { return String(f.text || ''); }) });
+          }
+        }
+      } catch (_) {}
+    }
+
+    // FORWARD — declared rows first, then the nearest, to the request cap and the budget.
+    var later = rows.filter(function (r) { return r.n > wScene && !_retired(r); });
+    var declared = later.filter(function (r) {
+      return (Array.isArray(r.eventMarkers) && r.eventMarkers.length)
+        || (Array.isArray(r.reservedEvents) && r.reservedEvents.length);
+    });
+    var rest = later.filter(function (r) { return declared.indexOf(r) === -1; });
+    declared.concat(rest).forEach(function (r) {
+      if (out.forward.length >= MW_MAX) { out.dropped.push(r.n); return; }
+      if (!_fits(r)) return;
+      out.forward.push({ n: r.n, text: r.text, declaredBy: r.declaredBy || null });
+    });
+    out.budget = { forwardCharBudget: BUDGET, forwardRowCap: MW_MAX, backwardRowCap: BACK_MAX,
+      backwardChars: _backSpent, backwardExemptFromBudget: true, charged: _spent,
+      note: 'the budget bounds the FORWARD entries. Backward (still-owed) entries are charged '
+        + 'against it first, so they displace forward rows, but they are exempt from it and are '
+        + 'never dropped — so the total can exceed it. It is not a hard limit on the request.' };
+    if (out.dropped.length) {
+      try { console.warn('[MILESTONE-WATCH] ' + out.dropped.length + ' FORWARD row(s) NOT watched this'
+        + ' scene — over the ' + MW_MAX + '-row cap or the ' + BUDGET + '-character forward budget'
+        + ' (still-owed rows are exempt and were not dropped). Whole rows are dropped and named; no'
+        + ' target is shortened: ' + out.dropped.join(',')); } catch (_) {}
+    }
+    out.forward.sort(function (a, b) { return a.n - b.n; });
+    return out;
+  }
+  try { window._milestoneWatchRows = _milestoneWatchRows; } catch (_) {}
+
+  // WHICH TARGETS THIS SCENE MAY BE CREDITED FOR, in either direction. The only authority is the
+  // list the ENGINE sent with the request: a row nobody asked about is discarded exactly as before,
+  // and the scene's own row is never a watch entry because the milestone question (~app.js:105211)
+  // is what judges it. Direction is recorded, not used to refuse.
+  function _milestoneWatchTargetOK(tgt, asScene, asked) {
+    tgt = Number(tgt); asScene = Number(asScene);
+    if (!(tgt > 0)) return { ok: false, why: 'not a row number' };
+    if (tgt === asScene) {
+      return { ok: false, why: 'row ' + tgt + " is this scene's own assignment — the milestone question judges it, not the watch" };
+    }
+    if (!Array.isArray(asked) || asked.indexOf(tgt) === -1) {
+      return { ok: false, why: 'row ' + tgt + ' was not on the watch list sent with this request ('
+        + (Array.isArray(asked) ? asked.join(',') : 'none') + ')' };
+    }
+    return { ok: true, direction: (tgt > asScene) ? 'early' : 'late', why: 'asked' };
+  }
+  try { window._milestoneWatchTargetOK = _milestoneWatchTargetOK; } catch (_) {}
+
   async function _commitScene(prevText, prevProposal, prevSceneNum, sceneIdentity) {
     try {
       if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
@@ -104323,40 +105540,18 @@ function _buildAuthorFloorDirective(s) {
         var _wPlan = (typeof _activePlan === 'function') ? _activePlan(window.state) : null;
         var _wScene = (prevProposal && Number(prevProposal.storyScene) > 0) ? Number(prevProposal.storyScene)
           : (Number(prevSceneNum) + 1);
-        if (_wPlan && Array.isArray(_wPlan.scenes)) {
-          // WHICH LATER ROWS TO WATCH, and why it is not simply "the next eight". The nearest rows
-          // are the least likely to be delivered early; the rows a story actually risks revealing
-          // ahead of time are the ones it has bothered to declare markers or reserved events for.
-          // So declared rows come FIRST, then the nearest ones fill the remaining slots. The cap
-          // bounds the request; eight entries at 180 chars is ~1.5k of prompt.
-          var _later = _wPlan.scenes.filter(function (r) {
-            return r && Number(r.n) > _wScene && String(r.goal || '').trim();
-          });
-          var _declared = _later.filter(function (r) {
-            return (Array.isArray(r.eventMarkers) && r.eventMarkers.length)
-              || (Array.isArray(r.reservedEvents) && r.reservedEvents.length);
-          });
-          var _rest = _later.filter(function (r) { return _declared.indexOf(r) === -1; });
-          // EVERY DECLARED ROW IS WATCHED. A flat cap of 8 silently dropped declared rows whenever
-          // a plan declared more, which is not what "every declared row" means. Declared rows go in
-          // first up to 12, the nearest rows fill to 12, and anything that still does not fit is
-          // NAMED in the log rather than dropped quietly.
-          var _MW_MAX = 12;
-          _declared.forEach(function (r) {
-            if (_mWatch.length >= _MW_MAX) return;
-            _mWatch.push({ n: Number(r.n), text: String(r.goal).trim().slice(0, 180) });
-          });
-          if (_declared.length > _MW_MAX) {
-            try { console.warn('[MILESTONE-WATCH] ' + (_declared.length - _MW_MAX) + ' declared row(s) NOT watched'
-              + ' this scene (over the ' + _MW_MAX + '-row request cap): '
-              + _declared.slice(_MW_MAX).map(function (r) { return r.n; }).join(',')); } catch (_) {}
-          }
-          _rest.forEach(function (r) {
-            if (_mWatch.length >= _MW_MAX) return;
-            _mWatch.push({ n: Number(r.n), text: String(r.goal).trim().slice(0, 180) });
-          });
-          _mWatch.sort(function (a, b) { return a.n - b.n; });
-        }
+        // WHICH ROWS TO WATCH — see _milestoneWatchRows (~app.js:105137) for the policy and for
+        // the two measured defects it repairs (wrong source; forward only). `_mBack` are rows this
+        // story still OWES: asked here so that a scene which actually completes one can be
+        // credited for it, which nothing could produce before.
+        var _mwRows = _milestoneWatchRows(window.state, _wScene);
+        _mWatch = _mwRows.forward.slice();
+        var _mBack = _mwRows.backward.slice();
+        if (_mBack.length) _mWatch = _mBack.concat(_mWatch);
+        try { console.log('[MILESTONE-WATCH:ROWS] scene ' + _wScene + ' — source=' + _mwRows.source
+          + ' rows=' + _mwRows.rowsSeen + ' forward=' + _mwRows.forward.length
+          + ' outstanding-earlier=' + _mBack.length
+          + (_mBack.length ? ' (' + _mBack.map(function (b) { return b.n + ':' + b.owedAs; }).join(', ') + ')' : '')); } catch (_) {}
         if (_wPlan && Array.isArray(_wPlan.prerequisites)) {
           _wPlan.prerequisites.forEach(function (pq) {
             if (pq && pq.id && _pWatch.length < 6) _pWatch.push({ id: String(pq.id), text: String(pq.text || '').slice(0, 180) });
@@ -104456,9 +105651,28 @@ function _buildAuthorFloorDirective(s) {
           + ' "delivered_on_page" or "invalidated_on_page" with no verbatim evidence is DISCARDED by the'
           + ' engine, and so is one whose quotation is not found in the prose. Do NOT infer, do NOT'
           + ' paraphrase, and do NOT reason from outside this prose.';
-        if (_mWatch.length) {
+        var _mFwd = _mWatch.filter(function (m) { return !m.back; });
+        var _mOwed = _mWatch.filter(function (m) { return !!m.back; });
+        if (_mOwed.length) {
+          // ASSIGNED EARLIER AND STILL OPEN. The same question in the other direction: not "was a
+          // later row delivered ahead of time" but "did this prose finish something the story was
+          // already owed". Judged on the same evidence rules; nothing here asks whether it SHOULD
+          // have been finished, and a row left unfinished simply stays as it was.
+          _vUsr += '\n\nSTILL-OWED MILESTONES (assigned at an EARLIER scene and recorded as not'
+            + ' completed; this scene was NOT asked to deliver them — report whether THIS prose'
+            + ' completed any of them anyway, and answer these BEFORE spending entries on the'
+            + ' later rows below):';
+          _mOwed.forEach(function (m) {
+            _vUsr += '\n  n ' + m.n + ' :: ' + m.text;
+            if (m.verifiedFacts && m.verifiedFacts.length) {
+              _vUsr += '\n       ALREADY ESTABLISHED from that scene (do NOT cite these as this scene\'s delivery): '
+                + m.verifiedFacts.map(function (f) { return '"' + String(f).slice(0, 110) + '"'; }).join(' · ');
+            }
+          });
+        }
+        if (_mFwd.length) {
           _vUsr += '\n\nWATCHED MILESTONES (these belong to LATER scenes and are NOT this scene\'s job — report whether this prose delivered any of them anyway):';
-          _mWatch.forEach(function (m) { _vUsr += '\n  n ' + m.n + ' :: ' + m.text; });
+          _mFwd.forEach(function (m) { _vUsr += '\n  n ' + m.n + ' :: ' + m.text; });
         }
         if (_pWatch.length) {
           _vUsr += '\n\nWATCHED PREREQUISITES (named world conditions later scenes depend on):';
@@ -104818,12 +106032,14 @@ function _buildAuthorFloorDirective(s) {
           _mw.forEach(function (m) {
             if (!m) return;
             var tgt = Number(m.n);
-            if (!(tgt > 0) || tgt <= _asScene) return;            // only a LATER row can be delivered early
-            // ONLY WHAT WAS ASKED. Verbatim evidence shows that words exist; it says nothing about
-            // which assignment those words satisfy, so a row nobody asked about is discarded.
-            if (_asTarget.watchMilestones.indexOf(tgt) === -1) {
-              try { console.warn('[MILESTONE-WATCH] DISCARDED row ' + tgt + ' — it was not on the watch list sent with this request ('
-                + _asTarget.watchMilestones.join(',') + ')'); } catch (_) {}
+            // EITHER DIRECTION, BUT ONLY WHAT WAS ASKED. Verbatim evidence shows that words exist;
+            // it says nothing about which assignment those words satisfy, so a row nobody asked
+            // about is discarded — and the engine only asks about a LATER row (early delivery) or
+            // an OUTSTANDING earlier one (late completion). The old guard discarded every target at
+            // or behind the cursor, which left late completion with no producer at all.
+            var _tOK = _milestoneWatchTargetOK(tgt, _asScene, _asTarget.watchMilestones);
+            if (!_tOK.ok) {
+              try { console.warn('[MILESTONE-WATCH] DISCARDED row ' + tgt + ' — ' + _tOK.why); } catch (_) {}
               return;
             }
             var st = String(m.status || '').toLowerCase();
@@ -104843,11 +106059,15 @@ function _buildAuthorFloorDirective(s) {
               unitKind: _asTarget.unitKind, unitId: _asTarget.unitId,
               unitHash: _asTarget.unitHash, unitChars: _asTarget.unitChars,
               status: st || 'unstated', accepted: accepted, why: why,
+              // WHICH WAY THE CREDIT POINTS. A separate field on purpose: `superseded` already
+              // means "the prose this was read from was revised" (_revalidateAssessments) and is
+              // not a place to record anything about the story.
+              direction: _tOK.direction,
               evidence: m.evidence || null, participants: parts, scope: scope || null,
               excerptHash: _asExcerptHash, superseded: false, at: Date.now(), source: 'runtime commit verifier'
             });
-            try { console.log('[MILESTONE-WATCH] scene ' + _asScene + ' vs row ' + tgt + ': status=' + (st || 'unstated')
-              + ' accepted=' + accepted + ' (' + why + ')'); } catch (_) {}
+            try { console.log('[MILESTONE-WATCH] scene ' + _asScene + ' vs row ' + tgt + ' (' + _tOK.direction
+              + '): status=' + (st || 'unstated') + ' accepted=' + accepted + ' (' + why + ')'); } catch (_) {}
           });
           var _pw = (_vP && Array.isArray(_vP.prereq_watch)) ? _vP.prereq_watch : [];
           _pw.forEach(function (q) {
@@ -104921,8 +106141,11 @@ function _buildAuthorFloorDirective(s) {
                 source: 'runtime commit verifier' }, extra));
             };
             _asTarget.watchMilestones.forEach(function (n2) {
-              if (_mSeen[String(n2)] || Number(n2) <= _asScene) return;
-              _unrep('_milestoneDeliveries', { milestoneScene: Number(n2) });
+              // The same two-direction rule the accept path uses, so an OUTSTANDING earlier row
+              // the verifier said nothing about is recorded as NOT ASSESSED rather than skipped.
+              if (_mSeen[String(n2)] || !_milestoneWatchTargetOK(n2, _asScene, _asTarget.watchMilestones).ok) return;
+              _unrep('_milestoneDeliveries', { milestoneScene: Number(n2),
+                direction: (Number(n2) > Number(_asScene)) ? 'early' : 'late' });
             });
             _asTarget.watchPrereqs.forEach(function (id2) {
               if (_pSeen[String(id2)]) return;
@@ -105362,10 +106585,29 @@ function _buildAuthorFloorDirective(s) {
         if (_spineVerbatim || _issuePurposeBlock) {
           try {
             var _sd2 = [];
-            if (_asg && _asg.setting) _sd2.push('SETTING: ' + _asg.setting);
-            if (_asg && _asg.participants && _asg.participants.length) _sd2.push('PRESENT: ' + _asg.participants.join(', '));
+            // SUPPLIED STAGING AND A TEXT-PARSER READING ARE TWO DIFFERENT THINGS (Roman 2026-11-02).
+            // They were printed on one line under a header that calls both "supplied … treat as
+            // given". Scene 4 of run_2026-11-02T19-03-47 carried a parser reading of the event
+            // sentence that had taken the place the sentence EXCLUDES, and the author was told to
+            // treat it as given. They are now separate lines with separate authority: a labelled
+            // reading does not claim to be given, and the complete assignment sentence — which the
+            // author already has, verbatim, above — is what it defers to.
+            var _sdRead = [];
+            if (_asg && _asg.setting) {
+              (_asg._settingInferred ? _sdRead : _sd2).push('SETTING: ' + _asg.setting);
+            }
+            if (_asg && _asg.participants && _asg.participants.length) {
+              (_asg._participantsInferred ? _sdRead : _sd2)
+                .push('PRESENT: ' + _asg.participants.join(', '));
+            }
             if (_asg && _asg.props && _asg.props.length) _sd2.push('PROPS: ' + _asg.props.join(', '));
             if (_sd2.length) _spineBlock += '  STAGING (supplied by the scene assignment — treat as given, not as suggestion): ' + _sd2.join(' · ') + '\n';
+            if (_sdRead.length) {
+              _spineBlock += '  STAGING READ FROM THE EVENT SENTENCE BY A TEXT PARSER — NOT supplied, and NOT'
+                + ' authority: ' + _sdRead.join(' · ') + '. The assigned event above is the authority.'
+                + ' Where this reading and that sentence disagree, the sentence wins and this is wrong;'
+                + ' where the sentence names no place, choose a continuity-valid one.\n';
+            }
           } catch (_) {}
         }
         // The Author is what invents; until now only the planner was told not to.
@@ -105554,6 +106796,45 @@ function _buildAuthorFloorDirective(s) {
     // and read a shared mutable slot after asynchronous work had run.
     var _subProv = null;
     try { _subProv = _captureSubmissionProvenance(state, act, dia); } catch (_) {}
+    // ── RESOLVE THE PREVIOUS SCENE'S PLAN-SUPPLIED DECISION FROM THIS SUBMISSION ──────────
+    // Placed here because this is the first point where BOTH the reader's own words and the
+    // resolved outline are in scope, and it runs BEFORE route selection for the scene being
+    // planned — so an `activeRoute` can actually be chosen on this turn rather than one turn
+    // late. It records through the shipped recorder and only on an unambiguous, reader-worded
+    // match; otherwise the decision stays unresolved and every route is presented as untaken.
+    try {
+      // RESOLVED THROUGH THE EXPOSED REFERENCE, AND A MISSING ONE IS LOUD. The first wiring
+      // called the bare identifier, which is declared ~113k lines away; if the two sites are not
+      // in one scope that is a ReferenceError, and the surrounding try/catch swallowed it — so
+      // the harness (which called window._resolvePlanDecisionFromReaderInput directly) passed
+      // while the application silently never resolved a decision at all. Measured: the planner
+      // block ran and no [PLAN-DECISION] line was ever emitted.
+      var _pdFn = (typeof _resolvePlanDecisionFromReaderInput === 'function')
+        ? _resolvePlanDecisionFromReaderInput
+        : ((typeof window !== 'undefined' && typeof window._resolvePlanDecisionFromReaderInput === 'function')
+            ? window._resolvePlanDecisionFromReaderInput : null);
+      var _pdCur = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(state)
+        : ((typeof window !== 'undefined' && typeof window._currentSceneNumber === 'function')
+            ? window._currentSceneNumber(state) : 0);
+      var _pdPrev = Number(_pdCur) - 1;
+      if (!_pdFn) {
+        try { console.warn('[PLAN-DECISION:UNWIRED] the plan-decision resolver is not reachable from'
+          + ' the planner — a plan-supplied decision cannot be recorded this turn'); } catch (_) {}
+      } else if (_pdPrev > 0 && (String(act || '').trim() || String(dia || '').trim())) {
+        // DIAGNOSTIC ONLY. The resolver no longer commits anything (see its own header: the
+        // matcher is negation-blind), so this call cannot record a decision or select a route.
+        // It is kept because the log tells us which option a turn pointed at while the decision
+        // interface is decided separately.
+        var _pdOut = _pdFn(state, _pdPrev, act, dia);
+        if (!_pdOut.resolved) {
+          try { console.log('[PLAN-DECISION:UNRESOLVED] scene ' + _pdPrev + ' — ' + _pdOut.why
+            + '. The reader keeps their own action; no planned option was assumed.'); } catch (_) {}
+        }
+      }
+    } catch (_pdErr) {
+      try { console.warn('[PLAN-DECISION:THREW] ' + (_pdErr && _pdErr.message)
+        + ' — no decision recorded this turn'); } catch (_) {}
+    }
     // HANDED BACK THROUGH THE CALLER'S OWN OBJECT. The CG caller used to re-read
     // state._submissionProvenance after awaiting this function and compare it against
     // state._cgGenAttempt — two mutable globals, so if both had moved on to another invocation,
@@ -105872,11 +107153,36 @@ function _buildAuthorFloorDirective(s) {
                 // fabricating a partial skeleton that might pass the cache check — that premise is FALSE:
                 // _isSkeletonValid() (~91962) returns false unless BOTH sceneSkeleton AND _skeletonMeta exist,
                 // and this write never sets _skeletonMeta. The guard only made the "always-live" write not live.
-                if (s._spineStaging && s._spineStaging.setting) {
+                // ── ONLY A SUPPLIED SETTING MAY OVERWRITE THE ANCHOR (Roman 2026-11-02) ──────
+                // This write was unconditional on the PARSE, which is how one mis-read sentence
+                // became an anchor mandate: run_2026-11-02T19-03-47 scene 4 got
+                // environment_anchor "the ceremony clearing" from a sentence that put the scene
+                // at the stall OUTSIDE it. The anchor is a HARD first-sentence command
+                // (buildSkeletonDirective ~app.js:101920), so a parser error here is binding on
+                // the opening line of the scene.
+                // The authored setting still overwrites, which is what this was built for. A
+                // parse no longer does: it travels to the generator as a labelled reading beside
+                // the complete sentence (_buildSceneAssignmentBlock above) and the generator —
+                // the existing planner — decides. Nothing forces movement and nothing declares
+                // the outline superior to the reader; the parse simply stops being a mandate.
+                var _supplied = null;
+                try {
+                  var _asgNow = s._sceneAssignment;
+                  if (_asgNow && _asgNow.setting && !_asgNow._settingInferred) _supplied = _asgNow.setting;
+                } catch (_) { _supplied = null; }
+                if (_supplied) {
                   s.sceneSkeleton = s.sceneSkeleton && typeof s.sceneSkeleton === 'object' ? s.sceneSkeleton : {};
                   var _prevAnchor = s.sceneSkeleton.environment_anchor || '';
-                  s.sceneSkeleton = Object.assign({}, s.sceneSkeleton, { environment_anchor: 'the ' + s._spineStaging.setting });
-                  console.log('[SPINE-STAGING] environment_anchor ← "the ' + s._spineStaging.setting + '" at SELECTION (always-live; was: "' + String(_prevAnchor).slice(0, 50) + '")');
+                  s.sceneSkeleton = Object.assign({}, s.sceneSkeleton, {
+                    environment_anchor: 'the ' + _supplied,
+                    environment_anchor_for: _planSceneNum || null,
+                    environment_anchor_turn: (s.turnCount != null ? s.turnCount : null),
+                    environment_anchor_src: 'supplied-setting' });
+                  console.log('[SPINE-STAGING] environment_anchor ← "the ' + _supplied + '" at SELECTION (SUPPLIED setting; was: "' + String(_prevAnchor).slice(0, 50) + '")');
+                } else if (s._spineStaging && s._spineStaging.setting) {
+                  console.log('[SPINE-STAGING] environment_anchor NOT overwritten — "'
+                    + s._spineStaging.setting + '" was read from the event sentence by the text parser,'
+                    + ' not supplied; it is passed to the generator as a reading instead');
                 }
               } catch (_) { s._spineStaging = null; }
               try { console.log('[PLAN-SPINE] scene=' + _planSceneNum + ' OBJECTIVE from authored spine: "' + String(_planScene.goal).slice(0, 110) + '"'); } catch (_) {}
@@ -105885,6 +107191,39 @@ function _buildAuthorFloorDirective(s) {
               try { console.log('[PLAN-SPINE] scene=' + _planSceneNum + ' no authored plan-scene → generic milestone fallback'); } catch (_) {}
             }
           }
+        }
+      } catch (_) {}
+
+      // ── THE PLANNER AND THE AUTHOR NOW READ THE SAME RESOLVED ROW (Roman 2026-10-31) ────────
+      // MEASURED DEFECT: with no authored row covering this scene, `_curMs` stayed on the GENERIC
+      // aPlot milestone while the author received the generated outline row as its HARD
+      // assignment — two different events for one scene. `_selectSceneAssignment` above is the one
+      // normalization boundary, so when it resolved the outline row, the planner's objective is
+      // built from THAT, and the reader's selected route travels with it instead of reaching the
+      // author alone.
+      //
+      // AUTHORED PRECEDENCE IS INTACT: an authored plan row sets `_curMs._fromPlan`, and this runs
+      // only when it did not. It cannot overturn an authored objective.
+      try {
+        var _asgOut = s._sceneAssignment;
+        if (_asgOut && _asgOut.source === 'issue-outline' && _asgOut.event && !(_curMs && _curMs._fromPlan)) {
+          _curMs = { event: String(_asgOut.event), atScene: _asgOut.sceneNumber, kind: 'issue-outline',
+                     triggered: false, _fromOutline: true,
+                     exitState: _asgOut.stateChange || null, participants: null };
+          s._spineEventVerbatim = String(_asgOut.event);
+          var _oc = '';
+          if (_asgOut.followsFrom) _oc += '\n  WHY THIS FOLLOWS WHAT CAME BEFORE: ' + _asgOut.followsFrom;
+          if (_asgOut.stateChange) _oc += '\n  WHAT CHANGES BY THE END: ' + _asgOut.stateChange;
+          if (_asgOut.setsUp) _oc += '\n  WHAT IT SETS UP: ' + _asgOut.setsUp;
+          if (_asgOut.activeRoute && _asgOut.activeRoute.how)
+            _oc += '\n  THE ROUTE THE PLAYER PUT HER ON: ' + _asgOut.activeRoute.how;
+          if (_asgOut.activeRoute && _asgOut.activeRoute.carries)
+            _oc += '\n  SHE ARRIVES CARRYING THIS, and it must stay visible — reaching the same point by a'
+                 + ' different route is NOT the same experience: ' + _asgOut.activeRoute.carries;
+          s._spineConstraints = (s._spineConstraints || '') + _oc;
+          try { console.log('[PLAN-SPINE] scene=' + _asgOut.sceneNumber
+            + ' objective from the ISSUE OUTLINE — the same resolved row the author receives'
+            + (_asgOut.activeRoute ? ' · route="' + _asgOut.activeRoute.choice + '" consequence carried' : '')); } catch (_) {}
         }
       } catch (_) {}
 
@@ -105911,6 +107250,18 @@ function _buildAuthorFloorDirective(s) {
             }
           } catch (_) {}
           var _opContingent = _opPrec.mode === 'contingent';
+          // ── THE RECOVERY HANDOFF, RESOLVED BEFORE THE PROMPT IS BUILT ─────────────────────
+          // Computed here, with the scene's current assignment already selected above, so the
+          // planner is asked about ONE outstanding obligation and its own assignment TOGETHER
+          // rather than being handed a reminder beneath a mandate. Null when nothing is owed, in
+          // which case every string below is byte-identical to before.
+          var _recScene = 0, _recHandoff = null;
+          try {
+            _recScene = (s._sceneAssignment && Number(s._sceneAssignment.sceneNumber) > 0)
+              ? Number(s._sceneAssignment.sceneNumber)
+              : ((typeof _currentSceneNumber === 'function') ? _currentSceneNumber(s) : 0);
+          } catch (_) { _recScene = 0; }
+          try { _recHandoff = (typeof _recoveryHandoff === 'function') ? _recoveryHandoff(s, _recScene) : null; } catch (_) { _recHandoff = null; }
           // TRACE: does this prompt block run per continuation, or once? The contract builder
           // logged a single time with an empty ledger, which could mean either. Observed, not
           // assumed — the answer decides whether the contract belongs here or in the per-scene
@@ -105926,13 +107277,39 @@ function _buildAuthorFloorDirective(s) {
             + '  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", phrased so the scene must OPEN with it still false. 8-16 words. ENTRY, EVENT AND EXIT MUST BE MUTUALLY CONSISTENT: write the "before" as the condition that genuinely holds at the first line, never as a restatement of the exit state with a negation bolted on, which leaves the same sentence being false at entry and made true by its own opposite. Read the three together before you answer: at the opening THIS is false, the event happens, and by the end the exit_state is true — if that sequence does not read as one coherent history, the precondition is wrong, not the event.\n'
             + '  • state_change: the ENACTED development, landing partway through, that makes the precondition true, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) TWO THINGS, KEPT APART: the OUTCOME is what must be true by the end; the ENACTMENT is the encounter, act or exchange that establishes it where people can see it. The ENACTMENT must be EXTERNALLY OBSERVABLE — something another character present could witness happen. The OUTCOME may be a change in KNOWLEDGE or BELIEF, and often is: "she has reason to suspect him" and "he now knows she was told" are legitimate outcomes. What is INVALID is a state_change whose text is a bare interior report with nothing enacted. What is VALID is the act or exchange that establishes the outcome where the room can see it: someone handles the thing that gives it away, or puts the question that only a person who now believes this would put, or answers in a way that fails to cover it. Write state_change as the ENACTMENT and put the outcome in exit_state — a change in what someone knows is NOT disqualified, it simply has to HAPPEN on the page rather than be announced; (c) THE CHANGE MUST BE NEW, AND ITS CAUSE IS NOT THE CHANGE. After it, something is different in KNOWLEDGE (someone now knows, or has reason to believe, what they did not), RELATIONSHIP (what these two can say or ask of each other has moved), OBLIGATION (a duty, permission or restriction begins or ends), DANGER (what can now be lost, and by whom), or AVAILABLE ACTION (a course opens or closes). WHEN THE OUTCOME IS THAT SOMEONE NOW UNDERSTANDS AN EARLIER EVENT, THAT EARLIER EVENT IS HISTORY AND DOES NOT HAPPEN AGAIN: what is new is the encounter with its evidence, the admission, the question asked, or the behaviour that gives it away. CHECK THE COMMITTED WORLD STATE ABOVE — if the event you are about to name is already listed there, you have named the CAUSE instead of this scene\'s change, and it is INVALID however true it is. WHOSE knowledge or belief moves is PART OF THE FACT and must be preserved: "Lirael suspects Julian steered the inquiry" and "Julian steered the inquiry" are DIFFERENT facts, the first is hers and provisional, and only the one this scene actually establishes may be proposed — a protagonist\'s suspicion is never a finding of another character\'s guilt. A bodily act CAN be the enactment when the scene establishes what it costs or settles — a hand withdrawn that ends a bargain, a blade set down that concedes a claim. What fails is a reaction with nothing following from it; (d) NAME ONLY THE ENACTMENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). The outcome belongs in exit_state, never appended to the event. 8-16 words, phrased as the enactment.\n'
             + '  • forces_choice: the decision the event UNLOCKS — the scene\'s closing choice, which could NOT have been posed before it (the event exists to CREATE this choice). "forces [PC] to choose between A and B" where A and B are TWO ACTIVE responses to the new fact (NOT one action + one escape hatch like "act or do nothing").\n'
+            // ── THE SCAFFOLD'S DECLARED DECISION, AT THE POINT forces_choice IS CHOSEN ───────
+            // MEASURED FAILURE (scenes 2 and 3 of run_2026-10-31T02-06-30-814Z_24073): the scene-3
+            // scaffold declared "player-facing Tempt Fate threshold — offered, never taken", and
+            // that clause WAS in the request — 18k characters away, among the per-scene constraints.
+            // At the point the planner actually picked forces_choice it had no sight of it, and it
+            // instead lifted the top line of STILL UNRESOLVED ("Lirael must clarify whether she
+            // claims interference or only ownership") and made that the closing choice. Scene 2 had
+            // already put that exact question, so both scenes ended on it.
+            //
+            // The rule the planner violated was ALREADY HERE — "which could NOT have been posed
+            // before it". So this adds no new doctrine: it puts the declared decision where the
+            // choice is made, and says what to do when it no longer fits.
+            + ((_curMs && _curMs.decision_axis)
+                ? '  • THIS SCENE\'S DECLARED DECISION (from the story scaffold): ' + String(_curMs.decision_axis)
+                  + '\n    forces_choice MUST REALIZE THAT DECISION while it remains applicable. If the '
+                  + 'reader\'s action or an established event has made it inapplicable — already answered, '
+                  + 'overtaken, or impossible from the committed state — DO NOT silently substitute your own '
+                  + 'and DO NOT force the scaffold\'s anyway: set "decision_conflict" to one sentence naming '
+                  + 'what makes it inapplicable, then propose the decision the committed state actually '
+                  + 'supports. An unanswered question from an earlier scene is NOT grounds for conflict: it '
+                  + 'is persisting pressure, and it may press on this scene without being re-posed as this '
+                  + 'scene\'s closing choice.\n'
+                : '')
             + '  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone\'s SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone\'s OWN nouns and actions.\n'
             + '  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.\n'
             + '  • DELETE TEST (the sufficiency invariant — the state_change is valid ONLY if it passes): delete the event, and BOTH branch_a AND branch_b become impossible or materially different. If either branch would still stand unchanged without the event, the event is too weak — pick a stronger one.\n'
             + (_opContingent
                 ? 'DERIVE from: THE CHANGED REALITY the committed rupture left behind (see RUPTURE PRECEDENCE below) + the tactical move + the PRIOR scene\'s state. The scheduled milestone is UNDER REVIEW this scene, not an anchor to realize — do not treat it as the thing to land unless you first conclude it still causally holds. The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n'
                 : 'DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene\'s state (below). The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n')
-            + 'Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
+            + 'Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":""'
+            + ((_curMs && _curMs.decision_axis) ? ', "decision_conflict":"" (empty unless the declared decision is inapplicable)' : '')
+            + (_recHandoff ? ', "recovery":{ "row":0, "disposition":"incorporate|defer|retire", "why":"", "superseded_by":"" } (REQUIRED — an outstanding obligation is put to you below)' : '')
+            + ' }';
           // HIDDEN CAUSES FOR THE SCENE PROPOSAL (Roman 2026-10-13). This planner decides the
           // scene's state change, so it is a planning authority and takes the 'planning' tier —
           // the causes and the scheduled do-not-plan list, never the sealed price. It was the
@@ -105944,7 +107321,15 @@ function _buildAuthorFloorDirective(s) {
             if (_scCausal) _scSys += '\n' + _scCausal;
           } catch (_) {}
           var _csGen = (typeof _ensureCommittedState === 'function') ? _ensureCommittedState() : { facts: [], pendingIntent: null };
-          var _scUsr = ((_curMs && _curMs._fromPlan)
+          // ── A RESOLVED OUTLINE ROW IS A PER-SCENE OBJECTIVE TOO (Roman 2026-10-31) ──────
+          // `_fromOutline` joins `_fromPlan` on this gate. Without it, a generated row that the
+          // resolver had made THIS SCENE'S ASSIGNMENT — and that the author receives as a HARD
+          // assignment — reached the planner through the "distant TARGET" branch instead: framed
+          // as a far-off constraint, truncated at 300 chars, and stripped of the spine
+          // constraints, which is where the branch consequence now travels. Same row, two
+          // different mandates. The label below distinguishes the two sources honestly; it does
+          // NOT call a generated row authored.
+          var _scUsr = ((_curMs && (_curMs._fromPlan || _curMs._fromOutline))
               // AUTHORED SPINE: the plan goal is a PER-SCENE objective (not a distant milestone) — present it as
               // this scene's central development to realize NOW, and suppress the competing generic A-plot goal
               // so the planner has ONE objective (no blending — the whole point of the Phase-0 experiment).
@@ -105952,8 +107337,38 @@ function _buildAuthorFloorDirective(s) {
                     // The scheduled objective is SHOWN — never hidden, so the planner can judge it —
                     // but it is no longer labelled as the thing to realize. One authority, not two.
                     ? 'THIS SCENE\'S SCHEDULED OBJECTIVE — UNDER REVIEW, NOT YET YOUR OBJECTIVE (a committed rupture may have removed its causal foundation; decide under RUPTURE PRECEDENCE below before treating it as anything): '
-                    : 'THIS SCENE\'S OBJECTIVE (authored story spine — the scene\'s central development to realize NOW as this scene\'s state_change, NOT a distant target): ')
-                 + JSON.stringify(_curMs.event).slice(0, 300)
+                    // ── AN OPEN ROW HAS NO GOAL, AND MUST NOT BE FRAMED AS ONE ──────────────
+                    // Same handoff, same defect: at the selection point an OPEN row is given
+                    // `goal: ''` deliberately (_effSpine.goal || (_openRow ? '' : …)), and this
+                    // framing then presented that empty string as "the scene's central development
+                    // to realize NOW". Measured on scene 2 of the Sol run:
+                    // [PLAN-SPINE] scene=2 OBJECTIVE from authored spine: "" — a mandatory, empty
+                    // mandate, which is why that planner free-ran. It is NOT a separate backlog
+                    // item. When the row carries no goal, say so and let the declared decision and
+                    // the aftermath lanes anchor the scene instead of an empty imperative.
+                    : (String(_curMs.event || '').trim()
+                        ? ('THIS SCENE\'S OBJECTIVE ('
+                            + (_curMs._fromOutline ? 'generated issue outline' : 'authored story spine')
+                            + ' — the scene\'s central development to realize NOW as this scene\'s state_change, NOT a distant target): ')
+                        : 'THIS SCENE CONTINUES AN OPEN SPINE ROW AND CARRIES NO SCHEDULED OBJECTIVE OF ITS OWN. Do not invent a milestone to land. Derive the state_change from the committed world state, the declared decision below, and the aftermath this encounter still owes: '))
+                 // ── THE AUTHORED EVENT IS DELIVERED WHOLE (2026-10-31) ──────────────────
+                 // This was `.slice(0, 300)`, and the cap was arbitrary: nothing downstream
+                 // needs it and the authored goals are bounded (longest in the First
+                 // Sacrifice spine: 710 stringified chars). Measured on the preserved
+                 // scene-4 run, the cut landed mid-clause and dropped 305 of 605 chars:
+                 //   KEPT    "…Julian is named aloud as having demanded a review; he is
+                 //   DROPPED  NOT in the room. Do NOT name who will hear the matter, do NOT
+                 //            name a venue, … do NOT constitute a panel … END with Lirael
+                 //            formally under investigation, supervised, …"
+                 // So the planner was handed a dangling "he is", no prohibitions and no exit
+                 // condition, and the block the author is told is the HIGHEST AUTHORITY on
+                 // who is present went out silent about the one person who had to be absent.
+                 // Row 3 loses its tail the same way, including "(E) STOP at the threshold.
+                 // Lirael does NOT choose. The player does." Two of the eighteen goal
+                 // literals in this spine exceed 300 chars; both are load-bearing rows.
+                 // The closing quote was also sliced off, so the prompt carried an
+                 // unterminated quoted string. Deliver the authored text whole.
+                 + JSON.stringify(_curMs.event)
                  + (_curMs.requiredTruth ? ((_opContingent
                      ? '\nWAS TO REMAIN TRUE after this scene (verify it still can — a rupture may have changed what is true): '
                      : '\nMUST STILL BE TRUE for the reader after this scene: ') + JSON.stringify(typeof _fscSeedProse === 'function' ? _fscSeedProse(_curMs.requiredTruth, 'requiredTruth') : _curMs.requiredTruth).slice(0, 160)) : '')
@@ -106037,9 +107452,22 @@ function _buildAuthorFloorDirective(s) {
                 }
                 // BEGUN BUT NOT FINISHED.
                 if (_st === 'PARTIAL') {
+                  // ── A REMAINDER IS JUDGED, NOT AUTOMATICALLY OWED (Roman 2026-11-01) ───────
+                  // This already said "carry it from where it stopped, or complete it" — both of
+                  // which assume the remainder MUST be discharged. MEASURED: scenes 10-11 were
+                  // detected PARTIAL and that reached later author requests, so the feedback was
+                  // never missing; what was missing was permission to decide the unfinished part
+                  // no longer mattered. So the planner re-approached the same ground. Nothing new
+                  // is detected here; the existing verdict is given one more question to answer.
                   return '\nPENDING INTENT — PARTIALLY DELIVERED. A prior scene BEGAN this and did not '
-                    + 'complete it. Do not restart it from nothing: carry it from where it stopped, or '
-                    + 'complete it: ';
+                    + 'complete it, and the DEFAULT IS THAT IT IS STILL OWED. It may be dropped only if a '
+                    + 'specific development since then has SUPERSEDED it — name that development. A planned '
+                    + 'action can become unnecessary; a promised payoff does not become unnecessary because '
+                    + 'the earlier scene failed to deliver it, and nothing a reader\'s choice set in motion, '
+                    + 'nor anything canon or a disclosure rule requires, may be dropped at all. Otherwise '
+                    + 'carry ONLY what is actually unfinished — the delivered part is on the page and must '
+                    + 'not be staged again — either as this scene\'s own work or inside a scene doing more. '
+                    + 'Never treat it as already done: ';
                 }
                 // VERIFIED NON-DELIVERY — only for an EXPLICIT supported outcome. The verifier
                 // said MISSED, or the slot check affirmed the event did not occur. Nothing else may
@@ -106063,6 +107491,19 @@ function _buildAuthorFloorDirective(s) {
                   + 'from this line: ';
               })() + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
+            // ── WHAT THE LAST SCENE LEFT OPEN, NAMED AS PRESSURE ────────────────────────────
+            // Only the prior EVENT was passed. The prior scene's closing CHOICE was stored on the
+            // same object and never shown, so the planner could not tell that re-posing it would
+            // repeat an ending rather than create one. It persists as pressure — a reader may
+            // evade a question and the consequences stand — but it is not this scene's new choice.
+            + ((_prevSc && _prevSc.forces_choice)
+                ? ('\nTHE CHOICE THE LAST SCENE CLOSED ON, STILL UNANSWERED: '
+                   + JSON.stringify(String(_prevSc.forces_choice)).slice(0, 220)
+                   + '\n  It REMAINS live pressure and its consequences continue. Do NOT re-pose it as '
+                   + 'this scene\'s forces_choice in substantially the same terms — that would end two '
+                   + 'scenes on the same decision. It may press on the scene, be referred to, harden, or '
+                   + 'cost her something; what it may not be is this scene\'s closing choice again.')
+                : '')
             + ((function () {
                 // ── WHAT THE READER HAS ALREADY READ (2026-10-07) ────────────────────────────
                 // The planner used to get COMMITTED WORLD STATE only, which is fed solely by
@@ -106145,6 +107586,22 @@ function _buildAuthorFloorDirective(s) {
                     ? window._buildTemptFateActiveInvocationDirective({ invoked: _tcInvoked, wishText: _tcWish }, 'planner')
                     : '';
                   return _tfoDurableLine + _tfoActiveLine;
+                } catch (_) { return ''; }
+              })())
+            // ── OUTSTANDING WORK, PUT TO THE PLANNER THAT DECIDES THIS SCENE ────────────────
+            // The existing planner, the existing reply. Empty whenever nothing is owed.
+            + ((function () {
+                try {
+                  if (!_recHandoff) return '';
+                  var _rb = (typeof _renderRecoveryHandoffBlock === 'function')
+                    ? (_renderRecoveryHandoffBlock(_recHandoff) || '') : '';
+                  if (_rb) {
+                    try { console.log('[RECOVERY:HANDOFF] scene ' + _recHandoff.sceneNum + ' · owed '
+                      + _recHandoff.order.join(',') + ' · put to the planner: row '
+                      + _recHandoff.obligation.n + ' (' + _recHandoff.obligation.status + ')'
+                      + ' · ranking "' + _recHandoff.ranking + '" [' + _recHandoff.rankingStatus + ']'); } catch (_) {}
+                  }
+                  return _rb;
                 } catch (_) { return ''; }
               })());
           // ═══ HISTORY REACHES THE PLANNER (Roman 2026-10-03) ═══
@@ -106918,6 +108375,21 @@ function _buildAuthorFloorDirective(s) {
                 + JSON.stringify(_blkEvent).slice(0, 90)); } catch (_) {}
             }
           } catch (_) {}
+          // ── THE RECOVERY KEY SURVIVES A REPLACED SYSTEM PROMPT ─────────────────────────
+          // Three flag-gated alternative planners (_accomplishedEventContract,
+          // _situationDrivenPlanner, _consequenceSelectionPlanner — all opt-in, all default off)
+          // REASSIGN _scSys wholesale while leaving _scUsr intact, so the base schema line above
+          // would be lost while the question below still reached the planner. Asked once more here,
+          // at the single dispatch point, only if the schema does not already carry it.
+          try {
+            if (_recHandoff && _recHandoff.obligation && String(_scSys).indexOf('"recovery"') === -1) {
+              _scSys += '\n\nRECOVERY DECISION (REQUIRED — add ONE more key to your JSON): "recovery":'
+                + ' { "row": ' + _recHandoff.obligation.n + ', "disposition":"incorporate|defer|retire",'
+                + ' "why":"one sentence", "superseded_by":"" }. An outstanding obligation from an'
+                + ' earlier scene is put to you in the context below, with the rules for each'
+                + ' disposition; answer it there.';
+            }
+          } catch (_) {}
           var _scMessages = [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }];
           var _scMinistralAdmission = (typeof _ministral8bGovernorAdmits === 'function') ? _ministral8bGovernorAdmits(_scMessages, _scMaxTok) : { admits: true };
           var _scTiers = [];
@@ -107075,6 +108547,71 @@ function _buildAuthorFloorDirective(s) {
             }
           } catch (_) {}
 
+          // ══ REPETITION DIAGNOSTIC — RECORDED, NEVER ACTED ON ═══════════════════════════════
+          // WHAT THIS USED TO DO AND WHY IT WAS WRONG: it computed a word-overlap score between
+          // the proposed closing choice and the previous scene's, and when the score was high it
+          // REPLACED forces_choice with the scaffold's declared decision. Three faults, all real:
+          //   1. It rewrote forces_choice ALONE. branch_a, branch_b, tactical_move,
+          //      state_change and the event slots all stayed as proposed, so a substituted choice
+          //      could contradict the branches meant to answer it and the event meant to create it.
+          //   2. It ran BEFORE decision_conflict was read, and ignored it — so it could install a
+          //      scaffold decision the planner had just reported inapplicable.
+          //   3. It inferred reader INTENT from two shared words. Two words cannot establish that
+          //      a reader meant to prolong an encounter.
+          // Lexical overlap is a useful SIGNAL and a bad DECIDER. It is now recorded and logged,
+          // and nothing downstream reads it. Reconciling the scaffold decision, the previous
+          // ending and the reader's action is the planner's job, and the inputs for all three now
+          // reach it — see the declared-decision clause and the prior-choice clause above.
+          try {
+            var _fcNow = String(_scP.forces_choice || '').trim();
+            var _fcPrev = String((_prevSc && _prevSc.forces_choice) || '').trim();
+            if (_fcNow && _fcPrev) {
+              // The schema mandates "forces [PC] to choose between A and B", so those words are in
+              // every proposal and carry no information; only the branch content is compared.
+              var _FRAME = { forces: 1, choose: 1, between: 1, choice: 1, scene: 1, whether: 1 };
+              var _pcName = String((s && (s.playerName || s.name)) || '').toLowerCase();
+              var _toks = function (x) {
+                return String(x).toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/)
+                  .filter(function (w) { return w.length >= 4 && !_FRAME[w] && w !== _pcName; });
+              };
+              var _a = _toks(_fcNow), _b = _toks(_fcPrev);
+              var _setB = {}; _b.forEach(function (w) { _setB[w] = 1; });
+              var _hit = 0; _a.forEach(function (w) { if (_setB[w]) _hit++; });
+              var _sim = _hit / Math.max(1, Math.min(_a.length, _b.length));
+              // A LEXICAL OBSERVATION, NOT A READING OF INTENT. Recorded under a name that says so.
+              var _readerTxt = _toks(String(act || '') + ' ' + String(dia || ''));
+              var _readerHit = 0; _readerTxt.forEach(function (w) { if (_setB[w]) _readerHit++; });
+              s._planRepetitionDiagnostic = { at: Date.now(),
+                contentOverlap: Math.round(_sim * 100) / 100,
+                sharedWords: _hit, proposedWords: _a.length, priorWords: _b.length,
+                proposed: _fcNow, prior: _fcPrev,
+                readerWordsSharedWithPriorChoice: _readerHit,
+                declared: (_curMs && _curMs.decision_axis) ? String(_curMs.decision_axis) : null,
+                actedOn: false,
+                note: 'DIAGNOSTIC ONLY. Nothing downstream reads this. Lexical overlap is not '
+                  + 'evidence that a plan is recycling an encounter, and reader word overlap is '
+                  + 'not evidence of reader intent.' };
+              if (_sim >= 0.4) {
+                try { console.log('[PLAN-REPETITION] the proposed closing choice shares '
+                  + Math.round(_sim * 100) + '% of its content words with the last scene\'s ('
+                  + _hit + ' of ' + Math.min(_a.length, _b.length) + '). DIAGNOSTIC ONLY — not '
+                  + 'acted on. The planner was given the declared decision, the prior ending and '
+                  + 'the reader action and is responsible for reconciling them.'); } catch (_) {}
+              }
+            }
+            // decision_conflict is READ AND REPORTED, and nothing overrides it. It is the planner
+            // telling us the scaffold decision no longer fits; the scaffold is not forced, and the
+            // reader is not overruled.
+            if (_scP.decision_conflict && String(_scP.decision_conflict).trim()) {
+              console.warn('[PLAN-DECISION-CONFLICT] the planner reports the declared decision is '
+                + 'inapplicable: ' + String(_scP.decision_conflict).trim().slice(0, 240)
+                + ' — surfaced, and neither the scaffold nor the reader was silently overridden.');
+              s._planDecisionConflict = { at: Date.now(), reason: String(_scP.decision_conflict).trim(),
+                declared: (_curMs && _curMs.decision_axis) || null, proposed: String(_scP.forces_choice || '') };
+            }
+          } catch (_diagErr) {
+            try { console.warn('[PLAN-REPETITION] diagnostic failed: ' + (_diagErr && _diagErr.message)); } catch (_) {}
+          }
           var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0),
             // AFTERMATH LANE MENU (Roman 2026-09-21) — carried so _detectPlannerFunctionGap can check
             // the declared lane against the row's own menu; see _generateLiteraryPlotContract's output
@@ -107261,6 +108798,17 @@ function _buildAuthorFloorDirective(s) {
               state._lastContinuationResult = _ctRes;   // diagnostics for the next harvest/eval
             }
           } catch (_ctpErr) { try { console.warn('[CONTINUATION] handler threw: ' + (_ctpErr && _ctpErr.message)); } catch (_) {} }
+          // ── THE RECOVERY DISPOSITION, FROM THE SAME REPLY ───────────────────────────────
+          // Reads `_scP`, the RAW parsed reply, for the same reason the continuation handler does:
+          // `_stateChange` is built from a fixed whitelist of fields and would drop this key. It
+          // records the decision and NOTHING else — no delivery status is written anywhere, so
+          // planning an incorporation cannot discharge the obligation.
+          try {
+            if (_recHandoff && typeof _acceptRecoveryDisposition === 'function') {
+              _acceptRecoveryDisposition(s, _scP, _recHandoff);
+            }
+          } catch (_recErr) { try { console.warn('[RECOVERY] disposition not recorded: '
+            + (_recErr && _recErr.message)); } catch (_) {} }
           if (_openAccept && _openAccept.ok) {
             s._sceneObjectives = s._sceneObjectives || {};
             s._sceneObjectives[String(_planSceneNum)] = { sceneNum: _planSceneNum, branch: _posture ? _posture.choice : null, postureHash: _posture ? _posture.hash : null, posture_read: _openAccept.posture_read,
@@ -107372,7 +108920,11 @@ function _buildAuthorFloorDirective(s) {
         + '  · region: "opening" or "closing" if this beat IS the scene\'s opening or closing passage, else null.\n'
         + '  · produces: the observable change(s) this beat leaves true afterwards. dependsOn: beats or facts that must already hold.';
       var usr = 'A-plot goal: ' + JSON.stringify(goal).slice(0, 300)
-        + (_v0 ? ('\nCURRENT MILESTONE (strategic anchor — make irreversible progress TOWARD this; do NOT restate it): ' + JSON.stringify(_curMs.event).slice(0, 300)) : '')
+        // Same authored field, same arbitrary cap, so the same clauses were lost here —
+        // including "he is NOT in the room". This handoff is an ANCHOR, not the objective
+        // authority (it is told "do NOT restate it"), so it is not implicated in the measured
+        // scene-4 failure; it is corrected because it can assign hardBeats off the same text.
+        + (_v0 ? ('\nCURRENT MILESTONE (strategic anchor — make irreversible progress TOWARD this; do NOT restate it): ' + JSON.stringify(_curMs.event)) : '')
         + '\nOutstanding relationship milestones: ' + JSON.stringify(milestones).slice(0, 400)
         + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 300)
         + '\n' + (_v0 ? 'Prior scene end-state (CONTINUITY CONTEXT ONLY — not the beat to repeat): ' : 'Where the LAST scene ended: ') + JSON.stringify(sc).slice(0, 400)
@@ -117716,9 +119268,46 @@ LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
     return { valid: violations.length === 0, violations };
   }
 
+  // ── THIS ONE PASS IS DIAGNOSTIC-ONLY (2026-10-30, measured) ───────────────────────────────
+  // Measured in the ten-scene run run_2026-10-30T05-26-53-545Z_70428: this pass appended a
+  // paragraph to scenes 3, 5 and 6, each time on the SAME violation —
+  //   [PASS4] Violations: [MISSING_ARTIFACT: "the presiding Dohkar" not found in scene]
+  // — and the violation was false every time. "presiding Dohkar" occurred exactly once per
+  // scene, INSIDE the paragraph this pass added, while "Dohkar" occurred 6/4/2 times: the
+  // artifact was present and speaking, and the check matches the full label while the prose
+  // uses the short form. The append then satisfied the check by inserting the missing string
+  // ("CLEARED · patched=true"), so the pass cleared its own false violation by writing prose
+  // over a finished ending. See feedback_validators_never_write: a validator that can rewrite
+  // is a competing author.
+  //
+  // WHAT THIS CHANGES: nothing is appended and no correction call is dispatched. The FINDINGS
+  // are untouched, because they are produced by the CALLER, not here — the
+  // `[PASS4] Violations:` warn, `state._pass4Validation` and the `state._pass4Log` entry all
+  // live at the call site (~334945) and still record `triggered: true` with their reasons,
+  // now alongside `patch_applied: false`.
+  //
+  // SCOPE: keyed to this function alone, via its own existing pen switch. Every other
+  // STRUCTURAL_CORRECTION consumer, and every other pen switch, is left exactly as it was —
+  // the role serves other functions and they are not in question here.
+  //
+  // SEPARATE, STILL OPEN: the alias-blind MISSING_ARTIFACT matcher that produced the false
+  // violation. That is an independent fix and is deliberately not made here.
+  try {
+    if (typeof window !== 'undefined') {
+      window._penOff = window._penOff || {};
+      if (window._penOff.applyStructuralCorrection === undefined) {
+        window._penOff.applyStructuralCorrection = true;
+      }
+    }
+  } catch (_) {}
+
   /**
    * Additive structural correction — appends 2-4 sentence fragment to fix violations.
    * Does NOT regenerate the full scene.
+   *
+   * DIAGNOSTIC-ONLY by default (see the note above). The early return below is the whole
+   * behaviour change; the body is retained unmodified so the pass can be re-enabled by
+   * setting window._penOff.applyStructuralCorrection = false.
    */
   async function applyStructuralCorrection(renderedText, strategy, violations) {
   // PEN SWITCH (default ON — no behaviour change). window._penOff.applyStructuralCorrection = true makes this
@@ -136828,7 +138417,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       issue: 1,
       cast: [
         { role: 'PC', name: 'Lirael', species: 'First Favored', nameLock: false, castingTier: 1, // name ADDED 2026-09-13: this starter has no casting line (baked, fixed opening — nameLock:false/"player-named" is stale for this starter specifically), and the delivered prose in starter-scenes.js already fixes her name to "Lirael" throughout; this field makes that existing fact machine-readable instead of leaving it implicit in prose strings only.
-          bio: 'A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself. Brilliant but untested; terrified of failing publicly.',
+          // ADULT STATUS IS STATED, NOT INFERRED (Roman 2026-10-31). "A young apprentice" is an
+          // ambiguity this story can no longer afford: the graduant is now twelve, and the
+          // romance is Lirael's. Her adulthood must be an explicit delivered fact rather than
+          // something a reader or a renderer has to reconstruct from the fifteen-year backstory.
+          bio: 'LIRAEL — AN ADULT WOMAN, fully grown: she made her own First Sacrifice many years ago, trained through a full apprenticeship since, and holds professional charge of a ward. "Young" here means EARLY IN HER CAREER, never young in years — she is never a youth, a teenager or an adolescent, and never rendered or written as one. A First Favored apprentice Sacrificiant. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself. Brilliant but untested; terrified of failing publicly.',
           // The PC carries facets like anyone else — she is the OBSERVED party in a CG panel, an
           // LI-POV edition, or another character's read of her. Her own C+ is pc_opening_fusion.
           cPlusFacets: [
@@ -136840,7 +138433,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               possible_pressures: ['an assembly present', 'a mistake that cannot be quietly corrected'] },
           ] },
         { role: 'LI', name: 'Julian', species: 'First Favored', nameLock: true, castingTier: 1,
-          bio: 'An older First Favored: calm, quietly respected. Already knows something about the PC’s lineage. Present at the ritual only as an observer.',
+          // ADULT STATUS IS STATED, NOT INFERRED (Roman 2026-10-31) — same reason as Lirael's.
+          // "Older" was relative to her and established nothing on its own.
+          bio: 'JULIAN — AN ADULT MAN of middle years, plainly older than Lirael and senior to her in standing: he already held a senior office fifteen years ago. Never written or rendered as a youth. Calm, quietly respected. Already knows something about the PC’s lineage. Present at the ritual only as an observer.',
           // ── C+ FACETS (AUTHORED BY ROMAN, approved 2026-08-27) ──
           // The two drafts these replace were WITHDRAWN and are not coming back: they invented a
           // motive — why he withholds what he knows about her lineage — and that is a canon
@@ -136924,18 +138519,60 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           cPlusForbiddenImplications: [
             { forbid: 'frightened|terrified|overwhelmed|panick\\w+|too young to understand|does not understand what',
               why: 'the poise is the point — a frightened child cannot make the choice this scene turns on' },
+            // ADDED WITH THE AGE CHANGE (Roman 2026-10-31, rite age 16 → 12 for a girl). The C+
+            // engine assigns a psychological angle per scene and the surrounding doctrine is an
+            // adult-romance stack; this forbids the one class of reading that must never be
+            // assigned to the graduant. It is a guard on the READING, not new motive, and it
+            // restates the world truth so the guard exists at both layers.
+            { forbid: 'attract\\w+|allur\\w+|seduc\\w+|desir\\w+ (?:her|for her)|beaut\\w+|lovel\\w+|sensu\\w+|flirt\\w*|coquett\\w*|charm\\w* (?:him|them)|precocious\\w*|knowing beyond her|wise beyond her|budding|blossoming',
+              why: 'she is twelve. She is categorically outside the romance in every mode — no attraction, no allure, no admiring physical register, and never written as knowing or performing beyond her age IN THAT DIRECTION. SCOPE (Roman 2026-10-31): this bars one register and nothing else. Her composure, her intelligence, her trained competence, her vanity, her need to be seen being good and her agency are all still hers to reveal — the "beyond her years" patterns above are barred only as a sexualising read, never as a bar on writing her as capable' },
           ],
-          bio: 'SEREN — the PC\'s ward, making her First Sacrifice after months of rehearsing it with her. POISED, NOT TIMID: she has held her composure through every correction and every failed run-through. Her empathy is REAL but PERFORMED — she needs to be SEEN being good, and asks "are you okay?" first even when she is the one bleeding. That is exactly WHY she abandons her prepared, self-directed wish at the last moment and spends her First Sacrifice on a very public "helping" of the PC instead: not innocence — vanity wearing compassion. Never write her as a frightened, overwhelmed child; the poise is the point, and it is what makes the choice a choice. (Gender LOCKED female so she stays consistent across panels — the render must never flip her to a boy.)' }
+          bio: 'SEREN — TWELVE YEARS OLD, the PC\'s ward, making her First Sacrifice at the customary age for a girl after months of rehearsing it with her. She is a child, she is outside the romance entirely, and nothing in the attraction or intimacy register applies to her in any mode — AND THAT IS THE ONLY THING IT TAKES AWAY. She is a full character: her own wants, her own reasons, her own choices and her own consequences, with real affection in its proper register between her and the adults who are responsible for her. Do not write her as fragile, helpless or merely acted upon, and do not treat her family\'s decisions as though they were hers. POISED, NOT TIMID: she has held her composure through every correction and every failed run-through. Her empathy is REAL but PERFORMED — she needs to be SEEN being good, and asks "are you okay?" first even when she is the one bleeding. That is exactly WHY she abandons her prepared, self-directed wish at the last moment and spends her First Sacrifice on a very public "helping" of the PC instead: not innocence — vanity wearing compassion. Never write her as a frightened, overwhelmed child; the poise is the point, and it is what makes the choice a choice. (Gender LOCKED female so she stays consistent across panels — the render must never flip her to a boy.)' }
       ],
       // WORLD TRUTHS — canon invariants the author must receive and never contradict.
       worldTruths: [
-        'A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.',
+        // THE RITE AGE (Roman 2026-10-31, AUTHORITATIVE — was 16 for everyone). The ages are
+        // SETTLED CUSTOM and the author must not invent a biological or developmental reason for
+        // the difference between them; an invented justification becomes canon the next scene has
+        // to carry. NOTE the scope: the parenthetical below explains why the rite has a FLOOR at
+        // all (pre-existing canon, unchanged) — it is not a reason for the one-year split, and
+        // nothing may be built out of it into one. Roman has NOT decided how the world regards
+        // the split socially, so nothing here asserts that it is or is not argued over.
+        'A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. THE AGE IS FIXED CUSTOM: a girl makes hers at TWELVE, a boy at THIRTEEN. A floor exists because younger minds are too unformed to wish safely; the ONE-YEAR DIFFERENCE between a girl\'s age and a boy\'s comes with no stated reason, and you must not supply one — no biological, developmental or doctrinal justification, in narration or in a character\'s mouth. It is how it is done, and the story is not about why. At the customary age a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.',
         'First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.',
+        // ── THE GRADUANT IS A CHILD, AND IS OUTSIDE THE ROMANCE ENTIRELY (Roman 2026-10-31) ──
+        // WRITTEN DOWN with the age change, NOT created by it. Roman's correction stands on the
+        // record: at sixteen the graduant was a minor too, and the adult sexual-content stack
+        // should never have been able to reach her then either. This block states a rule that was
+        // always true and merely unstated — it is not a concession the age change bought.
+        // It is explicit now because the whole surrounding stack (author, specialist renderers,
+        // CG panel path) carries attraction, embodiment and intimacy doctrine, and inference is
+        // not an acceptable guard in an 18+ application. Hard in EVERY content mode, safe or
+        // otherwise; no scene's heat, Fate card or reader action relaxes it.
+        //
+        // THE SECOND HALF IS LOAD-BEARING TOO (Roman 2026-10-31): the exclusion is SEXUAL AND
+        // ROMANTIC ONLY. It must not be read as licence to thin her out into a prop, a victim or
+        // a bundle of safety constraints. She keeps her motives, her agency, her complexity,
+        // her nonsexual affections and her real relationships, and her seed facets and bio stay
+        // in force unchanged.
+        'THE GRADUANT IS A CHILD AND IS CATEGORICALLY OUTSIDE THE ROMANCE (HARD, ABSOLUTE, EVERY MODE): the youth at the centre of a First Sacrifice is twelve or thirteen. She is NEVER a romantic or sexual subject, never an object of anyone\'s attraction, never described in a way that lingers on her body, and never present in or adjacent to an intimate scene. No attraction beat, body-callback, embodiment directive, desire register, charged glance or "keenly notices" instruction applies to her in any mode, at any heat, for any reason. Describe her the way an adult who is responsible for her would see her: her face, her hair, her bearing, her composure, her costume as coverage, what she says and what she is doing. Her relationship to every adult in the story is professional, familial or custodial. THE ROMANCE OF THIS STORY IS BETWEEN TWO ADULTS — Lirael and Julian — and has nothing to do with her. If any directive elsewhere in a request would put her in an attraction or intimacy frame, that directive does not apply to her and this rule wins.',
+        // The guard above is a guard on ONE register. This truth exists so the guard cannot be
+        // over-applied, which is its own failure mode: a flattened, decorative child.
+        'THAT EXCLUSION IS SEXUAL AND ROMANTIC ONLY — IT IS NOT A THINNING OUT (HARD): write the graduant as a FULL CHARACTER. She has her own wants and reasons, and acts on them; she makes real choices with real consequences, including the one this story turns on; she can be composed, proud, stubborn, ashamed, calculating, generous or wrong; she can love and be loved as a ward, a daughter, a friend. Nonsexual physical affection in its proper register is normal and welcome — a hand held, a child leaning against someone she trusts, being carried when she is hurt. She is not fragile scenery, not a plot device, not a hostage and not a lesson, and she is not spoken ABOUT in place of being allowed to speak. Nor is she automatically responsible for her family\'s decisions, or automatically bound by them: adults decided things around her, and she is her own person inside that.',
+        // ── THE TWO LEADS ARE ADULTS, STATED IN THE ONE CHANNEL THAT ACTUALLY ARRIVES ──────
+        // MEASURED, 2026-10-31: the seed's CAST BIOS reach the CG screenplay prompt but do NOT
+        // reach the literary continuation request — a capture of 22 built prompts contains
+        // neither the old "A young First Favored apprentice" nor the new adult wording. So the
+        // bios alone cannot carry this. `worldTruths` is the channel proven to reach BOTH paths,
+        // which is why the statement is repeated here rather than left to the cast entry.
+        // (The bio/visualCanon gap on the literary path is PRE-EXISTING and is reported as a
+        // separate defect, not patched here.)
+        'THE TWO LEADS ARE ADULTS (HARD, both modes): LIRAEL is an adult woman — she made her own First Sacrifice many years ago and has trained through a full apprenticeship since; where she is called "young" or "an apprentice" that is her STANDING, early in her career, never her age. JULIAN is an adult man of middle years, older than her and senior to her in standing; he already held a senior office fifteen years ago. Neither is ever written, aged down or rendered as a youth, a teenager or an adolescent, and the romance between them is a romance between two adults. The only child in the story is the graduant.',
         'The GRADUANT (the role) is the person making the wish at their own First Sacrifice — the one who pays the sacrifice and speaks the desire. The Sacrificiant officiates and supervises; the Graduant wishes. Use the title only where the ceremonial role matters; otherwise the person is called by name.',
-        'The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. CG: the mouth-band is drawn IN on the supervising Sacrificiant for the duration of the rite.',
+        'The supervisor is a SACRIFICIANT (the role): one whose misalignment-sense is honed enough to supervise (the PC is an apprentice Sacrificiant). THE SACRIFICIANT SEAL — worn by whoever supervises, during ANY official First Sacrifice rite: because a supervisor bolstering the youth’s sacrifice with a wish of their OWN would be a ruinous breach, every Sacrificiant is ceremonially SEALED for the rite — a gossamer BAND drawn across the mouth and tied behind the head (just cloth, part of their ceremonial sash; NO orb, NO bead, NO gag), so they cannot cleanly voice a wish while officiating. Vestments are otherwise the same sheer gossamer as everyone, with ONE ornamented ceremonial SASH (never robes). LITERARY: WHILE THE BAND IS ACROSS HER MOUTH, a sealed Sacrificiant’s cries and speech are MUFFLED behind the cloth — emotion reads through the eyes and body. THE MUFFLING FOLLOWS WHERE THE BAND IS, NOT WHETHER THE RITE IS IN PROGRESS: the seal is unbroken wherever the band sits (it works worn anywhere on the person — the mouth is only where ritual puts it so the family can read it), so if established state says she has lowered it to her throat, she speaks clearly from that point on and nothing here says otherwise. CG: the mouth-band is drawn IN on the supervising Sacrificiant wherever established state currently places it, for the duration of the rite.',
         'ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.',
         'The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.',
-        'Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.',
+        'Youth are barred from wishcraft until their own First Sacrifice — twelve for a girl, thirteen for a boy — but children sneak little illegal wishes all the time, the way children sneak alcohol.',
         'Everyone present is First Favored.',
         // Positive description, for the same reason as the rite-machinery truth below: the writer
         // is told what the world LOOKS like, not handed a list of effects to avoid.
@@ -136954,7 +138591,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // STORY-SPECIFIC (Roman 2026-09-13, split out of FATELANDS_CANON.landmarks.the_open, which
         // stays shared/generic — see the correction note there). This fact belongs ONLY here: it names
         // Lirael, Julian, and her accusation, and must never reach an unrelated Fatelands story.
-        'LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.'
+        'LIRAEL’S FORMAL INQUIRY — WHERE AND WHEN: the presiding Dohkar has asserted the rite and the ruling on the Sacrificiant’s conduct are his, and Julian has publicly claimed authority to convene and preside over a formal inquiry (a Chayr and two Dohkars) into Lirael. When that inquiry is formally convened, it would be held at The Open (the Fatelands’ site for trials, treaties, coronations, and matters of comparable institutional gravity). It is NOT yet convened, and its convening is LATE-ISSUE-1 content, not an early scene’s. Early scenes may carry accusation, preliminary review, political pressure, investigation, concealment, or flight — never the convened inquiry itself, and never a scene staged at The Open before that point.',
+        // STORY-SPECIFIC (Roman 2026-10-31, AUTHORITATIVE CREATIVE DIRECTION). This is the ONE
+        // consolidated statement of the deck's narrative scope, placed beside the inquiry truth
+        // because it answers the same kind of question: WHEN this story's own object is allowed to
+        // matter. It replaces scattered per-row deck mandates rather than adding to them — row 3's
+        // "the already-discovered deck gains consequence" clause was removed when this was written.
+        'THE HEIRLOOM DECK — WHEN IT MATTERS, AND WHEN IT IS FINISHED: Lirael finds her great-grandmother\'s deck by the END of scene 1, coinciding suspiciously with everyone feeling Seren\'s wish untwist. That IS its narrative introduction, complete. Scene 2 may briefly treat the coincidence as grounds for suspicion. AFTER THAT THE OBJECT IS NOT A SUBJECT: no later scene re-discovers it, examines it, displays it, explains the heirloom again, or investigates it — and it is NEVER the mechanism of Julian\'s interference. AND A SHORTER LIST IS BARRED IN EVERY SCENE, THE FIRST TWO INCLUDED, because the scene-1 and scene-2 permission above is a discovery and a brief acknowledgment and nothing wider: the deck is never confiscated, stolen, searched for, demanded or used as leverage, its custody is never disputed or transferred, it is never found tampered with or short a card, and no proceeding, character or beat investigates or questions it. Those are not available early and then closed; they are not available at all. THE PLAYER\'S USE OF IT IS A SEPARATE THING AND CONTINUES NORMALLY: it stays in her possession and remains available for the reader\'s decisions for the rest of the story, which requires no prose attention, no fresh description and no character remarking on it. Characters discussing the deck and the reader using the deck are different acts; only the first is closed. The continuing conflict is Seren\'s wish, Lirael\'s conduct, the consequences and the characters\' motives. THE SAME RULE IN THE VISUAL / SCREENPLAY MODE: it binds screenplay beats, dialogue, captions and visual emphasis equally. No later scene gives the deck a discovery shot, a meaningful close-up, a handling sequence, a confiscation, a missing card, tampering, or a deck-centred line of questioning — and no beat exists in order to show it. Gameplay and UI presentation are NOT affected and stay exactly as they are: the card surface, its labels and the player\'s invocation of it are mechanics, not scene content. Incidental visual continuity is also fine and is NOT a plot beat: the deck may be on her person, in frame, or in her hand because it is hers, with no attention called to it and nobody remarking on it. THE FATHER CLAUSE, BOUNDED: Lirael believing her father took the deck may erode AT the discovery or BRIEFLY in scene 2, and that is its whole life as a deck-adjacent beat. It is NOT a standing exemption for bringing the object back later — after scene 2 her father is pursued through him, through what was paid and through who knew, never through the relic.'
       ],
       // SCENE ONE — the SERIALIZED physical reality of the opening (Roman 2026-07-31). IMMUTABLE story fact,
       // not a creative call: the author RENDERS this, never invents / relocates / reframes it (a drifted
@@ -136969,6 +138612,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // "takes out" or "feels a weight" near a deck mention, and those phrases could belong to
         // any object. A seed that declares nothing keeps the established behaviour exactly.
         ownsGenericFrames: ['deck_discovery'],
+        // ── THE DECK STOPS BEING A SUBJECT AFTER THIS SCENE (Roman 2026-10-31) ──────────
+        // Declared the same way as `ownsGenericFrames`, for the same reason: a per-story
+        // name test is a per-story exception, and the next story would need another one.
+        // A seed that declares nothing keeps the established behaviour exactly.
+        // The number is the LAST scene permitted to treat the object as scene content —
+        // scene 1 discovers it, scene 2 may treat the coincidence once, and that is all.
+        // Read by the CG screenplay directive to withdraw its standing "the deck MAY come
+        // to the FOREGROUND when it is a deliberate PLOT POINT (confiscated, stolen,
+        // searched for, demanded, used as leverage)" exception, which this story closes.
+        // The full statement of the rule is THE HEIRLOOM DECK in `worldTruths`.
+        deckSubjectClosedAfterScene: 2,
         // ── THE PLACE'S IDENTITY, DECLARED (Roman 2026-10-19) ───────────────────────────────
         // `setting` below is a DESCRIPTION: it names dawn, the light, the canopy and the ground,
         // and a later scene in the same clearing at dusk would word it differently. An identity
@@ -137162,15 +138816,23 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // the only outcome left was the assembly turning to look, the second contradicts what
         // actually happened to Lirael's father, and the third confused a DELAYED CONSEQUENCE
         // (lawful, usually the point) with a withheld one.
-        aboutToHappen: "THE OPENING-CRISIS SEQUENCE, IN ORDER — EACH BEAT A SEPARATE EVENT. This sequence may span the opening and its continuation: obey the current scene plan and stop at its player decision; never mark a later beat accomplished before the prose actually delivers it. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like 'the beneficiary was not the wisher' or 'the target had no name' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael registers the misalignment and actual twist, and the Dohkar reacts. The later unexplained straightening and discovery are separate events, not the same instant renamed. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. AND, AT THIS MOMENT AND NOT BEFORE, JULIAN BECOMES CONSEQUENTIAL TO THE PEOPLE AROUND HIM: as the wrongness travels through the assembly, two or three of them look to JULIAN before they look to the presiding Dohkar, and an older First Favored standing near him moves aside to give him the sightline without being asked for it. He holds no office at this rite and claims none. That is OBSERVABLE BEHAVIOUR BY OTHER PEOPLE toward him and it is the ONLY thing it establishes - it says nothing about why he is here, nothing about what he wants, and nothing about anything he has done. Do not let this displace Seren: her rite is still the scene, and his salience rises here because the room turns, not because he acts. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward's rite for your own benefit, because the wish is ABOUT YOU. That is what makes the choice cost something. (6) THE WISH TWISTS FIRST. Lirael's alignment-sense registers the real wrongness, with distinct witnessed reactions from the others; this is not merely a decorative omen or the assembly looking at her. Do not invent a specific harmful twisted fulfilment, an extra price, or a new magical law. At the scene's decision boundary, STOP for the player's choice. In the continuation honour the action actually chosen: tearing away the mouth-band and moving to Seren breaks protocol, but do not assert that breach if the player held the line. (7) AFTER THE TWIST, THE WISH UNEXPECTEDLY STRAIGHTENS; THEN THE LOST DECK IS FOUND. Lirael can register the change in alignment, and others' reactions make their surprise observable. Neither she nor the assembly knows what caused it. The apparent recovery must land before the boon: Lirael feels an unfamiliar weight in the family ceremonial sash she is wearing for the first time and takes out her great-grandmother's tarot deck, lost since her father went and long believed to have gone with him. She did not knowingly bring it and cannot explain finding it now. NOTHING IS CONJURED OR TRANSPORTED: it has lain in an overlooked fold of the stored sash for years. Do not foreshadow her knowing a deck is there before this discovery, narrate a hidden cause, or present the deck as Seren's misalignment simply handing her an object instead of a person. Fate manifests no apparition, vision, burst, or visible effect. (8) THE FAMILY'S ACCUSATION AND DEMAND FOR PUNISHMENT ARE ESSENTIAL, not an optional aftermath lane. Once the twist, unexpected straightening, and discovery have actually been delivered, unnamed voices from Seren's family angrily connect what they witnessed: the wish twisted, then righted itself, and Lirael suddenly found a boon from the sacrifice Seren paid. They accuse her of stealing or turning the wish for herself and demand that she answer for it or be punished. Her broken mouth-band or movement strengthens the charge ONLY if she actually broke protocol. Keep this their accusation, not a narrator-confirmed fact; nobody knows that a second wish was made, much less who made it. Permit brief family outcries as collective dialogue without introducing named or individualised new cast. The Dohkar qualification is at risk through ordinary misattribution and public anger, not a magical law of touch or transfer."
+        aboutToHappen: "THE OPENING-CRISIS SEQUENCE, IN ORDER — EACH BEAT A SEPARATE EVENT. BEATS 1-7 ARE THE OPENING'S OWN WORK AND BEAT 8 IS ITS CONTINUATION'S: obey the current scene plan, stop at its player decision, and never mark a beat accomplished before the prose actually delivers it. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like 'the beneficiary was not the wisher' or 'the target had no name' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael registers the misalignment and actual twist, and the Dohkar reacts. The later unexplained straightening and discovery are separate events, not the same instant renamed. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. AND, AT THIS MOMENT AND NOT BEFORE, JULIAN BECOMES CONSEQUENTIAL TO THE PEOPLE AROUND HIM: as the wrongness travels through the assembly, two or three of them look to JULIAN before they look to the presiding Dohkar, and an older First Favored standing near him moves aside to give him the sightline without being asked for it. He holds no office at this rite and claims none. That is OBSERVABLE BEHAVIOUR BY OTHER PEOPLE toward him and it is the ONLY thing it establishes - it says nothing about why he is here, nothing about what he wants, and nothing about anything he has done. Do not let this displace Seren: her rite is still the scene, and his salience rises here because the room turns, not because he acts. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward's rite for your own benefit, because the wish is ABOUT YOU. That is what makes the moment cost something. It is the PROSE that decides whether she breaks the seal here; it is not the reader's choice, and the reader's choice comes at the end of the scene. (6) THE WISH TWISTS FIRST. Lirael's alignment-sense registers the real wrongness, with distinct witnessed reactions from the others; this is not merely a decorative omen or the assembly looking at her. Do not invent a specific harmful twisted fulfilment, an extra price, or a new magical law. (7) STILL IN THE OPENING, AFTER THE TWIST: THE WISH UNEXPECTEDLY STRAIGHTENS; THEN THE LOST DECK IS FOUND. Lirael can register the change in alignment, and others' reactions make their surprise observable. Neither she nor the assembly knows what caused it. The apparent recovery must land before the boon: Lirael feels an unfamiliar weight in the family ceremonial sash she is wearing for the first time and takes out her great-grandmother's tarot deck, lost since her father went and long believed to have gone with him. She did not knowingly bring it and cannot explain finding it now. NOTHING IS CONJURED OR TRANSPORTED: it has lain in an overlooked fold of the stored sash for years. Do not foreshadow her knowing a deck is there before this discovery, narrate a hidden cause, or present the deck as Seren's misalignment simply handing her an object instead of a person. Fate manifests no apparition, vision, burst, or visible effect. BEATS 1-7 ALL BELONG TO THE OPENING AND THE DECK IS FOUND BEFORE IT ENDS: the straightening everyone feels and the discovery are the opening's last events, and their suspicious coincidence is the whole point of placing them together. ONLY NOW, at the scene's decision boundary, STOP for the player's choice, and the choice is RUN OR REMAIN: she leaves the clearing, or she stays where the assembly can see her and responds. The distortion is over by this point, so do NOT pose it as whether to intervene. Give her no stated motive and no answer — the reader supplies the reason, the feeling and whether she addresses what just happened at all; shame is one available reading and never a requirement. Whether she tore the mouth-band and moved to Seren back at beat (6) is the PROSE's to settle, exactly as the baked opening settles it; in the continuation cite that breach only if the prose actually delivered it, and honour the run-or-remain action actually chosen. THE DECK'S INTRODUCTION IS COMPLETE AT THAT STOP. It is the reader's to use from here on, and it is finished as a subject of the prose: beat (8) may let the family's accusation turn on the coincidence, and after that nothing re-discovers, re-examines, displays, confiscates, disputes the ownership of, tampers with or investigates the object. (8) THE FAMILY'S ACCUSATION AND DEMAND FOR PUNISHMENT ARE ESSENTIAL, not an optional aftermath lane. Once the twist, unexpected straightening, and discovery have actually been delivered, unnamed voices from Seren's family angrily connect what they witnessed: the wish twisted, then righted itself, and Lirael suddenly found a boon from the sacrifice Seren paid. They accuse her of stealing or turning the wish for herself and demand that she answer for it or be punished. Her broken mouth-band or movement strengthens the charge ONLY if she actually broke protocol. Keep this their accusation, not a narrator-confirmed fact; nobody knows that a second wish was made, much less who made it. Permit brief family outcries as collective dialogue without introducing named or individualised new cast. The Dohkar qualification is at risk through ordinary misattribution and public anger, not a magical law of touch or transfer."
       },
       // VISUAL CANON — locked appearance so the author never infers it. Species block =
       // First Favored canon (→ future CANON registry); per-character = seed-specific anchors.
       visualCanon: {
-        'First Favored': ['barefoot', 'gossamer / Veilweave attire (never cloaks or boots) — EVERY First Favored is dressed, adults and children alike; the tunic is the SOLE GARMENT (unlined, nothing beneath it), and in CG the gossamer blooms to soft luminous white over the torso, hips and seat', 'a full head of thick, lush, glossy hair on EVERY one of them (a bald or sparse scalp is a wish-debt tell and belongs only to a character written that way — never the crowd)', 'each figure reads as TWO colours: a saturated exotic skin hue and a clearly different, contrasting or complementary hair hue — no one is a single colour head to toe', 'a MANY-HUED people: across any gathering the skin hues DIFFER from one another — navy, teal, aqua, emerald, violet, amethyst, maroon, ruby, orange, amber, yellow, slate, grey, pearl, obsidian', 'THE CLEARING IS NOT SCENERY. The crimson spiralgrass grows here BECAUSE First Sacrifices have been witnessed on this ground — generations of offerings changed the soil, and the colour is the record. The ritual site has a relationship to Fate; the ground remembers what the assembly is about to do. Every environmental detail must reveal something about Fate, First Favored culture, sacrifice, or history. A detail that only supplies texture (a resin scent, a pleasant light, a drifting sound) is DECORATION and must be cut or given a job. Ask of each one: what does the reader now know that they did not know before?', 'visible Weave-Script on the skin of EVERY First Favored present, background figures included, each in their own colour — but NEVER as decoration or a light effect. Every single time it appears it must SPELL ONE SPECIFIC FEELING belonging to ONE named person: say whose, and what it says. If you cannot name whose feeling it is, leave it off the page. No general flicker, no colour for its own sake, and it NEVER reacts to the wish, the rite, or a misalignment — only to what a person feels', 'strikingly, unmistakably beautiful in the First Favored way'],
-        Julian: ['First Favored (NOT human): a saturated exotic SKIN hue (deep slate-blue) — never a human skin tone', 'LONG black hair, falling well past the jaw to the shoulders — heavy and loose enough to CURTAIN his face when he lowers his head, which is how the concealed / mystery-man framings work; he always has this full head of long dark hair (never shaved, never cropped, never bald)', 'the long black hair CONTRASTS the slate-blue skin — he reads as two colours, never one', 'silver Weave-Script visible on the skin', 'sheer gossamer tunic like every First Favored — NEVER heavy robes, vestments, a mantle, or human clothing, and never bare-chested (even seen from behind: exotic slate-blue skin + silver Weave-Script above the gossamer, not a robed back)', 'small rounded human ears', 'a scar over the left wrist', 'always stands too still'],
-        PC: ['First Favored species canon applies (PC is player-named)', 'officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes)', 'THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; her cries are muffled behind it'],
-        Seren: ['a young GIRL (female — never a boy), consistent across every panel', 'First Favored species canon applies: aqua skin, pale coral hair (a full head of it — the coral CONTRASTS the aqua skin), small rounded ears', 'DRESSED in a gossamer child\'s tunic in every panel — the fabric blooming to soft luminous white over the torso, hips and seat; a child is always fully covered', 'child-of-the-rite: small, kneeling, and COMPOSED — she holds herself well; do not draw or write her as frightened', 'when restored: her WHOLE face on her body (never a disembodied / floating head)']
+        'First Favored': ['barefoot', 'gossamer / Veilweave attire (never cloaks or boots) — EVERY First Favored is dressed, adults and children alike; the tunic is the SOLE GARMENT (unlined, nothing beneath it), and in CG the gossamer blooms to soft luminous white over the torso, hips and seat', 'a full head of thick, lush, glossy hair on EVERY one of them (a bald or sparse scalp is a wish-debt tell and belongs only to a character written that way — never the crowd)', 'each figure reads as TWO colours: a saturated exotic skin hue and a clearly different, contrasting or complementary hair hue — no one is a single colour head to toe', 'a MANY-HUED people: across any gathering the skin hues DIFFER from one another — navy, teal, aqua, emerald, violet, amethyst, maroon, ruby, orange, amber, yellow, slate, grey, pearl, obsidian', 'THE CLEARING IS NOT SCENERY. The crimson spiralgrass grows here BECAUSE First Sacrifices have been witnessed on this ground — generations of offerings changed the soil, and the colour is the record. The ritual site has a relationship to Fate; the ground remembers what the assembly is about to do. Every environmental detail must reveal something about Fate, First Favored culture, sacrifice, or history. A detail that only supplies texture (a resin scent, a pleasant light, a drifting sound) is DECORATION and must be cut or given a job. Ask of each one: what does the reader now know that they did not know before?', 'visible Weave-Script on the skin of EVERY First Favored present, background figures included, each in their own colour — but NEVER as decoration or a light effect. Every single time it appears it must SPELL ONE SPECIFIC FEELING belonging to ONE named person: say whose, and what it says. If you cannot name whose feeling it is, leave it off the page. No general flicker, no colour for its own sake, and it NEVER reacts to the wish, the rite, or a misalignment — only to what a person feels', 'strikingly, unmistakably beautiful in the First Favored way — ON AN ADULT. Applied to a CHILD of the rite this means a lovely, healthy, well-kept child and nothing else: never glamour, never allure, never a framing that invites admiration of her body. It is a species trait, not a licence'],
+        Julian: ['AN ADULT MAN of middle years, drawn and read as such in every panel — visibly older than the PC, never a youth',
+          'First Favored (NOT human): a saturated exotic SKIN hue (deep slate-blue) — never a human skin tone', 'LONG black hair, falling well past the jaw to the shoulders — heavy and loose enough to CURTAIN his face when he lowers his head, which is how the concealed / mystery-man framings work; he always has this full head of long dark hair (never shaved, never cropped, never bald)', 'the long black hair CONTRASTS the slate-blue skin — he reads as two colours, never one', 'silver Weave-Script visible on the skin', 'sheer gossamer tunic like every First Favored — NEVER heavy robes, vestments, a mantle, or human clothing, and never bare-chested (even seen from behind: exotic slate-blue skin + silver Weave-Script above the gossamer, not a robed back)', 'small rounded human ears', 'a scar over the left wrist', 'always stands too still'],
+        PC: ['AN ADULT WOMAN, drawn and read as a grown woman in every panel — never a teenager, never aged down toward the graduant she is supervising. She is the one responsible adult in the frame and must look it',
+          'First Favored species canon applies (PC is player-named)', 'officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes)', 'THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite, at WHATEVER POSITION ESTABLISHED STATE CURRENTLY PLACES IT (across the mouth to begin with; at the throat once she has lowered it); her cries are muffled behind it ONLY while it is across her mouth'],
+        Seren: ['a TWELVE-YEAR-OLD GIRL (female — never a boy), consistent across every panel: read as a child of twelve in face, proportion and bearing, never aged up toward a young woman',
+          'First Favored species canon applies: aqua skin, pale coral hair (a full head of it — the coral CONTRASTS the aqua skin), small rounded ears',
+          // THE COVERAGE RULE IS A COVERAGE RULE, NOT A BODY DESCRIPTION (Roman 2026-10-31). The
+          // species-wide gossamer line names torso, hips and seat because that is where the fabric
+          // must read OPAQUE. On a twelve-year-old that must not be re-read as an instruction to
+          // render or describe those regions, so it is stated here as the constraint it is.
+          'DRESSED in a gossamer child\'s tunic in every panel, FULLY COVERED, always. The fabric reads SOLID OPAQUE WHITE from shoulder to below the knee — that is a coverage requirement and nothing else: her torso, hips and seat are not described, shaped, outlined or drawn through the cloth, and no panel composition frames them. Render her face, hair, hands and posture.', 'child-of-the-rite: small, kneeling, and COMPOSED — she holds herself well; do not draw or write her as frightened', 'when restored: her WHOLE face on her body (never a disembodied / floating head)']
       },
       // TRUTHS — immutable plot facts / secrets. NEVER change. The PLANNER decides, per
       // scene, WHEN (if ever) each becomes known to the PC / the crowd / the reader.
@@ -137242,9 +138904,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           'JULIAN was present at that bargain, failed in his office to make Augar bound the offer, and afterwards wished the SACRIFICE out of the public record at the price of his own attachment to the man. He feels nothing for Augar and remembers everything. He acts in this issue to protect that, not to protect anyone.',
           'LIRAEL has spent years of her own MEMORY on revelation wishes looking for her father — each one answered as an opportunity that then failed to close in an ordinary way. She can no longer clearly recall his face. She wants AN ANSWER, not a person. Scenes may stage the cost of that habit; they must not resolve the search.',
           'THE DECK has been in an overlooked fold of the family\'s stored ceremonial sash for fifteen years, where Augar put it. Lirael wears the sash today for the first time because she officiates today. Nothing conjures, transports or hands it over — the only event is the DISCOVERY, and she is the one who finds it.',
-          "OPENING CAUSAL ORDER — PRIVATE PLANNER KNOWLEDGE: Seren's misalignment makes the wish TWIST; only then Julian secretly counter-wishes to UNTWIST it; the unexpected straightening leads to Lirael discovering the lost deck in the stored family sash. Never collapse these into Seren's twist directly producing the deck. No precise uncorrected harm or new cost is specified. Plan only the next undelivered beats: a stopped opening does not complete its continuation, and an opening that already delivered the recovery or discovery must not repeat them. For this countered wish, the assigned sequence and player-decision boundary take precedence over the generic seven-beat uncountered-wish template. Do not invent an additional harmful fulfilment, cost, or visible magical effect, or disclose the intervention to satisfy that template.",
+          "OPENING CAUSAL ORDER — PRIVATE PLANNER KNOWLEDGE: Seren's misalignment makes the wish TWIST; only then Julian secretly counter-wishes to UNTWIST it; the unexpected straightening leads to Lirael discovering the lost deck in the stored family sash. Never collapse these into Seren's twist directly producing the deck. No precise uncorrected harm or new cost is specified. THE OPENING DELIVERS ALL THREE — twist, straightening, discovery — AND STOPS AFTER THEM; the family's accusation is what it leaves for the continuation. Plan only the next undelivered beats: a stopped opening does not complete its continuation, and an opening that already delivered the recovery or discovery must not repeat them. For this countered wish, the assigned sequence and player-decision boundary take precedence over the generic seven-beat uncountered-wish template. Do not invent an additional harmful fulfilment, cost, or visible magical effect, or disclose the intervention to satisfy that template.",
           "PUBLIC CONSEQUENCE REQUIRED: after the sensed twist, unexplained straightening, and deck discovery have actually reached the page, Seren's unnamed family voices angrily accuse Lirael of stealing the wish for her own boon and demand punishment. Their evidence is the sequence they witnessed, the benefit she holds, and any protocol breach she actually committed. This accusation is required across aftermath lanes, but its claimed cause remains an accusation, not confirmed knowledge. Nobody knows or suspects Julian's counter-wish before the existing sealed reveal; the planner knowing it does not make any character know it.",
-          'CONSEQUENCES AVAILABLE TO PLAN WITHOUT EXPOSING THE SOLUTION: the inquiry and the deck\'s contested provenance; Julian saying more than he means and paying for it in standing; Lirael\'s belief that her father took the deck beginning to erode; and the first hint that no bargain was ever recorded against anyone. Each is a consequence of the hidden causes and discloses none of them.',
+          // "the deck's contested provenance" was removed 2026-10-31: it invited exactly the custody
+          // dispute the deck direction closes. The remaining lanes are people and consequences, which
+          // is where this story's conflict belongs. Her eroding belief about her father stays — that is
+          // the FATHER mystery and her own motive, not an inquiry into the object.
+          'CONSEQUENCES AVAILABLE TO PLAN WITHOUT EXPOSING THE SOLUTION: the inquiry into Lirael\'s conduct; Julian saying more than he means and paying for it in standing; Lirael\'s belief that her father took the deck beginning to erode — AVAILABLE AT THE DISCOVERY OR BRIEFLY IN SCENE 2 AND NOT AFTER, never as a reason to bring the object back into a later scene; and the first hint that no bargain was ever recorded against anyone. Each is a consequence of the hidden causes and discloses none of them. Do NOT route a consequence through the deck as an object — its provenance, custody, condition and contents are not available plot material (see THE HEIRLOOM DECK in the world truths).',
           { untilScene: 15,
             text: 'WHILE THE REVEAL IS STILL SEALED (scenes 1-15): do not plan Augar appearing, being found, being named or being recovered, and do not plan Julian\'s intervention being witnessed, suspected or confessed. THIS IS A SCHEDULE, NOT A PERMANENT BAN — the sealed event unseals at scene 16 and this instruction stops applying then.' },
           { fromScene: 16,
@@ -137271,8 +138937,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           { untilScene: 2,
             text: "OPENING CRISIS — PRIVATE AUTHOR KNOWLEDGE: Seren's wish twists FIRST. Only afterwards Julian secretly counter-wishes to untwist it; the change leads to discovery of the deck already in the sash. The page must deliver the sensed twist, then the unexplained straightening, then the discovery, as distinct events when due under the scene plan and player choice. Do not narrate, hint, or let anyone identify Julian's counter-wish. Read committed history: preserve already-delivered events, finish only missing beats, and do not treat a planned future event as completed. Before discovery, Lirael believes her father took the family deck. For this countered wish, the assigned sequence and player-decision boundary take precedence over the generic seven-beat uncountered-wish template. Do not invent an additional harmful fulfilment, cost, or visible magical effect, or disclose the intervention to satisfy that template." },
           'POV: first person, Lirael, bounded by her senses and her knowledge. She perceives ALIGNMENT, not thoughts, emotions or facts — a trained sense that something does not point at one truth. She cannot read Julian and must not be given information she has no way to have. This one does not expire: it is a POV rule, not a secret.',
-          { untilScene: 2,
-            text: "UNTIL THE DISCOVERY IS ACTUALLY DELIVERED: the deck is in the old family sash but Lirael does not know it. She wears this sash for the first time today. Establish the sash as the ceremonial weight she tightens for composure, not an already-recognised deck, container, pocket, or suspicious fold. Let the unfamiliar object become perceptible at the discovery after the wish straightens. After it has been found, preserve that knowledge and never replay the reveal." },
+          // WINDOW CLOSES AT SCENE 1 (Roman 2026-10-31): the discovery now lands inside the opening,
+          // so a window reaching into scene 2 would tell that author the deck is still unfound after
+          // she has it in her hand. The note is unchanged; only its expiry moves.
+          { untilScene: 1,
+            text: "UNTIL THE DISCOVERY IS ACTUALLY DELIVERED — WHICH IS BEFORE THIS OPENING ENDS: the deck is in the old family sash but Lirael does not know it. She wears this sash for the first time today. Establish the sash as the ceremonial weight she tightens for composure, not an already-recognised deck, container, pocket, or suspicious fold. Let the unfamiliar object become perceptible at the discovery after the wish straightens. After it has been found, preserve that knowledge and never replay the reveal." },
           { untilScene: 15,
             text: 'DISCLOSURE WINDOW, SCENES 1-15 — WHAT LIRAEL DOES NOT YET KNOW, SO THE READER DOES NOT EITHER: her father is simply GONE, cause unknown. Within this window do not write, imply or hint that he is alive, that a bargain was made for her, that Julian was present at it, that Julian concealed anything, or that Julian wished anything at the rite. Also do not narrate Fate\'s verdict or name which word bent as an authorial explanation — that is a design note, not prose. THIS WINDOW CLOSES AT SCENE 16; it is a schedule, not a permanent prohibition, and it binds only what the READER may be told, never what you may know.' },
           { fromScene: 16,
@@ -137462,7 +139131,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         // Lirael's response. Julian's hidden counter-wish produces the subsequent straightening
         // and discovery. The family infers theft from that observed sequence and actual conduct.
         // This countered wish has no separately specified harmful fulfilment to invent or stage.
-        { n: 1, kind: 'independent', goal: "THE WISH AND THE FIRST TWIST. Scene 1 establishes the personal crisis and stops for the player's decision before the recovery and discovery. IN THIS ORDER: (A) The presiding Dohkar calls for the cost first. (B) Seren names her offering aloud as dialogue — her earliest memory — and the assembly settles. (C) She looks at Lirael, abandons the rehearsed wish, and says: 'so that Lirael may find the one she lost.' She wants the assembly to see her compassion and blurs the wording rather than naming Lirael's wound. (D) The misaligned wish actually TWISTS. Lirael senses it through alignment; individual witnessed reactions register the same wrongness. Do not substitute a decorative omen or the assembly merely looking at her, invent a precise harmful outcome, or use omniscient group narration. (E) Lirael understands what intervening will look like because the wish is about her. STOP ON THE PLAYER DECISION: tear the gossamer band away and go to Seren, or hold the line. The unexpected straightening, deck discovery, and family accusation belong after that decision; do not mark them completed here.",
+        { n: 1, kind: 'independent', goal: "THE WISH, THE TWIST, THE RECOVERY AND THE DECK. Scene 1 establishes the personal crisis AND delivers the unexplained recovery and the deck's discovery before it stops for the player's decision. IN THIS ORDER: (A) The presiding Dohkar calls for the cost first. (B) Seren names her offering aloud as dialogue — her earliest memory — and the assembly settles. (C) She looks at Lirael, abandons the rehearsed wish, and says: 'so that Lirael may find the one she lost.' She wants the assembly to see her compassion and blurs the wording rather than naming Lirael's wound. (D) The misaligned wish actually TWISTS. Lirael senses it through alignment; individual witnessed reactions register the same wrongness. Do not substitute a decorative omen or the assembly merely looking at her, invent a precise harmful outcome, or use omniscient group narration. (E) Lirael understands what intervening will look like because the wish is about her. (F) THE WISH UNEXPECTEDLY STRAIGHTENS and every First Favored present feels it; nobody knows why. (G) IN THAT SAME MOMENT Lirael feels an unfamiliar weight in the family sash she is wearing for the first time and takes out her great-grandmother's deck, lost since her father went. She did not knowingly bring it and cannot explain finding it now; nothing is conjured or transported. The COINCIDENCE of (F) and (G) is the point, and it is why they share a page. (H) STOP ON THE PLAYER DECISION, WHICH THE DISCOVERY HAS JUST CREATED — she is standing in front of a full assembly holding a boon she cannot account for, at the rite she was supervising: leave the clearing, or remain where they can all see her and respond. The family's accusation is the continuation's beat and is NOT delivered here, so the pressure she answers is the room's attention, not a charge already laid. Do NOT write her reason, her feeling or her answer — no shame, no confession, no explanation of the deck — and do not resolve it. Whether she broke the seal earlier is the prose's to settle, not the player's. The deck's introduction IS completed here, and nothing later returns to it as a subject.",
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // ── AUDITED OWNERSHIP METADATA (2026-09-01) ──
       // Classification: DETERMINISTICALLY ATTRIBUTABLE. The goal above sequences beats and names
@@ -137492,11 +139161,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                          { ref: 'pc:lirael',  role: 'target',  label: 'Lirael' }] },
       ],
       presentGroups: ['assembled First Favored family and guests (unnamed collective; brief reactive speech permitted, no new individualised cast)'],
-      requiredTruth: "Seren is sympathetic AND wrong. Her misaligned wish has actually begun to twist; the countering, unexplained recovery, and deck discovery have not yet been delivered in this planned scene. Lirael has not said aloud why the wish matters to her.",
+      // DECK TIMING (Roman 2026-10-31, AUTHORITATIVE): the discovery belongs to the OPENING, not to
+      // its continuation. The tested manuscript delayed it to scene 2, which is the violation this
+      // corrects — the suspicious coincidence between everyone feeling the wish untwist and Lirael
+      // finding the relic only lands if both happen on the same page. The family's accusation stays
+      // in the continuation; it is the discovery that moves, and it moves BEFORE the player decides.
+      requiredTruth: "Seren is sympathetic AND wrong. Her misaligned wish has actually begun to twist. By this scene's end the unexplained recovery and the deck's discovery have ALSO been delivered, in that order, and their coincidence is suspicious on its face; the family's accusation has not. Lirael has not said aloud why the wish matters to her.",
       player_decision_required: true,
-      decision_axis: 'intervene (tear the band, go to Seren) vs remain_bound (hold the line she was told to hold)',
-      decision_consequence: "The chosen action MUST alter how Lirael is judged when the recovery and boon arrive and what she can learn afterwards. Cite a broken band or movement only if actually chosen. Do not resolve the recovery or discovery before the player decides.",
-      exitState: "DELIVERED: Seren spoke the wish and Lirael sensed it twist, with observable reactions. PENDING: Lirael must choose whether to break protocol for Seren or hold the line. The unexplained recovery, deck discovery, and family accusation have not been completed by this planned opening." },
+      // ── THE CLOSING CHOICE, RECONCILED (Roman 2026-10-31) ───────────────────────────
+      // This was `intervene (tear the band, go to Seren) vs remain_bound`, a choice about
+      // stopping a distortion. Once the discovery moved inside the opening, that distortion
+      // is already over by the time the reader is asked — the wish has straightened and the
+      // deck is in her hand — so the old axis asked about a situation that no longer exists.
+      // The replacement is NOT a new invention: it is the axis the BAKED opening already
+      // records (`emitted.axes.microDecision` = run vs remain, `displacingChoices: ['run']`),
+      // and the keys row 4's `routes` have always expected. The generated path now converges
+      // on it. Whether she broke the seal mid-rite is settled by the prose, the way the baked
+      // page settles it, and later scenes cite it only if the prose actually delivered it.
+      // NO MOTIVE IS PRESCRIBED: the reader supplies the reason, the feeling and whether she
+      // answers the accusation at all. Shame is one available reading, never a requirement,
+      // and neither branch is a confession.
+      decision_axis: 'run (leave the clearing) vs remain (stay where the assembly can see her and respond)',
+      decision_consequence: "The chosen action MUST alter how Lirael is judged and what she can learn afterwards; 'run' displaces the scheduled next beat rather than becoming a mood. Cite a broken band or movement only if the prose actually delivered it. The recovery and the discovery are NOT the player's to decide and are not withheld for the decision: deliver both, then stop. DO NOT PRESCRIBE HER MOTIVE OR HER FEELING — not shame, not defiance, not guilt — and do not require her to explain the deck, admit anything, or answer the accusation at all. Both branches are live actions, not postures: leaving is a thing she does in front of them, and remaining is standing in it.",
+      exitState: "DELIVERED: Seren spoke the wish, Lirael sensed it twist, the wish unexpectedly straightened where everyone could feel it, and Lirael found her great-grandmother's deck in the stored family sash — the last two coinciding suspiciously and unexplained. PENDING: Lirael must choose whether to break protocol for Seren or hold the line. The family's accusation has not been completed by this planned opening. The deck's introduction IS complete: from here it is the reader's instrument, not a subject the prose returns to." },
     // ── OPEN ROW (Roman 2026-09-11): nobody pre-writes Scene 2. The seed owns the immutable aftermath (the baked
     // package's emitted record) and the long arc (reservedEvents on later rows); the reader's recorded end-of-opening
     // choice plus their exact Say/Do owns the immediate posture; the scene-spine planner derives ONE bounded local
@@ -137506,9 +139193,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     { n: 2, objective: 'reader', aftermathSource: 'baked_emitted',
       kind: 'conditional',
       causalLink: 'therefore',
-      followsFrom: "Continue the events and player conduct actually delivered in scene 1. The planned opening stops after the sensed twist at the intervene/hold decision; a baked or previously delivered opening may already include later events. Complete only missing beats in the authoritative order — twist, unexplained straightening, deck discovery, family accusation — and never replay or invent a completed event.",
+      followsFrom: "Continue the events and player conduct actually delivered in scene 1. The planned opening delivers the twist, the unexplained straightening and the deck's discovery, then stops at the intervene/hold decision; the family's accusation is the beat it leaves. Complete only missing beats in the authoritative order — twist, unexplained straightening, deck discovery, family accusation — and never replay or invent a completed event. THE DECK IS DONE BEING A SUBJECT after this scene: its discovery is scene 1's, and this scene is the LAST one permitted to make anything of it, briefly, as grounds for suspicion — see THE HEIRLOOM DECK in the world truths.",
       setsUp: 'Lirael\'s standing is at risk and the cost of the wish is still uncounted.',
-      constraints: ['NO new mystery', 'NO new named character', 'NO new lore'],
+      constraints: ['NO new mystery', 'NO new named character', 'NO new lore',
+        'THE DECK CLOSES HERE — one brief treatment of the untwist/discovery coincidence as grounds for suspicion is allowed, and that is the last of it; it stays in her possession for the reader to use, and no later scene makes it a subject again'],
       vectors: [
         'Lirael goes on the offensive against Julian for what his accusation called her',
         'Lirael smiles and turns it back on him: Julian confessed to more than he meant to — he implied she was so alluring that others could not help trying to please her',
@@ -137521,7 +139209,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // The planner keeps these history-sensitive invariants; a planned or baked event is not
       // automatically accomplished in a generated opening. Preserve it only if actually delivered.
       aftermathTruths: [
-        { id: 'twist_manifested', text: "Seren's misalignment causes the wish to twist FIRST. Preserve the twist if the preceding prose delivered it; otherwise it is the first missing beat, not a retroactive assertion. Next comes an unexplained straightening, then discovery of the lost deck, then family accusation and demands for punishment. Complete only missing beats in that order; never re-stage a delivered discovery or identify Julian's hidden intervention." },
+        { id: 'twist_manifested', text: "Seren's misalignment causes the wish to twist FIRST. Preserve the twist if the preceding prose delivered it; otherwise it is the first missing beat, not a retroactive assertion. Next comes an unexplained straightening, then discovery of the lost deck — both of which the planned opening delivers before it stops — then family accusation and demands for punishment, which is this scene's. Complete only missing beats in that order; never re-stage a delivered discovery or identify Julian's hidden intervention." },
         { id: 'interrogation_interrupted', text: "If the preceding prose delivered Julian questioning Lirael intimately before the assembly and the Dohkar interrupting him, preserve those events and do not replay them. If it did not, neither event is already true: do not manufacture a prior interrogation, interruption, or run/stay choice merely because a baked opening contains them. The reader's actual preceding choice governs." },
         { id: 'the_answer_institutional', text: "The Answer belongs to the Institution and Julian is its caretaker; it is not Lirael's. Whether it has been shown or physically handed to her for questioning depends on committed prose. Do not invent a completed handover." },
         { id: 'inquiry_authority_claimed', text: "Preserve any authority claim or demand for a formal inquiry actually spoken in the preceding scene, but do not declare unspoken claims accomplished. The formal inquiry is not open; its convening, membership, date, and terms remain reserved for the later planned scene. An early demand for review or punishment is not a constituted inquiry." },
@@ -137547,7 +139235,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       player_decision_required: true,
       decision_axis: 'claim the interference openly vs let the assembly keep its assumption',
       decision_consequence: 'Whatever the player chose in scene 1 must be VISIBLE here — different witnesses, different judgement, different information available. If this scene reads the same either way, the choice was decorative.',
-      exitState: "DELIVERED by this scene's end: the wish twisted, unexpectedly straightened, and Lirael found the lost deck; the family accused her of wish theft and demanded punishment. Their explanation is unproven and Julian's role unknown. NEW PROBLEM: Lirael's standing is at risk and Seren's offered cost has not yet been accounted for.",
+      exitState: "DELIVERED by this scene's end: the wish twisted, unexpectedly straightened, and Lirael found the lost deck (the first three belong to the opening); the family accused her of wish theft and demanded punishment. Their explanation is unproven and Julian's role unknown. NEW PROBLEM: Lirael's standing is at risk and Seren's offered cost has not yet been accounted for — and the question from here is her conduct, Seren's wish, the consequences and the motives behind them, never the object.",
       // REQUIRED SCENE FUNCTION (Roman 2026-09-20) — grounded in this SAME row's own exitState above
       // and the seed's own worldTruths ("LIRAEL'S FORMAL INQUIRY — WHERE AND WHEN": early scenes may
       // carry "accusation, preliminary review, political pressure, investigation, concealment, or
@@ -137745,7 +139433,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     { n: 3, kind: 'independent', causalLink: 'therefore',
       followsFrom: 'Lirael\'s standing is at risk after the aftermath of scene 2, and the cost of Seren\'s wish has still not been counted.',
       setsUp: 'The price has landed, a new irreversible pressure is in play, Julian\'s position has shifted, and the player stands at a threshold Lirael does not cross for them.',
-      goal: 'THE PRICE AND THE THRESHOLD — after the recovery, discovery, and accusation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The already-discovered deck gains consequence and the temptation sharpens; do not find or introduce it a second time. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
+      goal: 'THE PRICE AND THE THRESHOLD — after the recovery, discovery, and accusation. IN THIS ORDER: (A) The sacrifice is taken or identified — the offered MEMORY, expressed in the memory\'s own domain, never a faculty Seren did not offer. It lands only now, after the audience understands the twist, so cost is never confused with warp. (B) A NEW irreversible pressure arrives; this scene may NOT restage scene 2\'s accusation. (C) Julian\'s position shifts — a constraint, a knowledge, or a limit that changes what he is to her. (D) The temptation sharpens — through what the price has cost Seren and what Lirael now stands to lose. (E) STOP at the threshold. Lirael does NOT choose. The player does.',
       participants: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
       // MIGRATED B: same room, same people; the beats are contingent on the Scene-1 choice and
       // on the price the rite exacts, so no act is authorable as a fact here either.
@@ -139590,10 +141278,34 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         });
       });
     } catch (_) {}
-    // current custody = the last link; the chain above it is the history that cannot be erased
+    // ── CURRENT CUSTODY IS SELECTED FROM SUPPORTED LINKS ONLY (2026-10-30) ─────────────────
+    // THE DEFECT THIS FIXES: this used to take the LAST link in the chain, whatever its
+    // provenance — and the chain is quotedItems.concat(summaryItems). So a transfer the
+    // admission stage had already DEMOTED to summary-only, because its quotation could not be
+    // found in the published prose, still became `lastKnown` whenever it sorted last. The
+    // renderer then printed it under "WHERE THINGS ARE — last established custody or location",
+    // with nothing but a trailing ", the author's account, no quotation" to mark it. An
+    // unsupported claim could therefore overwrite an EARLIER, QUOTE-BACKED location.
+    //
+    // Demotion to summary was never sufficient on its own, and the removed-transfer control that
+    // only asserted "0 quote-backed, 2 summary-only" did not test this at all.
+    //
+    // NOW: `lastKnown` is the latest link that is quote-backed AND not superseded. Unsupported
+    // links are KEPT — they are not deleted, and they stay available as explicitly unverified
+    // claims — but they can neither become `lastKnown` nor displace a supported location. An
+    // object with no supported link at all reports `lastKnown: null`, which the renderers state
+    // as "no established location" rather than presenting a claim as established.
     var objects = Object.keys(custody).map(function (k) {
-      var e = custody[k], last = e.chain[e.chain.length - 1];
-      return { object: e.object || k, lastKnown: last, priorChain: e.chain.slice(0, -1), scenes: e.chain.length };
+      var e = custody[k];
+      var supported = e.chain.filter(function (l) { return l && l.quoteBacked && !l.superseded; });
+      var unsupported = e.chain.filter(function (l) { return !l || !l.quoteBacked || l.superseded; });
+      var last = supported.length ? supported[supported.length - 1] : null;
+      return { object: e.object || k,
+        lastKnown: last,
+        priorChain: supported.slice(0, -1),
+        unverified: unsupported,
+        scenes: e.chain.length,
+        hasEstablished: !!last };
     });
     return { objects: objects, knowledge: knowledge, turning: turning };
   }
@@ -139812,10 +141524,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           lines.push('  WHERE THINGS STAND NOW (current state — a later scene may change any of'
             + ' this; until one does, it holds):');
           durable.objects.slice(0, 8).forEach(function (ob) {
+            if (!ob.lastKnown) {
+              // NO SUPPORTED LOCATION. The claims are reported as claims, never as current state.
+              lines.push('    • ' + String(ob.object) + ': NO ESTABLISHED LOCATION — '
+                + ob.unverified.length + ' unverified claim(s) about it exist and none could be '
+                + 'confirmed against the published prose. Do not treat any of them as where it is.');
+              return;
+            }
             lines.push('    • ' + String(ob.object) + ': '
               + String(ob.lastKnown.text || '').slice(0, 140) + _prov(ob.lastKnown)
               + (ob.priorChain.length ? '  (earlier locations are listed below and remain true as'
-                + ' history)' : ''));
+                + ' history)' : '')
+              + (ob.unverified.length ? '  [' + ob.unverified.length + ' later claim(s) could not'
+                + ' be confirmed against the prose and do NOT change this]' : ''));
           });
         }
         if (open.length) {
@@ -139835,14 +141556,29 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           + ' with age. An object stays where it was last put until a later scene actually moves'
           + ' it; do not return it to someone\'s possession for convenience.]');
         durable.objects.forEach(function (ob) {
+          if (!ob.lastKnown) {
+            lines.push('  - ' + String(ob.object) + ': NO ESTABLISHED LOCATION. '
+              + ob.unverified.length + ' claim(s) were made about it and none could be confirmed '
+              + 'against the published prose, so none of them is where it is:');
+            ob.unverified.slice(0, 4).forEach(function (c) {
+              lines.push('      [UNVERIFIED CLAIM, not established] scene ' + c.scene + ' — '
+                + String(c.text || '').slice(0, 140));
+            });
+            return;
+          }
           lines.push('  - ' + String(ob.object) + ': ' + ob.lastKnown.text
             + ' (established scene ' + ob.lastKnown.scene
-            + (ob.lastKnown.quoteBacked
-              ? ', the author\'s account with a quotation found in the scene'
-              : ', the author\'s account, no quotation') + ')');
+            + ', the author\'s account with a quotation found in the scene)');
           if (ob.priorChain.length) {
             lines.push('      earlier in this object\'s history, still true as history: '
               + ob.priorChain.map(function (c) { return 'scene ' + c.scene + ' — ' + c.text; }).join(' | '));
+          }
+          if (ob.unverified.length) {
+            // KEPT AND LABELLED. A later claim that could not be confirmed is shown so the author
+            // is not told the object was never mentioned again — but it does not move the object.
+            lines.push('      later claim(s) about this object that could NOT be confirmed against'
+              + ' the prose, and which therefore do NOT move it: '
+              + ob.unverified.map(function (c) { return 'scene ' + c.scene + ' — ' + c.text; }).join(' | '));
           }
         });
       }
@@ -142140,9 +143876,53 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               stateChange: ps.exitState || ps.state_change || null, source: 'plan-scene' };
       }
     } catch (_) {}
+    // ── THE GENERATED OUTLINE ROW IS AN ASSIGNMENT SOURCE (Roman 2026-10-31) ──────────────
+    // MEASURED DEFECT (_nf_plan_delivery_probe.mjs): a generated scene row reached the AUTHOR
+    // under "THIS SCENE'S PURPOSE … HARD — this is the scene's ASSIGNMENT, not background",
+    // while this selector never read the generated outline at all. With no authored row the
+    // assignment fell through to `_sceneMissionCurrent` — a scene-1 protagonist INTENT — and the
+    // planner and the author were handed different events for the same scene.
+    //
+    // PRECEDENCE IS UNCHANGED. The authored plan row above still wins; this sits BELOW it and
+    // ABOVE the mission. It reads _resolveIssueOutline, which itself implements "authored plan
+    // row > generated spine row", so routing through it cannot overturn an authored row. A row
+    // the resolver has WITHHELD (already-delivered canon) carries no `accomplishes` and is
+    // skipped here, and an `overturned` row is skipped rather than assigned.
+    if (!a) {
+      try {
+        var _rioFn = (typeof _resolveIssueOutline === 'function') ? _resolveIssueOutline : window._resolveIssueOutline;
+        var _rio = _rioFn ? _rioFn(s, { sceneNumber: sceneNum }) : null;
+        var _orow = (_rio && Array.isArray(_rio.scenes))
+          ? _rio.scenes.filter(function (r) { return r && r.n === sceneNum; })[0] : null;
+        if (_orow && String(_orow.accomplishes || '').trim()
+            && _orow.delivery !== 'committed' && _orow.kind !== 'overturned') {
+          a = { event: String(_orow.accomplishes).trim(), setting: null, participants: null, props: null,
+                stateChange: _orow.changes || null,
+                // THE BRANCH CONSEQUENCE TRAVELS WITH THE EVENT. Without this the planner gets
+                // the convergence point and not what the reader's route makes her carry into it.
+                activeRoute: _orow.activeRoute || null,
+                followsFrom: (_orow.follows_from && _orow.follows_from.text) || null,
+                setsUp: _orow.sets_up || null,
+                source: 'issue-outline' };
+        }
+      } catch (_) {}
+    }
     if (!a) {                                   // CORRIDOR: the planner's own per-scene mission
       try {
+        // STALE OPENING INTENT CANNOT BECOME A LATER SCENE'S ASSIGNMENT (Roman 2026-10-31).
+        // `_sceneMissionCurrent` has exactly ONE writer (the Scene-1 planner, ~app.js:297448) and
+        // is never cleared, so the probe measured the scene-1 intent "Supervise the First
+        // Sacrifice without intervening until the wish twists" being assigned at scenes 5 AND 6.
+        // It is now accepted only for the scene it was produced for. On a save written before
+        // that field existed, scene 1 is the only scene it could have described.
+        var _mScene = Number(s._sceneMissionForScene || 0);
+        var _mOK = _mScene ? (_mScene === sceneNum) : (sceneNum === 1);
         var m = s._sceneMissionCurrent || s._scene1Mission || null;
+        if (m && String(m).trim() && !_mOK) {
+          try { console.log('[SCENE-ASSIGNMENT] scene ' + sceneNum + ': the stored scene mission was'
+            + ' produced for scene ' + (_mScene || 1) + ' — NOT used as this scene\'s assignment'); } catch (_) {}
+          m = null;
+        }
         if (m && String(m).trim()) a = { event: String(m).trim(), setting: null, participants: null,
                                          props: null, stateChange: null, source: 'scene-mission' };
       } catch (_) {}
@@ -142168,6 +143948,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (!a.participants.length) a.participants = null;
     }
     a.sceneNumber = sceneNum;
+    // THE RECOVERY DISPOSITION TAKEN FOR THIS SCENE, carried on the assignment itself so every
+    // consumer of the one normalization boundary sees the same decision. It is an ANNOTATION: it
+    // never changes `a.event`, and it discharges nothing.
+    try {
+      a.recovery = (typeof _recoveryDecidedAt === 'function') ? (_recoveryDecidedAt(s, sceneNum)[0] || null) : null;
+    } catch (_) { a.recovery = null; }
     try { console.log('[SCENE-ASSIGNMENT] scene=' + sceneNum + ' source=' + a.source
       + ' setting=' + JSON.stringify(a.setting || null) + (a._settingInferred ? '(inferred)' : '')
       + ' event="' + String(a.event).slice(0, 90) + '"'); } catch (_) {}
@@ -142435,6 +144221,44 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   //   written_unassessed    — prose exists for this ordinal; nothing has checked it.
   //   not_written           — no record this scene was produced.
   function _outlineDeliveryStatus(s, n, ev, sceneNow) {
+    // ── A ROW CAN BE COMPLETED AFTER ITS OWN SCENE (Roman 2026-11-03) ───────────────────────
+    // Every branch below reads evidence bound to scene n ALONE: facts whose sealed proposal
+    // carries that scene number, and that scene's own frozen verdict. Both stop changing the
+    // moment the scene is written, so a row left outstanding could never afterwards be credited —
+    // not by a later scene that genuinely finished it, and not by anything else. That is one half
+    // of why the owed set could only grow; the other half is that the next scene's assignment is
+    // chosen by ordinal and never re-offers an earlier row.
+    //
+    // THE ONLY THING ADMITTED HERE is an ACCEPTED post-prose assessment of a LATER scene that
+    // names THIS row's milestone — the same record type, the same accept gates (verbatim evidence
+    // against that scene's prose, named participants, stated scope, not stale) and the same
+    // invalidation (it drops the moment the prose it was read from is revised) as the early-
+    // delivery credit that was already honoured. Nothing is inferred and nothing is retired: a row
+    // that was not finished is still owed, exactly as before.
+    var _late = null;
+    try {
+      _outlineAcceptedAssessments(s, '_milestoneDeliveries').forEach(function (r) {
+        if (!r || Number(r.milestoneScene) !== Number(n)) return;
+        if (!(Number(r.atScene) > Number(n))) return;          // early delivery is credited below
+        if (!_late || Number(r.atScene) < Number(_late.atScene)) _late = r;   // the FIRST scene that finished it
+      });
+    } catch (_) {}
+    if (_late) {
+      var _lOwn = (ev.byProposalScene[n] || []);
+      var _lEv = Array.isArray(_late.evidence) ? _late.evidence.join(' … ') : String(_late.evidence || '');
+      return { status: 'committed',
+        // The row's own scene's committed facts stay listed as the verified ones, so the already-
+        // delivered part is still named as established and is not re-staged.
+        verifiedFacts: _lOwn.map(function (f) { return { text: String(f.fact || ''), ref: f.proposalRef || null }; }),
+        lateCredit: { atScene: Number(_late.atScene), evidence: _lEv,
+          participants: _late.participants || [], scope: _late.scope || null },
+        evidence: 'assigned at scene ' + n + ' and COMPLETED LATER, at scene ' + _late.atScene
+          + ': that scene\'s post-prose assessment found THIS row\'s milestone delivered on the page'
+          + ' (participants: ' + ((_late.participants || []).join(', ') || 'unnamed')
+          + '; scope: ' + (_late.scope || 'unstated') + ')'
+          + (_lOwn.length ? '; its ' + _lOwn.length + ' committed fact(s) from scene ' + n
+              + ' remain established history' : '') };
+    }
     // ── WHAT WAS VERIFIED IS THE FACT'S OWN TEXT, bound to THIS scene's sealed proposals. ──
     var own = (ev.byProposalScene[n] || []);
     if (own.length) {
@@ -143074,6 +144898,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         alreadyDelivered: alreadyDelivered, alreadyDeliveredBy: alreadyDeliveredBy,
         delivery: del.status, deliveryEvidence: del.evidence,
         verifiedFacts: del.verifiedFacts || null,
+        // WHERE a row was finished, when that was not its own scene. Carried so the author is told
+        // the row is established AND by which scene, instead of "committed, but no fact text".
+        lateCredit: del.lateCredit || null,
         overturnedBy: overturnedBy,
         status: del.status,                       // kept for readers of v1's field name
         conditional: conditional, conditionalOn: conditional ? horizon : null,
@@ -143087,7 +144914,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         brokenPrereqs: brokenPrereqs.length ? brokenPrereqs : null,
         prereqsAtRisk: prereqsAtRisk.length ? prereqsAtRisk : null,
         prereqsAtRiskWhy: prereqsAtRisk.length ? prereqsAtRisk.map(function (d) { return overturned._atRiskWhy[d]; }) : null,
-        routes: routes || null, activeRoute: activeRoute,
+        // routesDecidedBy is EXPOSED (2026-11-01), not newly computed: `decidedAt` is already
+        // derived above to pick the active route, but it never left this function, so nothing
+        // downstream could ask "which scene's decision do these routes hang on?". Answering that
+        // is what lets a plan-supplied decision be recorded against the plan's own route keys.
+        routes: routes || null, activeRoute: activeRoute, routesDecidedBy: decidedAt || null,
         withheld: (eff && eff._reconciliation && eff._reconciliation.withheld) ? eff._reconciliation.withheld.slice() : [],
         source: (eff ? (eff.openObjective ? 'plan row (reader-owned)' : 'plan row') : 'issue spine')
       };
@@ -143263,8 +145094,17 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     committed: { head: 'ESTABLISHED AND VERIFIED — these exact facts were delivered on the page and committed. Do NOT stage any of them again as a new event or a new revelation (a character may refer back to one, which is not the same as delivering it). Only what is listed here is verified: anything else that scene was PLANNED to do is NOT established by this',
                  line: function (r) {
                    var fs_ = (r.verifiedFacts || []);
-                   if (!fs_.length) return 'scene ' + r.n + ': (committed, but no fact text retained)';
-                   return 'scene ' + r.n + ': ' + fs_.map(function (f) { return '"' + String(f.text).slice(0, 200) + '"'; }).join(' · ');
+                   // A ROW FINISHED AT A LATER SCENE says so, and says where. Without this a late
+                   // credit printed either nothing or only the partial facts from its own scene,
+                   // which reads as "committed" with no evidence of what completed it.
+                   var _lc = r.lateCredit
+                     ? ' — completed at scene ' + r.lateCredit.atScene
+                       + (r.lateCredit.evidence ? ': "' + String(r.lateCredit.evidence).slice(0, 160) + '"' : '')
+                     : '';
+                   if (!fs_.length) {
+                     return 'scene ' + r.n + (r.lateCredit ? _lc : ': (committed, but no fact text retained)');
+                   }
+                   return 'scene ' + r.n + ': ' + fs_.map(function (f) { return '"' + String(f.text).slice(0, 200) + '"'; }).join(' · ') + _lc;
                  } },
     assessed_not_delivered: { head: 'CHECKED AND NOT DELIVERED — this was planned, the scene was written, and the event did NOT land. It is STILL OWED. Do not treat it as history, and do not assume the reader knows it',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
@@ -143272,7 +145112,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
     written_unassessed: { head: 'WRITTEN BUT UNCHECKED — prose exists for these scenes and nothing has verified what landed. Do not assert them as established facts',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } },
-    partially_verified: { head: 'PARTLY VERIFIED — specific facts from these scenes were committed, but the scene\'s own verdict did NOT record its planned event as delivered. The listed facts are established; the scene\'s ASSIGNMENT is not, and may still be owed',
+    partially_verified: { head: 'PARTLY VERIFIED — specific facts from these scenes were committed, but the scene\'s own verdict did NOT record its planned event as delivered. The listed facts are established; the scene\'s ASSIGNMENT is not, and the DEFAULT IS THAT IT IS STILL OWED. It may be retired ONLY if you can name the specific established development that superseded it — a planned ACTION can be made unnecessary by what has since happened. A missing PAYOFF is different: a promised revelation, consequence or confrontation does NOT become unnecessary because an earlier scene failed to deliver it, and a still-live reader consequence, a canon requirement, a disclosure constraint or a purpose the story needs may never be dropped. If you retire it, name the superseding development; never record an undelivered event as though it happened. If it is still owed, carry ONLY THE UNFINISHED REMAINDER and never re-stage the facts listed as verified — completing something important can be a scene\'s own work, or can ride inside a scene doing more',
                  line: function (r) {
                    var fs_ = (r.verifiedFacts || []);
                    return 'scene ' + r.n + ' — verified: ' + (fs_.length
@@ -143282,6 +145122,634 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     not_written: { head: 'NO RECORD THESE WERE PRODUCED — planned earlier in the issue, with no evidence they were written. They are NOT history',
                  line: function (r) { return 'scene ' + r.n + ': ' + String(r.accomplishes).slice(0, 220); } }
   };
+  // ══ THE RECOVERY DECISION (Roman 2026-11-03) ═══════════════════════════════════════════════
+  // WHAT WAS MISSING, and it is not an accounting problem. The engine can now RECOGNISE a late
+  // completion (_milestoneWatchRows + the accept path + _outlineDeliveryStatus' late credit), but
+  // nothing ever caused the story to ATTEMPT one. The component that decides what the next scene
+  // does — _selectSceneAssignment — is keyed on the ordinal and never weighs what is outstanding,
+  // so an unfinished development reached the planner as a single-slot reminder and the author as an
+  // annotation, and the owed set could only grow. Ten scenes, nine rows, nothing recovered.
+  //
+  // WHAT THIS IS. A HANDOFF, not a scheduler. It puts one outstanding obligation in front of the
+  // EXISTING planner alongside the scene's current assignment, with the original assignment whole
+  // and whatever is already established at that row, and requires an explicit disposition. It adds
+  // no model stage and no second planner: the same reply that carries the state_change carries this.
+  //
+  // THE THREE RULES THAT MAKE IT HONEST:
+  //   • PLANNING AN INCORPORATION DOES NOT DISCHARGE THE OBLIGATION. Nothing here writes to
+  //     _milestoneDeliveries, _committedState or any delivery status. Only a VERIFIED delivery can
+  //     retire a row, and the producer for that already exists and is unchanged.
+  //   • DEFERRAL STAYS OWED. It is a real third outcome, not a soft cancel: the row keeps its
+  //     status, keeps appearing in the owed set, and is put again at a later scene.
+  //   • RETIREMENT NEEDS AN ESTABLISHED SUPERSEDING DEVELOPMENT. The planner must quote a COMMITTED
+  //     fact that committed AFTER the owed row; a citation that matches none is not a retirement and
+  //     is recorded as a deferral with that reason. A planner assertion cannot retire anything.
+  //
+  // WHAT REMAINS A PROPOSAL. The SELECTION RANKING — which outstanding row is put to the planner —
+  // is an EXPERIMENTAL POLICY and is labelled as one everywhere it appears, including in the record
+  // it writes. It is not a proven storytelling improvement, and the competing ordering is one
+  // switch away (window._recoveryRanking = 'oldest'). Kill switch for the whole handoff:
+  // window._recoveryHandoffV0 === false.
+  var _RECOVERY_DISPOSITIONS = { incorporate: 1, defer: 1, retire: 1 };
+  var _RECOVERY_RANKING_STATUS = 'EXPERIMENTAL POLICY — not a proven storytelling improvement';
+
+  function _recoveryDispositionFor(s, rowN) {
+    try {
+      s = s || window.state;
+      var m = (s && s._recoveryDispositions) || null;
+      return (m && m[String(Number(rowN))]) || null;
+    } catch (_) { return null; }
+  }
+
+  function _recoveryDecidedAt(s, sceneNum) {
+    var out = [];
+    try {
+      s = s || window.state;
+      var m = (s && s._recoveryDispositions) || {};
+      Object.keys(m).forEach(function (k) {
+        var r = m[k];
+        if (r && Number(r.decidedAtScene) === Number(sceneNum)) out.push(r);
+      });
+      out.sort(function (a, b) { return Number(a.row) - Number(b.row); });
+    } catch (_) {}
+    return out;
+  }
+
+  // ── WHAT MAY NEVER BE RETIRED, WHATEVER IS CITED ───────────────────────────────────────────
+  // These restrictions already exist in the author's own PARTLY VERIFIED wording ("a promised
+  // revelation, consequence or confrontation does NOT become unnecessary because an earlier scene
+  // failed to deliver it, and a still-live reader consequence, a canon requirement, a disclosure
+  // constraint or a purpose the story needs may never be dropped"). They were prose addressed to
+  // the author and nothing enforced them against a planner's retirement. Read structurally, from
+  // the resolved row and the authoritative row — never from the assignment's wording.
+  function _recoveryProtections(s, rowN, resolvedRow) {
+    var out = [];
+    try {
+      if (resolvedRow && resolvedRow.activeRoute) {
+        out.push('a route the reader\'s own recorded choice put her on — a live reader consequence');
+      }
+      if (resolvedRow && resolvedRow.decision && resolvedRow.decision.resolved) {
+        out.push('a decision the reader answered at that row, whose consequence is still owed');
+      }
+      var p = null;
+      try {
+        var _apl = (typeof _activePlan === 'function') ? _activePlan(s) : null;
+        p = ((_apl && Array.isArray(_apl.scenes)) ? _apl.scenes : [])
+          .filter(function (q) { return q && Number(q.n) === Number(rowN); })[0] || null;
+      } catch (_) { p = null; }
+      if (p && (p.requiredTruth || (Array.isArray(p.requiredTruths) && p.requiredTruths.length))) {
+        out.push('a world truth this row is required to keep true — a canon requirement');
+      }
+      if (p && Array.isArray(p.reservedEvents) && p.reservedEvents.length) {
+        out.push('an event this row has RESERVED for itself — a promised payoff, which does not '
+          + 'become unnecessary because the scene failed to deliver it');
+      }
+    } catch (_) {}
+    return out;
+  }
+
+  // THE OWED SET AS OF A SCENE. Eligibility is the resolver's, not a second opinion: an overturned
+  // row is already dropped, a row with no stated assignment has nothing to put, and a row retired
+  // earlier on an ESTABLISHED reason is gone. A row deferred earlier is STILL HERE — that is what
+  // deferral means.
+  function _recoveryOwedRows(s, sceneNum) {
+    s = s || window.state;
+    var n = Number(sceneNum), out = [];
+    try {
+      var rio = (typeof _resolveIssueOutline === 'function') ? _resolveIssueOutline(s, { sceneNumber: n }) : null;
+      ((rio && Array.isArray(rio.scenes)) ? rio.scenes : []).forEach(function (r) {
+        if (!r || !(Number(r.n) > 0) || Number(r.n) >= n) return;
+        if (r.kind === 'overturned') return;
+        if (r.delivery !== 'assessed_not_delivered' && r.delivery !== 'partially_verified') return;
+        if (!String(r.accomplishes || '').trim()) return;
+        var prior = _recoveryDispositionFor(s, Number(r.n));
+        if (prior && prior.disposition === 'retire' && prior.established) return;
+        out.push({ n: Number(r.n), assignment: String(r.accomplishes).trim(), status: r.delivery,
+          verifiedFacts: (r.verifiedFacts || []).map(function (f) {
+            return String((f && f.text) || f || '').trim(); }).filter(Boolean),
+          protections: _recoveryProtections(s, Number(r.n), r),
+          dependsOn: [].concat(Array.isArray(r.dependsOn) ? r.dependsOn : [],
+            Array.isArray(r.brokenPrereqs) ? r.brokenPrereqs : []).map(String),
+          priorDisposition: prior || null });
+      });
+    } catch (_) {}
+    return out;
+  }
+
+  function _recoveryRankingName(s) {
+    try {
+      var w = (typeof window !== 'undefined') ? window._recoveryRanking : null;
+      if (String(w || '') === 'oldest') return 'oldest-outstanding';
+    } catch (_) {}
+    return 'explicit-non-delivery-first-then-newest';
+  }
+
+  function _recoveryRank(rows, name) {
+    var r = (rows || []).slice();
+    if (name === 'oldest-outstanding') { r.sort(function (a, b) { return a.n - b.n; }); return r; }
+    var k = function (x) { return x.status === 'assessed_not_delivered' ? 0 : 1; };
+    r.sort(function (a, b) { return (k(a) - k(b)) || (b.n - a.n); });
+    return r;
+  }
+
+  function _recoveryHandoff(s, sceneNum) {
+    try {
+      s = s || window.state;
+      if (typeof window !== 'undefined' && window._recoveryHandoffV0 === false) return null;
+      var n = Number(sceneNum);
+      if (!(n > 0)) return null;
+      var owed = _recoveryOwedRows(s, n);
+      if (!owed.length) return null;
+      var name = _recoveryRankingName(s);
+      var ranked = _recoveryRank(owed, name);
+      var due = null;
+      try {
+        due = (s._sceneAssignment && Number(s._sceneAssignment.sceneNumber) === n)
+          ? s._sceneAssignment
+          : ((typeof _selectSceneAssignment === 'function') ? _selectSceneAssignment(s, n) : null);
+      } catch (_) { due = null; }
+      return { sceneNum: n, ranking: name, rankingStatus: _RECOVERY_RANKING_STATUS,
+        order: ranked.map(function (r) { return r.n; }),
+        obligation: ranked[0] || null, others: ranked.slice(1),
+        due: due ? { event: String(due.event || ''), source: due.source || null } : null };
+    } catch (_) { return null; }
+  }
+
+  // THE PLANNER-FACING BLOCK. It states the two assignments together, because the decision is about
+  // their relationship; it does NOT demand both be delivered, because two scenes' worth of events
+  // in one scene is the failure this is trying to avoid rather than the fix.
+  function _renderRecoveryHandoffBlock(h) {
+    try {
+      if (!h || !h.obligation) return '';
+      var o = h.obligation;
+      var L = ['\nOUTSTANDING WORK FROM AN EARLIER SCENE — DECIDE WHAT THIS SCENE DOES ABOUT IT.'];
+      L.push('  THIS SCENE\'S CURRENT ASSIGNMENT, restated so the two are decided together: '
+        + JSON.stringify(h.due ? h.due.event : '(none selected for this scene)'));
+      L.push('  STILL OWED — assigned at scene ' + o.n + ' and recorded '
+        + (o.status === 'assessed_not_delivered' ? 'CHECKED AND NOT DELIVERED' : 'PARTIALLY DELIVERED')
+        + '. Its ORIGINAL assignment, whole: ' + JSON.stringify(o.assignment));
+      if (o.verifiedFacts.length) {
+        L.push('  ALREADY ESTABLISHED AT THAT SCENE (verified on the page — the reader has read it, so it '
+          + 'must NOT be staged again): ' + o.verifiedFacts.map(function (f) { return '"' + f + '"'; }).join(' · '));
+      } else {
+        L.push('  NOTHING from that assignment is recorded as established.');
+      }
+      L.push('  WHAT THE ENGINE DOES NOT KNOW: it stores the original assignment and whatever is '
+        + 'recorded as established above. It does NOT compute "the part that is left", and the '
+        + 'ABSENCE of an established fact is not proof that nothing was written there. Judge the '
+        + 'remainder from those two and from what the reader has already read.');
+      if (o.priorDisposition) {
+        L.push('  IT WAS DECIDED ON ONCE ALREADY, at scene ' + o.priorDisposition.decidedAtScene + ': '
+          + String(o.priorDisposition.disposition).toUpperCase()
+          + (o.priorDisposition.why ? ' — "' + o.priorDisposition.why + '"' : '')
+          + '. It is still owed, so it is put to you again.');
+      }
+      if (h.others.length) {
+        L.push('  ALSO STILL OWED and NOT put to you this scene: '
+          + h.others.map(function (r) {
+              var pd = r.priorDisposition;
+              return 'scene ' + r.n + (pd ? ' (' + String(pd.disposition) + 'd at scene '
+                + pd.decidedAtScene + ')' : '');
+            }).join(', ')
+          + '. Do not try to clear those here.');
+      }
+      L.push('  CHOOSE ONE DISPOSITION:');
+      L.push('    "incorporate" — this scene\'s state_change carries its own assignment AND the '
+        + 'unfinished part of that one. Choose it only if ONE scene can genuinely do both; do not '
+        + 'promise two scenes\' worth of events. DECIDING THIS DOES NOT DISCHARGE IT — it stays owed '
+        + 'until a scene is verified to have delivered it.');
+      L.push('    "defer" — it remains owed and this scene does something else. Name what makes this '
+        + 'scene the wrong place for it. Deferring is a legitimate answer; it is not cancelling.');
+      if (o.protections && o.protections.length) {
+        L.push('    "retire" IS NOT AVAILABLE FOR THIS OBLIGATION. It carries: '
+          + o.protections.join('; ') + '. Answer "incorporate" or "defer".');
+      } else {
+        L.push('    "retire" — it is no longer worth delivering because a development that ALREADY '
+          + 'HAPPENED made it unnecessary. TWO THINGS ARE NEEDED AND THE FIRST IS NOT THE SECOND: '
+          + 'quote the development VERBATIM from COMMITTED WORLD STATE above in "superseded_by" (that '
+          + 'it HAPPENED), and in "why" say what about it makes THIS obligation unnecessary (that it '
+          + 'SUPERSEDES). A later fact about some other matter is not authority to cancel this one. '
+          + 'Your judgment is recorded as a CLAIM and checked against the engine\'s own accepted '
+          + 'assessments; where they do not support it the proposal is KEPT and the row stays owed, '
+          + 'which is not a rejection of your reasoning. Your plan for this scene is NOT a '
+          + 'superseding development, and neither is the earlier scene having failed to deliver. '
+          + 'A promised revelation, consequence or confrontation does NOT become unnecessary because '
+          + 'a scene failed to deliver it, and a live reader consequence, a canon requirement or a '
+          + 'disclosure constraint may never be dropped at all.');
+      }
+      L.push('  Return: "recovery": { "row": ' + o.n + ', "disposition": "incorporate"|"defer"'
+        + ((o.protections && o.protections.length) ? '' : '|"retire"')
+        + ', "why": "one sentence — for a retirement, what makes this obligation unnecessary",'
+        + ' "superseded_by": "" }');
+      return L.join('\n');
+    } catch (_) { return ''; }
+  }
+
+  // ══ TWO SEPARATE QUESTIONS, AND THE FIRST ONE IS NOT THE SECOND ═══════════════════════════
+  // CORRECTED 2026-11-03 (Roman), after the first version's "positive control" retired row 3's
+  // institutional challenge on the strength of a scene-5 fact about sash folds and relic
+  // provenance — and passed with why:"". What it verified was that the citation existed, was
+  // verbatim, and came later. None of that says the unfinished challenge became unnecessary.
+  //
+  //   (a) DID THE CITED DEVELOPMENT HAPPEN?  _recoveryCitedFact — a committed fact, sealed
+  //       pre-prose and verified delivered, from a story scene LATER than the owed row, matched
+  //       verbatim. This is NECESSARY EVIDENCE and is NOT authority to cancel anything.
+  //   (b) DOES IT MAKE THIS OBLIGATION UNNECESSARY?  _recoverySupersessionSupport — asked of the
+  //       engine's OWN ACCEPTED ASSESSMENTS, never of the planner. The planner's answer to (b) is
+  //       recorded as `supersessionClaim`: a claim, never a finding.
+  //
+  // Retirement needs (a) AND (b), and is refused outright for a protected obligation. Without (b)
+  // the proposal is PRESERVED and the row stays owed — a held proposal, not a denial in principle.
+  function _recoveryCitedFact(s, cited, rowN) {
+    try {
+      s = s || window.state;
+      var norm = function (t) {
+        return String(t || '').toLowerCase().replace(/[‘’“”"']/g, '')
+          .replace(/\s+/g, ' ').trim();
+      };
+      var want = norm(cited);
+      if (want.length < 12) return null;
+      var facts = (s._committedState && Array.isArray(s._committedState.facts)) ? s._committedState.facts : [];
+      for (var i = 0; i < facts.length; i++) {
+        var f = facts[i];
+        if (!f || !f.fact) continue;
+        // THE STORY SCENE OF A FACT HAS ONE OWNER — _factStoryScene. `committedAtScene` is the TURN
+        // index, not a story scene (prop:1:2 carries storyScene 3 and committedAtScene 1), so
+        // reading it here would compare a turn against a row number.
+        var ss = (typeof _factStoryScene === 'function') ? _factStoryScene(f) : { n: null };
+        var at = ss && ss.n;
+        if (!(Number(at) > Number(rowN))) continue;
+        var have = norm(f.fact);
+        if (!have) continue;
+        if (have.indexOf(want) !== -1 || want.indexOf(have) !== -1) {
+          return { fact: String(f.fact), atScene: Number(at), ref: f.proposalRef || null,
+            isAuthority: false,
+            note: 'an established later development. Necessary evidence that something happened '
+              + 'after row ' + rowN + '; NOT authority that row ' + rowN + ' became unnecessary.' };
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ── (b) THE AUTHORITY, FROM THE ENGINE'S OWN ACCEPTED ASSESSMENTS ────────────────────────
+  // DERIVED, never cited: the planner cannot point at this, so it cannot be gamed by a confident
+  // sentence. Exactly ONE existing record can authorise a permanent retirement:
+  //   PREREQUISITE INVALIDATION — an accepted _prereqInvalidations assessment put one of this
+  //   row's declared prerequisites into _outlineOverturnedPrereqs. Normally the resolver has
+  //   already marked such a row kind:'overturned' and it never reaches the owed set at all, so
+  //   this branch exists so the two paths cannot disagree, not to add a new power.
+  //
+  // ── WHY invalidatedPlans IS NOT AUTHORITY (Roman 2026-11-03, corrected) ──────────────────
+  // The first version of this accepted a committed rupture's `invalidatedPlans` entry as grounds
+  // for retirement. That field's own schema covers obligations made "IMPOSSIBLE, SUSPENDED or
+  // UNEXPLAINED" in one flat array with nothing distinguishing them, and its existing consumer
+  // (_resolveObjectivePrecedence) correctly makes a matching objective CONTINGENT — under review,
+  // still possibly owed. Turning the same record into "do NOT deliver it and do NOT replace it"
+  // promotes a suspension into a cancellation, which is how a temporarily blocked development
+  // disappears permanently. The record cannot express the distinction, so it is no longer used as
+  // retirement authority at all. It is still REPORTED, because a rupture naming this obligation is
+  // real information the planner and the author should have — it just does not cancel anything.
+  //
+  // THE CONSEQUENCE, stated rather than hidden: with invalidatedPlans removed and prerequisite
+  // invalidation already handled upstream by the resolver, there is TODAY NO REACHABLE PATH that
+  // GRANTS a retirement. Every retirement proposal is recorded and HELD, and the row stays owed.
+  // The missing piece is a structural link from an accepted cancellation record to an outline row;
+  // inferring one from wording would be a language heuristic pretending to be authority.
+  function _recoverySuspensionSignal(s, obligation) {
+    try {
+      s = s || window.state;
+      var norm = function (t) {
+        return String(t || '').toLowerCase().replace(/[\u2018\u2019\u201c\u201d"']/g, '')
+          .replace(/\s+/g, ' ').trim();
+      };
+      var want = norm(obligation && obligation.assignment);
+      if (want.length < 12) return null;
+      var idx = (typeof _tfoInvalidatedPlanIndex === 'function') ? _tfoInvalidatedPlanIndex(s) : { entries: [] };
+      for (var i = 0; i < ((idx && idx.entries) || []).length; i++) {
+        var e = idx.entries[i];
+        for (var j = 0; j < (e.invalidatedPlans || []).length; j++) {
+          var plan = norm(e.invalidatedPlans[j]);
+          if (plan.length < 12) continue;
+          if (want.indexOf(plan) !== -1 || plan.indexOf(want) !== -1) {
+            return { plan: String(e.invalidatedPlans[j]), rupture: String(e.wish || '').slice(0, 200),
+              ruptureClass: e.ruptureClass || null, isAuthority: false,
+              meaning: 'a committed rupture\'s accepted record names this obligation as no longer '
+                + 'supported. That field covers IMPOSSIBLE, SUSPENDED and UNEXPLAINED without '
+                + 'distinguishing them, so it does NOT establish cancellation — the same record '
+                + 'makes a current objective CONTINGENT, not void.' };
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function _recoverySupersessionSupport(s, obligation) {
+    try {
+      s = s || window.state;
+      var rowN = Number(obligation && obligation.n);
+      var dep = (obligation && Array.isArray(obligation.dependsOn)) ? obligation.dependsOn.map(String) : [];
+      if (dep.length) {
+        var ov = [];
+        try { ov = (typeof _outlineOverturnedPrereqs === 'function') ? (_outlineOverturnedPrereqs(s) || []) : []; } catch (_) { ov = []; }
+        var hit = dep.filter(function (d) { return ov.indexOf(d) !== -1; });
+        if (hit.length) {
+          return { kind: 'prerequisite_invalidated', prereqs: hit,
+            record: 'an accepted prerequisite-invalidation assessment overturned ' + hit.join(', '),
+            judgedBy: 'the existing prerequisite-invalidation assessment (not the planner)' };
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // RECORD THE DECISION — and NOTHING ELSE. This function writes exactly one place:
+  // s._recoveryDispositions[row]. It does not touch _milestoneDeliveries, _committedState, the
+  // delivery log or any outline cache, so no disposition can discharge an obligation.
+  function _acceptRecoveryDisposition(s, reply, h) {
+    try {
+      s = s || window.state;
+      if (!h || !h.obligation) return null;
+      var o = h.obligation;
+      var raw = (reply && (reply.recovery || reply.recovery_decision)) || null;
+      var d = String((raw && raw.disposition) || '').trim().toLowerCase();
+      var rec = { row: o.n, obligation: o.assignment, owedAs: o.status,
+        verifiedFacts: (o.verifiedFacts || []).slice(),
+        decidedAtScene: h.sceneNum, at: Date.now(),
+        disposition: null, why: String((raw && raw.why) || '').trim(),
+        citedSupersede: String((raw && (raw.superseded_by || raw.supersededBy)) || '').trim() || null,
+        established: false, establishedBy: null, downgradedFrom: null, note: null,
+        citedFact: null, citedFactEstablished: false, supersessionClaim: null, supportedBy: null,
+        protectedBy: null, proposedRetirement: null, suspensionSignal: null,
+        protections: (o.protections || []).slice(),
+        ranking: h.ranking, rankingStatus: h.rankingStatus };
+      if (!raw || !_RECOVERY_DISPOSITIONS[d]) {
+        // NO ANSWER IS NOT A DECISION TO DROP IT. The obligation stays owed, untouched.
+        rec.disposition = 'defer';
+        rec.downgradedFrom = d || 'none';
+        rec.note = 'no usable disposition came back ("' + (d || 'absent') + '"), so the obligation '
+          + 'stays owed and nothing was decided about it';
+      } else if (d === 'retire') {
+        // THE FACT and THE JUDGMENT ARE RECORDED SEPARATELY, and only the second can retire.
+        var fact = _recoveryCitedFact(s, rec.citedSupersede, o.n);
+        var support = _recoverySupersessionSupport(s, o);
+        rec.suspensionSignal = _recoverySuspensionSignal(s, o);   // reported, never authority
+        var prot = (o.protections || []);
+        rec.citedFact = fact;                       // (a) did the cited development happen?
+        rec.citedFactEstablished = !!fact;
+        rec.supersessionClaim = rec.why || null;    // the PLANNER'S judgment — a claim, not a finding
+        rec.supportedBy = support;                  // (b) does any accepted assessment say so?
+        rec.established = !!support;
+        rec.establishedBy = support;
+        if (prot.length) {
+          rec.disposition = 'defer'; rec.downgradedFrom = 'retire';
+          rec.protectedBy = prot.slice();
+          rec.note = 'this obligation may not be retired at all: ' + prot.join('; ') + '. It stays owed.';
+        } else if (!rec.why) {
+          rec.disposition = 'defer'; rec.downgradedFrom = 'retire';
+          rec.note = 'the retirement proposal states no reason, so there is nothing to judge. '
+            + 'A citation on its own is not a retirement. The row stays owed.';
+        } else if (!fact) {
+          rec.disposition = 'defer'; rec.downgradedFrom = 'retire';
+          rec.note = 'no ESTABLISHED later development was cited — the citation '
+            + (rec.citedSupersede ? 'matched no committed fact from a scene later than row ' + o.n
+              : 'was absent') + '. The row stays owed.';
+        } else if (!support) {
+          rec.disposition = 'defer'; rec.downgradedFrom = 'retire';
+          rec.proposedRetirement = { why: rec.why, cited: rec.citedSupersede,
+            citedFact: fact, heldAtScene: h.sceneNum };
+          rec.note = 'the cited development IS established, and that is necessary evidence but not '
+            + 'authority: nothing in the engine\'s own accepted assessments establishes that it makes '
+            + 'row ' + o.n + ' unnecessary, and the planner\'s own judgment that it does is a claim, '
+            + 'not a finding. The proposal is PRESERVED and the row stays owed.'
+            + (rec.suspensionSignal ? ' A committed rupture record DOES name this obligation as no '
+              + 'longer supported, but that record does not separate SUSPENDED from CANCELLED, so it '
+              + 'makes the obligation contingent rather than void.' : '');
+        } else {
+          rec.disposition = 'retire';
+        }
+      } else {
+        rec.disposition = d;
+      }
+      s._recoveryDispositions = (s._recoveryDispositions && typeof s._recoveryDispositions === 'object')
+        ? s._recoveryDispositions : {};
+      s._recoveryDispositions[String(o.n)] = rec;
+      try {
+        console.log('[RECOVERY] scene ' + h.sceneNum + ' · row ' + o.n + ' (' + o.status + ') → '
+          + String(rec.disposition).toUpperCase()
+          + (rec.downgradedFrom ? ' (asked for "' + rec.downgradedFrom + '"; ' + rec.note + ')' : '')
+          + (rec.established ? ' on ' + rec.establishedBy.record : '')
+          + (rec.proposedRetirement ? ' · a retirement proposal citing an ESTABLISHED fact at scene '
+              + rec.citedFact.atScene + ' is HELD: the fact is evidence, not authority' : '')
+          + ' · selection ranking "' + rec.ranking + '" [' + rec.rankingStatus + ']'
+          + ' · the obligation is NOT discharged by this decision');
+      } catch (_) {}
+      return rec;
+    } catch (_) { return null; }
+  }
+
+  // ── ONE-LINE STATUS FOR A ROW, FOR EVERY CONSUMER THAT LISTS EARLIER ROWS ────────────────
+  // The earlier-scene buckets are classed by DELIVERY HISTORY, which a disposition never changes:
+  // a retired row is still `partially_verified`, because that is what the record says happened.
+  // What the disposition changes is whether it is still OWED — and the PARTLY VERIFIED heading
+  // states "the DEFAULT IS THAT IT IS STILL OWED", so a retired or deferred row needs that default
+  // answered on its own line or the author receives two contradictory instructions. This is the
+  // suffix; it overrides the default for that row without rewriting its delivery class.
+  // ── CURRENT DELIVERY OUTRANKS A RECORDED DISPOSITION ──────────────────────────────────────
+  // A disposition is what was DECIDED at one scene; delivery is what has since HAPPENED. The first
+  // version read only the disposition, so INCORPORATE at scene 7 followed by an accepted late
+  // completion at scene 8 had scene 9 telling the author "STILL OWED … not recorded as completed"
+  // while _outlineDeliveryStatus said `committed` — a delivered development offered back as
+  // outstanding work, which is a repetition instruction. The decision stays on the record as
+  // history; what it may no longer do is describe the obligation's present state.
+  function _recoveryDelivered(s, rowN) {
+    try {
+      s = s || window.state;
+      // THE FULL ARGUMENT LIST. _outlineDeliveryStatus(s, n, ev, sceneNow) needs the commit
+      // evidence; calling it with two arguments throws inside and the catch silently returned
+      // null, which is how a delivered row still read as outstanding.
+      var ev = (typeof _outlineCommitEvidence === 'function') ? _outlineCommitEvidence(s) : null;
+      var now = 1;
+      try { now = (typeof _currentSceneNumber === 'function') ? (_currentSceneNumber(s) || 1) : 1; } catch (_) {}
+      var st = (ev && typeof _outlineDeliveryStatus === 'function')
+        ? _outlineDeliveryStatus(s, Number(rowN), ev, now) : null;
+      if (st && st.status === 'committed') {
+        return { at: (st.lateCredit && Number(st.lateCredit.atScene)) || Number(rowN),
+          late: !!st.lateCredit,
+          evidence: (st.lateCredit && st.lateCredit.evidence)
+            || ((st.verifiedFacts || []).map(function (f) { return String((f && f.text) || ''); })[0] || '') };
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function _recoveryStatusSuffix(s, rowN) {
+    try {
+      var r = _recoveryDispositionFor(s, rowN);
+      if (!r) return '';
+      var done = _recoveryDelivered(s, rowN);
+      if (done) {
+        return '  |  NO LONGER OUTSTANDING: it was DELIVERED and verified'
+          + (done.late ? ' at scene ' + done.at : ' at its own scene')
+          + '. The ' + String(r.disposition).toUpperCase() + ' recorded at scene '
+          + r.decidedAtScene + ' is history, not a live obligation.';
+      }
+      if (r.disposition === 'retire' && r.established) {
+        return '  |  NO LONGER OWED: retired at scene ' + r.decidedAtScene + ' — '
+          + r.establishedBy.record + '. Do NOT deliver it and do NOT replace it.';
+      }
+      if (r.disposition === 'defer') {
+        return '  |  STILL OWED, deferred at scene ' + r.decidedAtScene
+          + (r.why ? ' because "' + String(r.why).slice(0, 160) + '"' : '')
+          + (r.proposedRetirement ? ' (a retirement was proposed and is HELD — the cited development'
+            + ' is established, but nothing establishes that it makes this unnecessary)' : '')
+          + '. It is NOT completed and NOT cancelled.';
+      }
+      if (r.disposition === 'incorporate') {
+        return '  |  STILL OWED: taken up at scene ' + r.decidedAtScene
+          + ' and NOT recorded as completed. Deciding to carry it is not delivering it.';
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  // THE AUTHOR-FACING RENDERING. It goes inside the scene's own ASSIGNMENT block, because a
+  // disposition is part of what this scene is for — and because an author told nothing about a
+  // deferred obligation will half-write it, and an author told nothing about a retired one will
+  // deliver it.
+  //
+  // IT RENDERS EVERY DISPOSITION STILL IN FORCE, not only this turn's. The first version filtered
+  // on decidedAtScene === n, so the retirement instruction appeared for exactly one scene and
+  // vanished the next turn while the earlier-scene buckets went on calling the row still owed. A
+  // decision taken at an earlier scene is rendered as STATUS, never as an instruction to act: the
+  // handoff is what asks a scene to do something, and it asks about one obligation at a time.
+  function _renderRecoveryDirective(s, sceneNum) {
+    try {
+      s = s || window.state;
+      var n = Number(sceneNum);
+      var m = (s && s._recoveryDispositions) || {};
+      var fresh = [], standing = [];
+      Object.keys(m).forEach(function (k) {
+        var r = m[k];
+        if (!r) return;
+        if (Number(r.decidedAtScene) === n) fresh.push(r);
+        else if (Number(r.decidedAtScene) < n) standing.push(r);
+      });
+      fresh.sort(function (a, b) { return Number(a.row) - Number(b.row); });
+      standing.sort(function (a, b) { return Number(a.row) - Number(b.row); });
+      var L = [];
+      fresh.forEach(function (r) {
+        // Checked here too, so no path can state an outstanding obligation for a delivered row.
+        var doneNow = _recoveryDelivered(s, r.row);
+        if (doneNow) {
+          L.push('    SCENE ' + r.row + '\'S OBLIGATION IS ALREADY DELIVERED AND VERIFIED'
+            + (doneNow.late ? ' (completed at scene ' + doneNow.at + ')' : '')
+            + ', so the ' + String(r.disposition).toUpperCase() + ' decided this turn no longer'
+            + ' applies to it. Do NOT stage it again.');
+          return;
+        }
+        if (r.disposition === 'incorporate') {
+          L.push('    THIS SCENE ALSO CARRIES UNFINISHED WORK FROM SCENE ' + r.row
+            + ' (decided this turn: INCORPORATE):');
+          L.push('      THE ORIGINAL ASSIGNMENT, WHOLE: ' + r.obligation);
+          if ((r.verifiedFacts || []).length) {
+            L.push('      ALREADY ESTABLISHED THERE — the reader has read this, so do NOT stage it again: '
+              + r.verifiedFacts.map(function (f) { return '"' + f + '"'; }).join(' · '));
+          } else {
+            L.push('      NOTHING of it is recorded as established — the engine holds no verified fact'
+              + ' from that row. That is NOT proof none of it was written: check what the reader has'
+              + ' already read before staging any part of it again.');
+          }
+          if (r.why) L.push('      WHY IT IS BEING PICKED UP HERE: ' + r.why);
+          L.push('      Accomplish this scene\'s own purpose above AND the unfinished part of this one. If '
+            + 'a single scene genuinely cannot hold both, the purpose above comes first and this stays '
+            + 'owed for a later scene — do not compress both into gestures. Writing it here does not '
+            + 'settle it: it is owed until a scene is verified to have delivered it.');
+        } else if (r.disposition === 'retire') {
+          L.push('    NO LONGER OWED — SCENE ' + r.row + '\'S ASSIGNMENT IS RETIRED (decided this turn, and'
+            + ' supported by the engine\'s own accepted assessment, not by the plan):');
+          L.push('      THE ASSIGNMENT THAT IS DROPPED: ' + r.obligation);
+          L.push('      WHAT ESTABLISHES THAT IT IS NO LONGER NEEDED: ' + r.establishedBy.record
+            + ' (judged by ' + r.establishedBy.judgedBy + ')');
+          if (r.citedFact) L.push('      THE DEVELOPMENT CITED, committed at scene ' + r.citedFact.atScene
+            + ': "' + r.citedFact.fact + '"');
+          if (r.why) L.push('      THE PLANNER\'S OWN REASON, recorded as its judgment: ' + r.why);
+          L.push('      Do NOT deliver it, and do NOT invent an equivalent development to stand in for it.');
+        } else {
+          L.push('    STILL OWED FROM SCENE ' + r.row + ', AND DELIBERATELY NOT THIS SCENE\'S WORK (decided'
+            + ' this turn: DEFER):');
+          L.push('      ' + r.obligation);
+          if (r.why) L.push('      WHY NOT HERE: ' + r.why);
+          if (r.protectedBy) L.push('      AND IT MAY NOT BE RETIRED AT ALL: ' + r.protectedBy.join('; '));
+          if (r.proposedRetirement) {
+            L.push('      A RETIREMENT WAS PROPOSED AND IS HELD, NOT GRANTED: the cited development is'
+              + ' established ("' + String(r.citedFact.fact).slice(0, 160) + '", scene '
+              + r.citedFact.atScene + '), but that it HAPPENED is not authority that this obligation'
+              + ' became unnecessary. Treat the obligation as owed.');
+            if (r.suspensionSignal) {
+              L.push('      A COMMITTED RUPTURE DOES NAME IT AS NO LONGER SUPPORTED ("'
+                + String(r.suspensionSignal.plan).slice(0, 160) + '"), which makes it CONTINGENT —'
+                + ' under review — and NOT cancelled: that record does not distinguish an obligation'
+                + ' that is SUSPENDED from one that is void. Do not write it as though it had been'
+                + ' dropped, and do not write it as though nothing had happened to it.');
+            }
+          }
+          if (r.note) L.push('      (' + r.note + ')');
+          L.push('      Do NOT take it up here and do NOT gesture at completing it — a half-delivery is'
+            + ' worse than a clean deferral. It remains owed and will be put to a later scene.');
+        }
+      });
+      if (standing.length) {
+        L.push('    OBLIGATION STATUS CARRIED FORWARD (decided at an earlier scene and still in force —'
+          + ' this is STATUS, not an instruction to act on any of it here):');
+        standing.forEach(function (r) {
+          // DELIVERY SINCE THE DECISION SETTLES IT. Whatever was decided, if the row has since been
+          // delivered and verified it is not outstanding and must not be offered as work.
+          var done = _recoveryDelivered(s, r.row);
+          if (done) {
+            L.push('      – scene ' + r.row + ': DELIVERED and verified'
+              + (done.late ? ' at scene ' + done.at : ' at its own scene')
+              + (done.evidence ? ' — "' + String(done.evidence).slice(0, 140) + '"' : '')
+              + '. It was ' + ({ incorporate: 'incorporated', defer: 'deferred', retire: 'retired' }[r.disposition]
+                || String(r.disposition)) + ' at scene ' + r.decidedAtScene
+              + '; that decision is history. It is NOT owed, and it must NOT be staged again.');
+            return;
+          }
+          if (r.disposition === 'retire' && r.established) {
+            L.push('      – scene ' + r.row + ': RETIRED at scene ' + r.decidedAtScene + ' — '
+              + r.establishedBy.record + '. It is NOT owed. Do not deliver it and do not replace it.');
+          } else if (r.disposition === 'incorporate') {
+            L.push('      – scene ' + r.row + ': STILL OWED. Taken up at scene ' + r.decidedAtScene
+              + ' and not recorded as completed — carrying it was decided, delivering it was not verified.');
+          } else {
+            L.push('      – scene ' + r.row + ': STILL OWED, deferred at scene ' + r.decidedAtScene
+              + (r.why ? ' because "' + String(r.why).slice(0, 140) + '"' : '')
+              + (r.proposedRetirement ? '; a retirement proposal is HELD, not granted' : '')
+              + '. Not completed, not cancelled.');
+          }
+        });
+      }
+      return L;
+    } catch (_) { return []; }
+  }
+
+  try {
+    window._recoveryOwedRows = _recoveryOwedRows;
+    window._recoveryHandoff = _recoveryHandoff;
+    window._renderRecoveryHandoffBlock = _renderRecoveryHandoffBlock;
+    window._acceptRecoveryDisposition = _acceptRecoveryDisposition;
+    window._recoveryCitedFact = _recoveryCitedFact;
+    window._recoverySupersessionSupport = _recoverySupersessionSupport;
+    window._recoverySuspensionSignal = _recoverySuspensionSignal;
+    window._recoveryProtections = _recoveryProtections;
+    window._renderRecoveryDirective = _renderRecoveryDirective;
+    window._recoveryStatusSuffix = _recoveryStatusSuffix;
+    window._recoveryDelivered = _recoveryDelivered;
+    window._recoveryDispositionFor = _recoveryDispositionFor;
+    window._recoveryDecidedAt = _recoveryDecidedAt;
+  } catch (_) {}
+
   function _renderIssueOutlineDirective(s, sceneNum) {
     try {
       s = s || window.state; if (!s) return '';
@@ -143291,7 +145759,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (!o) return '';
       var row = null;
       for (var i = 0; i < o.scenes.length; i++) if (o.scenes[i].n === n) row = o.scenes[i];
-      if (!row) return '';
+      // A SCENE WITH NO OUTLINE ROW STILL HEARS A DECISION TAKEN FOR IT. This used to return ''
+      // outright, which would have silently dropped the recovery disposition for exactly the
+      // stories most likely to need it — the ones with no row covering this ordinal.
+      if (!row) {
+        try {
+          var _rl0 = (typeof _renderRecoveryDirective === 'function') ? (_renderRecoveryDirective(s, n) || []) : [];
+          if (_rl0.length) {
+            return ['\n  OUTSTANDING WORK THIS SCENE HAS A DECISION ABOUT (scene ' + n + '; HARD — '
+              + 'this scene has no outline row of its own, so this is the only assignment it carries'
+              + ' from the issue):'].concat(_rl0).join('\n') + '\n';
+          }
+        } catch (_) {}
+        return '';
+      }
       var L = ['\n  THIS SCENE\'S PURPOSE WITHIN ' + String(o.label).toUpperCase()
         + ' (scene ' + n + ' of ' + o.bounds.last + '; HARD — this is the scene\'s ASSIGNMENT, not background):'];
       if (o.thesis) L.push('    ISSUE THESIS: ' + o.thesis);
@@ -143371,14 +145852,39 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       ['committed', 'partially_verified', 'assessed_not_delivered', 'unverified', 'written_unassessed', 'not_written'].forEach(function (cls) {
         var set = o.scenes.filter(function (r) {
           if (r.n >= n || r.delivery !== cls) return false;
+          // A ROW CREDITED AT A LATER SCENE HAS NO FACTS OF ITS OWN (Roman 2026-11-03). The
+          // requirement was "committed rows are reported through their committed facts", which is
+          // right for a row completed at its own scene and silently DROPS one completed later:
+          // nothing was committed under its number, so it left the owed set by vanishing from the
+          // packet altogether — and an author told nothing about it can deliver it again as new.
+          // Its late credit carries the quotation that completed it, so it is reportable.
           return (cls === 'committed' || cls === 'partially_verified')
-            ? !!(r.verifiedFacts && r.verifiedFacts.length) : !!r.accomplishes;
+            ? !!((r.verifiedFacts && r.verifiedFacts.length) || (cls === 'committed' && r.lateCredit))
+            : !!r.accomplishes;
         });
         if (!set.length) return;
         var w = _OUTLINE_DELIVERY_WORDING[cls];
         L.push('    EARLIER IN THIS ISSUE — ' + w.head + ':');
-        set.slice(-6).forEach(function (r) { L.push('      – ' + w.line(r)); });
+        // A RECORDED DISPOSITION ANSWERS THE OWED DEFAULT ON THE ROW'S OWN LINE. The class is
+        // delivery HISTORY and is never rewritten; what the suffix settles is whether this row is
+        // still owed, which the PARTLY VERIFIED heading otherwise leaves at "still owed by default"
+        // — so a row retired at scene 8 was being reported as owed from scene 9 onward.
+        set.slice(-6).forEach(function (r) {
+          var sfx = '';
+          try { sfx = (typeof _recoveryStatusSuffix === 'function') ? _recoveryStatusSuffix(s, r.n) : ''; } catch (_) { sfx = ''; }
+          L.push('      – ' + w.line(r) + sfx);
+        });
       });
+      // ── THE RECOVERY DECISION TAKEN FOR THIS SCENE ─────────────────────────────────────
+      // This block is labelled "HARD — this is the scene's ASSIGNMENT", and a disposition is part
+      // of what the scene is for: incorporate adds work to it, defer explicitly withholds work from
+      // it, retire removes a row from the story. The decision is the planner's; this only delivers it.
+      try {
+        if (typeof _renderRecoveryDirective === 'function') {
+          var _recL = _renderRecoveryDirective(s, n) || [];
+          if (_recL.length) L = L.concat(_recL);
+        }
+      } catch (_) {}
       var ahead = o.scenes.filter(function (r) { return r.n > n && r.accomplishes; }).slice(0, 3);
       if (ahead.length) {
         L.push('    COMING LATER, RESERVED FOR ITS OWN SCENE (do not deliver, name or pre-empt any of it here):');
@@ -143841,6 +146347,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           }
           var _rows = (typeof _apprSourcesFor === 'function')
             ? _apprSourcesFor(_stx || {}, _roster) : [];
+          // The unbounded-restriction caveat is about this whole APPEARANCE block, so it is
+          // collected across rows and emitted once below instead of once per character.
+          var _apprAcc = { anyUnbounded: false };
           _rows.forEach(function (r) {
             var facts = (typeof _apprRowToFacts === 'function') ? _apprRowToFacts(r) : '';
             if (!facts) return;             // NO SOURCE, NO LINE. Never an invented portrait.
@@ -143848,9 +146357,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             lines.push('  ' + label + ': ' + facts
               + (r.sources && r.sources.length ? '   [source: ' + r.sources.join(' + ') + ']' : ''));
             if (typeof _apprRestrictionLines === 'function') {
-              _apprRestrictionLines(r, '    ').forEach(function (L) { lines.push(L); });
+              _apprRestrictionLines(r, '    ', _apprAcc).forEach(function (L) { lines.push(L); });
             }
           });
+          if (_apprAcc.anyUnbounded && typeof _APPR_UNBOUNDED_CAVEAT === 'string') {
+            lines.push('  ' + _APPR_UNBOUNDED_CAVEAT);
+          }
         } catch (_) { lines = []; }
         if (lines.length) out += 'APPEARANCE (locked \u2014 deploy as established, never a neutral catalog. '
           + 'THESE ARE CONTINUITY FACTS, NOT AN INSTRUCTION TO DESCRIBE: receiving them is not a '
@@ -166446,11 +168958,11 @@ Intimacy is authorized ONLY when the narrative reaches ST3, the scene gate is op
 RULES:
 1. Write in the selected POV.
 2. Respond to the player's actions naturally.
-3. Keep pacing slow and tense (unless Dirty).
+3. Pace to the reader's selected pacing and the scene's purpose.
 4. Focus on sensory details, longing, and chemistry.
 5. Be creative, surprising, and emotionally resonant.
-6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
-7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.
+${(state.constraints?.bannedWords || []).length ? `6. BANNED WORDS/TOPICS: ${(state.constraints.bannedWords).join(', ')}.
+` : ''}7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.
 ${typeof buildProseStackDirectives === 'function' ? '\n' + buildProseStackDirectives() : ''}`;
 
           const introPrompt = buildScene1IntroPrompt(pKernel, lKernel, pGen, lGen, pPro, lPro);
@@ -207951,7 +210463,7 @@ No text, no watermark, no UI elements, share-ready.`;
       charTypeNote = '  → FRACTURED HYBRID SPEECH: cuts between cadences. An old phrase, then a modern one, then a half-finished sentence. The voice of someone who left the continuity behind but cannot fully leave it.' + (isHalfFavored ? ' (Half-Favored intensifies the exile feel — the fracture is bone-deep.)' : '');
     } else if (/heart_warden/.test(arch)) {
       charType = 'younger';
-      charTypeNote = '  → MODERN DRIFT WITH OLD UNDERTONES: mostly contemporary cadence with occasional inheritance — a turn of phrase from a parent, an inversion under emotional pressure, a compressed aphorism that surfaces and then disappears. Easily readable; the heritage flickers.';
+      charTypeNote = '  → MODERN DRIFT WITH OLD UNDERTONES: mostly contemporary cadence with occasional inheritance — a turn of phrase from a parent that surfaces under emotional pressure and then disappears. Easily readable; the heritage flickers.';
     } else if (isHalfFavored) {
       // Unknown archetype but Half-Favored — default to younger/modern-drift.
       charTypeNote = '  → MODERN DRIFT (Half-Favored, unspecified line): mostly contemporary speech with occasional inheritance. The cadence flickers in moments of pressure, never sustained.';
@@ -207970,9 +210482,9 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     var intensityNote = '';
     if (_intensity === 'light') {
-      intensityNote = 'LIGHT INTENSITY (this scene): casual register. Mostly modern-readable. Occasional compression or subtle inversion — one per several lines, not every line. The heritage is a flicker, not a flood.';
+      intensityNote = 'LIGHT INTENSITY (this scene): casual register. Mostly modern-readable. Occasional formality — one turn per several lines, not every line. The heritage is a flicker, not a flood.';
     } else if (_intensity === 'medium') {
-      intensityNote = 'MEDIUM INTENSITY (this scene): more ceremonial. Ritual framing surfaces. Aphoristic compression more common. The character may speak as if their words are being witnessed by ancestors. Still readable; never theatrical.';
+      intensityNote = 'MEDIUM INTENSITY (this scene): more ceremonial. Ritual framing surfaces. The character may speak as if their words are being witnessed by ancestors. Still readable; never theatrical.';
     } else {
       intensityNote = 'STRONG INTENSITY (this scene): grief / intimacy / rage / transcendence pressure. Poetic compression allowed. Sentence rhythm may become more mythic or tidal. Ancient metaphor domains accessible. STILL within readability — never collapse into nonsense or pastiche.';
     }
@@ -207998,7 +210510,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // are still the default; ceremonial moments are the explicit exception.
     var ceremonialNote = '';
     if (inCeremonialRite) {
-      ceremonialNote = '\n\n‼ CEREMONIAL RITE ACTIVE — RESTRICTED BAN-LIFT:\nThis scene contains a formal ritual moment (oath utterance, sacrifice rite, naming ceremony, Petition / Tempt invocation, court binding, or equivalent). The HARD BANS above are SOFTENED for the ritual utterance ONLY — not for surrounding dialogue.\n\nLIFT (during the literal ritual utterance):\n  ✓ "Thou" / "thy" allowed ONCE in the formal oath line ("By the verdict of the Threshold, thou art bound.")\n  ✓ "shalt" allowed in commandment-form ("Thou shalt not unmake what the Field has joined.")\n  ✓ Archaic invocation framings allowed ("Be it known...", "Witness...", "I name thee...")\n\nSTILL FORBIDDEN even during ritual:\n  ✗ "dost / hath / wilt / canst" — these read as parody outside iambic-verse contexts\n  ✗ "Methinks / Verily / Hark" — Renaissance Faire energy\n  ✗ Sustained archaic dialogue OUTSIDE the literal ritual moment — the lift is for the OATH line itself, not the conversation around it\n\nThe ritual utterance is ONE OR TWO LINES, then the speakers RETURN to default First Favored register (cadence, compressed aphorism, selective inversion — without the lifted archaisms).';
+      ceremonialNote = '\n\n‼ CEREMONIAL RITE ACTIVE — RESTRICTED BAN-LIFT:\nThis scene contains a formal ritual moment (oath utterance, sacrifice rite, naming ceremony, Petition / Tempt invocation, court binding, or equivalent). The HARD BANS above are SOFTENED for the ritual utterance ONLY — not for surrounding dialogue.\n\nLIFT (during the literal ritual utterance):\n  ✓ "Thou" / "thy" allowed ONCE in the formal oath line ("By the verdict of the Threshold, thou art bound.")\n  ✓ "shalt" allowed in commandment-form ("Thou shalt not unmake what the Field has joined.")\n  ✓ Archaic invocation framings allowed ("Be it known...", "Witness...", "I name thee...")\n\nSTILL FORBIDDEN even during ritual:\n  ✗ "dost / hath / wilt / canst" — these read as parody outside iambic-verse contexts\n  ✗ "Methinks / Verily / Hark" — Renaissance Faire energy\n  ✗ Sustained archaic dialogue OUTSIDE the literal ritual moment — the lift is for the OATH line itself, not the conversation around it\n\nThe ritual utterance is ONE OR TWO LINES, then the speakers RETURN to default First Favored register (precise, measured wording — without the lifted archaisms).';
     }
 
     return '\n═══════════════════════════════════════════════════════\n' +
@@ -208022,17 +210534,15 @@ No text, no watermark, no UI elements, share-ready.`;
       '  ✗ heavy apostrophe elisions ("\'tis" / "\'twas" / "\'twere")\n' +
       '  ✗ fake Shakespeare constructions ("Methinks the lady doth..." / "Verily, the hour calls...")\n' +
       '  ✗ constant archaic nouns (knave, varlet, fair maid, my liege)\n\n' +
+      'First Favored speech is precise and measured, becoming more elevated when the occasion warrants it. It stays intelligible on the first reading: a question, an accusation or a refusal is understandable even when the speaker is withholding what lies under it.\n\n' +
       'PRIORITIZE SYNTAX OVER VOCABULARY:\n' +
       '- restrained cadence over ornate diction\n' +
       '- precise wording — every word load-bearing\n' +
       '- emotional indirection — the surface line is calm; the weight is underneath\n' +
-      '- compressed aphorisms — short, complete-in-themselves sentences that could be quoted\n' +
-      '- selective inversion — "Too late, you came." not "You came too late."\n' +
       '- ritual framing under pressure (oaths, namings, witness-language)\n' +
       '- ancient metaphor domains used SPARINGLY (tide, blood, root, threshold, verdict, kingdom, hunger-as-destiny)\n' +
       '- unusual but readable sentence rhythm\n\n' +
       'GOOD EXAMPLE LINES (cadence cues — do NOT quote verbatim; write in this register):\n' +
-      '  • "Too late, you came."\n' +
       '  • "You ask for honesty like a person unafraid of it."\n' +
       '  • "That oath has buried kingdoms before."\n' +
       '  • "Careful. The Favored once mistook hunger for destiny."\n' +
@@ -208190,7 +210700,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // Cultural contrast clauses
     var contrastNote = '';
     if (firstFavoredAlsoInScene) {
-      contrastNote += '\n\nCULTURAL CONTRAST WITH FIRST FAVORED (HARD — both cultures in this scene):\nFirst Favored speakers in this scene speak with CEREMONIAL / VERTICAL / OATH-AND-BLOOD register (compressed aphorism, ancient continuity, ritual framing). Thornwild speakers speak with LIVED-IN / BODILY / ECOLOGICAL register (body metaphor, weather metaphor, animal metaphor, curse sayings). The contrast must REMAIN VISIBLE — do not collapse one register into the other or let either bleed across the cultural line. The two cultures recognize each other but do not sound the same.';
+      contrastNote += '\n\nCULTURAL CONTRAST WITH FIRST FAVORED (HARD — both cultures in this scene):\nFirst Favored speakers in this scene speak with CEREMONIAL / VERTICAL / OATH-AND-BLOOD register (precise, measured wording, ancient continuity, ritual framing). Thornwild speakers speak with LIVED-IN / BODILY / ECOLOGICAL register (body metaphor, weather metaphor, animal metaphor, curse sayings). The contrast must REMAIN VISIBLE — do not collapse one register into the other or let either bleed across the cultural line. The two cultures recognize each other but do not sound the same.';
     }
     if (shackleAlsoInScene) {
       contrastNote += '\n\nCULTURAL CONTRAST WITH SHACKLE ISLES: Shackle Isles speakers in this scene use MARITIME-COMMERCIAL register (tide / chain / harbor / debt metaphor, fast transactional cadence). Thornwild speech is FOREST-ECOLOGICAL register (body / weather / forest / curse metaphor, slower folk-poetic cadence). Both cultures are weathered by survival, but oriented to different ecologies — SEA vs FOREST. The metaphor domains do not overlap. The contrast must remain visible.';
@@ -208399,7 +210909,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // Cultural contrast clauses.
     var contrastNotes = '';
     if (firstFavoredAlsoInScene) {
-      contrastNotes += '\n\nCULTURAL CONTRAST WITH FIRST FAVORED: First Favored speakers in this scene use CEREMONIAL / VERTICAL / OATH-AND-BLOOD register (compressed aphorism, ancient continuity). Shackle Isles speech is ADAPTIVE / TRANSACTIONAL / TIDE-AND-CHAIN register (quick, interruptive, mercantile). The contrast must REMAIN VISIBLE — the islander reads First Favored ritual gravity with a port-trained ear (skeptical, mildly impatient with verticality), while the Favored may register the islander\'s velocity as informal or untrustworthy. Neither collapses into the other.';
+      contrastNotes += '\n\nCULTURAL CONTRAST WITH FIRST FAVORED: First Favored speakers in this scene use CEREMONIAL / VERTICAL / OATH-AND-BLOOD register (precise, measured wording, ancient continuity). Shackle Isles speech is ADAPTIVE / TRANSACTIONAL / TIDE-AND-CHAIN register (quick, interruptive, mercantile). The contrast must REMAIN VISIBLE — the islander reads First Favored ritual gravity with a port-trained ear (skeptical, mildly impatient with verticality), while the Favored may register the islander\'s velocity as informal or untrustworthy. Neither collapses into the other.';
     }
     if (thornwildAlsoInScene) {
       contrastNotes += '\n\nCULTURAL CONTRAST WITH THORNWILD: Thornwild speakers in this scene use LIVED-IN / BODILY / ECOLOGICAL register (body / weather / forest / curse metaphor). Shackle Isles speech is MARITIME-COMMERCIAL register (tide / chain / harbor / debt metaphor). Both are weathered cultures shaped by survival — but Thornwild orients to FOREST and Isles orients to SEA/PORT/TRADE. Their metaphor ecologies do not overlap. The contrast must remain visible.';
@@ -218483,6 +220993,113 @@ No text, no watermark, no UI elements, share-ready.`;
     return true;
   }
   function _sceneDecision(n) { try { var d = state._sceneDecisions && state._sceneDecisions[String(n || 1)]; return (d && d.choice && d.storyId === state.storyId) ? d : null; } catch (_) { return null; } }
+  // ── A PLAN-SUPPLIED DECISION, ANSWERED IN SAY/DO (Roman 2026-11-01) ────────────────────────
+  // MEASURED GAP: the generated plan declared `player_decision` at scene 12 and routes at 13
+  // with `routes_decided_by: 12`, the reader answered in free text, and `_sceneDecisions` stayed
+  // EMPTY — so `_outlineRecordedChoice(s, 12)` returned null, no `activeRoute` was ever selected,
+  // and both the planner and the author were told "the player has not yet taken one". The
+  // alternatives existed and the answer existed; nothing connected them. The existing picker
+  // cannot do it: it is baked-opening-only and a generated row carries `choiceKeys: null`, so its
+  // keys are not the plan's differently-worded route identifiers.
+  //
+  // THE IDENTIFIERS ARE THE PLAN'S OWN. Keys are read from the rows whose `routes_decided_by`
+  // names this scene — `routes[].choice`, verbatim — so what gets recorded is exactly what route
+  // selection later matches on. Nothing is invented and nothing is renamed.
+  //
+  // FREE-TEXT AGENCY IS PRESERVED BY REFUSING TO GUESS. A key is selected ONLY when the reader's
+  // own words contain a word DISTINCTIVE to that option (one that appears in no other option) and
+  // contain none distinctive to any other. An ambiguous answer, an answer touching both options,
+  // or a genuinely different action therefore records NOTHING and the decision stays unresolved —
+  // which the outline already handles by presenting every route as untaken. The author's later
+  // prose is never consulted: a decision inferred from what the author wrote would be the engine
+  // reading its own output back as the reader's intent.
+  function _planDecisionKeysForScene(s, n) {
+    try {
+      var o = (typeof _resolveIssueOutline === 'function') ? _resolveIssueOutline(s, { sceneNumber: n }) : null;
+      if (!o || !Array.isArray(o.scenes)) return [];
+      var keys = [];
+      o.scenes.forEach(function (r) {
+        if (!r || Number(r.routesDecidedBy || r.routes_decided_by) !== Number(n)) return;
+        (Array.isArray(r.routes) ? r.routes : []).forEach(function (rt) {
+          var k = rt && rt.choice ? String(rt.choice).trim() : '';
+          if (k && keys.indexOf(k) === -1) keys.push(k);
+        });
+      });
+      return keys;
+    } catch (_) { return []; }
+  }
+  var _PDQ_STOP = {};
+  ('the a an and or of to for it its with without into onto from that this these those then than there here when while' +
+   ' i me my mine you your he she they them his her their we us our is are was were be been being do does did done' +
+   ' not no nor but so if as at by on in out up down off over under again once all any both each few more most other' +
+   ' some such only own same too very can will just should now what which who whom how why about against between' +
+   ' through during before after above below take takes taken keep keeps kept let lets leave leaves one two first'
+  ).split(/\s+/).forEach(function (w) { if (w) _PDQ_STOP[w] = 1; });
+  function _pdqWords(t) {
+    return String(t == null ? '' : t).toLowerCase().replace(/[^a-z0-9' ]+/g, ' ')
+      .split(/\s+/).filter(function (w) { return w.length > 2 && !_PDQ_STOP[w]; });
+  }
+  function _resolvePlanDecisionFromReaderInput(s, n, action, dialogue) {
+    try {
+      s = s || window.state; if (!s || !(Number(n) > 0)) return { resolved: false, why: 'no scene' };
+      if (typeof _sceneDecision === 'function' && _sceneDecision(Number(n))) {
+        return { resolved: false, why: 'a decision is already recorded for scene ' + n };
+      }
+      var keys = _planDecisionKeysForScene(s, n);
+      if (keys.length < 2) return { resolved: false, why: 'the plan declares no alternative route keys for scene ' + n, keys: keys };
+      var text = _pdqWords(String(action || '') + ' ' + String(dialogue || ''));
+      if (!text.length) return { resolved: false, why: 'the reader supplied no usable words' };
+      var textSet = {}; text.forEach(function (w) { textSet[w] = 1; });
+      // A word is DISTINCTIVE to a key when it occurs in that key and in no other.
+      var wordsByKey = keys.map(_pdqWords);
+      var counts = {};
+      wordsByKey.forEach(function (ws) { ws.forEach(function (w) { counts[w] = (counts[w] || 0) + 1; }); });
+      var hits = keys.map(function (k, i) {
+        var distinctive = wordsByKey[i].filter(function (w) { return counts[w] === 1; });
+        var matched = distinctive.filter(function (w) { return textSet[w]; });
+        return { key: k, distinctive: distinctive, matched: matched };
+      });
+      var withHits = hits.filter(function (h) { return h.matched.length > 0; });
+      if (withHits.length === 0) {
+        return { resolved: false, why: 'the answer matches no option distinctively — left unresolved', hits: hits };
+      }
+      if (withHits.length > 1) {
+        return { resolved: false, why: 'the answer touches ' + withHits.length + ' options — ambiguous, left unresolved',
+                 hits: hits };
+      }
+      var win = withHits[0];
+      // ── COMMITMENT DISABLED (Roman 2026-11-01) ──────────────────────────────────────────
+      // This used to call _recordSceneDecision and commit `win.key`. It must not: keyword
+      // distinctiveness is BLIND TO NEGATION, so a refusal commits the thing refused. Measured:
+      //   "I will not buy it"                  → COMMITS "Buy the revelation opportunity."
+      //   "Do not buy it. I refuse."           → COMMITS "Buy the revelation opportunity."
+      //   "I would never buy that opportunity" → COMMITS "Buy the revelation opportunity."
+      //   "I am not preserving the memory"     → COMMITS "Preserve the memory."
+      // The 27/27 suite that passed over this code proved only that the matcher MATCHES WORDS;
+      // it never tested intent, so it was not evidence that the reader's meaning was read.
+      // Binding a reader to the opposite of what they said is worse than leaving the decision
+      // unresolved, which the outline already handles by presenting every route as untaken.
+      //
+      // The match is still COMPUTED and LOGGED as a diagnostic, because knowing which option a
+      // turn pointed at is useful while the decision interface is settled separately. It commits
+      // nothing. No replacement heuristic is wired in its place: the next step is a product
+      // decision about how a plan-supplied choice is actually put to the reader, not a cleverer
+      // guess at free text. Existing decision recording (the baked-opening picker, posture
+      // recording, OAS exits) and plan route selection are untouched — they read
+      // state._sceneDecisions exactly as before, and nothing here writes to it.
+      try { console.log('[PLAN-DECISION:DIAGNOSTIC-ONLY] scene ' + n + ' — the reader\'s words point at '
+        + JSON.stringify(win.key) + ' via ' + JSON.stringify(win.matched)
+        + ', but NOTHING IS RECORDED: this matcher cannot read negation ("I will not buy it" points'
+        + ' at BUY), so it must not bind the reader. The decision stays unresolved.'); } catch (_) {}
+      return { resolved: false, committed: false, why: 'keyword commitment is disabled — negation-blind',
+               wouldHaveMatched: win.key, matched: win.matched, scene: Number(n) };
+    } catch (e) { return { resolved: false, why: 'threw: ' + (e && e.message) }; }
+  }
+  try {
+    window._planDecisionKeysForScene = _planDecisionKeysForScene;
+    window._resolvePlanDecisionFromReaderInput = _resolvePlanDecisionFromReaderInput;
+  } catch (_) {}
+
   function _recordSceneDecision(n, choice, label, source) {
     state._sceneDecisions = state._sceneDecisions || {};
     var ax = _sceneDecisionAxis();
@@ -239389,6 +242006,22 @@ No text, no watermark, no UI elements, share-ready.`;
       '- "motifBank": 3-5 SPARSE anchor images only. NEVER prescriptive ("a glass of water tipping" is good; "Issue 3 Scene 4 mentions the glass" is forbidden).\n' +
       '- "sceneOutline" per issue: EXACTLY ' + _outlineScenesPerIssue + ' entries, one per scene of that issue, numbered with GLOBAL scene numbers in ascending order — issue k covers scenes (k-1)x' + _outlineScenesPerIssue + '+1 through kx' + _outlineScenesPerIssue + ', so NO two issues may share a scene number. This is the ISSUE LENGTH (' + _outlineModeKey + '). It is NOT a beat count: the number of BEATS inside one scene is decided elsewhere and is a different, larger number.\n' +
       '- Every "sceneOutline" entry after an issue\'s first MUST carry "link": "therefore" or "but". If you cannot say which, the two scenes are not causally connected and the outline is wrong.\n' +
+      // ── EVERY SCENE MUST EARN ITS SPACE (Roman 2026-11-01) ─────────────────────────────────
+      // OBSERVED on a generated plan: rows 1-8 of a 20-row issue all sat on the opening dispute
+      // and permission to leave, with the same agency/control negotiation recurring at 4, 7 and 8.
+      // Each row was LEGAL — a true `changes`, a `kind`, an honest "therefore" — so the contract
+      // permitted the allocation. WHAT IS NOT DEMONSTRATED: that the fixed quota of EXACTLY N
+      // entries CAUSED it. We know what the instructions allowed and what the plan contained; we
+      // have not isolated why the model chose to spend its rows that way, and a quota plus
+      // permissive row rules are plausible contributors, not an established cause. The quota is
+      // the issue LENGTH and is unchanged; this states what a row must contain to deserve a slot.
+      // Stated structurally, with no exemplar to copy, and about ALLOCATION — the planner still
+      // decides what happens.
+      '- Every "sceneOutline" entry must EARN its scene. A scene earns it by carrying a materially new ATTEMPT, OBSTACLE, CONSEQUENCE or RELATIONSHIP CHANGE. What fails this test is an exchange that accomplishes NOTHING — the same ground covered again with the characters in the same position, holding the same information, at the same cost. Procedural developments DO qualify when they materially change what she can now DO, what it COSTS her, what she RISKS, or who holds POWER over the outcome: obtaining consequential permission is a real development. Clarifying the same permission again is padding.\n' +
+      '- A contested question may sustain MANY scenes, and an unresolved conflict may DEEPEN without first being settled and then overturned — sustained mystery and slow-burn romance are built that way. What may not stay the same across those scenes is the characters\' APPROACH, the INFORMATION in play, the STAKES, and the CONSEQUENCES already incurred. If a later scene returns to a question, say in "follows_from" what has moved since; if nothing has, that scene is a repeat and does not belong in the outline.\n' +
+      '- Several small things that merely prepare the same later event belong in one entry; and where several answers about the same matter come available together, decide whether they belong inside ONE substantial encounter or whether separate scenes genuinely develop the situation. A separate scene must not exist merely because the next answer is ready. What can make them separate is a change in the ENCOUNTER — what prompts the disclosure, how it is received, what follows from it — not danger, sacrifice or interruption invented to justify the split. A conversation or a shift in understanding can carry a powerful scene by itself; neither an immediate action nor a penalty to the speaker is required. The test is not how often the location changes, but whether the story is in a different position than it was one scene earlier.\n' +
+      '- The issue\'s entries must cover the WHOLE arc named in its "thesis" and reach its "endingShape". An outline that is still circling its opening situation when its entries run out has not planned the issue, however sound each entry looks on its own.\n' +
+      '- Romantic progression is measured ACROSS THE ISSUE, not in every scene: most scenes need no relationship beat at all. A recurring gesture, distance or object is good writing when what it MEANS changes, and empty when it recurs unchanged. Negotiating ACCESS — whether he may help, approach, accompany or speak — can contribute to attraction but cannot stand in for it. Somewhere in the issue, PLAN ENCOUNTERS that make the pull between these two specific: occasions where what one finds absorbing, formidable, funny or unguarded in the other is the work the scene is doing, or where they share an experience neither of them is adjudicating. A sentence naming attractive qualities is not such an encounter. By the issue\'s end something must have moved: trust extended or withdrawn, vulnerability risked, enjoyment taken, or conduct toward the other altered by what happened. Say in "changes" when one of those moves.\n' +
       '- "cliffhanger" per issue: REQUIRED. A specific event plus the predicament it leaves for the next issue. "A quiet rupture" is not a cliffhanger; "she signs the thing he asked her not to sign, in front of the person it ruins" is.\n' +
       '- Every "sceneOutline" entry MUST carry "kind". A sequence of nothing but "conditional" is a branching tree, not a plan; a sequence of nothing but "independent" is a plot the player cannot touch. Most issues are mostly independent and convergence, with conditional at the real choices.\n' +
       '- Where a scene follows an earlier player choice by a materially different route, give it "routes" and "routes_decided_by", and say in "carries" what each route costs her. Do NOT write two separate plots.\n' +
@@ -239829,8 +242462,75 @@ No text, no watermark, no UI elements, share-ready.`;
       try { console.log('[CG:SCAFFOLD] portfolio subject present — ceiling ' + _scaffoldMaxTok
         + ' (+' + PORTFOLIO_MAX_TOKENS + ' conservative chars÷3 allowance, not a token measurement)'); } catch (_) {}
     }
+    // ── STORY ARCHITECTURE RUNS ON SOL (Roman 2026-10-31) ───────────────────────────────────
+    // THE STAGE, NOT A NEW STAGE. This is the existing scaffold/spine call — the one that owns
+    // the scene-by-scene plot, the romance arc, the reader decisions and the payoffs. Nothing is
+    // added to the pipeline; only the model this one call is addressed to changes.
+    //
+    // WHY: the default was the tiered policy below (ministral-8b primary), chosen by a bake-off
+    // on 2026-06-21 — four months before this prompt was given the plot contract — and whose
+    // scorer measured only thesis distinctness. A matched comparison on frozen inputs then
+    // measured ministral failing supplied canon in 3 of 3 First Sacrifice runs and producing the
+    // only response-contract failure, while Sol returned complete, interactive, canon-respecting
+    // plans 4 times out of 4.
+    //
+    // A FALLBACK IS NEVER REPORTED AS SOL. `_scaffoldServedBy` records the model the PROVIDER
+    // says served the reply, every route attempt is kept, and both are attached to the scaffold
+    // object, so a silent demotion to the weak baseline cannot be labelled Sol-generated.
+    // Validation, the allowance computation and the parse path below are untouched.
+    // Kill switch: window._solArchitectureOff === true restores the tiered policy as primary.
     var raw;
-    if (_isGrokScaffold) {
+    var _scaffoldServedBy = null, _scaffoldAttempts = [];
+    var _solArchOn = !_isGrokScaffold
+      && !(typeof window !== 'undefined' && window._solArchitectureOff === true);
+    if (_solArchOn) {
+      try {
+        var _solRes = await fetch('/api/sol-scene-test', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-6.1-sol',
+            messages: _scaffoldMsgs,
+            // The route REQUIRES max_completion_tokens and refuses max_tokens outright; and a
+            // reasoning model rejects `temperature`, so it is deliberately not sent.
+            max_completion_tokens: _scaffoldMaxTok,
+            // ── THE SCAFFOLD EFFORT IS PINNED AND THEREFORE VERIFIABLE (Roman 2026-11-02) ──
+            // A test proposal claimed reasoning_effort "medium" for this stage while the body
+            // sent no effort field at all, so the call ran at the provider default and the
+            // claim was unfalsifiable. The architecture stage now states its effort, and the
+            // value is overridable for a deliberate comparison. It is the ONE stage pinned
+            // here; nothing else is changed.
+            reasoning_effort: (typeof window !== 'undefined'
+              && typeof window._solArchReasoningEffort === 'string'
+              && window._solArchReasoningEffort) ? window._solArchReasoningEffort : 'medium',
+            response_format: { type: 'json_object' },
+            _sbCallLabel: 'arch_spine_' + String((s && s.storyId) || 'nostory') + '_' + Date.now(),
+            _sbRunBudgetUsd: (typeof window !== 'undefined' && Number(window._solArchRunBudgetUsd) > 0)
+              ? Number(window._solArchRunBudgetUsd) : 0.30
+          })
+        });
+        var _solTxt = await _solRes.text();
+        var _solJson = null; try { _solJson = JSON.parse(_solTxt); } catch (_) {}
+        var _solUp = (_solJson && _solJson._upstreamRaw) || _solJson || {};
+        var _solCh = (_solUp.choices && _solUp.choices[0]) || {};
+        raw = (_solCh.message && _solCh.message.content) || '';
+        _scaffoldAttempts.push({ asked: 'gpt-6.1-sol', status: _solRes.status,
+          served: _solUp.model || null, finish: _solCh.finish_reason || null,
+          contentChars: String(raw || '').length });
+        if (!_solRes.ok || !String(raw || '').trim()) {
+          throw new Error('HTTP ' + _solRes.status + ' :: ' + String(_solTxt || '').slice(0, 180));
+        }
+        _scaffoldServedBy = _solUp.model || 'gpt-6.1-sol';
+        try { console.log('[CG:SCAFFOLD] architecture SERVED BY ' + _scaffoldServedBy
+          + ' (asked gpt-6.1-sol) · finish=' + (_solCh.finish_reason || '?')
+          + ' · ' + String(raw).length + ' chars'); } catch (_) {}
+      } catch (_solArchErr) {
+        raw = '';
+        try { console.warn('[CG:SCAFFOLD] Sol architecture call FAILED (' + (_solArchErr && _solArchErr.message)
+          + ') — falling through to the tiered policy. Whatever serves the retry is recorded as the'
+          + ' server; this scaffold will NOT be reported as Sol-generated.'); } catch (_) {}
+      }
+    }
+    if (!String(raw || '').trim() && _isGrokScaffold) {
       // UNCHANGED (Roman's bake-off / grok-4.3 author testing override — a deliberately-
       // invoked, non-default path, never a silent primary). Investigated 2026-09-13:
       // _isGrokScaffold is only ever true when _opts.modelOverride carries a grok-prefixed
@@ -239875,7 +242575,7 @@ No text, no watermark, no UI elements, share-ready.`;
           try { console.log('[CG:SCAFFOLD] ✓ recovered via grok-4-1-fast-reasoning (last resort)'); } catch (_) {}
         }
       }
-    } else {
+    } else if (!String(raw || '').trim()) {
       // TIERED PROVIDER POLICY (2026-09-13): Mistral (ministral-8b-2512) primary → Grok
       // fallback → Claude/OpenAI terminal-only, via the shared _callTieredProvider helper
       // (grep "TIERED PROVIDER POLICY" near ~5817). REPLACES the bespoke SPINE FALLBACK chain
@@ -239886,6 +242586,14 @@ No text, no watermark, no UI elements, share-ready.`;
       try {
         var _tieredScaffold = await _callTieredProvider('scaffold', _scaffoldMsgs, { max_tokens: _scaffoldMaxTok, temperature: 0.7 });
         raw = (_tieredScaffold && typeof _tieredScaffold.content === 'string') ? _tieredScaffold.content : '';
+        // WHICHEVER TIER SERVED IT IS WHAT GETS RECORDED (2026-10-31). Never 'gpt-6.1-sol'
+        // on this branch: reaching here means the Sol call did not produce content.
+        _scaffoldServedBy = (_tieredScaffold && (_tieredScaffold.model || _tieredScaffold.billedModel))
+          || 'tiered-fallback (model not reported by the helper)';
+        _scaffoldAttempts.push({ asked: 'tiered policy (ministral-8b primary)',
+          served: _scaffoldServedBy, contentChars: String(raw || '').length });
+        try { console.log('[CG:SCAFFOLD] architecture SERVED BY ' + _scaffoldServedBy
+          + ' via the tiered policy — NOT Sol'); } catch (_) {}
         if (!String(raw || '').trim()) throw new Error('all provider tiers returned empty content');
       } catch (_scaffoldTieredErr) {
         try { console.warn('[CG:SCAFFOLD] all provider tiers failed: ' + (_scaffoldTieredErr && _scaffoldTieredErr.message)); } catch (_) {}
@@ -239981,7 +242689,16 @@ No text, no watermark, no UI elements, share-ready.`;
     parsed._version = 1;
     parsed._generatedAt = new Date().toISOString();
     parsed.storyId = s.storyId || null;
-    parsed._sourceModel = _genre.model;
+    // ── _sourceModel WAS NEVER THE MODEL THAT SERVED THE REPLY (Roman 2026-10-31) ───────────
+    // It records `_genre.model` — a table value that has read 'gpt-4o-mini' on every genre since
+    // June and is not consulted at all on the default dispatch path. An audit reading it would
+    // attribute every spine to a model that did not write it. It is KEPT (consumers may read it)
+    // and relabelled, with the served model recorded beside it from the provider's own reply.
+    parsed._sourceModel = _genre.model;          // the genre TABLE's value, not the server
+    parsed._sourceModelNote = 'genre-table value; see _servedBy for the model that actually replied';
+    parsed._servedBy = _scaffoldServedBy || 'unrecorded';
+    parsed._routeAttempts = _scaffoldAttempts;
+    parsed._isSolArchitecture = (String(_scaffoldServedBy || '').indexOf('sol') !== -1);
     // STORY SPINE echo — stamp the resolved run-level pattern onto the scaffold so the
     // artifact is self-describing for audits (input directive lives in the userPrompt above).
     try { parsed.storyShape = _storyShape(s); parsed.worldArc = _worldArc(s); } catch (_) {}
@@ -240696,6 +243413,14 @@ No text, no watermark, no UI elements, share-ready.`;
       scaffold.forbiddenDefaults.forEach(function(f) { lines.push('- ' + f); });
     }
     lines.push('');
+    // ── NO BANNER WITHOUT CONTENT (2026-10-28) ──
+    // The banner at the top is pushed unconditionally while every content line below it is
+    // individually optional, so a scaffold object that exists but carries none of those fields
+    // rendered as a header, the authority sentence and an END marker with nothing between them.
+    // Measured in a captured continuation: "═══ STORY SCAFFOLD ═══" sat directly above SCENE
+    // LENGTH GUIDANCE and the SCENE 1 OPENING CONTRACT, appearing to title instructions that have
+    // nothing to do with the scaffold. An empty scaffold now renders nothing at all.
+    if (lines.length <= 1) return '';
     lines.push('SCAFFOLD AUTHORITY: GRAVITATIONAL, NOT PRESCRIPTIVE. It biases which truths stay open, which motifs recur, which pressures accumulate — NEVER which scenes happen. Player actions and Fate moves deform the scaffold; honor the deformation while preserving the gravitational targets. Do NOT name scaffold elements verbatim in prose; let them shape texture.');
     lines.push('═══ END SCAFFOLD ═══');
     return lines.join('\n') + '\n\n';
@@ -243033,12 +245758,21 @@ No text, no watermark, no UI elements, share-ready.`;
       '- THE TEST: if you remove the protagonist from beats[0..3], does the scene still make sense? If yes, the scene is treating her as observer — REWRITE so the pressure is ON her.\n\n' +
       'DRAMATIC STAKES (HARD — TOP-LEVEL REQUIREMENT, NOT OPTIONAL):\n' +
       '- Every scene MUST have something at stake under the surface — a secret, a deadline, a longing, a recent loss, a betrayal that hasn\'t landed yet, a decision being avoided, a confrontation being delayed.\n' +
-      '- Two-page Scene 1 checklist — the rendered scene MUST satisfy ALL FIVE:\n' +
-      '    [1] The protagonist is HIDING, WANTING, or AVOIDING something specific. Name it (in your head, not on the page): "she\'s hiding that she got fired Friday" / "she wants to call her ex" / "she\'s avoiding telling Kira about the article."\n' +
+      // ── THE CHECKLIST RESTATED THE SCENE CHARGE CONTRACT (2026-10-29) ──────────────
+      // Four of its five items were the sceneCharge fields declared above in different words,
+      // down to the shared exemplar:
+      //   [1] hiding / wanting / avoiding      = sceneCharge.stake
+      //   [3] a concrete specific, "a returned ring"  = sceneCharge.concrete_specific_beat_idx
+      //   [4] a dialogue beat whose surface conflicts = sceneCharge.subtext_beat_idx
+      //   [5] almost says something and stops        = sceneCharge.almost_said_beat_idx
+      // Those are the authority because they are the OUTPUT FIELDS the scene is built from, so
+      // restating them here could only drift from them. Item [2] has no counterpart there and is
+      // kept in full. The BORING / WORKING exemplars below are untouched.
+      '- Two-page Scene 1 checklist. FOUR of the five requirements are the sceneCharge fields you '
+        + 'filled in above \u2014 stake, concrete_specific_beat_idx, subtext_beat_idx and '
+        + 'almost_said_beat_idx \u2014 and the rendered scene must satisfy them AS WRITTEN THERE. '
+        + 'The fifth is separate and also mandatory:\n' +
       '    [2] The protagonist is NOT EMOTIONALLY NEUTRAL. She is leaving somewhere, dreading somewhere, mourning something, anticipating something, or evading something. Something just happened or is about to.\n' +
-      '    [3] At least ONE narration beat or exposition beat contains a CONCRETE SPECIFIC that hints at the stake — a returned ring on the desk, an unopened envelope, a phone she keeps not picking up, a name she doesn\'t say. NOT a vague mood word ("she felt unsettled"). A specific object or unspoken word.\n' +
-      '    [4] AT LEAST ONE dialogue beat is SUBTEXTUAL — the spoken line is ordinary but its surface CONFLICTS with what the protagonist actually feels. (She says "I\'m fine" when the narration just told us her hand is shaking. She asks "How was your weekend?" the beat after the reader saw her staring at a wedding invitation.)\n' +
-      '    [5] The scene contains AT LEAST ONE moment where the protagonist almost says something and stops — a sentence that breaks off, a word swapped at the last second, a topic she steers away from. This is the engine of subtext.\n' +
       '- WHAT BORING LOOKS LIKE (DO NOT WRITE THIS): Dani sits with Kira. They talk about the rain. They talk about going home. Dani is calm. Kira is calm. Nothing is concealed. Nothing is wanted. The dialogue exchanges weather, weekend plans, mug refills. This is a FAILURE. If you find your scene drifting toward weather/coffee/commute logistics with no underlying pressure, STOP and rewrite. The surface can be ordinary; the subtext cannot be empty.\n' +
       '- WHAT WORKING LOOKS LIKE: Dani sits with Kira. They talk about the rain — but Dani\'s phone is face-down on the table and she keeps glancing at it. Kira asks about her weekend; Dani answers about Saturday but skips Sunday. Kira notices but doesn\'t push. The rain in the window matches the silence between two questions Kira hasn\'t asked yet. The reader doesn\'t know what happened Sunday. Neither does Kira. But everyone in the room feels its weight.\n' +
       '- OFF-STAGE LI GRAVITY (Scene 1 only): the LI is absent, but their absence has weight — the protagonist may be on her way to meet them, just left them, debating texting them, dreading what they\'ll do next. The Scene 1 charge often comes from this off-stage gravity. Use it. The LI being off-screen is a DIFFERENT THING from the LI being narratively absent — the reader should feel the LI\'s eventual arrival in this scene\'s pressure.\n\n' +
@@ -243052,7 +245786,45 @@ No text, no watermark, no UI elements, share-ready.`;
       '- NO CONCRETE EXAMPLES ARE GIVEN HERE on purpose: when this prompt previously included specific name examples (Devorah Boothe / Marisol Quay / Pen), the model copied them verbatim into every story instead of generating fresh names. Invent from first principles per world + role; the absence of examples is intentional and the directive.\n' +
       '- Also do NOT use the side character\'s name as a coffee shop / store / venue brand (e.g., never name the cafe "Kira Kira" if the side character is named Kira) — that\'s a workshop tell.\n' +
       '- VARY THE SIDE CHARACTER\'S CAREER / ROLE per story too — do NOT default to "copy editor at the newsroom" or any other journalism-coded role. Pull the role from the PC\'s actual world + occupation in THIS story (not a recurring journalism-newsroom template).\n' +
-      '- DECK PRESENCE (HARD): the protagonist\'s grandmother\'s deck is a CARRIED OBJECT that is almost never foregrounded. DEFAULT (any scene): the protagonist does NOT shuffle, draw from, fan, contemplate, hand off, or narrate the deck, and OTHER characters do NOT mention it or reference "cards / tarot / reading / fortune / your grandmother\'s deck" — it rides quietly in a pocket / bag / on a surface, and the scene is about the PC\'s actual life in this WORLD, not the deck. EXCEPTION — the deck MAY come to the FOREGROUND when it is a deliberate PLOT POINT (it is confiscated when she is arrested, stolen, searched for, demanded, used as leverage); there the interaction is intentional and earns its place. ONBOARDING OVERRIDE — when the SCENE 1 MANDATED FRAME (DECK-AT-END, onboarding Stories 1 & 2) is active, THAT block is STRICTER and governs: the deck must NOT appear at all — not even in a pocket — until the mandated closing beat, where it surfaces for the FIRST time to onboard the reader to the cards UI below. Follow the mandated frame whenever it is present.\n\n' +
+      // ── THE FOREGROUND EXCEPTION IS WITHDRAWABLE BY THE SEED (Roman 2026-10-31) ─────
+      // The DEFAULT below already matches the First Sacrifice deck direction ("almost
+      // never foregrounded… rides quietly in a pocket"). The EXCEPTION did not: it stood
+      // as a CG permission for exactly the beats that direction closes — confiscation,
+      // theft, a search, a demand, leverage. A seed that declares
+      // `sceneOne.deckSubjectClosedAfterScene` withdraws it from the scene after that
+      // number; every other story keeps the exception verbatim.
+      '- DECK PRESENCE (HARD): the protagonist\'s grandmother\'s deck is a CARRIED OBJECT that is almost never foregrounded. DEFAULT (any scene): the protagonist does NOT shuffle, draw from, fan, contemplate, hand off, or narrate the deck, and OTHER characters do NOT mention it or reference "cards / tarot / reading / fortune / your grandmother\'s deck" — it rides quietly in a pocket / bag / on a surface, and the scene is about the PC\'s actual life in this WORLD, not the deck. '
+        + (function () {
+            var _closeAfter = null, _curScene = null;
+            try {
+              var _sd = (typeof _activeSeed === 'function') ? _activeSeed(window.state) : null;
+              var _n = _sd && _sd.sceneOne ? _sd.sceneOne.deckSubjectClosedAfterScene : null;
+              if (typeof _n === 'number' && _n >= 0) _closeAfter = _n;
+            } catch (_) {}
+            try {
+              _curScene = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber(window.state) : null;
+            } catch (_) {}
+            if (_closeAfter === null) {
+              return 'EXCEPTION — the deck MAY come to the FOREGROUND when it is a deliberate PLOT POINT (it is confiscated when she is arrested, stolen, searched for, demanded, used as leverage); there the interaction is intentional and earns its place. ';
+            }
+            // ── THE GENERIC EXCEPTION NEVER APPLIES IN A CLOSED-DECK STORY (corrected
+            // 2026-10-31 after review). An earlier version said the exception "EXPIRES AFTER
+            // SCENE 2", which left confiscation, theft and leverage available DURING scenes
+            // 1-2 — two scenes of unrestricted deck plotting, which the direction never
+            // granted. It granted a discovery and a brief acknowledgment. So the generic
+            // permission is withdrawn in EVERY scene of such a story, and what the window
+            // allows is stated POSITIVELY and narrowly instead.
+            var _never = 'It is never confiscated, stolen, searched for, demanded or used as leverage; there is no missing card, no tampering and no deck-centred line of investigation or questioning — not in any scene, including the ones below. ';
+            if (typeof _curScene === 'number' && _curScene > 0 && _curScene <= _closeAfter) {
+              return 'NO GENERIC FOREGROUND EXCEPTION IN THIS STORY (HARD — see THE HEIRLOOM DECK in the world truths): the usual permission to foreground the deck as a deliberate plot point does NOT apply, in this scene or any other. ' + _never
+                + 'WHAT IS ALLOWED, AND ONLY THIS: in scene 1, the discovery itself — the deck coming to light in the same moment the wish untwists — and the immediate suspicious significance of that coincidence'
+                + (_closeAfter >= 2 ? '; in scene 2, at most a BRIEF acknowledgment of that coincidence' : '')
+                + '. Nothing else, and from scene ' + (_closeAfter + 1) + ' onward not even that. ';
+            }
+            return 'NO FOREGROUND EXCEPTION IN THIS STORY (HARD — the seed closed the deck as a subject after scene ' + _closeAfter + '; see THE HEIRLOOM DECK in the world truths): the usual permission to foreground the deck as a deliberate plot point does NOT apply here. ' + _never
+              + 'It gets no discovery shot, close-up or handling sequence, and no beat exists in order to show it. It stays on her person for the reader to use, in frame only as incidental continuity, with no attention called to it and nobody remarking on it. ';
+          })()
+        + 'ONBOARDING OVERRIDE — when the SCENE 1 MANDATED FRAME (DECK-AT-END, onboarding Stories 1 & 2) is active, THAT block is STRICTER and governs: the deck must NOT appear at all — not even in a pocket — until the mandated closing beat, where it surfaces for the FIRST time to onboard the reader to the cards UI below. Follow the mandated frame whenever it is present.\n\n' +
       'PC PROXY ACTION RULES (HARD — externalize PC reaction when her face is hidden):\n' +
       '- The protagonist\'s face is structurally HIDDEN (back_only / partial_cheekbone / side_profile / hidden — never fully revealed). So her emotional reactions cannot be carried by facial expression. Film does this constantly: cut to her hand on the cup tightening, her ring rotating once, her drink left untouched, ' + ((typeof window !== 'undefined' && typeof window._rotCgBodyLanguageProxy === 'function') ? window._rotCgBodyLanguageProxy() : 'the way her hand settles on the table edge and refuses to move') + '. The body says what the face cannot.\n' +
       '- pc_proxy_action is a SHORT (≤12 words) physical detail describing the protagonist\'s body/object/posture reaction on this beat. It is NOT prose narration; it is a CAPTIONABLE moment surfaced as a small italic line beneath the beat\'s main text in the renderer. The reader sees the LI/side-char\'s spoken line, then reads the PC\'s body answering it without words.\n' +
@@ -243109,7 +245881,15 @@ No text, no watermark, no UI elements, share-ready.`;
       '\n' +
       'BEAT DISTRIBUTION (SILENCE BUDGET): 60-70% LOADED beats (stake/collision/revelation) + 20-30% TEXTURE beats (atmospheric/sensory/mundane) + 5-10% BREATH beats (silence, weather, held look). Contrast is what makes loaded moments land.\n' +
       '\n' +
-      'HIGH-STAKES INTENSITY: when sceneCharge.stake names triggering content (contract/eviction/notice/discovery/threat/news/accusation), AT LEAST ONE peak MUST reach READABLE band (0.40+); on confession/break/decision moments, allow STRONG band (0.55-0.75). Restraint is a choice; flatness is a failure.\n' +
+      // ── ONE DELIVERY OF THE HIGH-STAKES BAND RULE (2026-10-29) ──
+      // This restated the HIGH-STAKES INTENSITY MANDATE from app.js:~242832 inside the same
+      // prompt: identical bands (READABLE 0.40+, STRONG 0.55-0.75) and the identical closing
+      // line, with a trigger list that is a strict SUBSET of the one stated there (it drops
+      // blackmail, positive test, missing person, dna result, phone call, forbidden name). A
+      // compressed second copy whose triggers are narrower can only weaken the first, so the
+      // rule is stated once and pointed at from here.
+      'HIGH-STAKES INTENSITY: as stated in the HIGH-STAKES INTENSITY MANDATE above \u2014 the '
+        + 'perceptual band must match the stake.\n' +
       '═══════════════════════════════════════════════════════════════════\n' +
       '\n' +
       // LI INITIATIVE DIRECTIVE (2026-05-22) — injected here so the
@@ -244437,7 +247217,12 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
   // THE SHAPE OF THE SKILL: prepared openings and tactical foresight (chess) delivered fast and
   // precisely under pressure (rap battle). RHYME IS A MNEMONIC AND CARRIES NO MAGICAL BONUS — a
   // rhyme is not a safety rating, which is the single most important thing in this module.
-  var _WISH_SLINGING_RX = /\b(wish-?sling\w*|wish-?duel\w*|duel\w*|tournament\w*|tourney|contest\w*|bout\w*|match(?:es)?\b|challeng\w*|formula\w*|repertoire|opening\w*|counter\w*|combination\w*|notebook\w*|memoris\w*|memoriz\w*|recit\w*|rhym\w*|verse\w*|couplet\w*|lytharyn|institute|academy|curriculum|student\w*|apprentic\w*|novice\w*|train\w*|lesson\w*|teach\w*|taught|drill\w*|practis\w*|practic\w*|first aid|emergenc\w*)\b/i;
+  // DEMONSTRATED FALSE POSITIVE (Roman 2026-11-01): `practic\w*` matched the ordinary word
+  // "practical", so a scene offering PRACTICAL HELP activated a 10,052-char wishcraft-TRAINING
+  // module. `practic(?:e|es|ed|ing)` keeps the training senses (practice / practices / practiced
+  // / practicing) and `practis\w*` keeps the British spellings, while "practical", "practically"
+  // and "practicality" no longer fire it. Genuine training and contest terms are untouched.
+  var _WISH_SLINGING_RX = /\b(wish-?sling\w*|wish-?duel\w*|duel\w*|tournament\w*|tourney|contest\w*|bout\w*|match(?:es)?\b|challeng\w*|formula\w*|repertoire|opening\w*|counter\w*|combination\w*|notebook\w*|memoris\w*|memoriz\w*|recit\w*|rhym\w*|verse\w*|couplet\w*|lytharyn|institute|academy|curriculum|student\w*|apprentic\w*|novice\w*|train\w*|lesson\w*|teach\w*|taught|drill\w*|practis\w*|practic(?:e|es|ed|ing)\b|first aid|emergenc\w*)\b/i;
   function _buildFatelandsWishSlingingDirective(sceneText, opts) {
     try {
       opts = opts || {};
@@ -250013,7 +252798,17 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
     // the speaker label disappears and we don't render an attribution
     // for a non-existent line).
     try {
-      var _emptyQuoteRx = /["“]\s*["”]/g;  // ASCII or curly empty pairs
+      // ── SAME DEFECT AS THE LITERARY SCRUB, SAME CORRECTION (Roman 2026-11-01) ──────────
+      // WAS /["“]\s*["”]/g. `\s` spans newlines and plain spaces alike, so this matched from
+      // the CLOSING mark of one quotation to the OPENING mark of the next and deleted both:
+      // on the literary path that fused two speakers into one paragraph (reproduced
+      // byte-for-byte, 5,490→5,474 on a real draft), and the same expression here would turn
+      // '"Yes." "No."' into '"Yes.No."'. A beat holding two short quoted lines is exactly the
+      // shape at risk. Emptiness is now PROVEN, not inferred from whitespace: zero-width `""`,
+      // or a DIRECTIONAL curly pair whose order rules out a junction. Everything ambiguous is
+      // preserved. The demote-to-narration logic below is unchanged — it still fires when a
+      // dialogue beat genuinely ends up with no quoted content.
+      var _emptyQuoteRx = /""|“[ \t]*”/g;  // zero-width ASCII pair, or a directional curly pair
       var _emptyStripCount = 0;
       var _demoteCount = 0;
       plan.beats.forEach(function(b) {
@@ -256934,9 +259729,9 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       if (typeof callNormalizationLayer === 'function') {
         try {
           var actNorm = await callNormalizationLayer({ axis: 'player_action', user_text: action, context_signals: state.picks?.world || [] });
-          normAction = usableAction(actNorm?.canonical_instruction || actNorm?.normalized_text, action);
+          normAction = usableAction(actNorm?.canonical_instruction || actNorm?.normalized_text, action, actNorm);
           var diaNorm = await callNormalizationLayer({ axis: 'player_dialogue', user_text: dialogue, context_signals: state.picks?.world || [] });
-          normDialogue = usableDialogue(diaNorm?.canonical_instruction || diaNorm?.normalized_text, dialogue);
+          normDialogue = usableDialogue(diaNorm?.canonical_instruction || diaNorm?.normalized_text, dialogue, diaNorm);
         } catch (normErr) {
           console.warn('[GN:NORM] Normalization failed, using raw input:', normErr.message);
         }
@@ -282712,7 +285507,7 @@ Generate the synopsis now.` }
   // from the SAME selector rows through this function, so a prohibition cannot be delivered to
   // one and withheld from the other. Scope travels; missing structured bounds are reported as
   // missing, never as "unconditional".
-  function _apprRestrictionLines(row, indent) {
+  function _apprRestrictionLines(row, indent, acc) {
     var pad = indent || '    ';
     var out = [];
     var _anyUnbounded = false;
@@ -282742,12 +285537,25 @@ Generate the synopsis now.` }
         : 'no structured bounds are recorded for this entry.'));
       if (r.why) out.push(pad + '  why (read it for conditions): ' + r.why);
     });
+    // \u2500\u2500 ONE CAVEAT PER APPEARANCE BLOCK, NOT PER CHARACTER (2026-10-28) \u2500\u2500
+    // This function handles ONE row, and its only caller runs it inside a per-character
+    // forEach \u2014 so hoisting the caveat out of the per-restriction loop (earlier batch) made it
+    // once per CHARACTER, not once per request. Found by the new CG screenplay coverage: that
+    // prompt has two characters carrying unbounded restrictions and received the caveat twice.
+    // The statement is about the whole APPEARANCE block, so when the caller supplies `acc` it
+    // records the need and emits the caveat itself, once, after every row. Without `acc` the
+    // behaviour is unchanged, which keeps the window-exposed function and its controlled probe
+    // working as before.
     if (_anyUnbounded) {
-      out.push(pad + 'ON ANY RESTRICTION ABOVE WITH NO STRUCTURED BOUNDS: ANY LIMIT STATED IN ITS '
-        + 'REASON STILL APPLIES \u2014 do not treat it as unconditional.');
+      if (acc && typeof acc === 'object') acc.anyUnbounded = true;
+      else out.push(pad + _APPR_UNBOUNDED_CAVEAT);
     }
     return out;
   }
+  // Stated once in source so the per-row and per-block emitters cannot drift apart.
+  var _APPR_UNBOUNDED_CAVEAT = 'ON ANY RESTRICTION ABOVE WITH NO STRUCTURED BOUNDS: ANY LIMIT '
+    + 'STATED IN ITS REASON STILL APPLIES \u2014 do not treat it as unconditional.';
+  try { if (typeof window !== 'undefined') window._APPR_UNBOUNDED_CAVEAT = _APPR_UNBOUNDED_CAVEAT; } catch (_) {}
   try { if (typeof window !== 'undefined') {
     window._apprSourcesFor = _apprSourcesFor; window._apprRowToFacts = _apprRowToFacts;
     window._apprRestrictionLines = _apprRestrictionLines;
@@ -284343,12 +287151,12 @@ ${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlo
     RULES:
     1. Write in the selected POV.
     2. Respond to the player's actions naturally.
-    3. Keep pacing slow and tense.
+    3. Pace this scene to the reader's selected pacing and to the scene's own purpose.
     4. Focus on sensory details, longing, and chemistry.
     5. Be creative, surprising, and emotionally resonant.
-    6. BANNED WORDS/TOPICS: ${(state.constraints?.bannedWords || []).join(', ')}.
-    7. TONE ADJUSTMENTS: ${(state.constraints?.tone || []).join(', ')}.
-
+${(state.constraints?.bannedWords || []).length ? `    6. BANNED WORDS/TOPICS: ${(state.constraints.bannedWords).join(', ')}.
+` : ''}${(state.constraints?.tone || []).length ? `    7. TONE ADJUSTMENTS: ${(state.constraints.tone).join(', ')}.
+` : ''}
     PRESSURE MEMORY ILLUSION (ALL SCENES):
     Characters behave as if prior interactions still exert emotional and strategic pressure.
     They do NOT explicitly recall past events unless narratively appropriate.
@@ -284362,8 +287170,10 @@ ${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlo
     - ESCALATION: increases tension, conflict, or instability
     - CONSOLIDATION: stabilizes or temporarily contains tension, but does not remove it
     - DISPLACEMENT: shifts focus to a different pressure, allowing prior tension to persist in background
-    Do NOT fully resolve existing tensions unless replacing them with a greater instability.
-    CONSOLIDATION must feel temporary or fragile. DISPLACEMENT must still carry underlying pressure.
+    Resolution is allowed: a scene may genuinely settle something, and relief does not have to be
+    paid for with a larger problem. What this scene resolves or withholds follows from its purpose.
+    DISPLACEMENT still carries its underlying pressure, because that is what distinguishes it from
+    resolution.
     ${(state.picks?.world === 'Dystopia' && state.picks?.worldSubtype === 'thirst') ? 'THIRST OVERRIDE: ESCALATION is most common. CONSOLIDATION is rare and should feel uneasy or conditional. DISPLACEMENT should introduce new interpersonal or system tension that interacts with existing ones.' : ''}
     Each scene's weight must be perceptible through dominant characteristics:
     - ESCALATION: faster pacing, interruptions, immediate consequences, compressed dialogue
@@ -284536,7 +287346,14 @@ INCORRECT:
     // default (char 208,180) and told the author the A-plot may exist ONLY as relationship pressure.
     // LAW 1 + LAW 2 are Scene-1 calibration; LAW 3 (memory content) is scene-agnostic and stays.
     var _archLawsScene1Only =
-      '(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\n' +
+      // POSITIONAL WORDING CORRECTED (2026-10-30). This read "Every doctrine below INTERPRETS
+      // within these laws", which bound the claim to where the block physically sat. The block
+      // now sits after the shared doctrine so the opening and every continuation can present one
+      // identical leading section, so the claim is restated without reference to position. It is
+      // a POSITIONAL CLARIFICATION ONLY: the scope is unchanged (all doctrine in the request),
+      // the conflict rule below it is unchanged, the three laws themselves are untouched, and
+      // LAW 0's explicit authority tiers continue to decide any disagreement.
+      '(These three laws are the LOAD-BEARING contract for Scene 1. All doctrine in this request INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\n' +
       'LAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE).\n' +
       'This scene\'s PRIMARY axis is the RELATIONSHIP. The A-plot (the named crisis, antagonist, plagiarism, board, lawsuit, etc.) exists ONLY as PRESSURE — its function is to force the relationship question into the open. Render A-plot details ONLY when they activate the relationship axis.\n' +
       '  • INVERSION TEST: If you removed the LI entirely from this scene, would the scene still work as a coherent piece of writing? If YES, you have written A-plot. The scene must COLLAPSE without the LI, even when the LI is OFFSTAGE — his absence IS the gravity.\n' +
@@ -284589,10 +287406,52 @@ INCORRECT:
       '    • his institutional position\n' +
       'COUNT TEST: at end of scene, count your LI memories by category. If TERTIARY ≥ PRIMARY, you have written a procedural in which the LI happens to be useful. Required ratio: PRIMARY > SECONDARY ≥ TERTIARY.\n' +
       'EXCEPTION — ADVERSARIAL ENGINES (COLLISION pre-bond, ENEMIES-TO-LOVERS): tertiary MAY lead IF every tertiary mention ends in a PRIMARY-shaped body response. Strategy alone, no body, is intrigue, not enemies-to-lovers.\n';
-    var _phase1ArchLaws = '\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n' + _archLawsScene1Only + _archLawsAllScenes + '═══ END ARCHITECTURE LAWS ═══\n';
-    // Exact strip target for the continuation seam; Scene 1 keeps _phase1ArchLaws byte-identical.
-    window._ARCH_LAWS_SCENE1_STRIP = '\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n' + _archLawsScene1Only;
-    window._ARCH_LAWS_CONT_TITLE = '\n═══ STORYBOUND ARCHITECTURE LAWS ═══\n';
+    // ── STABLE PREFIX (2026-10-30): THE SHARED LAWS LEAD, THE SCENE-1 ADDENDUM FOLLOWS ──────
+    // MEASURED PROBLEM. The opening's law block opened with a PHASE-1 title and the scene-1-only
+    // laws; continuations replaced both with a plain title. Since this block is the first thing
+    // in state.sysPrompt, and sysPrompt is the first thing in the author's cached segment, the
+    // opening and every continuation diverged AT CHARACTER 1 — a shared leading prefix of one
+    // character between scene 1 and scene 2, measured in
+    // _nf_drive_seq/run_2026-10-30T19-28-27-239Z_61389. Continuation-to-continuation was already
+    // fine (170,056 identical leading chars), so only the opening boundary was broken, and it is
+    // the boundary that decides whether the opening's cache can serve scene 2 at all.
+    //
+    // WHAT CHANGED: nothing was reworded, removed, duplicated or padded. The shared laws and the
+    // END marker now lead in BOTH paths, and the scene-1-only laws move to their own titled
+    // addendum directly after them — still above every doctrine section, which is what their own
+    // first sentence requires ("Every doctrine below INTERPRETS within these laws").
+    //
+    // WHY THIS DOES NOT CHANGE INSTRUCTION PRIORITY: priority here is DECLARED, not positional.
+    // LAW 0 states the authority order explicitly as five numbered tiers and says a lower tier
+    // never overrides a higher one. Moving a block does not move its tier. The laws also stay
+    // contiguous, each group keeps its own numbering, and "these three laws" still refers to the
+    // block it is written in.
+    var _archLawsTitle = '\n═══ STORYBOUND ARCHITECTURE LAWS ═══\n';
+    var _scene1Addendum = '\n═══ SCENE 1 ADDENDUM — LOAD-BEARING FOR THE OPENING ═══\n'
+      + _archLawsScene1Only + '═══ END SCENE 1 ADDENDUM ═══\n';
+    // ── THE OPENING-ONLY ADDENDUM SITS AFTER THE SHARED DOCTRINE (DEFAULT, 2026-10-30) ──────
+    // MEASURED, on the real generated-opening runs:
+    //   · addendum immediately after the laws: scene 1 and scene 2 shared 4,400 leading
+    //     characters of system text (_nf_drive_seq2/run_2026-10-30T19-38-47-188Z_63174).
+    //   · addendum after the shared doctrine: they shared 167,443 leading characters
+    //     (_nf_drive_seq3/run_2026-10-30T19-41-25-347Z_63698), and the continuous dispatcher run
+    //     stayed on Sol through the rapid continuations.
+    // So 1,885 characters of position decided whether the opening's leading section could serve
+    // the continuations at all. The addendum is therefore emitted at the END of the cached
+    // segment (see the sysPrompt assembly), and the positional sentence inside it has been
+    // restated to say "All doctrine in this request" rather than "below".
+    //
+    // NOTHING IS WEAKENED AND NOTHING IS DUPLICATED. The three opening laws are untouched, they
+    // are still delivered in full, they are delivered ONCE, only the opening receives them, and
+    // LAW 0's explicit authority tiers still decide every conflict. Position never carried the
+    // authority: LAW 0 states it.
+    var _phase1ArchLaws = _archLawsTitle + _archLawsAllScenes + '═══ END ARCHITECTURE LAWS ═══\n';
+    window._SB_SCENE1_ADDENDUM_LATE_BLOCK = _scene1Addendum;
+    // Exact strip target for the continuation seam. It is now the ADDENDUM, which sits after the
+    // shared prefix — so stripping it leaves the leading bytes untouched instead of rewriting
+    // them. That is the whole point of the change.
+    window._ARCH_LAWS_SCENE1_STRIP = _scene1Addendum;
+    window._ARCH_LAWS_CONT_TITLE = '';
     var _narrativeEngineHeader = _phase1ArchLaws + '\n=== STORYBOUND NARRATIVE ENGINE ===\n' +
       // ── PRESSURE DOMINANCE (top priority, before all other rules) ──
       'PRESSURE DOMINANCE RULE: This is NOT a passive or atmospheric scene. Pressure must be present within the first 2\u20133 paragraphs. Atmosphere, setting, and introspection are secondary to tension. If a scene can exist without conflict, it is invalid. Do NOT default to soft introductions or neutral setup.\n' +
@@ -284984,6 +287843,12 @@ INCORRECT:
       // each time. NEUTRAL for the turn path: fullSys does `state.sysPrompt +
       // _CACHE_SENTINEL + …`, so this trailing sentinel sits adjacent to that one
       // and collapses to an empty (skipped) segment — identical breakpoints.
+      // THE OPENING-ONLY ADDENDUM, DELIVERED ONCE, HERE. It is withheld from the laws block
+      // above and appended at the very end of the cached segment, after every doctrine section,
+      // so the opening and every continuation present ONE identical leading section followed by
+      // the instructions that actually differ. Continuations remove it through the existing
+      // _ARCH_LAWS_SCENE1_STRIP seam, so they never carry it and it is never sent twice.
+      + (window._SB_SCENE1_ADDENDUM_LATE_BLOCK || '')
       + ((window.StoryboundOrchestration && window.StoryboundOrchestration.CACHE_BOUNDARY) || '<<<STORYBOUND_CACHE_BOUNDARY>>>');
     // PROMPT MASS AUDIT (Roman 2026-06-07): break out the sysPrompt prefix (≈60%
     // of fullSys) so window._promptMassAudit() can see it, not just the per-turn
@@ -294595,8 +297460,105 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
               _v2.faults.push('opening_actor_id missing — name the person_id the opening beat stages, or null');
             } else if (_oa !== null && String(_oa).trim() !== '') {
               _oaRec = _v2People.filter(function (p) { return String(p.person_id) === String(_oa).trim(); })[0] || null;
-              if (!_oaRec) _v2.faults.push('opening_actor_id "' + _oa + '" is not a person physically present in this scene');
-              else if (!_v2NameRe(_oaRec.name).test(_ob)) _v2.faults.push('opening_actor_id names ' + _oaRec.name + ' but the opening beat never stages them');
+              // ── AN UNAMBIGUOUS DECLARED NAME RESOLVES TO ITS person_id (Roman 2026-11-01) ────
+              // MEASURED: the opening planner returned opening_actor_id "Lirael" — the display
+              // name — while the SAME reply staged her { name: "Lirael", presence: "IN_PERSON" }.
+              // This field is resolved against person_id (pc:self / named:julian /
+              // role:…), so the lookup found nothing, the one repair pass did not fix it, and the
+              // build aborted before the author ran. It knew who was present; it filled an id
+              // field with a name.
+              //
+              // WHAT THIS DOES AND NOTHING MORE: an EXACT declared name, compared after ordinary
+              // whitespace and case normalization, resolves to that person's id. A canonical id
+              // is returned untouched. It never mints an identity, never guesses from a first
+              // name or a partial, and never alters staging to make a lookup succeed — the
+              // candidate set IS the physically-present roster, so an offstage or unknown person
+              // cannot be resolved into the room. Ambiguity is refused rather than guessed. The
+              // "does the opening beat actually stage them" check below is unchanged and still
+              // has to pass. The value as returned is kept beside the resolved one.
+              if (!_oaRec) {
+                var _oaNorm = function (x) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim().toLowerCase(); };
+                var _oaWanted = _oaNorm(_oa);
+                var _oaByName = _oaWanted
+                  ? _v2People.filter(function (p) { return _oaNorm(p.name) === _oaWanted; })
+                  : [];
+                if (_oaByName.length === 1) {
+                  _oaRec = _oaByName[0];
+                  try {
+                    plan._opening_actor_id_asReturned = _oa;
+                    plan._opening_actor_id_resolvedFrom = 'declared name (exact, whitespace/case normalized)';
+                    plan.opening_actor_id = _oaRec.person_id;
+                  } catch (_) {}
+                  try { console.log('[SCENE1:OPENING-ACTOR:NORMALIZED] "' + _oa + '" is the declared name of'
+                    + ' exactly one physically present person → person_id "' + _oaRec.person_id + '".'
+                    + ' The value as returned is preserved on the plan; staging was not changed.'); } catch (_) {}
+                } else if (_oaByName.length > 1) {
+                  _v2.faults.push('opening_actor_id "' + _oa + '" is AMBIGUOUS — ' + _oaByName.length
+                    + ' people present share that declared name ('
+                    + _oaByName.map(function (p) { return p.person_id; }).join(', ')
+                    + '). Name the person_id, not the name.');
+                } else {
+                  // Known to the scene but NOT in the room: say so, rather than reporting it as
+                  // an unknown person. `byLabel` carries the people this scene may MENTION.
+                  var _oaOffstage = null;
+                  try {
+                    var _bl = (_cpContract && _cpContract.byLabel) || null;
+                    if (_bl && _oaWanted && _bl[_oaWanted]) _oaOffstage = _bl[_oaWanted];
+                  } catch (_) { _oaOffstage = null; }
+                  if (_oaOffstage) {
+                    _v2.faults.push('opening_actor_id "' + _oa + '" names someone this scene may refer to'
+                      + ' but who is NOT physically present. The opening beat is staged by someone in the room.');
+                  } else {
+                    _v2.faults.push('opening_actor_id "' + _oa + '" is not a person physically present in this scene');
+                  }
+                }
+              }
+              // STANDALONE, NOT `else if` (2026-11-01): chained to the resolution block above it
+              // would have run ONLY for an exact-id match and been skipped for a name-resolved
+              // person — which is precisely the case the normalizer creates. The beat-staging
+              // check must apply to the resolved person however the id was arrived at.
+              //
+              // ── THE NARRATOR STAGES HERSELF IN THE FIRST PERSON (Roman 2026-11-01) ──────────
+              // MEASURED: the planner's beat was "I tear the gossamer band from my mouth as the
+              // wish begins to twist" — a first-person narrative action by the protagonist. This
+              // check tested for her literal NAME, which cannot appear in her own narration, so
+              // the build aborted on a beat that stages her perfectly well. On HEAD this fault was
+              // masked behind the id fault; resolving the id let it through.
+              //
+              // DELIBERATELY NARROW. ALL THREE must hold, and an arbitrary "I"/"my"/"me" is NOT
+              // enough: (1) the resolved actor is the canonical PC and is physically present —
+              // _v2People is the onstage roster, so presence is structural; (2) the declared
+              // first-person narrator IS that PC, which excludes the LI-POV edition and the 4th/
+              // 5th-person modes, where "I" is someone else's voice or no one's; (3) the beat
+              // contains an unambiguous narrative action BY that narrator — the subject "I"
+              // followed by a verb, at a clause boundary, OUTSIDE quotation marks. So another
+              // character's quoted "I did it" cannot establish her, and neither can a possessive:
+              // "my father enters" has no first-person subject and is correctly refused. Named
+              // actors and every identity/presence check above are untouched.
+              var _oaStaged = _oaRec ? _v2NameRe(_oaRec.name).test(_ob) : false;
+              if (_oaRec && !_oaStaged) {
+                var _isPC = String(_oaRec.person_id) === 'pc:self';
+                var _pov = String((window.state && window.state.povMode) || '').toLowerCase();
+                var _pcNarrates = (_pov === '' || _pov === 'normal' || _pov === 'default');
+                if (_isPC && _pcNarrates) {
+                  // Quoted speech is removed first: it is another voice inside her narration.
+                  var _obUnquoted = String(_ob)
+                    .replace(/[“"'][^“”"']*[”"']/g, ' ')
+                    .replace(/\s+/g, ' ');
+                  // Subject "I" + a verb, at the start or after a clause boundary. A possessive
+                  // ("my", "mine") can never match, because only the pronoun I is accepted as a
+                  // SUBJECT and it must be followed by a lowercase verb word.
+                  var _firstPersonAction = /(^|[.!?;:,]\s+|\s—\s|\s-\s)I\s+[a-z][a-z'’]*/.test(_obUnquoted);
+                  if (_firstPersonAction) {
+                    _oaStaged = true;
+                    try { console.log('[SCENE1:OPENING-ACTOR:FIRST-PERSON] the opening beat stages the'
+                      + ' protagonist as its first-person narrator ("' + String(_obUnquoted).slice(0, 60)
+                      + '…") — her name cannot appear in her own narration. PC id ' + _oaRec.person_id
+                      + ', povMode "' + (_pov || '(unset — PC narrates)') + '".'); } catch (_) {}
+                  }
+                }
+              }
+              if (_oaRec && !_oaStaged) _v2.faults.push('opening_actor_id names ' + _oaRec.name + ' but the opening beat never stages them');
             } else {
               var _namedOnes = _v2People.filter(function (p) { return _v2NameRe(p.name).test(_ob); });
               if (_namedOnes.length) _v2.faults.push('opening_beat stages ' + _namedOnes.map(function (p) { return p.name; }).join(', ')
@@ -296732,7 +299694,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         var readerState = (plan.reader_state && typeof plan.reader_state === 'object' && !Array.isArray(plan.reader_state)) ? plan.reader_state : null;
         // CORRIDOR SOURCE (Roman 2026-08-16): scene_mission feeds _selectSceneAssignment for stories with
         // no authored plan. It is a SOURCE, not a second downstream authority.
+        // THE SCENE IT WAS PRODUCED FOR, RECORDED ALONGSIDE IT (Roman 2026-10-31). This field has
+        // one writer and no clear, so without a scene stamp `_selectSceneAssignment` could hand a
+        // scene-1 protagonist intent to scene 5 as that scene's assignment — measured, and now
+        // refused there. Writing the stamp is what makes the refusal possible.
         try { if (window.state) window.state._sceneMissionCurrent = sceneMission || null; } catch (_) {}
+        try { if (window.state) window.state._sceneMissionForScene = (_asgNow && _asgNow.sceneNumber) || 1; } catch (_) {}
         try { if (window.state) { window.state._scene1Mission = sceneMission || null; window.state._scene1ReaderState = readerState; } } catch (_) {}
         // mission_family / mission_attempt / immediate_result REMOVED (Roman 2026-08-25):
         // schema-only fields. Their sole injection site was gated on window._missionEnactmentChain,
@@ -302984,7 +305951,41 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
           // render as literal "". The CG validator strips these in
           // _validateAndNormalizeCGPlan (commit 311dd15); the literary
           // path didn't. Same regex, applied here to keep parity.
-          .replace(/["“]\s*["”]/g, '')
+          //
+          // ── \s* SPANNED PARAGRAPH BREAKS AND ATE DIALOGUE (Roman 2026-11-01) ───────────
+          // WAS: .replace(/["“]\s*["”]/g, ''). `\s` includes \n, so between two SPEAKERS —
+          // '…in the record."\n\n"Lirael—"' — it matched the closing quote of one, the
+          // paragraph break, and the opening quote of the next, and deleted all three.
+          // The result is a period abutting the next speaker's first word
+          // ('…in the record.Lirael—That is the distance,"'), two voices fused into one
+          // paragraph, and the break gone.
+          //
+          // DEMONSTRATED, not inferred: applying the old rule alone to scene 9's
+          // AUTHOR_RETURN draft reproduces the damaged wrapper output BYTE-FOR-BYTE,
+          // 5,490 → 5,474 chars, and it altered 7 of the 8 author drafts in the
+          // 2026-11-01 run. Because its classes are ["“] … ["”], the opening class omits
+          // the right curly ” and the closing class omits the left curly “ — so only
+          // STRAIGHT-quoted text was hit, which is exactly what the author returns before
+          // the later curly conversion.
+          //
+          // THE FIX REMOVES ONLY DEMONSTRABLY EMPTY PAIRS. A first attempt narrowed `\s*` to
+          // `[ \t]*`, which still destroyed same-line quotations: '"Yes." "No."' became
+          // '"Yes.No."' and '"red" "moon"' became '"redmoon"', because the match ran from the
+          // CLOSING mark of one quotation to the OPENING mark of the next. Whitespace between
+          // two marks never establishes an empty quotation — it is ambiguous, and ambiguous
+          // text is preserved.
+          //
+          // So emptiness must be PROVEN, by one of exactly two signals:
+          //   · `""` — two straight marks with ZERO characters between them. Nothing can be
+          //     quoted there. This is the case the rule was written for ('"" The command hung
+          //     in the air…').
+          //   · `“…”` — a DIRECTIONAL curly pair, opening then closing, optionally with
+          //     spaces/tabs. Directionality proves it is one empty quotation and not a
+          //     junction, because a junction reads `” “` (closing then opening).
+          // Everything else — `" "`, `" "`, a newline between marks, a mixed `"”` — is left
+          // exactly as written. No editor and no repair pass: the damage was deterministic,
+          // so removing the cause is the whole correction.
+          .replace(/""|“[ \t]*”/g, '')
           // Markdown headings (2026-05-30, observed live): Sonnet
           // sometimes emits literal "# SOVEREIGN FORUM" / "## Section" at
           // the top of the scene — a markdown artifact bleeding from the
@@ -326370,8 +329371,8 @@ _pcFrictionBlock +
           user_text: rawDia,
           context_signals: state.picks?.world || []
       });
-      let act = usableAction(actNorm.canonical_instruction || actNorm.normalized_text, rawAct);
-      let dia = usableDialogue(diaNorm.canonical_instruction || diaNorm.normalized_text, rawDia);
+      let act = usableAction(actNorm.canonical_instruction || actNorm.normalized_text, rawAct, actNorm);
+      let dia = usableDialogue(diaNorm.canonical_instruction || diaNorm.normalized_text, rawDia, diaNorm);
 
       // ── SAFETY REWRITE: Metaphorical reinterpretation of disallowed sexual actions ──
       // Runs BEFORE sanitizeUserIntent. Preserves player intent as metaphorical equivalent.
@@ -326706,8 +329707,31 @@ If both main characters are present, render their tension and restraint ONLY —
         );
       }
 
+      // ── turnCount 0 IS NOT SCENE 1 ON THE CONTINUATION PATH (2026-10-28) ────────────────
+      // turnCount counts COMPLETED CONTINUATION TURNS, so its legitimate value while building the
+      // FIRST continuation — scene 2 — is 0. This test therefore handed scene 2 the OPENING
+      // bounds, and buildSceneLengthDirective below handed it the opening's text. Measured on a
+      // current-source capture: scene 2's author received "Target 700-870 words" AND "Write the
+      // opening scene (900-1100 words, hard cap 1100). This is the LONGEST scene." A genuine
+      // mid-story continuation (preserved save, turnCount 9) received only one statement, which is
+      // how the two numbers were shown never to apply to the same scene.
+      // Same off-by-one, same cause and same fix as the ARCH LAWS strip (app.js:~333140, 2026-10-14).
+      // _currentSceneNumber is the existing authority: 1 for a real Scene-1 build, the staged index
+      // while CG authors a staged scene, otherwise turnCount + 2.
+      function _sbSceneNumNow() {
+        try {
+          var f = (typeof _currentSceneNumber === 'function') ? _currentSceneNumber
+            : (typeof window !== 'undefined' && typeof window._currentSceneNumber === 'function')
+              ? window._currentSceneNumber : null;
+          if (f) return f(state) || 1;
+        } catch (_) {}
+        return (state.turnCount || 0) + 1;   // last-resort: never claims scene 1 from turnCount 0
+      }
       function getAdaptiveSceneBounds() {
-        const isScene1 = (state.turnCount || 0) === 0;
+        // The pacingMode table below is keyed by (pacingMode, isScene1), so correcting isScene1
+        // gives a first continuation the CONTINUATION bounds for its OWN pacing mode — it does
+        // not merely drop the word "opening" while keeping opening-only numbers.
+        const isScene1 = _sbSceneNumNow() === 1;
         let bounds;
         switch (state.pacingMode) {
           case 'IMMERSIVE':
@@ -326990,7 +330014,13 @@ If the generated scene does not visibly express the world's defining mechanism i
        * Returns empty string after scene 3 (ignition complete).
        */
       function buildIgnitionPatternDirective() {
-          const sceneIndex = state.turnCount || 0;
+          // SAME DEFECT AS THE LENGTH DIRECTIVE (2026-10-28): phase 1 opens with "This is the
+          // opening scene", and selecting it from turnCount === 0 meant the FIRST CONTINUATION —
+          // scene 2 — was told it was the opening by a second builder. The 3-scene ignition
+          // phases are scene-NUMBERED (1/2/3), so they are selected by scene number; the phase
+          // boundaries and their content are unchanged.
+          const sceneNum = (typeof _sbSceneNumNow === 'function') ? _sbSceneNumNow() : ((state.turnCount || 0) + 1);
+          const sceneIndex = sceneNum - 1;
 
           if (sceneIndex === 0) {
               return `\n3-SCENE IGNITION — PHASE 1: SITUATION
@@ -328192,9 +331222,40 @@ Characters should pursue these objectives through dialogue and behavior \u2014 n
 
           let parts = [];
 
-          // Narrative Director
-          parts.push(`SCENE FOCUS: ${FOCUS_LABELS[focus] || focus}.
+          // ── THE CURRENT ASSIGNMENT OUTRANKS AN INDEPENDENTLY SELECTED FOCUS (Roman 2026-11-01) ──
+          // This picked a scene purpose from counters and elapsed scenes and stated it as an
+          // instruction ("SCENE FOCUS: … Prioritize …"), which competed with the planner/spine
+          // assignment the author had also been given. Two purposes arriving as peers is a
+          // second author.
+          //
+          // When a VALID CURRENT assignment exists the focus is SUBORDINATED, not deleted: its
+          // label still travels as context, so the useful state reading survives, but it no
+          // longer issues priorities. With no current assignment the original instruction is
+          // emitted unchanged, so the existing fallback behaviour is intact. Governance itself
+          // is untouched — the Pressure Governor and everything below still run — and the
+          // assignment remains subject to reader choices, canon and safety constraints.
+          var _nvHasAssignment = false, _nvAsgScene = null;
+          try {
+              // CONTRACT: _selectSceneAssignment(s, sceneNum) takes a NUMBER. The first version
+              // passed an OBJECT, which fell through to the shared accessor — correct by luck.
+              // Omitting the argument requests that same shared derivation EXPLICITLY, which the
+              // function documents as "behaviour is exactly as before". Passing turnCount + 1
+              // here would hard-code an off-by-one assumption this call site cannot verify.
+              var _nvA = (typeof _selectSceneAssignment === 'function')
+                  ? _selectSceneAssignment(window.state)
+                  : null;
+              _nvAsgScene = _nvA && (_nvA.sceneNumber || null);
+              _nvHasAssignment = !!(_nvA && String(_nvA.event || '').trim());
+          } catch (_) { _nvHasAssignment = false; }
+          if (_nvHasAssignment) {
+              parts.push(`SCENE TENDENCY (context only — the scene's PURPOSE is the assignment you were given above, which outranks this): ${FOCUS_LABELS[focus] || focus}.`);
+              try { console.log('[NARRATIVE-GOVERNANCE] SCENE FOCUS subordinated — a valid current assignment owns this scene\'s purpose'
+                  + (_nvAsgScene ? ' (scene ' + _nvAsgScene + ')' : '')); } catch (_) {}
+          } else {
+              parts.push(`SCENE FOCUS: ${FOCUS_LABELS[focus] || focus}.
 ${FOCUS_GUIDANCE[focus] || ''}`);
+              try { console.log('[NARRATIVE-GOVERNANCE] SCENE FOCUS emitted (no current assignment — fallback unchanged)'); } catch (_) {}
+          }
 
           // Pressure Governor
           if (energyUsed >= 5) {
@@ -328693,13 +331754,18 @@ Characters express emotion through arguments, choices, physical reactions, and s
       }
 
       function buildSceneLengthDirective() {
-          const sceneIndex = state.turnCount || 0;
+          // The OPENING branch is selected by scene NUMBER, not by turnCount. See the note on
+          // _sbSceneNumNow above: turnCount is 0 while building scene 2, so this branch used to
+          // tell a continuation author to "Write the opening scene. This is the LONGEST scene."
+          // isMainCharacterIntimacySceneAllowed keeps using turnCount deliberately — there it is a
+          // count of completed turns compared against a gate, not a scene index.
+          const isOpeningScene = _sbSceneNumNow() === 1;
           const isMainPairIntimacyScene = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
           const bounds = getAdaptiveSceneBounds();
 
           // Scene 1 (Opening): LONGEST scene — establishes world, tone, power dynamics
           // MUST NOT include sexual/romantic contact between main characters
-          if (sceneIndex === 0) {
+          if (isOpeningScene) {
               return `Write the opening scene (${bounds.min}-${bounds.max} words, hard cap ${bounds.cap}). This is the LONGEST scene.
 Establish: world, tone, power dynamics, emotional stakes, character tension.
 NO sexual or romantic physical contact between the two main characters in this scene.
@@ -332947,7 +336013,12 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       // _billionaireAttractionBlock (reads turnCount, app.js:186752) — were POISONING the
       // segment (one varying byte → the whole 1h prefix re-writes every scene). They moved to
       // the per-turn tail (after _CACHE_SENTINEL). Paired with orchestration's 1h-on-first-two.
-      const _persistentStableTail = _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireFixationBlock + _billionairePerceptionBlock + (typeof _buildBodyBibleCanonBlock === 'function' ? _buildBodyBibleCanonBlock() : '') + (typeof _buildBiblesProseDoctrineBlock === 'function' ? _buildBiblesProseDoctrineBlock() : '') + (typeof _buildSkeletonDoctrineBlock === 'function' ? _buildSkeletonDoctrineBlock() : '');
+      const _persistentStableTail = _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireFixationBlock + _billionairePerceptionBlock + (typeof _buildBodyBibleCanonBlock === 'function' ? _buildBodyBibleCanonBlock() : '') + (typeof _buildBiblesProseDoctrineBlock === 'function' ? _buildBiblesProseDoctrineBlock(state.sysPrompt || '') : '') + (typeof _buildSkeletonDoctrineBlock === 'function' ? _buildSkeletonDoctrineBlock() : '');
+      // state.sysPrompt, not _sysForTurn: that variable is assigned further down (~333137) and is
+      // this same string with the Scene-1 ARCH LAWS title swapped, which touches none of the three
+      // C+ region markers. Passing the prompt keeps this block byte-stable PER STORY — it varies
+      // only with a value that is itself frozen for the story's life — so it stays cacheable, and
+      // the prefix bytes are measured rather than assumed.
       // 2026-05-31 (Roman, audit instrumentation): capture each inline
       // build*Directive() result into a named const BEFORE assembling
       // fullSys. Same execution order, same side effects (each fires once),
@@ -332993,10 +336064,48 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       // Re-rendering it here sent the same ~2-3k-char scaffold TWICE every turn.
       // Skip the redundant tail copy when sysPrompt already carries it; still
       // emit if (defensively) sysPrompt lacks it, so we never drop the spine.
-      const _binl_literaryScaffoldTail =
-          (typeof buildLiteraryScaffoldDirective === 'function'
-            && !(state.sysPrompt && state.sysPrompt.indexOf('STORY SCAFFOLD (gravitational guidance') !== -1))
-          ? buildLiteraryScaffoldDirective() : '';
+      // ── SUPPRESS ON CONTENT, NEVER ON THE HEADING (2026-10-29) ──
+      // The previous guard skipped the tail copy whenever state.sysPrompt contained the scaffold
+      // HEADING. That is content-blind: a resumed save can carry an OLDER issue plan under the
+      // same heading while state holds an updated one, and suppressing on the heading would
+      // discard the current plan. So this compares THIS scaffold's own content against the
+      // prefix and suppresses only on a real match. No probe extractable → emit, never drop.
+      const _binl_literaryScaffoldTail = (function () {
+        try {
+          if (typeof buildLiteraryScaffoldDirective !== 'function') return '';
+          var _scNow = buildLiteraryScaffoldDirective() || '';
+          if (!_scNow) return '';
+          var _probe = (_scNow.match(/RUN THESIS: .{0,90}/) || [])[0]
+            || (_scNow.match(/THEMATIC DIRECTION: .{0,90}/) || [])[0] || '';
+          if (_probe && state.sysPrompt && state.sysPrompt.indexOf(_probe) !== -1) {
+            try { console.log('[SCAFFOLD] tail copy suppressed — the prefix already carries THIS plan'); } catch (_) {}
+            return '';
+          }
+          // ── WHICH PLAN GOVERNS (2026-10-29) ──
+          // The prefix is a frozen saved prompt and cannot be rewritten, so when the current plan
+          // DIFFERS from the one in it, the request necessarily carries both. Delivering the
+          // current plan is not enough — the author would see two plans and no way to tell which
+          // is in force. The current render is therefore prefixed with an explicit supersession
+          // statement naming the earlier one as obsolete. This is only emitted when the prefix
+          // actually contains a scaffold; on a request with no earlier copy nothing is added.
+          var _prefixHasScaffold = !!(state.sysPrompt && state.sysPrompt.indexOf('\u2550\u2550\u2550 STORY SCAFFOLD') !== -1);
+          if (_prefixHasScaffold) {
+            try { console.log('[SCAFFOLD] tail copy KEPT and marked as superseding the prefix plan'); } catch (_) {}
+            return '\n\u2550\u2550\u2550 CURRENT STORY PLAN \u2014 SUPERSEDES THE EARLIER SCAFFOLD \u2550\u2550\u2550\n'
+              + 'THE PLAN BELOW IS THE CURRENT ONE AND GOVERNS. Any STORY SCAFFOLD stated earlier in '
+              + 'this prompt is a SUPERSEDED PLAN: it was frozen when the story was saved and has since '
+              + 'been revised. Where the two disagree, the one below wins. Do not treat the earlier run '
+              + 'thesis, thematic direction, world behaviour or issue plan as a current requirement.\n'
+              + 'SCOPE (HARD): this replaces PLANNING INSTRUCTIONS ONLY. It does not invalidate anything '
+              + 'that has already happened in the story, and it does not touch established lore, world '
+              + 'facts or character facts \u2014 published events remain true and canon remains canon. A '
+              + 'superseded plan is a plan that was changed, never an event that did not occur.\n'
+              + _scNow;
+          }
+          try { console.log('[SCAFFOLD] tail copy KEPT — no earlier scaffold in this request'); } catch (_) {}
+          return _scNow;
+        } catch (_) { return ''; }
+      })();
       const _binl_mode1Whisper               = (typeof buildMode1WhisperDirective === 'function') ? buildMode1WhisperDirective() : '';
       const _binl_mode1FemaleVariant         = (typeof buildMode1FemaleVariantDirective === 'function') ? buildMode1FemaleVariantDirective() : '';
       const _binl_mode1Aftermath             = (typeof buildMode1AftermathDirective === 'function') ? buildMode1AftermathDirective() : '';
@@ -333099,11 +336208,43 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
         // a maintained signal.
         var _archNotScene1 = true;
         try { _archNotScene1 = (state._isScene1Build !== true); } catch (_) {}
-        if (_archNotScene1 && window._ARCH_LAWS_SCENE1_STRIP &&
-            _sysForTurn.indexOf(window._ARCH_LAWS_SCENE1_STRIP) !== -1) {
-          _sysForTurn = _sysForTurn.replace(window._ARCH_LAWS_SCENE1_STRIP, window._ARCH_LAWS_CONT_TITLE);
+        // ── STRIP BY LITERAL MARKERS, NOT BY A GLOBAL A BUILDER HAPPENED TO SET ──────────────
+        // MEASURED DEFECT (2026-10-30, _nf_drive_final/run_2026-10-30T19-59-21-662Z_66467): the
+        // scene generated immediately AFTER a save/reload/resume carried the opening-only laws.
+        // Cause: this strip read window._ARCH_LAWS_SCENE1_STRIP, which is populated only when the
+        // sysPrompt BUILDER runs. On resume, state.sysPrompt is restored from the snapshot — with
+        // the opening block inside it — and the builder does not re-run, so the global was empty,
+        // the condition failed, and a continuation was handed the opening's contract.
+        //
+        // This fragility PRE-DATES the addendum move: the same conditional, with the same
+        // dependency, previously governed stripping the PHASE-1 title and the scene-1 laws, so a
+        // post-resume continuation carried those instead. The move did not introduce it; a
+        // save/resume test that ran while the block was still distinguishable exposed it.
+        //
+        // The markers below are literals in this file, so they survive a reload. The window value
+        // is still honoured first when present, because it is the exact built string.
+        var _S1_ADD_OPEN = '\n═══ SCENE 1 ADDENDUM — LOAD-BEARING FOR THE OPENING ═══\n';
+        var _S1_ADD_END = '═══ END SCENE 1 ADDENDUM ═══\n';
+        if (_archNotScene1) {
+          if (window._ARCH_LAWS_SCENE1_STRIP
+              && _sysForTurn.indexOf(window._ARCH_LAWS_SCENE1_STRIP) !== -1) {
+            _sysForTurn = _sysForTurn.replace(window._ARCH_LAWS_SCENE1_STRIP,
+              window._ARCH_LAWS_CONT_TITLE || '');
+          }
+          // Marker-based sweep, and it runs REGARDLESS of whether the global path matched: a
+          // restored sysPrompt can carry the block even when the global is absent, and a second
+          // copy must never survive into a continuation.
+          var _guard = 0;
+          while (_guard++ < 5) {
+            var _a = _sysForTurn.indexOf(_S1_ADD_OPEN);
+            if (_a === -1) break;
+            var _b = _sysForTurn.indexOf(_S1_ADD_END, _a);
+            if (_b === -1) break;
+            _sysForTurn = _sysForTurn.slice(0, _a) + _sysForTurn.slice(_b + _S1_ADD_END.length);
+          }
         }
       } catch (_archStripErr) { _sysForTurn = state.sysPrompt || ''; }
+
       // ═══ THE HISTORY NOTE IS PART OF THE LITERARY AUTHOR'S CONTRACT ═══════════════════
       // It was first added to _buildLitLitePrompt (app.js:73252), which the Book continuation
       // path does NOT use — the author request came back with no note instruction in it. The
@@ -333176,7 +336317,14 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       var _persistentTailForTurn = (typeof _dropBlocksAlreadyIn === 'function')
         ? _dropBlocksAlreadyIn(_persistentStableTail, _sysForTurn, 'literary _persistentStableTail')
         : _persistentStableTail;
-      let fullSys = !_buildHeavy ? '' : (_hnLiteraryContract + _sysForTurn + _persistentTailForTurn + _CACHE_SENTINEL + _contCausal + _buildAuthorFloorDirective(state) + _buildContinuitySpineBlock(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() +_seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
+      // ── STABLE PREFIX (2026-10-30): THE WORLD BIBLE LEADS THE CACHED SEGMENT ──────────────
+      // _hnLiteraryContract was FIRST, so every continuation's cached segment began with a
+      // per-contract output-format instruction while the opening's began with the world bible —
+      // the second of the two reasons scene 1 and scene 2 shared one leading character. It moves
+      // to the end of the SAME cached segment, immediately before _CACHE_SENTINEL: identical
+      // content, identical segment, unchanged authority (LAW 0 declares tiers; position does not
+      // set them), and nothing is duplicated or padded.
+      let fullSys = !_buildHeavy ? '' : (_sysForTurn + _persistentTailForTurn + _hnLiteraryContract + _CACHE_SENTINEL + _contCausal + _buildAuthorFloorDirective(state) + _buildContinuitySpineBlock(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() +_seedCanonPersist(state) + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -333235,6 +336383,114 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           } catch (_e) { console.warn('[SKELETON] shared boundary failed:', _e && _e.message); }
       }
 
+      // ── OFFSTAGE LI-TEXTURE DOCTRINE — SELECTED WHERE THE CURRENT SCENE IS KNOWN ────────
+      // Relocated out of the per-story stable tail (app.js ~71000). By this point the current
+      // scene's skeleton has been validated or generated, so `sceneSkeleton.li_texture_beat` is
+      // THIS scene's beat — the field the pipeline already nulls when the LI is physically
+      // present (app.js:101473, "he is HERE, not a memory — kill the offstage beat").
+      //
+      // THE DEFAULT IS RETAIN. Withholding requires CURRENT, AUTHORITATIVE evidence: a skeleton
+      // that `_isSkeletonValid()` accepts for this scene, carrying the field, with it empty.
+      // Missing, stale or unresolved information keeps the doctrine — and a throw anywhere here
+      // also keeps it, because the stable tail no longer carries a copy. No new planner call and
+      // no model stage: this reads state the pipeline already produced.
+      var _ltText = '';
+      try {
+        var _ltv = window._liTexDoctrineVariants || null;
+        if (_ltv) _ltText = (window._liTextureDoctrineCompressed === true)
+          ? String(_ltv.compact || '') : String(_ltv.full || '');
+      } catch (_) { _ltText = ''; }
+      var _ltRetain = true, _ltWhy = 'retained — no current authoritative evidence of inapplicability';
+      try {
+        var _ltValid = (typeof _isSkeletonValid === 'function') ? !!_isSkeletonValid() : false;
+        var _ltSk = (window.state && window.state.sceneSkeleton) || null;
+        if (!_ltValid) _ltWhy = 'retained — current skeleton not valid for this scene (stale or unresolved)';
+        else if (!_ltSk) _ltWhy = 'retained — no skeleton object present';
+        else if (!Object.prototype.hasOwnProperty.call(_ltSk, 'li_texture_beat'))
+          _ltWhy = 'retained — validated skeleton does not carry li_texture_beat';
+        else if (!String(_ltSk.li_texture_beat || '').trim()) {
+          _ltRetain = false;
+          _ltWhy = 'WITHHELD — current validated skeleton set no LI texture beat (LI on stage, or no memory beat)';
+        } else _ltWhy = 'retained — current validated skeleton set an LI texture beat';
+      } catch (_) { _ltRetain = true; _ltWhy = 'retained — eligibility check threw; defaulting to deliver'; }
+      try {
+        // EXACTLY ONCE. An older save whose prefix already carries the section is not doubled.
+        if (_ltRetain && _ltText && fullSys.indexOf('LI-TEXTURE DOCTRINE (apply when') === -1) {
+          fullSys += _ltText;
+        }
+        console.log('[LI-TEXTURE:DOCTRINE] ' + _ltWhy + ' (' + (_ltText.length || 0) + 'c available)');
+      } catch (_) {}
+
+      // ── DELIVERED DEVELOPMENT METADATA IS REMOVED (Roman 2026-11-01) ───────────────────
+      // MEASURED in a preserved request: 31 "Roman <date>" stamps, 7 as parentheticals and 17
+      // inline, plus empty settings. None of it is actionable by an author — it records WHEN a
+      // rule was written and WHO asked for it. 571 chars in that request, so this is a
+      // correctness change, not a size one.
+      //
+      // DELIBERATELY NARROW. It removes ONLY an attribution parenthetical that begins with
+      // "Roman" or a bare date, and an inline "— Roman <date>". Every other parenthetical is
+      // left alone, because parentheses carry substantive instruction all through these prompts
+      // (conditions, worked examples, field names). Nothing touches HARD markers, the ✗/✓
+      // examples, the output markers (<<MARKER>>, [TRAVEL:x]) or the reader-choice safeguards.
+      try {
+        var _dbgBefore = fullSys.length;
+        // ── ONLY IDENTIFIABLE INSTRUCTION METADATA (Roman 2026-11-01, second pass) ──────
+        // THE FIRST VERSION DESTROYED STORY FACTS. Measured on ordinary text:
+        //   "The letter was dated (2026-05-14)." → "The letter was dated."
+        //   "Temperature (-5 degrees) mattered."  → "Temperature (5 degrees) mattered."
+        //   "The deadline (2026-12-01) cannot move." → "The deadline cannot move."
+        // Two causes: it treated a BARE DATE as development metadata, and a global punctuation
+        // tidy ate the minus sign in "(-5". Canon, history and reader input all pass through
+        // this text, so a scrub that can reach them is unacceptable regardless of its intent.
+        //
+        // NOW: every rule REQUIRES the literal attribution name. A bare date is never matched,
+        // and there is no global punctuation cleanup. Dates, deadlines, negative numbers,
+        // meaningful parentheticals and output markers are therefore untouched by construction,
+        // and the controls in _nf_debris_safety_verify.mjs prove the old rules damaged them.
+        fullSys = fullSys
+          // a parenthetical that is NOTHING but attribution
+          .replace(/ ?\(Roman\s+20\d\d-\d\d-\d\d\)/g, '')
+          // attribution opening a parenthetical that continues with real content
+          .replace(/\(Roman\s+20\d\d-\d\d-\d\d\s*[—-]\s*/g, '(')
+          // attribution appended inside a parenthetical after real content
+          .replace(/[;,]\s*Roman\s+20\d\d-\d\d-\d\d(?=[\s)]|$)/g, '')
+          // attribution set off inline by a dash or comma
+          .replace(/\s*[—-]\s*Roman\s+20\d\d-\d\d-\d\d(?=[\s).,;:]|$)/g, '')
+          // a bare stamp, with or without audit commentary, introducing a sentence
+          .replace(/\bRoman\s+20\d\d-\d\d-\d\d(?:\s+OBSERVED LIVE)?\s*:\s*/gi, '')
+          .replace(/\bRoman\s+20\d\d-\d\d-\d\d\b/g, '');
+
+        // ── OBSOLETE INSTRUCTION LINES, REMOVED FROM THE OUTGOING COPY ONLY ──────────────
+        // Source removal is not delivered removal: an existing story carries its own saved
+        // prompt, so the two blanket rules kept arriving even though app.js no longer contains
+        // them. These are EXACT-TEXT removals of three known obsolete lines. A save whose
+        // wording differs is simply left alone, stored saves are never rewritten, and nothing
+        // else in the prompt is touched.
+        try {
+          var _obsolete = [
+            '    3. Keep pacing slow and tense.\n',
+            '3. Keep pacing slow and tense (unless Dirty).\n',
+            '    Do NOT fully resolve existing tensions unless replacing them with a greater instability.\n',
+            'CONSOLIDATION must feel temporary or fragile. ',
+          ];
+          var _obsBefore = fullSys.length, _obsHit = 0;
+          _obsolete.forEach(function (t) {
+            if (fullSys.indexOf(t) !== -1) { _obsHit++; fullSys = fullSys.split(t).join(''); }
+          });
+          // Empty settings: a numbered rule whose list came back empty is not an instruction.
+          fullSys = fullSys.replace(/^[ \t]*\d+\.[ \t]*(?:BANNED WORDS\/TOPICS|TONE ADJUSTMENTS):[ \t]*\.[ \t]*\r?\n/gm, '');
+          if (fullSys.length !== _obsBefore) {
+            console.log('[PROMPT-OBSOLETE] removed ' + _obsHit + ' blanket instruction line(s) and any '
+              + 'empty settings from the OUTGOING copy — ' + (_obsBefore - fullSys.length)
+              + ' chars; the stored save is unchanged');
+          }
+        } catch (_) {}
+        if (fullSys.length !== _dbgBefore) {
+          console.log('[PROMPT-DEBRIS] removed ' + (_dbgBefore - fullSys.length)
+            + ' chars of attribution/revision metadata the author cannot act on');
+        }
+      } catch (_) {}
+
       // ONE AUTHORITATIVE SNAPSHOT. The skeleton is appended HERE, before __abCapture,
       // validateStoryPromptSize and the directive-size telemetry read fullSys. Previously all
       // three measured a prompt ~900 chars shorter than the one the author received, so every
@@ -333243,6 +336499,150 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       // large string for the life of the page for no production benefit, so the invariant is
       // carried by a local const and the window copy exists only under an existing diagnostic
       // flag. A cheap length+hash is kept regardless, which is enough to detect drift.
+      // ── OPENING-ONLY PASSAGES COME OUT OF A CONTINUATION; ENDURING TEACHING STAYS ──
+      // A continuation re-reads the whole Scene-1 contract: part arrives inside the frozen
+      // state.sysPrompt and part is re-emitted per turn in the volatile tail, so this runs on the
+      // ASSEMBLED request, the only place both are present. An earlier version ran on the prefix
+      // alone and matched nothing.
+      // Scene-1 contract. Reading those sections by their REQUIREMENTS rather than their headings
+      // shows most of them are enduring and must be kept: REALITY CONSISTENCY is four lines of
+      // physical believability, the GENERIC FAILURE RULE is an all-worlds invariant, the reader
+      // question is the story's engine, and the DECISION QUALITY / VISIBILITY floors are craft.
+      // Only a few passages are genuinely about the opening, and only those are removed here:
+      //   · the hook's "first 150-200 words" timing — a continuation has its own pacing;
+      //   · "CORRECT PATTERN — what Scene 1 should sound like", which orders the OPENING's beats
+      //     ("the plot enters AFTERWARD") and contradicts a mid-story scene's shape.
+      // Three headings are also re-titled: they announce a Scene-1 scope their own content does
+      // not have, and on a continuation that false scope invites the author to discount enduring
+      // rules. Every edit is an exact-text replacement, so an older save whose wording differs is
+      // simply left alone — nothing can be dropped by a near-miss.
+      try {
+        var _contRescope = [
+          // [what to find, what to put there, why]
+          ['\nSCENE 1 ACTIVE HOOK REQUIREMENT (MANDATORY \u2014 BOTH MODES):\n'
+            + '- Within the first 150\u2013200 words, the protagonist must FACE A DECISION (not merely feel tension).\n',
+           '\nACTIVE SCENE HOOK (MANDATORY \u2014 BOTH MODES):\n'
+            + '- Early in this scene the protagonist must FACE A DECISION (not merely feel tension).\n',
+           'hook timing is opening-scoped; the decision requirement endures'],
+          ['REALITY CONSISTENCY (SCENE 1 \u2014 HARD):',
+           'REALITY CONSISTENCY (HARD):',
+           'its four requirements are physical believability, nothing opening-specific'],
+          ['GENERIC FAILURE RULE (SCENE 1 GLOBAL INVARIANT \u2014 ALL WORLDS):',
+           'GENERIC FAILURE RULE (GLOBAL INVARIANT \u2014 ALL WORLDS):',
+           'declared global by its own heading'],
+          ['If this Scene 1 could exist UNCHANGED in a different genre / world',
+           'If this scene could exist UNCHANGED in a different genre / world',
+           'the invariant applies to every scene'],
+          ['BY END OF SCENE 1 THE READER SHOULD BE WONDERING:',
+           'THE QUESTION THE READER MUST KEEP ASKING:',
+           'the question is the whole story\u2019s engine, not an opening deliverable'],
+        ];
+        var _rescoped = 0;
+        for (var _ri = 0; _ri < _contRescope.length; _ri++) {
+          var _find = _contRescope[_ri][0], _put = _contRescope[_ri][1];
+          if (fullSys.indexOf(_find) !== -1) { fullSys = fullSys.split(_find).join(_put); _rescoped++; }
+        }
+        // The opening's beat ORDER. Removed outright: it tells the author the plot arrives after
+        // the romance beat, which is an opening shape, and it is the only passage here with no
+        // enduring content. Bounded by the blank line that follows it.
+        var _cpStart = fullSys.indexOf('CORRECT PATTERN \u2014 what Scene 1 should sound like:');
+        if (_cpStart !== -1) {
+          var _cpEnd = fullSys.indexOf('\n\n', _cpStart);
+          if (_cpEnd !== -1) { fullSys = fullSys.slice(0, _cpStart) + fullSys.slice(_cpEnd + 2); _rescoped++; }
+        }
+        if (_rescoped) {
+          try { console.log('[SCENE1:RESCOPE] ' + _rescoped + ' opening-scoped passage(s) re-scoped or '
+            + 'removed for this continuation; enduring teaching, canon and constraints retained'); } catch (_) {}
+        }
+      } catch (_rescopeErr) {
+        try { console.warn('[SCENE1:RESCOPE] skipped: ' + (_rescopeErr && _rescopeErr.message)); } catch (_) {}
+      }
+
+      // ── THE SHARED COGNITIVE-INTERFERENCE RUNGS ARE DELIVERED ONCE ────────────────────
+      // The ladder appears at three sites and they are NOT three copies:
+      //   · the OFFSTAGE LI-texture doctrine — rungs + memory LEVEL 4 + STRANGER-COMPATIBLE variant
+      //   · the ON-STAGE callback doctrine   — its OWN exemplars ("He had elegant hands") and its
+      //                                        own TEST ("cause her to MISS something"): not a copy
+      //   · the Scene-1 contract            — the same rungs, plus ATTRACTION-PATTERN ANCHORING
+      // Only the offstage doctrine and the Scene-1 contract share text — LEVEL 1/2/3 and THE TEST,
+      // word for word — and different framing around them does not justify sending those five
+      // sentences twice. Every scope-specific qualification is left untouched; only the shared
+      // rungs and THE TEST are replaced, in the SECOND and later occurrences, by a cross-reference.
+      //
+      // WHY HERE AND NOT IN EITHER BUILDER: which of the two lands first depends on the path. On a
+      // resumed save the Scene-1 copy is inside the frozen state.sysPrompt and comes first; on a
+      // fresh continuation the skeleton doctrine's copy comes first and the contract's copy lands
+      // later in the volatile tail. Neither builder can know its own position, so an attempt to
+      // own this at source failed open and changed nothing (measured). This is the one point where
+      // position is knowable — the same reason the dedupe below runs here — and "first occurrence
+      // wins" keeps the cached prefix's copy intact.
+      if (fullSys) {
+        try {
+          var _ladRung1 = '✗ LEVEL 1 — EXPOSITION: "He was attentive."';
+          var _ladLvl4 = '✓✓ LEVEL 4 — COGNITIVE INTERFERENCE';
+          var _ladTest = 'THE TEST: read your remembered moment.';
+          var _ladFirst = fullSys.indexOf(_ladRung1);
+          var _ladDropped = 0, _ladChars = 0;
+          while (_ladFirst !== -1) {
+            var _nextRung = fullSys.indexOf(_ladRung1, _ladFirst + _ladRung1.length);
+            if (_nextRung === -1) break;                      // only one copy — nothing to do
+            var _endRungs = fullSys.indexOf(_ladLvl4, _nextRung);
+            if (_endRungs === -1 || _endRungs <= _nextRung) break;   // shape changed — leave it
+            _ladChars += _endRungs - _nextRung;
+            fullSys = fullSys.slice(0, _nextRung)
+              + 'LEVELS 1–3 of the ladder are stated once earlier in this prompt — apply them here.\n     '
+              + fullSys.slice(_endRungs);
+            // THE TEST is the same sentence as the first copy's; point at it instead of repeating.
+            var _t2 = fullSys.indexOf(_ladTest, fullSys.indexOf(_ladTest) + _ladTest.length);
+            if (_t2 !== -1) {
+              var _tEnd = fullSys.indexOf('\n', _t2);
+              _ladChars += (_tEnd === -1 ? fullSys.length : _tEnd) - _t2;
+              fullSys = fullSys.slice(0, _t2) + 'THE TEST is the one stated with the ladder above.'
+                + (_tEnd === -1 ? '' : fullSys.slice(_tEnd));
+            }
+            _ladDropped++;
+            if (_ladDropped > 4) break;                        // never loop on malformed input
+          }
+          if (_ladDropped) {
+            try { console.log('[PROMPT:LADDER] shared rungs + THE TEST reduced to a cross-reference in '
+              + _ladDropped + ' later copy/copies (' + _ladChars + ' chars); scope-specific LEVEL 4 '
+              + 'variants and framings untouched'); } catch (_) {}
+          }
+        } catch (_ladErr) {
+          try { console.warn('[PROMPT:LADDER] pass skipped: ' + (_ladErr && _ladErr.message)); } catch (_) {}
+        }
+      }
+
+      // ── THE VOLATILE REGION GETS THE SAME DEDUPE THE CACHED PREFIX ALREADY GETS ──
+      // _dropBlocksAlreadyIn is applied above to _persistentStableTail against _sysForTurn, and
+      // it works: measured on a current-source continuation it dropped 64 blocks / 125,980 chars,
+      // leaving exactly ONE copy of each C+ region inside the cached prefix. But the region built
+      // AFTER the cache sentinel never passed through it, and that is where the surviving repeats
+      // were: splitting a captured request at the sentinel put 1 copy of EMOTIONAL PHYSICS in the
+      // prefix and 2 more after it. The literary OPENING path shows 1 copy across 99 captures, so
+      // this is specific to the turn path's volatile tail.
+      //
+      // Same helper, same policy, wider scope. The head — everything up to and including the first
+      // sentinel — is passed through UNCHANGED, so the 1h-cached prefix stays byte-identical and
+      // prompt caching is unaffected. Only the volatile tail is filtered, and only of blocks
+      // demonstrably already present earlier in THIS request (or repeated within the tail itself).
+      // Nothing is assumed about who built the prefix: a block the head lacks is kept. The result
+      // is only accepted if it did not grow.
+      if (fullSys && typeof _dropBlocksAlreadyIn === 'function' && _CACHE_SENTINEL) {
+        try {
+          var _sIdx = fullSys.indexOf(_CACHE_SENTINEL);
+          if (_sIdx !== -1) {
+            var _dHead = fullSys.slice(0, _sIdx + _CACHE_SENTINEL.length);
+            var _dTail = fullSys.slice(_sIdx + _CACHE_SENTINEL.length);
+            var _dedTail = _dropBlocksAlreadyIn(_dTail, _dHead, 'literary volatile tail');
+            if (typeof _dedTail === 'string' && _dedTail.length <= _dTail.length) {
+              fullSys = _dHead + _dedTail;
+            }
+          }
+        } catch (_dedErr) {
+          try { console.warn('[PROMPT:DEDUP] volatile-tail pass skipped: ' + (_dedErr && _dedErr.message)); } catch (_) {}
+        }
+      }
       const finalAuthorSystemPrompt = fullSys;
       try {
         window.__finalAuthorPromptFingerprint = {
@@ -333854,6 +337254,19 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
                 'continuation:' + (_useLite ? 'lite' : 'reused'));
             }
           } catch (_) {}
+          // ── THIS INVOCATION'S AUTHORING IDENTITY, AS A VALUE ────────────────────────────────
+          // Captured BEFORE the author call below, so the history-note promotion further down
+          // consumes the candidate belonging to THIS dispatch. Reading state._authoringOp at
+          // promotion time was the other half of the overlapping-generation race: a late
+          // response's flow would look up whatever generation had started since, and take that
+          // generation's candidate. This is a local const — nothing can move it.
+          var _hnOpAtCall = null;
+          try {
+            var _opC = state._authoringOp || null;
+            _hnOpAtCall = _opC ? { storyId: String(_opC.storyId || ''),
+              scene: (_opC.scene != null) ? Number(_opC.scene) : null,
+              gen: _opC.gen ? String(_opC.gen) : null } : null;
+          } catch (_) { _hnOpAtCall = null; }
           if (_useLite && !(useSpeculative && speculativeScene)) {
               // ── LIT-LITE PATH (router-selected or global toggle) ──
               // Single minimal model call. No speculative reuse, no skeleton /
@@ -333908,6 +337321,23 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
                   integrationTokenBoost: state._petitionTokenBoost || 0,
                   onPhaseChange: passPhaseHandler
               });
+              // ── THE PASS-TIER DRAFT-SIDE CAPTURE WAS REMOVED (2026-10-30) ──────────────────
+              // An unverified patch lived here: it pulled the author's HISTORY_NOTE out of
+              // tierResult.orchestrationState.authorOutput before `raw` was replaced with the
+              // renderer's prose. It was written on a wrong attribution — the paid run never took
+              // this branch (no '[ORCHESTRATION] Pass-tier turn complete' line appears in its
+              // console, and useFullOrchestration requires explicitEmbodimentAuthorized, which no
+              // request in that run carried) — and it was never exercised by any control.
+              //
+              // It is removed rather than kept beside the real fix, so it cannot be mistaken for
+              // it or act as a second admission owner. The loss it was aimed at is handled at the
+              // AUTHOR-WRAPPER boundary instead (orchestration-client.js step 1.4), which is
+              // upstream of every prose editor on every path.
+              //
+              // KNOWN, UNCOVERED GAP, recorded rather than silently patched: if this pass-tier
+              // branch ever runs, `raw` becomes the renderer's prose and the wrapper candidate is
+              // the only carrier of the note. Whether the renderer path needs its own handling is
+              // a separate question from this fix and is not answered here.
               var __rp_3cc5be00_1 = raw; raw = tierResult.finalOutput; try { if (window.__rawSnap) window.__rawSnap.push({ sid: '3cc5be00#1', label: 'tierResult.finalOutput', mutationClass: 'model', before: String(__rp_3cc5be00_1||''), after: String(raw||''), changed: String(raw||'')!==String(__rp_3cc5be00_1||'') }); } catch (_) {}
 
               // Log orchestration details
@@ -334070,8 +337500,124 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               // CLEARED ON EVERY RESPONSE, set only when a note actually parsed. This is what
               // stops a note from a turn that never reached acceptance surviving into a LATER
               // scene: the next response overwrites it, and a response carrying no note wipes it.
-              try { delete s._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
-              try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
+              // ── CLEARING THE SHARED SLOT IS ALSO AN OWNERSHIP ACT ───────────────────────
+              // These deletes exist so a note from a turn that never reached acceptance cannot
+              // survive into a LATER scene. That purpose is served when the CURRENT generation
+              // clears its own stale note. A SUPERSEDED invocation doing it is pure damage:
+              // measured in the concurrency control — a superseded turn was correctly refused
+              // promotion and still wiped the superseding generation's pending note on its way
+              // through, because this clear ran unconditionally. Guarding admission alone was
+              // half a fix.
+              //
+              // So the slot is cleared only when this invocation is still the registered
+              // authoring operation, or when the note sitting there is this invocation's own.
+              var _hnMayClear = !!(_hnOpAtCall && typeof window._authoringOpCurrent === 'function'
+                && window._authoringOpCurrent(_hnOpAtCall));
+              var _hnExisting = state._pendingLiteraryHistoryNote || null;
+              var _hnExistingIsMine = !!(_hnExisting && _hnOpAtCall && _hnOpAtCall.gen
+                && String(_hnExisting.gen || '') === String(_hnOpAtCall.gen));
+              if (_hnMayClear || _hnExistingIsMine || !_hnExisting) {
+                try { delete s._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
+                try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
+              } else {
+                try {
+                  console.warn('[HISTORY-NOTE] a superseded invocation ('
+                    + ((_hnOpAtCall && _hnOpAtCall.gen) || 'NO-GEN') + ') did NOT clear the pending '
+                    + 'note belonging to ' + (_hnExisting.gen || 'NO-GEN')
+                    + ' — clearing another generation\'s slot would destroy the history of the '
+                    + 'generation that is actually publishing');
+                } catch (_) {}
+              }
+              // ── THE AUTHOR-WRAPPER CANDIDATE IS PROMOTED HERE, AND ONLY FOR THIS GENERATION ──
+              // By the time this site runs, the wrapper (orchestration-client.js step 1.4) has
+              // already taken any sentinel off the author's text, so `_hnEx.blocks` is 0 on the
+              // ordinary path and the branch below is correctly inert. The note is not lost: it
+              // is waiting in state._hnAuthorCandidates, keyed BY the authoring GENERATION.
+              //
+              // It is promoted into the SAME pending slot the admission site already consumes, so
+              // there is ONE admission owner and one evidence check — nothing here admits
+              // anything, and nothing here is exempt from the published-prose quote check.
+              //
+              // OWNERSHIP IS VERIFIED, NOT ASSUMED. The candidate is taken only when its gen and
+              // storyId match the operation registered for THIS dispatch. A candidate from
+              // another generation — a retry, a superseded attempt, an earlier scene — is
+              // DISCARDED and the discard is logged. A candidate with no gen is also discarded:
+              // an ownership claim nobody can corroborate is worse than no note.
+              try {
+                // KEYED LOOKUP BY THIS INVOCATION'S OWN GENERATION. Not "the current candidate",
+                // which was a shared slot two overlapping generations could fight over.
+                var _map = state._hnAuthorCandidates || null;
+                var _myGen = (_hnOpAtCall && _hnOpAtCall.gen) ? String(_hnOpAtCall.gen) : null;
+                // ── PRUNE, SO THE MAP CANNOT GROW WITHOUT BOUND ────────────────────────────
+                // Keying by generation isolates concurrent dispatches, but a candidate whose own
+                // dispatch never reached this site would otherwise sit in the map forever and be
+                // carried into the saved snapshot. Entries from a previous page load are dropped
+                // outright (their session can never match again). Beyond a small cap the oldest
+                // are dropped, newest kept — a stale candidate is worth less than a fresh one.
+                try {
+                  if (_map) {
+                    var _keys = Object.keys(_map);
+                    for (var _ki = 0; _ki < _keys.length; _ki++) {
+                      var _c0 = _map[_keys[_ki]];
+                      if (!_c0 || !_c0.session || String(_c0.session) !== String(window.__sbHnSession || '')) {
+                        if (_keys[_ki] !== _myGen) delete _map[_keys[_ki]];
+                      }
+                    }
+                    var _live = Object.keys(_map);
+                    if (_live.length > 8) {
+                      _live.sort(function (a, b) { return Number((_map[a] || {}).at || 0) - Number((_map[b] || {}).at || 0); });
+                      for (var _kj = 0; _kj < _live.length - 8; _kj++) {
+                        if (_live[_kj] !== _myGen) delete _map[_live[_kj]];
+                      }
+                    }
+                  }
+                } catch (_) {}
+                var _cand = (_map && _myGen) ? (_map[_myGen] || null) : null;
+                if (_cand) {
+                  delete _map[_myGen];                   // consumed exactly once, either way
+                  var _ownOk = !!(_cand.gen && _myGen && String(_cand.gen) === String(_myGen)
+                    && String(_cand.storyId || '') === String((_hnOpAtCall && _hnOpAtCall.storyId) || '')
+                    // SESSION TOO. The generation counter restarts at gen#1 on each page load, so
+                    // a candidate persisted by a turn that died before promotion could otherwise
+                    // match the next session's first generation.
+                    && _cand.session && window.__sbHnSession
+                    && String(_cand.session) === String(window.__sbHnSession));
+                  // A SUPERSEDED INVOCATION DOES NOT GET TO WRITE THE SHARED SLOT EITHER. If a
+                  // newer generation has registered since this one dispatched, this result may
+                  // not touch the story — checked with the same existing mechanism as the final
+                  // boundary below, so a late result cannot park a note for someone else to admit.
+                  var _stillCurrentAtPromote = !!(_hnOpAtCall
+                    && typeof window._authoringOpCurrent === 'function'
+                    && window._authoringOpCurrent(_hnOpAtCall));
+                  if (_ownOk && _cand.note && !_stillCurrentAtPromote) {
+                    console.warn('[HISTORY-NOTE] NOT promoting ' + _cand.gen + ' — a newer '
+                      + 'authoring generation has registered since it dispatched, so this result '
+                      + 'may not touch the story. Its candidate is dropped, not parked.');
+                  } else if (_ownOk && _cand.note) {
+                    state._pendingLiteraryHistoryNote = { note: _cand.note,
+                      turn: Number(state.turnCount || 0), at: Date.now(),
+                      gen: String(_cand.gen), scene: _cand.scene, fromAuthorWrapper: true };
+                    console.log('[HISTORY-NOTE] author-wrapper candidate promoted for '
+                      + _cand.gen + ' (scene ' + _cand.scene + ') — ' + _cand.blocks
+                      + ' block(s) were taken before the prose editors; admission and its '
+                      + 'published-prose evidence check are unchanged');
+                  } else if (_ownOk && !_cand.note) {
+                    // Blocks found but none parsed. Explicitly ABSENT, never fabricated.
+                    console.warn('[HISTORY-NOTE] author-wrapper candidate for ' + _cand.gen
+                      + ' carried ' + _cand.blocks + ' block(s) that did not parse — no note is '
+                      + 'admitted and none is invented');
+                  } else {
+                    console.warn('[HISTORY-NOTE] DISCARDED an author-wrapper candidate that does '
+                      + 'not belong to this dispatch (candidate ' + (_cand.gen || 'NO-GEN')
+                      + '/scene ' + _cand.scene + '/session ' + String(_cand.session || 'NONE').slice(0, 12)
+                      + ' vs this dispatch ' + (_myGen || 'NONE') + '/scene '
+                      + ((_hnOpAtCall && _hnOpAtCall.scene) != null ? _hnOpAtCall.scene : 'NONE') + ')');
+                  }
+                }
+              } catch (_hnPromote) {
+                try { console.warn('[HISTORY-NOTE] candidate promotion failed: '
+                  + (_hnPromote && _hnPromote.message)); } catch (_) {}
+              }
               if (_hnEx && _hnEx.blocks) {
                 raw = _hnEx.body;
                 // REQUEST-LOCAL, NOT AN UNKEYED GLOBAL. Stamped with the turn it belongs to so
@@ -335759,12 +339305,18 @@ ABSOLUTE RULES:
               try {
                   var _continuityLine = _buildMicroExprContinuityLine();
                   if (_continuityLine) {
-                      // Split into sentences, insert at random index 0-2
-                      var _sentences = raw.split(/(?<=[.!?])\s+/);
-                      var _insertIdx = Math.min(Math.floor(Math.random() * 3), _sentences.length);
-                      _sentences.splice(_insertIdx, 0, _continuityLine);
-                      var __rp_92c91ea6_1 = raw; raw = _sentences.join(' '); try { if (window.__rawSnap) window.__rawSnap.push({ sid: '92c91ea6#1', label: '_sentences.join', mutationClass: 'model', before: String(__rp_92c91ea6_1||''), after: String(raw||''), changed: String(raw||'')!==String(__rp_92c91ea6_1||'') }); } catch (_) {}
-                      console.log('[MICRO-EXPR:CONTINUITY] Injected at sentence', _insertIdx, ':', _continuityLine);
+                      // ── DISABLED: THIS WAS AN UNAUTHORIZED PROSE WRITER (Roman 2026-11-01) ──
+                      // It spliced a CANNED expression line into the author's prose at a RANDOM
+                      // sentence index (0-2) and then rejoined with `_sentences.join(' ')` — which
+                      // also FLATTENED PARAGRAPH BOUNDARIES, since the split/rejoin replaced every
+                      // inter-sentence break, including blank lines, with a single space.
+                      // Emotional continuity is already the AUTHOR's job and is already covered by
+                      // existing author guidance, so nothing replaces this: no new prompt block and
+                      // no paid rewriting stage. Author and Editor choose the words and placement.
+                      // The line is still COMPUTED and LOGGED as a diagnostic — only the write is
+                      // gone — so continuity state and observability are untouched.
+                      console.log('[MICRO-EXPR:CONTINUITY] computed, NOT injected (prose splice '
+                        + 'disabled; author owns continuity):', _continuityLine);
                   }
               } catch(_) {}
           }
@@ -335785,9 +339337,19 @@ ABSOLUTE RULES:
                       'The stillness lands.'
                   ];
                   var _silencePick = _silenceLines[Math.floor(Math.random() * _silenceLines.length)];
-                  // Append after the last sentence
-                  var __rp_869268d9_1 = raw; raw = raw.trimEnd() + ' ' + _silencePick; try { if (window.__rawSnap) window.__rawSnap.push({ sid: '869268d9#1', label: 'raw.trimEnd', mutationClass: 'model', before: String(__rp_869268d9_1||''), after: String(raw||''), changed: String(raw||'')!==String(__rp_869268d9_1||'') }); } catch (_) {}
-                  console.log('[SILENCE BEAT] Injected after spike:', _silencePick);
+                  // ── DISABLED: THIS WAS AN UNAUTHORIZED PROSE WRITER (Roman 2026-11-01) ──
+                  // It appended a RANDOM stock sentence to the end of the author's scene without
+                  // checking location, viewpoint, whether silence was ALREADY present, or whether
+                  // the author's own ending should simply stand. MEASURED: it put "The room goes
+                  // quiet." on a scene set OUTSIDE among trees, and on a rerun of the same scene
+                  // chose "The stillness lands." instead — the varying closer is what exposed it.
+                  // It is NOT the cut-away: that comes from specialist failure handling
+                  // ([ORCHESTRATION] DETERMINISTIC CUT-AWAY), which is deliberately left alone.
+                  // Sparing silence is already covered by existing author guidance; nothing
+                  // replaces this. The pick is still LOGGED as a diagnostic, and the tension
+                  // state it reads (_prevStoryturn, _lastTensionIntensity) is untouched.
+                  console.log('[SILENCE BEAT] computed, NOT appended (prose append disabled; '
+                    + 'author owns the ending):', _silencePick);
               }
           }
 
@@ -336079,6 +339641,35 @@ ABSOLUTE RULES:
             // demoted to unverified summary instead of being presented as the scene's own words.
             try {
               var _pendHN = state._pendingLiteraryHistoryNote || null;
+              // ── OWNERSHIP IS CARRIED THROUGH THIS FINAL BOUNDARY ────────────────────────
+              // The candidate store is keyed by generation, but it feeds this ONE pending slot —
+              // so without a check here a superseded invocation could still commit history, and
+              // its unconditional delete could destroy the note belonging to the generation that
+              // is actually publishing. Keying the candidates was not sufficient on its own.
+              //
+              // Two conditions, using the mechanism that already exists for exactly this question
+              // (_authoringOpCurrent — "may this late result touch the story"), not a new one:
+              //   1. the pending note must carry THIS invocation's generation, and
+              //   2. this invocation must still be the registered authoring operation.
+              // A superseded result fails (2) even though it legitimately retained its own id —
+              // retaining your id is not permission to publish.
+              var _hnMine = !!(_pendHN && _hnOpAtCall && _hnOpAtCall.gen
+                && String(_pendHN.gen || '') === String(_hnOpAtCall.gen));
+              var _hnStillCurrent = !!(_hnOpAtCall && typeof window._authoringOpCurrent === 'function'
+                && window._authoringOpCurrent(_hnOpAtCall));
+              if (_pendHN && !(_hnMine && _hnStillCurrent)) {
+                // NOT OURS, OR NO LONGER CURRENT — so it is LEFT IN PLACE, not deleted. Deleting
+                // another generation's pending note is how a superseded invocation would silently
+                // destroy the publishing generation's history.
+                try {
+                  console.warn('[HISTORY-NOTE] admission REFUSED at the ownership boundary — '
+                    + 'pending note belongs to ' + (_pendHN.gen || 'NO-GEN') + ', this invocation is '
+                    + ((_hnOpAtCall && _hnOpAtCall.gen) || 'NO-GEN')
+                    + ', still current=' + _hnStillCurrent
+                    + '. The note is left untouched for its own generation; nothing was committed.');
+                } catch (_) {}
+                _pendHN = null;
+              }
               if (_pendHN) {
                 try { delete state._pendingLiteraryHistoryNote; } catch (_) { state._pendingLiteraryHistoryNote = null; }
                 // turnCount INCREMENTS DURING THE TURN — the note is extracted when the
@@ -337904,8 +341495,8 @@ ABSOLUTE RULES:
               user_text: rawDia,
               context_signals: state.picks?.world || []
           });
-          let act = usableAction(actNorm.canonical_instruction || actNorm.normalized_text, rawAct);
-          let dia = usableDialogue(diaNorm.canonical_instruction || diaNorm.normalized_text, rawDia);
+          let act = usableAction(actNorm.canonical_instruction || actNorm.normalized_text, rawAct, actNorm);
+          let dia = usableDialogue(diaNorm.canonical_instruction || diaNorm.normalized_text, rawDia, diaNorm);
 
           // ── SAFETY REWRITE (speculative path) ──
           const specSafetyRewrite = reinterpretSafetyAction(act, dia);
@@ -341046,19 +344637,45 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     var input = String(raw == null ? '' : raw);
     var out = { body: input, note: null, blocks: 0 };
     try {
-      if (input.indexOf(_HN_OPEN) < 0) return out;    // no sentinel: today's behaviour, untouched
+      // ── THE SENTINEL'S ANGLE-BRACKET COUNT IS NOT GUARANTEED (Roman 2026-11-01) ──────────
+      // This checked ONLY for the triple form `<<<HISTORY_NOTE … HISTORY_NOTE>>>`. MEASURED on
+      // the preserved scene-13 bodies: response 220 emitted a MISMATCHED sentinel — opener
+      // `<<HISTORY_NOTE` (two angles) with closer `HISTORY_NOTE>>>` (three) — while response 221
+      // emitted a well-formed `<<<`. A single indexOf on the triple opener missed 220, and it went
+      // through untouched into reader HTML — where the browser parsed `<history_note {"events":…`
+      // as an ELEMENT and turned the JSON into attributes (`lirael=""`, `offers=""`, …), leaving
+      // a stray escaped `&gt;&gt;` in the visible prose. That is a PUBLICATION defect: machine
+      // metadata reached the reader's page.
+      //
+      // Detection is now arity-tolerant (two or more angles, either end) and close-form tolerant
+      // (`HISTORY_NOTE>>` or a bare `>>` after the JSON). A block that does not parse is still
+      // STRIPPED AND NOT STORED — malformed metadata must never become story memory, and it must
+      // never reach the page either.
+      var _hnOpenAt = function (s, from) {
+        var m = /<{2,}\s*HISTORY_NOTE\b/i.exec(s.slice(from || 0));
+        return m ? { at: (from || 0) + m.index, len: m[0].length } : null;
+      };
+      var _hnCloseAt = function (s, from) {
+        var named = /HISTORY_NOTE\s*>{2,}/i.exec(s.slice(from));
+        if (named) return { at: from + named.index, len: named[0].length };
+        var bare = /\}\s*>{2,}/.exec(s.slice(from));           // `…} >>` — the double form's end
+        if (bare) return { at: from + bare.index + 1, len: bare[0].length - 1 };
+        return null;
+      };
+      if (!_hnOpenAt(input, 0)) return out;           // no sentinel of any arity: untouched
       // EVERY BLOCK, NOT JUST THE FIRST. Codex emitted two consecutive HISTORY_NOTE blocks and
       // the second stayed in the returned prose — a single indexOf/slice pass removes one block
       // and leaves any others for the reader. A model repeating itself is ordinary, so the strip
       // loops until no opener remains, and the FIRST well-formed block wins as the note.
       var body = input, note = null, blocks = 0, guard = 0;
-      while (body.indexOf(_HN_OPEN) >= 0 && guard++ < 50) {
-        var i = body.indexOf(_HN_OPEN);
-        var j = body.indexOf(_HN_CLOSE, i);
-        var inner = (j < 0) ? body.slice(i + _HN_OPEN.length) : body.slice(i + _HN_OPEN.length, j);
+      var _op;
+      while ((_op = _hnOpenAt(body, 0)) && guard++ < 50) {
+        var i = _op.at;
+        var _cl = _hnCloseAt(body, i + _op.len);
+        var inner = _cl ? body.slice(i + _op.len, _cl.at) : body.slice(i + _op.len);
         // STRIP FIRST, PARSE SECOND, every time. An unterminated block truncates the rest, since
         // whatever follows an unclosed marker is not prose the reader should see either.
-        body = (j < 0) ? body.slice(0, i) : (body.slice(0, i) + body.slice(j + _HN_CLOSE.length));
+        body = _cl ? (body.slice(0, i) + body.slice(_cl.at + _cl.len)) : body.slice(0, i);
         blocks++;
         if (note) continue;                            // already have one; this one is only stripped
         var a = inner.indexOf('{'), b = inner.lastIndexOf('}');
