@@ -181,9 +181,58 @@
     breadth: 'IT NEED NOT BE AN ACTION. The established mechanisms run equally on a remembered '
       + 'pattern, an absence or a change, a contrast, a corrected assumption, a line of dialogue, '
       + 'or a small present-tense behaviour. Reach for whichever this moment actually affords.',
-    notChecklist: 'NO BEAT OWES EVERY FUNCTION. Revealing the observed is enough; revealing the '
-      + 'observer is enough; both at once is enough. The only question is what inference the '
-      + 'reader gains that did not exist before the line.',
+    // ── REPLACED: MINIMUM SUFFICIENCY → THE CONNECTING WORK (Roman 2026-11-06) ────────────
+    // WHAT THIS REPLACED AND WHY. The old `notChecklist` read "Revealing the observed is enough;
+    // revealing the observer is enough; both at once is enough." Three permissions to stop. An
+    // editor handed a paragraph and that framing locates one line that qualifies and halts, which
+    // is what the two measured craft passes did: one certified an existing line, the other wrote
+    // social proof. The permission itself is NOT lost — it is the author's own
+    // `_CP_DOCTRINE.notChecklist`, which now reaches the craft request verbatim, in his words.
+    // This slot therefore carries the work the doctrine already describes rather than a weaker
+    // paraphrase of its permission. NOTHING IS APPENDED: one field replaces one field.
+    //
+    // ── CONSOLIDATED: NAMED THE DEFAULT OPERATION, AND THE MASK (Roman 2026-11-06) ─────────
+    // The previous wording said WHAT to connect but not WHERE TO START, so "take the behaviour
+    // this moment puts in front of her" left the editor free to compose a new incident and
+    // interpret that instead. The operation is now stated as a sequence: SELECT prose that is
+    // already there, then DEVELOP its meaning. Two further things fold into this one field
+    // rather than arriving as more instructions:
+    //  · THE READING IS MASK-SHAPED. It is her mask that decides which observable detail
+    //    matters and what she makes of it, and the mask now reaches this request through the
+    //    existing viewpoint input (`viewpointAndMask`) instead of being absent from it.
+    //  · NO COMPULSORY GLOSS. Measured in both craft arms: the connection arrived as a stated
+    //    opinion appended to an observation. Selection, comparison and response carry a reading
+    //    too, which CP_STYLE.implicitViewpoint already says — so this says plainly that an
+    //    opinion after every observation is NOT owed, instead of leaving the two in tension.
+    // THE OBSERVED/OBSERVER/BOTH PERMISSION IS CARRIED HERE, and that is a correction to the
+    // first version of this field. It assumed the author's own `_CP_DOCTRINE.notChecklist` made
+    // the permission redundant, which is true of the CRAFT EDITOR — the doctrine reaches that
+    // request verbatim — and FALSE of the judge-driven repair brief, which carries CP_STYLE and
+    // no doctrine at all. `_essential_beat_check_control` and `_eb_evidence_corrections` both
+    // went red on exactly that, correctly. The permission is restored into this one field rather
+    // than as a sixth key, so the one-field-for-one-field discipline holds: it belongs here,
+    // because it qualifies what the connection has to accomplish. The nine mechanisms are
+    // untouched and remain the author's own words. No exemplar sentence is supplied, in either
+    // version.
+    connection: 'START FROM SOMETHING ALREADY ON THE PAGE, THEN DEVELOP WHAT IT MEANS TO HER. '
+      + 'That is the default operation, in that order: SELECT observable behaviour this encounter '
+      + 'already contains — his, her own, or the two together — and DEVELOP its meaning through '
+      + 'her reading of it, which is the reading her mask gives her. Her desires, her '
+      + 'assumptions, her defences, her self-image, her sense of what she is to this person: the '
+      + 'connection runs between the observable thing and one of those. Finding one line that '
+      + 'qualifies and stopping is not the work; neither is writing a new incident in order to '
+      + 'have something to interpret. Express the connection THROUGH THE ENCOUNTER ITSELF — in '
+      + 'what she attends to, what she takes it to mean, and how she answers it — and do not step '
+      + 'outside the moment to explain it. AN OPINION AFTER EVERY OBSERVATION IS NOT OWED: a '
+      + 'stated reading is one way and often the weakest, selection and comparison and response '
+      + 'carry a reading too, and the prose must not become observation-then-gloss repeated down '
+      + 'the page. NO BEAT OWES EVERY FUNCTION: revealing the observed is enough, revealing the '
+      + 'observer is enough, and both at once is enough — what the connection may not be is '
+      + 'absent, or the same inference the reader already had. HIS MOTIVES REMAIN HER READING OF '
+      + 'HIM — defeasible, possibly wrong, and never promoted into fact by the narration. Invent '
+      + 'no backstory and no hidden motive to make a connection available: work from what the '
+      + 'supplied prose and canon already give you, and where they give you little, choose a '
+      + 'smaller connection rather than a supplied past.',
     implicitViewpoint: 'HER VIEWPOINT CAN LIVE IN THE SELECTION. What she chooses to notice, what '
       + 'she compares it to, the words she reaches for, the contrast she draws — any of these '
       + 'carries her reading. She does not have to declare what she felt about it.',
@@ -205,6 +254,231 @@
       + 'or a changed reading of what the reader already saw. That is an echo, and an echo deepens. '
       + 'What is to be avoided is restating the first impression in new words, and equally a '
       + '"fresh" depiction that behaves as though the first never happened.'
+  };
+  // ══ PHYSICAL GROUNDING — THE SECOND, DISTINCT FINDING (Roman 2026-11-04) ══════════════════
+  // WHAT THIS REPLACES, AND WHY. The appearance block used to tell the editor the supplied facts
+  // were "ALREADY ESTABLISHED ... NOT AS A PROMPT TO DESCRIBE", and that "an edit that mentions
+  // none of them is correct". The premise was wrong: a character record is CANON, not evidence
+  // that the reader has ever been shown it. Missing information in an abbreviated history is not
+  // proof that a character was never described, and holding a record is not proof that they were.
+  //
+  // THE MEASURED FAILURE. On the Sol opening the production assessor returned `fulfilled` for all
+  // four Character+ obligations — including the presiding Dohkar, who has no face, build, hair or
+  // name anywhere on the page, and whose entire physical presence is a hand that stops moving.
+  // That verdict is CORRECT for what C+ measures: a relationship PERCEPTION EVENT, which behaviour
+  // and inference alone can satisfy. Nothing in the pass could see that the reader cannot picture
+  // him, because nothing in the pass was looking.
+  //
+  // SO: TWO FINDINGS, KEPT APART. "We perceive something about this person" and "we can picture or
+  // recognize this person" are different achievements. A fulfilled C+ obligation does not answer
+  // the second and MUST NOT suppress an edit for it. Equally, a useful physical detail owes no
+  // psychological truth and no plot work — helping the reader see someone is sufficient.
+  // ══ A NAMED EDITING TASK, WHEN THE PASS IS NOT A GROUNDING PASS (Roman 2026-11-05) ═══════
+  // The editor's machinery — paragraph refs, protected passages, the splice, the byte check —
+  // is task-agnostic. What was NOT task-agnostic was the instruction block and the reply
+  // contract: both hard-coded the Character+/grounding questions, so a differently-briefed pass
+  // was still asked those four questions and answered them. This carries an objective supplied
+  // by the caller and asks the model to do THAT, with the same preservation guarantees.
+  //
+  // It is a MECHANISM, not a new stage and not a permanent mode: nothing in production supplies
+  // `opts.task`, so no shipped pass changes behaviour.
+  var CP_TASK = {
+    block: function (t) {
+      var L = ['THIS PASS HAS ONE EDITING TASK, STATED BELOW. It is not a Character+ pass and '
+        + 'not a description pass; do the task named here.', '', 'TASK: ' + t.objective];
+      if (t.welcome) L.push('', t.welcome);
+      if (t.insufficient) L.push('', 'NOT AUTOMATICALLY ENOUGH: ' + t.insufficient);
+      if (t.exclusions) L.push('', 'ABSOLUTE EXCLUSIONS: ' + t.exclusions);
+      // ── ONE AUTHORIZED EXCEPTION, NAMED BY THE CALLER (Roman 2026-11-06) ───────────────
+      // "Remove nothing the scene already has" is right for every task this block has carried,
+      // and it CONTRADICTS a consistency pass that is explicitly authorized to delete an
+      // accidental duplicate — the pass would be told the opposite of its remit in the same
+      // prompt. `authorizedRemoval` lets the caller name that one exception instead of relaxing
+      // the rule for everybody. Omitted, the sentence is byte-identical to before, and nothing
+      // in production supplies `opts.task` at all.
+      L.push('', 'PRESERVE: the scene’s events and their causal order, every established '
+        + 'fact, every character description already present, the viewpoint, the reader’s '
+        + 'choices including the closing decision, and the prose’s voice and rhythm. '
+        + (t.authorizedRemoval
+          ? ('Remove nothing the scene already has, WITH ONE AUTHORIZED EXCEPTION: '
+             + t.authorizedRemoval + ' Everything outside that exception stays.')
+          : 'Remove nothing the scene already has.')
+        + ' Every protectedPassage must survive verbatim.');
+      L.push('', 'USE THE OPPORTUNITY THE SCENE ALREADY OFFERS. Do not invent contact, privacy '
+        + 'or events this scene cannot support, and do not introduce a new obstacle, a '
+        + 'confession, shame or denial that the scene did not already contain.');
+      L.push('', 'A KEEP IS AVAILABLE AND IS THE RIGHT ANSWER WHEN THE REQUESTED EFFECT ALREADY '
+        + 'WORKS. Quote the passage that achieves it and change nothing. Leave passages that are '
+        + 'doing other work well alone.');
+      if (t.exampleNote) L.push('', t.exampleNote);
+      return L.join('\n');
+    }
+  };
+
+  var CP_GROUNDING = {
+    // The one compact paragraph that now carries the whole requirement.
+    paragraph: 'GROUND THE PROTAGONIST, THE LOVE INTEREST AND THE NAMED OR CONSEQUENTIAL ON-PAGE '
+      + 'CHARACTERS SUFFICIENTLY FOR THE READER TO PICTURE THEM. Where that grounding is missing, '
+      + 'weave in a few clear, memorable details — often one to three — drawn from '
+      + 'appearance, voice, clothing or distinctive manner. Briefly recall a familiar feature when '
+      + 'someone returns after an absence; otherwise let description recur when it helps us picture '
+      + 'the encounter. This is not a per-scene quota. Preserve established traits and player '
+      + 'choices. Supplied character records establish canon, not proof that the reader has seen it.',
+    // ── SELECTION, NOT VOLUME (Roman 2026-11-05) ────────────────────────────────────────────
+    // CORRECTED ATTRIBUTION. I first wrote that the editor "reached for HAIR, the one attribute
+    // the prose already had". That was false: the original Luna draft contained no hair for
+    // Lirael at all — the only hair in it belonged to Julian and to Seren — and the edit
+    // INTRODUCED hers. The criticism is not repetition. It is that she arrived with seven
+    // delivered facts (age, height, build, hair, face, complexion, signature) and the resulting
+    // portrait was still THIN: one feature added where the record could have supported a fuller
+    // impression. A bible may be detailed while the prose selects the few features that do work.
+    selection: 'CHOOSE THE DETAILS THAT HELP THE READER PICTURE THIS PERSON IN CONTEXT. Where '
+      + 'the supplied record carries a face, a build, a height, a bearing, a voice, a scar or a '
+      + 'way of holding still, use whichever of those this moment can actually carry — '
+      + 'HAIR AND HANDS ARE OPTIONS, NOT DEFAULTS. A GENERIC VOICE ADJECTIVE ("low", "even", '
+      + '"soft") OR A ROUTINE GESTURE DOES NOT AUTOMATICALLY COMPLETE A PORTRAIT: it completes '
+      + 'one when it is particular enough that the reader could pick this person out by it. '
+      + 'Equally, do NOT assemble an anatomical checklist, do not hunt for a novel or unique '
+      + 'identifying gimmick, and do not add another description to someone the reader can '
+      + 'already picture. A familiar feature is perfectly good if it is the one that works here. '
+      + 'Two or three well-chosen features beat six.',
+    // ── STAGING IS NOT AN IMPRESSION (Roman 2026-11-04, recalibrating this paragraph) ───────
+    // The withdrawn wording ended "a generic hand movement, a posture or a silence does not by
+    // itself make anyone recognizable" — a list of insufficient examples, which the editor read
+    // and then certified a hand movement anyway. Naming the CATEGORY is the correction: the
+    // question is not whether someone is visibly doing something, it is whether the reader comes
+    // away with a concrete impression of this particular person.
+    twoFindings: 'KEEP THE TWO FINDINGS DISTINCT, PER PERSON. (1) PERCEPTION — the passage '
+      // ── WHAT PERCEPTION ACTUALLY REQUIRES (Roman 2026-11-05) ────────────────────────────
+      // REPLACES "we perceive something about this person", which a restatement of someone's
+      // job satisfies. Measured: the presiding Dohkar's C+ was credited to "You are supervising
+      // her sacrifice. Do not add your own." — a line that states his office and her duty
+      // and reveals nothing anyone did not already know. The requirement names its CHANNELS so
+      // the test is what the passage does, not whether it mentions the person.
+      + 'REVEALS SOMETHING about this person, about the observer, or about what lies between '
+      + 'them — carried by the viewpoint\'s ATTENTION (what she notices, and that she '
+      + 'noticed it), INTERPRETATION (what she makes of it), ACTION (what someone chooses to '
+      + 'do) or RESPONSE (what it costs or changes in someone). RESTATING SOMEONE’S '
+      + 'PROFESSIONAL ROLE IS NOT AUTOMATICALLY ENOUGH: that he presides, that she supervises, '
+      + 'that he is senior, is position rather than revelation. It becomes revelation when the '
+      + 'passage shows how this person holds that position, or what the observer makes of them '
+      + 'holding it. (2) GROUNDING — we come away with a concrete impression of '
+      + 'THIS PARTICULAR PERSON. A fulfilled perception obligation does NOT satisfy the second '
+      + 'and does not block an edit for it. THESE ARE DIFFERENT QUESTIONS, AND THE EASIER ONE IS '
+      + 'NOT THE ONE BEING ASKED: "is this person visibly doing something" is answered by '
+      + 'STAGING — turning, entering, speaking, moving their hands, holding a room — and staging '
+      + 'does not automatically answer the second. Someone can act decisively through a whole '
+      + 'scene and still leave nobody the reader could pick out of the crowd they were commanding. '
+      + 'A PHYSICAL FEATURE, A VOICE, A BEARING OR A DISTINCTIVE HABIT each supply that '
+      // ── NO UNIQUENESS TEST (Roman 2026-11-04) ─────────────────────────────────────────
+      // This closed with "an action that anyone present could equally have performed does not",
+      // which set a bar nobody asked for: a shared accent, a common build or a gesture half the
+      // room makes can still let the reader see someone. The question is whether the reader can
+      // picture this person here, not whether the detail distinguishes them from everyone.
+      + 'impression. Generic staging alone may leave someone indistinct. The detail need not be '
+      + 'unique; it needs to help the reader picture or recognize this person in context.',
+    sufficiency: 'DESCRIPTION MAY SIMPLY HELP THE READER SEE SOMEONE. It does not have to justify '
+      + 'itself by advancing the plot or revealing a psychological truth. Scale it to the person\'s '
+      + 'importance, and weave it into action the scene already has rather than stopping for a '
+      + 'portrait. FIRST-PERSON NARRATION EXEMPTS NOBODY: the protagonist telling the story needs '
+      + 'physical presence too.',
+    invention: 'PREFER EXISTING PHYSICAL CANON, which is supplied below where a record exists. '
+      + 'Where a detail is genuinely unspecified, a modest, compatible invention is permitted — '
+      + 'but missing access to a record is never permission to contradict one. Never alter, '
+      + 'contradict or re-list a supplied fact, and never contradict a player choice.',
+    // ── THE ANSWER MAY COME FROM EARLIER PROSE, AND USUALLY SHOULD ──────────────────────────
+    // The first version of this requirement accepted ONLY evidence quoted from the scene in
+    // front of the editor. That turned "not a per-scene quota" into a per-scene quota by
+    // validation: a character described in scene 2 and developed through dialogue in scene 3
+    // could not be left alone, because the scene-3 prose held no description to quote. The
+    // obligation would go unanswered and an edit would be owed — another identifying passage,
+    // every time a cadence came due, which is precisely the repetitive portraiture this whole
+    // requirement exists to avoid.
+    // ── REPLACED: SCENE-WIDE SUFFICIENCY → THE ENCOUNTER IN FRONT OF YOU (Roman 2026-11-06) ─
+    // WHAT THIS REPLACED AND WHY — MEASURED, both providers, on the same frozen request. The
+    // editable span was the explicit continuation (P22–P30). Both picturability passes answered
+    // ALL-KEEP with `basis: "scene"`, quoting Mara's loosening pin and borrowed green silk and
+    // Roman's shed jacket and white shirt — every word of it from P2 and P3, which were supplied
+    // READ-ONLY. The claim was literally true (it IS this scene) and it settled nothing about the
+    // encounter, which runs for nine paragraphs with no physical particularity in it at all.
+    // Both also quoted the cuffs approvingly while the encounter has them fastened at the wrists,
+    // then at the forearms, with the shirt coming off in between and clicking "with every drive"
+    // — a clothing contradiction neither pass registered, because nothing asked it to look at the
+    // encounter as the thing under judgement.
+    //
+    // THE OLD FRAMING IS WHAT PERMITTED THAT, and its reason was sound: a character described in
+    // scene 2 and developed through dialogue in scene 3 must not be re-described merely because
+    // scene 3 carries no portrait. That protection is KEPT, in `prior`. What is withdrawn is the
+    // part that let prose from OUTSIDE the editable encounter answer a question about the
+    // encounter. A record and an earlier portrait supply CONTINUITY AND FACTS; they do not
+    // discharge this requirement, and `basis: "scene"` now means the editable encounter itself.
+    // NOTHING IS APPENDED: one field replaces one field.
+    encounter: 'JUDGE THE ENCOUNTER YOU CAN EDIT. The question is whether THE PARAGRAPHS YOU ARE '
+      + 'PERMITTED TO CHANGE make these particular people physically present, and whether their '
+      + 'clothing, positions and movement stay coherent through them. EARLIER DESCRIPTION AND A '
+      + 'SUPPLIED RECORD GIVE YOU CONTINUITY AND FACTS — THEY DO NOT AUTOMATICALLY DISCHARGE THIS '
+      + 'ENCOUNTER. A portrait delivered before this encounter began tells you what the reader has '
+      + 'already read; a character record tells you what is true of someone; neither answers '
+      + 'whether the reader can see them HERE. Say which you are standing on in `grounding.basis`: '
+      + '"scene" when THE EDITABLE ENCOUNTER ITSELF grounds them — a quote taken from read-only '
+      + 'prose outside it is continuity, not an answer, and is not accepted as one; "prior" when a '
+      + 'supplied published passage from an EARLIER SCENE already did and this encounter needs no '
+      + 'reminder; "unknown" ONLY where the supplied history is incomplete and you genuinely '
+      + 'cannot tell — then say in `why` what you are unsure of. "unknown" RECORDS '
+      + 'UNCERTAINTY AND NOTHING ELSE: it does not force another description, and it does not '
+      + 'certify that one was ever delivered, so it is not a finding that the reader can picture '
+      + 'this person. WHERE THE SUPPLIED HISTORY IS COMPLETE — '
+      + '`publishedPassagesForThesePeople.historyComplete` says so, and it is true of an opening '
+      + '— there is no earlier prose to appeal to, and an unsupported claim that someone was '
+      + 'described before is unavailable. GENERIC ANATOMICAL ACTIVITY IS NOT AUTOMATICALLY '
+      + 'ENOUGH: bodies in motion, hands and mouths doing things, the mechanics of contact — '
+      + 'these can run for paragraphs without telling the reader WHOSE body it is. NO NEW TRAIT '
+      + 'AND NO ANATOMICAL CHECKLIST IS REQUIRED OF YOU: a familiar feature recurring naturally, '
+      + 'through movement, clothing, proximity or what the viewpoint notices, is usually the '
+      + 'better answer than a new one. AND GROUNDING IS STILL NOT A QUOTA — ask for an edit when '
+      + 'the reader cannot see these people in this encounter, or when its clothing or positions '
+      + 'contradict themselves; never merely because a span of prose happens to carry no '
+      + 'description.',
+    // ── KEEP IS STILL FIRST-CLASS, AND IT IS NOW ANSWERED FROM THE ENCOUNTER ────────────────
+    // The second sentence used to read "So does a character the reader can already picture from
+    // earlier scenes, where this encounter needs no reminder" — the same scene-wide discharge
+    // `encounter` has just withdrawn, sitting one field below it. A person who is ON STAGE in the
+    // editable encounter is answered from that encounter; `prior` remains for a person the
+    // encounter does not actually put in front of the reader. Nothing here forces a portrait: an
+    // encounter that already works, or one where another detail would add little, is a KEEP.
+    restraint: 'KEEP WHAT ALREADY WORKS. A character THIS ENCOUNTER already grounds adequately '
+      + 'takes a KEEP on this finding, and you quote the passage inside it that does the work. So '
+      + 'does a character the encounter does not actually put in front of the reader — someone '
+      + 'referred to, remembered or off-stage — where an earlier scene has already shown them. '
+      + 'AN ENCOUNTER THAT IS ALREADY SUFFICIENTLY EMBODIED IS A KEEP, and so is one where another '
+      + 'detail would add little: the test is what the reader comes away with, never how many '
+      + 'features you counted. DO NOT FORCE ANOTHER INTRODUCTORY PORTRAIT INTO AN ENCOUNTER '
+      + 'ALREADY UNDER WAY — the moment for an establishing description has passed, and what '
+      + 'belongs here is woven into the action the encounter already has. Do not give everyone a '
+      + 'second portrait, do not require a new feature on every appearance, and do not substitute '
+      + 'a compulsory repeated gesture for a missing appearance. WHERE YOU CORRECT CLOTHING OR '
+      + 'POSITION, KEEP IT NARROW: fix the thing that contradicts itself and change no event — no '
+      + 'action removed, none added, none reordered.',
+    // The header for the supplied records themselves. It replaces the withdrawn
+    // "NOT AS A PROMPT TO DESCRIBE" wording and says what a record actually is.
+    recordsHeader: 'ESTABLISHED PHYSICAL CANON FOR THESE PEOPLE. This is CANON — what is TRUE '
+      + 'of them, which nothing you write may contradict or restate as a list. It is NOT a record '
+      + 'of what the reader has been shown, and its absence for someone is NOT evidence they were '
+      + 'described. Prefer these facts over inventing new ones when you ground a person.',
+    block: function () {
+      return [
+        'PHYSICAL RECOGNIZABILITY IS DUE IN THIS PASS, ALONGSIDE CHARACTER+.',
+        '',
+        this.paragraph,
+        '',
+        this.twoFindings,
+        this.encounter,
+        this.selection,
+        this.sufficiency,
+        this.invention,
+        this.restraint
+      ].join('\n');
+    }
   };
   // ADVISORY ONLY. Never rejects a passage. "I could hear the courtiers fall silent when Julian
   // approached" is a modal clause reporting a reaction that actually happened; "I could tear the
@@ -794,7 +1068,7 @@
           + 'block of new prose to the end of a paragraph is the last resort, not the first move.',
         compression: CP_STYLE.compression,
         breadth: CP_STYLE.breadth,
-        notChecklist: CP_STYLE.notChecklist,
+        connection: CP_STYLE.connection,
 
         implicitViewpoint: CP_STYLE.implicitViewpoint,
         noNewCast: CP_STYLE.noNewCast,
@@ -1027,8 +1301,73 @@
     EMPTY: 'empty_replacement', UNAUTHORIZED: 'unauthorized_ref', NON_PROSE: 'non_prose_ref',
     // Protected content that shares a paragraph with an eligible repair must SURVIVE the edit.
     // Enforced by validation, not by asking the editor nicely.
-    PROTECTED: 'protected_passage_removed' };
+    PROTECTED: 'protected_passage_removed',
+    // ── THE ENRICHMENT-PRESERVATION BOUNDARY (Roman 2026-11-06) ─────────────────────────────
+    // An ADDITIVE pass may add; it may not hand back a paragraph. These two are the structural
+    // refusals that make that true rather than requested. The code names the OPERATION that was
+    // refused, not a judgement about the returned text — nothing here inspected the text.
+    DESTRUCTIVE: 'replace_unavailable_in_enrichment',
+    ANCHOR: 'anchor_not_unique_in_paragraph',
+    // An insertion that reproduces source prose already sitting beside the insertion point.
+    ECHOED: 'insertion_copies_adjacent_source',
+    // A grounding finding about the editable encounter, answered from read-only prose.
+    OUTSIDE: 'grounding_outside_the_encounter' };
 
+  // ── WHAT AN ENRICHMENT MAY DO: ADD. THAT IS THE WHOLE RULE. ───────────────────────────────
+  // (Roman 2026-11-06, third version, and the first that is not a heuristic.) THE TWO EARLIER
+  // VERSIONS WERE BOTH MEASUREMENTS OF THE TEXT AND BOTH WRONG, in opposite directions.
+  //
+  //  · Requiring every SENTENCE of the source to survive verbatim forbade the fusion the craft
+  //    exists to perform, and the editor suite said so at once: eight legitimate fixtures red.
+  //  · Allowing up to half the CONTENT WORDS to go permitted the exact thing the boundary was
+  //    built to stop. A replacement can turn "He stayed" into "He left" while dropping almost
+  //    nothing, and my own calibration table recorded a suite fixture swapping a response for a
+  //    different action at a cost of ONE token — reported as a known gap rather than fixed.
+  //
+  // A THRESHOLD THAT KNOWINGLY ADMITS AN ACTION CHANGE IS NOT PROTECTION, and tuning it only
+  // moves which action change passes silently. There is no number here to get right.
+  //
+  // SO THE BOUNDARY IS THE OPERATION, NOT A PROPERTY OF THE TEXT. An additive pass is given the
+  // two operations that cannot delete anything: `insert_at_anchor`, which weaves after an exact
+  // source phrase INSIDE a paragraph, and `insert_after`, which adds a paragraph following one.
+  // Both leave every original byte in place by construction, so an interpretation can be woven
+  // in after the observed action without the action being touched. `replace` hands back a whole
+  // paragraph with no constraint on what comes out, and is refused in this mode.
+  //
+  // THIS IS SCOPED TO THE ENRICHMENT MODE AND NOWHERE ELSE. A picturability pass corrects what
+  // contradicts itself and must be able to reword, so it keeps `replace`. A named-task pass is
+  // governed by the caller's own CP_TASK terms. The judge-driven repair path authorizes a
+  // `replace` per slot against a NAMED FAILED REQUIREMENT — a separately authorized revision,
+  // with its own protected-passage rules — and is untouched. Nothing about the literary bar
+  // changes: no instruction was added to compensate for the format, and the only prompt change
+  // is which operations the reply shape offers.
+
+  // ── THE PROSE BOUNDARY: MACHINE TRAILERS ARE NOT STORY PARAGRAPHS ─────────────────────────
+  // (Roman 2026-11-04.) MEASURED on the preserved Sol opening, whose draft ends:
+  //   [LORE: Sacrificiant ~ ritual_role ~ …]
+  //   [CONSPIRACY: regional ambient]
+  //   <!--sceneDuty: world_revelation | attraction: leaking-->
+  // Those three lines are one paragraph and the name test above only knew CHARACTERS/TITLE/
+  // SYNOPSIS, so the trailer was marked `isProse` — offered to the editor as an EDITABLE STORY
+  // PARAGRAPH, and taken by the plot-protection derivation as "the last sentence of the
+  // reader-facing draft", which displaced the actual closing choice from protection.
+  //
+  // TESTED BY WHAT REMAINS, NOT BY A LIST OF NAMES. A paragraph is machine metadata when
+  // removing the bracket tags, the HTML comments and the control markers leaves nothing behind.
+  // Any new trailer tag is covered the day it is introduced, and a prose paragraph that merely
+  // contains one is still prose — only a paragraph that is ENTIRELY machine text is excluded.
+  //
+  // NOTHING IS STRIPPED. The paragraph keeps its bytes, its ref and its offsets, so every
+  // existing consumer of the metadata still reads it and the splice still reassembles around
+  // it: it is simply not editable and not story prose.
+  function _machineOnlyParagraph(chunk) {
+    var t = String(chunk)
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<<[^>]*>>/g, '')
+      .replace(/\[[A-Z][A-Z0-9_ \-]{0,40}:[^\]]*\]/g, '')
+      .trim();
+    return t.length === 0;
+  }
   // Backend-issued refs, with byte offsets so the splice preserves original separators.
   function paragraphsOf(draft) {
     var src = String(draft == null ? '' : draft);
@@ -1039,10 +1378,26 @@
       if (!chunk.trim()) return;
       var isMeta = /^\s*\[(CHARACTERS|TITLE|SYNOPSIS)\s*:/i.test(chunk) || /^\s*-{3,}\s*$/.test(chunk);
       var hasMarker = /<<[^>]*>>/.test(chunk);
+      var isTrailer = !isMeta && !hasMarker && _machineOnlyParagraph(chunk);
       out.push({ ref: 'P' + (++n), text: chunk, start: start, end: start + chunk.length,
-        isProse: !isMeta && !hasMarker, why: isMeta ? 'metadata' : (hasMarker ? 'control markers' : null) });
+        isProse: !isMeta && !hasMarker && !isTrailer,
+        why: isMeta ? 'metadata'
+          : (hasMarker ? 'control markers' : (isTrailer ? 'machine trailer' : null)) });
     });
     return out;
+  }
+
+  // ── THE SCENE'S ACTUAL CLOSING PASSAGE ────────────────────────────────────────────────────
+  // What production protects from the editor: the last sentence the READER reads. Derived from
+  // the last PROSE paragraph, so a machine trailer can never stand in for the closing choice.
+  // The caller used `sentences(readerFacing(draft)).pop()` directly, which on the Sol opening
+  // returned the `<!--sceneDuty…-->` line and left the real closing question unprotected.
+  function cpClosingPassage(draft) {
+    var prose = paragraphsOf(readerFacing(draft)).filter(function (p) { return p.isProse; });
+    if (!prose.length) return null;
+    var sents = sentences(prose[prose.length - 1].text) || [];
+    var last = sents.length ? String(sents[sents.length - 1]).trim() : '';
+    return last.length > 12 ? last : null;
   }
 
   // WHICH REGIONS THE APPLICATION AUTHORIZES, derived from failed requirements only.
@@ -1293,6 +1648,22 @@
 
   // THE BACKEND SPLICES, by byte offset, so every byte outside an authorized region
   // is preserved exactly — including the separators between paragraphs.
+  //
+  // ── THE THIRD OP: AN INSERTION ANCHORED INSIDE A PARAGRAPH (Roman 2026-11-06) ─────────────
+  // WHY IT EXISTS. `replace` hands the model the whole paragraph and takes back whatever comes
+  // out, so an additive enrichment and a deletion are the same operation to this splice. Measured
+  // on P27 of the frozen continuation: the craft pass added one genuinely good clause and, in the
+  // same replacement, removed five established sentences — her reaching for his belt, the
+  // trousers dropping, an anatomical description, the first stroking, and his response — leaving
+  // a dangling "once more" referring to prose that no longer existed. Nothing structural could
+  // have caught that, because a replacement is permitted to say anything.
+  //
+  // `insert_at_anchor` carries an EXACT SOURCE ANCHOR and adds text immediately after it, inside
+  // the paragraph. Every other byte of that paragraph survives BY CONSTRUCTION — not by a rule
+  // the model is asked to respect, and not by a check that runs afterwards. Deleting an action
+  // through this op is not possible. It reuses the existing byte-offset splice, the existing
+  // protection and byte checks, and the existing applied-edit record; the validator settles the
+  // anchor's existence and uniqueness before anything reaches here.
   function spliceAuthorized(draft, paragraphs, items) {
     var src = String(draft == null ? '' : draft);
     var byRef = {};
@@ -1300,6 +1671,18 @@
     var ops = (items || []).map(function (it) {
       var p = byRef[it.ref];
       if (!p) return null;
+      if (it.op === 'insert_at_anchor') {
+        // Validated upstream: the anchor occurs EXACTLY ONCE in p.text. indexOf is therefore
+        // the only occurrence, and the offset is inside this paragraph's own span.
+        var _a = String(it.anchor || '');
+        var _i = p.text.indexOf(_a);
+        if (!_a || _i === -1) return null;
+        var _at = p.start + _i + _a.length;
+        // One separating space unless the anchor or the addition already supplies whitespace.
+        var _lead = (/\s$/.test(_a) || /^\s/.test(it.text)) ? '' : ' ';
+        return { start: _at, end: _at, text: _lead + it.text, ref: it.ref, op: it.op,
+          replaced: '', anchor: _a, beatId: it.beatId };
+      }
       return it.op === 'replace'
         ? { start: p.start, end: p.end, text: it.text, ref: it.ref, op: it.op, replaced: p.text, beatId: it.beatId }
         : { start: p.end, end: p.end, text: '\n\n' + it.text, ref: it.ref, op: it.op, replaced: '', beatId: it.beatId };
@@ -1307,7 +1690,13 @@
     var out = src;
     ops.forEach(function (o) { out = out.slice(0, o.start) + o.text + out.slice(o.end); });
     return { text: out, applied: ops.slice().reverse().map(function (o) {
-      return { tag: o.beatId, ref: o.ref, op: o.op, replaced: o.replaced, inserted: o.text.trim() }; }) };
+      // THE AUDIT RECORD HAS TO BE REVIEWABLE FOR EVERY OP. A replacement is reviewed against
+      // the prose it displaced, which is `replaced`. An insertion displaces nothing, so
+      // `replaced` is correctly empty and the reviewable fact is WHERE it landed — the anchor it
+      // followed. Carried so the host's before/after report can show an insertion in its place
+      // rather than reporting an empty before and no position.
+      return { tag: o.beatId, ref: o.ref, op: o.op, replaced: o.replaced,
+        anchor: o.anchor || undefined, inserted: o.text.trim() }; }) };
   }
 
   // Everything outside the applied spans must be byte-identical. This is true by
@@ -2053,16 +2442,36 @@
     var totalGiven = typeof usage.total_tokens === 'number' && usage.total_tokens >= pt;
     var verifiedReasoningShape = hasReasoningField && totalGiven
       && (usage.total_tokens - pt) === (ct + reasoning);
+    // ── TWO CONVENTIONS, ONE CORRECT RULE: THE PROVIDER'S OWN TOTAL ─────────────────────────
+    // (Roman 2026-11-04, measured on saved receipts.) `ct + reasoning` is right for xAI and a
+    // DOUBLE CHARGE for OpenAI:
+    //   · grok-4.3    prompt 15,070 · completion 703   · total 16,945 · reasoning 1,172
+    //                 total − prompt = 1,875 = completion + reasoning → reasoning is OUTSIDE.
+    //   · gpt-6-luna  prompt 15,113 · completion 3,984 · total 19,097 · reasoning 3,150
+    //                 total − prompt = 3,984 = completion exactly    → reasoning is INSIDE.
+    // The second case took the `reasoning_field_without_matching_total` branch and billed 7,134
+    // output tokens for 3,984 — $0.001575 over on one receipt, and it scaled with every
+    // reasoning call. `total − prompt` is what the provider says it billed and is right for
+    // both; the reasoning count stays for reporting and is no longer an addend.
     var billedOut, basis;
-    if (verifiedReasoningShape) { billedOut = usage.total_tokens - pt; basis = 'verified_reasoning_shape'; }
-    else if (hasReasoningField) { billedOut = ct + reasoning; basis = 'reasoning_field_without_matching_total'; }
-    else { billedOut = ct; basis = 'completion_only_reasoning_not_reported'; }
+    if (totalGiven) {
+      billedOut = usage.total_tokens - pt;
+      basis = verifiedReasoningShape ? 'total_minus_prompt_reasoning_outside_completion'
+        : (billedOut === ct ? 'total_minus_prompt_reasoning_inside_completion'
+           : 'total_minus_prompt');
+    } else if (hasReasoningField) {
+      // No total to trust: charge conservatively rather than risk under-billing.
+      billedOut = ct + reasoning; basis = 'completion_plus_reasoning_no_total_to_verify';
+    } else { billedOut = ct; basis = 'completion_only_reasoning_not_reported'; }
     var cached = (usage.prompt_tokens_details
       && typeof usage.prompt_tokens_details.cached_tokens === 'number')
       ? usage.prompt_tokens_details.cached_tokens : 0;
     return { ok: true, present: true, shape: 'openai', inTok: pt, outTok: billedOut,
       completionTok: ct, reasoningTok: reasoning, outputBasis: basis,
       reasoningAccounted: basis !== 'completion_only_reasoning_not_reported',
+      cacheWriteTok: (usage.prompt_tokens_details
+        && typeof usage.prompt_tokens_details.cache_write_tokens === 'number')
+        ? usage.prompt_tokens_details.cache_write_tokens : 0,
       cachedInTok: cached,
       // A COMPUTED FIGURE, NOT A PROVIDER BILL. Cached input is priced at the full input rate
       // because this repo holds no verified cached rate, so any total containing cached tokens
@@ -2092,7 +2501,22 @@
   // Rates copied from _fsc_cost_guard's verified table, which the harness cross-checks at
   // startup. An unlisted model fails closed rather than borrowing another model's rate.
   var EB_RATES = { 'claude-haiku-4-5-20251001': { in: 0.000001,   out: 0.000005 },
-                   'grok-4.3':                  { in: 0.00000125, out: 0.0000025 } };
+                   'grok-4.3':                  { in: 0.00000125, out: 0.0000025 },
+                   // ── TWO COMPARISON ARMS, PRICED FROM THEIR OWN ROUTES ────────────────────
+                   // gpt-6.1-sol: $2.00 / $10.00 per MTok, the figures api/sol-scene-test.js
+                   // already prices its per-call cap with (`RATE = { in: 2.0, out: 10.0 }`).
+                   'gpt-6.1-sol':               { in: 0.000002,   out: 0.00001 },
+                   // gpt-6-luna: $0.10 / $0.50 per MTok, standard rates, Roman's figures from
+                   // developers.openai.com/api/docs/models/gpt-6-luna. No prompt-length tier.
+                   'gpt-6-luna':                { in: 0.0000001,  out: 0.0000005 },
+                   // claude-haiku-5-5 is the one current model priced BY PROMPT LENGTH:
+                   // $0.10 / $0.50 per MTok up to 100,000 input tokens, $0.50 / $2.50 above it
+                   // (recorded in api/anthropic-proxy.js's allowlist note). A single pair of
+                   // numbers would misprice it on one side of that boundary, so the tier
+                   // travels with the rate and the reservation picks by its OWN input estimate.
+                   'claude-haiku-5-5':          { in: 0.0000001,  out: 0.0000005,
+                                                  aboveInTok: 100000,
+                                                  inAbove: 0.0000005, outAbove: 0.0000025 } };
   var EB_CHARS_PER_TOKEN_CLAUDE5 = 2.6;
   var EB_CHARS_PER_TOKEN = 4.0;
   var EB_REASONING_MULT = 1.5;
@@ -2113,9 +2537,19 @@
       ? EB_CHARS_PER_TOKEN_CLAUDE5 : EB_CHARS_PER_TOKEN;
     var inTok = Math.ceil(chars / cpt);
     var outTok = Math.ceil((Number(maxTokens) || 0) * EB_REASONING_MULT);
-    var raw = inTok * rate.in + outTok * rate.out;
+    // A PROMPT-LENGTH TIER, APPLIED FROM THIS REQUEST'S OWN ESTIMATE. Only models that declare
+    // `aboveInTok` have one; everyone else is unaffected and prices exactly as before.
+    var rIn = rate.in, rOut = rate.out, tier = null;
+    if (rate.aboveInTok && inTok > rate.aboveInTok) {
+      rIn = rate.inAbove; rOut = rate.outAbove;
+      tier = 'above ' + rate.aboveInTok + ' input tokens';
+    } else if (rate.aboveInTok) {
+      tier = 'up to ' + rate.aboveInTok + ' input tokens';
+    }
+    var raw = inTok * rIn + outTok * rOut;
     return { bounded: true, usd: raw * EB_SAFETY_MARGIN, raw: raw, model: m,
-      chars: chars, inTok: inTok, outTok: outTok, charsPerToken: cpt,
+      chars: chars, inTok: inTok, outTok: outTok, charsPerToken: cpt, tier: tier,
+      rateIn: rIn, rateOut: rOut,
       reasoningMult: EB_REASONING_MULT, safetyMargin: EB_SAFETY_MARGIN };
   }
 
@@ -2806,21 +3240,74 @@
   }
   // An operational record is only honest if the passage it claims is actually in the shipped
   // text. This is what the host must satisfy before writing `editor_reviewed`.
+  // ── THE RECORD KEEPS BOTH SUPPORTING PASSAGES ─────────────────────────────────────────────
+  // (Roman 2026-11-04.) It used to take ONE `publishedPassage` and credit a Character+ delivery
+  // on it. With a grounding-only edit that meant an inserted appearance sentence was filed as
+  // the C+ manifestation — the Dohkar's introduction recorded against "thick violet hair
+  // brushing his narrow, pearl-grey face". The two findings have two passages and the record
+  // keeps both: `perceptionPassage` is the Character+ manifestation, `groundingPassage` is the
+  // description. Neither stands in for the other.
+  //
+  // `completion` (from cpAssessObligationCompletion) decides the tier. EDITOR_REVIEWED requires
+  // BOTH findings supported in the published text; anything less is DIRECTED — work was done and
+  // nothing is credited, so the cadence does not advance.
   function cpEditorDeliveryRecord(opts) {
     opts = opts || {};
-    var passage = normalise(opts.publishedPassage);
     var reader = String(opts.reader || '');
-    var present = !!(passage && quotePresent(passage, reader));
+    var comp = (opts.completion && typeof opts.completion === 'object') ? opts.completion : null;
+    // The perception passage is the Character+ manifestation. `publishedPassage` remains
+    // accepted as its legacy name so existing callers keep working unchanged.
+    var pq = normalise(comp ? (comp.perception && comp.perception.passage)
+      : opts.publishedPassage);
+    var gq = normalise(comp ? (comp.grounding && comp.grounding.passage) : opts.groundingPassage);
+    // ── THE ASSESSMENT IS TRUSTED WHERE IT EXISTS ──────────────────────────────────────────
+    // (Roman 2026-11-04.) Re-checking here against the CURRENT scene undid the prior-evidence
+    // fix one layer down: a grounding passage published in an earlier scene is legitimately
+    // absent from this one, and re-testing it against this scene's text would deny credit for
+    // correctly NOT re-describing a familiar character. cpAssessObligationCompletion already
+    // verified each finding against its own proper source and says which; this records that
+    // result rather than re-deriving it from the wrong text.
+    var pPresent = comp ? !!(comp.perception && comp.perception.supported)
+      : !!(pq && quotePresent(pq, reader));
+    var gPresent = comp ? !!(comp.grounding && comp.grounding.supported)
+      : !!(gq && quotePresent(gq, reader));
+    // WITHOUT A COMPLETION ASSESSMENT this behaves exactly as before: the one passage it was
+    // given decides the tier. An older caller is not silently held to the new requirement.
+    var complete = comp ? (pPresent && gPresent) : pPresent;
     return {
-      verification: present ? CP_DELIVERY.EDITOR_REVIEWED : CP_DELIVERY.DIRECTED,
-      publishedPassage: present ? passage : null,
+      verification: complete ? CP_DELIVERY.EDITOR_REVIEWED : CP_DELIVERY.DIRECTED,
+      // Kept apart, deliberately. The C+ manifestation is the perception passage and nothing
+      // else; a description is never promoted into that slot.
+      publishedPassage: pPresent ? pq : null,     // legacy name for the perception passage
+      perceptionPassage: pPresent ? pq : null,
+      groundingPassage: gPresent ? gq : null,
+      perceptionSupported: pPresent,
+      groundingSupported: gPresent,
+      // PRESERVED THROUGH RECORDING: a passage credited from earlier published prose says so,
+      // so nothing downstream reads its absence from this scene as a failure.
+      groundingVerifiedAgainst: comp
+        ? ((comp.grounding && comp.grounding.verifiedAgainst) || null)
+        : (gPresent ? 'finished_scene' : null),
+      groundingBasis: comp ? ((comp.grounding && comp.grounding.basis) || null) : null,
       publishedRevision: opts.revisionId || null,
       decision: opts.decision || null,            // 'keep' | 'edit'
-      // SAID PLAINLY, ON EVERY RECORD: nobody checked whether this is GOOD.
+      // SAID PLAINLY, ON EVERY RECORD: nobody checked whether this is GOOD. A quotation check
+      // establishes that the passage EXISTS in the published text, never that it means what the
+      // editor said it means.
       semanticallyVerified: false,
-      basis: present
-        ? 'the dedicated editor answered and the passage is present in the published text'
-        : 'the passage the editor claimed is NOT in the published text — nothing is credited',
+      basis: complete
+        ? (comp
+            ? 'both findings are supported by passages present in the published text — their '
+              + 'EXISTENCE is verified, their sufficiency is not'
+            : 'the dedicated editor answered and the passage is present in the published text')
+        : (!pPresent
+            // KEEPS THE PHRASE THE EXISTING CONTRACT READS. §17p of the editor integration
+            // suite asserts "NOT in the published text" here, and that wording is exactly
+            // right for both callers: the legacy single-passage one and the completion one.
+            ? 'the Character+ passage is NOT in the published text — nothing is credited, '
+              + 'whatever prose the edit produced'
+            : 'the Character+ passage is present but physical grounding is not supported — the '
+              + 'obligation is not complete and is not credited'),
       at: Date.now()
     };
   }
@@ -3363,12 +3850,34 @@
   function cpEditorScope(paragraphs, protectedPassages, editableRefs) {
     var prose = (paragraphs || []).filter(function (p) { return p.isProse; });
     var prot = (protectedPassages || []).filter(function (q) { return q && String(q).trim(); });
+    // ── THE CURRENT ENCOUNTER IS THE EDITABLE PROSE, WHATEVER ITS EXTENT ───────────────────
+    // (Roman 2026-11-06.) `editableRefs` already bounded what MAY BE CHANGED. Nothing bounded
+    // what may be CITED, so a grounding finding about the editable prose was answerable from
+    // prose the pass could not touch — measured on both providers, which quoted P2/P3 and called
+    // it `basis: "scene"`.
+    //
+    // THE ENCOUNTER IS DEFINED BY THE CALL SITE, NOT BY A WINDOWING SYSTEM. At the ordinary
+    // production call site no `editableRefs` is supplied, so the whole scene is editable and
+    // `encounterText` IS the scene — which is correct, not a gap: a normal scene is the current
+    // encounter, and nothing needs to be built for that case. `restricted` is true only when a
+    // caller is deliberately editing part of a scene, which is what the continuation pass does.
+    //
+    // WHAT THE CHECK CANNOT DO, STATED PLAINLY: inside one unrestricted scene it cannot tell a
+    // lead-in from the encounter that follows it, because nothing in the text marks the boundary
+    // and no deterministic check can find one. A caller that wants only part of a scene judged
+    // says so with `editableRefs`. The check enforces the boundary it is given; it does not
+    // discover one.
+    var _restricted = false;
     if (Array.isArray(editableRefs) && editableRefs.length) {
       var allow = {};
       editableRefs.forEach(function (r) { allow[String(r)] = 1; });
+      var _all = prose.length;
       prose = prose.filter(function (p) { return allow[String(p.ref)]; });
+      _restricted = prose.length < _all;
     }
     return {
+      restricted: _restricted,
+      encounterText: prose.map(function (p) { return p.text; }).join('\n\n'),
       refs: prose.map(function (p) { return p.ref; }),
       byRef: prose.reduce(function (m, p) { m[p.ref] = p; return m; }, {}),
       protectedByRef: prose.reduce(function (m, p) {
@@ -3380,32 +3889,217 @@
     };
   }
 
-  function sceneEditorContract(ids, refs, envIds) {
+  // ── THE REPLY SHAPE FOR A NAMED-TASK PASS ─────────────────────────────────────────────────
+  // One decision per obligation still, because the obligations are what the splice authorizes
+  // against — but the QUESTION is the task, and no grounding finding is requested or validated.
+  // `validateSceneEditorReply` is called without groundingIds for these, so a reply that omits
+  // the grounding object is accepted rather than rejected.
+  // ── THE PICTURABILITY REPLY SHAPE ─────────────────────────────────────────────────────────
+  // One decision per PERSON, because picturability is a per-person question. It asks for the
+  // grounding finding and nothing else: no perception claim, no obligation certification.
+  function pictureEditorContract(ids, refs) {
     return [
       'Return ONLY JSON with BOTH arrays, in this shape:',
       '',
       '{"decisions":[',
-      '   {"id":"<obligation id>","decision":"keep","keptPassage":"<copied EXACTLY from the scene>","why":"<one sentence>"},',
-      '   {"id":"<obligation id>","decision":"edit","ref":"<the paragraph you chose>","why":"<one sentence>"}',
+      '   {"id":"<person id>","decision":"keep","keptPassage":"<copied EXACTLY from the scene>",',
+      '    "grounding":{"recognizable":true,"basis":"scene|prior|unknown","evidence":"<copied EXACTLY>","why":"<name the feature, voice, bearing or habit>"}},',
+      '   {"id":"<person id>","decision":"edit","ref":"<the paragraph you chose>","why":"<what you added and why it helps>",',
+      '    "grounding":{"recognizable":false,"basis":"scene","evidence":null}}',
       ' ],',
       ' "edits":[',
       '   {"ref":"<paragraph ref>","op":"replace","text":"<prose>","forObligations":["<id>"]}',
       ' ]}',
       '',
-      'ONE DECISION PER OBLIGATION, for all of these: ' + (ids || []).join(', '),
+      'ONE DECISION PER PERSON, for all of these: ' + (ids || []).join(', '),
+      '',
+      'WHERE EVIDENCE COMES FROM, BY DECISION \u2014 both decisions name a passage.',
+      'On a KEEP, `grounding.evidence` quotes prose that ALREADY EXISTS: this scene, or one of',
+      'that person\'s supplied published passages.',
+      'On an EDIT, `grounding.evidence` quotes THE PASSAGE INSIDE YOUR OWN `text` that carries',
+      'the physical grounding \u2014 copied verbatim from the replacement you are proposing, not a',
+      'summary of it and not a sentence you leave out of the edit. It is checked against the',
+      'FINISHED scene after your edits are spliced in. An edit that names no passage is recorded',
+      'as applied with its picturability requirement UNMET: having changed a line is not',
+      'evidence that the reader can now see anyone.',
+      '',
+      'YOU CHOOSE THE PARAGRAPH. Any of these may be edited: ' + (refs || []).join(' '),
+      'THOSE PARAGRAPHS ARE THE ENCOUNTER YOU ARE JUDGING — ordinarily the whole scene, and a',
+      'range of it when you are editing only part of one. Anything outside them is supplied for',
+      'context and is read-only. On a KEEP with basis "scene", `grounding.evidence` must come',
+      'from one of the paragraphs listed above: a quote from read-only prose is continuity,',
+      'not a finding about this encounter, and it is recorded as unanswered rather than accepted.',
+      'Three ops are available:',
+      '  "replace"          — the paragraph\'s full text, replaced by yours.',
+      '  "insert_after"     — a new paragraph following that ref.',
+      '  "insert_at_anchor" — your text inserted INSIDE the paragraph, immediately after an',
+      '                       exact source quote you supply as "anchor". Everything else in that',
+      '                       paragraph survives untouched. Prefer this when you are ADDING a',
+      '                       detail rather than correcting one. The anchor must be copied',
+      '                       byte-exact and must occur exactly once in that paragraph.',
+      '                       `text` IS ONLY THE NEW PROSE. Do not repeat the anchor in it, and',
+      '                       do not carry over the sentence that follows the anchor — those',
+      '                       sentences stay where they are, and copying one back publishes it',
+      '                       twice, which is rejected.',
+      '',
+      'A CORRECTION STAYS NARROW. Where you fix clothing, position or movement that contradicts',
+      'itself, change the thing that contradicts and nothing else: no action removed, none added,',
+      'none reordered. An edit that rewrites the events around the correction is the wrong edit.',
+      '',
+      'ONE TEXT PER PARAGRAPH. If two people belong in the same paragraph, give that paragraph a',
+      'SINGLE replacement serving both and list both under forObligations.',
+      '',
+      'EVERY CHARACTER DECISION CARRIES BOTH FINDINGS (' + (ids || []).join(', ') + ') \u2014 here,',
+      'the finding is picturability, reported per person.',
+      '',
+      'THAT QUESTION IS NOT ASKED OF THIS SCENE ALONE. `grounding.basis` says what your answer',
+      'stands on, and all three are legitimate:',
+      '  "scene"   \u2014 `grounding.evidence` quotes THIS SCENE verbatim.',
+      '  "prior"   \u2014 `grounding.evidence` quotes one of that person\'s supplied published',
+      '              passages verbatim; the reader has read it and needs no reminder here.',
+      '  "unknown" \u2014 the supplied history is INCOMPLETE and you cannot tell. No quote;',
+      '              `grounding.why` says what you are unsure of. It records uncertainty and',
+      '              certifies nothing. UNAVAILABLE where historyComplete is true.',
+      '',
+      'NO REVELATION IS REQUIRED OF YOU. A physical reminder does not have to expose anyone, mean',
+      'anything, or advance the plot. It has to let the reader see the person.',
+      'FAMILIAR FEATURES MAY RECUR \u2014 through movement, clothing, proximity or what the',
+      'viewpoint notices. A returning person needs no NEW trait: recalling one the reader already',
+      'has is often the better answer.',
+      'A KEEP is the right answer whenever the reader can already picture someone. It is not a way',
+      'to decline: quote the passage that does it.',
+      'An edit must preserve every protectedPassage verbatim and must remove nothing the scene has.'
+    ].join('\n');
+  }
+
+  function taskEditorContract(ids, refs) {
+    return [
+      'Return ONLY JSON with BOTH arrays, in this shape:',
+      '',
+      '{"decisions":[',
+      '   {"id":"<obligation id>","decision":"keep","keptPassage":"<copied EXACTLY from the scene>","why":"<how this passage already achieves the task>"},',
+      '   {"id":"<obligation id>","decision":"edit","ref":"<the paragraph you chose>","why":"<what your edit does for the task>"}',
+      ' ],',
+      ' "edits":[',
+      '   {"ref":"<paragraph ref>","op":"replace","text":"<prose>","forObligations":["<id>"]}',
+      ' ]}',
+      '',
+      'ONE DECISION, on the task. Its id is: ' + (ids || []).join(', '),
+      'You are NOT certifying a list of people. Answer the task once: either the scene already',
+      'achieves it (KEEP, quoting the passage that does) or it does not (EDIT, with the targeted',
+      'changes that achieve it). Several edits may serve the one decision — list them all under',
+      'the same id.',
       '',
       'YOU CHOOSE THE PARAGRAPH. Any of these may be edited: ' + (refs || []).join(' '),
       'op is "replace" for an existing paragraph, or "insert_after" to add one following that ref.',
+      '',
+      'ONE TEXT PER PARAGRAPH. If two obligations belong in the same paragraph, give that',
+      'paragraph a SINGLE replacement serving both and list both under forObligations.',
+      '',
+      'A KEEP must quote the scene verbatim. It is a legitimate answer when the task\'s effect',
+      'is already achieved; it is not a way to decline the task.',
+      'An edit must preserve every protectedPassage verbatim and must not remove anything the',
+      'scene already has.'
+    ].join('\n');
+  }
+
+  function sceneEditorContract(ids, refs, envIds, groundIds) {
+    return [
+      'Return ONLY JSON with BOTH arrays, in this shape:',
+      '',
+      '{"decisions":[',
+      '   {"id":"<obligation id>","decision":"keep","keptPassage":"<copied EXACTLY from the scene>","why":"<one sentence>",',
+      '    "grounding":{"recognizable":true,"basis":"scene|prior|established","evidence":"<copied EXACTLY from the scene, or from that person\'s supplied published passages>","why":"<one sentence>"}},',
+      '   {"id":"<obligation id>","decision":"edit","ref":"<the paragraph you chose>","why":"<one sentence>",',
+      '    "perception":{"passage":"<the passage that satisfies this character\'s own requirement in the FINISHED scene — existing prose you are leaving alone, or text you are adding>","why":"<one sentence>"},',
+      '    "grounding":{"recognizable":true,"basis":"scene","evidence":"<the passage that lets the reader picture them in the FINISHED scene>","why":"<name the feature, voice, bearing or habit>"}}',
+      ' ],',
+      ' "edits":[',
+      '   {"ref":"<paragraph ref>","op":"insert_at_anchor","anchor":"<exact source text yours follows>","text":"<prose>","forObligations":["<id>"]}',
+      ' ]}',
+      '',
+      'ONE DECISION PER OBLIGATION, for all of these: ' + (ids || []).join(', '),
+      '',
+      'YOU CHOOSE THE PARAGRAPH. Any of these may be edited: ' + (refs || []).join(' '),
       'Pick the paragraph where the depiction genuinely belongs — the moment that affords it.',
       'A paragraph merely MENTIONING the person is not necessarily the right place.',
       '',
+      'THIS PASS ADDS. TWO OPS ARE AVAILABLE, and the first is the one it usually wants:',
+      '  "insert_at_anchor" — your sentence woven INTO the paragraph, immediately after an exact',
+      '                       source quote you supply as "anchor". Everything else in that',
+      '                       paragraph stays exactly as it is, so the action you are reading is',
+      '                       still there to be read. `text` IS ONLY YOUR NEW PROSE: do not',
+      '                       repeat the anchor in it and do not carry over the sentence that',
+      '                       follows the anchor — those stay where they are, and copying one',
+      '                       back publishes it twice, which is rejected. The anchor is copied',
+      '                       byte-exact and must occur exactly once in that paragraph:',
+      '                       {"ref":"<ref>","op":"insert_at_anchor","anchor":"<exact source',
+      '                       sentence yours follows>","text":"<your sentence>",',
+      '                       "forObligations":["<id>"]}',
+      '  "insert_after"     — a new paragraph following that ref. Use it sparingly: a paragraph',
+      '                       of interpretation standing on its own is usually the weaker answer.',
+      '"replace" IS NOT AVAILABLE IN THIS PASS and is rejected, leaving the paragraph as written',
+      'and the obligation unanswered. This is not a judgement about what you would have written:',
+      'a returned paragraph can silently lose an undressing, a movement or a response, and the',
+      'pass cannot tell that from a rewrite, so the operation is withheld rather than policed.',
+      'WRITE AS YOU WOULD ANYWAY. The standard, the mechanisms and the tests are unchanged; what',
+      'changes is where your sentence goes. If your line reads best fused with an existing',
+      'sentence, anchor on that sentence and let yours follow it.',
+      '',
       'ONE TEXT PER PARAGRAPH. If two obligations belong in the same paragraph, give that',
-      'paragraph a SINGLE replacement serving both and list both under forObligations. Never',
-      'return two texts for the same ref — the second would overwrite the first and one',
-      'character\'s depiction would be lost.',
+      'paragraph a SINGLE addition serving both and list both under forObligations. Never return',
+      'two texts for the same ref.',
       '',
       'A KEEP must quote the scene verbatim, and is available ONLY where existing prose already',
       'satisfies that character\'s own applicable requirement. It is not a way to decline.',
+      ''
+    ].concat((groundIds && groundIds.length) ? [
+      'EVERY CHARACTER DECISION CARRIES BOTH FINDINGS (' + groundIds.join(', ') + ').',
+      '`grounding.recognizable` answers the SECOND finding only: can the reader picture or',
+      'recognize this person? A posture, a silence or a generic hand movement is not evidence.',
+      '',
+      'THAT QUESTION IS NOT ASKED OF THIS SCENE ALONE. `grounding.basis` says what your answer',
+      'stands on, and all three are legitimate:',
+      '  "scene"       — `grounding.evidence` quotes THIS SCENE verbatim.',
+      '  "prior"       — `grounding.evidence` quotes one of that person\'s supplied published',
+      '                  passages verbatim; the reader has read it and needs no reminder here.',
+      '  "unknown"     — the supplied history is INCOMPLETE and you cannot tell. No quote;',
+      '                  `grounding.why` says what you are unsure of. It records uncertainty: it',
+      '                  neither forces a description nor certifies one was delivered, and it is',
+      '                  NOT a finding that the reader can picture them. UNAVAILABLE where',
+      '                  historyComplete is true — in an opening there is no earlier prose to',
+      '                  appeal to, and a bare claim of one is REJECTED.',
+      'A KEEP REQUIRES BOTH: existing prose satisfying the perception requirement AND',
+      'grounding.recognizable true on one of those three bases. PERCEPTION FULFILLED WITH THE',
+      'READER UNABLE TO PICTURE SOMEONE IS AN EDIT — choose a paragraph and weave the identifying',
+      'details into the action it already has. A keep reporting recognizable false, or omitting',
+      'the grounding field, or quoting evidence that is not in the source its basis names, is',
+      'REJECTED and that obligation goes unanswered.',
+      'A SCENE WITH NO DESCRIPTION IN IT IS NOT A FAILURE. Do not edit for grounding merely',
+      'because this scene carries none; edit when the reader cannot picture the person, or when a',
+      'return after an absence wants one familiar feature recalled.',
+      '',
+      'AN EDIT CARRIES BOTH FINDINGS TOO, AND THIS IS JUDGED ON THE FINISHED SCENE.',
+      'For every character decision, `perception.passage` names the passage that satisfies that',
+      'character\'s own requirement and `grounding.evidence` names the passage that lets the',
+      'reader picture them — BOTH AS THE SCENE WILL READ AFTER YOUR EDITS ARE APPLIED. The two',
+      'may be DIFFERENT PASSAGES and they may come from different places: existing prose you are',
+      'leaving untouched can carry one while your new text carries the other. That is the',
+      'expected case, and it is why you are NOT asked to write fresh characterization for',
+      'someone the scene already characterizes — quote what is already there.',
+      'QUOTE FROM THE FINISHED SCENE. A passage you overwrite is gone: if your edit replaces the',
+      'paragraph holding the perception, the quote must be the text you are putting there instead.',
+      'A GROUNDING-ONLY EDIT IS STILL WORTH MAKING. If you can ground someone but cannot point',
+      'at a passage that satisfies their perception requirement, make the edit and leave',
+      '`perception.passage` null — the edit will be applied and the obligation reported as still',
+      'owed. What you must not do is claim a passage that is not there.',
+      'IN `grounding.why`, NAME THE FEATURE, VOICE, BEARING OR HABIT the reader comes away with.',
+      '"it supplies the details that make him recognizable" RESTATES THE VERDICT and explains',
+      'nothing — if you cannot name the thing itself, the impression is not there and the edit is',
+      'owed. Where you edit for grounding alone, say so there, and keep the perception passage',
+      'intact.',
+      ''
+    ] : []).concat([
       'FOR A FUSION OBLIGATION a KEEP must cite a passage where the environment is PARTICULAR and',
       'the SAME passage reveals its observer. A pc_opening_fusion field, a physical sensation or',
       'general atmosphere is not proof. If Character+ and Fusion fall in the same paragraph,',
@@ -3421,7 +4115,7 @@
       'An EDIT for one of them is an ordinary edit: same refs, same op, same protected-passage '
         + 'rules. If one passage serves an environmental obligation AND a character obligation, '
         + 'return ONE text and list BOTH ids under forObligations.'
-    ] : []).join('\n');
+    ] : [])).join('\n');
   }
 
   // The scene-wide request. The draft itself, stable refs, who is due, the authored material,
@@ -3441,7 +4135,13 @@
     var envDueIds = (Array.isArray(opts.environmentDue) ? opts.environmentDue : [])
       .map(function (o) { return o && o.id; }).filter(Boolean);
     var cpIds = dueList.map(function (o) { return o.id; });
-    var ids = cpIds.concat(envDueIds);
+    // ── TASK MODE ANSWERS ONE QUESTION, SO IT CARRIES ONE ID (Roman 2026-11-05) ───────────
+    // The validator keys decisions by obligation id, so asking for a single decision on the
+    // objective needs an id for it. In task mode the id space IS the task: no Character+
+    // obligation is listed, requested or certified. Ordinary mode is unchanged.
+    var _taskModeIds = (opts.task && opts.task.objective)
+      ? ['task:' + String(opts.task.id || 'objective')] : null;
+    var ids = _taskModeIds || cpIds.concat(envDueIds);
     var doctrine = opts.doctrine || null;
     // ══ APPEARANCE CONTINUITY REACHES THE EDITOR (Roman 2026-10-21) ═══════════════════
     // THE GAP: the repair editor and the selector received NO appearance values at all, so they
@@ -3491,9 +4191,81 @@
           + (r.why ? '\n        why (read it for conditions): ' + r.why : ''));
       });
     });
+    // ══ PERSON-LINKED PUBLISHED PROSE: THE SECOND SOURCE THE GROUNDING FINDING MAY STAND ON ══
+    // (Roman 2026-11-04.) WHY THIS EXISTS. The grounding finding first accepted evidence quoted
+    // from the scene in front of the editor and nothing else, which made a KEEP impossible for a
+    // character described in an earlier scene and developed here through dialogue — a per-scene
+    // description quota enforced by validation, under a prompt that says there is no quota.
+    //
+    // A BIBLE IS NOT PUBLISHED EVIDENCE. The appearance records above are CANON; these are prose
+    // the reader has actually read. They are different things and they are kept apart: a record
+    // can never satisfy this finding, and a published passage can.
+    //
+    // THE ROWS ARE THE DELIVERY LEDGER'S OWN SHAPE, so production forwards what it already holds
+    // and no transform in between can drift. Matched on WHOLE label equality, never a substring:
+    // "Seren" must not collect "Seren's mother".
+    var _priorRows = (Array.isArray(opts.priorCharacterPassages) ? opts.priorCharacterPassages : [])
+      .map(function (r) {
+        if (!r) return null;
+        var nm = normalise(r.name || r.character || '');
+        var tx = normalise(r.passage || r.publishedPassage || '');
+        if (!nm || !tx) return null;
+        return { name: nm, passage: tx, ordinal: (r.ordinal != null) ? r.ordinal : null };
+      }).filter(Boolean);
+    var _priorFor = {};        // obligation id -> [passages]
+    dueList.forEach(function (o) {
+      var nm = normalise((o && o.character) || '').toLowerCase();
+      if (!nm) return;
+      var mine = _priorRows.filter(function (r) { return r.name.toLowerCase() === nm; });
+      if (mine.length) _priorFor[o.id] = mine.map(function (r) { return r.passage; });
+    });
+    // The corpus the validator checks a "prior" quote against: one string per obligation.
+    var _priorCorpus = {};
+    Object.keys(_priorFor).forEach(function (id) {
+      _priorCorpus[id] = _priorFor[id].join('\n\n');
+    });
+    // ── KNOWN-COMPLETE HISTORY vs INCOMPLETE HISTORY ──────────────────────────────────────
+    // (Roman 2026-11-04.) These are different situations and the grounding finding must not
+    // treat them alike. In an OPENING the history is complete BY CONSTRUCTION — no scene has
+    // been published before it, so there is nothing earlier for a claim of prior description to
+    // appeal to, and "the reader already knows his appearance" is not an abbreviated record but
+    // a false statement. Recognizability is then judged from the scene and the supplied passages
+    // alone. Where the history genuinely IS abbreviated, uncertainty is recordable — as
+    // uncertainty, never as grounding.
+    //
+    // DERIVED, NOT GUESSED. `sceneOrdinal <= 1` is a structural fact about the story, not an
+    // inference from prose. A caller that knows more may state it with `historyComplete`; absent
+    // both, the history is treated as INCOMPLETE, which is the conservative reading — it allows
+    // uncertainty rather than forcing a description.
+    var _histComplete = (opts.historyComplete === true)
+      || (opts.sceneOrdinal != null && Number(opts.sceneOrdinal) <= 1);
     var examples = opts.examples || null;
 
-    var sys = [
+    // ══ TASK MODE OMITS THE CHARACTER+ ASSIGNMENT ENTIRELY (Roman 2026-11-05) ═══════════
+    // MEASURED on the frozen romance request: replacing the grounding block was not enough. Line
+    // 1 still read "You are the dedicated Character+ editor … 4 people due a depiction", and the
+    // request went on to teach Fusion, social proof, the protagonist's own depiction channels and
+    // the worked Character+ transformations. The pass was handed a competing assignment and did
+    // it. In task mode the whole Character+ apparatus is omitted — header, teaching, examples —
+    // and what remains is the scene, the canon, the viewpoint, the protections and the task.
+    var _pictureMode = opts.mode === 'picturability';
+    var _taskMode = !_pictureMode && !!(opts.task && opts.task.objective);
+    var sys = _pictureMode ? [
+      'You are a prose editor for an ongoing illustrated story. One scene, ONE reply, ONE task:',
+      'CAN THE READER SEE THESE PEOPLE?',
+      '',
+      'This is NOT a Character+ pass. Nobody here is due a depiction, a revelation or an',
+      'environmental beat, and you are not being asked for one. You are asked only whether each',
+      'person below is sufficiently physically present on the page, and to supply what is missing.',
+      '',
+      'THE AUTHOR IS EXPECTED TO WRITE EMBODIED PEOPLE ALREADY. This pass catches omissions; it',
+      'is not the place description comes from. Where the scene already does it, KEEP.'
+    ] : _taskMode ? [
+      'You are a prose editor for an ongoing illustrated story. One scene, ONE reply, ONE task.',
+      '',
+      'This is NOT a Character+ pass and NOT a description pass. You are not assigned anyone to '
+        + 'depict. The task you are doing is stated below, and nothing else is being asked of you.'
+    ] : [
       'You are the dedicated Character+ editor for an ongoing illustrated story. One scene, '
         + (dueList.length === 1 ? 'one person' : dueList.length + ' people') + ' due a depiction, '
         + 'ONE reply.',
@@ -3551,25 +4323,28 @@
     //
     // ORDINARY E+ IS UNAFFECTED. The flag is opt-in per obligation, so an environmental
     // obligation that does not declare it still gets the selection aid and no Fusion teaching.
-    var envDueRaw = Array.isArray(opts.environmentDue) ? opts.environmentDue : [];
+    // E+ AND FUSION BELONG TO THE OTHER PASS. Picturability is about people, so it carries no
+    // environmental obligations even when the caller forwards them. Gated HERE rather than on
+    // the forward list, because a key missing from that list silently never arrives at all.
+    var envDueRaw = (!_pictureMode && Array.isArray(opts.environmentDue)) ? opts.environmentDue : [];
     var fusionDue = dueList.concat(envDueRaw)
       .filter(function (o) { return o && o.requiresFusion; });
     var fusionIsEnvOnly = fusionDue.length > 0
       && !dueList.some(function (o) { return o && o.requiresFusion; });
     // opts.reflectiveScaffold is opt-in; absent, this is exactly the previous call.
-    if (fusionDue.length) sys.push('', CP_FUSION.editorBlock(
+    if (!_taskMode && fusionDue.length) sys.push('', CP_FUSION.editorBlock(
       { reflectiveScaffold: !!opts.reflectiveScaffold }));
     // THE SELECTION AID APPLIES TO ANY ENVIRONMENTAL WORK, not only Fusion: it answers "which
     // feature", which an environmental obligation asks just as much. Emitted here when
     // environmental work is due without a Fusion (the Fusion block already carries it).
-    if (!fusionDue.length && envDueIds.length) {
+    if (!_taskMode && !fusionDue.length && envDueIds.length) {
       sys.push('', opts.reflectiveScaffold
         ? CP_FUSION.reflectiveScaffold
         : CP_FUSION.scenePressure + '\n' + CP_FUSION.scenePressureBoundaries);
     }
     // THE SOCIAL-WEIGHT ALGORITHM TRAVELS WITH THE REQUIREMENT. It is emitted only when a
     // social-proof obligation is actually due, so a scene without one is not taught it.
-    if (dueList.some(function (o) { return o.requiresSocialProof; })) {
+    if (!_taskMode && dueList.some(function (o) { return o.requiresSocialProof; })) {
       sys.push('', CP_SOCIAL_WEIGHT.block());
     }
     // ── ENVIRONMENTAL WORK, IN THE SAME PASS ────────────────────────────────────────────────
@@ -3609,7 +4384,7 @@
     }
     // THE PROTAGONIST'S OWN CHANNELS, only when she is actually due.
     var pcDue = dueList.filter(function (o) { return o.isPC; });
-    if (pcDue.length) {
+    if (!_taskMode && pcDue.length) {
       sys.push('', CP_PC.channels + (fusionDue.length ? ' ' + CP_PC.withFusion : ''));
     }
     // ── FUSION BEYOND THE OPENING: PREFER ONE PASSAGE, NEVER FORCE IT ───────────────────────
@@ -3617,7 +4392,7 @@
     // does both is the better answer — that is what Fusion IS, and it is available in any scene,
     // not just the opening. But forcing the combination where it weakens either is worse than two
     // passages: E+ may stand alone, and a brief return callback owes no psychological discovery.
-    if (envDue.length && pcDue.length) {
+    if (!_taskMode && envDue.length && pcDue.length) {
       sys.push('', [
         'BOTH ENVIRONMENTAL WORK AND THE PROTAGONIST\'S OWN DEPICTION ARE DUE.',
         'PREFER ONE PASSAGE THAT DOES BOTH — ' + CP_FUSION.criterion + ' That is Fusion, and it is '
@@ -3632,22 +4407,65 @@
         CP_FUSION.focus
       ].join('\n'));
     }
-    if (doctrine) sys.push('', doctrine);
+    // The C+ doctrine excerpt is Character+ teaching, so it is omitted in task mode too.
+    // The canonical Character+ doctrine is C+ teaching: neither a task pass nor a picturability
+    // pass carries it. This is the "give each pass only its own teaching" rule.
+    if (!_taskMode && !_pictureMode && doctrine) sys.push('', doctrine);
+    // \u2500\u2500 THE GROUNDING REQUIREMENT TRAVELS WITH THE PEOPLE, NOT WITH THE RECORDS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    // Emitted whenever anyone is due, INCLUDING when no appearance record was supplied at all.
+    // Gating it on `_apprLines` would have skipped exactly the character who needs it most: the
+    // presiding Dohkar has no body bible (antagonistBodyBible was null for the Sol opening,
+    // because he resolved as a role rather than an identity), so a record-gated instruction
+    // would reach every character the reader can already picture and none of the ones they
+    // cannot. Environmental-only passes still emit nothing.
+    // ══ THE TASK MODE DECIDES WHAT THIS PASS IS FOR (Roman 2026-11-05) ═══════════════════
+    // A romance pass is a DIFFERENT EDITING TASK, not a brief attached to the grounding block.
+    // Measured: supplying the romance objective through `doctrine` while the request still
+    // asked the four Character+/grounding questions produced four KEEPs and zero romance work
+    // — the model answered the questions it was actually asked. When `opts.task` names a
+    // different objective, THAT objective replaces the grounding block as the pass's task, and
+    // the contract asks for it. Absent `opts.task` this is byte-identical to before.
+    // ══ TWO EDITING PURPOSES, SCHEDULED INDEPENDENTLY (Roman 2026-11-05) ════════════════
+    // THE SPLIT. Character+/E+/Fusion asks whether a passage REVEALS someone. Picturability
+    // asks whether the reader can SEE them. They were one request, so a scene with nobody
+    // C+-due could not get a physical reminder at all, and every C+ pass was also asked to
+    // certify grounding — which is how three consecutive passes spent their edit on Lirael's
+    // hair instead of on a revelation.
+    //
+    // THE GROUNDING TEACHING IS MOVED, NOT COPIED: CP_GROUNDING is emitted by the
+    // PICTURABILITY pass and by nothing else. The C+ pass no longer carries it and no longer
+    // requests a grounding finding, so its whole budget goes to the canonical standard.
+    if (_pictureMode) {
+      sys.push('', CP_GROUNDING.block());
+    } else if (_taskMode) {
+      sys.push('', CP_TASK.block(opts.task));
+    }
     if (_apprLines.length) {
-      sys.push('', 'APPEARANCE ALREADY ESTABLISHED FOR THESE PEOPLE \u2014 SUPPLIED FOR CONSISTENCY, '
-        + 'NOT AS A PROMPT TO DESCRIBE. Receiving these facts is not an instruction to mention '
-        + 'them, and an edit that mentions none of them is correct. Use them so that anything you '
-        + 'DO write cannot contradict what the reader has already been shown; never re-list them, '
-        + 'and never alter them.');
+      sys.push('', CP_GROUNDING.recordsHeader);
       _apprLines.forEach(function (l) { sys.push(l); });
     }
-    if (examples) {
+    // ── MY FIXTURE EXEMPLARS ARE WITHDRAWN (Roman 2026-11-05) ──────────────────────────────
+    // The Brannick / Oren / Teodor / Halvard / Vashti / Ines bank was written by me in October
+    // to teach the same mechanisms the AUTHOR's annotated Jess/ring pair already teaches, and
+    // it taught them at a lower bar — several of its entries are ordinary characterisation that
+    // would not pass the exposure clause. The canonical exemplar now reaches the editor inside
+    // the doctrine excerpt, so a second substitute bank is duplication that lowers the
+    // standard. Supplying `opts.examples` still emits them, for any caller that wants them;
+    // the production dispatch no longer does.
+    if (!_taskMode && examples && opts.allowSubstituteExamples === true) {
       sys.push('',
         'WORKED TRANSFORMATIONS — these demonstrate the physics. Do not copy their wording, their '
           + 'connective tissue or their sentence shapes; the worlds are unrelated to this story.',
         examples);
     }
-    sys.push('', sceneEditorContract(ids, scope.refs, envDueIds));
+    // THE CONTRACT FOLLOWS THE TASK. A task pass is not asked the grounding question per
+    // character, so it is not asked to report a grounding finding either.
+    sys.push('', _pictureMode
+      ? pictureEditorContract(ids, scope.refs)
+      : (_taskMode ? taskEditorContract(ids, scope.refs)
+        // cpIds is passed as [] so the C+ contract no longer demands a grounding finding:
+        // that question now belongs to the picturability pass.
+        : sceneEditorContract(ids, scope.refs, envDueIds, [])));
 
     var user = JSON.stringify({
       // WHICH SCENE THIS REQUEST IS FOR. The editor pass is async, so anything naming the request
@@ -3657,12 +4475,25 @@
       sceneNumber: (opts.sceneOrdinal != null) ? opts.sceneOrdinal : null,
       scene: paras.filter(function (p) { return p.isProse; })
         .map(function (p) { return { ref: p.ref, text: p.text }; }),
+      // ── NO CHARACTER+ ASSIGNMENT IN TASK MODE ─────────────────────────────────────────
+      // MEASURED on the frozen romance request: the system message was clean but the USER
+      // packet still shipped dueThisScene, all four obligations with requiresSocialProof and
+      // requiresFusion, the Fusion assignment and the Character+ style guidance. A cleaned
+      // system message beside a four-obligation payload is still a competing assignment.
       dueThisScene: ids,
-      obligations: dueList,
+      // IN PICTURE MODE THESE ARE NOT OBLIGATIONS. They are the people to assess, and they carry
+      // no requiresSocialProof, no requiresFusion and no assigned facet — so they are named for
+      // what they are rather than shipped under a key that reads as a Character+ assignment.
+      obligations: (_taskMode || _pictureMode) ? undefined : dueList,
+      peopleToPicture: _pictureMode ? dueList.map(function (o) {
+        return { id: o.id, character: o.character, isPC: !!o.isPC }; }) : undefined,
       editableRefs: scope.refs,
       protectedPassages: scope.protectedPassages,
       protectedByParagraph: scope.protectedByRef,
+      // THE ROSTER STAYS AS CONTEXT — who is on stage — never as a certification list.
       roster: opts.roster || [],
+      rosterNote: _taskMode ? 'Context only: who is present. Nobody here requires a depiction, '
+        + 'a Character+ beat or any certification in this pass.' : undefined,
       // E+ TRAVELS BESIDE C+, in one request. `priorPassages` are what was actually PUBLISHED for
       // this place, so a return can differ from what the reader already read. `established` and
       // `interpretation` are deliberately separate keys: a viewpoint reading must not arrive
@@ -3675,6 +4506,46 @@
       // pressure guides which feature to choose for ANY environmental work.
       // The viewpoint is whose eyes the whole scene is in — context, like the canon.
       viewpointAndMask: opts.viewpoint || undefined,
+      // ── WHAT A MISSING RECORD DOES AND DOES NOT MEAN ──────────────────────────────────────
+      // Stated as data because the inference runs both ways and both ways were being made
+      // wrongly: holding a record was read as proof the reader had seen it, and holding none was
+      // read as proof there was nothing to honour. Neither follows.
+      physicalCanon: dueList.length ? {
+        suppliedFor: (Array.isArray(opts.appearance) ? opts.appearance : [])
+          .filter(function (a) { return a && a.name && a.facts; })
+          .map(function (a) { return a.name; }),
+        note: 'Named people have established physical canon in the system block, and it is CANON '
+          + '— true of them, never to be contradicted. Anyone due but NOT on this list has no '
+          + 'record reaching this pass, which is not evidence that they were never described and '
+          + 'not evidence that they were. A record is not published evidence: judge grounding '
+          + 'from THE SCENE and from `publishedPassagesForThesePeople`.'
+      } : undefined,
+      // ── WHAT THE READER HAS ALREADY READ ABOUT EACH PERSON ────────────────────────────────
+      // Prose that actually shipped in earlier scenes, filed under that person. This is the
+      // "prior" basis for the grounding finding, and it is the reason a KEEP no longer requires
+      // a fresh description in every scheduled scene. `passages: []` means NONE REACHED THIS
+      // PASS — the history here is abbreviated, and that silence proves nothing either way.
+      publishedPassagesForThesePeople: dueList.length ? {
+        historyComplete: _histComplete,
+        historyNote: _histComplete
+          ? 'THE HISTORY HERE IS COMPLETE. No scene precedes this one, so there is no earlier '
+            + 'prose about anyone: whatever the reader can picture, they can picture from THIS '
+            + 'scene. A claim that someone was described before is not an abbreviated record, it '
+            + 'is false, and basis "unknown" is unavailable.'
+          : 'THE HISTORY HERE IS INCOMPLETE. Only the passages below reached this pass, and '
+            + 'their absence proves nothing either way. Where you cannot tell, basis "unknown" '
+            + 'records that — it is not a finding that the reader can picture the person.',
+        note: 'PROSE THE READER HAS ALREADY READ, filed under each person. Quoting one of these '
+          + 'verbatim with basis "prior" is a legitimate answer to the grounding finding: the '
+          + 'reader already holds this person and this encounter may need no reminder. An empty '
+          + 'list means no published passage for them reached this pass — the history supplied '
+          + 'here is ABBREVIATED, so an empty list is NOT evidence they were never described. '
+          + 'These are not canon records and nothing here is an instruction to repeat them.',
+        byObligation: dueList.map(function (o) {
+          return { id: o.id, character: o.character || null,
+            passages: _priorFor[o.id] ? _priorFor[o.id].slice() : [] };
+        })
+      } : undefined,
       environmentalCanon: opts.environmentalCanon || undefined,
       scenePressure: opts.scenePressure || undefined,
       scenePressureNote: (function () {
@@ -3708,7 +4579,7 @@
       // The canon is what is TRUE of the place. The viewpoint is how this protagonist sees. They
       // are deliberately not merged: merging them would hand the writer a pre-formed perception
       // and defeat the point.
-      fusion: fusionDue.length ? {
+      fusion: (!_taskMode && fusionDue.length) ? {
         obligations: fusionDue.map(function (o) { return o.id; }),
         test: CP_FUSION.criterion,
         // WHAT IS OWED DIFFERS BY WHICH LIST CARRIES THE FUSION. When a Character+ obligation
@@ -3723,13 +4594,29 @@
             + 'this: the revealing must happen IN the environmental writing.')
           : ('ONE obligation — her Character+ THROUGH Environment+. Do not also write a '
             + 'separate depiction of her.'),
-        // THE PERSON THE ENVIRONMENT MUST REVEAL. `fusionThrough` is the only key read; an
-        // obligation that writes `through` instead delivers null — which is how the first
-        // prepared diagnostic asked for Fusion while naming nobody.
+        // ── TWO DIFFERENT THINGS, READ FROM TWO DIFFERENT FIELDS (Roman 2026-11-04) ───────
+        // THE DEFECT, measured in the assembled Sol request: both keys were mapped from
+        // `fusionThrough`, so `revealsWhom` came out as "the officiating Sacrificiant's one
+        // ornamented ceremonial sash" — a GARMENT named as the person the environment must
+        // reveal. The editor was told to reveal the sash, and the paid pass duly wrote more
+        // sash: "The single sash, heavy with its one permitted ornament, settled lower than
+        // the rehearsed line." That edit was the request's fault, not the model's.
+        //
+        // `fusionThrough` was always the ENVIRONMENTAL ANCHOR — the producer at cpEditorDue
+        // says so in its own comment ("the environmental anchor the fusion is meant to
+        // develop") and reads it from pc_opening_fusion.through / .environment_target. The
+        // PERSON is `o.character`, which is what a Character+ obligation is about. Nothing
+        // upstream changes: the anchor keeps its value, the person is read from the field that
+        // holds a person.
         environmentalAnchor: fusionDue.map(function (o) {
           return { id: o.id, through: o.fusionThrough || null }; }),
-        revealsWhom: fusionDue.map(function (o) { return o.fusionThrough || null })
+        revealsWhom: fusionDue.map(function (o) { return o.character || null })
           .filter(Boolean),
+        // NOTHING IS ADDED HERE BEYOND THE CORRECTED FIELDS. A note I briefly added said "do not
+        // write a depiction of the anchor itself", which CHANGES THE ASSIGNMENT: a Fusion
+        // obligation exists precisely to develop the object or the place in order to reveal the
+        // person, so banning the anchor's depiction contradicts the combined task. The two
+        // corrected fields already say which is the person and which is the feature.
 
         // THE SCENE'S CENTRAL PRESSURE, SUPPLIED OR ABSENT — NEVER INVENTED HERE. The selection
         // aid above is conditional on this arriving; without it the editor chooses a feature the
@@ -3743,11 +4630,32 @@
         note: 'The canon above is SOURCE FACT. The viewpoint is HOW SHE SEES. Neither is a '
           + 'perception written for you.'
       } : undefined,
-      style: CP_STYLE
+      // CP_STYLE is Character+ craft guidance. A task pass keeps the prose-preservation
+      // requirements (in the task block) and not the depiction style rules.
+      // CP_STYLE is Character+ craft guidance; neither a task pass nor a picturability pass
+      // carries it. Their own preservation requirements travel in their own blocks.
+      style: (_taskMode || _pictureMode) ? undefined : CP_STYLE
     }, null, 2);
 
+    // `groundingIds` is the CHARACTER id space only. The grounding finding is about a person the
+    // reader must be able to picture, so an environmental obligation never carries one and must
+    // not be rejected for lacking it.
     return { sys: sys.join('\n'), user: user, paragraphs: paras, reader: reader,
-      scope: scope, ids: ids, revisionId: revisionId(reader) };
+      scope: scope, ids: ids, groundingCorpus: _priorCorpus,
+      historyComplete: _histComplete,
+      // A NAMED-TASK PASS ASKS NEITHER FINDING, so neither is required of its reply.
+      // GROUNDING FINDINGS BELONG TO THE PICTURABILITY PASS ALONE. The C+ pass is no longer
+      // asked to certify whether anyone can be pictured.
+      groundingIds: _pictureMode ? ids : [],
+      // The ids whose claims this pass collects, and the finding it is accountable for.
+      claimIds: _taskMode ? [] : ids,
+      completionRequire: _pictureMode ? 'grounding' : (_taskMode ? null : 'perception'),
+      perceptionRequested: !_pictureMode && !_taskMode,
+      // THE CHARACTER+ CRAFT PASS IS AN ADDITIVE PASS, and the preservation boundary applies to
+      // it alone. A picturability pass corrects what contradicts and must be able to reword; a
+      // named-task pass is told its own preservation terms by the caller through CP_TASK.
+      enrichment: !_pictureMode && !_taskMode,
+      revisionId: revisionId(reader) };
   }
 
   // Validates a reply whose refs the MODEL chose. Everything structural is still checked here —
@@ -3757,7 +4665,29 @@
     var scope = ctx.scope || { refs: [], byRef: {}, protectedByRef: {}, protectedPassages: [] };
     var ids = ctx.ids || [];
     var reader = String(ctx.reader || '');
-    var out = { ok: false, code: null, keeps: [], items: [], rejected: [], unanswered: [] };
+    // CHARACTER OBLIGATIONS ONLY. An environmental obligation carries no grounding finding and is
+    // not held to one. Absent (an older caller), nothing is required and behaviour is unchanged.
+    var needsGround = {};
+    (ctx.groundingIds || []).forEach(function (i) { needsGround[i] = true; });
+    // ── CLAIMS ARE COLLECTED FOR THE PASS'S OWN IDS ─────────────────────────────────────────
+    // (Roman 2026-11-05.) These were collected only where a GROUNDING finding was required. When
+    // the picturability split set groundingIds to [] for the Character+ pass, that pass stopped
+    // collecting any claims at all — so its completion assessment had no rows, "applied is not
+    // fulfilled" silently lost its teeth, and `unresolved` came back null. Claim collection is
+    // now keyed on the obligations this pass is answering; `needsGround` still governs only the
+    // grounding rejection rule.
+    var claimIds = {};
+    ((ctx.claimIds && ctx.claimIds.length) ? ctx.claimIds : (ctx.groundingIds || []))
+      .forEach(function (i) { claimIds[i] = true; });
+    // Person-linked published prose, per obligation. Absent for an id means NO prior passage for
+    // that person reached this pass — which is not evidence they were never described.
+    var groundCorpus = (ctx.groundingCorpus && typeof ctx.groundingCorpus === 'object')
+      ? ctx.groundingCorpus : {};
+    // Known-complete history (an opening) withdraws the uncertainty basis altogether: there is
+    // no earlier prose for a claim of prior description to be about.
+    var histComplete = ctx.historyComplete === true;
+    var out = { ok: false, code: null, keeps: [], items: [], rejected: [], unanswered: [],
+      grounding: [], claims: [] };
 
     var parsed = raw;
     if (typeof raw === 'string') {
@@ -3776,16 +4706,167 @@
         reason: 'no obligation with id "' + id + '" is due in this scene' });
       if (chose[id]) return out.rejected.push({ id: id, code: 'duplicate_decision' });
       var dec = String((d && d.decision) || '').toLowerCase();
+      // ── THE SECOND FINDING, RECORDED FOR EVERY CHARACTER DECISION ────────────────────────
+      // Recorded whether the decision is keep or edit, and whether or not it is well-formed, so
+      // the pass can report what the editor found about recognizability even where it then
+      // rejects the decision. `evidence` is verified against the scene exactly as a KEEP is: an
+      // attestation quoting prose that is not there proves nothing.
+      var _g = (d && d.grounding && typeof d.grounding === 'object') ? d.grounding : null;
+      var _gEv = _g ? normalise(_g.evidence) : null;
+      var _gRec = !!(_g && _g.recognizable === true);
+      var _gWhy = _g ? (normalise(_g.why) || null) : null;
+      var _corpus = (typeof groundCorpus[id] === 'string') ? groundCorpus[id] : '';
+      // ── THREE BASES, AND THE SCENE IS ONLY ONE OF THEM ────────────────────────────────────
+      // A missing basis is INFERRED rather than rejected, so a reply that answers the way the
+      // first version of this contract asked (scene evidence, no basis field) still validates
+      // exactly as it did: quote in the scene → "scene"; quote in that person's supplied
+      // published prose → "prior".
+      var _basis = _g ? String(_g.basis || '').toLowerCase().trim() : '';
+      if (_gRec && !_basis) {
+        _basis = (_gEv && quotePresent(_gEv, reader)) ? 'scene'
+          : ((_gEv && _corpus && quotePresent(_gEv, _corpus)) ? 'prior' : 'scene');
+      }
+      var _gOk = false, _gFail = null, _gVerified = false, _gUnknown = false;
+      if (_gRec) {
+        if (_basis === 'scene') {
+          // ── "SCENE" MEANS THE ENCOUNTER, NOT EVERYTHING SUPPLIED WITH IT ────────────────
+          // (Roman 2026-11-06.) Where the editable span is restricted, prose outside it is
+          // CONTEXT: the reader has read it, so it carries continuity and facts, and it cannot
+          // answer whether the encounter in front of the editor grounds anyone. Measured on
+          // both providers, which quoted the read-only lead-in and called it "scene". The
+          // quote is still checked against the whole scene first, so a FABRICATED quote keeps
+          // its own existing failure code and the two reasons never get confused.
+          //
+          // IT FORCES NOTHING. The consequence is that the finding is not credited and the
+          // obligation is recorded unanswered; no edit is demanded, and the prose publishes
+          // untouched. In ordinary production `scope.restricted` is false and this is inert.
+          if (!_gEv) _gFail = 'grounding_without_evidence';
+          else if (!quotePresent(_gEv, reader)) _gFail = 'grounding_evidence_not_verbatim';
+          else if (scope.restricted === true && scope.encounterText
+                   && !quotePresent(_gEv, scope.encounterText)) _gFail = CP_REJECT.OUTSIDE;
+          else { _gOk = true; _gVerified = true; }
+        } else if (_basis === 'prior') {
+          // VERIFIABLE WHENEVER A CORPUS ARRIVED, AND THEN IT BITES. Claiming prior publication
+          // with a quote that is in neither the scene nor that person's supplied prose is a
+          // fabrication, and is rejected like any other unfound quotation.
+          if (!_gEv) _gFail = 'grounding_without_evidence';
+          else if (!_corpus) _gFail = 'prior_grounding_without_supplied_prose';
+          else if (!quotePresent(_gEv, _corpus)) _gFail = 'prior_evidence_not_in_supplied_prose';
+          else { _gOk = true; _gVerified = true; }
+        } else if (_basis === 'established' || _basis === 'unknown') {
+          // ── UNCERTAINTY IS RECORDED AS UNCERTAINTY, AND NEVER AS RECOGNIZABILITY ────────
+          // (Roman 2026-11-04, narrowing the previous version of this branch.) It used to
+          // ACCEPT any non-empty reason as a grounding finding and merely flag it unverified —
+          // which let "the reader already knows his appearance" satisfy the requirement for an
+          // undescribed character, in an OPENING, where no earlier prose exists at all. Marking
+          // a claim unverified does not stop it from discharging the obligation; only refusing
+          // to count it does.
+          //
+          // TWO SITUATIONS, KEPT APART:
+          //  · KNOWN-COMPLETE HISTORY (an opening): REJECTED. Nothing precedes this scene, so
+          //    there is nothing for the claim to be about, and recognizability is judged from
+          //    the scene and the supplied passages alone.
+          //  · INCOMPLETE HISTORY: the KEEP may stand — uncertainty must not force another
+          //    description — but `recognizable` is recorded as 'unknown', NOT as true. It
+          //    certifies nothing about what was previously delivered.
+          if (histComplete) _gFail = 'established_unavailable_complete_history';
+          else if (!_gWhy) _gFail = 'uncertain_without_reason';
+          else { _gOk = true; _gUnknown = true; }
+        } else _gFail = 'grounding_basis_unrecognized';
+      }
+      if (needsGround[id]) {
+        // ── AN EDIT'S CLAIM IS CHECKED AFTER THE SPLICE, NOT HERE ───────────────────────
+        // An EDIT now names the grounding passage inside its own proposed text, so it HAS a
+        // claim at reply time — but that claim quotes prose that does not exist in the scene
+        // yet, so it cannot be verified here. It is PENDING, and the post-splice assessment
+        // settles it. An edit that names NO passage is not pending: there is nothing to check,
+        // and it is recorded as applied with its requirement unmet.
+        var _pending = (dec === 'edit') && !!_gEv;
+        out.grounding.push({ id: id, decision: dec || null,
+          pending: _pending || undefined,
+          pendingWhy: _pending
+            ? 'the edit names a passage in its own proposed text; checked after splicing'
+            : undefined,
+          noGroundingClaimed: ((dec === 'edit') && !_gEv) || undefined,
+          // 'unknown' is a THIRD value, not a true. Nothing downstream may read this as a
+          // finding that the reader can picture the person.
+          reported: _g ? (_gUnknown ? 'unknown' : _gRec) : null,
+          basis: _gRec ? (_gUnknown ? 'unknown' : (_basis || null)) : null,
+          claimedBasis: _g ? (_basis || null) : null,
+          historyComplete: histComplete,
+          evidence: _gEv || null,
+          evidenceVerbatim: _gEv
+            ? (quotePresent(_gEv, reader) || (!!_corpus && quotePresent(_gEv, _corpus)))
+            : null,
+          priorProseSupplied: !!_corpus,
+          accepted: _gOk,
+          // FALSE for an "established" attestation: accepted, not verified. The distinction is
+          // the whole reason this field exists.
+          verified: _gVerified,
+          code: _gFail,
+          why: _gWhy });
+      }
       if (dec === 'keep') {
         var q = normalise(d.keptPassage);
         if (!q) return out.rejected.push({ id: id, code: 'keep_without_passage' });
         if (!quotePresent(q, reader)) {
           return out.rejected.push({ id: id, code: 'kept_passage_not_verbatim', quote: q });
         }
+        // ── A KEEP NEEDS BOTH FINDINGS, OR IT IS NOT A KEEP ──────────────────────────────
+        // This is the whole point of the change: perception fulfilled with grounding missing
+        // used to end the obligation. Now it leaves the obligation UNANSWERED, which is what
+        // makes the pass able to ask for an edit instead.
+        if (needsGround[id] && !_gOk) {
+          return out.rejected.push({ id: id,
+            code: !_g ? 'keep_without_grounding_finding'
+              : (!_gRec ? 'keep_but_not_recognizable' : (_gFail || 'grounding_not_accepted')),
+            quote: _gEv || null,
+            basis: _gRec ? (_basis || null) : null,
+            reason: (_gFail === CP_REJECT.OUTSIDE)
+              ? ('the grounding evidence is real prose but it lies OUTSIDE the editable '
+                 + 'encounter, so it is continuity rather than an answer about this encounter. '
+                 + 'Quote a passage from the paragraphs you may edit, or make a small edit that '
+                 + 'carries one. The prose you quoted is untouched either way.')
+              : ('a KEEP must satisfy BOTH findings: the perception requirement AND physical '
+              + 'recognizability — evidenced in the editable encounter, or in a supplied '
+              + 'published passage for this person. Where the history is complete there is no '
+              + 'earlier prose to appeal to, and an unsupported claim of one counts for nothing. '
+              + 'Perception alone does not end this obligation — an edit for grounding is owed.') });
+        }
         chose[id] = 'keep';
-        out.keeps.push({ id: id, passage: q, why: normalise(d.why) || null });
+        if (claimIds[id]) {
+          out.claims.push({ id: id, decision: 'keep',
+            perception: q, perceptionWhy: normalise(d.why) || null,
+            grounding: _gEv, groundingBasis: _gUnknown ? 'unknown' : (_basis || null),
+            groundingWhy: _gWhy });
+        }
+        out.keeps.push({ id: id, passage: q, why: normalise(d.why) || null,
+          grounding: needsGround[id]
+            ? { basis: _gUnknown ? 'unknown' : (_basis || null), evidence: _gEv,
+                verified: _gVerified, recognizable: _gUnknown ? 'unknown' : true } : undefined });
       } else if (dec === 'edit') {
         chose[id] = 'edit';
+        // ── AN EDIT'S OWN TWO CLAIMS, CARRIED FORWARD FOR THE POST-SPLICE CHECK ──────────
+        // (Roman 2026-11-04.) THE DEFECT THIS CLOSES, measured on two paid passes: an EDIT
+        // discharged a Character+ obligation by EXISTING. `chose[id]='edit'` plus any edit
+        // text listing that id marked it answered, and nothing asked whether the text served
+        // the perception requirement — so gpt-6.1-sol wrote "thick violet hair brushing his
+        // narrow, pearl-grey face", said in its own `why` that it "supplies only the missing
+        // physical grounding", and the presiding Dohkar's INTRODUCTION was recorded as
+        // delivered by a sentence of hair colour. A keep had to prove both findings; an edit
+        // proved neither.
+        //
+        // The claims are only RECORDED here. They are checked against the FINISHED scene
+        // after the splice, because that is the only text that answers the question — a
+        // passage an edit overwrote is not in the scene the reader gets.
+        if (claimIds[id]) {
+          var _pc = (d && d.perception && typeof d.perception === 'object') ? d.perception : null;
+          out.claims.push({ id: id, decision: 'edit',
+            perception: _pc ? (normalise(_pc.passage) || null) : null,
+            perceptionWhy: _pc ? (normalise(_pc.why) || null) : (normalise(d.why) || null),
+            grounding: _gEv, groundingBasis: _gRec ? (_gUnknown ? 'unknown' : (_basis || null)) : null,
+            groundingWhy: _gWhy });
+        }
       } else {
         out.rejected.push({ id: id, code: 'unknown_decision', got: dec || '(none)' });
       }
@@ -3801,7 +4882,7 @@
         ? e.forObligations.map(String).filter(function (i) { return want[i]; }) : [];
       if (!scope.byRef[ref]) return out.rejected.push({ tag: tag, code: CP_REJECT.UNKNOWN,
         reason: 'ref "' + ref + '" is not an editable prose paragraph of this revision' });
-      if (op !== 'replace' && op !== 'insert_after') {
+      if (op !== 'replace' && op !== 'insert_after' && op !== 'insert_at_anchor') {
         return out.rejected.push({ tag: tag, code: 'unknown_op', got: op });
       }
       // ONE TEXT PER PARAGRAPH. A second text for the same paragraph is REJECTED, never applied:
@@ -3814,15 +4895,88 @@
         reason: 'replacement text introduces control markers' });
       if (!forIds.length) return out.rejected.push({ tag: tag, code: 'edit_serves_nothing',
         reason: 'an edit must name at least one due obligation under forObligations' });
-      // PROTECTED CONTENT SURVIVES, OR THE EDIT DOES NOT.
+      // ── AN ANCHORED INSERTION MUST NAME ONE UNAMBIGUOUS PLACE ──────────────────────────
+      // The anchor is matched BYTE-EXACT, because the splice offsets into the source by
+      // indexOf. It must occur exactly once: zero occurrences is a quote the paragraph does
+      // not contain, and two is an insertion point nobody chose.
+      var _anchor = (e && typeof e.anchor === 'string') ? e.anchor : '';
+      if (op === 'insert_at_anchor') {
+        var _src = scope.byRef[ref].text || '';
+        if (!_anchor.trim()) return out.rejected.push({ tag: tag, code: CP_REJECT.ANCHOR,
+          reason: 'an anchored insertion must carry `anchor`: the exact source text it follows' });
+        var _n = _src.split(_anchor).length - 1;
+        if (_n !== 1) return out.rejected.push({ tag: tag, code: CP_REJECT.ANCHOR, occurrences: _n,
+          reason: _n === 0
+            ? ('the anchor is not verbatim in paragraph "' + ref + '" — copy it exactly, '
+               + 'including punctuation: "' + _anchor.slice(0, 70) + '"')
+            : ('the anchor occurs ' + _n + ' times in paragraph "' + ref + '" — extend it until '
+               + 'it names one place') });
+        // ── COPIED ADJACENT SOURCE CONTEXT (Roman 2026-11-06) ────────────────────────────
+        // MEASURED on the paid Grok craft reply. Its P29 insertion payload opened with the
+        // sentence that already FOLLOWED its anchor — the model wrote the addition in context,
+        // the way a replacement would be written — so the splice put that sentence into the
+        // paragraph a second time and "He groaned my name into my neck…" published twice. The
+        // additive ops guarantee nothing is LOST; they cannot stop something being DOUBLED, and
+        // no check existed for it.
+        //
+        // THE RULE IS LOCAL AND STRUCTURAL: an insertion may not reproduce a whole sentence
+        // that the source already has at the insertion point — the anchor itself, or the
+        // remainder of that paragraph after it. Nothing else is examined.
+        //
+        // WHAT IT DELIBERATELY DOES NOT DO. It is not a prose de-duplicator: it looks only at
+        // the one paragraph being edited and only at the span adjacent to the insertion, never
+        // across the scene. It cannot fire on a repeated WORD or phrase, because the unit is a
+        // complete sentence at the existing MIN_QUOTE_CHARS floor. It cannot fire on the
+        // model's OWN rhythmic repetition — "He was gone. He was gone." passes, because neither
+        // sentence is in the adjacent source. It fires only when the duplicate is source prose
+        // the model copied back, which is the defect and is never intentional craft.
+        //
+        // THE PAYLOAD IS NOT REWRITTEN. Stripping the copied sentence would usually be
+        // equivalent, but "usually" is not demonstrable from here — the model may have intended
+        // the second half to read against the copy — so the edit is refused, that paragraph
+        // publishes as written, and other independently valid edits in the same reply still
+        // apply.
+        var _at = _src.indexOf(_anchor);
+        var _adjacent = _anchor + ' ' + _src.slice(_at + _anchor.length);
+        var _copied = sentences(text).filter(function (s) {
+          return normalise(s).length >= MIN_QUOTE_CHARS && quotePresent(s, _adjacent); });
+        if (_copied.length) return out.rejected.push({ tag: tag, code: CP_REJECT.ECHOED,
+          copied: _copied, copiedCount: _copied.length,
+          reason: 'this insertion reproduces ' + _copied.length + ' sentence(s) that paragraph "'
+            + ref + '" already has at the insertion point, so splicing it would publish them '
+            + 'twice: "' + String(_copied[0]).slice(0, 80) + '". Send ONLY the new prose — the '
+            + 'anchor already places it, and the surrounding sentences stay where they are. The '
+            + 'paragraph is retained as written.' });
+      }
+      // PROTECTED CONTENT SURVIVES, OR THE EDIT DOES NOT. Checked ahead of the mode rule so a
+      // replacement that drops protected prose keeps reporting THAT, which is the more specific
+      // fault and the one the caller named.
       if (op === 'replace') {
         var prot = scope.protectedByRef[ref] || [];
         var lost = prot.filter(function (q) { return !quotePresent(q, text); });
         if (lost.length) return out.rejected.push({ tag: tag, code: CP_REJECT.PROTECTED,
           reason: 'the replacement drops protected content: "' + String(lost[0]).slice(0, 90) + '"' });
+        // ── THE ENRICHMENT-PRESERVATION BOUNDARY: NO UNRESTRICTED REPLACE ───────────────
+        // An additive pass may not hand back a whole paragraph. THE SOURCE PROSE IS RETAINED —
+        // the paragraph is left exactly as written, the obligation goes unanswered, and nothing
+        // is sent to a model to repair it. The rejection names the two operations that can do
+        // the work, because the point is not to refuse the edit but to refuse the format that
+        // makes deletion possible.
+        if (ctx.enrichment === true) {
+          return out.rejected.push({ tag: tag, code: CP_REJECT.DESTRUCTIVE,
+            availableOps: ['insert_at_anchor', 'insert_after'],
+            reason: 'this is an additive pass, and `replace` is not available in it: handing '
+              + 'back the whole of paragraph "' + ref + '" can drop an action, a movement or a '
+              + 'response, and no check on the returned text can reliably tell that from a '
+              + 'rewrite. Weave your line in after the prose it reads with '
+              + '{"ref":"' + ref + '","op":"insert_at_anchor","anchor":"<the exact source text '
+              + 'yours follows>","text":"<your sentence>"}, or add a paragraph with '
+              + '"insert_after". The source prose is retained.' });
+        }
       }
       seen[ref] = 1;
-      out.items.push({ ref: ref, op: op, text: text, beatId: forIds[0],
+      out.items.push({ ref: ref, op: op, text: text, anchor: _anchor || undefined,
+        beatId: forIds[0],
         beatIds: forIds.slice(), addressed: forIds.slice(), provesFulfilment: false });
     });
 
@@ -3839,6 +4993,157 @@
     return out;
   }
 
+  // ── WHAT THE FINISHED SCENE ACTUALLY SUPPORTS ─────────────────────────────────────────────
+  // (Roman 2026-11-04.) AN EDIT BEING APPLIED IS NOT AN OBLIGATION BEING FULFILLED. This is the
+  // separation: the splice decides what the reader gets, and THIS decides what may be credited.
+  //
+  // JUDGED ON THE FINAL ASSEMBLED TEXT, for two reasons. A passage an edit overwrote is not in
+  // the scene the reader receives, so a claim quoting it must not count; and a passage the edit
+  // ADDED is legitimately available, so new text and untouched prose may carry the two findings
+  // between them. Nothing here asks for redundant characterization: quoting prose that was
+  // already on the page is the expected way to support the perception finding.
+  //
+  // THE TWO FINDINGS STAY SEPARATE. Grounding supported with perception unsupported is a real,
+  // publishable improvement AND an unfulfilled Character+ obligation — the edit stands, the
+  // credit does not.
+  //
+  // WHAT A QUOTATION CHECK PROVES, AND WHAT IT DOES NOT. `quotePresent` establishes that the
+  // passage EXISTS in the finished scene. It cannot establish that the passage MEANS what the
+  // editor says it means — that it is a relationship perception event rather than a line of
+  // dialogue that happens to be addressed to someone. No deterministic check can, and none here
+  // pretends to: `semanticallyVerified` stays false on every record this produces.
+  function cpAssessObligationCompletion(opts) {
+    opts = opts || {};
+    var finalText = String(opts.finalText || '');
+    var claims = Array.isArray(opts.claims) ? opts.claims : [];
+    var ids = Array.isArray(opts.groundingIds) ? opts.groundingIds : [];
+    var byId = {};
+    claims.forEach(function (c) { if (c && c.id) byId[c.id] = c; });
+    return ids.map(function (id) {
+      var c = byId[id] || null;
+      var pq = c ? (c.perception || null) : null;
+      var gq = c ? (c.grounding || null) : null;
+      var pOk = !!(pq && quotePresent(pq, finalText));
+      // An "unknown" grounding basis is an admission of uncertainty, never support. It cannot
+      // carry the grounding half of a creditable result.
+      var gBasis = c ? (c.groundingBasis || null) : null;
+      // ── A `prior` QUOTE IS CHECKED AGAINST ITS OWN SOURCE, NOT AGAINST THIS SCENE ────────
+      // (Roman 2026-11-04, fixing a regression this function introduced.) The first version
+      // required every grounding quote to be present in the FINISHED SCENE. For basis "prior"
+      // that is the per-scene description quota coming back in through the bookkeeping: a
+      // familiar character correctly left undescribed this time would be denied credit
+      // BECAUSE the editor rightly did not re-describe them. Published evidence is evidence
+      // wherever it was published. So a "prior" quote is verified against that person's
+      // person-linked published prose — the same corpus the reply-time check used — and a
+      // "scene" quote against the finished scene, which is where it claims to be.
+      var corpus = (opts.groundingCorpus && typeof opts.groundingCorpus === 'object'
+        && typeof opts.groundingCorpus[id] === 'string') ? opts.groundingCorpus[id] : '';
+      var gSource = (gBasis === 'prior') ? corpus : finalText;
+      var gOk = !!(gq && gSource && quotePresent(gq, gSource)) && gBasis !== 'unknown';
+      // ── AN EDIT IS SETTLED BY ITS CLAIMED PASSAGE, NOT BY HAVING LANDED ───────────────
+      // (Roman 2026-11-05, replacing my previous rule.) I had made an applied edit settle
+      // grounding automatically: any text spliced for this obligation counted. That is wrong —
+      // it makes APPLICATION and GROUNDING SUPPORT the same fact, so an edit that changes a
+      // line without adding any physical grounding would certify picturability.
+      //
+      // An EDIT must therefore NAME THE GROUNDING PASSAGE inside the finished text it is
+      // proposing. After splicing, that passage is checked exactly as a KEEP's is — the
+      // difference is only WHERE it is quoted from: a KEEP quotes prose that already exists or
+      // was supplied as prior publication; an EDIT quotes its own proposed text.
+      //
+      // APPLICATION STATUS IS REPORTED SEPARATELY and never substitutes for support. An older
+      // reply that claimed no passage (the null-evidence contract this replaces) is recorded as
+      // APPLIED with grounding UNSUPPORTED. Nothing is back-filled on its behalf.
+      var appliedForId = null;
+      (Array.isArray(opts.applied) ? opts.applied : []).forEach(function (a) {
+        if (appliedForId) return;
+        // spliceAuthorized records the obligation as `tag`; richer callers may pass beatIds.
+        var ids = (a && (a.beatIds || (a.tag ? [a.tag] : (a.beatId ? [a.beatId] : [])))) || [];
+        if (ids.indexOf(id) !== -1) appliedForId = normalise(a.inserted || a.text || '') || true;
+      });
+      var _noClaim = !!(c && c.decision === 'edit' && !gq);
+      var why = [];
+      if (!c) why.push('no character decision was recorded for this obligation');
+      else {
+        if (!pq) why.push('no perception passage was claimed');
+        else if (!pOk) why.push('the claimed perception passage is NOT in the finished scene '
+          + '(absent, misquoted, or no longer contiguous after an edit)');
+        if (!gq) why.push(gBasis === 'unknown'
+          ? 'grounding was reported as unknown, which supports nothing'
+          : 'no grounding passage was claimed');
+        else if (!gOk) why.push(gBasis === 'unknown'
+          ? 'grounding was reported as unknown, which supports nothing'
+          : (gBasis === 'prior'
+              ? (corpus
+                  ? 'the claimed prior passage is NOT in that person\'s supplied published prose'
+                  : 'basis "prior" was claimed but no published prose for that person reached '
+                    + 'this pass, so the quote cannot be verified against its own source')
+              : 'the claimed grounding passage is NOT in the finished scene'));
+      }
+      // WHICH FINDING THIS PASS IS ACCOUNTABLE FOR. Under the split, the Character+ pass owns
+      // perception and the picturability pass owns grounding; neither is judged on the other's.
+      var req = opts.require || 'both';
+      var complete = (req === 'perception') ? pOk : (req === 'grounding' ? gOk : (pOk && gOk));
+      return { id: id, decision: c ? c.decision : null, requires: req,
+        perception: { passage: pq, supported: pOk, why: c ? c.perceptionWhy : null },
+        grounding: { passage: gq, supported: gOk, basis: gBasis,
+          // APPLICATION IS NOT SUPPORT. Both are reported; only the second can complete.
+          editApplied: appliedForId ? true : (c && c.decision === 'edit' ? false : undefined),
+          noGroundingClaimed: _noClaim || undefined,
+          noClaimWhy: _noClaim
+            ? 'the reply named no grounding passage, so nothing can be checked after splicing'
+            : undefined,
+          settledBy: gOk ? (gBasis === 'prior' ? 'published_prose' : 'finished_scene') : null,
+          // WHERE IT WAS VERIFIED, carried so the recorder does not re-check a prior quote
+          // against the current scene and undo this.
+          verifiedAgainst: gOk ? (gBasis === 'prior' ? 'published_prose' : 'finished_scene') : null,
+          why: c ? c.groundingWhy : null },
+        // COMPLETE means this pass's own finding is supported by a passage in the finished scene.
+        complete: complete,
+        creditable: complete,
+        // Said on every one of these, because a quote check cannot answer it.
+        semanticallyVerified: false,
+        why: why.length ? why.join('; ') : 'both findings are supported by passages in the '
+          + 'finished scene — EXISTENCE of the evidence, not a judgment that it is good' };
+    });
+  }
+
+  // ── PICTURABILITY ELIGIBILITY, INDEPENDENT OF CHARACTER+ ──────────────────────────────────
+  // (Roman 2026-11-05.) THE WHOLE POINT OF THE SPLIT. This asks only "who is importantly on this
+  // page", so it fires in a scene where NOBODY is Character+, E+ or Fusion due — which the
+  // combined request could never do, because the grounding question only travelled with a C+
+  // obligation. The PC is included: first-person narration exempts nobody.
+  //
+  // IT IS NOT A QUOTA. This returns who is ELIGIBLE to be assessed; the editor answers KEEP for
+  // anyone the scene already pictures, and a scene where everyone is already visible produces
+  // no edits at all. Nothing here schedules "another description every N scenes".
+  //
+  // WHAT IT DELIBERATELY DOES NOT DECIDE: whether the reader has in fact seen someone. That is
+  // the editor's finding, against the scene and any supplied published prose — canonical
+  // appearance is what is TRUE of a person, never evidence of what has been shown, and an
+  // uncertain history is reported as unknown rather than certifying anyone as already described.
+  function cpPictureDue(opts) {
+    opts = opts || {};
+    var onStage = Array.isArray(opts.onStage) ? opts.onStage : [];
+    var seen = {}, out = [];
+    onStage.forEach(function (p) {
+      if (!p || !p.label) return;
+      // IMPORTANT on-page people only: the PC, the love interest, and anyone the stage resolver
+      // marked a major participant. A passing doorway attendant is not assessed.
+      var major = p.isPC === true || p.isLI === true
+        || String(p.participation || '') === 'major'
+        || String(p.kind || '') === 'pc' || String(p.kind || '') === 'li';
+      if (!major) return;
+      var key = String(p.label).toLowerCase().trim();
+      if (!key || seen[key]) return;
+      seen[key] = 1;
+      out.push({ id: 'picture:' + key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+        character: p.label, kind: p.kind || null, isPC: p.isPC === true,
+        participation: p.participation || null });
+    });
+    return out;
+  }
+
   // ── THE PASS ──────────────────────────────────────────────────────────────────────────────
   // Returns the text to publish and a factual account of what happened. It NEVER throws, never
   // blocks publication, never regenerates, never retries and never falls back to another model.
@@ -3848,7 +5153,8 @@
     opts = opts || {};
     var reader = readerFacing(opts.draft);
     var base = { ran: false, text: opts.draft, reader: reader, revisionId: revisionId(reader),
-      keeps: [], applied: [], rejected: [], unanswered: [], due: [], deferred: [],
+      keeps: [], applied: [], rejected: [], unanswered: [], grounding: [], completion: [],
+      due: [], deferred: [],
       dispatched: false, unresolved: null };
 
     if (typeof opts.editorFn !== 'function') {
@@ -3869,8 +5175,33 @@
     // that owes no Character+ — a new room with every character's cadence already satisfied — and
     // the pass must still run for it. Checking only `plan.due` would have silently dropped every
     // E+ obligation in exactly that case.
+    // ── PICTURABILITY SCHEDULES ITSELF ──────────────────────────────────────────────────────
+    // In picturability mode the Character+ plan is NOT what gates the pass: the people on stage
+    // are. So a scene with nobody C+ due still runs, which is the behaviour the split exists for.
+    var _pictureMode = opts.mode === 'picturability';
+    if (_pictureMode) {
+      var _picDue = cpPictureDue({ onStage: opts.onStage });
+      base.due = _picDue;
+      base.mode = 'picturability';
+      if (!_picDue.length) {
+        base.reason = 'no important on-page character to assess for picturability';
+        return base;
+      }
+      plan = { due: _picDue, deferred: [], introductions: 0, capacity: null, overflow: 0 };
+    }
+    // ── A NAMED TASK SCHEDULES ITSELF TOO (Roman 2026-11-06) ────────────────────────────────
+    // Same shape as the picturability exemption above, and found the same way — by a task pass
+    // returning "nothing is due" and never reaching the editor. The Character+ plan is not what
+    // gates a task pass: the CALLER'S OBJECTIVE is. A consistency pass over a finished scene
+    // owes no C+ depiction to anybody and must still run. Without this, `opts.task` could only
+    // ever fire on a scene that happened to owe Character+ work, which has nothing to do with
+    // the task. Nothing in production supplies `opts.task`, so no shipped pass changes.
+    var _taskMode = !_pictureMode && !!(opts.task && opts.task.objective);
     var _envCount = Array.isArray(opts.environmentDue) ? opts.environmentDue.length : 0;
-    if (!plan.due.length && !_envCount) {
+    if (_taskMode) {
+      base.mode = 'task';
+      plan = { due: [], deferred: [], introductions: 0, capacity: null, overflow: 0 };
+    } else if (!_pictureMode && !plan.due.length && !_envCount) {
       base.reason = 'nothing is due in this scene — no Character+, no Fusion, no environmental work';
       return base;
     }
@@ -3897,7 +5228,8 @@
     var req = buildSceneEditorRequest({
       draft: reader, due: plan.due, protectedPassages: opts.protectedPassages,
       sceneOrdinal: opts.sceneOrdinal,
-      environmentDue: opts.environmentDue, environmentMemory: opts.environmentMemory,
+      environmentDue: opts.environmentDue,
+      environmentMemory: opts.environmentMemory,
       environmentalCanon: opts.environmentalCanon,
       environmentalPassages: opts.environmentalPassages,
       priorEnvironment: opts.priorEnvironment,
@@ -3909,7 +5241,14 @@
       // about exactly this: an explicit caller-private forward list that nobody checks against
       // the callee, which is how viewpointAndMask and environmentalCanon were silently null on
       // the ordinary path while a direct caller got real values. Added with the parameter.
-      appearance: opts.appearance });
+      appearance: opts.appearance,
+      task: opts.task,
+      mode: opts.mode,
+      // PERSON-LINKED PUBLISHED PROSE. On this explicit forward list for the reason the comment
+      // above gives: the builder reads it, so a caller-private list that omits it delivers an
+      // empty corpus and the grounding finding silently loses its "prior" basis.
+      priorCharacterPassages: opts.priorCharacterPassages,
+      historyComplete: opts.historyComplete });
     base.requestRevision = req.revisionId;
 
     var replyRaw = null, call = null;
@@ -3944,9 +5283,14 @@
     }
 
     var v = validateSceneEditorReply(replyRaw, {
-      scope: req.scope, ids: req.ids, reader: req.reader });
+      scope: req.scope, ids: req.ids, reader: req.reader,
+      groundingIds: req.groundingIds, claimIds: req.claimIds,
+      groundingCorpus: req.groundingCorpus,
+      enrichment: req.enrichment === true,
+      historyComplete: req.historyComplete });
     base.ran = true;
     base.keeps = v.keeps; base.rejected = v.rejected; base.unanswered = v.unanswered;
+    base.grounding = v.grounding;
     base.code = v.code || null;
 
     if (!v.items.length) {
@@ -3976,9 +5320,44 @@
       return { ref: it.ref, op: it.op, obligations: it.beatIds.slice() }; });
     base.publishedRevision = revisionId(readerFacing(spl.text));
     base.reason = 'applied ' + v.items.length + ' edit(s), kept ' + v.keeps.length;
-    if (v.unanswered.length) {
-      base.unresolved = { why: 'some obligations were not answered',
-        obligations: v.unanswered.map(function (u) { return u.id; }) };
+    // ── APPLIED IS NOT FULFILLED ───────────────────────────────────────────────────────────
+    // Assessed against the FINISHED scene, after the splice. This is what may be credited; the
+    // prose above is what publishes, and the two are deliberately not the same decision.
+    // ── ASSESSED ONLY AGAINST A CONTRACT THAT WAS ACTUALLY SENT ────────────────────────────
+    // (Roman 2026-11-04.) The perception claim is a field this contract asks for. A reply
+    // produced from a request that never asked for it cannot be scored on its absence — that
+    // would read a format change as a writing failure, which is exactly what a replay of an
+    // earlier request must not do. `perceptionRequested` travels with the request; a replay
+    // sets it false and the pass reports decisions and prose without a completion verdict.
+    var _wantPerception = (opts.perceptionRequested === false) ? false
+      : (req.perceptionRequested !== false);
+    // The completion assessment runs whenever the pass owns a finding — perception for the
+    // Character+ pass, grounding for the picturability pass, neither for a named task.
+    var _require = req.completionRequire || null;
+    base.perceptionRequested = _wantPerception;
+    base.completion = _require ? cpAssessObligationCompletion({
+      finalText: readerFacing(spl.text), claims: v.claims, applied: spl.applied,
+      groundingCorpus: req.groundingCorpus, require: _require,
+      groundingIds: req.claimIds && req.claimIds.length ? req.claimIds : req.groundingIds }) : [];
+    var _incomplete = base.completion.filter(function (c) { return !c.complete; });
+    var _unansweredIds = v.unanswered.map(function (u) { return u.id; });
+    // An obligation whose edit was applied but whose Character+ is unsupported is NOT answered,
+    // however much prose it produced. It joins the unresolved list rather than being counted.
+    _incomplete.forEach(function (c) {
+      if (_unansweredIds.indexOf(c.id) === -1) _unansweredIds.push(c.id);
+    });
+    if (_unansweredIds.length) {
+      base.unresolved = {
+        why: v.unanswered.length
+          ? 'some obligations were not answered, and some received an edit without support for '
+            + 'both findings in the finished scene'
+          : 'an edit was applied without support for both findings in the finished scene — the '
+            + 'prose improvement stands, the obligation does not',
+        obligations: _unansweredIds,
+        incomplete: _incomplete.map(function (c) {
+          return { id: c.id, perceptionSupported: c.perception.supported,
+            groundingSupported: c.grounding.supported, why: c.why }; })
+      };
     }
     return base;
   }
@@ -4112,20 +5491,42 @@
         + 'made. Take the RELATIONSHIP — a fact becomes meaning through how it has been used — and '
         + 'not the invention.' },
 
-    { id: 'keep-already-works', mechanism: 'keep',
-      facts: ['Marisa runs the dispatch desk', 'the night shift calls her when a route fails'],
-      viewpoint: 'the narrator has worked under her for two years and notices procedure',
-      before: 'Marisa took the call about the washed-out bridge and started rerouting before the '
-        + 'driver finished the sentence. She had the alternate up on the second screen already.',
+    // ══ REPLACED, NOT APPENDED (Roman 2026-11-04) ════════════════════════════════════
+    // This slot held the Marisa dispatch-desk KEEP, which taught evidence-over-verdict for the
+    // PERCEPTION finding — a lesson the editor already applies well. What it did not teach is
+    // the standard that actually failed: on the measured pass every character was KEPT, and the
+    // one with no feature, no voice and no bearing on the page was certified recognizable on a
+    // hand movement, defended as "supplies the physical details that make him recognizable".
+    // Same mechanism, same always-travelling slot, same evidence-over-verdict structure —
+    // retargeted onto grounding, where the verdict was standing in for the finding.
+    { id: 'keep-impression-not-staging', mechanism: 'keep',
+      facts: ['Brannick chairs the water board',
+        'the board has learned to wait for him, and he never raises his voice'],
+      viewpoint: 'the narrator has sat through nine of these hearings and watches who moves first',
+      before: 'Brannick turned towards the petitioner, his hands moving quietly at his side, and '
+        + 'waited until the room was looking at him. "Read the second clause again," he said, in '
+        + 'the flat Dunmarch vowels he has never bothered to soften.',
       decision: 'keep',
-      kept: 'She had the alternate up on the second screen already.',
-      why: 'The second screen is the inference: she had anticipated this failure. It reveals her '
-        + '(she plans for the route she does not trust) and the narrator (someone who watches '
-        + 'which screen a person reaches for). Nothing needs adding.',
-      failure: { text: 'Marisa took the call and started rerouting immediately. She was always '
-          + 'three steps ahead — that was simply who she was.',
-        why: 'The rewrite replaces evidence with a verdict. "Three steps ahead" is a compliment '
-          + 'the reader is asked to accept; the second screen was something they could conclude.' } },
+      kept: 'waited until the room was looking at him. "Read the second clause again," he said, '
+        + 'in the flat Dunmarch vowels he has never bothered to soften',
+      why: 'BOTH FINDINGS, AND THEY ARE ANSWERED BY DIFFERENT PARTS OF THE SENTENCE. PERCEPTION '
+        + 'is the waiting — a judgment about who controls the room, selected by a narrator who '
+        + 'watches for it. GROUNDING is the unsoftened vowels: a concrete vocal impression, and '
+        + 'a habit of not bothering with it. Whether anyone else in the hearing shares that '
+        + 'accent is unknown and does not matter — the reader can hear him either way. THE '
+        + 'TURNING AND THE HANDS, AS WRITTEN HERE, CARRY NEITHER: they report that he is doing '
+        + 'something and leave little to picture. One clause of voice was enough, and it '
+        + 'explains nothing about his psychology; it does not have to.',
+      failure: { text: 'Brannick turned towards the petitioner, his hands moving quietly at his '
+          + 'side, and waited until the room was looking at him. "Read the second clause again."',
+        why: 'The same perception, and little beyond the managing of the room: strike the voice '
+          + 'and this particular passage leaves the reader not much to picture, so one concrete '
+          + 'identifying cue would help. THIS IS NOT A RULE THAT WAITING, POSTURE OR A MOVEMENT '
+          + 'OF THE HANDS CAN NEVER GROUND ANYONE — written with enough particularity, bearing '
+          + 'does exactly that. What fails is the DEFENCE: a KEEP justified as "the passage '
+          + 'supplies the physical details that make him recognizable" restates the verdict and '
+          + 'names nothing. Point at the cue; where there is none to point at, the edit is '
+          + 'owed.' } },
     { id: 'keep-not-the-named-facet', mechanism: 'keep_different_facet',
       facts: ['Oren was the youngest ever promoted to the floor',
         'the facet on file is: he needs to be the one who noticed first'],
@@ -4335,8 +5736,10 @@
     regressions: regressions, characterPlusBeats: characterPlusBeats,
     judgeContract: judgeContract, validateQuotation: validateQuotation,
     CP_STYLE: CP_STYLE,
+    CP_GROUNDING: CP_GROUNDING, CP_TASK: CP_TASK,
     STATUS: STATUS, OCCURRENCE: OCCURRENCE, EVIDENCE_PROBLEM: EVIDENCE_PROBLEM,
-    paragraphsOf: paragraphsOf, authorizeRepairRegions: authorizeRepairRegions,
+    paragraphsOf: paragraphsOf, cpClosingPassage: cpClosingPassage,
+    authorizeRepairRegions: authorizeRepairRegions,
     validateRepairReply: validateRepairReply, spliceAuthorized: spliceAuthorized,
     CP_REJECT: CP_REJECT, CP_MODE: CP_MODE,
     cpCreditDelivery: cpCreditDelivery, cpCoveragePlan: cpCoveragePlan,
@@ -4372,6 +5775,8 @@
     epLocationIdentity: epLocationIdentity,
     epMemoryFor: epMemoryFor,
     cpEditorDeliveryRecord: cpEditorDeliveryRecord,
+    cpPictureDue: cpPictureDue,
+    cpAssessObligationCompletion: cpAssessObligationCompletion,
     CP_EXAMPLES: CP_EXAMPLES, CP_EXAMPLE_PROVENANCE: CP_EXAMPLE_PROVENANCE,
     cpSelectExamples: cpSelectExamples,
     cpExamplesForObligations: cpExamplesForObligations,

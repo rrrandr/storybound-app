@@ -33441,6 +33441,80 @@ function buildTarotOnboardingDirective(opts) {
       // 2a. cheap shape rejections
       if (/^(?:he|she|they|him|her|them|it|i|me|you|we|us|his|hers|theirs|its|my|your|our)$/i.test(raw))
         return { ok: false, reason: 'pronoun' };
+      // ── A STAGED SUBJECT IS NOT A DESCRIPTOR (Roman 2026-11-05) ─────────────────────────
+      // "the presiding Dohkar" is rejected below as a descriptive phrase, which is right for an
+      // arbitrary one — but this person is ALREADY STAGED, with a backend-owned subject_ref the
+      // extractor was handed in STAGED SUBJECTS and told to copy exactly. A character carrying
+      // one of those refs has been identity-bound by the story, not described by the model, so
+      // the shape tests for unbound phrases do not apply to them. That is why a consequential
+      // supporting character introduced by title or role could never acquire appearance memory.
+      //
+      // THE RULE IS NOT RELAXED. The ref must match a subject actually staged for THIS scene;
+      // an invented ref, a ref for someone else, or no ref at all still falls through to the
+      // descriptor rejection. No proper name is invented and nothing is special-cased by name.
+      // ── TWO DIFFERENT THINGS, AND I HAD THE WRONG ONE (Roman 2026-11-05) ─────────────
+      // A PENDING-ADMISSION CANDIDATE is a NEW person awaiting admission in this invocation.
+      // An EXISTING STAGED IDENTITY is someone the scene's stage already carries. The presiding
+      // Dohkar is the second kind: the saved stage holds
+      // `role:first_sacrifice_presiding_dohkar`.
+      //
+      // This read did two things wrong at once. It consulted the PENDING store, which is the
+      // wrong population; and it called `_pendingAdmissionSnapshot(window.state)` with no
+      // sceneUid, while that function begins `if (!store || !sceneUid) return null` — so it
+      // returned null unconditionally, for every character, in every story. The null told me
+      // nothing about whether an identity existed, and I wrongly concluded from it that this
+      // story had no trusted identity for him.
+      //
+      // The staged participants for the scene are the existing-identity path, read exactly as
+      // _cpAssignmentFor reads them: keyed by scene number, and only a stage whose storyId
+      // matches this story. THE RULE IS NOT RELAXED — the ref must match a participant actually
+      // staged for this scene; an invented ref, someone else's ref, or no ref still falls
+      // through to the descriptor rejection, and no name is invented or special-cased.
+      var _stagedRef = null; var _stagedScene = null;
+      try {
+        var _sr = String((c && c.subject_ref) || '').trim();
+        if (_sr) {
+          // THE EXISTING ACCESSOR, not the raw store. `state._cpGeneratedStage` holds only
+          // PLANNER-generated stages and is empty in a restored story, while the authored seed
+          // row carries `role:first_sacrifice_presiding_dohkar` — so reading that store alone
+          // reported "no identity" for someone who plainly has one.
+          // `_sceneStageContract(state, n)` is the function the Character+ path already uses to
+          // resolve a scene's stage from whichever substrate owns it: accepted stage, authored
+          // row, or generated stage.
+          //
+          // _charAdmit(c, prose, ledger) receives no scene number and a restored story can sit
+          // at turnCount 0, so the scenes actually present are tried rather than one guessed
+          // key, and the scene where the ref was found is reported.
+          var _st = window.state || {};
+          var _maxN = Math.max(1, Number(_st.turnCount || 0) + 1,
+            (window.StoryPagination && window.StoryPagination.getPages
+              && (window.StoryPagination.getPages() || []).length) || 1);
+          for (var _n = 1; _n <= _maxN && !_stagedRef; _n++) {
+            var _stage = null;
+            try {
+              _stage = (typeof window._sceneStageContract === 'function')
+                ? window._sceneStageContract(_st, _n) : null;
+            } catch (_) { _stage = null; }
+            if (!_stage) continue;
+            var _parts = (_stage.onStage || []).concat(_stage.participants || []);
+            // A participant named only inside an event fact is staged just as truly as one in
+            // the top-level list.
+            (_stage.eventFacts || []).forEach(function (f) {
+              ((f && f.participants) || []).forEach(function (o) { _parts.push(o); });
+            });
+            // THE FIELD NAMES DIFFER BY SUBSTRATE. An `onStage` entry carries the identity as
+            // `id` ("role:first_sacrifice_presiding_dohkar", source seed.sceneOne); an
+            // event-fact participant carries it as `ref`. Reading only `ref` found the Dohkar's
+            // row and then reported no identity, because his id is on the other field.
+            if (_parts.some(function (x) {
+              return x && String((x && (x.id || x.ref || x.subject_ref)) || '') === _sr; })) {
+              _stagedRef = _sr; _stagedScene = _n;
+            }
+          }
+        }
+      } catch (_) { _stagedRef = null; }
+      if (_stagedRef) return { ok: true, reason: 'staged-subject', existing: true,
+        subject_ref: _stagedRef, stagedInScene: _stagedScene };
       if (/^(?:the|a|an)\s/i.test(raw)) return { ok: false, reason: 'descriptor' };
       if (!/^[A-Z]/.test(raw)) return { ok: false, reason: 'uncapitalised' };
       // A bare title with no proper name attached ("Marshal", "Father") is a role word.
@@ -33865,11 +33939,18 @@ function buildTarotOnboardingDirective(opts) {
         var verdict = (typeof window._charAdmit === 'function')
           ? window._charAdmit(c, sceneText, ledger)
           : { ok: !!(c && c.name), reason: 'no-validator' };
-        if (verdict.ok) _admitted.push(c); else _refused.push({ name: (c && c.name) || '?', why: verdict.reason });
+        if (verdict.ok) _admitted.push(c);
+        // THE REFUSAL SAYS WHETHER A REF ARRIVED. A descriptor-named person is refused either
+        // because no identity was supplied or because the one supplied is not staged; those are
+        // different problems and the log used to show the same word for both.
+        else _refused.push({ name: (c && c.name) || '?', why: verdict.reason,
+          ref: String((c && c.subject_ref) || '') || null });
       });
       if (_refused.length) {
         try { console.log('[CHAR-ADMIT] refused ' + _refused.length + ': '
-          + _refused.map(function (r) { return r.name + '(' + r.why + ')'; }).join(', ')); } catch (_) {}
+          + _refused.map(function (r) {
+            return r.name + '(' + r.why + (r.ref ? ' ref=' + r.ref : ' no-ref') + ')'; })
+            .join(', ')); } catch (_) {}
       }
       // ══════════════════════════════════════════════════════════════════════════════════
       // SEAM 3 — THE ECHO CONTRACT, VALIDATED BEFORE ANY MUTATION (Roman 2026-08-29)
@@ -35673,7 +35754,26 @@ function buildTarotOnboardingDirective(opts) {
       // census). Suppressed for Scene 1 ONLY; scene 2+ are unaffected — this is not a permanent
       // removal, only pre-page suppression, per Roman's instruction not to build a deferred-fire
       // registry this pass.
-      if (typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(_s0)) {
+      // ── PRE-PUBLICATION, NOT "EVER" (Roman 2026-11-05) ──────────────────────────────────
+      // THE DEFECT: this guard tested only whether the story is a Tier-0-eligible fixed starter,
+      // which is true before AND after the page is published — so it suppressed the EXISTING
+      // post-render call too, and no opening appearance detail could ever enter character
+      // memory. The suppression was only ever meant to stop a paid call BEFORE the reader sees
+      // Scene 1; its own comment says so ("only pre-page suppression").
+      //
+      // THE DISTINCTION IS ALREADY ON THE CALL. StoryPagination.triggerPostRenderHooks() invokes
+      // this updater AFTER mounting the page, passing that page's prose and its canonical UID
+      // (app.js:14378). A pre-publication caller has neither: it falls through to scenes[] or to
+      // undefined, which is exactly the updater's own pre-commit early return. So "published"
+      // means an explicit mounted-page UID arrived with explicit prose — no registry, no
+      // scheduler, no new hook.
+      //
+      // NOTHING ELSE IS RELAXED. The baked-opening policy above still returns first, story
+      // ownership, UID deduplication (_ledgerInFlightUids plus the processed-UID set) and the
+      // verified-admission path that keeps unaccepted drafts out of canon are all untouched —
+      // this only stops suppressing a call that the reader has already been shown.
+      var _publishedPage = !!(sceneUid && String(explicitText || '').trim());
+      if (!_publishedPage && typeof _tier0Scene1Eligible === 'function' && _tier0Scene1Eligible(_s0)) {
         console.log('[TIER0] CHARACTER_DISCLOSURE_EXTRACTION suppressed pre-page — no paid call before the reader sees Scene 1');
         return;
       }
@@ -69796,11 +69896,82 @@ try { if (typeof window !== 'undefined') window._CP_DOCTRINE = _CP_DOCTRINE; } c
 // annotated Jess/ring pair with its law, the fusion bar, the governing principle, the breadth
 // permission, and the clarified ban. No nine-mechanism table — an editor rewriting one paragraph
 // needs the physics and the one worked distinction, not a menu to pick a shape from.
+// ── THE EDITOR READS THE AUTHOR'S OWN CANONICAL BLOCKS (Roman 2026-11-05) ──────────────────
+// THE DEFECT. _CP_DOCTRINE's header claims it carries "nine mechanisms, the annotated Jess/ring
+// pair, the substitution and removal tests, the bar, the banned shape". Measured on its payload
+// (5,574 chars, comments stripped): ZERO occurrences of "substitut", "remov" or "exposure", and
+// "mechanism" only as a passing reference — the enumerated NINE MECHANISMS, the SUBSTITUTION
+// TEST, the REMOVAL TEST and the EXPOSURE CLAUSE were never hoisted. Only the Jess/ring exemplar
+// made it. So the editor has been running on a partial hoist plus later paraphrase, while the
+// author receives the full August doctrine from _buildCharacterPlusShared.
+//
+// THE FIX IS TO SHARE, NOT TO RE-HOIST. Re-copying those blocks would create exactly the second
+// paraphrase the original hoist existed to prevent, and editing the author's own 60k-char
+// builder to extract them risks changing what the AUTHOR receives. Instead this calls that
+// builder and SELECTS the canonical blocks out of its own output by their stable opening
+// phrases, so the editor gets the authoritative text VERBATIM and the author path is untouched.
+// A block that is renamed or removed upstream simply stops arriving and is reported, rather than
+// silently diverging.
+//
+// A FAITHFUL SELECTION, NOT THE WHOLE AUTHOR PROMPT: five blocks, listed here.
+// ── A BLOCK IS NOT ALWAYS ONE LINE (Roman 2026-11-05) ──────────────────────────────────────
+// THE DEFECT I SHIPPED AND THEN CERTIFIED: this selector took the FIRST MATCHING LINE, and the
+// nine mechanisms are ten lines — the heading plus nine separate `lines.push` entries, A · to
+// I ·. So the editor received "NINE MECHANISMS. These are NOT templates…" followed straight by
+// the Jess exemplar, with the entire teaching absent, and my grep for the heading counted 1 and
+// called the block delivered. Counting a heading is not reading the content; that is the third
+// time in this work I have verified a label instead of a payload.
+//
+// `follow` names the pattern that continues a block. The selection runs from the heading line
+// until a line stops matching it, so all nine entries travel with their heading in their
+// original wording. No new examples, no rules, no extraction framework.
+var _CP_CANON_BLOCKS = [
+  { lead: 'Character+ is NOT description' },   // the bar: what C+ is not
+  { lead: 'THE EXPOSURE CLAUSE' },             // the criterion + the Seren ✓/✗ pair
+  { lead: 'SUBSTITUTION TEST (HARD)' },        // the substitution test
+  { lead: 'REMOVAL TEST (runs WITH' },         // the removal test, with its causal-clause note
+  // The heading, then A · through I ·, then stop.
+  { lead: 'NINE MECHANISMS', follow: /^\s*[A-I]\s*\u00b7\s/, expectFollow: 9 }
+];
+function _cpCanonicalCPlusBlocks() {
+  try {
+    if (typeof _buildCharacterPlusShared !== 'function') return { blocks: [], missing: _CP_CANON_BLOCKS.map(function (x) { return x.lead; }), shortfall: [] };
+    var txt = _buildCharacterPlusShared({ spine: true }) || '';
+    var lines = String(txt).split('\n');
+    var out = [], missing = [], shortfall = [];
+    _CP_CANON_BLOCKS.forEach(function (spec) {
+      var lead = spec.lead, at = -1;
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].indexOf(lead) !== -1) { at = i; break; }
+      }
+      if (at < 0) { missing.push(lead); return; }
+      out.push(lines[at]);
+      if (!spec.follow) return;
+      // THE CONTINUATION LINES, in order, until the pattern stops matching.
+      var got = 0;
+      for (var k = at + 1; k < lines.length; k++) {
+        if (!spec.follow.test(lines[k])) break;
+        out.push(lines[k]); got++;
+      }
+      if (spec.expectFollow != null && got !== spec.expectFollow) {
+        // REPORTED, NOT GUESSED. A changed upstream block must not pass silently as complete.
+        shortfall.push(lead + ': expected ' + spec.expectFollow + ' entries, found ' + got);
+      }
+    });
+    return { blocks: out, missing: missing, shortfall: shortfall };
+  } catch (_) { return { blocks: [], missing: _CP_CANON_BLOCKS.map(function (x) { return x.lead; }), shortfall: [] }; }
+}
+try { if (typeof window !== 'undefined') window._cpCanonicalCPlusBlocks = _cpCanonicalCPlusBlocks; } catch (_) {}
+try { if (typeof window !== 'undefined') window._CP_CANON_BLOCKS = _CP_CANON_BLOCKS; } catch (_) {}
+
 function _cpDoctrineExcerptForRepair() {
   // THE ENVIRONMENT KEY IS NAMED HERE OR IT DOES NOT ARRIVE. This function selects fields by
   // name, so a new sibling on _CP_DOCTRINE reaches nothing until it is listed. Added with the
   // editor-only boundary: an author may invent a past, an editor may not.
-  return [_CP_DOCTRINE.framing, ''].concat(_CP_DOCTRINE.exemplar, ['',
+  // THE CANONICAL BLOCKS FIRST, verbatim from the author's own builder, so the editor is held to
+  // the original standard rather than to a paraphrase of it.
+  var _canon = _cpCanonicalCPlusBlocks();
+  return [_CP_DOCTRINE.framing, ''].concat(_canon.blocks, ['']).concat(_CP_DOCTRINE.exemplar, ['',
     _CP_DOCTRINE.governing, _CP_DOCTRINE.bar, _CP_DOCTRINE.notChecklist, _CP_DOCTRINE.bannedShape,
     '', _CP_DOCTRINE.environment,
     'A place may only carry a past this story has established. The supplied facts are the only '
@@ -147818,7 +147989,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           userId: accountId, operationId: opId,
           storyId: String(owner.storyId || s.storyId || ''), scene: owner.scene,
           revisionId: req.revisionId, system: req.sys, user: req.user,
-          maxTokens: req.maxTokens, obligations: req.ids || null }) });
+          maxTokens: req.maxTokens, obligations: req.ids || null,
+          // ── WHICH PINNED EDITOR CONFIGURATION (Roman 2026-11-04) ─────────────────────────
+          // The C+ editor REWRITES prose, so an explicit scene must not reach a model that
+          // moderates — the same harm `_proseModerationHot` was built to prevent on the Claude
+          // polish path, which DECLINES rather than softens. General prose goes to gpt-6-luna;
+          // a CARNAL or live-intimacy scene stays on grok-4.3. Read from the existing gate so
+          // there is one definition of "explicit" and it cannot drift from the prose path.
+          contentClass: (function () {
+            try {
+              return (typeof window._proseModerationHot === 'function'
+                && window._proseModerationHot(s)) ? 'explicit' : 'general';
+            } catch (_) { return 'explicit'; }   // unreadable state → the safe side
+          })() }) });
       data = await resp.json().catch(function () { return null; });
     } catch (e) {
       return { dispatched: true, reason: 'transport failure: ' + ((e && e.message) || e),
@@ -285593,6 +285776,14 @@ Generate the synopsis now.` }
             }
           }
         }
+        // ── NO SECOND PORTRAIT REGISTRY (Roman 2026-11-05, withdrawn) ──────────────────
+        // I briefly read a `portrait` off _relEntityForName() here. Two faults: that function
+        // returns a canonical ID STRING, not an entity, so `.portrait` on it was always
+        // undefined and nothing could ever have arrived; and the store was redundant —
+        // Storybound ALREADY carries published-prose appearance facts through
+        // _extractCharacterDisclosure -> _charLedgerApplyVerified -> character memory, and this
+        // selector ALREADY reads that memory below. The repair belongs in finishing that path,
+        // not in a parallel registry.
         // ══ THE PRODUCTION FIELD NAME (Roman 2026-10-21) ══════════════════════════════
         // THE DEFECT: this read `forbidden`, which is what the NORMALIZED audit file and my own
         // fixtures use. The LIVE seed cast stores these under `cPlusForbiddenImplications`, so
@@ -285780,10 +285971,29 @@ var _APPR_FIELDS = [
     // CANONICAL FIELD FIRST, then documented legacy fallbacks. These are PRECEDENCE lists, not
     // sets to concatenate: {eye_color:"green", eyes:"blue"} must not become "green blue".
     { label: 'age', canonical: 'age', legacy: [] },
-    { label: 'build', canonical: 'height', legacy: [], also: 'build' },
+    // ── ONE ATTRIBUTE PER ENTRY, AND NO ATTRIBUTE WITHOUT ONE (Roman 2026-11-04) ───────────
+    // MEASURED on the preserved Sol opening's editor request: of Lirael's six completed
+    // appearance fields, THREE never reached the model.
+    //   · `height` and `build` were ONE entry — canonical 'height' with `also: 'build'` — so the
+    //     two values were concatenated into a single 271-character fact, which exceeded the
+    //     240-char budget and was WITHHELD WHOLE. Both attributes were reported as NOT SUPPLIED
+    //     because, together, they were too long. They are independent facts and are now
+    //     delivered independently: each is measured, and each stands or falls alone.
+    //   · `face` had NO ENTRY AT ALL, although the generator writes it (the ancestry directive
+    //     names "complexion", "hair", "face" and "signature_feature" as the fields it fills) —
+    //     so a completed face was generated, committed, and read by nothing.
+    //   · `voice` is written by _APPR_CANON_RULES from the seed's visualCanon and had no entry
+    //     either. The grounding requirement names voice explicitly as a way to make someone
+    //     recognizable; it is canon we already hold, so it is delivered too.
+    // Nothing here generates a value. Every one of these is a field the record may already
+    // carry, and this list is the only reason it reaches the model.
+    { label: 'height', canonical: 'height', legacy: [] },
+    { label: 'build', canonical: 'build', legacy: ['frame'] },
     { label: 'hair', canonical: 'hair', legacy: ['hair_color', 'hair_colour'] },
+    { label: 'face', canonical: 'face', legacy: ['facial_features'] },
     { label: 'complexion', canonical: 'complexion', legacy: ['skin', 'skin_tone'] },
     { label: 'eyes', canonical: 'eye_color', legacy: ['eye_colour', 'eyes'] },
+    { label: 'voice', canonical: 'voice', legacy: [] },
     { label: 'ancestry', canonical: 'ancestry', legacy: [] },
     { label: 'signature', canonical: 'signature_feature', legacy: [] },
     { label: 'also', canonical: 'second_celebrated_feature', legacy: [] }
@@ -285810,15 +286020,10 @@ var _APPR_FIELDS = [
       else if (v.toLowerCase() !== found.value.toLowerCase()) disagree.push(keys[i] + '="' + v + '"');
     }
     if (!found) return null;
-    if (spec.also) {
-      var extra = b[spec.also];
-      if (extra != null) {
-        extra = String(extra).replace(/\s+/g, ' ').trim();
-        if (extra.length > 1 && extra.toLowerCase() !== found.value.toLowerCase()) {
-          found.value = found.value + ' ' + extra;
-        }
-      }
-    }
+    // NO SECOND ATTRIBUTE IS FOLDED IN HERE. The `also` merge that used to live at this point
+    // appended `build` onto `height` and produced one fact carrying two attributes — which the
+    // budget check below then withheld whole, costing both. Each attribute is its own entry in
+    // _APPR_FIELDS now, so one spec yields one value and a long value can only cost itself.
     found.disagree = disagree;
     return found;
   }
@@ -285839,7 +286044,10 @@ var _APPR_FIELDS = [
           + _APPR_FIELD_BUDGET + '-char budget)');
         return;   // WITHHELD WHOLE. Never a fragment presented as authority.
       }
-      bits.push(spec.label === 'build' ? f.value : spec.label + ': ' + f.value);
+      // EVERY FACT CARRIES ITS LABEL. `build` was the one exception, emitted bare because it was
+      // the merged height+build phrase and no single label was true of it. It is one attribute
+      // now, so it is named like the rest.
+      bits.push(spec.label + ': ' + f.value);
     });
     var out = bits.join(' · ');
     if (conflicts.length) out += (out ? '\n  ' : '') + 'RECORD DISAGREES WITH ITSELF on '
@@ -307723,12 +307931,22 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
               } catch (_) { _cpDueForExamples = []; }
               var _cpProt = [];
               try {
-                var _cpReader = _EBC.readerFacing(_result);
-                var _cpSents = _EBC.sentences(_cpReader) || [];
-                if (_cpSents.length) {
-                  var _close = String(_cpSents[_cpSents.length - 1] || '').trim();
-                  if (_close.length > 12) _cpProt.push(_close);
+                // ── THE CLOSING CHOICE, NOT THE MACHINE TRAILER (Roman 2026-11-04) ──────────
+                // This took the last sentence of the whole reader-facing draft, which on a scene
+                // ending in a `[LORE: …] [CONSPIRACY: …] <!--sceneDuty…-->` trailer is a line of
+                // metadata — so the trailer was "protected" and the reader's actual closing
+                // question was handed to the editor unprotected. cpClosingPassage derives it
+                // from the last PROSE paragraph. The old path stays as the fallback so an older
+                // essential-beat-check.js still protects something rather than nothing.
+                var _close = (typeof _EBC.cpClosingPassage === 'function')
+                  ? _EBC.cpClosingPassage(_result) : null;
+                if (!_close) {
+                  var _cpSents = _EBC.sentences(_EBC.readerFacing(_result)) || [];
+                  var _lastS = _cpSents.length
+                    ? String(_cpSents[_cpSents.length - 1] || '').trim() : '';
+                  if (_lastS.length > 12) _close = _lastS;
                 }
+                if (_close) _cpProt.push(_close);
                 if (window.state && Array.isArray(window.state._cpProtectedPassages)) {
                   window.state._cpProtectedPassages.forEach(function (q) {
                     if (q && String(q).trim()) _cpProt.push(String(q)); });
@@ -307738,27 +307956,10 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
               try { _cpDoctrine = (typeof _cpDoctrineExcerptForRepair === 'function')
                 ? _cpDoctrineExcerptForRepair() : null; } catch (_) {}
 
-              var _cpRes = await _EBC.editorPassOnFinalizedDraft({
-                draft: _result,
-                coveragePlan: _cpPlan,
-                onStage: _cpOnStage,
-                skeleton: (_ebSk && _ebOwns) ? _ebSk : null,
-                liName: _cpLiName,
-                attempts: _cpAtt, ledger: _cpLedger,
-                sceneOrdinal: _ebScene, issue: _cpIssue,
-                protectedPassages: _cpProt,
-                roster: _cpOnStage.map(function (p) { return { label: p.label, kind: p.kind }; }),
-                // ══ APPEARANCE FROM THE ACTUAL BIBLES, AT THE PRODUCTION DISPATCH SITE ═════
-                // (Roman 2026-10-21.) THE HEAD OF THE CHAIN. The builder reads opts.appearance
-                // and the orchestrator forwards it, but nothing populated it, so the repair
-                // editor still received no appearance values and worked with less authority than
-                // the author on exactly what it is asked to judge.
-                //
-                // THE SOURCES ARE THE THREE BIBLES THAT ALREADY HOLD THESE FACTS, rendered by the
-                // SAME _apprFactLine the author's lock block uses - so the editor cannot be shown
-                // a different version of someone's face than the author was. Identity, the
-                // source and any self-disagreement travel with each line.
-                appearance: (function () {
+              // ── ONE APPEARANCE RECORD SET, SHARED BY BOTH PASSES ──────────────────────
+              // Hoisted so picturability and the craft pass read the SAME canon from the
+              // SAME producers. Character records are shared; neither pass gets its own view.
+              var _cpAppearance = (function () {
                   // USES THE SHARED SELECTOR, so an absent body bible no longer means absent
                   // appearance: the active seed's visualCanon is read exactly as the author
                   // reads it. Only people this scene stages are sent, matched on whole
@@ -307871,7 +308072,112 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                     });
                     return _out.length ? _out : undefined;
                   } catch (_) { return undefined; }
-                })(),
+                })();
+
+              // ══ TWO INDEPENDENTLY SCHEDULED PASSES, IN ORDINARY GENERATION ═════════════
+              // (Roman 2026-11-05.) THE INTEGRATION GAP THIS CLOSES. The shared editor gained a
+              // picturability mode, but this — the only production caller — still invoked the
+              // default Character+ pass once. Because grounding was MOVED out of that pass,
+              // ordinary generation would have LOST the physical-presence repair instead of
+              // gaining two passes. That is a regression introduced by the split, and it is
+              // fixed here rather than in a harness.
+              //
+              // ORDER AND INDEPENDENCE: picturability runs FIRST and on its own eligibility —
+              // the people on stage, not the Character+ plan — so a scene with no craft
+              // obligation still gets it. Its accepted prose becomes the draft the craft pass
+              // reads, so the craft pass sees what the reader will.
+              //
+              // EACH PASS IS ITS OWN AUTHORIZED CALL. Both go through the same
+              // /api/cplus-editor dispatcher, so the feature switch, the entitlement check, the
+              // per-call reservation, the daily cap and the durable operation id all apply to
+              // each one separately. The operation id carries the draft revision, so the second
+              // pass is a distinct operation rather than a replay of the first.
+              //
+              // CREDIT IS NOT SHARED. The picturability result is NEVER recorded as a
+              // Character+ manifestation: a physical description does not become a C+
+              // fulfilment because it was edited. Only the craft pass's own obligations reach
+              // the delivery recorder below.
+              var _picRes = null;
+              try {
+                var _picDue = (typeof _EBC.cpPictureDue === 'function')
+                  ? _EBC.cpPictureDue({ onStage: _cpOnStage }) : [];
+                if (_picDue.length) {
+                  _picRes = await _EBC.editorPassOnFinalizedDraft({
+                    draft: _result,
+                    mode: 'picturability',
+                    onStage: _cpOnStage,
+                    sceneOrdinal: _ebScene, issue: _cpIssue,
+                    protectedPassages: _cpProt,
+                    roster: _cpOnStage.map(function (p) { return { label: p.label, kind: p.kind }; }),
+                    priorCharacterPassages: (Array.isArray(_cpLedger) ? _cpLedger : [])
+                      .filter(function (r) {
+                        return r && r.publishedPassage && r.ordinal != null
+                          && Number(r.ordinal) < Number(_ebScene); })
+                      .map(function (r) {
+                        return { character: r.character, publishedPassage: r.publishedPassage,
+                          ordinal: r.ordinal }; }),
+                    appearance: _cpAppearance,
+                    owner: _ebOwner,
+                    editorFn: (typeof window !== 'undefined'
+                      && typeof window._ebEditorDispatch === 'function')
+                      ? window._ebEditorDispatch : null
+                  });
+                  // THE ACCEPTED PROSE BECOMES THE DRAFT. On any non-applied outcome the
+                  // original publishes unchanged, exactly as the single pass behaved.
+                  if (_picRes && typeof _picRes.text === 'string' && _picRes.text.trim()
+                      && _picRes.text !== _result) {
+                    _result = _picRes.text;
+                  }
+                  try {
+                    console.log('[PICTURE] ' + ((_picRes && _picRes.reason) || '?')
+                      + ' · due ' + _picDue.length
+                      + ' · kept ' + (((_picRes && _picRes.keeps) || []).length)
+                      + ' · edits ' + (((_picRes && _picRes.applied) || []).length));
+                  } catch (_) {}
+                }
+              } catch (_picErr) {
+                try { console.warn('[PICTURE] pass unavailable (' + (_picErr && _picErr.message)
+                  + ') — the draft publishes unchanged'); } catch (_) {}
+              }
+
+              var _cpRes = await _EBC.editorPassOnFinalizedDraft({
+                draft: _result,
+                coveragePlan: _cpPlan,
+                onStage: _cpOnStage,
+                skeleton: (_ebSk && _ebOwns) ? _ebSk : null,
+                liName: _cpLiName,
+                attempts: _cpAtt, ledger: _cpLedger,
+                sceneOrdinal: _ebScene, issue: _cpIssue,
+                protectedPassages: _cpProt,
+                roster: _cpOnStage.map(function (p) { return { label: p.label, kind: p.kind }; }),
+                // ══ PERSON-LINKED PUBLISHED PROSE, FROM THE DELIVERY LEDGER ════════════════
+                // (Roman 2026-11-04.) The grounding finding may stand on prose the reader has
+                // ALREADY READ, so a character grounded in an earlier scene does not owe a
+                // fresh description every time a cadence comes due. `_cpLedger` is
+                // _cpDeliveredFlat(window.state) — rows already filed under each character,
+                // each carrying the passage that actually shipped. EARLIER SCENES ONLY: a row
+                // from THIS scene would let the pass answer itself with its own output, and a
+                // row with no ordinal cannot be placed in time, so neither is forwarded.
+                priorCharacterPassages: (Array.isArray(_cpLedger) ? _cpLedger : [])
+                  .filter(function (r) {
+                    return r && r.publishedPassage && r.ordinal != null
+                      && Number(r.ordinal) < Number(_ebScene);
+                  })
+                  .map(function (r) {
+                    return { character: r.character, publishedPassage: r.publishedPassage,
+                      ordinal: r.ordinal };
+                  }),
+                // ══ APPEARANCE FROM THE ACTUAL BIBLES, AT THE PRODUCTION DISPATCH SITE ═════
+                // (Roman 2026-10-21.) THE HEAD OF THE CHAIN. The builder reads opts.appearance
+                // and the orchestrator forwards it, but nothing populated it, so the repair
+                // editor still received no appearance values and worked with less authority than
+                // the author on exactly what it is asked to judge.
+                //
+                // THE SOURCES ARE THE THREE BIBLES THAT ALREADY HOLD THESE FACTS, rendered by the
+                // SAME _apprFactLine the author's lock block uses - so the editor cannot be shown
+                // a different version of someone's face than the author was. Identity, the
+                // source and any self-disagreement travel with each line.
+                appearance: _cpAppearance,
                 doctrine: _cpDoctrine,
                 // THE ENVIRONMENTAL EXAMPLES REACH THE ORDINARY EDITOR. This selected from the
                 // Character+ due list alone, so the E+ teaching existed only in the author prompt
@@ -307940,8 +308246,42 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                     // NOTHING IS INVENTED. No psychology is composed, and the experiment's
                     // hand-assembled Lirael context is not copied in. Absent sources stay absent.
                     var _name = String((_st.playerName || _st.name) || '').trim();
+                    // ══ THE MASK KEY IS NORMALIZED, SO THE PROFILE CAN BE FOUND ══════════════
+                    // (Roman 2026-11-06.) This read the mask and sent the raw string. The author
+                    // normalizes the SAME chain with .toUpperCase().replace(/[^A-Z_]/g,'') before
+                    // looking the mask up, so a lowercase or spaced value that the author resolves
+                    // fine arrived here as an unmatchable label. Same chain, same normalization.
                     var _mask = String((_st.picks && (_st.picks.playermask || _st.picks.playerMask))
-                      || _st.playerMask || _st.playermask || '').trim();
+                      || _st.playerMask || _st.playermask || '').toUpperCase().replace(/[^A-Z_]/g, '');
+                    // ══ THE AUTHOR-FACING PROFILE FOR THAT MASK ══════════════════════════════
+                    // MEASURED, on the frozen continuation craft request: it contained no mask at
+                    // all. LAYER 1A — the PC narrator voice block — is built inside
+                    // _buildCharacterPlusShared from `window.state`, and the C+ doctrine excerpt
+                    // is built from that same function, so a caller whose state carries no mask
+                    // produces a doctrine with LAYER 1A omitted. `viewpointAndMask` was then the
+                    // only remaining route and it was undefined too. The craft pass was therefore
+                    // asked for the protagonist's reading of a moment without being told whose
+                    // reading it is — and the instruction it now carries says the reading is
+                    // mask-shaped, so the mask has to arrive.
+                    //
+                    // THE EXISTING PROFILE, NOT A NEW ONE. _PC_NARRATOR_ARCHETYPE_PROFILES is the
+                    // same table the author reads. Nothing is composed here, nothing is inferred
+                    // from the love interest, and an unknown or absent mask yields no profile
+                    // rather than a default one — inventing a mask for a protagonist who has
+                    // none would be worse than sending none.
+                    //
+                    // sampleShapes AND desire_register.pass_shapes ARE DELIBERATELY EXCLUDED.
+                    // They are concrete sentences, and a concrete exemplar gets copied: the
+                    // profile's own text says "do NOT copy literally" and that has never been
+                    // enough. movement/voice/sentenceShape describe the operation structurally,
+                    // which is what an editor needs to read a moment in her register.
+                    var _prof = null;
+                    try {
+                      var _tbl = window._PC_NARRATOR_ARCHETYPE_PROFILES || {};
+                      var _p = _mask ? _tbl[_mask] : null;
+                      if (_p) _prof = { label: _p.label || null, movement: _p.movement || null,
+                        voice: _p.voice || null, sentenceShape: _p.sentenceShape || null };
+                    } catch (_) {}
                     // A lens recorded on a resolved obligation is scene material, kept separate
                     // from the stable character context above.
                     var _lens = null;
@@ -307953,8 +308293,14 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                     if (!_name && !_mask && !_lens) return undefined;
                     return {
                       stable: { character: _name || null, mask: _mask || null,
+                        maskProfile: _prof || undefined,
                         note: 'The PC\'s own mask, from the reader\'s pick. Not the love '
-                          + 'interest\'s archetype.' },
+                          + 'interest\'s archetype. Her mask is HOW SHE READS what she sees — it '
+                          + 'decides which observable detail matters to her and what she makes of '
+                          + 'it. It is not a label to state and not a trait to assert on the page.'
+                          + (_mask && !_prof ? ' No profile is supplied for this mask key; work '
+                            + 'from the mask name and the supplied prose, and invent nothing.'
+                            : '') },
                       thisScene: { lensOperation: _lens || null },
                       bounded: 'Only what the protagonist can perceive or infer. Her reading may '
                         + 'be biased or mistaken; the narration must not convert her inference '
@@ -308029,8 +308375,13 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                     appliedEdits: (_cpRes.appliedFor || []).map(function (e) {
                       var _ap = (_cpRes.applied || []).filter(function (a) {
                         return a.ref === e.ref && a.op === e.op; })[0] || {};
+                      // `before` is null for an insertion, because an insertion displaces
+                      // nothing. The anchor is then the reviewable fact — WHERE the sentence
+                      // landed — so it travels alongside rather than leaving a bare `after`
+                      // with no position. (Roman 2026-11-06.)
                       return { ref: e.ref, op: e.op, obligations: e.obligations,
-                        before: _ap.replaced || null, after: _ap.inserted || null };
+                        before: _ap.replaced || null, after: _ap.inserted || null,
+                        afterAnchor: _ap.anchor || null };
                     }),
                     // OPERATIONAL delivery, labelled as such. Separate from the KEEP claims
                     // above and from any semantic finding, of which there are none: no judge ran.
@@ -308135,26 +308486,47 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                       // against the PUBLISHED draft and downgrades to 'directed' if it is not
                       // there — so an obligation is only operationally delivered when the reader
                       // can actually read it.
+                      // ── THE COMPLETION ASSESSMENT IS THE AUTHORITY, NOT THE SPLICE ────────
+                      // (Roman 2026-11-04.) This used to take the INSERTED TEXT as the
+                      // obligation's published passage whenever the decision was 'edit' — so a
+                      // grounding-only edit filed an appearance sentence as the Character+
+                      // manifestation and the character's introduction was recorded as
+                      // delivered. The pass now assesses both findings against the FINISHED
+                      // scene and reports per-obligation support; that assessment carries the
+                      // two passages, and cpEditorDeliveryRecord credits EDITOR_REVIEWED only
+                      // when both are present. An edit with unsupported Character+ lands in the
+                      // prose and stays DIRECTED, so the cadence does not advance on it.
+                      var _comp = (_cpRes.completion || []).filter(function (c) {
+                        return c && c.id === o.id; })[0] || null;
                       var _passage = null;
-                      if (_cpAnswered[o.id] === 'keep') {
-                        _passage = ((_cpRes.keeps.filter(function (k) {
-                          return k.id === o.id; })[0] || {}).passage) || null;
-                      } else if (_cpAnswered[o.id] === 'edit') {
-                        var _ed = (_cpRes.appliedFor || []).filter(function (e) {
-                          return (e.obligations || []).indexOf(o.id) !== -1; })[0];
-                        var _ap = _ed ? (_cpRes.applied || []).filter(function (a) {
-                          return a.ref === _ed.ref && a.op === _ed.op; })[0] : null;
-                        _passage = _ap ? _ap.inserted : null;
+                      if (!_comp) {
+                        // No assessment for this id (an environmental obligation, or an older
+                        // pass): the previous single-passage behaviour, unchanged.
+                        if (_cpAnswered[o.id] === 'keep') {
+                          _passage = ((_cpRes.keeps.filter(function (k) {
+                            return k.id === o.id; })[0] || {}).passage) || null;
+                        } else if (_cpAnswered[o.id] === 'edit') {
+                          var _ed = (_cpRes.appliedFor || []).filter(function (e) {
+                            return (e.obligations || []).indexOf(o.id) !== -1; })[0];
+                          var _ap = _ed ? (_cpRes.applied || []).filter(function (a) {
+                            return a.ref === _ed.ref && a.op === _ed.op; })[0] : null;
+                          _passage = _ap ? _ap.inserted : null;
+                        }
                       }
                       var _del = _EBC.cpEditorDeliveryRecord({
-                        publishedPassage: _passage,
+                        completion: _comp,
+                        publishedPassage: _comp ? undefined : _passage,
                         reader: _EBC.readerFacing(_result),
                         revisionId: _cpPublishedRev,
                         decision: _cpAnswered[o.id] || null });
+                      // THE APPEARANCE EVIDENCE IS THE GROUNDING PASSAGE, not the C+ one. These
+                      // were the same field when one passage carried everything; they are
+                      // different passages now, and quoting the perception passage as the
+                      // appearance evidence would assert the reader had been shown a face.
                       var _att2 = _EBC.cpAttemptRecord({
                         judgeUsable: false,            // no judge ran in this pass, by design
                         revisionId: _cpPublishedRev,
-                        appearanceQuote: _del.publishedPassage,
+                        appearanceQuote: _del.groundingPassage || null,
                         reader: _EBC.readerFacing(_result) });
                       _cpRecordManifestation(_e3, {
                         // Recorded against the ASSIGNMENT identity, never a facet: no facet was
@@ -308168,7 +308540,15 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
                         // 'verified' — no judge ran, and the record says semanticallyVerified:
                         // false on its face.
                         verification: _del.verification,
+                        // BOTH SUPPORTING PASSAGES ARE RETAINED. publishedPassage is the
+                        // Character+ manifestation; groundingPassage is the description. A later
+                        // reader of this record can see which finding each one answered instead
+                        // of inferring that one sentence did both jobs.
                         publishedPassage: _del.publishedPassage,
+                        perceptionPassage: _del.perceptionPassage,
+                        groundingPassage: _del.groundingPassage,
+                        perceptionSupported: _del.perceptionSupported,
+                        groundingSupported: _del.groundingSupported,
                         semanticallyVerified: false,
                         deliveryBasis: _del.basis,
                         relation: (o.mode === _EBC.CP_MODE.BROADEN) ? 'complicated' : 'reinforced',
