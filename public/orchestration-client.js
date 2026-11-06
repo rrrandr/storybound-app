@@ -2944,6 +2944,19 @@ FAILURE CONDITIONS (invalid outputs):
 
   async function _grokLiteraryAuthor(messages, options = {}) {
     const _maxTokens = options.max_tokens || 3000;
+    // ── THE AUTHORING IDENTITY, CAPTURED BEFORE ANY AWAIT IN THIS INVOCATION ────────────────
+    // Read ONCE here, as a value, so the history-note candidate taken at step 1.4 below is
+    // stamped with the operation that was registered when THIS call was dispatched — not with
+    // whatever window.state._authoringOp happens to hold when it returns. Two overlapping
+    // generations otherwise both read the later op and a late response acquires an identity that
+    // is not its own. Nothing downstream re-reads the global for this purpose.
+    const _hnOpAtDispatch = (function () {
+      try {
+        const o = (typeof window !== 'undefined' && window.state && window.state._authoringOp) || null;
+        return o ? { storyId: String(o.storyId || ''), scene: (o.scene != null) ? Number(o.scene) : null,
+          gen: o.gen ? String(o.gen) : null } : null;
+      } catch (_) { return null; }
+    })();
     // 1. Grok authors the scene prose (reasoning / "thinking" model). AUTHOR FALLBACK
     // (Roman 2026-06-18): callGrokNarrativeAuthor THROWS on empty content, and during a
     // degraded proxy window (empty/502 observed live) that failed the ENTIRE scene with no
@@ -3012,6 +3025,89 @@ FAILURE CONDITIONS (invalid outputs):
         console.error('[GROK-LIT] ' + _term.message + (_term._attempts ? ' — attempts: ' + JSON.stringify(_term._attempts) : ''));
         throw _term;
       }
+    }
+    // ═══ 1.4 THE AUTHOR'S HISTORY NOTE COMES OFF HERE, BEFORE ANY PROSE EDITOR ═══════════════
+    // MEASURED LOSS THIS FIXES (run_2026-10-30T05-26-53-545Z_70428, scenes 4, 5 and 6):
+    // the author emitted a well-formed <<<HISTORY_NOTE … HISTORY_NOTE>>> block; the de-calc
+    // editor and the Mistral-small mechanical repair below BOTH received it in their user
+    // message (requests of 7,188/5,961 · 7,877/6,625 · 8,338/7,111 chars carried the sentinel);
+    // NEITHER returned it (no response in that run carries it except the author's own); and the
+    // repair's `prose = _t` replaced the text. By the time app.js's extraction site ran, there
+    // was no sentinel: it recorded 0 blocks, logged nothing, set no pending note, and the run
+    // admitted none — state._historyNotes is absent from its saved state entirely.
+    //
+    // THE OWNERSHIP RULE THIS ENCODES: the author supplies CANDIDATE history; prose editors edit
+    // PROSE; the existing admission stage validates history against the FINAL PUBLISHED text.
+    // So the note is separated from the prose at the author boundary — the editors below receive
+    // prose only — and carried as metadata to the admission path that already exists.
+    //
+    // WHAT THIS IS NOT: not a new extraction stage (it calls app.js's own
+    // window._sbExtractLiteraryNote), not a new model call, and not a second admission owner —
+    // it hands a candidate to the one admission site that already runs, which still quote-checks
+    // every claim against the published prose. An author's note is therefore NOT automatically
+    // established history: if an editor below removes or changes the event, the existing check
+    // fails it exactly as before.
+    //
+    // OWNERSHIP IS BY GENERATION, not by turn. state._authoringOp carries { storyId, scene, gen }
+    // and _authoringOpBegin mints a fresh `gen` per authoring operation, so a retry or a
+    // regeneration of the same scene cannot collect an earlier generation's note. A turn-only
+    // stamp could not tell those apart.
+    try {
+      if (typeof prose === 'string' && prose.indexOf('<<<HISTORY_NOTE') !== -1
+          && typeof window !== 'undefined' && typeof window._sbExtractLiteraryNote === 'function') {
+        var _hnEx14 = window._sbExtractLiteraryNote(prose);
+        if (_hnEx14 && _hnEx14.blocks) {
+          prose = _hnEx14.body;                       // EDITORS SEE PROSE, NEVER THE NOTE
+          // ── THE IDENTITY WAS CAPTURED BEFORE THE DISPATCH, NOT READ BACK AFTERWARDS ────────
+          // THE RACE THIS CLOSES: this used to read window.state._authoringOp HERE, after the
+          // author had returned. Two overlapping generations (A starts, B starts, A returns late)
+          // would both read whatever op was current at RETURN time, so a late A would stamp
+          // itself with B's identity, pass the ownership test, and be admitted as B's note. A
+          // session nonce cannot catch that — both requests are in the same session.
+          // _hnOpAtDispatch is captured at the top of this invocation, before any await, so it
+          // belongs to THIS call and nothing can move it.
+          var _op14 = _hnOpAtDispatch;
+          window.state._hnAuthorCandidates = window.state._hnAuthorCandidates || {};
+          var _key14 = (_op14 && _op14.gen) ? String(_op14.gen) : null;
+          var _cand14 = {
+            note: _hnEx14.note || null,               // null = blocks found but none parsed
+            blocks: _hnEx14.blocks,
+            storyId: String((_op14 && _op14.storyId) || (window.state && window.state.storyId) || ''),
+            scene: (_op14 && _op14.scene != null) ? Number(_op14.scene) : null,
+            gen: (_op14 && _op14.gen) ? String(_op14.gen) : null,
+            // SESSION-SCOPED, because `gen` alone is not unique across page loads: the
+            // generation counter is a module variable that restarts at gen#1 on every load. If a
+            // turn died between this capture and its promotion, the candidate would be saved by
+            // the state snapshot (cleanState is a full spread) and could then match the NEXT
+            // session's first generation. The nonce is minted once per page load, so a candidate
+            // from an earlier session can never satisfy the ownership test.
+            session: (window.__sbHnSession || (window.__sbHnSession =
+              'hn-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10))),
+            at: Date.now(),
+            source: 'author-wrapper',
+          };
+          // ONE SLOT PER GENERATION, so a late A cannot overwrite B's candidate. A single shared
+          // slot made that a last-writer-wins race; the map makes each invocation's candidate
+          // reachable only under its own key. Promotion deletes the key it consumes.
+          if (_key14) {
+            window.state._hnAuthorCandidates[_key14] = _cand14;
+          } else {
+            // NO GENERATION, NO CLAIM. An ownership assertion nobody can corroborate is worse
+            // than no note, so it is recorded as unattributable and never becomes promotable.
+            window.state._hnUnattributedCandidates =
+              (window.state._hnUnattributedCandidates || 0) + 1;
+          }
+          try {
+            console.log('[HISTORY-NOTE] candidate taken at the author boundary — ' + _hnEx14.blocks
+              + ' block(s) off the prose BEFORE any editor, note='
+              + (_hnEx14.note ? 'parsed' : 'unparsed') + ', owner='
+              + (_key14 || 'NO-GEN (unattributable, not promotable)') + '/scene ' + _cand14.scene);
+          } catch (_) {}
+        }
+      }
+    } catch (_hn14) {
+      try { console.warn('[HISTORY-NOTE] candidate capture failed at the author boundary: '
+        + (_hn14 && _hn14.message)); } catch (_) {}
     }
     // 1.5 Strip leaked metadata tags (Roman 2026-06-25): Small sometimes prefixes the prose with
     //     [TITLE: …][SYNOPSIS: …][CHARACTERS: …] scaffolding. Deterministically remove any leading

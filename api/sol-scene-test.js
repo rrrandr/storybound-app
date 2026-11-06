@@ -4,7 +4,14 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const ALLOWED = ['gpt-6.1-sol'];
+// ── gpt-6-luna ADMITTED 2026-11-04 FOR ONE AUTHORIZED EDITOR-COMPARISON CALL ──────────────
+// Roman's figures and source: standard pricing $0.10 input / $0.50 output per MTok, Chat
+// Completions, medium reasoning effort —
+// https://developers.openai.com/api/docs/models/gpt-6-luna
+// It shares this route because it is the same Chat Completions connection and the same
+// localhost-only, single-use, run-budgeted gate; nothing about production routing changes.
+// REMOVE once that comparison is reported, as every other temporary admission here has been.
+const ALLOWED = ['gpt-6.1-sol', 'gpt-6-luna'];
 const PLAYTHROUGH = true;
 // ── TEST-ONLY ADMISSION LIMIT (Roman, authorized 2026-10-31) ─────────────────────────
 // The DEFAULT stays 0.30 — unchanged, and that is what any caller without the variable
@@ -17,7 +24,16 @@ const PER_CALL_CAP = (function () {
   var t = Number(process.env.SB_SOL_PER_CALL_CAP_TEST);
   return (isFinite(t) && t > 0 && t <= 0.35) ? t : 0.30;
 })();
-const RATE = { in: 2.0, out: 10.0 };
+// ── PER MODEL, BECAUSE THE PRICES DIFFER BY 20× ───────────────────────────────────────────
+// One hardcoded pair priced every model on this route at Sol's rates. For gpt-6-luna that
+// overestimates by 20×, which fails SAFE at the gate but makes the route's own priced ceiling
+// a fiction — and this file's cap comments are written from those numbers. Per model now, so
+// the ceiling it reports is the ceiling it means. Dollars per MILLION tokens.
+const RATES = {
+  'gpt-6.1-sol': { in: 2.0, out: 10.0 },
+  'gpt-6-luna': { in: 0.10, out: 0.50 }
+};
+const RATE = RATES['gpt-6.1-sol'];   // retained for any reader of the original comment
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
@@ -76,7 +92,25 @@ module.exports = async (req, res) => {
   // 0.2098 still clears the 0.30 default on its own, so that safeguard keeps the same bite.
   const SPINE_ALLOWANCE_BASE = 14250;   // _spineOutputAllowance('literary', 2).tokens
   const PORTFOLIO_ALLOWANCE = 3900;     // PORTFOLIO_MAX_TOKENS, public/app.js:149466
-  const CAP_LIMIT = SPINE_ALLOWANCE_BASE + PORTFOLIO_ALLOWANCE;   // 18150
+  // ── 18150 → 24000 FOR THE LUNA RECOVERY ONLY (Roman, authorized 2026-11-05) ─────────
+  // MEASURED: gpt-6-luna at reasoning_effort medium consumed its ENTIRE completion allowance as
+  // reasoning on both saved packets — exactly 6,000 of 6,000 on scene authorship and exactly
+  // 14,250 of 14,250 on whole-story architecture — and returned content: "" with
+  // finish_reason "length". Those are floors on its reasoning, not its appetite. The answers
+  // themselves measure ~1,400 tokens (650–800 words of prose) and ~8,700 tokens (the
+  // architecture JSON, from Sol's 43,384-char reply), so architecture needs roughly 14,250 +
+  // 8,700 = 23,000. 24,000 is the bound that admits it.
+  //
+  // THIS IS A TEST-ROUTE LIMIT, NOT A SPENDING LIMIT. PER_CALL_CAP is untouched and still bites:
+  // at Luna's $0.10/$0.50 per MTok these calls price at $0.0181 and $0.0133, far under $0.30.
+  // Nothing in production changes, and the C+ editor configuration is untouched.
+  // ── 24000 → 64000 FOR THE LUNA EDIT COMPARISON (Roman, authorized 2026-11-05, option B) ──
+  // At reasoning_effort "max" Luna's appetite is unmeasured, and at MEDIUM it absorbed a whole
+  // 24,000 allowance on an 11,795-token input and returned nothing. 64,000 is the bound that
+  // gives max-effort reasoning room to finish and still return edits. PER_CALL_CAP is untouched
+  // and still binds: at Luna's $0.10/$0.50 per MTok a 16,713-token request with a 64,000
+  // allowance prices at $0.0337, far under $0.30.
+  const CAP_LIMIT = Math.max(SPINE_ALLOWANCE_BASE + PORTFOLIO_ALLOWANCE, 64000);   // 64000
   const cap = Number(body.max_completion_tokens);
   if (!(cap > 0 && cap <= CAP_LIMIT)) {
     return res.status(400).json({ error: 'cap_out_of_bounds', cap, limit: CAP_LIMIT,
@@ -85,7 +119,8 @@ module.exports = async (req, res) => {
   }
 
   const chars = JSON.stringify(body.messages).length;
-  const ceiling = ((chars / 4) * RATE.in + cap * RATE.out) / 1e6;
+  const rate = RATES[String(body.model)] || RATE;
+  const ceiling = ((chars / 4) * rate.in + cap * rate.out) / 1e6;
   if (ceiling > PER_CALL_CAP) {
     return res.status(400).json({ error: 'over_per_call_cap', ceiling, cap: PER_CALL_CAP });
   }
