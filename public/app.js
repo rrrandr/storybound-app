@@ -107245,7 +107245,7 @@ function _buildAuthorFloorDirective(s) {
       try {
         try { if (s.aPlot && s.aPlot._seeded && typeof _reconcileSeededMilestones === 'function') _reconcileSeededMilestones(); } catch (_) {}
         var _msArr = (s.aPlot && Array.isArray(s.aPlot.milestones)) ? s.aPlot.milestones : [];
-        _curMs = _msArr.find(function (m) { return m && !m.triggered && m.event; }) || _msArr.find(function (m) { return m && m.event; }) || null;
+        _curMs = _msArr.find(function (m) { return m && !m.triggered && m.event; }) || null;
       } catch (_) {}
       var _v0 = !!(_mAnchorOn && _curMs);   // active only when there is a milestone to anchor to
 
