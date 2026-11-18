@@ -20,9 +20,17 @@ const PLAYTHROUGH = true;
 // three tenths of a cent under the default limit. This raises the ADMISSION limit only:
 // no token allowance changes, the cap the caller requests is still 4,000, and this route
 // remains localhost-only with its label, run-budget and single-use claim intact.
+// ── OPT-IN CEILING RAISED 0.35 → 0.40 (Roman, authorized 2026-11-10) ─────────────────
+// For the single authorized Sol A-plot comparison. The frozen post-repair A-plot request
+// measures ~26,944 input tokens with a 32,000 combined allowance, which this route prices at
+// (26944 x 2.0 + 32000 x 10.0)/1e6 = $0.373888 — under $0.40 but above the previous 0.35
+// clamp, so the override could not express the approved amount. The DEFAULT IS STILL 0.30:
+// a caller without the variable is unaffected, and the variable is opt-in per run.
+// Nothing else moves — localhost-only, the run budget, the call label, the single-use claim
+// and CAP_LIMIT all keep the same bite, and no Storybound default model changes.
 const PER_CALL_CAP = (function () {
   var t = Number(process.env.SB_SOL_PER_CALL_CAP_TEST);
-  return (isFinite(t) && t > 0 && t <= 0.35) ? t : 0.30;
+  return (isFinite(t) && t > 0 && t <= 0.40) ? t : 0.30;
 })();
 // ── PER MODEL, BECAUSE THE PRICES DIFFER BY 20× ───────────────────────────────────────────
 // One hardcoded pair priced every model on this route at Sol's rates. For gpt-6-luna that
@@ -220,11 +228,39 @@ module.exports = async (req, res) => {
   catch (e) { return res.status(409).json({ error: 'label_already_claimed', label }); }
   fs.writeFileSync(claimPath, JSON.stringify({ label, sha256: sha, at: new Date().toISOString() }));
   const startedAt = Date.now();
-  const upstream = await fetch('https://api.openai.com/v1/chat/completions', {
+  // ══ THE TRANSPORT MUST BE ABLE TO WAIT FOR THE ALLOWANCE THIS CALL CARRIES ═══════════════
+  // MEASURED (_transport_deadline_chain.mjs, node v25.3.0): globalThis.fetch rejects with
+  // UND_ERR_HEADERS_TIMEOUT after ~301,042ms when no response headers arrive. A non-streaming
+  // completion sends nothing until it is done, so time-to-headers IS generation time. The
+  // 2-issue spine measured here took 178,295ms for 16,699 completion tokens (~94 tok/s); a
+  // THREE-issue spine is ~50% more visible output, which lands near that ceiling before any
+  // increase in reasoning. Leaving it would mean a spine that failed in transport and was
+  // reported as a provider failure.
+  //
+  // SCOPED BY THE CALL'S OWN DECLARED ALLOWANCE, so a request that fits the default window is
+  // sent exactly as before. Fail-safe: a failure to load the Agent falls through to the ordinary
+  // fetch, and the window is never shortened.
+  const SOL_DEFAULT_TRANSPORT_MS = 300000;
+  const fetchOpts = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
     body: JSON.stringify(upstreamBody),
-  });
+  };
+  if (cap > 28000) {
+    const winMs = Math.max(SOL_DEFAULT_TRANSPORT_MS, Math.ceil((cap / 90) * 1000) + 60000);
+    try {
+      const { Agent } = require('undici');
+      fetchOpts.dispatcher = new Agent({ headersTimeout: winMs, bodyTimeout: winMs });
+      console.log('[SOL-SCENE-TEST] transport window widened to ' + winMs + 'ms for a ' + cap
+        + '-token allowance (default ~' + SOL_DEFAULT_TRANSPORT_MS + 'ms would have cut it off)');
+    } catch (agentErr) {
+      console.warn('[SOL-SCENE-TEST] could not widen the transport window ('
+        + (agentErr && agentErr.message) + ') — sending with the default ~'
+        + SOL_DEFAULT_TRANSPORT_MS + 'ms; a ' + cap + '-token allowance may be cut off by the '
+        + 'transport rather than by the model');
+    }
+  }
+  const upstream = await fetch('https://api.openai.com/v1/chat/completions', fetchOpts);
   const text = await upstream.text();
   const ms = Date.now() - startedAt;
   let data = null; try { data = JSON.parse(text); } catch (e) {}

@@ -20,7 +20,30 @@
 // than resolved to something else — the whole point of the route.
 const ALLOWED_ANTHROPIC_MODELS = [
   'claude-haiku-4-5-20251001',   // Claude Haiku 4.5 — canon-auditor calibration candidate
-  'claude-sonnet-5-5'            // Claude Sonnet 5.5 — literary author comparison arm.
+  'claude-sonnet-5-5',           // Claude Sonnet 5.5 — literary author comparison arm.
+  // Claude Haiku 5.5 — RE-ADMITTED 2026-10-26 for the ten-scene literary continuation test
+  // (Sol opening, Haiku continuations). Re-admitted on the facts this file already recorded when
+  // it was removed: it is the CURRENT Haiku, it SUPPORTS `effort` (4.5 does not), thinking counts
+  // toward max_tokens so max_tokens bounds total billable output, and it is priced by prompt
+  // length — $0.10/$0.50 per MTok up to 100,000 input tokens, $0.50/$2.50 above it. The test's
+  // packets measure ~165k input tokens, so the ABOVE-100k tier applies. Send `effort`, leave
+  // thinking_budget_tokens unset. REMOVE AGAIN once that test is reported, as before.
+  'claude-haiku-5-5'
+  // claude-haiku-5-5 was admitted here on 2026-10-22 for ONE authorized six-writer ABC
+  // comparison and REMOVED once it was reported. Recorded for the next time it is asked for:
+  // it is the CURRENT Haiku (4.5 above is legacy) and, unlike 4.5, it SUPPORTS the `effort`
+  // parameter — Haiku 4.5 is not in that parameter's supported-model list at all. Adaptive
+  // thinking, documented default effort 'medium', and thinking counts toward max_tokens, so
+  // max_tokens bounds total billable output: send `effort` and leave thinking_budget_tokens
+  // unset. It is the one current model priced by prompt length — $0.10/MTok in and $0.50/MTok
+  // out up to 100,000 input tokens, $0.50/$2.50 above it.
+  // Measured once at 33,837 input chars / cap 3,000 / effort medium: $0.0020647.
+  // claude-opus-5-5 was admitted here on 2026-10-22 for ONE authorized ABC writing comparison
+  // and REMOVED once it was reported. Recorded for the next time it is asked for: Opus 5.5 uses
+  // ADAPTIVE thinking, so thinking.type 'enabled' + budget_tokens returns a 400 on Claude 4.7 and
+  // later; this route must send `effort` (-> output_config.effort) and leave `thinking` off. Its
+  // documented default effort is 'medium', and max_tokens bounds thinking + visible output.
+  // Measured once at 30,745 input chars / cap 2,500: $0.0867240.
   // NOTE, and it differs from Haiku 4.5: Sonnet 5.5 has ADAPTIVE thinking (docs default effort
   // `high`), and the manual thinking.type 'enabled' + budget_tokens mode this route implements is
   // documented as NOT ACCEPTED on models after the 4.6 generation. So a caller must leave
@@ -82,7 +105,76 @@ module.exports = async (req, res) => {
     }
 
     const body = { model: String(model), max_tokens: maxTokens, messages: turnMsgs };
-    if (system) body.system = system;
+    // ── EXPLICIT ONE-HOUR PROMPT CACHING (2026-10-14) ─────────────────────────────────────────
+    // This route previously sent `system` as a plain string with no cache configuration at all —
+    // no breakpoint, no TTL — so nothing on it could ever be cached. Caching is a PREFIX match
+    // (render order tools -> system -> messages), so a breakpoint only pays where the leading
+    // bytes are byte-identical across requests.
+    //
+    // `cache_prefix_chars` is the caller's measured stable prefix length. The system string is
+    // split there into TWO blocks and `cache_control` is placed on the FIRST, so everything after
+    // it stays volatile and invalidates nothing. Nothing is reordered or removed: the
+    // concatenation of the two blocks is byte-identical to the single string it replaces.
+    //
+    // Haiku 4.5's minimum cacheable prefix is 4096 TOKENS — the highest of any model — so a split
+    // below that is refused rather than sent: a breakpoint that cannot bind is either a silent
+    // no-op or, once it is large enough to write but badly placed, a pure write surcharge.
+    // ttl '1h' doubles the write premium (2x vs 1.25x for 5m), which is why the caller must have
+    // decided the reuse count is worth it.
+    const _cachePrefixChars = Number(req.body && req.body.cache_prefix_chars) || 0;
+    const _CACHE_MIN_TOKENS = 4096;
+    const _cacheApproxTokens = Math.floor(_cachePrefixChars / 3.97);
+    let _cacheApplied = null;
+    if (system) {
+      if (_cachePrefixChars > 0 && _cachePrefixChars < system.length
+          && _cacheApproxTokens >= _CACHE_MIN_TOKENS) {
+        body.system = [
+          { type: 'text', text: system.slice(0, _cachePrefixChars),
+            cache_control: { type: 'ephemeral', ttl: '1h' } },
+          { type: 'text', text: system.slice(_cachePrefixChars) },
+        ];
+        _cacheApplied = { prefixChars: _cachePrefixChars, approxPrefixTokens: _cacheApproxTokens,
+          ttl: '1h', blocks: 2 };
+      } else {
+        body.system = system;
+        if (_cachePrefixChars > 0) {
+          _cacheApplied = { skipped: true,
+            why: _cacheApproxTokens < _CACHE_MIN_TOKENS
+              ? ('prefix ~' + _cacheApproxTokens + ' tok is below the ' + _CACHE_MIN_TOKENS + '-token minimum')
+              : 'prefix is not shorter than the system string',
+            prefixChars: _cachePrefixChars };
+        }
+      }
+    }
+    if (_cacheApplied) {
+      console.log('[ANTHROPIC-PROXY] cache_control: ' + JSON.stringify(_cacheApplied));
+    }
+
+    // PROVIDER-FREE VERIFICATION OF THE FINAL UPSTREAM BODY. Returns exactly what WOULD be sent,
+    // without sending it, so the cache configuration can be inspected as it will actually leave
+    // rather than as an intermediate prompt. No API key is read and no request is made.
+    if (req.body && req.body.dry_run_body === true) {
+      return res.status(200).json({
+        dry_run: true,
+        upstream_body_shape: {
+          model: body.model,
+          max_tokens: body.max_tokens,
+          system_type: Array.isArray(body.system) ? 'blocks' : (body.system ? 'string' : 'absent'),
+          system_blocks: Array.isArray(body.system)
+            ? body.system.map((b) => ({ type: b.type, chars: String(b.text || '').length,
+                cache_control: b.cache_control || null }))
+            : null,
+          system_chars_total: Array.isArray(body.system)
+            ? body.system.reduce((n, b) => n + String(b.text || '').length, 0)
+            : String(body.system || '').length,
+          messages: (body.messages || []).map((m) => ({ role: m.role, chars: String(m.content || '').length })),
+          thinking: body.thinking || null,
+          output_config: body.output_config || null,
+          temperature: (body.temperature != null) ? body.temperature : null,
+        },
+        cache: _cacheApplied,
+      });
+    }
     // THREE DISTINCT THINKING CONFIGURATIONS, and the model generation decides which is legal.
     //   · manual budget (thinking.type 'enabled' + budget_tokens) — 4.6 and earlier only;
     //   · a Claude 5 thinking.type such as 'between_tools', paired with output_config.effort.

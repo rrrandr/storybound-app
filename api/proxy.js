@@ -81,6 +81,19 @@ const ALLOWED_GROK_MODELS = [
  * its public model list under us.
  */
 const ROLE_MODEL_CHAIN = {
+  // ── SD_AUTHOR BELONGS HERE (Roman 2026-11-07) ────────────────────────────────────────────
+  // MEASURED at scene 17: the client dispatches `role: 'SD_AUTHOR'` to this route with
+  // CONFIG.SD_AUTHOR_MODEL, and this table had no entry for it — so the request died on
+  // `INVALID_ROLE` ("Valid Grok roles: RENDERER, INTIMACY_SPECIALIST, SPECIALIST_RENDERER").
+  // SD_AUTHOR is intentionally-explicit SD authorship for Steamy/Passionate and is Grok's by
+  // design (CONFIG.ENABLE_GROK_SD_AUTHORING), so the fix is to admit it here rather than
+  // reroute it to OpenAI, which would send explicit authorship to a model that sanitizes it.
+  // The chain leads with the model the client already names and its own allowlist already
+  // permits (ALLOWED_SD_AUTHOR_MODELS), then falls back inside the same family.
+  SD_AUTHOR: [
+    'grok-4-1-fast-reasoning',       // primary — CONFIG.SD_AUTHOR_MODEL
+    'grok-4.3'                       // fallback — universal
+  ],
   INTIMACY_SPECIALIST: [
     'grok-4.20-0309-non-reasoning',  // primary — fast OAS author (de-repeated downstream by gpt-4o-mini)
     'grok-4-1-fast-reasoning',       // fallback 1 — reasoning model (opt-in depth turns; aliases to 4.3)

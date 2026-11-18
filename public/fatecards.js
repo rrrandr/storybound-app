@@ -1208,6 +1208,311 @@ function stopContinuousSparkles() {
     const CONFIDENCE_THRESHOLD = 0.35;
 
     // Contextual card generation with full scene awareness
+    // ═══════════════════════════════════════════════════════════════════════
+    // THE SCENE'S OWN DILEMMA, FROM THE PLAN AND FROM THE PAGE (Roman 2026-11-16)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Returns { poles: [A, B], object, source } or null. A is the ACT, B is the LETTING-GO.
+    // Read from the accepted closing decision first, because that is the decision the story
+    // committed to; the final published beat supplies the concrete object when the plan's
+    // phrasing is abstract.
+    // ── THE EXACT HEADING STORYBOUND EMITS (Roman 2026-11-16) ─────────────────────────────
+    // app.js:309550 writes this literal and then the decision:
+    //   '• CLOSING DECISION — the VERY LAST sentences of the scene, standing ALONE as a short
+    //    paragraph: ' + decision
+    // Anchoring on the whole literal replaces my heuristic, which matched the DOCTRINE passage
+    // ("...MAY be a first-person \"X or Y?\" decision...") and put prompt text on a reader-facing
+    // card. The doctrine cannot match this anchor, and neither can the repair instruction at
+    // app.js:311432 ("• CLOSING DECISION: the final beat is a decision/choice moment...").
+    var _SB_CLOSING_DECISION_HEADING =
+      '\u2022 CLOSING DECISION \u2014 the VERY LAST sentences of the scene, standing ALONE as a short paragraph:';
+    function _sbClosingDecisionFromTail(tail) {
+      var t = String(tail || '');
+      if (!t) return null;
+      var out = [];
+      var from = 0;
+      for (;;) {
+        var at = t.indexOf(_SB_CLOSING_DECISION_HEADING, from);
+        if (at === -1) break;
+        from = at + _SB_CLOSING_DECISION_HEADING.length;
+        var line = t.slice(from, t.indexOf('\n', from) === -1 ? t.length : t.indexOf('\n', from)).trim();
+        // A decision is a question with a genuine two-clause fork. Anything else is not one.
+        if (!/\?\s*$/.test(line)) continue;
+        var parts = line.replace(/\?+$/, '').split(/\s+or\s+/i);
+        if (parts.length !== 2) continue;
+        if (parts[0].trim().split(/\s+/).length < 2) continue;
+        if (parts[1].trim().split(/\s+/).length < 2) continue;
+        out.push(line);
+      }
+      var uniq = out.filter(function (x, i2) { return out.indexOf(x) === i2; });
+      // Zero = absent, more than one = ambiguous. Both yield nothing.
+      return uniq.length === 1 ? uniq[0] : null;
+    }
+    // The chosen move, resolved early so it can be handed to the generators in ctx.
+    function _sbDilemmaPrefetch(st, cardId) {
+      try {
+        var d = _sbSceneDilemma(st);
+        if (!d) return null;
+        return _sbDilemmaCardText(cardId, d, null);
+      } catch (_) { return null; }
+    }
+
+    function _sbSceneDilemma(st) {
+      try {
+        st = st || (typeof state !== 'undefined' ? state : {}) || {};
+        // ── SCENE 1'S DECISION BELONGS TO SCENE 1'S HAND ONLY (Roman 2026-11-16) ──────────
+        // Both sources below are Scene-1 specific: `_scene1DecisionBeat` is stamped when Scene 1's
+        // scaffold is accepted, and `_lastScene1AuditPrompt` is Scene 1's audit. A save keeps them
+        // for the life of the story, so without this gate a hand dealt at scene 5 would still be
+        // offering the microphone. A later hand must read its own scene, which is exactly what the
+        // restored contextual generators now do.
+        var _onScene1 = false;
+        try {
+          _onScene1 = (st._scene1Active === true)
+            || (Number(st.turnCount || 0) === 0 && !(Array.isArray(st.scenes) && st.scenes.length > 1));
+        } catch (_) { _onScene1 = false; }
+        if (!_onScene1) {
+          try { console.log('[FATE-CARDS:DILEMMA] not Scene 1 (turnCount=' + (st.turnCount || 0)
+            + ') \u2014 Scene 1\u2019s closing decision is NOT reused; this hand reads its own scene'); } catch (_) {}
+          return null;
+        }
+        // (a) THE ACCEPTED CLOSING DECISION.
+        var dec = '';
+        var srcs = [
+          st.sceneSkeleton && st.sceneSkeleton.decision_beat,
+          st._scene1OpeningSpine && st._scene1OpeningSpine.decision_beat,
+          st._acceptedOpeningPlan && st._acceptedOpeningPlan.decision_beat,
+          st.openingSpine && st.openingSpine.decision_beat,
+          st._scene1DecisionBeat
+        ];
+        var _srcNames = ['sceneSkeleton.decision_beat', '_scene1OpeningSpine.decision_beat',
+          '_acceptedOpeningPlan.decision_beat', 'openingSpine.decision_beat', '_scene1DecisionBeat'];
+        var _srcFrom = '';
+        for (var i = 0; i < srcs.length && !dec; i++) {
+          if (srcs[i]) { dec = String(srcs[i]).trim(); _srcFrom = _srcNames[i]; }
+        }
+        // WHICH SOURCES EXIST, ALWAYS. Without this the resolver's failure is indistinguishable
+        // from the resolver not running, and the hand silently ships card defaults.
+        try {
+          console.log('[FATE-CARDS:DILEMMA] decision sources: '
+            + _srcNames.map(function (nm, k) { return (srcs[k] ? '\u2713' : '\u2717') + nm; }).join(' \u00b7 ')
+            + (dec ? (' \u2014 using ' + _srcFrom + ': "' + dec.slice(0, 90) + '"')
+                   : ' \u2014 none populated; falling back to the saved Scene 1 audit'));
+        } catch (_) {}
+        // ── AN OLDER SAVE CARRIES IT IN THE SCENE 1 AUDIT (Roman 2026-11-16) ─────────────
+        // Structured fields are preferred and tried first, above. Every Scene 1 published before
+        // `_scene1DecisionBeat` existed has none of them, and reopening such a save dealt stock
+        // cards. The audit prompt kept for that scene states the decision once, explicitly:
+        //   "• CLOSING DECISION — ... : Demand the microphone now or let the broadcast end on
+        //    her mother's version?"
+        // VERIFIED at state._lastScene1AuditPrompt.structuralTail in the First Taste save.
+        // Only a line that offers a two-option fork is accepted; anything else yields nothing and
+        // the cards stay grounded in the rest of the scene.
+        // ── AN OLDER SAVE CARRIES IT IN THE SCENE 1 AUDIT (Roman 2026-11-16) ─────────────
+        // Structured fields are preferred and tried above. Saves published before
+        // `_scene1DecisionBeat` existed have none, and reopening one dealt stock cards.
+        //
+        // MY FIRST MATCHER GRABBED THE DOCTRINE: the save discusses closing decisions in prose
+        // ("...MAY be a first-person \"X or Y?\" decision..."), that passage contains " or ", and
+        // the reader was offered prompt doctrine as a card. The extractor below rejects doctrine
+        // explicitly and requires a single concrete fork. It is the body proven in
+        // _ft_closing_decision_extract_check.mjs against this very save (10/10) — same text, so
+        // the check and the runtime cannot drift.
+        if (!dec) {
+          try {
+            var tail = (st._lastScene1AuditPrompt && st._lastScene1AuditPrompt.structuralTail) || '';
+            var rec = tail ? _sbClosingDecisionFromTail(tail) : null;
+            if (rec) {
+              dec = rec;
+              try { console.log('[SCENE1:DECISION-BEAT:RECOVERED] from the saved Scene 1 audit: "'
+                + dec + '"'); } catch (_) {}
+            } else if (tail) {
+              try { console.log('[SCENE1:DECISION-BEAT] no single explicit CLOSING DECISION line in'
+                + ' the saved audit (absent or ambiguous) — the cards stay grounded in the rest of'
+                + ' the scene'); } catch (_) {}
+            }
+          } catch (_) {}
+        }
+        if (!dec) {
+          try { console.log('[FATE-CARDS:DILEMMA] NO closing decision available \u2014 no strategy'
+            + ' will run for this hand, and each card falls back to the contextual generators'); } catch (_) {}
+          return null;
+        }
+        // Split at the dilemma's own hinge. "Demand the microphone now or let the broadcast end
+        // on her mother's version?" -> two poles. A decision with no hinge is not a two-sided
+        // dilemma and is left alone rather than invented into one.
+        var body = dec.replace(/[?.!]+\s*$/, '');
+        var m = body.split(/\s+(?:or|versus|vs\.?)\s+/i);
+        if (m.length < 2) {
+          try { console.log('[FATE-CARDS:DILEMMA] the decision has no two-sided hinge ("'
+            + body.slice(0, 90) + '") \u2014 not invented into one; no strategy runs'); } catch (_) {}
+          return null;
+        }
+        var act = m[0].trim().replace(/^(?:does she|should she|will she|whether to)\s+/i, '');
+        var yield_ = m.slice(1).join(' or ').trim().replace(/^(?:does she|should she|will she)\s+/i, '');
+        if (!act || !yield_) return null;
+        // (b) THE FINAL PUBLISHED BEAT — what the reader just saw.
+        var lastBeat = '';
+        try {
+          var txt = String(st._scene1FinalBeat || st.lastSceneText || '');
+          if (!txt && typeof document !== 'undefined') {
+            var ps = document.querySelectorAll('[data-paragraph-id]');
+            if (ps && ps.length) lastBeat = String(ps[ps.length - 1].textContent || '').trim();
+          } else if (txt) {
+            var parts = txt.split(/\n+/).filter(Boolean);
+            lastBeat = String(parts[parts.length - 1] || '').trim();
+          }
+        } catch (_) {}
+        // The object at stake, preferred from the decision and confirmed by the page.
+        var obj = '';
+        var om = act.match(/\b(?:the|her|his|that)\s+([a-z][a-z\-]{2,24})\b/i);
+        if (om) obj = om[0];
+        return { poles: [act, yield_], object: obj, lastBeat: lastBeat,
+                 source: 'decision_beat' };
+      } catch (_) { return null; }
+    }
+
+        // ── EACH CARD IS A STRATEGY, NOT A SIDE OF THE FORK (Roman 2026-11-16) ────────────────
+    // THE FIXED CARD-TO-POLE MAPPING IS GONE. It made two cards share one sentence: boundary and
+    // confession were both "the act pole", reversal and temptation both "the yield pole", so five
+    // distinct moves offered two. Worse, it mistook the deck's meaning — a card is not a vote for
+    // one branch of the dilemma, it is a WAY OF RESPONDING to the situation the dilemma describes.
+    //
+    // The dilemma supplies the material: what is being done to her (the pressure), and what she
+    // could take hold of (the lever). Each card's own strategy decides what to do with it, and
+    // composes Say and Do TOGETHER so they are one move in her voice.
+    //   temptation — escalate, provoke, insult, deceive: risk it because the scene gives a reason
+    //   confession — reveal a relevant secret, including someone else's
+    //   silence    — withhold, deflect, dismiss (spoken), or give nothing at all (nonverbal)
+    //   boundary   — draw or test a line
+    //   reversal   — shift who is in control
+    var _SB_SILENCE_CUE = '\u2013Silence\u2013';
+    // The thing she could take hold of, read out of the dilemma's own words.
+    function _sbDilemmaLever(dil) {
+      try {
+        for (var i = 0; i < 2; i++) {
+          var m = String((dil.poles || [])[i] || '').match(/\b(?:the|her|his|their)\s+([a-z][a-z-]{2,22})\b/i);
+          if (m) return m[0].toLowerCase();
+        }
+      } catch (_) {}
+      return '';
+    }
+    // What is being done to her: the concessive pole stripped of its "let" framing.
+    function _sbDilemmaPressure(dil) {
+      try {
+        var y = String((dil.poles || [])[1] || '').trim();
+        return y.replace(/^let\s+/i, '').replace(/[.?!]+$/, '');
+      } catch (_) { return ''; }
+    }
+    // {first} is the addressee's first name; omitted cleanly when nobody is named.
+    var _SB_CARD_STRATEGY = {
+      temptation: function (m) {
+        return { action: 'Escalate it \u2014 say the worst true thing in the room and let it land.',
+                 say: m.first ? ('You want the version where I\u2019m the difficult one, ' + m.first + '? Give them that one.')
+                              : 'You want the version where I\u2019m the difficult one? Take it.' };
+      },
+      confession: function (m) {
+        return { action: 'Put the part nobody here has admitted on the record.',
+                 say: m.first ? ('I\u2019ll tell them what you left out, ' + m.first + '.')
+                              : 'I\u2019ll tell them the part that got left out.' };
+      },
+      silence: function (m) {
+        // Withhold, deflect or dismiss. A spoken dismissal when there is someone to aim it at;
+        // the nonverbal cue when there is not.
+        if (m.first) {
+          return { action: 'Give them nothing they can use \u2014 refuse the question itself.',
+                   say: 'Who wants to know?' };
+        }
+        return { action: 'Say nothing at all and let the room hold it.', say: _SB_SILENCE_CUE };
+      },
+      boundary: function (m) {
+        return { action: m.lever
+                   ? ('Draw the line at ' + m.lever + ' \u2014 and say where it is.')
+                   : 'Draw the line out loud and hold it there.',
+                 say: m.first ? ('This is as far as it goes, ' + m.first + '.')
+                              : 'This is as far as it goes.' };
+      },
+      reversal: function (m) {
+        return { action: m.lever
+                   ? ('Take ' + m.lever + ' and set the terms yourself.')
+                   : 'Take the terms out of their hands and set them yourself.',
+                 say: m.first ? ('We do this my way now, ' + m.first + '.')
+                              : 'We do this my way now.' };
+      },
+    };
+    function _sbDilemmaCardText(cardId, dil, targetName) {
+      if (!dil) return null;
+      var strat = _SB_CARD_STRATEGY[cardId];
+      if (!strat) return null;
+      var first = String(targetName || '').trim().split(/\s+/)[0] || '';
+      var mat = { dil: dil, first: first, lever: _sbDilemmaLever(dil),
+                  pressure: _sbDilemmaPressure(dil) };
+      var out = strat(mat) || null;
+      if (!out || !out.action) return null;
+      return { action: out.action, dialogue: String(out.say || ''),
+               dialogueIsFinal: true, _strategy: cardId,
+               _isNonverbal: String(out.say || '') === _SB_SILENCE_CUE };
+    }
+
+    // ── IS THIS SPOKEN LINE GROUNDED, OR IS IT A CANNED ONE? ──────────────────────────────
+    // The contextual generators fall back to fixed strings when they have nothing to work with.
+    // Those strings are exactly what must NOT reappear under a grounded move, so they are
+    // recognised by value and rejected. Anything else the contextual path produced is grounded in
+    // the scene, the speaker, the addressee and the move, because that is what it was given.
+    // ── A SAY MUST FIT THE MOVE, NOT MERELY BE FRESH ──────────────────────────────────────
+    // MEASURED on the First Taste prefill: the canned-value guard passed
+    //     temptation -> "This feeling... I should ignore it."
+    // because it is not byte-equal to any stock string. It is still wrong: interior deliberation
+    // about wanting something, under a move that is "let the broadcast end on her mother's
+    // version". The guard tested PROVENANCE; the requirement is FIT.
+    //
+    // THIS IS A HEURISTIC AND IT ERRS TOWARD EMPTY. It rejects the DESIRE REGISTER — a line whose
+    // subject is the speaker's own feeling or wanting — because that is the mismatch actually
+    // observed when a romance-coded card is retargeted to a non-romantic addressee. It does not
+    // try to judge fit in general, and it will sometimes drop a usable line. An empty Say is a
+    // worse suggestion than a good one and a better one than a wrong one.
+    //
+    // The real fix is for the romance-coded generators to be addressee-aware; until then this
+    // keeps the wrong register off the card.
+    var _SB_DESIRE_REGISTER = /\bthis feeling\b|\bI should(?:n'?t)? (?:ignore|want|feel)\b|\bpart of me\b|\bI can'?t help\b|\bshouldn'?t want\b|\bwant(?:ing)? (?:this|him|her|you)\b|\bgive in\b/i;
+    function _sbSayFitsMove(line, cardId, dil) {
+      var s2 = String(line || '').trim();
+      if (!s2) return false;
+      if (_SB_DESIRE_REGISTER.test(s2)) {
+        try { console.log('[FATE-CARDS:SAY-REJECTED] card=' + cardId + ' \u2014 the line is interior'
+          + ' desire-register ("' + s2.slice(0, 60) + '"), which does not fit this move; Say left'
+          + ' empty rather than mis-spoken'); } catch (_) {}
+        return false;
+      }
+      return true;
+    }
+
+    function _sbIsCannedSay(line) {
+      var s2 = String(line || '').trim();
+      if (!s2) return true;
+      var canned = [];
+      try {
+        (fateDeckBase || []).forEach(function (c) { if (c && c.dialogueTemplate) canned.push(c.dialogueTemplate); });
+        Object.keys(SOFT_FALLBACKS || {}).forEach(function (k) {
+          var f = SOFT_FALLBACKS[k];
+          if (f && f.dialogue) canned.push(f.dialogue);
+          if (f && f.altDialogue) canned.push(f.altDialogue);
+        });
+        Object.keys(_LI_ABSENT_FALLBACKS || {}).forEach(function (k) {
+          var f = _LI_ABSENT_FALLBACKS[k];
+          if (f && f.dialogue) canned.push(f.dialogue);
+          if (f && f.altDialogue) canned.push(f.altDialogue);
+        });
+      } catch (_) {}
+      var norm = function (x) { return String(x || '').replace(/[\s"\u201c\u201d\u2018\u2019']/g, '').toLowerCase(); };
+      var n = norm(s2);
+      for (var i = 0; i < canned.length; i++) if (norm(canned[i]) === n) return true;
+      return false;
+    }
+    function _sbCap(x) {
+      var t = String(x || '').trim();
+      return t ? (t.charAt(0).toUpperCase() + t.slice(1)) : t;
+    }
+
     function generateContextualCard(baseCard, sceneContext, usedInThisDraw) {
         const state = window.state || {};
         const turnCount = state.turnCount || 0;
@@ -1301,12 +1606,17 @@ function stopContinuousSparkles() {
         // can branch on A-plot pressure, committed truth, grievances, scars,
         // callbacks, gravity, axis lean. Existing branches still fire if no
         // plot signal matches.
-        const options = generateCardOptions(baseCard.id, {
+        const options = _sbCardOptionsOrLastResort(baseCard.id, {
             isSetup,
             isEarlyStory,
             liIntroduced: targetResolution.target ? true : liIntroduced,
             liName: resolvedTargetName, // AUTHORITATIVE: Storybeau-resolved target
             liAbsent: !!targetResolution.liAbsent, // LI offstage → non-LI generic fallback
+            // THE CHOSEN MOVE, so a generator can decide whether a line ADVANCES it rather than
+            // guessing from the card id alone.
+            // No pole is passed any more: the dilemma no longer assigns sides. For a scene WITHOUT
+            // a closing decision the generators still compose from the addressee and the card's own
+            // sense, which is what `_sbAddresseeSay` falls back to.
             intensity,
             lastEmotionalBeat,
             unresolvedTension,
@@ -1333,6 +1643,35 @@ function stopContinuousSparkles() {
             dialogue = options.altDialogue || baseCard.dialogueTemplate;
         }
 
+        // ═══════════════════════════════════════════════════════════════════════
+        //  THE SCENE'S DILEMMA OWNS THE MOVE; THE CONTEXTUAL PATH OFFERS THE SPEECH
+        // ═══════════════════════════════════════════════════════════════════════
+        //  Placed HERE, after the contextual generators have run, so Say can come from the path
+        //  that actually has the scene, the speaker, the addressee and the move — rather than from
+        //  a line written into a shared table. A canned fallback is refused outright: under a
+        //  grounded Do, no stock dialogue may reappear. Silence is wordless by definition.
+        try {
+            var _dil2 = _sbSceneDilemma(state);
+            if (_dil2) {
+                var _dt2 = _sbDilemmaCardText(baseCard.id, _dil2, resolvedTargetName);
+                if (_dt2 && _dt2.action) {
+                    // SAY AND DO COME OUT OF THE SAME STRATEGY, so they are one move in her voice
+                    // rather than an action with a line bolted on. Nothing downstream re-phrases
+                    // them: dialogueIsFinal says this pair is already coherent.
+                    try {
+                        console.log('[FATE-CARDS:STRATEGY] card=' + baseCard.id
+                            + ' strategy=' + _dt2._strategy
+                            + ' do="' + _dt2.action + '"'
+                            + ' say=' + (_dt2._isNonverbal ? '(nonverbal cue)'
+                                         : ('"' + _dt2.dialogue + '"')));
+                    } catch (_) {}
+                    return { ...baseCard, action: _dt2.action, dialogue: _dt2.dialogue,
+                             dialogueIsFinal: true, _strategy: _dt2._strategy,
+                             _isNonverbal: !!_dt2._isNonverbal };
+                }
+            }
+        } catch (_) {}
+
         return {
             ...baseCard,
             action,
@@ -1356,6 +1695,142 @@ function stopContinuousSparkles() {
                       altAction: 'Flip who\'s running the room.', altDialogue: '"I\'ll decide how this goes."' }
     };
 
+    // ── WHO IS BEING SPOKEN TO, AND WHAT ARE THEY TO HER? ─────────────────────────────────
+    // Read from the retarget that [FATE:AUTHORITY] already performed, plus the cast record that
+    // names the relationship. Returns null when nothing is known, which means "offer no line".
+    var _SB_REL_KINDS = [
+      { kind: 'parent',    rx: /\b(mother|mum|mom|father|dad|stepmother|stepfather|parent)\b/i },
+      { kind: 'child',     rx: /\b(daughter|son|child)\b/i },
+      { kind: 'sibling',   rx: /\b(sister|brother|sibling)\b/i },
+      { kind: 'kin',       rx: /\b(aunt|uncle|cousin|grandmother|grandfather|niece|nephew)\b/i },
+      { kind: 'romantic',  rx: /\b(wife|husband|partner|lover|fianc|boyfriend|girlfriend|ex)\b/i },
+      { kind: 'friend',    rx: /\b(friend|neighbour|neighbor|roommate|flatmate)\b/i },
+      { kind: 'colleague', rx: /\b(co-?producer|producer|colleague|assistant|agent|boss|employer|manager|director|crew)\b/i },
+      { kind: 'adversary', rx: /\b(antagonist|rival|adversary|opponent)\b/i },
+    ];
+    // ── THE SAME RELATIONSHIP VOCABULARY, AVAILABLE TO THE PREVIEW PROMPT ────────────────
+    // app.js builds the Say/Do suggestion prompt and had no way to say what the present
+    // character IS to the protagonist, so it could only forbid romance rather than name a
+    // mother. One table, two readers.
+    function _sbRelationKindOf(relText) {
+      var rel = String(relText || '');
+      for (var i = 0; i < _SB_REL_KINDS.length; i++) {
+        if (_SB_REL_KINDS[i].rx.test(rel)) return _SB_REL_KINDS[i].kind;
+      }
+      return '';
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        window._sbRelationKindOf = _sbRelationKindOf;
+        window._sbResolveAddressee = _sbResolveAddressee;
+      }
+    } catch (_) {}
+    function _sbResolveAddressee(ctx) {
+      try {
+        var name = String((ctx && ctx.liName) || '').trim();
+        if (!name) return null;
+        var first = name.split(/\s+/)[0];
+        // The relationship, from whichever record carries it for THIS person.
+        var rel = '';
+        try {
+          var comp = (state && state._scene1OpenerCompanion) || null;
+          if (comp && String(comp.name || '').indexOf(first) !== -1) rel = String(comp.relationship || '');
+          if (!rel && state && Array.isArray(state.cast)) {
+            state.cast.forEach(function (c) {
+              if (!rel && c && String(c.name || '').indexOf(first) !== -1) {
+                rel = String(c.relationship || c.role || '');
+              }
+            });
+          }
+          if (!rel && ctx && ctx.targetResolution && ctx.targetResolution.relationship) {
+            rel = String(ctx.targetResolution.relationship);
+          }
+        } catch (_) {}
+        var kind = '';
+        for (var i = 0; i < _SB_REL_KINDS.length; i++) {
+          if (_SB_REL_KINDS[i].rx.test(rel)) { kind = _SB_REL_KINDS[i].kind; break; }
+        }
+        // A romantic addressee is what the existing branches were written for; leave them to it.
+        var isRomantic = (kind === 'romantic')
+          || !!(ctx && ctx.targetResolution && ctx.targetResolution.isStorybeau)
+          || !(ctx && ctx.liAbsent);
+        return { name: name, first: first, relationship: rel, kind: kind, isRomantic: isRomantic };
+      } catch (_) { return null; }
+    }
+
+    // The line, composed from the relationship and the DIRECTION of the chosen move.
+    //   assert = she takes the move · concede = she lets it stand
+    // Nothing here mentions a scene; the direction and the relationship are the whole input.
+    var _SB_REL_SAY = {
+      parent:    { assert: 'You\u2019ve had your say, {first}. Now I have mine.',
+                   concede: 'Keep it, {first}. I\u2019m not doing this here.' },
+      child:     { assert: 'Listen to me, {first}. This part is mine to say.',
+                   concede: 'Not now, {first}. Later, when it\u2019s just us.' },
+      sibling:   { assert: 'I\u2019m saying it, {first}, whether you back me or not.',
+                   concede: 'Have it your way, {first}.' },
+      kin:       { assert: 'I\u2019m going to say this plainly, {first}.',
+                   concede: 'Leave it, {first}. Not like this.' },
+      friend:    { assert: 'I need you to hear me say it, {first}.',
+                   concede: 'Let it go, {first}. Please.' },
+      colleague: { assert: 'I\u2019ll speak for myself, {first}.',
+                   concede: 'Then it\u2019s on your record, {first}, not mine.' },
+      adversary: { assert: 'You don\u2019t get the last word on this, {first}.',
+                   concede: 'Take it, {first}. I\u2019m not spending myself here.' },
+    };
+    // ── SILENCE IS A CUE, NOT AN ABSENCE (Roman 2026-11-16) ───────────────────────────────
+    // Leaving Say blank was the previous rule; it is replaced. Every card now offers a coherent
+    // pair, and the wordless move says so explicitly. The submit path reads this token as a
+    // NONVERBAL cue rather than as a spoken line.
+    var _SB_SILENCE_CUE = '\u2013Silence\u2013';
+    // Where no relationship is known, the move's direction and the plot's own pressure still
+    // ground a line. Nothing here names a scene.
+    var _SB_DIR_SAY = {
+      assert:  ['I\u2019m saying it myself.', 'I\u2019ll put it plainly.'],
+      concede: ['I\u2019m not doing this here.', 'Let it stand.'],
+    };
+    function _sbStakeSay(ctx, dir) {
+      var stake = '';
+      try {
+        var pl = (ctx && ctx.plot) || null;
+        stake = String((pl && (pl.aplotPressure || pl.aplot || pl.pressure)) || '').trim();
+      } catch (_) { stake = ''; }
+      if (stake && stake.length <= 60) {
+        return dir === 'assert'
+          ? ('I\u2019m not letting this go \u2014 not with ' + stake.replace(/[.?!]+$/, '') + '.')
+          : ('Leave it. ' + stake.replace(/[.?!]+$/, '') + ' will keep.');
+      }
+      return (_SB_DIR_SAY[dir] || _SB_DIR_SAY.assert)[0];
+    }
+    function _sbAddresseeSay(ctx, cardId) {
+      // Silence offers a CUE, so the pair stays coherent: the Do is wordless and the Say says so.
+      if (cardId === 'silence') return _SB_SILENCE_CUE;
+      var a = _sbResolveAddressee(ctx);
+      var dir0 = (ctx && ctx.chosenActionPole)
+        ? (ctx.chosenActionPole === 'act' ? 'assert' : 'concede')
+        : ((cardId === 'confession' || cardId === 'boundary') ? 'assert' : 'concede');
+      // EVERY CARD OFFERS A PAIR. Relationship known → built from it; name only → addressed
+      // directly; neither → the move's direction and the plot stake. No branch returns empty.
+      if (!a) return _sbStakeSay(ctx, dir0);
+      if (a.isRomantic) return null;            // the existing romance branches own this
+      if (!a.kind) {
+        return (_SB_DIR_SAY[dir0][0]).replace(/\.$/, '') + ', ' + a.first + '.';
+      }
+      var tmpl = _SB_REL_SAY[a.kind];
+      if (!tmpl) return _sbStakeSay(ctx, dir0);
+      // DIRECTION OF THE CHOSEN MOVE. The dilemma supplies it when there is one; otherwise the
+      // card's own sense: confession and boundary assert, temptation and reversal concede.
+      var dir = (ctx && ctx.chosenActionPole)
+        ? (ctx.chosenActionPole === 'act' ? 'assert' : 'concede')
+        : ((cardId === 'confession' || cardId === 'boundary') ? 'assert' : 'concede');
+      var line = String(tmpl[dir] || '').replace(/\{first\}/g, a.first);
+      try {
+        console.log('[FATE-CARDS:ADDRESSEE] card=' + cardId + ' \u2192 ' + a.first + ' ('
+          + (a.kind || 'unknown relationship') + ', non-romantic) \u00b7 move=' + dir
+          + ' \u00b7 say=' + (line ? ('"' + line + '"') : '(none)'));
+      } catch (_) {}
+      return line;
+    }
+
     // ACTIONABLE OPTIONS: Each should change the next beat differently
     function generateCardOptions(cardId, ctx) {
         const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters, plot, liAbsent } = ctx;
@@ -1364,11 +1839,18 @@ function stopContinuousSparkles() {
         const objectPhrase = sceneObjects.length > 0 ? sceneObjects[0] : '';
         const tensionPhrase = unresolvedTension.length > 0 ? unresolvedTension[0] : '';
 
-        // LI offstage → romance-coded cards use the non-LI generic default
-        // instead of LI-templated text. (Silence falls through — no LI dep.)
-        if (liAbsent && _LI_ABSENT_FALLBACKS[cardId]) {
-            return _LI_ABSENT_FALLBACKS[cardId];
-        }
+        // ── AN OFFSTAGE LI CHANGES THE ADDRESSEE, NOT THE INPUTS (Roman 2026-11-16) ───────
+        // This used to return _LI_ABSENT_FALLBACKS here, before the switch below, so four of the
+        // five cards never saw the location, the objects, the unresolved tension, the A-plot or
+        // the people actually in the room. MEASURED on the restored First Taste save: Helen was
+        // on stage, the A-plot was loaded, [FATE:AUTHORITY] had already retargeted every
+        // romance-coded card to her, and the reader was still offered "There's an opening right
+        // in front of you. Take it before the moment closes."
+        //
+        // The generators below receive the retargeted addressee through ctx.liName, so they are
+        // safe to run with the love interest offstage. _LI_ABSENT_FALLBACKS is kept as a
+        // LAST-RESORT shape for a generator that returns nothing at all, never as a shortcut
+        // past the scene.
 
         switch(cardId) {
             case 'temptation':
@@ -1386,7 +1868,35 @@ function stopContinuousSparkles() {
         }
     }
 
+    // A generator that comes back empty would hand the reader a blank card. The LI-absent shapes
+    // are the last resort for that case ONLY — reached after the scene-aware path has run and
+    // produced nothing, never instead of it.
+    function _sbCardOptionsOrLastResort(cardId, ctx) {
+        var o = null;
+        try { o = generateCardOptions(cardId, ctx); } catch (_) { o = null; }
+        if (o && String(o.action || '').trim()) return o;
+        var lr = _LI_ABSENT_FALLBACKS[cardId];
+        if (lr) {
+            try { console.log('[FATE-CARDS:LAST-RESORT] card=' + cardId + ' — the scene-aware'
+              + ' generator returned nothing, so a neutral shape is used rather than a blank card'); } catch (_) {}
+            return lr;
+        }
+        return o || { action: '', dialogue: '' };
+    }
+
     function getTemptationOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        // ── A NON-ROMANTIC ADDRESSEE IS DECIDED HERE, BEFORE ANY ROMANCE BRANCH ───────
+        // The retarget already happened upstream; this is where it finally matters. A parent,
+        // sibling, colleague or adversary gets a line composed from that relationship and the
+        // chosen move. An empty string means the context does not support a line, and Say
+        // stays blank rather than borrowing a lover's register.
+        {
+            var _relSay = _sbAddresseeSay(ctx, 'temptation');
+            if (_relSay !== null) {
+                return { action: (ctx && ctx.chosenAction) || '', dialogue: _relSay,
+                         altAction: '', altDialogue: _relSay, _addresseeAware: true };
+            }
+        }
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, plot } = ctx;
 
         // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
@@ -1496,6 +2006,18 @@ function stopContinuousSparkles() {
     }
 
     function getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        // ── A NON-ROMANTIC ADDRESSEE IS DECIDED HERE, BEFORE ANY ROMANCE BRANCH ───────
+        // The retarget already happened upstream; this is where it finally matters. A parent,
+        // sibling, colleague or adversary gets a line composed from that relationship and the
+        // chosen move. An empty string means the context does not support a line, and Say
+        // stays blank rather than borrowing a lover's register.
+        {
+            var _relSay = _sbAddresseeSay(ctx, 'confession');
+            if (_relSay !== null) {
+                return { action: (ctx && ctx.chosenAction) || '', dialogue: _relSay,
+                         altAction: '', altDialogue: _relSay, _addresseeAware: true };
+            }
+        }
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension, plot } = ctx;
 
         // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
@@ -1597,6 +2119,18 @@ function stopContinuousSparkles() {
     }
 
     function getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        // ── A NON-ROMANTIC ADDRESSEE IS DECIDED HERE, BEFORE ANY ROMANCE BRANCH ───────
+        // The retarget already happened upstream; this is where it finally matters. A parent,
+        // sibling, colleague or adversary gets a line composed from that relationship and the
+        // chosen move. An empty string means the context does not support a line, and Say
+        // stays blank rather than borrowing a lover's register.
+        {
+            var _relSay = _sbAddresseeSay(ctx, 'boundary');
+            if (_relSay !== null) {
+                return { action: (ctx && ctx.chosenAction) || '', dialogue: _relSay,
+                         altAction: '', altDialogue: _relSay, _addresseeAware: true };
+            }
+        }
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation, plot } = ctx;
 
         // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
@@ -1705,6 +2239,18 @@ function stopContinuousSparkles() {
     }
 
     function getReversalOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        // ── A NON-ROMANTIC ADDRESSEE IS DECIDED HERE, BEFORE ANY ROMANCE BRANCH ───────
+        // The retarget already happened upstream; this is where it finally matters. A parent,
+        // sibling, colleague or adversary gets a line composed from that relationship and the
+        // chosen move. An empty string means the context does not support a line, and Say
+        // stays blank rather than borrowing a lover's register.
+        {
+            var _relSay = _sbAddresseeSay(ctx, 'reversal');
+            if (_relSay !== null) {
+                return { action: (ctx && ctx.chosenAction) || '', dialogue: _relSay,
+                         altAction: '', altDialogue: _relSay, _addresseeAware: true };
+            }
+        }
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters, plot } = ctx;
 
         // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
@@ -1813,6 +2359,8 @@ function stopContinuousSparkles() {
     }
 
     function getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
+        // WORDLESS BY DEFINITION. Whatever the scene, this move is the absence of speech.
+        { var _silBase = null; }
         const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects, plot } = ctx;
 
         // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──

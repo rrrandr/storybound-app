@@ -9,3 +9,85 @@ _fs_issue_corpus_out/
 _audit_out/
 _tempt_fate_fixtures/
 _fs_planner_capture_out/
+
+# SAME FAILURE MODE, RECURRED (2026-10-15, measured). `vercel dev` (PID 53947, --debug) held 10,264
+# open descriptors against 10,222 project files — one per file, and within 20 of the 2026-10-08
+# figures above — while every API route returned NO_RESPONSE_FROM_FUNCTION and the server trace
+# showed `spawn EBADF` after the builder had already imported successfully.
+#
+# These two directories were not listed above and held 5,719 of those 10,222 descriptors (56%):
+#   _ab_writing_out  3,019   ·   _validate_out  2,700
+# Verified before adding: neither is referenced by public/, api/, package.json or vercel.json. Only
+# harness .mjs scripts read them, from disk, which this file does not affect.
+#
+# WHAT THIS IS NOT: proof of the descriptor bug. The process was holding all 10,264 successfully,
+# and EBADF ("bad descriptor") is not EMFILE ("none available") — so exhaustion was never
+# demonstrated. This reduces a measured condition that accompanied the documented failure twice.
+_ab_writing_out/
+_validate_out/
+
+# THIRD RECURRENCE (2026-10-30, measured). `vercel dev` (PID 55583) held 7,054 open descriptors,
+# 7,031 of them REG files inside the project tree, on a process ~2 minutes old, while the console
+# reported `spawn EBADF` and two OPENING_PLANNER requests to /api/proxy returned 502 with no
+# `[SPECIALIST-PROXY]` line and no usage receipt.
+#
+# Descriptors by top-level directory at the time of measurement (the rest of the tree below these):
+#   public 847 (legitimately served)   ·   _nf_fresh_continuation_out 605   ·   _nf_capture 560
+#   _stage0_out 401   ·   _saydo_gibberish_out 353   ·   _nf_scaffold_control_out 131
+#   _live_corpus_out 125   ·   _scene2_repair_replay_sample_out 110   ·   _nf_author_request_out 100
+#   _nf_playthrough_out 90   ·   _nf_cg_delivery_out 72   ·   _quarantine 69
+#
+# Verified before adding, across api/, public/, scripts/, vercel.json, package.json and .githooks/:
+# none is read by the served app. The only three matches anywhere are COMMENTS in public/app.js
+# citing evidence paths (lines 8897, 9073, 322094) — nothing loads them at runtime, and vercel.json
+# declares no includeFiles. Harness .mjs scripts read them from disk, which this file does not
+# affect. Listed explicitly rather than as `_nf_*` so a future harness directory is a deliberate
+# addition and not silently excluded from deployment.
+#
+# WHAT THIS IS NOT, restated because it has now been tempting three times: this is mitigation of a
+# measured watched-file load that ACCOMPANIED the failure, not a confirmed fix. EBADF is still
+# "bad descriptor", not EMFILE "none available", so exhaustion remains undemonstrated; file CHURN
+# (harnesses deleting and recreating output directories inside the watched tree) fits the error
+# name at least as well. It is NOT established that EBADF produced the two planner 502s: the
+# process that served them was restarted before it could be inspected, and a missing
+# `[SPECIALIST-PROXY]` line does not by itself prove the handler never executed.
+_nf_fresh_continuation_out/
+_nf_capture/
+_stage0_out/
+_saydo_gibberish_out/
+_nf_scaffold_control_out/
+_live_corpus_out/
+_scene2_repair_replay_sample_out/
+_nf_author_request_out/
+_nf_playthrough_out/
+_nf_cg_delivery_out/
+_quarantine/
+
+# ── NEVER UPLOAD A LOCAL ENV FILE OR ITS BACKUPS (Roman 2026-11-15) ──────────────────────────
+# `.env.local` is gitignored and so never deployed, but `.env.local.bak-20261108` is NOT, and a
+# preview deploy would have carried 34 API keys into the deployment's own filesystem. Secrets
+# reach a deployment through the project's configured environment variables, never through a file
+# in the upload. Checked before the first preview deploy, not after.
+.env
+.env.*
+*.env
+*.env.*
+
+# ── TEST OUTPUT DIRECTORIES ARE NEVER DEPLOYED (Roman 2026-11-15) ────────────────────────────
+# Each run directory carries a `LATEST` symlink to an absolute local path, which the build
+# container rejects outright: "/vercel/path0/_ft_arrival_probe/LATEST is not a valid symlink"
+# failed the first preview deploy. There are 66 such directories. They are harness artefacts and
+# have no business in a deployment regardless.
+_ft_*/
+_nf_*/
+_ab_writing_out/
+_audit_out/
+_canon_audit_selective_out/
+_cg_ground_truth_census_out/
+_validate_out/
+_fs_live_out/
+
+# The symlink itself, by name, wherever it appears — the directory patterns above did not
+# reliably exclude every run folder and the build container rejects the symlink, not the folder.
+**/LATEST
+LATEST

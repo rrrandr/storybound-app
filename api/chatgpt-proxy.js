@@ -151,7 +151,11 @@ module.exports = async function handler(req, res) {
       storyturn,
       sceneType,
       structuredState,
-      user_id
+      user_id,
+      // WHICH NAMED OPERATION THIS REQUEST IS (optional). Only consulted for a model listed in
+      // MODEL_OPERATION_SCOPE, where it is REQUIRED — see validateModelForRole. Every other
+      // caller omits it and is unaffected.
+      operation
     } = req.body;
     // SECURITY: scrub user-role messages before any downstream code touches them.
     const messages = sanitizeUserMessages(_rawMessages, 'chatgpt');
@@ -228,15 +232,16 @@ module.exports = async function handler(req, res) {
     const requestedModel = model || getDefaultModel(role);
 
     try {
-      validateModelForRole(requestedModel, role);
+      validateModelForRole(requestedModel, role, operation);
     } catch (validationError) {
-      console.error('[CHATGPT-PROXY] Model validation failed:', validationError.message, '| role:', role, '| model:', requestedModel);
+      console.error('[CHATGPT-PROXY] Model validation failed:', validationError.message, '| role:', role, '| model:', requestedModel, '| operation:', operation || '(none declared)');
       return res.status(400).json({
         error: 'Model not allowed',
         code: 'MODEL_VALIDATION_FAILED',
         details: validationError.message,
         role: role,
         requestedModel: requestedModel,
+        operation: operation || null,
         allowedModels: ALLOWED_MODELS[role] || []
       });
     }
@@ -367,26 +372,80 @@ Output only the mythic kernel. Prose realization is deferred.`
     // CALL OPENAI API
     // ==========================================================================
 
-    const requestBody = {
-      model: requestedModel,
-      messages: finalMessages,
-      temperature: temperature,
-      max_tokens: max_tokens
-    };
+    // ══ REASONING MODELS TAKE A DIFFERENT ALLOWANCE FIELD (Roman 2026-11-06) ═══════════════
+    // Chat Completions rejects `max_tokens` outright on a reasoning model — the C+ editor route
+    // records the same thing for gpt-6-luna and already sends `max_completion_tokens` for it.
+    // Sending the wrong field here would make every Luna call a 400, so the field is chosen by
+    // model rather than hardcoded. `temperature` is also unsupported on these models and is
+    // omitted rather than sent and refused.
+    //
+    // NOTHING ELSE CHANGES. For every model already on this route the body is byte-identical to
+    // before: same field, same temperature, same ordering.
+    const REASONING_MODELS = /^(gpt-6|gpt-5|o1|o3|o4)/;
+    const isReasoning = REASONING_MODELS.test(String(requestedModel));
+    const requestBody = isReasoning
+      ? {
+        model: requestedModel,
+        messages: finalMessages,
+        max_completion_tokens: max_tokens,
+        // Caller-chosen, defaulting to medium. On this model reasoning is billed INSIDE
+        // completion, so the allowance above has to cover the thinking as well as the prose —
+        // the caller sizes it knowing that.
+        reasoning_effort: (req.body && req.body.reasoning_effort) || 'medium'
+      }
+      : {
+        model: requestedModel,
+        messages: finalMessages,
+        temperature: temperature,
+        max_tokens: max_tokens
+      };
 
     // Add response format if specified (for JSON mode)
     if (response_format) {
       requestBody.response_format = response_format;
     }
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // ══ A CALL MAY NOT BE GIVEN AN ALLOWANCE ITS TRANSPORT CANNOT WAIT FOR ═══════════════════
+    // MEASURED, not read off a doc page: `globalThis.fetch` in this Node build (v25.3.0) rejects
+    // with HeadersTimeoutError / UND_ERR_HEADERS_TIMEOUT after 301,042ms when a server sends no
+    // response headers (_transport_deadline_chain.mjs). A non-streaming completion sends nothing
+    // until it is finished, so time-to-headers IS generation time — and at the ~95-105 tok/s
+    // measured on this model that ceiling sits around 30,000 tokens. An operation handed a
+    // 40,000-token allowance therefore could not reach it: the route's own transport gave up
+    // first, and the caller would read a transport failure instead of the model's outcome.
+    //
+    // SCOPED TO THE CALLS THAT NEED IT, by their own declared allowance. A request whose
+    // allowance fits inside the default window is sent EXACTLY as before — same transport, same
+    // defaults, byte-identical body — so nothing unrelated moves. Only a call that has asked for
+    // more output than the default window can carry gets a window sized to it.
+    //
+    // FAIL-SAFE: undici's Agent is loaded lazily and a failure to load falls through to the
+    // ordinary fetch, which is today's behaviour. It never shortens a deadline, only lengthens.
+    const DEFAULT_TRANSPORT_MS = 300000;
+    const _declaredOut = Number(requestBody.max_completion_tokens || requestBody.max_tokens || 0);
+    const _needsLongTransport = _declaredOut > 28000;
+    let _fetchOpts = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify(requestBody)
-    });
+    };
+    if (_needsLongTransport) {
+      // 90 tok/s is BELOW every rate measured on this model, so the window is sized by the
+      // slowest observed throughput rather than the fastest — plus a 60s floor for connection
+      // and queueing. It is a LIMIT, not a promise: exceeding it is still a transit failure.
+      const _ms = Math.max(DEFAULT_TRANSPORT_MS, Math.ceil((_declaredOut / 90) * 1000) + 60000);
+      try {
+        const { Agent } = require('undici');
+        _fetchOpts.dispatcher = new Agent({ headersTimeout: _ms, bodyTimeout: _ms });
+        console.log(`[CHATGPT-PROXY] transport window widened to ${_ms}ms for a ${_declaredOut}-token allowance (default ${DEFAULT_TRANSPORT_MS}ms would have cut it off)`);
+      } catch (_agentErr) {
+        console.warn(`[CHATGPT-PROXY] could not widen the transport window (${_agentErr && _agentErr.message}) — sending with the default ~${DEFAULT_TRANSPORT_MS}ms; a ${_declaredOut}-token allowance may be cut off by the transport rather than by the model`);
+      }
+    }
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', _fetchOpts);
 
     const responseText = await openaiResponse.text();
 
@@ -472,7 +531,22 @@ Output only the mythic kernel. Prose realization is deferred.`
         timestamp: new Date().toISOString()
       },
       // Preserve usage metadata for token accounting
-      usage: data.usage || null
+      usage: data.usage || null,
+      // ── WHY THE CONTENT IS EMPTY, NOT JUST THAT IT IS (Roman 2026-11-06) ────────────────
+      // This normalizer collapsed every unusable reply to `content: ''`, so a report had to
+      // GUESS the cause from an empty string. It guessed wrong once already: a planning call
+      // that exhausted its completion budget on reasoning (completion_tokens exactly equal to
+      // the allowance, finish_reason "length") was read as a prose-author refusal.
+      //
+      // The upstream's own verdict is carried through instead. `finish_reason` distinguishes
+      // exhaustion ("length") from a normal stop with no content; `refusal` is the provider's
+      // explicit decline, which is a different outcome again and must never be reported as
+      // truncation. Both are additive fields — every existing consumer reads `content`,
+      // `canonical_instruction` and `usage` exactly as before.
+      finish_reason: (data.choices && data.choices[0]
+        && (data.choices[0].finish_reason || data.choices[0].finishReason)) || null,
+      refusal: (data.choices && data.choices[0] && data.choices[0].message
+        && data.choices[0].message.refusal) || null
     };
 
     return res.status(200).json(normalizedResponse);

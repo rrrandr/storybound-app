@@ -61,19 +61,179 @@ export function allocateArtifactPath(dir, kind, reqId, role, status, opts) {
 // So the requirement is scoped BY MODE, explicitly, and defaults to ON. This is a pure function
 // of the mode so the seam itself is testable: a control asserts that 'run' and 'run-resume'
 // require Sol and only 'drive' does not, without any run at all.
-export function prerequisiteOptionsFor(mode) {
+// ── THE PLANNER UNDER TEST IS THE ONE THE RUN SELECTED (Roman 2026-11-06) ──────────────────
+// MEASURED FAILURE: the requirement above was "isSolArchitecture === true", hardcoded. With
+// architectureModel: "gpt-6-luna" — a selection that was approved and frozen — it demanded the
+// one model the configuration excludes, so it was unsatisfiable by construction. A 20-scene run
+// died on it AFTER the three-issue spine and the opening planner had both been paid for and had
+// both succeeded. The check was right to exist and wrong about what it compared against.
+//
+// IT IS STILL STRICT. The scaffold must be served by the SELECTED architecture model, compared
+// exactly (case and punctuation normalised, nothing else); any other provider fails, including a
+// model that merely resembles it and including the fallback chain. Nothing is relaxed — what
+// changes is that the expectation comes from the run's own configuration instead of this file.
+export const DEFAULT_EXPECTED_ARCHITECTURE_MODEL = 'gpt-6.1-sol';
+// What the provider-blocked driver's own fixtures declare. A synthetic reply must never claim a
+// real model's identity, so it declares this instead.
+export const PROVIDER_FREE_IDENTITY = 'synthetic-driver';
+
+export function verifyScaffoldProvenance(o) {
+  const expected = String((o && o.expectedModel) || '').trim();
+  const served = String((o && o.servedBy) || '').trim();
+  const allowSynthetic = (o && o.allowProviderFreeIdentity) === true;
+  const n = (s) => s.toLowerCase().replace(/[^a-z0-9.]+/g, '');
+  if (!expected) {
+    return { ok: false, code: 'no_expected_model', served, expected,
+      why: 'no architecture model was selected for this run, so the scaffold\'s provenance '
+        + 'cannot be verified against anything — which is not the same as it being correct' };
+  }
+  if (!served) {
+    return { ok: false, code: 'provenance_unrecorded', served, expected,
+      why: 'the scaffold records no serving model, so its provenance is UNKNOWN — and unknown '
+        + 'provenance is not met provenance' };
+  }
+  if (n(served) === n(expected)) {
+    return { ok: true, code: 'match', served, expected,
+      why: 'the scaffold was served by the selected architecture model ' + JSON.stringify(served) };
+  }
+  if (allowSynthetic && n(served) === n(PROVIDER_FREE_IDENTITY)) {
+    return { ok: true, code: 'provider_free_identity', served, expected,
+      why: 'the scaffold carries the driver\'s declared synthetic identity '
+        + JSON.stringify(served) + ' — the check RAN and passed as a provider-free reply; it '
+        + 'establishes nothing about any provider, and a real model other than '
+        + JSON.stringify(expected) + ' would still have failed here' };
+  }
+  return { ok: false, code: 'unexpected_provider', served, expected,
+    why: 'the scaffold was served by ' + JSON.stringify(served) + ', not the selected '
+      + JSON.stringify(expected) + ' — that is a different planner than the one under test' };
+}
+
+export function prerequisiteOptionsFor(mode, expectedModel) {
   const m = String(mode || '');
   return {
-    // FAIL-CLOSED: anything that is not explicitly the provider-blocked driver requires Sol.
-    requireSol: m !== 'drive',
     mode: m || '(unset)',
+    // FAIL-CLOSED on the EXPECTATION, not on a model name written here: an unset selection falls
+    // back to the historical expectation rather than to "anything will do".
+    expectedModel: String(expectedModel || DEFAULT_EXPECTED_ARCHITECTURE_MODEL),
+    // THE ASSERTION IS NEVER SKIPPED. The previous version turned it off entirely in the
+    // provider-blocked driver, and that exemption is exactly what hid the defect above: the one
+    // mode that could have caught it was the one mode excused from checking. Now the driver
+    // checks too — it simply accepts its own declared synthetic identity as a legitimate server,
+    // while a real provider that is not the selected one still fails there. That is strictly
+    // more than either the old requirement or the old exemption could detect.
+    allowProviderFreeIdentity: m === 'drive',
   };
+}
+
+// ── THE DISPATCH WAITING BUDGET, AS A PURE FUNCTION (Roman 2026-11-06) ────────────────────
+// Extracted so the policy can be exercised without a run, which is the only reason the previous
+// two versions of it survived: both were lists of operation NAMES, both were written after
+// watching a specific call fail, and neither could be tested except by letting the next unnamed
+// call fail too. Measured cost of that: the A-plot and the opening author both died at exactly
+// 120,003ms on allowances of 16,000 — the author having carried that allowance, unexercised,
+// since the configuration was frozen.
+//
+// THE DECISION IS ABOUT WHAT GOES OUT: the model that will serve the call and the completion
+// allowance it declares. REASONING_OUT is the same expression api/chatgpt-proxy.js uses to pick
+// the allowance FIELD, so the harness and the route cannot disagree about what a reasoning call
+// is. A reasoning model spends its allowance on thinking before one visible token appears, so
+// the budget has to cover the allowance; a non-reasoning model keeps its default.
+//
+// IT IS A WAITING BUDGET, NOT A COMPLETION TIME. 90 tok/s is below every rate measured here
+// (94 and 105 on this model), but a provider may be slower; exceeding the budget is still a
+// transit failure. The function can only ever LENGTHEN a deadline relative to the 120s default.
+export const REASONING_OUT = /^(gpt-6|gpt-5|o1|o3|o4)/;
+
+// ── THE GROK LEG, WHICH THIS POLICY USED TO EXCLUDE (Roman 2026-11-07) ──────────────────────
+// MEASURED at the scene-19 halt. Request #12, NARRATIVE_AUTHOR on grok-4.3, was recorded as
+// `operationClass:'other'`, `reasoningCall:false`, `dispatchTimeoutMs:120000` — and abandoned at
+// exactly 120000ms with no HTTP response, so it may have billed. Two separate mistakes produced
+// that number, and REASONING_OUT is NOT the place to fix either:
+//
+//   REASONING_OUT deliberately mirrors api/chatgpt-proxy.js:379 (REASONING_MODELS) because that
+//   route uses the same expression to choose `max_completion_tokens` over `max_tokens`. Widening
+//   it to match grok would change which ALLOWANCE FIELD an OpenAI-route request carries, which is
+//   a different contract on a different route. It stays byte-identical.
+//
+// MISTAKE 1 — grok-4.3 IS a reasoning call. api/proxy.js:215 resolves effort as
+//   `(/non-reasoning|4\.20/.test(name)) ? 'none' : 'high'`, so a plain 'grok-4.3' runs at effort
+//   HIGH and spends its budget thinking before the first visible token — precisely the condition
+//   `deadlineForAllowance` exists for. The classifier simply never looked at the grok family.
+//
+// MISTAKE 2 — and this one is not about the model at all. api/proxy.js guards each upstream
+//   attempt with XAI_CALL_TIMEOUT_MS (90000) and ADVANCES ITS CHAIN on a hang; NARRATIVE_AUTHOR
+//   has three entries and SPECIALIST_RENDERER/INTIMACY_SPECIALIST four. So the server's own
+//   envelope for one client request reaches 4 x 90000ms. A 120000ms client deadline expires while
+//   the server is still on its first or second attempt — the client gives up on a request the
+//   server is still paying for, which is the one outcome the stop policy calls unrecoverable.
+//   The deadline therefore has to cover the TRANSPORT CHAIN, not just the model's own thinking.
+//
+// Mirrors of the server's constants. If api/proxy.js changes either, the control that reads them
+// out of that file fails rather than this drifting silently.
+export const UPSTREAM_ATTEMPT_MS = 90000;    // api/proxy.js XAI_CALL_TIMEOUT_MS
+export const UPSTREAM_MAX_ATTEMPTS = 4;      // longest role chain in api/proxy.js ROLE_MODEL_CHAIN
+export const GROK_NON_REASONING = /non-reasoning|4\.20/;
+
+// Same decision api/proxy.js:215 makes, asked here so the deadline matches the effort the server
+// will actually request. A name this harness cannot classify is treated as reasoning: being wrong
+// in that direction only lengthens the wait, while being wrong the other way abandons a paid call.
+export function isGrokReasoningModel(m) {
+  const s = String(m || '');
+  return /grok/i.test(s) && !GROK_NON_REASONING.test(s);
+}
+
+// What the SERVER may spend on one client request before it has nothing left to try.
+export function upstreamEnvelopeMs(attempts) {
+  const n = Math.max(1, Math.min(UPSTREAM_MAX_ATTEMPTS, Number(attempts) || UPSTREAM_MAX_ATTEMPTS));
+  return n * UPSTREAM_ATTEMPT_MS + DEADLINE_CONNECT_MS + DEADLINE_OUTSIDE_ROUTE_MS;
+}
+export const DEADLINE_FLOOR_MS = 300000;      // what long calls already had
+export const DEADLINE_TOKENS_PER_SEC = 90;    // below every measured rate
+export const DEADLINE_CONNECT_MS = 60000;     // connection, queueing, the route's own overhead
+export const DEADLINE_OUTSIDE_ROUTE_MS = 30000; // sit just outside the route's own window
+export const DEADLINE_DEFAULT_MS = 120000;
+export const DEADLINE_AUTHOR_OVERRIDE_MS = 300000;
+
+export function deadlineForAllowance(n) {
+  return Math.max(DEADLINE_FLOOR_MS,
+    Math.ceil((Number(n) / DEADLINE_TOKENS_PER_SEC) * 1000) + DEADLINE_CONNECT_MS)
+    + DEADLINE_OUTSIDE_ROUTE_MS;
+}
+
+export function dispatchDeadlineMs(o) {
+  const outModel = String((o && o.outModel) || '');
+  const allowanceOut = Number((o && o.allowanceOut) || 0);
+  // A grok dispatch is a reasoning call on its own terms (the server picks effort from the model
+  // name, not from the allowance), so it does NOT carry the `allowanceOut > 0` condition the
+  // OpenAI-route test uses — request #12 declared only 2200 output tokens and still ran at
+  // effort HIGH over a 590,002-character packet.
+  const grokReasoning = isGrokReasoningModel(outModel);
+  const isReasoningCall = (REASONING_OUT.test(outModel) && allowanceOut > 0) || grokReasoning;
+  // THE TRANSPORT FLOOR. For anything going to the grok route, the budget must outlast the
+  // server's retry envelope, or the client abandons a request that is still being paid for.
+  if (grokReasoning) {
+    const envelope = upstreamEnvelopeMs(o && o.upstreamAttempts);
+    return { ms: Math.max(deadlineForAllowance(allowanceOut), envelope),
+      basis: 'grok_upstream_envelope', outModel, allowanceOut,
+      reasoningCall: true, upstreamEnvelopeMs: envelope,
+      upstreamAttempts: (o && o.upstreamAttempts) || UPSTREAM_MAX_ATTEMPTS };
+  }
+  if (isReasoningCall || (o && o.solArchitecture === true)) {
+    return { ms: deadlineForAllowance(allowanceOut), basis: 'reasoning_allowance',
+      outModel, allowanceOut, reasoningCall: isReasoningCall };
+  }
+  if (o && o.authorOverride) {
+    return { ms: DEADLINE_AUTHOR_OVERRIDE_MS, basis: 'author_override',
+      outModel, allowanceOut, reasoningCall: false };
+  }
+  return { ms: DEADLINE_DEFAULT_MS, basis: 'default', outModel, allowanceOut, reasoningCall: false };
 }
 
 export function scaffoldPrerequisite(snapshot, opts) {
   const o = opts || {};
-  // DEFAULT ON. A caller that forgets to pass options gets the strict check, never the lax one.
-  const requireSol = o.requireSol !== false;
+  // DEFAULT ON. A caller that forgets to pass options gets the strict check, never the lax one:
+  // no options means no selection, which `verifyScaffoldProvenance` treats as the historical
+  // expectation and never as "unverified is fine".
   const s = snapshot || {};
   if (s.readable === false) {
     return { ok: false, code: 'snapshot_unreadable',
@@ -87,11 +247,19 @@ export function scaffoldPrerequisite(snapshot, opts) {
     return { ok: false, code: 'scaffold_empty',
       why: 'the scaffold carries 0 outline rows, so it supplies no scene assignment' };
   }
-  // SOL IS THE CONFIGURATION, SO A FALLBACK IS A MISMATCH — NOT A DEGRADED PASS.
-  if (requireSol && s.isSolArchitecture !== true) {
-    return { ok: false, code: 'scaffold_not_sol',
-      why: 'the scaffold was served by ' + JSON.stringify(s.servedBy || 'unrecorded')
-        + ', not Sol; that is a different planner and a different experiment' };
+  // THE SELECTED PLANNER IS THE CONFIGURATION, SO A FALLBACK IS A MISMATCH — NOT A DEGRADED
+  // PASS. One predicate, consulted here and by the post-launch assertion, so the dispatch gate
+  // and the launch check cannot disagree about whose plan this is.
+  // A CALLER THAT PASSES NO EXPECTATION GETS THE STRICT HISTORICAL ONE, never "unverifiable".
+  // Caught by running the existing controls: several of them call this with raw options and no
+  // expectedModel, and without this fallback they all reported "no architecture model was
+  // selected" instead of exercising the provenance rule they were written to exercise.
+  const prov = verifyScaffoldProvenance({
+    servedBy: s.servedBy,
+    expectedModel: o.expectedModel || DEFAULT_EXPECTED_ARCHITECTURE_MODEL,
+    allowProviderFreeIdentity: o.allowProviderFreeIdentity === true });
+  if (!prov.ok) {
+    return { ok: false, code: 'scaffold_provenance_' + prov.code, provenance: prov, why: prov.why };
   }
   // The stale scene-mission is the known mismatch signature. Only gate on it once the assignment
   // actually resolves — an unresolved assignment at this point is normal, not a failure.
@@ -99,11 +267,10 @@ export function scaffoldPrerequisite(snapshot, opts) {
     return { ok: false, code: 'assignment_stale',
       why: 'the scene-1 assignment resolved to a stale scene-mission, so the scaffold did not reach the opening' };
   }
-  return { ok: true, code: 'ok', requireSol,
-    why: (requireSol ? 'fresh Sol scaffold present with ' : 'scaffold present with ')
-      + s.scaffoldRows + ' rows'
+  return { ok: true, code: 'ok', provenance: prov,
+    why: 'scaffold present with ' + s.scaffoldRows + ' rows'
       + (s.assignmentSource ? ', assignment source ' + s.assignmentSource : '')
-      + (requireSol ? '' : ' (Sol identity NOT required: provider-blocked driver)') };
+      + '; ' + prov.why };
 }
 
 // WHICH REQUESTS THE PRECONDITION GUARDS. The scaffold stage itself and its own preamble must be

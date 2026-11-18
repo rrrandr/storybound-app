@@ -248,6 +248,35 @@ function sandbox(overrides = {}) {
     ${fnSource('_isSignedIn')}
     ${fnSource('_bakedGenesisLocked')}
     ${fnSource('_resetBakedLifecycle')}
+    // ── MISSING TEST DEPENDENCY (fixed 2026-10-25) ────────────────────────────────────
+    // _commitBakedScene writes a scene record through EXACTLY ONE door: the real
+    // _sbPersistSceneProjection (app.js:150378). The sandbox never provided it, so the
+    // guarded call fell to its else branch, logged "[SCENE-PROJECTION] baked scene could not
+    // persist through the API — no scene record written", appended NOTHING, and the next
+    // assertion read scenes[0].text of an empty array.
+    // THIS IS A TEST DEPENDENCY, NOT A PRODUCTION CHANGE, AND THE ASSERTION IS UNCHANGED:
+    // the stub performs the real contract (push one record carrying the committed text and
+    // return it) and nothing more. ONE shape, matching app.js:338800-338825 — never a union.
+    // It deliberately does NOT re-implement projection/attribution/idempotency; a test that
+    // needs those must assert against the real function, not against this.
+    function _sbPersistSceneProjection(spec) {
+      if (!state) return null;
+      if (!Array.isArray(state.scenes)) state.scenes = [];
+      const rec = {
+        uid: 'stub-uid-' + (state.scenes.length + 1),
+        title: (spec && spec.title != null) ? spec.title : '',
+        synopsis: (spec && spec.synopsis != null) ? spec.synopsis : '',
+        text: String((spec && spec.input) || ''),
+        fateCard: (spec && spec.fateCard != null) ? spec.fateCard : null,
+        projection: { kind: (spec && spec.kind) || 'body', provenance: 'test_stub', revision: 0 },
+        attributionAvailable: false,
+        historyNote: null,
+        assignedEvent: null
+      };
+      state.scenes.push(rec);
+      env.calls.projections = (env.calls.projections || 0) + 1;
+      return rec;
+    }
     ${fnSource('_commitBakedScene')}
     ${fnSource('_unlockBakedGenesis')}
     ${fnSource('_clearBakedEntry')}

@@ -193,7 +193,29 @@ const ALLOWED_MODELS = {
     'gpt-4o',
     'gpt-4o-mini',
     'gpt-4-turbo',
-    'gpt-4'
+    'gpt-4',
+    // ── gpt-6-luna ADMITTED (Roman, authorized 2026-11-06) ────────────────────────────────
+    // For the authorized twenty-scene First Sacrifice run, in which Luna plans the arc and
+    // authors general prose. It is a REASONING model on Chat Completions, so the proxy maps its
+    // allowance field and effort separately — see api/chatgpt-proxy.js. Admitting it to the
+    // allowlist does NOT route anything to it: the client still has to ask for it, and only an
+    // explicitly selected run configuration does (`_sbRunConfig`, orchestration-client.js).
+    // Every Storybound default is unchanged.
+    'gpt-6-luna',
+    // ── gpt-6.1-sol ADMITTED FOR INITIAL PLAN GENERATION (Roman, authorized 2026-11-11) ──────
+    // Sol is now the default for the two ONCE-PER-STORY planning calls: the A-plot
+    // (generateAPlot) and the R-plot (_generateRPlot). It is NOT admitted for prose: the prose
+    // author remains NARRATIVE_AUTHOR_MODEL, and nothing in the per-scene path asks for this
+    // model. It reaches the API through the same reasoning-model handling gpt-6-luna uses —
+    // REASONING_MODELS in api/chatgpt-proxy.js is /^(gpt-6|gpt-5|o1|o3|o4)/, which this matches,
+    // so the allowance travels as max_completion_tokens, reasoning_effort is forwarded, and
+    // temperature is dropped.
+    //
+    // THERE IS NO FALLBACK BEHIND IT, BY DESIGN. Both planners now dispatch a single Sol rung and
+    // FAIL LOUDLY when it returns no usable plan, because a silently-substituted planner produces
+    // a whole story built on a plan nobody chose. Admitting it here still routes nothing on its
+    // own — the client has to ask for it, and only the two planners do.
+    'gpt-6.1-sol'
   ],
 
   // Normalization roles - ALWAYS use OpenAI, NEVER Grok
@@ -463,7 +485,24 @@ function createEmptyESD() {
  * - Unauthorized model substitutions
  * - Configuration errors
  */
-function validateModelForRole(model, role) {
+/**
+ * Models permitted ONLY for specific named operations.
+ *
+ * WHY THIS EXISTS. A role is coarse: PRIMARY_AUTHOR carries story logic, normalization, vetoes,
+ * the ESD pass and both planners, so admitting a model to that role admits it to all of them.
+ * gpt-6.1-sol was authorized for exactly two once-per-story planning calls — the initial A-plot
+ * and the initial R-plot — and this narrows the server permission to those, so a future client
+ * change cannot route per-scene work to it without a deliberate edit here.
+ *
+ * FAIL CLOSED. A scoped model whose request declares NO operation is refused: an undeclared
+ * operation is not a permitted one. A model absent from this map is unaffected, so every existing
+ * caller is unchanged.
+ */
+const MODEL_OPERATION_SCOPE = {
+  'gpt-6.1-sol': ['aplot-initial', 'rplot-initial'],
+};
+
+function validateModelForRole(model, role, operation) {
   const allowlist = ALLOWED_MODELS[role];
   if (!allowlist) {
     throw new Error(`Unknown role: ${role}`);
@@ -474,6 +513,23 @@ function validateModelForRole(model, role) {
       `Disallowed model "${model}" for role "${role}". ` +
       `Allowed models: ${allowlist.join(', ')}`
     );
+  }
+
+  const scope = MODEL_OPERATION_SCOPE[model];
+  if (scope) {
+    const op = String(operation == null ? '' : operation).trim();
+    if (!op) {
+      throw new Error(
+        `Model "${model}" is operation-scoped and this request declared no operation. ` +
+        `Permitted operations: ${scope.join(', ')}`
+      );
+    }
+    if (!scope.includes(op)) {
+      throw new Error(
+        `Model "${model}" is not permitted for operation "${op}". ` +
+        `Permitted operations: ${scope.join(', ')}`
+      );
+    }
   }
 
   return true;
@@ -989,6 +1045,7 @@ module.exports = {
   // Model validation
   validateModelForRole,
   getDefaultModel,
+  MODEL_OPERATION_SCOPE,
   ALLOWED_MODELS,
   DEFAULT_MODELS,
 

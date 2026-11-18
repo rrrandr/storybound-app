@@ -1,4 +1,5 @@
 import { createClient as sbCreateClient } from '@supabase/supabase-js';
+import { editionForRequest } from './_edition.js';
 
 /**
  * THE CHARACTER+ EDITOR'S ONLY DOOR TO A PROVIDER.
@@ -109,6 +110,12 @@ export function editorConfigFor(contentClass) {
   return Object.prototype.hasOwnProperty.call(EDITOR_CONFIGS, k) ? EDITOR_CONFIGS[k] : null;
 }
 
+// ── THE EDITION DECISION LIVES IN ONE PLACE (Roman 2026-11-08) ─────────────────────────────
+// `editionForRequest` is api/_edition.js, imported here and by /api/config, so what a client
+// may be SHOWN and what this route will PRODUCE are the same function. It is re-exported for
+// the provider-free controls, which assert the gate against this module.
+export { editionForRequest, platformForRequest, channelForRequest, deploymentChannel } from './_edition.js';
+
 // Reservation arithmetic, matching EssentialBeatCheck.ebReserveUsd so the quote the client sees
 // and the amount the server holds are computed the same way.
 const CHARS_PER_TOKEN = 4.0;
@@ -128,7 +135,12 @@ const UPSTREAM_TIMEOUT_MS = 120000;
  * BEFORE any IO. The ordering here is the security property, not an implementation detail.
  */
 export function editorAdmission(input) {
-  const { env = {}, accountId = null, body = {} } = input || {};
+  // `origin` is the REQUEST's own Origin header, not a body field — a payload cannot set it, and
+  // it is what distinguishes two clients sharing one backend. Absent, `editionForRequest` yields
+  // the base edition, which is the safe direction.
+  const { env = {}, accountId = null, body = {}, origin = null } = input || {};
+  input = input || {};
+  input.origin = origin;
 
   // ── 0. THE KILL SWITCH ────────────────────────────────────────────────────────────────────
   // CPLUS_EDITOR_ENABLED=false (or 0/off/no) turns editor dispatch off AT THE SERVER, with no
@@ -189,11 +201,65 @@ export function editorAdmission(input) {
   // THE SPELLING OF THE ID IS NOT AN ENTITLEMENT. This only rejects an id pointed at different
   // work than the request describes; whether the account may spend on this STORY is checked
   // against the stories table inside cplus_editor_admit, not here.
+  // ── THE ID ALSO NAMES THE PASS (Roman 2026-11-07) ───────────────────────────────────────
+  // MEASURED: this required strict equality with a 5-part id, while the client appends the PASS
+  // MODE — ':craft', ':picturability', ':task:consistency' — because three independently
+  // scheduled passes run on ONE draft revision and a shared id made the second and third look
+  // like duplicate charges for the first. The result was 22 consecutive HTTP 409
+  // operation_mismatch refusals, before any dispatch, reported upstream as empty completions.
+  //
+  // THE PREFIX IS STILL CHECKED EXACTLY. Account, story, scene and revision must match, so an
+  // id pointed at different work is still refused. What is now permitted is a suffix that names
+  // WHICH pass — and because the suffix is part of the id, idempotency gets STRONGER, not
+  // weaker: a repeat of the SAME pass on the SAME revision still collides and is still refused
+  // a second charge, while a different pass is correctly a different operation.
+  //
+  // A bare 5-part id (no mode) remains valid, so an older client is unaffected.
   const expectedOperationId = ['cplus-editor', String(accountId), String(storyId),
     'scene' + String(scene), String(revisionId)].join(':');
-  if (operationId !== expectedOperationId) {
+  const _opPassMode = (operationId === expectedOperationId)
+    ? null
+    : (operationId.startsWith(expectedOperationId + ':')
+      ? operationId.slice(expectedOperationId.length + 1) : undefined);
+  const _PASS_MODE_RE = /^(?:craft|picturability|task:[a-z0-9_-]{1,40})$/;
+  if (_opPassMode === undefined || (_opPassMode !== null && !_PASS_MODE_RE.test(_opPassMode))) {
     return { ok: false, status: 409, error: 'operation_mismatch',
-      detail: 'the operation id does not describe this account, story, scene and revision' };
+      detail: 'the operation id does not describe this account, story, scene, revision and pass' };
+  }
+
+  // ══ 3b. WHICH EDITION THIS DEPLOYMENT MAY PRODUCE (Roman 2026-11-08) ══════════════════════
+  // The explicitness pass produces the ENHANCED edition of a passage. Which editions a build is
+  // allowed to produce is a platform question, and platform selection is enforced HERE, on the
+  // server, because the client cannot be trusted to describe its own distribution channel: an
+  // App Store build, a web build and a test harness all speak the same API.
+  //
+  // THE DECISION IS AN ENVIRONMENT DECISION, NOT A REQUEST FIELD. No payload can ask for the
+  // enhanced edition; the deployment either permits it or it does not. An App Store or other
+  // restricted edition therefore receives its permitted BASE version, which is the full scene
+  // Luna authored and the craft passes repaired — not a degraded one.
+  //
+  // IT DEFAULTS TO REFUSING. An unset variable means "this build does not produce enhanced
+  // prose", so a deployment that was never configured cannot be probed into producing it, and a
+  // new environment is restricted until somebody states otherwise.
+  //
+  // THE SCENE'S RATING IS NOT THE GATE, which is the mistake this is written to avoid. An
+  // "R-rated" story setting describes what the reader asked for; it says nothing about what the
+  // distribution channel permits, and treating it as a compliance guarantee is how restricted
+  // builds end up shipping content they may not carry. `contentClass` below still selects the
+  // MODEL; it does not authorize an edition.
+  // GENERATION AND DELIVERY SHARE ONE DECISION — `editionForRequest` above, which is also what
+  // /api/config hands the client. The origin travels with the admission input so a restricted
+  // client cannot generate enhanced prose against a backend that also serves the website.
+  if (_opPassMode === 'task:explicitness') {
+    const ed = editionForRequest(env, input.origin);
+    if (ed.edition !== 'enhanced') {
+      return { ok: false, status: 403, error: 'enhanced_edition_not_permitted',
+        editionWhy: ed.why,
+        detail: 'this request may not receive the enhanced edition (' + ed.why + ': '
+          + ed.detail + '). The scene publishes in its base edition, which is the complete '
+          + 'authored and craft-repaired scene. Nothing was sent upstream and nothing was '
+          + 'charged.' };
+    }
   }
 
   // 4. SHAPE AND HARD BOUNDS.
@@ -208,17 +274,45 @@ export function editorAdmission(input) {
   // 5. WHICH PINNED CONFIGURATION. Required, never guessed: routing an explicit scene to a
   // moderating model is the harm this selection exists to prevent, so an absent or unrecognized
   // class is a refusal rather than a default.
-  const cfg = editorConfigFor(body.contentClass);
+  let cfg = editorConfigFor(body.contentClass);
   if (!cfg) {
     return { ok: false, status: 400, error: 'content_class_required',
       detail: 'declare contentClass as "general" or "explicit"; it selects a server-pinned '
         + 'editor configuration and cannot be inferred here' };
   }
+  // ── A RUN-SCOPED CONFIGURATION OVERRIDE, ENV-GATED (Roman, authorized 2026-11-06) ────────
+  // For the authorized twenty-scene run, Luna performs ALL THREE repair tasks including on
+  // explicit drafts, with their content preserved. That cannot be expressed by declaring the
+  // scene "general": mislabelling explicit material is the one thing this gate exists to
+  // prevent, and the declaration stays TRUTHFUL. So the class is still declared and still
+  // recorded; the model is overridden separately, visibly, and only where an operator has set
+  // the variable.
+  //
+  // UNSET IN PRODUCTION AND IN EVERY DEPLOYED ENVIRONMENT, which is the whole safety property:
+  // with no variable this block does nothing and the content class alone picks the model, byte
+  // for byte as before. It also cannot be reached by a client — it is an environment decision,
+  // not a request field, so no payload can ask for it.
+  //
+  // IF LUNA REFUSES OR FAILS, THAT IS THE RESULT. Nothing here falls back to Grok: the refusal
+  // or the empty completion is returned and recorded as the outcome of the pass.
+  const forced = String(env.CPLUS_EDITOR_FORCE_CONFIG || '').trim();
+  let forcedFrom = null;
+  if (forced) {
+    const fc = editorConfigFor(forced);
+    if (!fc) {
+      return { ok: false, status: 500, error: 'policy_invalid',
+        detail: 'CPLUS_EDITOR_FORCE_CONFIG must name a configured editor class' };
+    }
+    if (fc !== cfg) { forcedFrom = String(body.contentClass); cfg = fc; }
+  }
 
   const outCap = Math.min(cfg.maxOutputTokens,
     Math.max(cfg.floorOutputTokens, Number(maxTokens) || 1200));
   return { ok: true, priceFortunes, dailyCap, expectedOperationId,
-    model: cfg.model, config: cfg, contentClass: String(body.contentClass), outCap,
+    model: cfg.model, config: cfg, contentClass: String(body.contentClass),
+    // The declared class is preserved for the record even when the model was overridden, so a
+    // receipt never implies the scene was general when it was not.
+    configForcedFrom: forcedFrom || undefined, outCap,
     // THE RESERVATION, priced from the request we are actually about to send, at THIS
     // configuration's rates. Reasoning output is billed as output by both providers, so the
     // ceiling assumes it.
@@ -338,6 +432,28 @@ export function createHandler(deps = {}) {
   const log = deps.log || console;
 
   return async function handler(req, res) {
+    // ── EVERY REPLY STATES WHETHER A PROVIDER WAS CONTACTED (Roman 2026-11-07) ─────────────
+    // MEASURED: this route refused 22 consecutive calls with HTTP 503
+    // {"error":"policy_not_configured","detail":"CPLUS_EDITOR_DAILY_CAP is unset..."} — a LOCAL
+    // refusal, before any upstream dispatch. The caller could not tell that from a model that
+    // answered with nothing, so it logged "empty reply" and HELD the reservation as unknown
+    // provider spending. Both were wrong: no provider was contacted and nothing could have been
+    // billed.
+    //
+    // The route is the only party that knows, so it says so, on every reply, additively. The
+    // flag is set immediately before the upstream fetch and nowhere else — there are fifteen
+    // refusal sites and a caller-side list of their error codes would drift from this file.
+    let _upstreamDispatched = false;
+    try {
+      const _json0 = res.json && res.json.bind(res);
+      if (_json0) {
+        res.json = function (o) {
+          return _json0((o && typeof o === 'object' && !Array.isArray(o))
+            ? Object.assign({}, o, { _upstreamDispatched: _upstreamDispatched })
+            : o);
+        };
+      }
+    } catch (_) { /* a caller with an exotic res shape keeps the old behaviour */ }
     const origin = (req.headers && req.headers.origin) || '';
     const allowedOrigin = origin === 'https://storybound.love'
       || origin === 'https://www.storybound.love'
@@ -374,7 +490,7 @@ export function createHandler(deps = {}) {
     const accountId = authData && authData.user && authData.user.id;
     if (authErr || !accountId) return res.status(401).json({ error: 'invalid_session' });
 
-    const verdict = editorAdmission({ env, accountId, body: req.body || {} });
+    const verdict = editorAdmission({ env, accountId, body: req.body || {}, origin: req.headers && req.headers.origin });
     if (!verdict.ok) {
       log.warn(`[cplus-editor] refused ${verdict.error} (session=${accountId})`);
       return res.status(verdict.status).json({ error: verdict.error, detail: verdict.detail });
@@ -462,6 +578,7 @@ export function createHandler(deps = {}) {
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }] };
       upstreamBody[cfg.capField] = outCap;
       if (cfg.effort) upstreamBody.reasoning_effort = cfg.effort;
+      _upstreamDispatched = true;   // from here on, a provider MAY have been billed
       const upstream = await doFetch(cfg.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${providerKey}` },

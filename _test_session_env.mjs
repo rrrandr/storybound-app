@@ -24,11 +24,19 @@
 export const SB_URL = 'http://sb-test.localhost';
 export const SB_STORAGE_KEY = 'sb-' + new URL(SB_URL).hostname.split('.')[0] + '-auth-token';
 
+// ── ONE ISOLATED ACCOUNT ID, EXPORTED (Roman 2026-11-07) ──────────────────────────────────
+// MEASURED: the browser session minted this id while the isolated cplus-editor handler returned
+// 'sb-isolated-test-account' from its own literal. The client composes its operation id from the
+// SESSION account, so every editor call named an account the handler's session did not — which
+// the server correctly refuses. Two literals for one identity is the defect; this is the single
+// source both sides now read.
+export const SB_TEST_ACCOUNT_ID = '00000000-0000-0000-0000-000000000001';
+
 export function makeSession() {
   return { access_token: 'test-session-token-not-a-secret', token_type: 'bearer',
     expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
     refresh_token: 'test-refresh-not-a-secret',
-    user: { id: '00000000-0000-0000-0000-000000000001', aud: 'authenticated',
+    user: { id: SB_TEST_ACCOUNT_ID, aud: 'authenticated',
             role: 'authenticated', email: 'harness@example.invalid' } };
 }
 

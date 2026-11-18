@@ -261,6 +261,9 @@
     GEMINI_PROXY: '/api/gemini-proxy',
     MISTRAL_PROXY: '/api/mistral-proxy',
     DEEPSEEK_PROXY: '/api/deepseek-proxy',
+    // Added 2026-11-08 for the authorized Luna → Haiku → Grok fallback chain. The route already
+    // existed; it simply had no constant here because nothing in this file dispatched to it.
+    ANTHROPIC_PROXY: '/api/anthropic-proxy',
 
     // Default models
     PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: Plot, psychology, consent, limits, consequences
@@ -292,7 +295,9 @@
     PREMIUM_CREATIVE_MODEL: 'grok-4.3',
 
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'mistral-small-latest'], // Sonnet/Opus removed 2026-06-24; Haiku removed 2026-08-16 — no Anthropic in production as authors (Haiku repair only)
+    // gpt-6-luna admitted 2026-11-06 for the authorized twenty-scene run; it is reachable ONLY
+    // through an explicitly selected run configuration (see _sbRunConfig below), never by default.
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'mistral-small-latest', 'gpt-6-luna'], // Sonnet/Opus removed 2026-06-24; Haiku removed 2026-08-16 — no Anthropic in production as authors (Haiku repair only)
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -301,10 +306,40 @@
     ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_NARRATIVE_AUTHOR_MODELS: ['grok-4.3', 'grok-4-1-fast-reasoning'],
 
+    // ══ THE PROSE ARCHITECTURE (Roman 2026-11-08) ═════════════════════════════════════════
+    // LUNA IS THE PROSE AUTHOR EVERYWHERE: opening, continuation, ordinary romance,
+    // non-graphic intimacy, and the BASE edition of the LI's seductive whisper. One author
+    // writes the canonical story. Nothing below substitutes a different model for a model's
+    // own reason — no tier, no StoryTurn phase, no `intimacyPhase`, no provider fallback that
+    // relabels another model's output as Luna's.
+    //
+    // GROK IS AN OPTIONAL EXPLICITNESS EDITOR, not a second author. It runs through the
+    // existing editor infrastructure (`window._ebEditorDispatch` → /api/cplus-editor, which
+    // already pins grok-4.3 for `contentClass: 'explicit'`), on a FINISHED base draft, with a
+    // compact brief — the passages, compact character/appearance canon, current physical
+    // continuity and the authorized scope — and NOT the author rulebook.
+    //
+    // THE SUPERSEDED CASCADE IS REPLACED, NOT STACKED. The full-scene handoff (consent control
+    // pass → Grok author → [CONSTRAINTS] → SD authoring → specialist renderer → cut-away) was
+    // a parallel prose pipeline with its own author, its own consent adjudication and its own
+    // failure handling, and it bypassed every craft repair. Its dispatch gates are false below
+    // and `_sbProseArchitecture()` is the one place that says so.
+    PROSE_AUTHOR_MODEL: 'gpt-6-luna',
+    ALLOWED_PROSE_AUTHOR_MODELS: ['gpt-6-luna'],
+    // Grok reaches prose ONLY as the explicitness editor, and only where the server permits an
+    // enhanced edition for this deployment. The client cannot name the model: the editor route
+    // pins it from `contentClass`.
+    ENABLE_GROK_EXPLICITNESS_EDITOR: true,
+
     // Feature flags
     ENABLE_SPECIALIST_RENDERER: true,
     ENABLE_FATE_ELEVATION: true,
-    ENABLE_GROK_SD_AUTHORING: true,   // Grok authors SD for Steamy/Passionate
+    // SUPERSEDED BY THE EXPLICITNESS EDITOR (Roman 2026-11-08). This gated PHASE 1B — Grok SD
+    // authoring plus the specialist renderer — which is the cascade the new architecture
+    // replaces. Measured on published scenes 17 and 18: that path authored SD and dispatched an
+    // intimate renderer into an Inquiry hearing with `relationship_phase=strangers` and both
+    // romance gates `NOT-CONSULTED`, then truncated the draft when the renderer failed.
+    ENABLE_GROK_SD_AUTHORING: false,
     ENABLE_DEEPSEEK_SD: true,         // DeepSeek V4 Pro/Flash fallback (Tier 1 + 2)
     ENABLE_MISTRAL_SD: true, // Mistral fallback if Grok fails (Steamy/Passionate ONLY)
     // A1: route NON-INTIMATE scene prose to Grok (NARRATIVE_AUTHOR role) with a
@@ -329,7 +364,14 @@
     // callGrokNarrativeAuthor instead of callChatGPT. Sonnet/Opus are cost-deprecated;
     // their selector tiers still exist for telemetry but _maybeRemapAuthorToGrok now
     // always overrides them with Grok. Intimacy/OAS prose was already Grok.
-    ENABLE_GROK_NARRATIVE_AUTHOR: true,
+    //
+    // ── SUPERSEDED (Roman 2026-11-08) ────────────────────────────────────────────────────
+    // This is the flag that made Grok the prose author for every ordinary scene. Luna is the
+    // prose author now; explicitness is an EDITOR pass on Luna's draft, not a different
+    // author writing the scene. With this false, `_useGrokAuthor` is false, so the consent
+    // control pass, the Grok author call and the post-Grok Mistral polish/repair block all
+    // stop being reachable from the author pass.
+    ENABLE_GROK_NARRATIVE_AUTHOR: false,
 
     // Timeouts
     API_TIMEOUT_MS: 60000
@@ -1064,15 +1106,400 @@
   // tiers use REASONING Grok — the non-reasoning "fast" model is a garbage prose
   // author (verified 2026-06-17: token-salad + leaked control tokens) and is
   // NEVER used to author scene prose, even connective beats.
+  // ══ AN EXPLICITLY SELECTED RUN CONFIGURATION (Roman, authorized 2026-11-06) ═══════════════
+  // ONE run's author assignment, chosen by that run and nobody else. Absent — which is every
+  // ordinary Storybound session — every function below behaves byte-identically to before: the
+  // reader gets Grok 4.3 as the general author and the Grok renderer for intimate scenes.
+  //
+  // WHY A SELECTED CONFIGURATION RATHER THAN A CHANGED DEFAULT: the twenty-scene run needs Luna
+  // as the general author, and flipping NARRATIVE_AUTHOR_MODEL would hand Luna to every reader
+  // on the strength of one experiment. This is the smallest surface that makes the run possible:
+  // one object, read in one place, with no effect when unset.
+  //
+  // IT CANNOT REACH AN EXPLICIT SCENE. `generalAuthorModel` is consulted only on the NOT-hot
+  // branch. A hot or intimate beat still routes to the Grok renderer, unconditionally, by the
+  // same `_hot` predicate as before — which is the whole reason that predicate exists.
+  function _sbRunConfig() {
+    try {
+      const c = (typeof window !== 'undefined')
+        && (window._sbRunConfig || (window.state && window.state._sbRunConfig));
+      return (c && typeof c === 'object') ? c : null;
+    } catch (_) { return null; }
+  }
+
+  // ══ WHICH ARCHITECTURE IS LIVE — ONE PLACE, READ EVERYWHERE (Roman 2026-11-08) ════════════
+  // True means: Luna authors every scene's base prose and Grok reaches prose only as the
+  // explicitness editor. Derived from the CONFIG flags rather than stored separately, so the
+  // flags and the behaviour cannot disagree.
+  // ══ THE AUTHORIZED FALLBACK CHAIN FOR LUNA-AUTHORED OPERATIONS ════════════════════════════
+  // Roman 2026-11-08, explicitly authorizing a bounded substitution and changing the earlier
+  // "no silent substitution" instruction. Luna → Haiku → Grok, per operation.
+  //
+  // WHICH HAIKU, AND WHY THIS ONE. `claude-haiku-5-5`. api/anthropic-proxy.js admits two: the
+  // legacy `claude-haiku-4-5-20251001` and this one. 5-5 is chosen on three recorded facts, not
+  // on being newer: (1) it SUPPORTS the `effort` parameter and 4.5 is not in that parameter's
+  // supported list at all, so 4.5 gives no control over reasoning spend; (2) its thinking counts
+  // toward `max_tokens`, so the allowance bounds total billable output — on 4.5 it does not;
+  // (3) `_nf_cost_settlement.mjs` has a rate for `claude-haiku-5-5` and NONE for 4.5, so a 4.5
+  // receipt could not be settled and every fallback would create unresolved exposure. It is
+  // priced BY PROMPT LENGTH: $0.10/$0.50 per MTok up to 100,000 input tokens, $0.50/$2.50 above.
+  //
+  // EACH RUNG CARRIES ITS OWN PROVIDER CONTRACT, because they do not share one: route, role
+  // field, allowance field, allowance, effort, context limit and deadline all differ, and sending
+  // one provider's shape to another is a malformed request, not a fallback.
+  //
+  // CONTEXT LIMITS ARE CHECKED BEFORE DISPATCH, NOT DISCOVERED. An oversized packet is an
+  // AVOIDABLE error and must never read as a provider balk: a rung that cannot hold the packet is
+  // SKIPPED with `skipped: 'context'` recorded, and the chain moves on without a wasted call.
+  var SB_PROSE_CHAIN = [
+    { id: 'luna', model: 'gpt-6-luna', url: '/api/chatgpt-proxy', role: 'PRIMARY_AUTHOR',
+      capField: 'max_tokens', cap: 16000, effort: 'medium',
+      // Reasoning bills INSIDE the completion budget on this family, which is why the allowance
+      // is five figures for a ~3,000-token scene: a smaller one is spent on reasoning and returns
+      // empty. Measured in this project at 2,921 on a planner.
+      reasoningInsideCap: true, contextTokens: 400000, deadlineMs: 300000,
+      // ── CHARS PER TOKEN IS PER PROVIDER, NOT A SINGLE CONSTANT ──────────────────────────
+      // MEASURED in this project on this packet family: 2.65 for Anthropic and 4.45 for
+      // xAI/OpenAI (_nf_literary_playthrough.mjs CPT). Using one ratio for both is recorded
+      // there as the mistake that understated a Haiku quote by 48%, and here it would do
+      // something worse: the fit check below would pass a packet Anthropic cannot hold, the
+      // request would come back a context error, and this policy classifies that as a DEFECT
+      // that STOPS the chain — so a Luna balk on a large scene would never reach Grok. The
+      // conservative 4.0 is kept for the OpenAI family rather than the measured 4.45, which
+      // over-counts tokens and therefore under-claims headroom.
+      charsPerToken: 4.0,
+      // ── EVERY LIMIT HERE CARRIES ITS BASIS (Roman 2026-11-08) ────────────────────────────
+      // A number with no provenance gets quoted as a measurement. These say what they are.
+      contextBasis: 'ASSUMED — no gpt-6-luna context window is recorded in this repo; a working '
+        + 'figure, not a provider-stated limit',
+      cptBasis: 'conservative 4.0 rather than the measured 4.45 for this family, so it '
+        + 'over-counts tokens and under-claims headroom' },
+    { id: 'haiku', model: 'claude-haiku-5-5', url: '/api/anthropic-proxy', role: null,
+      capField: 'max_tokens', cap: 20000, effort: 'medium',
+      reasoningInsideCap: true, contextTokens: 200000, deadlineMs: 300000,
+      charsPerToken: 2.65,
+      // THE 200,000 IS NOT RECORDED FOR THIS MODEL. _fsc_cost_guard.mjs records "200k context"
+      // for claude-haiku-4-5-20251001, the LEGACY model; nothing in this repo states a context
+      // window for claude-haiku-5-5. The figure is carried over and is an ASSUMPTION. What IS
+      // recorded for 5-5 in api/anthropic-proxy.js: it supports `effort`, thinking counts toward
+      // max_tokens, and it is priced by prompt length with the tier boundary at 100,000 input
+      // tokens. A context skip decided on this number is a PRECAUTION, not a provider refusal.
+      contextBasis: 'ASSUMED — carried over from the legacy claude-haiku-4-5-20251001 row in '
+        + '_fsc_cost_guard.mjs; no context window is recorded in this repo for claude-haiku-5-5',
+      cptBasis: 'MEASURED for Anthropic on this packet family (2.65), recorded in '
+        + '_nf_literary_playthrough.mjs CPT' },
+    { id: 'grok', model: 'grok-4.3', url: '/api/proxy', role: 'NARRATIVE_AUTHOR',
+      capField: 'max_tokens', cap: 2200, effort: null,
+      // xAI bills reasoning as output but does NOT count it inside max_tokens, so the allowance
+      // here is the visible-prose figure the renderTier already uses.
+      reasoningInsideCap: false, contextTokens: 2000000, deadlineMs: 450000,
+      charsPerToken: 4.45,
+      contextBasis: 'ASSUMED — a deliberately large working figure; no grok-4.3 context window '
+        + 'is recorded in this repo, and this rung is last so a skip here would strand the call',
+      cptBasis: 'MEASURED for xAI on this packet family (4.45)' },
+  ];
+
+  // ══ OPERATION CLASS: INITIAL AUTHORSHIP vs REPAIR, AND THE RESPONSE CONTRACT ══════════════
+  // Roman 2026-11-08. Two things every call site needs named, which were previously implicit in
+  // a roleTag string and therefore invisible to the routing decision:
+  //
+  //   kind: 'authorship' — this call PRODUCES reader-facing writing. It takes the Luna →
+  //                        Haiku → Grok hierarchy.
+  //         'repair'     — this call CORRECTS writing that already exists. Identified
+  //                        separately on purpose: it is not initial authorship, its allowances
+  //                        are one to two orders of magnitude smaller, and moving it is a
+  //                        separate cost decision. Recorded as `repair` in the authorship
+  //                        record so a repair can never be read as "who wrote this scene".
+  //
+  //   contract: 'prose'  — the reply is prose.
+  //             'json'   — the reply is a STRUCTURED object with a schema a validator reads.
+  //                        The CG screenplay and the CG line revision are both in this group:
+  //                        they carry reader-facing dialogue and narration INSIDE a JSON
+  //                        envelope, which makes them authorship, not an excuse to skip them.
+  //
+  // THE SCHEMA IS PRESERVED, NOT REINTERPRETED. A 'json' operation sends
+  // `response_format: {type:'json_object'}` where the provider supports it, keeps the prompt's
+  // own "return ONLY JSON" instruction either way, and its reply still goes through the same CG
+  // projection, speaker validator and panel renderer it always did. Nothing about the schema,
+  // the field names or the consumers changes — only which model fills it in.
+  //
+  // THE LUNA ALLOWANCES HERE ARE ESTIMATES, STATED AS SUCH. Reasoning bills INSIDE the
+  // completion budget on this family, so a figure sized from the visible output alone is spent
+  // on reasoning and returns empty — measured in this project at 2,921 on a planner. The prose
+  // figure (16,000) is the one with sixteen receipts behind it. The JSON figures are scaled from
+  // the Grok allowance plus observed Luna reasoning draws (4,188 / 8,191 / 11,357 / 13,824
+  // tokens in this project); they are NOT measured for these two call sites and the first paid
+  // use is what will measure them.
+  var SB_OPERATION_CLASS = {
+    'literary-scene':     { kind: 'authorship', contract: 'prose', lunaCap: 16000,
+                            capBasis: 'measured — sixteen Luna prose receipts at 16,000' },
+    'full-scene-author':  { kind: 'authorship', contract: 'prose', lunaCap: 16000,
+                            capBasis: 'measured — same packet family as literary-scene' },
+    'scene':              { kind: 'authorship', contract: 'json', lunaCap: 24000,
+                            capBasis: 'ESTIMATE — Grok sends 8,000 visible; scaled for '
+                              + 'reasoning-inside-completion, unmeasured for this call site' },
+    'oas-opener':         { kind: 'authorship', contract: 'prose', lunaCap: 10000,
+                            capBasis: 'ESTIMATE — Grok sends 250 visible; unmeasured on Luna' },
+    'oas-turn':           { kind: 'authorship', contract: 'prose', lunaCap: 10000,
+                            capBasis: 'ESTIMATE — Grok sends 400 visible; unmeasured on Luna' },
+    'repair':             { kind: 'repair', contract: 'prose', lunaCap: null,
+                            capBasis: 'not routed to Luna — a 600-token correction' },
+    'li-presence-repair': { kind: 'repair', contract: 'prose', lunaCap: null,
+                            capBasis: 'not routed to Luna — a 400-token correction' },
+    'fate-revision':      { kind: 'repair', contract: 'json', lunaCap: null,
+                            capBasis: 'not routed to Luna — a 600-token per-line correction' },
+  };
+  function sbOperationClass(roleTag) {
+    var c = SB_OPERATION_CLASS[String(roleTag || '')];
+    // An UNKNOWN call site is classified as a repair with no Luna routing, which is the
+    // conservative answer: a new site is not silently enrolled into the hierarchy and its
+    // allowance is not guessed at.
+    return c || { kind: 'repair', contract: 'prose', lunaCap: null,
+      capBasis: 'unrecognised roleTag "' + roleTag + '" — not routed, not guessed' };
+  }
+
+  // ── WHAT COUNTS AS BALKING, AS A PURE FUNCTION ────────────────────────────────────────────
+  // "Balking" is an ACTUAL PROVIDER REFUSAL or a TERMINAL PROVIDER FAILURE. Nothing else may
+  // move an operation to another model. The three categories that must NOT advance the chain are
+  // each named, because each is a bug or a local mistake that substituting a model would hide:
+  //   • a LOCAL ADMISSION or SHAPE error (our guard refused it; the role is invalid; the body is
+  //     malformed; 413 too large) — the request never reached the provider, so there is nothing
+  //     to fall back FROM. The chain stops and reports.
+  //   • an AVOIDABLE CONTEXT-LIMIT error — the packet was known to be too big and should have
+  //     been caught by the pre-dispatch fit check. Treated as a defect, not a balk.
+  //   • WEAK WRITING — never a signal at all. This function is not shown the prose.
+  // A 429 is a provider telling us to wait: it earns the existing bounded retry, and only
+  // becomes a balk once that retry is exhausted.
+  function sbClassifyProseAttempt(o) {
+    var r = o || {};
+    var status = Number(r.status || 0);
+    var body = String(r.errorCode || r.bodyText || '').toLowerCase();
+    var transport = !!r.transportError;
+    var retriesLeft = Number(r.retriesLeft || 0);
+
+    if (r.ok && r.hasContent) return { verdict: 'success', advance: false };
+    // Content present but empty is a provider outcome, not weak writing: an empty completion is
+    // a failure to produce, and on a reasoning model it usually means the allowance was spent on
+    // reasoning. Bounded retry first, then balk.
+    if (r.ok && !r.hasContent) {
+      return retriesLeft > 0
+        ? { verdict: 'retry', advance: false, reason: 'empty_completion' }
+        : { verdict: 'balk', advance: true, reason: 'empty_completion_after_retry' };
+    }
+    // ── A REFUSAL IS CLASSIFIED BEFORE A SHAPE DEFECT, AND THE ORDER IS THE POINT ───────────
+    // MEASURED by the control: OpenAI returns a content-policy refusal as HTTP 400 with the
+    // reason in the body. With the shape check first, that refusal read as `local_request_defect`
+    // and the chain STOPPED — a genuine provider refusal silently turned into a hard failure,
+    // which is the opposite of what the authorization asks for. The body is inspected first, and
+    // only an unexplained 400 falls through to the shape defect below.
+    if (r.policyRefusal || status === 451 || /content[_ ]policy|refus|moderat|safety|policy[_ ]violation/.test(body)) {
+      return { verdict: 'balk', advance: true, reason: 'provider_refusal' };
+    }
+    if (status === 413 || /context[_ ]length|too many tokens|maximum context/.test(body)) {
+      return { verdict: 'defect', advance: false, reason: 'avoidable_context_limit',
+        detail: 'the packet exceeded a limit the pre-dispatch fit check should have caught' };
+    }
+    if (status === 401 || status === 403) {
+      // A key or entitlement problem is OURS. Trying the next provider would spend money to work
+      // around a configuration error.
+      return { verdict: 'defect', advance: false, reason: 'auth_or_entitlement' };
+    }
+    if (/invalid[_ ]role|unknown role|malformed|unsupported[_ ]parameter|invalid[_ ]request/.test(body)
+      || status === 400 || status === 404 || status === 422) {
+      return { verdict: 'defect', advance: false, reason: 'local_request_defect',
+        detail: 'the provider rejected the SHAPE of our request (status ' + status + '). Nothing '
+          + 'was authored, and another model would be sent the same malformed request.' };
+    }
+    if (status === 429) {
+      return retriesLeft > 0
+        ? { verdict: 'retry', advance: false, reason: 'rate_limited' }
+        : { verdict: 'balk', advance: true, reason: 'rate_limited_after_retry' };
+    }
+    if (transport || status === 408 || (status >= 500 && status <= 599)) {
+      return retriesLeft > 0
+        ? { verdict: 'retry', advance: false, reason: 'transient_provider_failure' }
+        : { verdict: 'balk', advance: true, reason: 'terminal_provider_failure' };
+    }
+    // An outcome this policy does not recognise is NOT quietly turned into a fallback.
+    return { verdict: 'defect', advance: false, reason: 'unclassified',
+      detail: 'status ' + status + ' is not a recognised refusal or terminal failure; the chain '
+        + 'stops rather than substituting a model on an outcome nobody has classified' };
+  }
+
+  // Does this rung's provider have room for the packet? Checked BEFORE dispatch so an oversized
+  // request is skipped rather than sent and misread as a balk.
+  function sbRungFits(rung, promptChars) {
+    // THIS RUNG'S OWN ratio, not a shared 4.0 — see the charsPerToken note on the chain above.
+    var cpt = Number(rung && rung.charsPerToken) > 0 ? Number(rung.charsPerToken) : 4.0;
+    var tok = Math.ceil(Number(promptChars || 0) / cpt);
+    // `promptTokensEstimated` says plainly what this is: chars divided by a ratio, NOT a
+    // tokenizer count and NOT anything a provider reported. A skip decided from it is a
+    // precaution taken before dispatch, never a provider refusal, and nothing may record it so.
+    return { fits: tok <= Number(rung.contextTokens || 0),
+      promptTokensEstimated: tok, promptTokens: tok, estimated: true,
+      charsPerToken: cpt, charsPerTokenBasis: (rung && rung.cptBasis) || null,
+      limit: Number(rung.contextTokens || 0),
+      limitBasis: (rung && rung.contextBasis) || 'unstated' };
+  }
+
+  // ── THE RECORD ────────────────────────────────────────────────────────────────────────────
+  // Intended model, every attempted model with its outcome, the fallback reason, the model that
+  // actually served, usage, and who therefore AUTHORED the prose. Per operation: a record is
+  // written for this operation and nothing in it changes which model the NEXT scene starts with,
+  // which is the difference between a fallback and a silent permanent re-routing.
+  function sbNewProseAuthorshipRecord(operation, intended) {
+    return { operation: String(operation || 'unknown'), intendedModel: String(intended || ''),
+      attempts: [], servedModel: null, authoredBy: null, fallbackReason: null,
+      usage: null, stoppedOnDefect: null, at: new Date().toISOString() };
+  }
+  function sbRecordProseAuthorship(rec) {
+    try {
+      if (typeof window === 'undefined' || !window.state) return rec;
+      window.state._proseAuthorship = (window.state._proseAuthorship || []).concat([rec]);
+      window.state._lastProseAuthorship = rec;
+      console.log('[AUTHORSHIP] ' + rec.operation + ' · intended ' + rec.intendedModel
+        + ' · served ' + (rec.servedModel || 'NONE')
+        + ' · authoredBy ' + (rec.authoredBy || 'NONE')
+        + (rec.fallbackReason ? ' · fellBackBecause ' + rec.fallbackReason : '')
+        + (rec.stoppedOnDefect ? ' · STOPPED ON DEFECT: ' + rec.stoppedOnDefect : '')
+        + ' · attempts ' + rec.attempts.map(function (a) {
+          return a.model + '=' + (a.verdict || (a.skipped ? 'skipped:' + a.skipped : '?'));
+        }).join(', '));
+    } catch (_) {}
+    return rec;
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      window._sbProseChain = SB_PROSE_CHAIN;
+      window._sbOperationClass = sbOperationClass;
+      window._sbOperationClassTable = SB_OPERATION_CLASS;
+      window._sbClassifyProseAttempt = sbClassifyProseAttempt;
+      window._sbRungFits = sbRungFits;
+      window._sbNewProseAuthorshipRecord = sbNewProseAuthorshipRecord;
+      window._sbRecordProseAuthorship = sbRecordProseAuthorship;
+    }
+  } catch (_) {}
+
+  // ── WHICH PLATFORM THIS CLIENT IS, read from the server's own answer ──────────────────────
+  // /api/config publishes it (api/_edition.js platformForRequest), decided from the request's
+  // Origin and NOT from the enhanced-edition flag, so a website deployment that does not serve
+  // enhanced prose is still the website. Defaults to 'restricted'.
+  function _sbPlatform() {
+    try { return (typeof window !== 'undefined' && window._sbConfigPlatform === 'web')
+      ? 'web' : 'restricted'; } catch (_) { return 'restricted'; }
+  }
+
+  // ── THE OAS DIALOGUE ROUTE — AN INTENTIONAL EXCEPTION ON THE WEBSITE ──────────────────────
+  // Roman 2026-11-08: OAS dialogue on Storybound.love is GROK; on restricted platforms it is
+  // LUNA. The website route is deliberate and includes the early whisper.
+  //
+  // THE WEBSITE ROUTE DOES NOT RUN THE LUNA CHAIN. Two mistakes are specifically avoided:
+  // sending it to Luna first (it is not a Luna-authored operation, so Luna is not its intended
+  // model and a Luna attempt would be a wasted call), and mechanically applying Luna → Haiku →
+  // Grok on top of a Grok primary, which would put Grok in the chain TWICE. On the website the
+  // chain starts and, for its own provider, ends at Grok — with Grok's EXISTING bounded fallback
+  // behaviour inside the specialist proxy untouched.
+  //
+  // THE RESTRICTED ROUTE IS a Luna-authored operation and takes the authorized chain in full.
+  //
+  // EDITION IS NOT DECIDED HERE. Whichever model serves, the text delivered is the edition the
+  // platform permits — and on a restricted platform that is the base edition even though a Grok
+  // fallback may have written it.
+  function _sbOasRoute() {
+    var web = _sbPlatform() === 'web';
+    return web
+      ? { primary: 'grok', chain: ['grok'], reason: 'website_oas_exception',
+          note: 'intentional: OAS dialogue on the website is Grok, including the early whisper. '
+            + 'No Luna attempt precedes it and the Luna fallback chain is NOT applied, so Grok '
+            + 'is never invoked twice.' }
+      : { primary: 'luna', chain: ['luna', 'haiku', 'grok'], reason: 'restricted_platform_oas',
+          note: 'a Luna-authored operation, so it takes the authorized bounded chain. A Grok '
+            + 'fallback here still delivers the BASE edition.' };
+  }
+
+  function _sbProseArchitecture() {
+    return {
+      lunaAuthorsEverything: !CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR
+        && !CONFIG.ENABLE_GROK_SD_AUTHORING,
+      proseAuthorModel: CONFIG.PROSE_AUTHOR_MODEL,
+      explicitnessEditor: !!CONFIG.ENABLE_GROK_EXPLICITNESS_EDITOR,
+      platform: _sbPlatform(),
+      oasRoute: _sbOasRoute(),
+      fallbackChain: SB_PROSE_CHAIN.map(function (r) { return r.id + ':' + r.model; }),
+    };
+  }
+  try {
+    if (typeof window !== 'undefined') {
+      window._sbPlatform = _sbPlatform;
+      window._sbOasRoute = _sbOasRoute;
+    }
+  } catch (_) {}
+  try { if (typeof window !== 'undefined') window._sbProseArchitecture = _sbProseArchitecture; }
+  catch (_) {}
+
+  // ── A SCENE THAT MAY WANT THE EXPLICITNESS EDITOR IS MARKED, NOT RE-ROUTED ────────────────
+  // This is the predicate that used to send the scene to a different AUTHOR. It still names the
+  // same scenes; what it now decides is whether the finished BASE draft is a candidate for the
+  // optional enhancement pass. Marking is not authorization: the enhancement additionally needs
+  // the server to permit an enhanced edition for this deployment, and the whisper in particular
+  // is explicitly NOT a licence for unrelated physical intimacy (see `_whisperBase` below).
+  function _recordEnhancementCandidate(s, why) {
+    try {
+      if (!s) return;
+      s._enhancementCandidate = {
+        scene: (s.turnCount == null ? null : s.turnCount + 1),
+        why: why,
+        eroticMode: s.eroticMode || null,
+        at: new Date().toISOString(),
+      };
+    } catch (_) {}
+  }
+
   function _maybeRemapAuthorToGrok(decision, appState) {
     try {
       if (!decision || !decision.model) return decision;
-      if (/grok/i.test(decision.model)) return decision; // already Grok (e.g. Mode 1)
       const s = appState || {};
       const _hot = s.intimacyPhase === true
         || s.eroticMode === 'CARNAL'
         || !!(s.intimacyDialogue && s.intimacyDialogue.active)
         || !!(s._mode1 && (s._mode1.aftermathActive || s._mode1.rendezvous || s._mode1.routeToGrok));
+      // ══ LUNA AUTHORS IT, WHATEVER THIS SCENE IS (Roman 2026-11-08) ════════════════════════
+      // The three substitutions that used to happen here are gone:
+      //   1. `_hot` → CONFIG.SCENE_RENDERER_MODEL (Grok), for every intimate or whisper scene;
+      //   2. the fall-through → CONFIG.NARRATIVE_AUTHOR_MODEL (Grok 4.3), for every other scene;
+      //   3. the early `/grok/i.test(decision.model) → return` that let an upstream Grok
+      //      selection (Mode 1, PREMIUM_CREATIVE_MODEL) pass through untouched.
+      // MEASURED, which is why (3) mattered as much as the other two: scene 18's selector
+      // returned `reason: TierA:ST3:Sonnet` and `model: grok-4.3` — the ST3 tier had already
+      // put Grok in `decision.model` before this function ran, so the early return, not the
+      // remap, is what made Grok the author. Same packet as Luna's, 7.3x the input price.
+      //
+      // NON-GRAPHIC INTIMACY IS LUNA'S WORK, not a reason to change author. An intimate scene
+      // that wants explicit rendering gets it from the EDITOR, after the base draft is finished
+      // and after the shared craft repairs have run on it.
+      const _arch = _sbProseArchitecture();
+      if (_arch.lunaAuthorsEverything) {
+        if (_hot) _recordEnhancementCandidate(s, 'hot beat on the base draft');
+        // A run configuration may still name the author explicitly — that is a stated choice,
+        // not a silent substitution, and it is recorded in the reason string either way.
+        const _rcSel = _sbRunConfig();
+        const _named = (_rcSel && _rcSel.generalAuthorModel)
+          ? String(_rcSel.generalAuthorModel) : null;
+        const _model = _named || CONFIG.PROSE_AUTHOR_MODEL;
+        if (_model === decision.model) return decision;
+        return Object.assign({}, decision, {
+          model: _model,
+          max_tokens: (_rcSel && Number(_rcSel.generalAuthorMaxTokens) > 0)
+            ? Number(_rcSel.generalAuthorMaxTokens) : decision.max_tokens,
+          reasoningEffort: (_rcSel && _rcSel.reasoningEffort) || decision.reasoningEffort || null,
+          _origModel: decision.model,
+          reason: (decision.reason || '')
+            + (_named ? ':SelectedProseAuthor(' + _named + ')' : ':ProseAuthor(Luna)')
+            + (_hot ? ':baseDraftForEnhancement' : ''),
+        });
+      }
+      if (/grok/i.test(decision.model)) return decision; // already Grok (e.g. Mode 1)
       // COST DEPRECATION (Roman 2026-06-24): paid Anthropic authors (Sonnet/Opus) are
       // forbidden. A Sonnet/Opus decision that reached here would otherwise fall to
       // callChatGPT and get cost-guard-downgraded to HAIKU for a FULL scene — bad. So
@@ -1095,6 +1522,23 @@
           model: CONFIG.SCENE_RENDERER_MODEL,
           _origModel: decision.model,
           reason: (decision.reason || '') + ':GrokRenderer(hot)'
+        });
+      }
+      // ── THE SELECTED GENERAL AUTHOR, IF THIS RUN CHOSE ONE ──────────────────────────────
+      // Reached only past the `_hot` branch above, so by construction this cannot author an
+      // explicit scene. A reading pause or a cache expiry cannot substitute another author
+      // either: the assignment is read from the run configuration on every call, not latched
+      // once, so it survives save/reopen for as long as the configuration is present — and when
+      // it is absent the next line is the unchanged Grok default.
+      const _rc = _sbRunConfig();
+      if (_rc && _rc.generalAuthorModel && !/grok/i.test(String(_rc.generalAuthorModel))) {
+        return Object.assign({}, decision, {
+          model: String(_rc.generalAuthorModel),
+          max_tokens: (Number(_rc.generalAuthorMaxTokens) > 0)
+            ? Number(_rc.generalAuthorMaxTokens) : decision.max_tokens,
+          reasoningEffort: _rc.reasoningEffort || null,
+          _origModel: decision.model,
+          reason: (decision.reason || '') + ':SelectedGeneralAuthor(' + _rc.generalAuthorModel + ')'
         });
       }
       if (!CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && !_isPaidClaude) return decision; // flag off: only force-remap the deprecated paid models
@@ -1124,15 +1568,87 @@
         appState._mode1.rendezvous
     ));
     if (_mode1ForceGrok) {
+        // ── RECORD WHICH TRIGGER, WHICH SCENE, WHICH MODEL (Roman 2026-11-07) ─────────────
+        // This exception is INTENDED — an explicit come-on from the LI that deliberately
+        // precedes the StoryTurn romance gates, and it is right for it to outrank the run's
+        // selected general author. What was missing is any record of it: scene 17 was served by
+        // Grok with only `reason: Mode1:Whisper:Grok` to show for it, and the three possible
+        // triggers (one-shot whisper, sustained explicit-language window, rendezvous/aftermath)
+        // could not be told apart afterwards. The flag's LIFETIME is unchanged — the one-shot is
+        // cleared here as before, and the sustained window keeps its own 2-of-3/3-clean-turn
+        // lifecycle, which is deliberately sustained and is not touched.
+        const _whisperTrigger = appState._mode1.rendezvous ? 'rendezvous'
+            : (appState._mode1.aftermathActive ? 'aftermath'
+            : (appState._mode1.routeToGrok ? 'whisper_one_shot' : 'unknown'));
+        try {
+            const _st = (typeof window !== 'undefined' && window.state) || {};
+            const _rec = {
+                trigger: _whisperTrigger,
+                scene: (_st.turnCount == null ? null : _st.turnCount + 1),
+                servedModel: CONFIG.SCENE_RENDERER_MODEL,
+                sustainedWindowActive: !!_st._sustainedProfanityActive,
+                at: new Date().toISOString(),
+            };
+            _st._mode1Routings = (_st._mode1Routings || []).concat([_rec]);
+            console.log('[MODE1:ROUTE] trigger=' + _rec.trigger + ' scene=' + _rec.scene
+                + ' model=' + _rec.servedModel + ' sustainedWindow=' + _rec.sustainedWindowActive
+                + ' — intended explicit-authorship exception to the selected general author');
+        } catch (_) {}
         // Clear the one-shot routeToGrok flag now that the route has been honored.
         if (appState._mode1 && appState._mode1.routeToGrok) appState._mode1.routeToGrok = false;
+        // ── THE WHISPER IS PRESERVED; ITS BASE EDITION IS LUNA'S (Roman 2026-11-08) ────────
+        // EVERYTHING THAT MADE THE WHISPER WORK IS UNCHANGED. It is still the highest-priority
+        // branch in this function, so it is still available BEFORE the StoryTurn romance gates,
+        // which is its point: an LI who propositions the reader early is a character decision,
+        // not a progression reward. The one-shot is still cleared here, the sustained
+        // explicit-language window still keeps its own 2-of-3 / 3-clean-turn lifecycle, the
+        // rendezvous and aftermath triggers still outrank the ordinary selector, and the routing
+        // record above is still written.
+        //
+        // WHAT CHANGED IS ONLY WHO WRITES IT. The branch used to exist because OpenAI models
+        // refused or sanitised the come-on, so it forced Grok. The base edition keeps the
+        // come-on in NON-GRAPHIC language, which Luna writes, and a reader on the website may
+        // then receive the enhanced edition of that passage from the explicitness editor.
+        //
+        // PRODUCING A WHISPER IS NOT AUTHORIZATION FOR PHYSICAL INTIMACY. It marks the scene as
+        // an enhancement candidate for the DIALOGUE it contains and nothing else; `_whisperBase`
+        // is recorded separately from `intimacyPhase` so a later pass cannot read a come-on as
+        // consent to render unrelated intimate ACTS.
+        try {
+            const _stW = (typeof window !== 'undefined' && window.state) || null;
+            if (_stW) {
+                _stW._whisperBase = { trigger: _whisperTrigger,
+                    scene: (_stW.turnCount == null ? null : _stW.turnCount + 1),
+                    nonGraphic: true, authorizesPhysicalIntimacy: false,
+                    at: new Date().toISOString() };
+                _recordEnhancementCandidate(_stW, 'mode1 whisper dialogue (' + _whisperTrigger + ')');
+            }
+        } catch (_) {}
+        // ── THE ALLOWANCE IS THE AUTHOR'S, NOT THE OLD GROK FIGURE (Roman 2026-11-11) ────────
+        // `max_tokens: 2000` was correct when this branch forced Grok: a non-reasoning model
+        // spends the whole allowance on visible prose, and 2,000 visible tokens is ample for a
+        // scene that ends on a whisper. The branch now returns PROSE_AUTHOR_MODEL — a reasoning
+        // model that bills reasoning INSIDE the same budget — so 2,000 combined is not a small
+        // allowance, it is no allowance at all.
+        //
+        // MEASURED (paid run 2026-11-11, scene 16, both arms): request 589,855 chars /
+        // 131,224 prompt tokens, declared allowanceOut 2,000, completion_tokens 2,000 of which
+        // reasoning_tokens 2,000 — ZERO visible characters. The scene never committed in either
+        // arm and the run halted as STALLED. The two author calls at the established 16,000 in
+        // the same scene returned prose (1,583 and 2,388 chars).
+        //
+        // So this takes the SAME figure as every other full-scene authorship call, read from
+        // SB_OPERATION_CLASS rather than retyped, because that table is where the Luna author
+        // budget is defined and has sixteen receipts behind it.
         return {
-            model: CONFIG.SCENE_RENDERER_MODEL,
-            max_tokens: 2000,
+            model: CONFIG.PROSE_AUTHOR_MODEL,
+            max_tokens: (SB_OPERATION_CLASS['full-scene-author']
+              && SB_OPERATION_CLASS['full-scene-author'].lunaCap) || 16000,
             tier: 'A',
             reason: appState._mode1.rendezvous
-                ? 'Mode1:Rendezvous:Grok'
-                : (appState._mode1.aftermathActive ? 'Mode1:Aftermath:Grok' : 'Mode1:Whisper:Grok')
+                ? 'Mode1:Rendezvous:LunaBase'
+                : (appState._mode1.aftermathActive ? 'Mode1:Aftermath:LunaBase'
+                   : 'Mode1:Whisper:LunaBase')
         };
     }
 
@@ -1462,6 +1978,13 @@
     // content-inspecting boundary (e.g. _e2e_network_gate.mjs's blockImagePreparation) can classify
     // a request by an explicit, load-bearing tag rather than sniffing prompt wording alone.
     if (options.purpose) payload.purpose = options.purpose;
+    // ── THE DECK-FRAME FLAG IS SERIALIZED EXPLICITLY (Roman 2026-11-17) ──────────────────────
+    // A boolean that only exists in the caller's options object cannot be checked by anything
+    // reading the request. The pre-dispatch deck check is scoped by this flag, so it has to BE
+    // in the payload: `purpose` says which operation this is, `deckFrameActive` says whether the
+    // Scene-1 deck frame is the one in force. Both are read off the intercepted POST.
+    if (typeof options.deckFrameActive === 'boolean') payload.deckFrameActive = options.deckFrameActive;
+    if (options.openingVariant) payload.openingVariant = String(options.openingVariant);
 
     // ── THE REASONING LEVEL IS STATED, NEVER INHERITED ──
     // Reasoning tokens bill at the FULL completion rate and no request parameter bounds them, so
@@ -1602,6 +2125,43 @@
           console.error('[ORCHESTRATION] Proxy returned 200 but no content field. Keys:', receivedKeys);
           throw new Error(`LLM proxy returned 200 but payload missing content field (${_model} via ${_proxy}). Received keys: [${receivedKeys.join(', ')}]`);
         }
+
+        // ── REASONING AND VISIBLE OUTPUT, REPORTED SEPARATELY (Roman 2026-11-11) ───────────
+        // THIS is the dispatch path a continuation scene uses: app.js's callChat reaches
+        // callChatGPT with role PRIMARY_AUTHOR, and the reply arrives here as a bare string, so
+        // the receipt was the only place the token split existed and nothing printed it. The
+        // scene-16 failure was therefore invisible in the log: "0 chars" with no statement that
+        // 2,000 of a 2,000-token allowance had gone to reasoning. (An earlier version of this
+        // logging went into _authorFullScenePolicy, which this path does not use — it never
+        // fired. Placed here because this is where the usage object is.)
+        //
+        // NOTHING ELSE CHANGES: not the model, not reasoning_effort, not the allowance.
+        try {
+          const _u = data && data.usage;
+          if (_u && role === 'PRIMARY_AUTHOR') {
+            const _comp = Number(_u.completion_tokens) || 0;
+            const _reason = Number((_u.completion_tokens_details || {}).reasoning_tokens) || 0;
+            const _visible = _comp ? (_comp - _reason) : 0;
+            const _allow = Number(options.max_tokens) || null;
+            const _exhausted = !!(_comp && _allow && _comp >= _allow);
+            console.log('[AUTHOR:TOKENS] ' + _model + ' · allowance '
+              + (_allow == null ? '(unstated)' : _allow) + ' · completion ' + _comp
+              + ' (reasoning ' + _reason + ', visible ' + _visible + ')'
+              + (_exhausted ? ' ALLOWANCE EXHAUSTED' : '')
+              + ' · ' + String(text || '').length + ' chars of prose');
+            // AN EMPTY AUTHOR REPLY IS A FAILURE, NAMED AS ONE. The caller may or may not treat
+            // a 200-with-no-prose as fatal; the LOG must not read like a normal line either way.
+            if (!String(text || '').trim()) {
+              console.error('[AUTHOR:TOKENS] FAILURE — ' + _model + ' returned NO PROSE. '
+                + (_exhausted && _visible === 0
+                  ? 'The ENTIRE ' + _allow + '-token combined allowance was spent on reasoning ('
+                    + _reason + ' reasoning, 0 visible): the allowance is too small for this '
+                    + 'prompt. This is not a refusal.'
+                  : 'completion ' + _comp + ' (reasoning ' + _reason + ', visible ' + _visible
+                    + ') — not an allowance exhaustion; look at finish_reason and refusal.'));
+            }
+          }
+        } catch (_) {}
 
         return text;
 
@@ -1787,7 +2347,17 @@
 
     const payload = {
       messages,
-      role: 'SCENE_RENDERER',
+      // ── THE ROLE NAME THE SERVER ACTUALLY DEFINES (Roman 2026-11-07) ──────────────────────
+      // MEASURED on published scenes 17 and 18: this sent `SCENE_RENDERER`, which /api/proxy has
+      // no entry for, so every call died on
+      //   400 INVALID_ROLE "Unknown role: SCENE_RENDERER. Valid Grok roles: RENDERER,
+      //   INTIMACY_SPECIALIST, SPECIALIST_RENDERER"
+      // and the failure then reached the cut-away handler below. SPECIALIST_RENDERER is the
+      // server's name for THIS operation (api/proxy.js:281 labels it "Orchestration role"), and
+      // its chain already permits CONFIG.SCENE_RENDERER_MODEL ('grok-4-1-fast-reasoning'), so the
+      // client is corrected to the defined name rather than a fourth alias being added
+      // server-side for the same thing.
+      role: 'SPECIALIST_RENDERER',
       model: CONFIG.SCENE_RENDERER_MODEL,
       temperature: options.temperature || 0.8,
       // Default 650 max_tokens (~488 words) caps the anchor (first intimate
@@ -3013,7 +3583,7 @@ FAILURE CONDITIONS (invalid outputs):
         throw new Error('scene author unavailable — window._authorFullScenePolicy (app.js) not loaded');
       }
       try {
-        const _policyResult = await window._authorFullScenePolicy(messages, { maxTokens: _maxTokens, temperature: 0.8, roleTag: 'literary-scene', grokModel: 'grok-4-1-fast-reasoning' });
+        const _policyResult = await window._authorFullScenePolicy(messages, { maxTokens: _maxTokens, temperature: 0.8, roleTag: 'literary-scene', grokModel: 'grok-4-1-fast-reasoning' , purpose: options.purpose, deckFrameActive: options.deckFrameActive, openingVariant: options.openingVariant });
         prose = _extract(_policyResult.text);
         try { console.log('[GROK-LIT] author = ' + _policyResult.provider + '/' + _policyResult.model + ' — cache ' + JSON.stringify(_policyResult.cache)); } catch (_) {}
         try { if (window.state) { window.state._lastLiteraryAuthor = _policyResult.provider; window.state._lastLiteraryAuthorCache = _policyResult.cache; window.state._authorPrevWasPremium = (_policyResult.provider === 'grok'); } } catch (_) {}
@@ -3157,6 +3727,35 @@ FAILURE CONDITIONS (invalid outputs):
       const _auditSys = 'You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by priority: (1) HIGHEST — a physical descriptor / gesture / body-tell / observation / image REPEATED within the scene (the same eyes/jaw/hands re-described; a tic like rotating a wrist, a crease between the brows, a palm on glass used twice). Fix repetition BEFORE clichés. (2) calcified physical cliché ("chiseled jaw", "piercing eyes", "rangy"/"wiry"/"lean" build, "ruggedly handsome", "he was gorgeous"); (3) flat emotional cliché ("her heart raced", "electricity between them", "sparks flew", "time stood still"). Return ONLY a JSON array, at most 5 items, no prose: [{"quote":"<EXACT verbatim substring copied from the scene>","replacement":"<...>"}]. RULES FOR EACH replacement: it must be a CONCRETE, GROUNDED, SPECIFIC physical / sensory / behavioral observation — NOT a synonym swap (trading "chiseled jaw" for "strong jawline", or "piercing eyes" for "intense gaze", is NOT a fix and is forbidden). NEVER introduce another generic descriptor (rangy/wiry/lean/chiseled/sculpted/piercing/penetrating/intense/ruggedly/gorgeous). For a REPEATED feature, the replacement must notice something ENTIRELY DIFFERENT (a sound, a gait, a habit, a texture, a smell), not the same feature reworded. GRAMMATICAL FIT (critical — the replacement is spliced in verbatim): the replacement must slot into the quote\'s exact grammatical position and read cleanly. If the quoted span is a COMPLETE SENTENCE (capitalized start, ends in a period), the replacement must ALSO be a complete sentence with a subject and a FINITE verb — never a participle fragment ("my heel bouncing once" is WRONG; "my heel bounced once against the floorboard" is right). If the quote is a phrase or clause, match that shape. Keep similar length; keep names/events/dialogue/markers intact. The quote MUST be an exact verbatim substring or the fix is discarded. If clean, return [].';
       const _BANNED_REPL = /\b(rangy|wiry|lean|chiseled|sculpted|piercing|penetrating|intense(ly)?|ruggedly|gorgeous|heart (raced|pounded|hammered|skipped)|electricity between|sparks (flew|flying)|time stood still)\b/i;
       let _auditRaw = '';
+      // ── MIGRATED: THE LINE EDITOR PREFERS THE SELECTED GENERAL AUTHOR (Roman 2026-11-07)
+      // Ordinary editorial work, so it moves to the run's selected author through the existing
+      // callChatGPT route. Its task, prompt and {quote, replacement} contract are untouched, as
+      // is the 5-fix cap and every downstream guard that decides whether a fix is applied.
+      // Allowance 10000: the reply is a short JSON array, but this family spends its allowance on
+      // reasoning first (observed draws 4,188-13,824), so a visible-output cap would starve it.
+      // An ESTIMATE from those draws; no paid probe. Absent a selected author, unchanged.
+      let _selLineEd = null;
+      try {
+        const _slc = (typeof window !== 'undefined'
+          && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
+        if (_slc && _slc.generalAuthorModel && !/grok/i.test(String(_slc.generalAuthorModel))) {
+          _selLineEd = { model: String(_slc.generalAuthorModel), effort: _slc.reasoningEffort || 'medium' };
+        }
+      } catch (_) {}
+      if (_selLineEd) {
+        try {
+          _auditRaw = _extract(await callChatGPT(
+            [{ role: 'system', content: _auditSys }, { role: 'user', content: prose }],
+            'PRIMARY_AUTHOR',
+            { model: _selLineEd.model, max_tokens: 10000, reasoningEffort: _selLineEd.effort }));
+          try { console.log('[SUPPORT:line-editor] served by ' + _selLineEd.model
+            + ' · allowance 10000 · ' + String(_auditRaw || '').length + ' chars'); } catch (_) {}
+        } catch (_selEdErr) {
+          _auditRaw = '';
+          try { console.warn('[SUPPORT:line-editor] selected ' + _selLineEd.model + ' failed ('
+            + (_selEdErr && _selEdErr.message) + ') — prose kept as authored, no Grok substitution'); } catch (_) {}
+        }
+      } else
       try {
         _auditRaw = _extract(await callGrokNarrativeAuthor([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], { preferredModel: CONFIG.SCENE_RENDERER_MODEL, max_tokens: 900 }));
       } catch (_gErr) {
@@ -4226,7 +4825,30 @@ ${continuityBlock}`;
           // to land embodied prose. Tempt-Fate cascade gets the larger 1200
           // budget for the higher-stakes invocation moment.
           const cascadeFastTokens = (window.state?.tempt_fate_invoked_this_turn === true) ? 1200 : 500;
-          let cascadeOutput = await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: cascadeFastTokens });
+          // ══ A CASCADE BEAT IS PROSE, SO LUNA WRITES IT (Roman 2026-11-08) ══════════════════
+          // A cascade beat is continuation prose in an authorized intimate encounter — exactly
+          // the case the architecture names ("opening, continuation, ordinary romance,
+          // non-graphic intimacy"). Sending it to the specialist renderer made Grok the author
+          // of four to eight consecutive pages of a scene Luna started, which is the
+          // substitution being removed; leaving it would have left the biggest one in place.
+          //
+          // EVERY PROMPT LAYER IS UNCHANGED. The renderer prompt, the continuity block, the
+          // scene-context bundle, the plot-reference policy, the phase directive, the Fate
+          // override, the continuation/invitation directives, the texture bias and the literary
+          // intimacy arc all still build and still ship, in the same order, with the same
+          // allowance. Only the model on the other end changes.
+          //
+          // AND THE BEAT IS A BASE EDITION, like every other page: it publishes through the same
+          // finalization, and the optional explicitness editor is what raises it on the website.
+          const _archCas = _sbProseArchitecture();
+          let cascadeOutput = _archCas.lunaAuthorsEverything
+            ? await callChatGPT(messages, 'PRIMARY_AUTHOR', {
+                model: CONFIG.PROSE_AUTHOR_MODEL, max_tokens: cascadeFastTokens,
+                profileLabel: 'cascade_beat' })
+            : await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: cascadeFastTokens });
+          if (typeof cascadeOutput !== 'string' && cascadeOutput && cascadeOutput.content) {
+            cascadeOutput = cascadeOutput.content;   // callChatGPT may return an envelope
+          }
 
           // Step 5: Guardrails — strip structural meta from cascade output
           if (cascadeOutput) {
@@ -4541,6 +5163,32 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     // a Grok model here (e.g. Mode 1) still takes the legacy callChatGPT path, so
     // flag-off behavior is byte-identical to before.
     const _useGrokAuthor = CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && /grok/i.test(renderTier.model || '');
+    // THE AUTHOR WE INTENDED, captured before dispatch so the result can state it even when the
+    // call fails. Under the live architecture this is Luna for every scene.
+    state.proseAuthorIntended = renderTier.model;
+    // ── A PROSE AUTHOR THAT IS NOT THE PROSE AUTHOR IS A DEFECT, NOT A SILENT ROUTE ───────
+    // The architecture says one author writes every scene. If something upstream still hands a
+    // different model to the author pass, say so rather than letting the scene publish with a
+    // quiet substitution — this is the check that would have caught scene 17 on the day.
+    try {
+      const _archA = _sbProseArchitecture();
+      if (_archA.lunaAuthorsEverything && /grok/i.test(String(renderTier.model || ''))) {
+        console.error('[PROSE-AUTHOR] the selector handed this scene to ' + renderTier.model
+          + ' (reason ' + renderTier.reason + ') while the live architecture authors all prose on '
+          + _archA.proseAuthorModel + '. Grok reaches prose only as the explicitness EDITOR.'
+          + ' This is a routing defect, not an authorized exception.');
+        if (typeof window !== 'undefined' && window.state) {
+          window.state._proseAuthorRouteDefect = { scene: (window.state.turnCount == null
+            ? null : window.state.turnCount + 1), model: renderTier.model,
+            reason: renderTier.reason, at: new Date().toISOString() };
+        }
+      }
+    } catch (_) {}
+
+    // Declared in the outer scope so GUARD-A can ask whether consent was adjudicated at all.
+    // `false` here means "no decision was produced", NOT "intimacy was declined".
+    let _controlDecisionMade = false;
+    let _controlDecisionFailure = null;
 
     try {
       if (_useGrokAuthor) {
@@ -4551,13 +5199,67 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         // now sees global story context.
         let _controlTags = '';
         try {
+          // ── THE CONTROL PASS MUST FIT THE MODEL IT IS SENT TO (Roman 2026-11-07) ──────────
+          // This call reuses `messages` — the whole author packet — and asks for 700 tokens of
+          // consent tags. On scenes 17 and 18 that packet was ~145,000 tokens against
+          // gpt-4o-mini's stated 128,000, so the request was refused BEFORE dispatch and consent
+          // went unadjudicated. A refusal protects the wallet; it does not do the job.
+          //
+          // THE PAYLOAD IS NOT CHANGED HERE. The oversize is a property of this CALL SITE (it
+          // forwards the author packet verbatim), and which material a consent pass actually
+          // needs is a payload decision, not something to settle inside a bug fix. So the
+          // routing is corrected instead: when the packet cannot fit the primary-author model,
+          // the pass goes to the run's selected general author, which is MEASURED to accept this
+          // exact packet (scene 18 request #13: 572,700 chars → HTTP 200).
+          //
+          // THE A1 SPLIT SURVIVES. This branch only runs when prose is authored by Grok, so the
+          // selected general author is never also the prose author — consent stays on a
+          // different model, which is the whole point of the split. Where the selected author IS
+          // the prose author (scenes 2-16, Luna), `_useGrokAuthor` is false and this pass does
+          // not run at all.
+          const _CTRL_CTX_TOK = { 'gpt-4o-mini': 128000, 'gpt-4o': 128000 };
+          const _ctrlChars = messages.reduce((a, m) =>
+            a + String((m && m.content) || '').length, 0);
+          const _ctrlTok = Math.ceil(_ctrlChars / 4);
+          let _ctrlModel = CONFIG.PRIMARY_AUTHOR_MODEL;
+          const _ctrlLimit = _CTRL_CTX_TOK[_ctrlModel];
+          if (_ctrlLimit && _ctrlTok > _ctrlLimit) {
+            let _selAuthor = null;
+            try {
+              const _rc = (typeof window !== 'undefined'
+                && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
+              if (_rc && _rc.generalAuthorModel && !/grok/i.test(String(_rc.generalAuthorModel))) {
+                _selAuthor = String(_rc.generalAuthorModel);
+              }
+            } catch (_) {}
+            if (_selAuthor) {
+              console.warn('[GROK-AUTHOR] control pass packet is ~' + _ctrlTok + ' tokens, over '
+                + _ctrlModel + "'s stated " + _ctrlLimit + ' — routing consent adjudication to the'
+                + ' run-selected author ' + _selAuthor + ' so the pass runs instead of being refused.');
+              _ctrlModel = _selAuthor;
+            } else {
+              console.error('[GROK-AUTHOR] control pass packet is ~' + _ctrlTok + ' tokens, over '
+                + _ctrlModel + "'s stated " + _ctrlLimit + ', and no larger-context author is'
+                + ' configured. The pass will be refused and consent left UNADJUDICATED —'
+                + ' GUARD-A will decline intimate authorship rather than invent it.');
+            }
+          }
           const _ctrlRaw = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
-            model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 700, profileLabel: 'control'
+            model: _ctrlModel, max_tokens: 700, profileLabel: 'control'
           });
           const _ctrlText = (typeof _ctrlRaw === 'string') ? _ctrlRaw : (_ctrlRaw && _ctrlRaw.content) || '';
           _controlTags = _extractControlTags(_ctrlText);
+          // WHETHER CONSENT WAS ACTUALLY ADJUDICATED (Roman 2026-11-07). Recorded as a fact
+          // rather than inferred downstream from the presence of a tag block, because those are
+          // different things: a control pass that RAN and omitted the block is a model declining
+          // to mark up its own output; a control pass that never returned is NO DECISION AT ALL.
+          // GUARD-A below is allowed to override the first and must refuse to invent the second.
+          _controlDecisionMade = true;
         } catch (_ctrlErr) {
-          console.warn('[GROK-AUTHOR] control pass failed — GUARD-A synthetic consent will apply:', _ctrlErr && _ctrlErr.message);
+          _controlDecisionFailure = (_ctrlErr && _ctrlErr.message) || String(_ctrlErr);
+          console.error('[GROK-AUTHOR] control pass did NOT return a decision ('
+            + _controlDecisionFailure + ') — consent is UNADJUDICATED, so intimate authorship'
+            + ' and the specialist renderer will NOT be invoked for this scene.');
         }
         const _grokMessages = _controlTags
           ? messages.concat([{ role: 'system', content: '[UPSTREAM_CONTROL_DECISION — AUTHORITATIVE. Obey consent / hardStops / physicalBounds EXACTLY; never exceed or contradict them.]\n' + _controlTags }])
@@ -4570,20 +5272,63 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         // CONVERSION_DELTA) behaves exactly as with a GPT-authored output.
         authorOutput = _controlTags ? (_controlTags + '\n\n' + _grokProse) : _grokProse;
       } else {
+        // The effort travels with the decision so a reasoning general author gets the level the
+        // run selected. Absent, `payload.reasoning_effort` is omitted exactly as before and a
+        // non-reasoning model's body is unchanged.
         authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
           model: renderTier.model,
-          max_tokens: renderTier.max_tokens
+          max_tokens: renderTier.max_tokens,
+          reasoningEffort: renderTier.reasoningEffort || undefined
         });
       }
     } catch (chatgptErr) {
-      console.error('[ORCHESTRATION] ChatGPT Author Pass failed, attempting Gemini fallback:', chatgptErr);
-      state.errors.push(`ChatGPT failed: ${chatgptErr.message}`);
+      // ══ A LUNA FAILURE IS REPORTED AS A LUNA FAILURE (Roman 2026-11-08) ═════════════════
+      // The instruction is that if Luna fails we report the failure rather than mislabelling
+      // another model's output. MEASURED on the halted scene 19: AUTHOR_ROUTING.json recorded
+      // `label: gpt-6-luna, reason: RUN_SELECTED_GENERAL_AUTHOR` for all three attempts while
+      // the request went to /api/proxy and was served by grok-4.3 — a record that named one
+      // author and a dispatch that used another, with nothing in between saying so.
+      //
+      // The Gemini fallback is NOT removed: a transport failure on the prose author still has
+      // somewhere to go, and losing the reader's turn outright is worse than a conservative
+      // draft. What changes is that the substitution is now RECORDED on state and in the
+      // returned result, named by the model that actually wrote the prose, so no downstream
+      // record, receipt or routing file can attribute Gemini's prose to Luna.
+      const _intendedAuthor = renderTier.model;
+      try {
+        if (typeof window !== 'undefined' && window.state) {
+          window.state._proseAuthorFailure = {
+            scene: (window.state.turnCount == null ? null : window.state.turnCount + 1),
+            intendedAuthor: _intendedAuthor,
+            error: (chatgptErr && chatgptErr.message) || String(chatgptErr),
+            substitutedWith: null, at: new Date().toISOString(),
+          };
+        }
+      } catch (_) {}
+      state.proseAuthorFailure = {
+        intendedAuthor: _intendedAuthor,
+        error: (chatgptErr && chatgptErr.message) || String(chatgptErr),
+        substitutedWith: null,
+      };
+      console.error('[PROSE-AUTHOR] ' + _intendedAuthor + ' did NOT produce this scene ('
+        + ((chatgptErr && chatgptErr.message) || chatgptErr) + '). Attempting the Gemini'
+        + ' fallback; if it succeeds the prose is GEMINI\'s and is recorded as Gemini\'s.');
+      state.errors.push(`Prose author ${_intendedAuthor} failed: ${chatgptErr.message}`);
 
       // GEMINI FALLBACK - ONE ATTEMPT, NO RETRIES
       try {
         authorOutput = await callGemini(messages, 'FALLBACK_AUTHOR');
         usedFallback = true;
-        console.log('[ORCHESTRATION] Gemini fallback succeeded');
+        state.proseAuthorFailure.substitutedWith = CONFIG.FALLBACK_AUTHOR_MODEL;
+        try {
+          if (typeof window !== 'undefined' && window.state
+            && window.state._proseAuthorFailure) {
+            window.state._proseAuthorFailure.substitutedWith = CONFIG.FALLBACK_AUTHOR_MODEL;
+          }
+        } catch (_) {}
+        console.log('[PROSE-AUTHOR] Gemini fallback succeeded — this scene was authored by '
+          + CONFIG.FALLBACK_AUTHOR_MODEL + ', NOT by ' + _intendedAuthor
+          + '. Do not record it as ' + _intendedAuthor + '.');
       } catch (geminiErr) {
         state.errors.push(`Gemini fallback failed: ${geminiErr.message}`);
         console.error('[ORCHESTRATION] Gemini fallback also failed, aborting:', geminiErr);
@@ -4601,6 +5346,71 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
     state.authorOutput = authorOutput;
     state.usedFallbackAuthor = usedFallback;
+
+    // ══ THE INTIMATE CASCADE SURVIVES THE REPLACEMENT (Roman 2026-11-08) ═══════════════════
+    // WHAT THE SD ACTUALLY IS. `state.esd` is a CONSTRAINT RECORD, not prose: `parseSD` fills
+    // emotionalCore, physicalBounds, hardStops and completionAllowed, and every one of those is
+    // already derivable without a model — `resolvePhysicalBounds()` from `state.eroticMode`,
+    // `EMOTIONAL_CORE_DEFAULTS` from the same, the hard stops as the fixed pair, and
+    // completionAllowed from the gate enforcement this run already computed.
+    //
+    // WHY IT STILL HAS TO EXIST. The multi-beat intimate cascade — anchor detection, the
+    // diegetic continuation question, the word ceiling, the authored interruption and the
+    // graceful terminate — is a READER-FACING FLOW, and it was anchored inside the SD block:
+    // the anchor fires on `if (esdOutput)`, and the next turn terminates the cascade on
+    // `cascadeMode && !state.esd`. Removing the SD AUTHORING without providing the record would
+    // not "replace the cascade", it would delete the feature: measured, the cascade control's
+    // anchor assertion went from PASS to `cascadeMode: false`, and with it the interruption
+    // mount, the card slots and the terminate path.
+    //
+    // SO THE RECORD IS BUILT DETERMINISTICALLY AND THE AUTHORING IS GONE. No consent control
+    // pass, no [CONSTRAINTS] block to synthesise, no SD_AUTHOR call, no DeepSeek or Mistral
+    // fallback chain, and — see the renderer gate below — no specialist renderer. The bounds
+    // come from the same `eroticMode` the base draft was written under, so nothing here can
+    // authorize more than the scene already authorized, and no model gets a say in it.
+    //
+    // IT IS NOT AN AUTHORIZATION. This block is reached only inside orchestration, which runs
+    // only when intimacy was already authorized for the scene (`explicitEmbodimentAuthorized`
+    // upstream in app.js). It records the bounds of an authorized encounter; it does not decide
+    // that there is one. A scene that never authorized intimacy never arrives here.
+    {
+      const _archSd = _sbProseArchitecture();
+      if (_archSd.lunaAuthorsEverything && !usedFallback) {
+        const _eroticMode = (window.state && window.state.eroticMode) || 'ROMANTIC';
+        state.esd = {
+          intimacyStage: 'authorized',
+          completionAllowed: !!(state.gateEnforcement && state.gateEnforcement.completionAllowed),
+          emotionalCore: EMOTIONAL_CORE_DEFAULTS[_eroticMode] || EMOTIONAL_CORE_DEFAULTS.ROMANTIC,
+          physicalBounds: resolvePhysicalBounds(),
+          hardStops: ['consent_withdrawal', 'scene_boundary'],
+          // Stated so no later reader mistakes this for a model-authored SD.
+          provenance: 'deterministic_from_eroticMode',
+          authoredBy: null,
+        };
+        state.esdAuthoredByGrok = false;
+        // STATED ON STATE, so no later reader — or control — has to infer how this SD came to
+        // exist. A model-authored SD would carry a different provenance, and the absence of this
+        // marker alongside a present SD is itself the signal that one did.
+        try {
+          if (typeof window !== 'undefined' && window.state) {
+            window.state._lastSdProvenance = { provenance: 'deterministic_from_eroticMode',
+              eroticMode: _eroticMode, authoredBy: null,
+              scene: (window.state.turnCount == null ? null : window.state.turnCount + 1),
+              at: new Date().toISOString() };
+          }
+        } catch (_) {}
+        console.log('[SD] constraint record derived deterministically from eroticMode='
+          + _eroticMode + ' (completionAllowed=' + state.esd.completionAllowed + ') — no SD'
+          + ' author, no fallback chain and no specialist renderer. The intimate prose is the'
+          + ' base draft; explicitness is an editor pass on it.');
+        // THE SAME ANCHOR THE SD BRANCH CALLS — one implementation, two call sites. Reaching
+        // this point means orchestration ran, and orchestration runs only for an encounter the
+        // scene already authorized, so `intimacyOccurs` is true by construction here. The
+        // anchor text is the author's own draft: under this architecture that draft IS the
+        // intimate prose, so it is the right thing to seed the cascade's word ceiling from.
+        _cascadeAnchorIfNeeded(state, true, authorOutput);
+      }
+    }
 
     // =========================================================================
     // PHASE 1B: Grok SD Authoring (CONDITIONAL - intimacy authorized only)
@@ -4620,8 +5430,44 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           guardAActivated = true;
           console.warn('[GUARD-A] intimacyOccurs was false despite authorized pipeline — overriding');
         }
+      } else if (_useGrokAuthor && !_controlDecisionMade) {
+        // ── GUARD-A FAILS CLOSED WHEN NOTHING ADJUDICATED CONSENT (Roman 2026-11-07) ────────
+        // MEASURED on published scenes 17 and 18, which are an Inquiry hearing:
+        //   #14 control pass (gpt-4o-mini, the full 576KB author packet) — REFUSED pre-dispatch
+        //        by the context-fit guard, so it returned nothing: "control pass failed ...
+        //        Failed to fetch"
+        //   → no [CONSTRAINTS] block existed
+        //   → this branch synthesised `intimacyOccurs: true`
+        //   → "[GROK SD] Authoring SD — intimacy authorized"
+        //   → SD_AUTHOR ($0.036) and the SPECIALIST RENDERER ($0.049) both dispatched
+        // Nothing in that chain ever decided intimacy was appropriate. GUARD-A's own comments
+        // say it exists for a model that "tried to suppress" an ALREADY-authorized scene — it
+        // was never meant to be the authorizer. The surrounding gate is
+        // CONFIG.ENABLE_GROK_SD_AUTHORING, a deployment flag, not a per-scene decision, and the
+        // regime log for both scenes reads `storyturn-gate=NOT-CONSULTED ·
+        // li-presence-gate=NOT-CONSULTED` with `relationship_phase=strangers`.
+        //
+        // So: no decision is NOT a decision to proceed. Intimate authorship and the specialist
+        // renderer are skipped, the scene publishes as ordinary prose, and the reason is stated.
+        // This does NOT touch the Mode 1 whisper: that routes explicit DIALOGUE to Grok by
+        // model selection and never depended on this block. Explicit dialogue is not
+        // authorization for physical intimacy, and this change keeps those separate.
+        constraints = { intimacyOccurs: false };
+        console.error('[GUARD-A] REFUSING to synthesise consent — the control pass produced no'
+          + ' decision' + (_controlDecisionFailure ? ' (' + _controlDecisionFailure + ')' : '')
+          + '. Intimacy is UNADJUDICATED, not authorized: no SD authoring, no specialist'
+          + ' renderer. The scene publishes as ordinary prose.');
+        try {
+          if (typeof window !== 'undefined' && window.state) {
+            window.state._sdRefusedUnadjudicated = {
+              scene: (window.state.turnCount == null ? null : window.state.turnCount + 1),
+              why: 'control pass produced no decision',
+              detail: _controlDecisionFailure || null, at: new Date().toISOString()
+            };
+          }
+        } catch (_) {}
       } else {
-        // GUARD A: No [CONSTRAINTS] block at all — ChatGPT omitted it entirely
+        // GUARD A: the control pass RAN and omitted the block entirely — its original case.
         guardAActivated = true;
         constraints = { hardStops: ['consent_withdrawal'] };
         console.warn('[GUARD-A] No [CONSTRAINTS] block found — generating synthetic constraints');
@@ -4796,89 +5642,8 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         if (esdOutput) {
           state.esd = parseSD(esdOutput, state.gateEnforcement);
 
-          // CASCADE ANCHOR DETECTION (Step 2):
-          // If intimacy occurs and we are NOT already in cascade mode,
-          // this is the Anchor Beat — store context for subsequent cascade beats
-          const appState = window.state;
-          if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
-            appState.cascadeMode = true;
-            appState.cascadeCount = 0;
-            // New intimacy encounter (anchor beat) → clear any prior SHAPE bias
-            // so the adjustment is strictly per-encounter (never bleeds forward).
-            appState.intimacyAdjustment = null;
-            appState.shapeEncounterChoice = null;
-            appState._litArcRegisterLanding = null; // new encounter → re-derive the arc's register baseline
-            appState._litArcRegister = null;
-            // Initialize diegetic continuation tracking. Anchor's word count
-            // seeds cascadeTotalWords so the hard 10K cap is enforced across
-            // anchor + cascade beats together.
-            appState.cascadeAwaitingContinuation = false;
-            appState.cascadeExtensionsGranted = 0;
-            const _anchorWords = (state.rendererOutput && typeof state.rendererOutput === 'string')
-              ? state.rendererOutput.trim().split(/\s+/).filter(Boolean).length
-              : 0;
-            appState.cascadeTotalWords = _anchorWords;
-
-            // Intimate context bundle — gives subsequent cascade beats enough
-            // plot/character grounding to maintain continuity AND engage with
-            // legitimate plot references (honey-pot extraction, roleplay,
-            // post-betrayal sex, etc.) without Grok hallucinating wholly new
-            // plot facts.
-            //
-            // Anchor plot excerpt: strip [CONSTRAINTS] / [SD] / [other tags]
-            // from authorOutput and take first ~250 words as "scene situation"
-            // for Grok to read. This is plot grounding, not a regen seed.
-            let _anchorPlotExcerpt = null;
-            if (state.authorOutput && typeof state.authorOutput === 'string') {
-              const _stripped = state.authorOutput
-                .replace(/\[[A-Z_]+\][\s\S]*?\[\/[A-Z_]+\]/g, '') // strip tag blocks
-                .replace(/\[.*?\]/g, '')                          // strip stray tags
-                .replace(/\s{2,}/g, ' ')
-                .trim();
-              const _words = _stripped.split(/\s+/).filter(Boolean);
-              _anchorPlotExcerpt = _words.slice(0, 250).join(' ');
-            }
-
-            appState.cascadeContext = {
-              // Existing SD-scoped fields:
-              emotionalCore:     state.esd.emotionalCore,
-              physicalBounds:    state.esd.physicalBounds,
-              hardStops:         state.esd.hardStops,
-              completionAllowed: state.esd.completionAllowed,
-              // NEW: intimate context bundle for plot grounding
-              intimateContextBundle: {
-                liName:               appState.loveInterestName || null,
-                liArchetype:          appState.liArchetype || (appState.archetype && appState.archetype.primary) || null,
-                liCoverIdentity:      appState.liCoverIdentity || null,    // opt-in: roleplay / spy / undercover
-                liHiddenAgenda:       appState.liHiddenAgenda  || null,    // opt-in: honey-pot, ulterior motive
-                liHiddenAgendaHandler: (appState.liHiddenAgendaContext && appState.liHiddenAgendaContext.handler) || null,
-                liConversionScore:    appState.liConversionScore || 0,
-                liConversionRevealed: appState.liConversionRevealed === true,
-                liOccupation:         appState.liOccupation || null,
-                world:                appState.world || null,
-                worldSubtype:         appState.worldSubtype || null,
-                flavor:               (appState.picks && appState.picks.flavor) || null,
-                eroticMode:           appState.eroticMode || null,
-                // World-specific intimacy physics — looked up at anchor time
-                // so cascade beats render the act with world-correct rules.
-                intimacyWorldCanon:   (typeof window.getIntimacyWorldCanon === 'function')
-                                        ? window.getIntimacyWorldCanon(appState.worldSubtype)
-                                        : null,
-                // A-plot snapshot (compact)
-                aPlotGoal:            (appState.aPlot && appState.aPlot.goal) || null,
-                aPlotNamedClock:      (appState.aPlot && appState.aPlot.namedClock) || null,
-                aPlotAntagonist:      (appState.aPlot && appState.aPlot.antagonistOrAntiForce) || null,
-                aPlotLastTriggered:   (appState.aPlot && Array.isArray(appState.aPlot.milestones))
-                                        ? (appState.aPlot.milestones.filter(m => m && m.triggered).slice(-1)[0] || null)
-                                        : null,
-                aPlotCurrentTurn:     (appState.aPlot && appState.aPlot.currentTurn) || 0,
-                aPlotTimelineLength:  (appState.aPlot && appState.aPlot.timelineLength) || 0,
-                // Recent plot prose for grounding
-                anchorPlotExcerpt:    _anchorPlotExcerpt
-              }
-            };
-            console.log('[CASCADE] Anchor beat detected — cascade context stored, anchor words:', _anchorWords, '— bundle has plot grounding:', !!_anchorPlotExcerpt);
-          }
+          // The anchor is now one function, called from here and from the deterministic-SD path.
+          _cascadeAnchorIfNeeded(state, constraints.intimacyOccurs, state.rendererOutput);
         } else {
           // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
           console.warn('[ORCHESTRATION] ALL scene authors failed — fateStumbled, forced interruption required');
@@ -4933,10 +5698,33 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
      */
 
     // Orchestration is only invoked when intimacy is authorized — renderer gated by SD presence only
+    // ── THE SPECIALIST RENDERER IS THE SECOND AUTHOR, AND IT DOES NOT RUN (Roman 2026-11-08) ──
+    // This is the call that wrote the intimate prose on a different model from the rest of the
+    // scene, and it is what the architecture replaces. Under the live architecture the intimate
+    // prose IS the base draft Luna wrote, and raising its explicitness is the editor's job — an
+    // optional, platform-gated pass on a finished draft, not a parallel author.
+    //
+    // THE SD RECORD STILL GATES IT, so this stays correct if the architecture is ever reverted:
+    // without an SD there is still no renderer, exactly as before. The added clause only says
+    // that under the new architecture the SD record is a constraint record for the cascade and
+    // is NOT an instruction to go and render the scene again.
+    //
+    // MEASURED, which is why this clause is explicit rather than implied: on published scenes 17
+    // and 18 the renderer was dispatched into an Inquiry hearing between characters whose
+    // relationship phase was `strangers`, with both romance gates `NOT-CONSULTED`, and then
+    // failed on an invalid role — and fixing the role alone would have turned an inappropriate
+    // call into a working, recurring one.
+    const _archRend = _sbProseArchitecture();
     const shouldCallRenderer = (
       CONFIG.ENABLE_SPECIALIST_RENDERER &&
-      state.esd
+      state.esd &&
+      !_archRend.lunaAuthorsEverything
     );
+    if (state.esd && _archRend.lunaAuthorsEverything) {
+      console.log('[RENDER] specialist renderer NOT called — the scene already has its prose from '
+        + _archRend.proseAuthorModel + ', and explicitness is an editor pass on that draft. The SD'
+        + ' record carries the encounter bounds for the cascade and nothing else.');
+    }
 
     if (shouldCallRenderer) {
       state.phase = 'RENDER_PASS';
@@ -5059,34 +5847,59 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         // =====================================================================
         const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
 
+        // ── A RENDERER FAILURE IS REPORTED, NOT NARRATED (Roman 2026-11-07) ────────────────
+        // MEASURED on published scenes 17 and 18. The renderer dispatched `role:'SCENE_RENDERER'`,
+        // a name /api/proxy does not define, and died on INVALID_ROLE. This block then did three
+        // separate things it was never meant to do:
+        //
+        //   1. IT FIRED ON A NON-INTIMATE SCENE. The comment above says "If intimacy was
+        //      authorized AND (renderer failed OR all scene authors failed)", but the condition
+        //      tested the failure alone. Scenes 17-18 are an Inquiry hearing with no SD at all.
+        //   2. IT TRUNCATED THE DRAFT at the first sentence matching /touch|hands on|breath/ —
+        //      ordinary words in a scene about a pen, a palm and a charge sheet — so a complete
+        //      authored scene was cut to its opening (+1,822 and +3,631 chars published).
+        //   3. IT APPENDED A FIXED SENTENCE ("The moment shattered…") to both scenes, so two
+        //      different scenes ended identically and the canned line entered the manuscript,
+        //      the prose chain and the reader's page as though the author had written it.
+        //
+        // WHAT IS PRESERVED. The purpose of the cut-away is to stop a FAILED explicit beat from
+        // being rewritten softer by a general model. That is preserved exactly: this branch still
+        // never calls the integration model, `forcedInterruption` is still set so cascade mode
+        // terminates (lines ~5010 and ~5307) and the turn still reports the flag. What is removed
+        // is the fabrication: the draft the author actually produced is published whole, and the
+        // failure is reported as a failure.
+        //
+        // The intimacy condition is now ACTUALLY tested, matching the documented intent.
+        const _intimacyAuthorized = !!state.esd;
         if (state.rendererFailed || allSceneAuthorsFailed) {
           const reason = allSceneAuthorsFailed ? 'all specialist authors (Grok+Mistral) failed' : 'renderer failed';
-          console.log(`[ORCHESTRATION] DETERMINISTIC CUT-AWAY: ${reason}, forcing interruption`);
+          const _haveDraft = typeof state.integrationOutput === 'string' && state.integrationOutput.trim().length > 0;
+          state.rendererFailureReported = {
+            reason,
+            intimacyAuthorized: _intimacyAuthorized,
+            draftPreserved: _haveDraft,
+            draftChars: _haveDraft ? state.integrationOutput.length : 0,
+            fabricatedInterruption: false
+          };
+          // The flag keeps its existing meaning for cascade termination and turn reporting.
           state.forcedInterruption = true;
-
-          // Record interruption for preference inference
-          recordPreferenceSignal('INTERRUPTION_ENCOUNTERED', {});
-
-          // Truncate to scene setup, remove any attempted erotic continuation
-          // Find natural break point before intimate content would begin
-          const sentences = state.integrationOutput.split(/(?<=[.!?])\s+/);
-          const truncatedSentences = [];
-
-          for (const sentence of sentences) {
-            // Stop before explicit physical intimacy begins
-            if (/\b(kiss(?:ed|ing)?|touch(?:ed|ing)?|hands?\s+(?:on|moved?|slid?)|breath(?:ed|ing)?.*(?:neck|ear|skin)|pull(?:ed|ing)?\s+close|bodies?\s+press)/i.test(sentence)) {
-              break;
-            }
-            truncatedSentences.push(sentence);
+          // OBSERVABLE WITHOUT READING THE PROSE. The old handler's only outward sign of a
+          // renderer failure WAS the altered prose, so nothing could distinguish a cut-away from
+          // an authored ending. Published here so a control — and a human — can ask directly.
+          try { if (typeof window !== 'undefined' && window.state) {
+            window.state._lastRendererFailureReport = state.rendererFailureReported;
+          } } catch (_) {}
+          // NOT recorded as a reader-facing interruption: no interruption occurred, and inferring
+          // a reader preference from an engineering failure is what made this defect invisible.
+          if (_haveDraft) {
+            console.warn(`[ORCHESTRATION] RENDERER FAILURE REPORTED: ${reason}`
+              + ` — the authored draft (${state.integrationOutput.length} chars) is preserved and`
+              + ` published unchanged; no interruption was written and no prose was appended.`);
+          } else {
+            console.error(`[ORCHESTRATION] RENDERER FAILURE REPORTED: ${reason}`
+              + ' — and there is NO authored draft to preserve. Nothing is published for this'
+              + ' scene and nothing is fabricated to stand in for it.');
           }
-
-          // Use truncated output or first sentence if all matched
-          const truncatedOutput = truncatedSentences.length > 0
-            ? truncatedSentences.join(' ')
-            : sentences[0] || state.integrationOutput.slice(0, 150);
-
-          // Force narrative interruption - scene is denied, not softened
-          state.integrationOutput = `${truncatedOutput.trim()}\n\nThe moment shattered. Something pulled them back to reality—a sound, a hesitation, the world refusing to wait.`;
         }
 
         // Handle Fate Stumbled (non-erotic cases or informational logging)
@@ -5128,15 +5941,23 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
       // DETERMINISTIC CUT-AWAY: Also applies on integration failure when intimacy was authorized
       const allSceneAuthorsFailed = state.grokFailed && (state.mistralFailed || !CONFIG.ENABLE_MISTRAL_SD);
+      // SAME CORRECTION AS THE PRIMARY PATH (Roman 2026-11-07). This one was harsher still: it
+      // kept the first TWO sentences and appended the same fixed line. An integration failure is
+      // a failure of the integration pass, not of the author — the author output is already in
+      // `state.integrationOutput` above, and it is published whole.
       if (state.rendererFailed || state.esd || allSceneAuthorsFailed) {
-        console.log('[ORCHESTRATION] DETERMINISTIC CUT-AWAY: Integration failed, forcing interruption');
+        const _haveDraft = typeof state.integrationOutput === 'string' && state.integrationOutput.trim().length > 0;
+        state.rendererFailureReported = {
+          reason: 'integration pass failed (' + (err && err.message) + ')',
+          intimacyAuthorized: !!state.esd,
+          draftPreserved: _haveDraft,
+          draftChars: _haveDraft ? state.integrationOutput.length : 0,
+          fabricatedInterruption: false
+        };
         state.forcedInterruption = true;
-
-        // Record interruption for preference inference
-        recordPreferenceSignal('INTERRUPTION_ENCOUNTERED', {});
-
-        state.integrationOutput = state.integrationOutput.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').trim();
-        state.integrationOutput += '\n\nThe moment shattered. Something pulled them back to reality—a sound, a hesitation, the world refusing to wait.';
+        console.warn('[ORCHESTRATION] INTEGRATION FAILURE REPORTED — the author draft'
+          + (_haveDraft ? ' (' + state.integrationOutput.length + ' chars)' : ' (ABSENT)')
+          + ' is published as authored; no interruption was written and no prose was appended.');
       }
     }
 
@@ -5230,6 +6051,21 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       rendererUsed: state.rendererCalled && !state.rendererFailed,
       fateStumbled: state.fateStumbled,
       forcedInterruption: state.forcedInterruption,  // Steamy/Passionate cut-away due to author/renderer failure
+      // REPORTED, SO A FAILURE IS VISIBLE TO THE CALLER (Roman 2026-11-07). The old handler
+      // communicated a renderer failure only by changing the prose, which is why two published
+      // scenes carried a fabricated ending and nothing upstream recorded that anything broke.
+      rendererFailureReported: state.rendererFailureReported || null,
+      // ── WHO ACTUALLY WROTE THIS PROSE (Roman 2026-11-08) ─────────────────────────────────
+      // Reported so the caller never has to infer the author from a routing file written
+      // before dispatch. `proseAuthorFailure` is null on the ordinary path and names both the
+      // intended author and the substitute when Luna failed.
+      proseAuthorModel: (state.proseAuthorFailure && state.proseAuthorFailure.substitutedWith)
+        || (state.proseAuthorIntended || null),
+      proseAuthorFailure: state.proseAuthorFailure || null,
+      enhancementCandidate: (function () {
+        try { return (window.state && window.state._enhancementCandidate) || null; }
+        catch (_) { return null; }
+      })(),
       usedFallbackAuthor: state.usedFallbackAuthor,
       esdAuthoredByGrok: state.esdAuthoredByGrok,
       esdAuthoredByMistral: state.esdAuthoredByMistral,  // Mistral fallback was used for SD
@@ -5256,6 +6092,103 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
    * Deterministic physicalBounds derived from window.state.eroticMode.
    * Bypasses ChatGPT's ability to water down the directive.
    */
+  // ══ THE CASCADE ANCHOR, REACHABLE FROM BOTH ARCHITECTURES (Roman 2026-11-08) ══════════════
+  // Lifted verbatim out of the SD branch so the anchor is ONE implementation. The multi-beat
+  // intimate cascade — anchor detection, the diegetic continuation question, the word ceiling,
+  // the authored interruption and the graceful terminate — is a reader-facing flow that happened
+  // to live inside the superseded SD cascade. Replacing that cascade must not delete this.
+  //
+  // TWO PARAMETERS, because they are the only things the two call sites disagree about:
+  //   intimacyOccurs — the legacy branch reads it from the control pass's [CONSTRAINTS] block;
+  //                    the live architecture is reached only inside orchestration, which runs
+  //                    only for an already-authorized encounter.
+  //   anchorText     — the legacy branch measures the specialist renderer's output; the live
+  //                    architecture measures the base draft, which IS the intimate prose.
+  function _cascadeAnchorIfNeeded(state, intimacyOccurs, anchorText) {
+          // CASCADE ANCHOR DETECTION (Step 2):
+          // If intimacy occurs and we are NOT already in cascade mode,
+          // this is the Anchor Beat — store context for subsequent cascade beats
+          const appState = window.state;
+          if (appState && !appState.cascadeMode && intimacyOccurs) {
+            appState.cascadeMode = true;
+            appState.cascadeCount = 0;
+            // New intimacy encounter (anchor beat) → clear any prior SHAPE bias
+            // so the adjustment is strictly per-encounter (never bleeds forward).
+            appState.intimacyAdjustment = null;
+            appState.shapeEncounterChoice = null;
+            appState._litArcRegisterLanding = null; // new encounter → re-derive the arc's register baseline
+            appState._litArcRegister = null;
+            // Initialize diegetic continuation tracking. Anchor's word count
+            // seeds cascadeTotalWords so the hard 10K cap is enforced across
+            // anchor + cascade beats together.
+            appState.cascadeAwaitingContinuation = false;
+            appState.cascadeExtensionsGranted = 0;
+            const _anchorWords = (typeof anchorText === 'string' && anchorText)
+              ? anchorText.trim().split(/\s+/).filter(Boolean).length
+              : 0;
+            appState.cascadeTotalWords = _anchorWords;
+
+            // Intimate context bundle — gives subsequent cascade beats enough
+            // plot/character grounding to maintain continuity AND engage with
+            // legitimate plot references (honey-pot extraction, roleplay,
+            // post-betrayal sex, etc.) without Grok hallucinating wholly new
+            // plot facts.
+            //
+            // Anchor plot excerpt: strip [CONSTRAINTS] / [SD] / [other tags]
+            // from authorOutput and take first ~250 words as "scene situation"
+            // for Grok to read. This is plot grounding, not a regen seed.
+            let _anchorPlotExcerpt = null;
+            if (state.authorOutput && typeof state.authorOutput === 'string') {
+              const _stripped = state.authorOutput
+                .replace(/\[[A-Z_]+\][\s\S]*?\[\/[A-Z_]+\]/g, '') // strip tag blocks
+                .replace(/\[.*?\]/g, '')                          // strip stray tags
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+              const _words = _stripped.split(/\s+/).filter(Boolean);
+              _anchorPlotExcerpt = _words.slice(0, 250).join(' ');
+            }
+
+            appState.cascadeContext = {
+              // Existing SD-scoped fields:
+              emotionalCore:     state.esd.emotionalCore,
+              physicalBounds:    state.esd.physicalBounds,
+              hardStops:         state.esd.hardStops,
+              completionAllowed: state.esd.completionAllowed,
+              // NEW: intimate context bundle for plot grounding
+              intimateContextBundle: {
+                liName:               appState.loveInterestName || null,
+                liArchetype:          appState.liArchetype || (appState.archetype && appState.archetype.primary) || null,
+                liCoverIdentity:      appState.liCoverIdentity || null,    // opt-in: roleplay / spy / undercover
+                liHiddenAgenda:       appState.liHiddenAgenda  || null,    // opt-in: honey-pot, ulterior motive
+                liHiddenAgendaHandler: (appState.liHiddenAgendaContext && appState.liHiddenAgendaContext.handler) || null,
+                liConversionScore:    appState.liConversionScore || 0,
+                liConversionRevealed: appState.liConversionRevealed === true,
+                liOccupation:         appState.liOccupation || null,
+                world:                appState.world || null,
+                worldSubtype:         appState.worldSubtype || null,
+                flavor:               (appState.picks && appState.picks.flavor) || null,
+                eroticMode:           appState.eroticMode || null,
+                // World-specific intimacy physics — looked up at anchor time
+                // so cascade beats render the act with world-correct rules.
+                intimacyWorldCanon:   (typeof window.getIntimacyWorldCanon === 'function')
+                                        ? window.getIntimacyWorldCanon(appState.worldSubtype)
+                                        : null,
+                // A-plot snapshot (compact)
+                aPlotGoal:            (appState.aPlot && appState.aPlot.goal) || null,
+                aPlotNamedClock:      (appState.aPlot && appState.aPlot.namedClock) || null,
+                aPlotAntagonist:      (appState.aPlot && appState.aPlot.antagonistOrAntiForce) || null,
+                aPlotLastTriggered:   (appState.aPlot && Array.isArray(appState.aPlot.milestones))
+                                        ? (appState.aPlot.milestones.filter(m => m && m.triggered).slice(-1)[0] || null)
+                                        : null,
+                aPlotCurrentTurn:     (appState.aPlot && appState.aPlot.currentTurn) || 0,
+                aPlotTimelineLength:  (appState.aPlot && appState.aPlot.timelineLength) || 0,
+                // Recent plot prose for grounding
+                anchorPlotExcerpt:    _anchorPlotExcerpt
+              }
+            };
+            console.log('[CASCADE] Anchor beat detected — cascade context stored, anchor words:', _anchorWords, '— bundle has plot grounding:', !!_anchorPlotExcerpt);
+          }
+  }
   function resolvePhysicalBounds() {
     const mode = (window.state && window.state.eroticMode) || 'ROMANTIC';
     const boundsMap = {
@@ -6082,40 +7015,180 @@ dialogue: <elevated dialogue>`;
     }
 
     let text;
+
+    // ══ THE PLATFORM DECIDES WHO SPEAKS FIRST (Roman 2026-11-08) ═════════════════════════════
+    // OAS dialogue on Storybound.love is GROK — an intentional exception, including the early
+    // whisper. On restricted platforms it is LUNA, which makes it a Luna-authored operation and
+    // therefore takes the authorized Luna → Haiku → Grok chain.
+    //
+    // THE WEBSITE ROUTE TAKES NO LUNA ATTEMPT AND NO LUNA CHAIN. Both mistakes are avoided by
+    // construction: `_oasRoute.primary === 'grok'` skips the Luna and Haiku rungs entirely, and
+    // the Grok rung below is the SAME `_callGrokWithPreferred` the existing chain already used,
+    // so Grok is dispatched once, not twice.
+    //
+    // THE EXISTING BOUNDED TAIL IS PRESERVED. DeepSeek, Mistral and the gpt-4o-mini fallback stay
+    // exactly where they were, after the authorized chain, so a turn still has somewhere to go
+    // and nothing cycles indefinitely: each rung is attempted at most once per dispatch.
+    //
+    // NO EDITION DECISION IS MADE HERE. Whoever serves, the text delivered is the edition the
+    // platform permits — on a restricted platform that is the base edition even when the Grok
+    // rung is what wrote it.
+    const _oasRoute = (typeof _sbOasRoute === 'function')
+      ? _sbOasRoute() : { primary: 'grok', chain: ['grok'], reason: 'default' };
+    const _oasRec = (typeof sbNewProseAuthorshipRecord === 'function')
+      ? sbNewProseAuthorshipRecord('oas-dialogue:' + roleTag,
+          _oasRoute.primary === 'luna' ? 'gpt-6-luna' : 'grok-4-1-fast-reasoning')
+      : null;
+    function _oasNote(model, verdict, extra) {
+      if (!_oasRec) return;
+      _oasRec.attempts.push(Object.assign({ model: model, verdict: verdict }, extra || {}));
+    }
+    function _oasServed(model) {
+      if (!_oasRec) return;
+      _oasRec.servedModel = model; _oasRec.authoredBy = model;
+      if (_oasRec.attempts.length > 1) {
+        const first = _oasRec.attempts[0];
+        _oasRec.fallbackReason = (first && (first.reason || first.verdict)) || 'earlier rung balked';
+      }
+      if (typeof sbRecordProseAuthorship === 'function') sbRecordProseAuthorship(_oasRec);
+    }
+
+    console.log('[OAS-LLM] route=' + _oasRoute.primary + ' (' + _oasRoute.reason + ') · chain '
+      + _oasRoute.chain.join(' → ') + ' · ' + (preferReasoning ? 'REASONING' : 'FAST'));
+
+    // THE LUNA RUNG, restricted platforms only. The allowance is deliberately generous for a
+    // short dialogue turn: reasoning bills INSIDE the completion budget on this family, and this
+    // project measured a 2,921-token allowance spent entirely on reasoning with an empty reply.
+    // A 400-token OAS cap on Luna would reproduce that, so the turn is capped by instruction and
+    // the budget is sized for the reasoning, not for the visible line.
+    async function _callLunaOAS() {
+      const t0 = Date.now();
+      try {
+        const resp = await fetch(CONFIG.CHATGPT_PROXY, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: 'gpt-6-luna',
+            messages: messages, max_tokens: 10000, reasoning_effort: 'medium' }) });
+        const data = await resp.json().catch(function () { return null; });
+        const t = (data && (data.content
+          || (data.choices && data.choices[0] && data.choices[0].message
+            && data.choices[0].message.content))) || '';
+        const cls = sbClassifyProseAttempt({ ok: resp.ok, hasContent: !!(t && t.trim()),
+          status: resp.status, bodyText: (data && data.error) || '', retriesLeft: 0 });
+        _oasNote('gpt-6-luna', cls.verdict, { reason: cls.reason, status: resp.status,
+          ms: Date.now() - t0 });
+        if (cls.verdict === 'success') {
+          _recordCost(data, 'gpt-6-luna');
+          console.log('[OAS-LLM] gpt-6-luna ok');
+          return String(t);
+        }
+        if (cls.verdict === 'defect') {
+          // NOT A BALK. A shape, auth or context defect would be sent identically to the next
+          // provider, so advancing would hide our own bug behind someone else's bill.
+          console.error('[OAS-LLM] gpt-6-luna DEFECT (' + cls.reason + ') — the chain does NOT '
+            + 'advance on a local defect: ' + (cls.detail || ''));
+          if (_oasRec) { _oasRec.stoppedOnDefect = cls.reason;
+            if (typeof sbRecordProseAuthorship === 'function') sbRecordProseAuthorship(_oasRec); }
+          return { __defect: cls };
+        }
+        console.warn('[OAS-LLM] gpt-6-luna balked (' + cls.reason + ') — advancing');
+        return null;
+      } catch (e) {
+        const cls = sbClassifyProseAttempt({ transportError: true, retriesLeft: 0 });
+        _oasNote('gpt-6-luna', cls.verdict, { reason: cls.reason, error: String(e && e.message),
+          ms: Date.now() - t0 });
+        console.warn('[OAS-LLM] gpt-6-luna threw:', e && e.message);
+        return null;
+      }
+    }
+
+    // THE HAIKU RUNG. `claude-haiku-5-5`, chosen over the legacy 4.5 because it supports
+    // `effort`, its thinking counts toward max_tokens so the allowance bounds billable output,
+    // and it is the only Haiku _nf_cost_settlement.mjs can price.
+    async function _callHaikuOAS() {
+      const t0 = Date.now();
+      try {
+        const resp = await fetch(CONFIG.ANTHROPIC_PROXY || '/api/anthropic-proxy', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'claude-haiku-5-5', messages: messages,
+            max_tokens: 8000, effort: 'medium' }) });
+        const data = await resp.json().catch(function () { return null; });
+        const t = (data && (data.content
+          || (Array.isArray(data.content) && data.content[0] && data.content[0].text))) || '';
+        const txt = (typeof t === 'string') ? t : '';
+        const cls = sbClassifyProseAttempt({ ok: resp.ok, hasContent: !!(txt && txt.trim()),
+          status: resp.status, bodyText: (data && data.error) || '', retriesLeft: 0 });
+        _oasNote('claude-haiku-5-5', cls.verdict, { reason: cls.reason, status: resp.status,
+          ms: Date.now() - t0 });
+        if (cls.verdict === 'success') {
+          _recordCost(data, 'claude-haiku-5-5');
+          console.log('[OAS-LLM] claude-haiku-5-5 ok');
+          return txt;
+        }
+        if (cls.verdict === 'defect') {
+          console.error('[OAS-LLM] claude-haiku-5-5 DEFECT (' + cls.reason + ') — not advancing');
+          if (_oasRec) { _oasRec.stoppedOnDefect = cls.reason;
+            if (typeof sbRecordProseAuthorship === 'function') sbRecordProseAuthorship(_oasRec); }
+          return { __defect: cls };
+        }
+        console.warn('[OAS-LLM] claude-haiku-5-5 balked (' + cls.reason + ') — advancing');
+        return null;
+      } catch (e) {
+        const cls = sbClassifyProseAttempt({ transportError: true, retriesLeft: 0 });
+        _oasNote('claude-haiku-5-5', cls.verdict, { reason: cls.reason,
+          error: String(e && e.message), ms: Date.now() - t0 });
+        console.warn('[OAS-LLM] claude-haiku-5-5 threw:', e && e.message);
+        return null;
+      }
+    }
+
+    // THE AUTHORIZED CHAIN, in the order this platform's route gives. A `__defect` result stops
+    // everything: nothing was authored and no other model would fare differently.
+    for (const rung of _oasRoute.chain) {
+      if (rung === 'luna') {
+        const r = await _callLunaOAS();
+        if (r && r.__defect) return null;
+        if (r) { _oasServed('gpt-6-luna'); return r; }
+        continue;
+      }
+      if (rung === 'haiku') {
+        const r = await _callHaikuOAS();
+        if (r && r.__defect) return null;
+        if (r) { _oasServed('claude-haiku-5-5'); return r; }
+        continue;
+      }
+      if (rung === 'grok') {
+        const gm = preferReasoning ? 'grok-4-1-fast-reasoning' : 'grok-4.20-0309-non-reasoning';
+        text = await _callGrokWithPreferred(gm, GROK_TIMEOUT_MS);
+        _oasNote(gm, text ? 'success' : 'balk');
+        if (text) { _oasServed(gm); return text; }
+      }
+    }
+
     if (preferReasoning) {
-      // Depth-first chain. Reasoning timeout 40s — in a real story the
-      // SCENE & PLOT CONTEXT block gives Grok genuine material to reason
-      // about (character roster, recent prose, hidden agendas), and that
-      // depth IS worth the wait. The 7s thinking overlay buys back the
-      // perceived dead time. In dev shortcut mode (no story), reasoning
-      // improvises but its improv tends to be plausible enough.
-      console.log('[OAS-LLM] Mode: REASONING (depth chain)');
-      text = await _callGrokWithPreferred('grok-4-1-fast-reasoning', GROK_TIMEOUT_MS);
-      if (text) return text;
+      // Depth-first bounded TAIL, unchanged except that the reasoning Grok rung above has
+      // already been attempted by the authorized chain — so it is not repeated here.
+      console.log('[OAS-LLM] Mode: REASONING (depth chain tail)');
       text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
-      if (text) return text;
+      if (text) { _oasServed('grok-4-1-fast-non-reasoning'); return text; }
       text = await _callDeepSeek('deepseek-v4-pro', 30000);
-      if (text) return text;
+      if (text) { _oasServed('deepseek-v4-pro'); return text; }
       text = await _callMistral();
-      if (text) return text;
+      if (text) { _oasServed('mistral-small-latest'); return text; }
       text = await _callGPTFallback();
+      if (text) _oasServed('gpt-4o-mini');
       return text;
     }
-    // Speed-first chain (default). grok-4.20 non-reasoning: ~0.6s/turn, no
-    // reasoning-token tax. Its repetition tendency is cleaned by a downstream
-    // gpt-4o-mini de-calc pass in _handleIntimacyTurn (FAST turns only).
-    console.log('[OAS-LLM] Mode: FAST (speed chain)');
-    // OAS PRIMARY = Mistral-Small @180 (validated 2026-06-25: best content + ~9x cheaper than
-    // Medium; the 180 cap fixed over-writing). Grok stays the FALLBACK — critical for explicit
-    // content if Mistral ever moderates/refuses a turn (returns null → chain continues to Grok).
-    // FAST turns only; the REASONING chain (opening/escalation) keeps Grok-reasoning primary for
-    // scene-aware richness, with small@180 still in its fallback line. Kill-switch: window._oasSmallEnabled=false.
+    // Speed-first bounded TAIL (default). The Grok rung of the authorized chain has already run
+    // above, so this continues from the next provider rather than re-dispatching it.
+    console.log('[OAS-LLM] Mode: FAST (speed chain tail)');
+    // Mistral-Small @180 was the OAS primary (validated 2026-06-25: best content + ~9x cheaper
+    // than Medium; the 180 cap fixed over-writing). It is now a TAIL rung rather than the
+    // primary, because the platform decides the primary: Grok on the website, Luna on restricted
+    // platforms. It keeps its kill-switch and its place in the line.
     if ((typeof window === 'undefined') || window._oasSmallEnabled !== false) {
       text = await _callMistral();
-      if (text) return text;
+      if (text) { _oasServed('mistral-small-latest'); return text; }
     }
-    text = await _callGrokWithPreferred('grok-4.20-0309-non-reasoning', GROK_TIMEOUT_MS);
-    if (text) return text;
     text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
     if (text) return text;
     text = await _callDeepSeek('deepseek-v4-flash', 15000);
@@ -7179,7 +8252,31 @@ Generate 3-6 beats. Be precise and structural. No prose.`;
 
     let result;
     try {
-      result = await callChatGPT(messages, 'PRIMARY_AUTHOR', { temperature: 0.3 });
+      // ── THE BEAT OUTLINE USES THE SELECTED AUTHOR, NOT THE ROUTE DEFAULT (Roman 2026-11-07)
+      // MEASURED at scene 17: this call carried no model, so chatgpt-proxy applied its role
+      // default of gpt-4o-mini — whose stated context is 128,000 tokens — and the packet had
+      // grown to 128,858. HTTP 400, then resent at 129,252, then 400 again. The packet was never
+      // the problem: the run's selected author has far more room and was already carrying the
+      // prose for sixteen scenes at this size. Naming it here is the resolution; the pre-dispatch
+      // fit check in the harness is the protection, and neither truncates canon.
+      //
+      // The Grok whisper exception is untouched — that is decided later, in the render tier, and
+      // this is the structural pre-pass, not the prose.
+      var _bOutSel = null;
+      try {
+        var _bc = (typeof window !== 'undefined'
+          && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
+        if (_bc && _bc.generalAuthorModel && !/grok/i.test(String(_bc.generalAuthorModel))) {
+          _bOutSel = { model: String(_bc.generalAuthorModel), effort: _bc.reasoningEffort || 'medium' };
+        }
+      } catch (_) {}
+      result = _bOutSel
+        // A reasoning model spends its allowance on thinking before emitting the outline JSON;
+        // 16,000 is the allowance this project has demonstrated on this model for comparable
+        // packets. An ESTIMATE from that, not calibration.
+        ? await callChatGPT(messages, 'PRIMARY_AUTHOR',
+            { model: _bOutSel.model, max_tokens: 16000, reasoningEffort: _bOutSel.effort })
+        : await callChatGPT(messages, 'PRIMARY_AUTHOR', { temperature: 0.3 });
       // Parse JSON from response (handle markdown code blocks)
       const jsonStr = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       const parsed = JSON.parse(jsonStr);
@@ -7385,6 +8482,15 @@ Tension: ${outline.tension_vector || 'N/A'}`;
   window.StoryboundOrchestration = {
     // Main orchestration
     orchestrateStoryGeneration,
+
+    // ── THE PROSE ARCHITECTURE, READABLE FROM OUTSIDE (Roman 2026-11-08) ──────────────────
+    // `_sbProseArchitecture` so app.js can ask which architecture is live rather than mirroring
+    // the CONFIG flags, and `resolvePhysicalBounds` so the explicitness editor's AUTHORIZED
+    // SCOPE comes from the one function that already derives it from `state.eroticMode` — the
+    // same ceiling the base draft was written under. Exported read-only: both are pure reads of
+    // CONFIG and state and neither can authorize anything.
+    _sbProseArchitecture,
+    resolvePhysicalBounds,
 
     // Anthropic prompt-cache seam marker. Prompt builders embed this once
     // between their static prefix and dynamic tail; callChatGPT splits on

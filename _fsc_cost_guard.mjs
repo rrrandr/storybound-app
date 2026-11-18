@@ -34,6 +34,16 @@ export const RATES = {
   'grok-4.20-0309-non-reasoning': { in: 0.00000125, out: 0.0000025 },
   'grok-4.3':                     { in: 0.00000125, out: 0.0000025 },
   'gpt-4o-mini':                  { in: 0.00000015, out: 0.0000006 },
+  // gpt-6-luna — $0.10 in / $0.50 out per MTok, the same figures api/cplus-editor.js
+  // EDITOR_CONFIGS.general and api/sol-scene-test.js RATES already price it at, from
+  // developers.openai.com/api/docs/models/gpt-6-luna. PRICED BECAUSE IT IS NOW ROUTABLE:
+  // the provider-free drive capture reported `PRIMARY_AUTHOR estimate $Infinity` for it,
+  // which in a PAID run means guardDispatch refuses every Luna author call — the guard
+  // correctly blocks what it cannot price. One rate row, no behaviour change for any other
+  // model. NOTE: on this model reasoning is billed INSIDE completion, so an `out` figure
+  // sized from visible prose alone understates it; the caller's allowance is what to reserve
+  // against, which is what guardDispatch already does.
+  'gpt-6-luna':                   { in: 0.0000001,  out: 0.0000005 },
   'gpt-4o':                       { in: 0.0000025,  out: 0.00001   },
   'gpt-4-turbo':                  { in: 0.00001,    out: 0.00003   },
   'mistral-small-latest':         { in: 0.00000015, out: 0.0000006 },
@@ -63,7 +73,33 @@ export const RATES = {
   'claude-sonnet-5-5':            { in: 0.000002,   out: 0.00001 },
   // Mistral Medium 3.5, PINNED — same published $1.50/$7.50 as the alias row above, but keyed to
   // an identifier whose resolution is known rather than assumed.
-  'mistral-medium-3-5-26-04':     { in: 0.0000015,  out: 0.0000075 }
+  'mistral-medium-3-5-26-04':     { in: 0.0000015,  out: 0.0000075 },
+  // ── THE TWO MODELS THE LITERARY CHAIN REACHES THAT THIS TABLE WAS MISSING ──────────────
+  // (Roman 2026-11-12.) MEASURED, not supposed: a provider-free drive of The First Taste
+  // assembled PRIMARY_AUTHOR on gpt-6.1-sol (R-plot, A-plot, issue spine) and
+  // STRUCTURE_GENERATOR on claude-haiku-5-5 (the Anthropic fallback rung on the Body Bibles).
+  // Neither had a row, so estimateUsd returned Infinity for both and guardDispatch refused
+  // them — correctly, since it cannot price what it has no rate for, but the effect was that a
+  // paid literary run halted at the R-plot with the whole authorization unspent. The gap was in
+  // the TABLE, not in the policy, and the policy is unchanged: anything still absent is refused.
+  //
+  // gpt-6.1-sol — $2.00 in / $10.00 out per MTok. Two in-repo sources agree: api/sol-scene-test.js
+  // RATES (the route's own table, which prices its per-call cap from these figures) and the
+  // cache-write note in api/cplus-editor.js ("$2.50/MTok ... against a $2.00 input rate").
+  // A REASONING MODEL: its reasoning tokens are billed INSIDE completion, so the allowance the
+  // caller sends is what to reserve against — which is what estimateUsd already does.
+  'gpt-6.1-sol':                  { in: 0.000002,   out: 0.00001 },
+  // claude-haiku-5-5 — TIERED BY PROMPT LENGTH, and the tier boundary matters here because the
+  // Body Bible prompts measured 38,434 and 58,636 chars (well under) while a late-issue author
+  // prompt runs past 500,000 chars (well over). $0.10/$0.50 per MTok at or below 100,000 INPUT
+  // TOKENS; $0.50/$2.50 above it (platform.claude.com/docs/en/about-claude/pricing).
+  // THIS REPO DISAGREED WITH ITSELF: _nf_pilot_run2.mjs carried the correct tiered pair, while
+  // _nf_note_recovery_quote.mjs labelled the ABOVE-tier $0.50/$2.50 as the "<=100k" rate. The
+  // published table settles it; the base tier here is the low one and the high tier is reached
+  // through tierAt, so a long prompt is never priced at the short-prompt rate.
+  'claude-haiku-5-5':             { in: 0.0000001,  out: 0.0000005,
+                                    tierAt: 100000,
+                                    aboveTier: { in: 0.0000005, out: 0.0000025 } }
 };
 
 // The most expensive rate in the verified table. NO LONGER a fallback for unknown models — those
@@ -132,6 +168,21 @@ export function resolveModel(requested, url, body) {
       ? { model: name, how: 'explicit model on the isolated anthropic calibration route' }
       : { model: null, how: 'api/anthropic-proxy.js requires an explicit allowlisted model' };
   }
+  // ── THE DEEPSEEK ENDPOINT RESOLVES ITS OWN MODEL (Roman 2026-11-07) ─────────────────────
+  // MEASURED at scene 17: the SD fallback chain dispatched to /api/deepseek-proxy and this
+  // function had no branch for that endpoint, so the call fell through to the no-recognised-
+  // endpoint case and the guard reported "SD_FALLBACK estimates $Infinity" — pricing by the ROLE
+  // LABEL instead of by the model. The run halted with $2.73 still available.
+  //
+  // THE ACTUAL MODEL IS NOW RESOLVED; NO RATE IS INVENTED. deepseek-v4-pro / -flash remain
+  // unpriced in RATES, so such a dispatch is STILL refused — but refused as "no published rate
+  // exists for deepseek-v4-pro", which names a model somebody can price or exclude, rather than
+  // as an unbounded role. The unknown-model refusal is deliberately left intact.
+  if (/deepseek-proxy/.test(endpoint)) {
+    return name && name !== '(unspecified)'
+      ? { model: name, how: 'explicit model on the deepseek endpoint' }
+      : { model: null, how: 'api/deepseek-proxy.js requires an explicit model; none was sent' };
+  }
   if (/mistral-proxy/.test(endpoint)) {
     return name && name !== '(unspecified)'
       ? { model: name, how: 'explicit model on the mistral endpoint' }
@@ -182,12 +233,20 @@ export function estimateUsd(body, model, url) {
       refuseReason: 'no published rate exists in this repo for "' + res.model + '" (resolved by '
         + res.how + '), so this dispatch cannot be bounded' };
   }
-  const r = RATES[res.model];
-  if (!r) {
+  const rRow = RATES[res.model];
+  if (!rRow) {
     return { bounded: false, estimate: Infinity, model: res.model, resolvedBy: res.how,
       refuseReason: '"' + res.model + '" is not in the verified rate table (resolved by '
         + res.how + '); refusing rather than applying another model\'s rate' };
   }
+  // ── A TIERED RATE IS PRICED AT THE TIER THIS PROMPT ACTUALLY FALLS IN ───────────────────
+  // Only claude-haiku-5-5 carries one today. The boundary is on INPUT TOKENS, and crossing it
+  // raises BOTH the input and the output rate fivefold, so pricing a 150k-token prompt at the
+  // short-prompt rate would understate it by 5x — the one direction this guard must never fail
+  // in. A row with no tierAt behaves exactly as before.
+  const r = (rRow.tierAt && promptTokens > rRow.tierAt && rRow.aboveTier)
+    ? { in: rRow.aboveTier.in, out: rRow.aboveTier.out, tierApplied: 'above ' + rRow.tierAt + ' input tokens' }
+    : { in: rRow.in, out: rRow.out, tierApplied: rRow.tierAt ? 'at or below ' + rRow.tierAt + ' input tokens' : null };
   const raw = promptTokens * r.in + outTokens * r.out;
   const estimate = raw * SAFETY_MARGIN;
   return { bounded: true, estimate, raw, promptChars: chars, promptTokens, outTokens,

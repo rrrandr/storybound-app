@@ -1,8 +1,27 @@
 // ── AUTHOR CACHE ROUTER ───────────────────────────────────────────────────────────────────
-// Chooses the prose author for ORDINARY GENERAL-PROSE scenes, and nothing else. It does not
-// touch the explicit-content workflow: Grok's explicit-content routing requirement is decided
-// upstream of this module by `_sniffAndRouteExplicit`, and this router is only consulted for
-// scenes that did NOT route there.
+// Chooses the prose author for ORDINARY GENERAL-PROSE scenes, and nothing else.
+//
+// ── WHAT "AND NOTHING ELSE" NOW MEANS (Roman 2026-11-08) ─────────────────────────────────
+// It used to mean that explicit scenes were routed to a DIFFERENT AUTHOR upstream of this
+// module and never reached it. Under the live architecture there is no such route: Luna
+// authors every scene — opening, continuation, ordinary romance, non-graphic intimacy and the
+// base edition of the LI's whisper — and explicitness is an EDITOR pass on the finished base
+// draft. So an explicit scene DOES reach this router now, as an ordinary prose scene, and the
+// decision it makes is the same one it makes for any other.
+//
+// A GROK CALL DOES NOT ERASE LUNA'S CACHE, and nothing here may treat it as if it did. The
+// explicitness editor is a separate request, to a separate provider, on a separate endpoint,
+// against a separate prompt; it neither writes nor reads Luna's prefix. Rule 5 below is the
+// mechanism: the retention clock is renewed ONLY by a completed Luna request whose own receipt
+// reports a cache read or write. An intervening editor call therefore does exactly nothing to
+// this record — it does not renew the clock, and it is not evidence that the prefix was
+// dropped. Elapsed time past the documented minimum still means UNKNOWN, as it always did.
+//
+// AND SAVINGS ARE STILL CLAIMED ONLY FROM RECORDED USAGE. Rule 4 is unchanged and remains the
+// binding constraint: `prediction` is ours, `measurement` is filled only from a usage receipt,
+// and the two are never collapsed. MEASURED across twelve paid scenes, Sol reported
+// cached_tokens 0 and Haiku cache_read 0 — so no figure in this module is a demonstrated hit,
+// and none of it should be quoted as one.
 //
 // THE POLICY THIS IMPLEMENTS (2026-10-30, as agreed):
 //   1. Sol ALWAYS authors the opening. That is an explicit exception, evaluated before any
@@ -293,6 +312,35 @@ function () {
     var now = Number(o.now || Date.now());
     var isOpening = !!o.isOpening || Number(o.sceneNumber) === 1;
     var d;
+
+    // ── A SELECTED GENERAL AUTHOR OVERRIDES THE CACHE POLICY (Roman 2026-11-06) ────────────
+    // MEASURED in a provider-free capture: with the run configuration naming gpt-6-luna, this
+    // router still returned HAIKU_UNKNOWN_CONSERVATIVE_SPENDING_POLICY and the boundary served
+    // Haiku. The configuration object said one thing and the dispatch did another, which is
+    // exactly the gap a config-object check cannot see.
+    //
+    // This router's whole job is choosing between Sol and Haiku on CACHE ECONOMICS. When a run
+    // has explicitly selected its general author, there is no choice left to make: the cache
+    // prediction is still computed and reported for the record, but it cannot divert the
+    // author. It comes BEFORE the opening exception for the same reason that exception exists —
+    // so nothing downstream can quietly reassign a scene.
+    //
+    // A reading pause cannot undo it either: the selection is read per decision, not latched.
+    if (o.selectedAuthorModel) {
+      var sel = { author: { key: 'selected', label: String(o.selectedAuthorModel),
+          model: String(o.selectedAuthorModel) },
+        reason: 'RUN_SELECTED_GENERAL_AUTHOR',
+        prediction: { state: 'not_consulted',
+          detail: 'the run selected its general author explicitly; cache economics cannot '
+            + 'divert it. Explicit scenes are routed by the app\'s own _hot predicate and never '
+            + 'reach this router as general prose.' },
+        at: now,
+        sceneNumber: o.sceneNumber == null ? null : Number(o.sceneNumber),
+        cacheStateIsPrediction: true, selected: true };
+      evidence.decisions.push({ at: now, sceneNumber: sel.sceneNumber, author: sel.author.key,
+        reason: sel.reason, predictedState: sel.prediction.state, numbers: null });
+      return { decision: sel, evidence: evidence };
+    }
 
     if (isOpening) {
       // THE EXPLICIT EXCEPTION, AND IT COMES FIRST. No cache state is consulted, so no cache

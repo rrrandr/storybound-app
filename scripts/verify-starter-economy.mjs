@@ -444,6 +444,24 @@ function gateSandbox(starterId, balance, opts = {}) {
     ${fnSource('_isSignedIn')}
     ${fnSource('_bakedGenesisLocked')}
     ${fnSource('_bakedFreeSceneActive')}
+    // The extracted commit function delegates scene storage to this boundary.
+    // Keep wallet and snapshot assertions exercising the real commit function.
+    function _sbPersistSceneProjection(spec) {
+      if (!Array.isArray(state.scenes)) state.scenes = [];
+      const record = {
+        uid: 'fixture-scene-' + (state.scenes.length + 1),
+        title: spec.title || '',
+        synopsis: spec.synopsis || '',
+        text: String(spec.input || ''),
+        fateCard: spec.fateCard || null,
+        projection: { kind: spec.kind || 'body', provenance: 'test_stub', revision: 0 },
+        attributionAvailable: false,
+        historyNote: null,
+        assignedEvent: null
+      };
+      state.scenes.push(record);
+      return record;
+    }
     ${fnSource('_commitBakedScene')}
     ${fnSource('_unlockBakedGenesis')}
     ${fnSource('_bakedGenesisGate')}
@@ -513,7 +531,8 @@ console.log('\n── nothing is persisted until the whole purchase has landed �
     'pre-planning finalization does NOT snapshot (the scene is still uncommitted)');
   eq(env.calls.snapshots, 1, 'exactly one snapshot for the whole purchase');
   const saved = env.calls.saved[0];
-  eq(saved.turnCount, 1, 'the snapshot was taken after turnCount reached 1');
+  // turnCount records completed continuations; the mounted opening has completed none.
+  eq(saved.turnCount, 0, 'the snapshot keeps zero completed continuation turns after the opening');
   eq(saved.scenes, 1, 'the snapshot contains exactly one scene');
   eq(saved.firstSceneText, 'baked', 'the snapshot contains the BAKED scene');
   ok(saved.storyLength !== 'taste', `the snapshot carries the real tier (${saved.storyLength})`);
