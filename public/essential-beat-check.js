@@ -283,9 +283,25 @@
   // It is a MECHANISM, not a new stage and not a permanent mode: nothing in production supplies
   // `opts.task`, so no shipped pass changes behaviour.
   var CP_TASK = {
-    block: function (t) {
+    // ── THE AUTHORIZED SCOPE IS A SECOND ARGUMENT, AND IT HAD TO BE (Roman 2026-11-08) ──────
+    // MEASURED GAP: the explicitness task's objective opens "READ THE AUTHORIZED SCOPE BELOW —
+    // it names WHICH MATERIAL you may make explicit, and it is the only thing that does", and
+    // the caller was passing `authorizedScope` as an option that NOTHING in this file read. So
+    // the one input that decides whether a pass may touch the body never reached the editor:
+    // a dialogue-only whisper and a full physical scene would have sent the identical prompt.
+    // Caught by the saved-scene control, which asserted the scope's own words in the outgoing
+    // request and found them absent.
+    //
+    // Omitted, the block is byte-identical to before, so the consistency pass is unaffected.
+    block: function (t, authorizedScope) {
       var L = ['THIS PASS HAS ONE EDITING TASK, STATED BELOW. It is not a Character+ pass and '
         + 'not a description pass; do the task named here.', '', 'TASK: ' + t.objective];
+      if (authorizedScope) {
+        // PLACED IMMEDIATELY AFTER THE OBJECTIVE, because the objective tells the editor to read
+        // it first. It is a CEILING: it says what may be made explicit, never what must be.
+        L.push('', 'AUTHORIZED SCOPE — THIS IS THE CEILING FOR THIS PASS, AND THE ONLY THING '
+          + 'THAT NAMES WHICH MATERIAL YOU MAY TOUCH:', String(authorizedScope));
+      }
       if (t.welcome) L.push('', t.welcome);
       if (t.insufficient) L.push('', 'NOT AUTOMATICALLY ENOUGH: ' + t.insufficient);
       if (t.exclusions) L.push('', 'ABSOLUTE EXCLUSIONS: ' + t.exclusions);
@@ -315,12 +331,160 @@
     }
   };
 
+  // ── THE CONSISTENCY TASK, AS ALREADY WRITTEN (Roman 2026-11-06) ─────────────────────────
+  // This is the task from the prepared pass (_consistency_pass_prepare.mjs), moved here as DATA
+  // so a run can schedule it. It is not a new stage, framework or prompt rule: it is the same
+  // object, carried through the same CP_TASK block, the same task mode, the same validator and
+  // the same duplicate-insertion guard. Its three remits, its welcome, its insufficient clause
+  // and its authorizedRemoval are the approved wording, verbatim.
+  //
+  // TWO SCENE-BOUND CLAUSES WERE NOT CARRIED OVER, and that is a deliberate, reported change:
+  //   · the exclusion naming cufflinks as "jewellery fastening a shirt cuff and nothing else"
+  //   · the instruction protecting "the line about a door that used to be closed between them"
+  // Both describe ONE saved Mara/Roman scene. Roman's own direction on that scene was that the
+  // shirt/cuff ambiguity is "a local regression case, not a permanent prompt example", and a
+  // concrete exemplar in a prompt gets copied verbatim — so sending either into every First
+  // Sacrifice scene would plant objects and lines that scene has never contained. The STRUCTURAL
+  // rules they instantiate are already in this wording and are untouched: "Do NOT invent an
+  // accessory, an action or an explanation to make a contradictory reference work", "NO INVENTED
+  // RESTRAINT of any kind", and "Do not rewrite prose that is doing its job: effective sentences
+  // stay exactly as they are." The per-scene clothing and body canon arrives the way it does for
+  // every other pass — through `appearance`, from the run's own bibles, not from this constant.
+  var CP_CONSISTENCY_TASK = {
+    id: 'consistency',
+    objective: 'REPAIR DEMONSTRATED CONSISTENCY DEFECTS IN THE EDITABLE PASSAGE, AND NOTHING '
+      + 'ELSE. There are exactly three things in your remit. (1) ACCIDENTAL DUPLICATION: text or '
+      + 'an action that appears twice because it was copied, not because the prose is repeating '
+      + 'for effect. (2) CLOTHING AND BODY-POSITION CONTINUITY across the encounter: a garment '
+      + 'that is both on and off, a fastening that moves from one part of the body to another '
+      + 'without being undone, a position that cannot follow from the one before it. (3) WHEN '
+      + 'CORRECTING A CONTINUITY DEFECT, CHECK ALL RELATED MENTIONS of the affected person, '
+      + 'object or state throughout the supplied scene. Return the smallest COMPLETE SET of '
+      + 'coordinated corrections that leaves the sequence coherent — not merely a locally correct '
+      + 'sentence. READ THE FULL CONTEXT, BUT EDIT ONLY THE AUTHORIZED REGION: if a complete '
+      + 'repair would require changing protected or read-only prose, make the corrections you can '
+      + 'and REPORT THE UNRESOLVED CONFLICT in your `why` — name the span you cannot reach and '
+      + 'what still contradicts it — rather than claiming the defect is fixed. '
+      + 'FIRST FIND THE CONFLICT, THEN FIX IT: for every edit you propose, your `why` must quote '
+      + 'or name the OTHER span it conflicts with and say what the contradiction is. An edit whose '
+      + '`why` does not identify a specific conflicting span is not a repair, and this pass has no '
+      + 'other business. If a thing is merely not to your taste, it is not in your remit.',
+    welcome: 'YOU MAY DELETE AN ACCIDENTAL DUPLICATE, and you may narrowly REWORD a contradictory '
+      + 'clothing or position reference so it agrees with the established canon below and with the '
+      + 'rest of the encounter. Those two are what this pass is for. Use the smallest span that '
+      + 'does the job AT EVERY MENTION THE DEFECT TOUCHES — one reworded sentence where one is '
+      + 'enough, and a coordinated set where the same state is referred to more than once. Do NOT '
+      + 'invent an accessory, an action or an explanation to make a contradictory reference work; '
+      + 'correct the reference or report it unresolved.',
+    insufficient: 'NOTICING A PROBLEM WITHOUT NAMING THE SPAN IT CONFLICTS WITH. "this reads '
+      + 'oddly" and "this could be clearer" are not defects. A duplication is a defect because the '
+      + 'same text is in two places; a clothing reference is a defect because another span says '
+      + 'something incompatible. Point at both halves of the contradiction or leave it alone.',
+    exclusions: 'NO Character+ work, no new interpretation of anyone, no romance beat, no '
+      + 'stylistic polishing, no euphemism or softening, no new sexual act and no escalation or '
+      + 'de-escalation of what is already explicit, and NO INVENTED RESTRAINT of any kind. '
+      + 'Do not change the sequence of events, anyone\'s characterization, the viewpoint, or the '
+      + 'level of explicitness. Do not rewrite prose that is doing its job: effective sentences '
+      + 'stay exactly as they are.',
+    authorizedRemoval: 'where text or an action is ACCIDENTALLY DUPLICATED, the redundant copy may '
+      + 'be deleted, leaving one instance.'
+  };
+
+  // ══ THE EXPLICITNESS TASK (Roman 2026-11-08) ══════════════════════════════════════════════
+  // The ENHANCED edition of a passage, produced by the existing editor as a named task — the
+  // same shape as CP_CONSISTENCY_TASK, carried as data. Nothing new is built: it goes through the
+  // same task mode, the same CP_TASK block, the same validator and the same non-destructive
+  // operations, and because `_taskMode` suppresses the Character+ doctrine, the Fusion block, the
+  // style block and the examples, its request carries only the passages, the compact appearance
+  // canon, the roster and this remit — not the author rulebook.
+  //
+  // THIS REPLACES A FULL-SCENE SECOND AUTHOR. The superseded cascade handed the whole scene to a
+  // second model with its own consent adjudication and its own failure handling, and the reader
+  // got that model's scene rather than an enhanced version of the one they were reading. An
+  // editor pass cannot do that: it may only return bounded edits to a draft that already exists,
+  // and the plot, the reader's choices, the identities and the outcomes are already fixed in it.
+  //
+  // IT IS NOT AN AUTHORIZER. Whether this pass runs at all is decided upstream — by the scene's
+  // authorized scope AND by the server, which enforces which edition this deployment may
+  // produce. Reaching this object means that decision has already been made.
+  // ── THE REMIT IS WHAT THE SCOPE AUTHORIZES, WHICH IS NOT ALWAYS PHYSICAL (Roman 2026-11-08) ─
+  // CORRECTED IN PLACE. The first wording required physical intimacy in every clause — "render
+  // the already-authorized PHYSICAL INTIMACY", "rewrite a PHYSICAL PASSAGE", "nothing outside the
+  // physical passages" — so the early LI whisper, which is DIALOGUE and deliberately precedes the
+  // StoryTurn romance gates, could never be enhanced at all. That excluded the one come-on the
+  // architecture was asked to keep.
+  //
+  // The fix is one task whose remit is read from the AUTHORIZED SCOPE supplied with each call,
+  // not a second rule block appended to a physical-only task. Two scopes exist today —
+  // dialogue-only and physical — and the wording below holds both without the editor having to
+  // guess which it is in: the scope states it.
+  //
+  // DIALOGUE PERMISSION IS NOT PHYSICAL PERMISSION. That separation is the whole reason the old
+  // architecture's collapse of it mattered, so it is stated in the objective AND again in the
+  // exclusions rather than left to the scope string alone.
+  var CP_EXPLICITNESS_TASK = {
+    id: 'explicitness',
+    objective: 'RAISE THE EXPLICITNESS OF THIS PASSAGE TO WHAT THE AUTHORIZED SCOPE BELOW '
+      + 'PERMITS, AND CHANGE NOTHING ELSE. The scene is finished: the events happened, the '
+      + 'characters chose what they chose, and it reached the outcome it reached. Your remit is '
+      + 'the LANGUAGE, never what occurs. '
+      + 'READ THE AUTHORIZED SCOPE FIRST — it names WHICH MATERIAL you may make explicit, and it '
+      + 'is the only thing that does. '
+      + 'WHERE THE SCOPE AUTHORIZES SPOKEN LANGUAGE, your remit is what characters SAY: a '
+      + 'proposition carried by implication, innuendo or a tactful paraphrase may be spoken '
+      + 'plainly, in that speaker\'s own voice and at that speaker\'s own level of nerve. '
+      + 'WHERE THE SCOPE AUTHORIZES PHYSICAL INTIMACY, your remit extends to the body: where an '
+      + 'authorized act is carried by euphemism, by a cut away, or by a summary of what happened '
+      + 'rather than the happening of it, write it directly, with anatomical and tactile '
+      + 'specificity, in the narration\'s established voice. '
+      + 'SPOKEN PERMISSION IS NOT PHYSICAL PERMISSION. A scope that authorizes dialogue '
+      + 'authorizes dialogue ONLY: you may make a character say something far more explicit and '
+      + 'you may NOT add, extend or render any physical act, touch or undressing anywhere in the '
+      + 'passage, however the line is answered. '
+      + 'Where the prose is ALREADY at the authorized level, leave it alone. EDIT ONLY THE '
+      + 'AUTHORIZED REGION: if a passage you would change is protected or read-only, make the '
+      + 'edits you can and REPORT what you could not reach in your `why`, naming the span, '
+      + 'rather than claiming the passage is done.',
+    welcome: 'YOU MAY REWRITE A PASSAGE at the explicitness the authorized scope allows. For a '
+      + 'dialogue scope, that is the SPOKEN LINE: say the thing outright instead of circling it, '
+      + 'keeping the speaker\'s diction, rhythm and restraint, and keeping every surrounding '
+      + 'narration sentence as it stands. For a physical scope, that is the body as well: anatomy '
+      + 'named directly, contact and rhythm narrated rather than implied, sensation given to the '
+      + 'viewpoint character in her own register. In both cases use the smallest span that does '
+      + 'the job and keep the paragraph\'s shape, length and position in the scene. For each '
+      + 'edit, your `why` must name what the authorized scope permits and what the current '
+      + 'wording is standing in for.',
+    insufficient: 'RAISING THE TEMPERATURE WITHOUT SAYING OR RENDERING ANYTHING. An intensifier, '
+      + 'an adverb or a more urgent verb attached to the same implication is not this pass\'s '
+      + 'work; neither is making the narration hotter around a line that still will not say what '
+      + 'it means. Nor is a passage that is already at the authorized level and merely not to '
+      + 'your taste. If the prose already says it or already renders it, it is finished.',
+    exclusions: 'NO NEW EVENTS AND NO NEW ACTS. Do not add, remove, reorder or extend anything '
+      + 'beyond the authorized scope supplied below — the scope is a CEILING, not a target, and a '
+      + 'passage may sit well under it. ON A DIALOGUE-ONLY SCOPE, no physical act of any kind may '
+      + 'be added, extended, or rendered more explicitly: not a touch, not a kiss, not a hand '
+      + 'moving, not a garment, and not a body described in a way the draft did not already '
+      + 'describe it. Do NOT change who is present, who does what, who consents to what, what '
+      + 'anyone refuses, how anyone answers a line, or how the passage ends. Do NOT change any '
+      + 'character\'s identity, body, name, appearance, relationship or history, and do not '
+      + 'invent any of those. Do NOT rewrite dialogue the reader chose. Do NOT cross a stated '
+      + 'hard stop or boundary, and do not narrate anyone the roster does not place in the '
+      + 'passage. Do NOT de-escalate, soften, abridge, moralize, add regret or add a consequence '
+      + 'that is not already in the scene. No Character+ work, no picturability work, no '
+      + 'continuity repair, and no stylistic polishing of prose outside the authorized material.',
+    authorizedRemoval: 'where a cut away, a fade, a tactful paraphrase, or a line that REPORTS '
+      + 'authorized material instead of delivering it stands in place of the thing itself, that '
+      + 'stand-in may be replaced by the delivered line or act, within the authorized scope. '
+      + 'Nothing else may be removed.'
+  };
+
   var CP_GROUNDING = {
     // The one compact paragraph that now carries the whole requirement.
     paragraph: 'GROUND THE PROTAGONIST, THE LOVE INTEREST AND THE NAMED OR CONSEQUENTIAL ON-PAGE '
       + 'CHARACTERS SUFFICIENTLY FOR THE READER TO PICTURE THEM. Where that grounding is missing, '
-      + 'weave in a few clear, memorable details — often one to three — drawn from '
-      + 'appearance, voice, clothing or distinctive manner. Briefly recall a familiar feature when '
+      + 'weave in a few clear, memorable details — often one to three — starting with what the '
+      + 'encounter is doing to their body, clothing, voice or movement, and using fixed features '
+      + 'where they help the reader recognize someone. Briefly recall a familiar feature when '
       + 'someone returns after an absence; otherwise let description recur when it helps us picture '
       + 'the encounter. This is not a per-scene quota. Preserve established traits and player '
       + 'choices. Supplied character records establish canon, not proof that the reader has seen it.',
@@ -332,16 +496,30 @@
     // delivered facts (age, height, build, hair, face, complexion, signature) and the resulting
     // portrait was still THIN: one feature added where the record could have supported a fuller
     // impression. A bible may be detailed while the prose selects the few features that do work.
-    selection: 'CHOOSE THE DETAILS THAT HELP THE READER PICTURE THIS PERSON IN CONTEXT. Where '
-      + 'the supplied record carries a face, a build, a height, a bearing, a voice, a scar or a '
-      + 'way of holding still, use whichever of those this moment can actually carry — '
-      + 'HAIR AND HANDS ARE OPTIONS, NOT DEFAULTS. A GENERIC VOICE ADJECTIVE ("low", "even", '
-      + '"soft") OR A ROUTINE GESTURE DOES NOT AUTOMATICALLY COMPLETE A PORTRAIT: it completes '
-      + 'one when it is particular enough that the reader could pick this person out by it. '
-      + 'Equally, do NOT assemble an anatomical checklist, do not hunt for a novel or unique '
-      + 'identifying gimmick, and do not add another description to someone the reader can '
-      + 'already picture. A familiar feature is perfectly good if it is the one that works here. '
-      + 'Two or three well-chosen features beat six.',
+    // ── THE ENCOUNTER FIRST, NOT THE FEATURE LIST (Roman 2026-11-10) ───────────────────────
+    // WHAT THIS REPLACES: feature-led guidance that told the editor which ATTRIBUTES of the
+    // supplied record to pick from (face, build, height, bearing, voice, scar) and then argued
+    // about which were defaults. Asked which attribute to choose, the editor chose attributes.
+    //
+    // MEASURED on the Scene 12 picturability pass, which is the comparison this wording is aimed
+    // at and NOT a template for other scenes: three accepted edits, all canon-faithful. The one
+    // that earned its place was Julian's Weave-Script spelling his concern — Lirael sees it while
+    // he takes her direction, so the detail is what the encounter is doing to him and what she
+    // can notice in the act. The two that could have waited were a portrait of his nose inserted
+    // mid-descent and a five-colour inventory of the crowd placed in the paragraph where the
+    // surge and the fall happen. Both are accurate; neither is what that moment was doing.
+    //
+    // So the instruction now leads with the body under pressure and keeps fixed features as a
+    // recognition aid rather than the starting point. Appearance canon is untouched — the system
+    // block still supplies it and it is still never to be contradicted — and KEEP is named here
+    // as it was before.
+    selection: 'Choose the detail that makes this person physically present in this moment. '
+      + 'Start with what the encounter is doing to their body, clothing, voice or movement. '
+      + 'In a rescue, that might be grit sticking to a sweaty wrist, a grip that shakes, or '
+      + 'someone having to stop for breath. Choose what the viewpoint character can actually '
+      + 'notice, and fit it into the action already on the page. Use fixed features when they '
+      + 'help the reader recognize someone. KEEP passages that already make the person feel '
+      + 'present.',
     // ── STAGING IS NOT AN IMPRESSION (Roman 2026-11-04, recalibrating this paragraph) ───────
     // The withdrawn wording ended "a generic hand movement, a posture or a silence does not by
     // itself make anyone recognizable" — a list of insufficient examples, which the editor read
@@ -1142,7 +1320,11 @@
   }
   // Accepts either shape. A KEEP is verified against the scene; an edit goes through the
   // existing validateRepairReply so authorization, protection and marker rules are identical.
-  function validateEditorReply(raw, slots, paragraphs, reader) {
+  // `opts` is accepted and unused. The C+ ledger handoff was briefly wired here; this function
+  // has NO caller in public/ (only two test harnesses reference it), so it was never the live
+  // boundary. The live parser is validateSceneEditorReply and the handoff lives beside its
+  // consumer in app.js. Left in place because the signature is exported.
+  function validateEditorReply(raw, slots, paragraphs, reader, opts) {
     var out = { decision: null, ok: false, kept: null, items: [], rejected: [], code: null };
     var parsed = raw;
     if (typeof raw === 'string') {
@@ -3054,7 +3236,7 @@
     // A LABELLED TECHNIQUE DEMONSTRATION. Not compulsory wording, not a personality every
     // protagonist must have, and not canon.
     demonstration: {
-      passage: 'I kept my eyes on a mated pair of Veilwood trees, studying the smooth white '
+      passage: 'I kept my eyes on a grafted pair of old sycamores, studying the smooth white '
         + 'trunks twisting together in immortal love. This pair had a faint pink coloring at the '
         + 'seam where the trunks pulled each other closest. I hated the stories some used to '
         + 'scare children by telling them that pink was the remains of a criminal, tied between '
@@ -3683,8 +3865,52 @@
       var key = String(o.label || '').toLowerCase();
       // ON STAGE IS A PRECONDITION, NOT A PREFERENCE. An absent character cannot be depicted,
       // and asking for it invites the model to invent a presence the scene does not have.
-      if (!onStage[key]) {
-        return deferred.push({ label: o.label, why: 'not on stage in this scene' });
+      // ── A FRAME BEAT'S ELIGIBILITY COMES FROM THE RESOLVED OPENING ROSTER ────────────
+      // `onStage` here is the craft pass's own roster, which in the measured Scene 1 held only
+      // Dani — so Helen's frame obligation was dropped as "not on stage" while the ACCEPTED
+      // stage had her present and acting as the opening actor. A frame beat is checked against
+      // the roster the scene was accepted with.
+      // ── AN ADMIRATION OBLIGATION IS ABOUT THE LI, AND THE LI MUST BE IN THE SCENE ────
+      // Checked on its own terms rather than folded into the frame branch, where an
+      // "LI is on the roster" fallback wrongly admitted an obligation labelled for a DIFFERENT
+      // character, and an empty roster admitted everything.
+      if (o.kind === 'li_admiration') {
+        if (!liName || key !== liName) {
+          return deferred.push({ label: o.label, id: o.id || null,
+            why: 'an admiration obligation must name the LI; this one names '
+              + (o.label || '(nobody)') });
+        }
+        var admRoster = {};
+        (opts.frameRoster || []).forEach(function (p) {
+          if (!p) return;
+          if (p.label) admRoster[String(p.label).toLowerCase()] = 1;
+          if (p.id) admRoster[String(p.id).toLowerCase()] = 1;
+        });
+        // With a resolved roster, use it; without one, fall back to the craft pass's own
+        // on-stage map rather than letting the obligation through unchecked.
+        var admPresent = (opts.frameRoster || []).length
+          ? !!admRoster[key] : !!onStage[key];
+        if (!admPresent) {
+          return deferred.push({ label: o.label, id: o.id || null,
+            why: 'the LI is not present in this scene, so there is nothing to admire' });
+        }
+      } else if (o.kind === 'character_plus_frame') {
+        var fr = {};
+        (opts.frameRoster || []).forEach(function (p) {
+          if (!p) return;
+          if (p.label) fr[String(p.label).toLowerCase()] = 1;
+          if (p.id) fr[String(p.id).toLowerCase()] = 1;
+        });
+        // The admiration obligations carry the LI's NAME as their label but a `liadmire:` id,
+        // so the id lookup never matches a roster entry; the label and the LI ref are what can.
+        var okFrame = fr[key] || fr[String(o.id || '').toLowerCase()];
+        if (!okFrame && (opts.frameRoster || []).length) {
+          return deferred.push({ label: o.label, id: o.id || null,
+            why: 'not on the resolved roster for this scene' });
+        }
+      } else if (!onStage[key]) {
+        return deferred.push({ label: o.label, id: o.id || null,
+          why: 'not on stage in this scene' });
       }
       if (o.kind === 'introduction' && o.eligibleThisScene === false) {
         return deferred.push({ label: o.label, why: 'introduction retried too recently — '
@@ -3749,7 +3975,25 @@
       var isFusion = !!(row && (row._fromFusion === true || row.fromFusion === true))
         || !!(pof && String(pof.character || '').toLowerCase() === key);
       due.push({
-        id: 'cplus:' + key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+        // ── A FRAME OBLIGATION KEEPS ITS OWN ID AND INSTRUCTIONS (Roman 2026-11-17) ───────
+        // This rebuilt every id from the character's NAME, so two distinct frame beats for two
+        // characters both collapsed to `cplus:dani_macbrayne` in the craft POST, and the frame
+        // text, slots and ask were dropped entirely. A beat whose id cannot round-trip cannot be
+        // settled against the published page.
+        // GENERALISED 2026-11-18: the carve-out above was for `character_plus_frame` only, so
+        // the next kind to bring its own id hit the same bug. Scene 4 raised
+        // `liadmire:social` and `liadmire:capability`, both labelled "Roman Tusk" — had they
+        // survived scheduling, BOTH would have been rebuilt as `cplus:roman_tusk`, becoming one
+        // indistinguishable obligation with its instructions dropped. ANY obligation that
+        // arrives with its own namespaced id keeps it; only an id-less one is derived from the
+        // name, which is the one case where the name is all there is.
+        id: (o && typeof o.id === 'string' && o.id.indexOf(':') !== -1)
+          ? o.id
+          : ('cplus:' + key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')),
+        frameTitle: (o && o.frameTitle) || undefined,
+        frameText: (o && o.frameText) || undefined,
+        frameSlots: (o && o.frameSlots) || undefined,
+        ask: (o && o.ask) || undefined,
         character: o.label,
         kind: isFusion ? 'fusion' : o.kind,
         requiresFusion: isFusion || undefined,
@@ -3797,7 +4041,7 @@
     due.sort(function (a, b) {
       var rank = function (o) {
         if (o.requiresSocialProof) return 0;
-        if (o.kind === 'introduction' || o.kind === 'fusion') return 1;
+        if (o.kind === 'introduction' || o.kind === 'fusion' || o.kind === 'li_admiration') return 1;
         return 2; };
       return rank(a) - rank(b);
     });
@@ -3805,10 +4049,17 @@
     // A FUSION OBLIGATION KEEPS THE SAME STANDING AS AN INTRODUCTION: it must remain visible
     // even when every ordinary NPC Character+ is already satisfied, because nothing else in the
     // scene can satisfy it.
-    var intros = due.filter(function (o) {
-      return o.kind === 'introduction' || o.kind === 'fusion'; });
-    var recurring = due.filter(function (o) {
-      return o.kind !== 'introduction' && o.kind !== 'fusion'; });
+    // AN ADMIRATION AREA KEEPS THE SAME STANDING, for the same stated reason: it is ISSUE-level
+    // coverage and nothing else in the scene can satisfy it. MEASURED on Scene 4: three frame
+    // beats filled CP_EDITOR_SOFT_DUE (5) first, and `liadmire:capability` was deferred as
+    // "the scene already covers 5 obligation(s)" — so an area the issue owes was dropped
+    // silently while a recurring depiction that is explicitly allowed to wait took its place.
+    // At most three areas exist and only OWED ones are ever raised, so this adds at most three
+    // and stays far inside CP_EDITOR_HARD_DUE (12), which still refuses loudly.
+    var _neverDrop = function (o) {
+      return o.kind === 'introduction' || o.kind === 'fusion' || o.kind === 'li_admiration'; };
+    var intros = due.filter(_neverDrop);
+    var recurring = due.filter(function (o) { return !_neverDrop(o); });
     var carried = intros.slice();
     // Recurring depictions fill whatever room is left, and the rest are genuinely still owed —
     // the issue cadence already says they need not land in THIS scene.
@@ -4438,7 +4689,7 @@
     if (_pictureMode) {
       sys.push('', CP_GROUNDING.block());
     } else if (_taskMode) {
-      sys.push('', CP_TASK.block(opts.task));
+      sys.push('', CP_TASK.block(opts.task, opts.authorizedScope));
     }
     if (_apprLines.length) {
       sys.push('', CP_GROUNDING.recordsHeader);
@@ -5124,23 +5375,59 @@
   // uncertain history is reported as unknown rather than certifying anyone as already described.
   function cpPictureDue(opts) {
     opts = opts || {};
-    var onStage = Array.isArray(opts.onStage) ? opts.onStage : [];
     var seen = {}, out = [];
+    var push = function (label, extra) {
+      var key = String(label || '').toLowerCase().trim();
+      if (!key || seen[key]) return;
+      seen[key] = 1;
+      out.push(Object.assign({
+        id: 'picture:' + key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+        character: String(label) }, extra || {}));
+    };
+    // ── THE RESOLVED LIST WINS (Roman 2026-11-18) ──────────────────────────────────────────
+    // `opts.people` is the SAME list the author's picturability mandate was built from, so the
+    // two surfaces cannot disagree about who the reader met. It already encodes the decisions
+    // this function used to approximate: who is present in person, who is an individual rather
+    // than a crowd, and who is unnamed but interacts on the page.
+    var people = Array.isArray(opts.people) ? opts.people : null;
+    if (people) {
+      people.forEach(function (p) {
+        if (!p) return;
+        var label = String(p.label || p.character || '').trim();
+        if (!label) return;
+        push(label, { kind: p.kind || null, isPC: p.isPC === true,
+          unnamed: p.unnamed === true, participation: p.participation || null,
+          why: p.why || null });
+      });
+      try {
+        if (typeof console !== 'undefined' && console.log) {
+          console.log('[PICTURE:ELIGIBLE] from the resolved roster — '
+            + out.map(function (x) { return x.character + (x.unnamed ? '(unnamed)' : ''); }).join(', '));
+        }
+      } catch (_) {}
+      return out;
+    }
+    // ── FALLBACK: THE OLD MAJOR-ONLY FILTER, DELIBERATELY UNCHANGED ────────────────────────
+    // Without the resolved roster there is no `presence` here, so this cannot tell a person in
+    // the room from a voice on a phone. Widening it would demand a picture of someone who
+    // cannot be pictured, so it stays narrow and says that it is the narrow path.
+    var onStage = Array.isArray(opts.onStage) ? opts.onStage : [];
     onStage.forEach(function (p) {
       if (!p || !p.label) return;
-      // IMPORTANT on-page people only: the PC, the love interest, and anyone the stage resolver
-      // marked a major participant. A passing doorway attendant is not assessed.
       var major = p.isPC === true || p.isLI === true
         || String(p.participation || '') === 'major'
         || String(p.kind || '') === 'pc' || String(p.kind || '') === 'li';
       if (!major) return;
-      var key = String(p.label).toLowerCase().trim();
-      if (!key || seen[key]) return;
-      seen[key] = 1;
-      out.push({ id: 'picture:' + key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
-        character: p.label, kind: p.kind || null, isPC: p.isPC === true,
+      push(p.label, { kind: p.kind || null, isPC: p.isPC === true,
         participation: p.participation || null });
     });
+    try {
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[PICTURE:ELIGIBLE] NARROW PATH — no resolved roster was supplied, so only'
+          + ' major participants are assessed (an unnamed interactor cannot be seen from here): '
+          + out.map(function (x) { return x.character; }).join(', '));
+      }
+    } catch (_) {}
     return out;
   }
 
@@ -5164,6 +5451,13 @@
     try {
       plan = cpEditorDue({
         plan: opts.coveragePlan, onStage: opts.onStage, skeleton: opts.skeleton,
+        // ── THE EDITOR SCHEDULES AGAINST THE CURRENT SCENE'S ROSTER (Roman 2026-11-18) ────
+        // This call omitted frameRoster, so the EDITOR's own scheduling saw only `onStage`
+        // while the author-prompt resolution upstream was given the accepted stage. On Scene 4
+        // that dropped both admiration obligations as "not on stage" with Roman speaking
+        // throughout. Falls back to onStage when no roster is supplied, so nothing changes for
+        // a caller that does not pass one.
+        frameRoster: opts.frameRoster || opts.onStage,
         liName: opts.liName, attempts: opts.attempts, ledger: opts.ledger,
         sceneOrdinal: opts.sceneOrdinal, issue: opts.issue });
     } catch (e) {
@@ -5180,7 +5474,7 @@
     // are. So a scene with nobody C+ due still runs, which is the behaviour the split exists for.
     var _pictureMode = opts.mode === 'picturability';
     if (_pictureMode) {
-      var _picDue = cpPictureDue({ onStage: opts.onStage });
+      var _picDue = cpPictureDue({ onStage: opts.onStage, people: opts.picturePeople });
       base.due = _picDue;
       base.mode = 'picturability';
       if (!_picDue.length) {
@@ -5243,6 +5537,13 @@
       // the ordinary path while a direct caller got real values. Added with the parameter.
       appearance: opts.appearance,
       task: opts.task,
+      // ── AND THIS IS THE SAME TRAP AGAIN (Roman 2026-11-08) ────────────────────────────────
+      // `authorizedScope` was passed by the enhancement caller and dropped HERE, by this very
+      // forward list — the third time the comment above has described its own failure. The
+      // explicitness task's objective tells the editor the scope is "the only thing that names
+      // which material you may touch", and without this line a dialogue-only whisper and a full
+      // physical scene sent byte-identical prompts.
+      authorizedScope: opts.authorizedScope,
       mode: opts.mode,
       // PERSON-LINKED PUBLISHED PROSE. On this explicit forward list for the reason the comment
       // above gives: the builder reads it, so a caller-private list that omits it delivers an
@@ -5256,6 +5557,16 @@
       call = await opts.editorFn({
         sys: req.sys, user: req.user, ids: req.ids, due: plan.due,
         revisionId: req.revisionId, owner: opts.owner || null,
+        // WHICH PASS THIS IS, so the dispatcher can key its durable operation per pass rather
+        // than per draft revision (see cpEditorOperationId). Picturability, the craft pass and a
+        // named task are three different operations on the same prose.
+        //
+        // A NAMED TASK CARRIES ITS OWN IDENTITY. Two different tasks on one draft are two
+        // different operations, so the id is the task's own — `task:consistency` cannot collide
+        // with `picturability`, with `craft`, or with some later task. A task without an id is
+        // still distinct from the two editor passes, which is what the collision fix required.
+        mode: _pictureMode ? 'picturability'
+          : (_taskMode ? ('task:' + String((opts.task && opts.task.id) || 'unnamed')) : 'craft'),
         // SIZED FOR EVERYONE DUE, not for a fixed cap: a decision plus a replacement paragraph
         // per obligation, plus the reply envelope. The server clamps this to its own hard bound,
         // and cpEditorDue refuses above CP_EDITOR_HARD_DUE rather than let it grow unbounded.
@@ -5717,10 +6028,27 @@
   // request or a second tab produces the SAME id, so the server replays the first result instead
   // of charging again. The revision is part of it on purpose: a genuinely regenerated scene is a
   // different draft and gets its own pass, while re-running the same bytes does not.
+  // ── TWO INDEPENDENT PASSES NEED TWO OPERATION IDS (Roman 2026-11-06) ────────────────────
+  // MEASURED DEFECT: this id did not name the PASS, only the draft revision. Picturability runs
+  // first; whenever it leaves the text unchanged — an empty or unusable reply, a refusal, or a
+  // perfectly legitimate all-KEEP outcome — the craft pass arrives at the SAME revision, builds
+  // the SAME id, and app.js:148082 refuses it as "this draft revision already had an editing
+  // pass in this session". Observed provider-free with four characters returning
+  // verdict=DUE: the C+/E+/Fusion pass never dispatched at all.
+  //
+  // So the two passes were structurally separated and then silently re-joined by their shared
+  // idempotency key — one cancelling the other. Naming the mode makes each pass its own durable
+  // operation, which is what every protection keyed on this id (the per-call reservation, the
+  // daily cap, the ledger row) was meant to be counting. It does NOT make either pass run: each
+  // keeps its own eligibility, and a genuine repeat of the SAME pass on the SAME revision is
+  // still refused exactly as before.
+  //
+  // Absent a mode the id is byte-identical to the old one, so no existing operation changes key.
   function cpEditorOperationId(o) {
     o = o || {};
     var parts = ['cplus-editor', String(o.accountId || 'anon'), String(o.storyId || ''),
       'scene' + String(o.scene == null ? '?' : o.scene), String(o.revisionId || '')];
+    if (o.mode) parts.push(String(o.mode));
     return parts.join(':');
   }
 
@@ -5737,6 +6065,8 @@
     judgeContract: judgeContract, validateQuotation: validateQuotation,
     CP_STYLE: CP_STYLE,
     CP_GROUNDING: CP_GROUNDING, CP_TASK: CP_TASK,
+    CP_CONSISTENCY_TASK: CP_CONSISTENCY_TASK,
+    CP_EXPLICITNESS_TASK: CP_EXPLICITNESS_TASK,
     STATUS: STATUS, OCCURRENCE: OCCURRENCE, EVIDENCE_PROBLEM: EVIDENCE_PROBLEM,
     paragraphsOf: paragraphsOf, cpClosingPassage: cpClosingPassage,
     authorizeRepairRegions: authorizeRepairRegions,

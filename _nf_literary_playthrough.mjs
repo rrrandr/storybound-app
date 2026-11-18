@@ -31,14 +31,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert';
+import _crypto from 'node:crypto';   // SB_NO_RETRY fingerprints
 import { chromium } from 'playwright-core';
-import { estimateUsd, guardDispatch } from './_fsc_cost_guard.mjs';
+import { estimateUsd, guardDispatch, RATES as GUARD_RATES } from './_fsc_cost_guard.mjs';
 // ── THE PRE-AUTHOR REGISTER GATE, WIRED INTO THE DISPATCH PATH ──
 // This run is GENERAL PROSE ONLY. Sol and Haiku must never be handed a scene whose declared
 // requirements call for a register they will not write: the author would either soften an
 // established voice to stay inside its own policy, or the provider would refuse. The gate is
 // consulted HERE, at the author dispatch, before any author request leaves the browser.
-import { registerVerdict, snapshotInPage, PROCEED } from './_nf_register_gate.mjs';
+import { registerVerdict, snapshotInPage, PROCEED, STOP_EXPLICIT_REQUESTED } from './_nf_register_gate.mjs';
 import { R_SCENE, reservationLines } from './_live_spend_ledger.mjs';
 // SETTLEMENT REPLACES THE ESTIMATE-SUBTRACTING LEDGER IN THE DISPATCH PATH. The old ledger read
 // only xAI's cost field, so Sol and Haiku receipts stayed unpriced estimates and the allowance
@@ -47,9 +48,10 @@ import { makeSettlement, settle } from './_nf_cost_settlement.mjs';
 // RELIABILITY MECHANISMS, SHARED WITH THE CONTROLS (2026-11-02). Imported rather than inlined so
 // _nf_reliability_controls.mjs exercises the same functions this run uses, not copies of them.
 import { allocateArtifactPath, scaffoldPrerequisite, isPrerequisiteGuarded, evidenceBundle,
-  prerequisiteOptionsFor }
+  prerequisiteOptionsFor, verifyScaffoldProvenance, dispatchDeadlineMs, deadlineForAllowance }
   from './_nf_run_reliability.mjs';
-import { configBody, installSession, isAuthOrigin, makeSession, installEntitledProfileStub }
+import { configBody, installSession, isAuthOrigin, makeSession, installEntitledProfileStub,
+  SB_TEST_ACCOUNT_ID }
   from './_test_session_env.mjs';
 // THE AUTHOR ROUTER IS THE PRODUCT FILE, NOT A COPY. Imported from public/ so the harness cannot
 // drift from what the application would load.
@@ -107,6 +109,29 @@ const OUT_ROOT = process.env.SB_OUT
   ? (process.env.SB_OUT.startsWith('/') ? process.env.SB_OUT : ROOT + '/' + process.env.SB_OUT)
   : '/Users/romantsukerman/storybound-diag/_nf_playthrough_out';
 const OUT = OUT_ROOT + '/run_' + RUN_ID;
+// ── A REWRITE MAY NOT WRITE WHERE ITS OWN SOURCE MATERIAL LIVES (Roman 2026-11-13) ──────────
+// The Scene 1 rewrite reuses replies saved by the paid opening, and that opening is the
+// COMPARISON — its page, its plan and its continuity state have to survive the rewrite intact.
+// Nothing in the run writes to the source directory today, but one mistyped SB_OUT is all it
+// would take, and the thing at risk is the only copy of the baseline. So the paths are compared
+// before chromium starts: if any SB_REUSE_* source sits under the output root, the run refuses.
+try {
+  const _srcDirs = Object.keys(process.env)
+    .filter((k) => /^SB_REUSE_/.test(k) && process.env[k])
+    .map((k) => ({ k, dir: path.dirname(fs.realpathSync.native
+      ? fs.realpathSync(String(process.env[k])) : String(process.env[k])) }));
+  const _outReal = OUT_ROOT.replace(/\/+$/, '');
+  for (const s of _srcDirs) {
+    if (s.dir === _outReal || s.dir.startsWith(_outReal + '/') || _outReal.startsWith(s.dir + '/')) {
+      throw new Error('[BASELINE SAFETY] ' + s.k + ' reads from ' + s.dir + ', which is inside or '
+        + 'above the output root ' + _outReal + '. The run this reuses is the COMPARISON for the '
+        + 'rewrite; writing a new run into it risks the only copy of that baseline. Point SB_OUT '
+        + 'somewhere else. Nothing was launched and nothing spent.');
+    }
+  }
+} catch (e) {
+  if (/BASELINE SAFETY/.test(String(e && e.message))) throw e;   // a missing source file is caught later, by name
+}
 const MODE = process.argv[2];
 const ORIGIN = process.env.SB_ORIGIN || 'http://localhost:3000';
 // SB_MAX_SCENES lets a diagnostic arm exit CLEANLY after fewer scenes, so the finally block still
@@ -126,7 +151,34 @@ const RESUME_AFTER_SCENE = Number(process.env.SB_RESUME_AFTER || 5);
 // control and nothing about dispatch, accounting or validation depends on it.
 const ACTION_WAIT_MS = (Number(process.env.SB_ACTION_WAIT_MIN) > 0
   ? Number(process.env.SB_ACTION_WAIT_MIN) : 30) * 60 * 1000;
-const SCENE_WAIT_MS = 6 * 60 * 1000;     // how long one scene may take to arrive
+// ── HOW LONG ONE SCENE MAY TAKE TO ARRIVE ─────────────────────────────────────────────────
+// FOUND BY CHECKING THE WHOLE CHAIN, not by it failing: a flat 6 minutes is SHORTER than the
+// per-call deadlines a scene's own critical path now carries. One scene can dispatch a staging
+// planner and an author, each a reasoning call whose waiting budget is derived from its
+// allowance — 330s apiece at 9,000/16,000 — and then renderers, three editor passes and the
+// small logic passes on top. Waiting 360s for that would cut the scene off while a call the
+// harness itself is still legitimately waiting on is in flight, which is the same defect one
+// level up.
+//
+// So the scene budget is the SUM of the budgets on that path plus a remainder for the
+// non-reasoning calls. It is read from the run's own selected allowances, so it moves with them
+// and with nothing else. Absent a selected configuration the historical 6 minutes stands
+// unchanged, and SB_SCENE_WAIT_MIN still overrides either way.
+const _sceneWaitDeadlineFor = (n) => deadlineForAllowance(n);
+const SCENE_WAIT_MS = (() => {
+  const override = Number(process.env.SB_SCENE_WAIT_MIN);
+  if (override > 0) return override * 60 * 1000;
+  let cfg = null;
+  try { cfg = process.env.SB_RUN_CONFIG ? JSON.parse(process.env.SB_RUN_CONFIG) : null; } catch (_) {}
+  if (!cfg) return 6 * 60 * 1000;
+  const plannerAllow = Math.max(Number(cfg.openingPlannerMaxTokens) || 0,
+    Number(cfg.plannerMaxTokens) || 0);
+  const authorAllow = Number(cfg.generalAuthorMaxTokens) || 0;
+  if (!(plannerAllow > 0) && !(authorAllow > 0)) return 6 * 60 * 1000;
+  const REMAINDER_MS = 120000;   // renderers, the three editor passes, the small logic passes
+  return (plannerAllow > 0 ? _sceneWaitDeadlineFor(plannerAllow) : 0)
+    + (authorAllow > 0 ? _sceneWaitDeadlineFor(authorAllow) : 0) + REMAINDER_MS;
+})();
 
 fs.mkdirSync(OUT, { recursive: true });
 // A pointer to this run, so readers do not have to guess which directory is current. The
@@ -154,20 +206,213 @@ const say = (m) => { console.log(m); log.push(m); fs.writeFileSync(OUT + '/RUN.l
 // WHICH SCENE it was, so there was nowhere for a routing decision to go. They are now named for
 // the models they configure, and the selection is made by public/author-cache-router.js at the
 // intercepted dispatch below.
+// ── THE UNCONDITIONAL SOL OPENING OVERRIDE IS REMOVED (Roman 2026-11-17) ──────────────────
+// It used to read: opening -> Sol via /api/sol-scene-test, continuations -> Haiku. That forced
+// the harness's own answer onto a decision that belongs to the product, and it is the reason the
+// published Scene 1 was authored by gpt-6.1-sol — the ONE dispatch flagged author:true requested
+// Sol. Under the standing assignment, ordinary prose INCLUDING THE OPENING is Luna's; Sol writes
+// the story-level spine and nothing else.
+//
+// The harness no longer chooses the prose author at all. public/model-routing.js makes the three
+// decisions, the app enforces them at dispatch, and this runner only RECORDS what went out. The
+// `luna` entry below exists solely to price and cap the prose call, never to select it.
+// RETAINED FOR SETTLEMENT OF HISTORICAL RECEIPTS ONLY. Nothing selects from this table any more:
+// the app owns prose routing and the shared cost guard prices the outgoing body. Kept because old
+// artifacts still have to resolve a rate when they are re-read.
 const AUTHOR_OVERRIDE = {
+  luna:  { label: 'Luna',  requested: 'gpt-6-luna',        route: '/api/chatgpt-proxy',
+                  // REASONING MODEL: the allowance travels as max_completion_tokens, which is the
+                  // same field api/chatgpt-proxy.js sends for /^(gpt-6|gpt-5|o1|o3|o4)/.
+                  capField: 'max_completion_tokens', cap: 4000,
+                  // THE PUBLISHED RATES, from _fsc_cost_guard.mjs: $0.10 in / $0.50 out per MTok.
+                  // My first edit copied Sol's 2.0e-6/10.0e-6 into this row, which would have
+                  // priced every Luna call at twenty times its real cost — a fabricated figure in
+                  // the one table a paid run reserves against. Reasoning bills INSIDE completion
+                  // on this model, so `out` covers it.
+                  rate: { in: 0.0000001, out: 0.0000005 } },
+};
+// Kept for the SETTLEMENT of historical receipts only: the preserved runs were served by these
+// models, and their prices must still resolve when an old artifact is re-read. Nothing selects
+// from this table.
+const HISTORICAL_AUTHOR_RATES = {
   sol:   { label: 'Sol',   requested: 'gpt-6.1-sol',       route: '/api/sol-scene-test',
                   capField: 'max_completion_tokens', cap: 4000,
                   rate: { in: 2.0e-6, out: 10.0e-6 } },
   haiku: { label: 'Haiku', requested: 'claude-haiku-5-5',  route: '/api/anthropic-proxy',
                   capField: 'max_tokens', cap: 20000,
-                  // measured on this packet family: >100k prompt tier. Thinking bills INSIDE the
-                  // cap, and the cap is the only lever — 'between_tools' is rejected by this model.
                   rate: { in: 0.50e-6, out: 2.50e-6 } },
 };
 // WHICH REQUEST IS THE AUTHOR? Identified by the prompt's own content, never by a role label:
 // this project routes prose through several role names, and the measured continuation author
 // arrived as STRUCTURE_GENERATOR.
-const isAuthorRequest = (bodyText) => /SCENE CONTINUATION \(HARD/.test(bodyText)
+// The prompt text of a request, assembled the same way the request RECORD assembles it, so the
+// planning allowlist and the offline check that verifies it read one identical string. Both
+// payload shapes this runner sends are covered: {messages:[{content}]} and {system,user}.
+// ── THE SHARED OPENING VALIDATOR ────────────────────────────────────────────────────────────
+// WHAT IT IS FOR, measured twice on the same Book. The accepted Scene 1 row read "Dani … REFUSES
+// THE GALA ORGANIZER'S microphone-for-endorsement offer ON SPEAKER". The plan came back with
+// "Her phone screen shows the organizer's LAST MESSAGE offering cottages with conditions", a
+// wound anchor that "lingers on the message", and must_not_confuse "ONLY DANI IS PRESENT". The
+// skeleton validator ACCEPTED it ("soft-only findings; assignments accepted"), the author wrote
+// a woman re-reading a text, and a live refusal — the one event the scene was built on — never
+// happened. Nothing in the chain asked the question this function asks.
+//
+// It judges ONE thing: when the assigned event is a LIVE EXCHANGE, do the plan's own beats show
+// the other person acting or speaking in real time, and the protagonist answering? A plan that
+// swaps the exchange for a message, a voicemail, a memory or a call that already ended is
+// REJECTED, however well-formed it is otherwise.
+//
+// It is not armed for every opening. An opening whose row assigns no live exchange — a genuinely
+// solo scene, a scene that opens in a room with another body — has no live requirement to lose,
+// so the validator passes it untouched. Requiring a voice everywhere would be the same mistake in
+// the other direction.
+//
+// IT READS AND NEVER WRITES. It returns a verdict and its evidence; the caller decides.
+const _OPENING_LIVE_ASSIGNED = [
+  /\blive\s+(?:video\s+|phone\s+|voice\s+)?call\b/i,
+  /\bon\s+(?:a|the)\s+(?:video|phone|voice)\s*call\b/i,
+  /\bvideo\s*call\b/i,
+  /\bon\s+the\s+(?:phone|line)\b/i,
+  /\bkeeps?\s+the\s+call\s+live\b/i,
+  /\bon\s+speaker(?:phone)?\b/i,
+  /\bputs?\s+(?:\w+\s+){0,4}on\s+speaker(?:phone)?\b/i,
+  /\bspeakerphone\b/i,
+  /\bover\s+the\s+speaker\b/i,
+];
+const _OPENING_NOT_LIVE_BEFORE = /\b(?:miss(?:ed|es)|unanswered|unreturned|declin(?:ed|es)|ignor(?:ed|es)|reject(?:ed|s)|cancell?(?:ed|s)|recorded|recording|logged|transcript|voicemail|returns?|returned|hung\s+up|hangs\s+up)\b/i;
+const _OPENING_NOT_LIVE_AFTER = /\b(?:(?:had\s+|has\s+|already\s+)*ended|is\s+over|was\s+over|went\s+to\s+voicemail|never\s+answer(?:s|ed)?|without\s+answering|does\s+not\s+answer|doesn'?t\s+answer)\b/i;
+
+// The assigned event is live only if the row says so AND does not immediately unsay it.
+const _openingRowAssignsLive = (rowText) => {
+  const t = String(rowText || '');
+  for (const rx of _OPENING_LIVE_ASSIGNED) {
+    const m = t.match(rx);
+    if (!m) continue;
+    const at = t.indexOf(m[0]);
+    if (_OPENING_NOT_LIVE_BEFORE.test(t.slice(Math.max(0, at - 70), at))) continue;
+    if (_OPENING_NOT_LIVE_AFTER.test(t.slice(at, at + 90))) continue;
+    return m[0];
+  }
+  return '';
+};
+
+// A LIVE EXCHANGE SUBSTITUTED FOR A RECORD. Each of these turns a two-way event into something
+// the protagonist consumes alone, which is precisely the failure that reached the page.
+const _OPENING_SUBSTITUTIONS = [
+  ['a message', /\b(?:last |latest |his |her |the )?(?:text )?messages?\b|\btexts?\b|\bin the thread\b|\bthread beneath\b|\bphone screen shows\b|\bscreen shows\b/i],
+  ['a voicemail', /\bvoicemails?\b|\bwent to voicemail\b|\bleft a message\b/i],
+  ['a memory', /\brecall(?:s|ed|ing)?\b|\bremember(?:s|ed|ing)?\b|\bthinks back\b|\breplays?\b|\breplaying\b/i],
+  ['a call that already ended', /\bcall (?:is|has|had|already) (?:ended|over|finished)\b|\bafter the call\b|\bonce the call\b|\bmeeting (?:has |had )?ended\b/i],
+  ['a recording or transcript', /\brecordings?\b|\btranscripts?\b|\blogged call\b/i],
+  ['a letter or document standing in for the exchange', /\bunsent letter\b|\breads the (?:letter|notice|clause|terms)\b/i],
+];
+// SOMEONE ELSE ACTING OR SPEAKING, NOW. Present-tense speech and pressure, not narration about
+// a person. "offers", "presses", "repeats", "will not take no" — the verbs of a live party.
+const _OPENING_OTHER_ACTS = /\b(?:says?|asks?|answers?|replies|repeats?|presses?|insists?|offers?|demands?|refuses?|argues?|interrupts?|cuts in|waits?|laughs?|warns?|threatens?|explains?|names?|counters?|pushes?|holds? the line|stays? on the line|talk(?:s|ing)?|speak(?:s|ing)?|tells?)\b/i;
+// AND THE PROTAGONIST ANSWERING. A live exchange she does not answer is a broadcast.
+const _OPENING_PC_RESPONDS = /\b(?:she |her )?(?:says?|answers?|replies|refuses?|tells?|counters?|asks?|argues?|insists?|names?|repeats?|cuts? (?:him|her|them) off|hangs? up|pushes? back|holds? her ground|snaps?|agrees?|declines?)\b/i;
+
+function validateOpeningPlan(opts) {
+  const o = opts || {};
+  const plan = o.plan || null;
+  const planText = String(o.planText || (plan ? JSON.stringify(plan) : ''));
+  const spine = (plan && (plan.opening_spine || plan)) || null;
+  const liName = String(o.liName || '').trim();
+  const assignedLive = _openingRowAssignsLive(o.rowText);
+
+  // The BEATS are the plan's account of what happens. The validator judges these and not the
+  // whole reply, because a plan can mention a live call in a field nobody writes from.
+  const beats = [];
+  const push = (label, v) => { if (v) beats.push({ label, text: String(v) }); };
+  if (spine) {
+    push('opening_beat', spine.opening_beat);
+    (Array.isArray(spine.rising_beats) ? spine.rising_beats : []).forEach((b, i) =>
+      push('rising_beats[' + (i + 1) + ']', b));
+    push('decision_beat', spine.decision_beat);
+    push('li_texture_beat', spine.li_texture_beat);
+    push('pc_wound_anchor', spine.pc_wound_anchor);
+  }
+  const beatText = beats.map((b) => b.text).join('\n');
+
+  // PHYSICAL CAST SEPARATION — true for every opening, live or not. A voice on a line is not a
+  // body in the room, and the roster's own echo validator treats staged_characters as the
+  // PHYSICAL cast; a live participant declared there is a fault, not a row.
+  const staged = (spine && Array.isArray(spine.staged_characters)) ? spine.staged_characters : [];
+  const inPerson = staged.filter((c) => c
+    && /IN_PERSON/i.test(String(c.presence || c.presence_mode || ''))).map((c) => String(c.name || ''));
+  const faults = [], evidence = {};
+  if (liName) {
+    const liRx = new RegExp('\\b' + liName.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+    const liStaged = inPerson.filter((n) => liRx.test(n));
+    if (liStaged.length) faults.push('the plan stages ' + liStaged.join(', ')
+      + ' IN_PERSON — the love interest\'s physical absence is lost');
+    evidence.loveInterestStagedInPerson = liStaged;
+  }
+  const remoteInPerson = staged.filter((c) => c
+    && /ON_PHONE/i.test(String(c.presence || c.presence_mode || ''))
+    && /IN_PERSON/i.test(String(c.presence || c.presence_mode || ''))).map((c) => String(c.name || ''));
+  if (remoteInPerson.length) faults.push('a live remote participant is also marked IN_PERSON: '
+    + remoteInPerson.join(', '));
+
+  evidence.assignedLiveExchange = assignedLive || null;
+  evidence.beatsRead = beats.map((b) => b.label);
+  evidence.stagedInPerson = inPerson;
+
+  if (!assignedLive) {
+    // NO LIVE EXCHANGE WAS ASSIGNED, so there is none to lose. A solo opening is a legitimate
+    // plan and this validator has no opinion about it.
+    evidence.note = 'the assigned event is not a live exchange, so no live requirement applies';
+    return { assignedLive: '', verdict: faults.length ? 'STOPPED' : 'PASSED', faults, evidence, beats };
+  }
+
+  const subs = _OPENING_SUBSTITUTIONS
+    .map(([label, rx]) => { const m = beatText.match(rx); return m ? { label, quote: m[0] } : null; })
+    .filter(Boolean);
+  const otherActs = beats.filter((b) => b.label !== 'pc_wound_anchor' && _OPENING_OTHER_ACTS.test(b.text));
+  const pcResponds = beats.filter((b) => _OPENING_PC_RESPONDS.test(b.text));
+
+  if (subs.length) faults.push('the assigned live exchange ("' + assignedLive + '") is replaced in '
+    + 'the beats by ' + subs.map((x) => x.label + ' ("' + x.quote + '")').join(' and ')
+    + ' — a record the protagonist consumes alone is not an exchange');
+  if (!otherActs.length) faults.push('no beat shows the other person acting or speaking in real '
+    + 'time — the assigned live exchange has no live party in it');
+  if (!pcResponds.length) faults.push('no beat shows the protagonist answering — a live exchange '
+    + 'she does not answer is a broadcast, not an exchange');
+
+  evidence.substitutions = subs;
+  evidence.beatsWhereOtherActs = otherActs.map((b) => b.label);
+  evidence.beatsWherePcResponds = pcResponds.map((b) => b.label);
+  return { assignedLive, verdict: faults.length ? 'STOPPED' : 'PASSED', faults, evidence, beats };
+}
+
+const _allowlistPromptText = (raw, body) => {
+  try {
+    const b = body || JSON.parse(raw);
+    if (b && Array.isArray(b.messages)) {
+      return b.messages.map((m) => String((m && m.content) || '')).join('\n');
+    }
+    if (b && (b.system != null || b.user != null)) {
+      return [b.system, b.user].map((x) => String(x || '')).join('\n');
+    }
+  } catch (_) {}
+  return String(raw || '');
+};
+
+// ── THE OPERATION IS DECLARED, NOT INFERRED (Roman 2026-11-17) ────────────────────────────
+// These two substrings were the whole test, and the real Scene 1 prose request contains NEITHER:
+// it carries "PROTAGONIST OPENING BEAT" only inside a general instruction, without "(HARD". So
+// `author` was recorded false for the actual author call, the pre-dispatch deck check never ran,
+// and a request asserting the protagonist had already taken the microphone was dispatched
+// unexamined. The call site now labels itself (`_sbOperation`), which cannot drift from the
+// prompt; the substrings stay as a fallback for the paths that do carry them.
+const isScene1OpeningProse = (body) => {
+  // READS THE SHIPPED FIELD. `purpose` is serialized by orchestration-client.js; `_sbOperation`
+  // was my invention and never left the browser.
+  try { return String((body && (body.purpose || body._sbOperation)) || '') === 'scene1_opening_prose'; }
+  catch (_) { return false; }
+};
+const isAuthorRequest = (bodyText, body) => isScene1OpeningProse(body)
+  || /SCENE CONTINUATION \(HARD/.test(bodyText)
   || /PROTAGONIST OPENING BEAT \(HARD/.test(bodyText);
 
 // ── PRICING THE OVERRIDE MODELS ────────────────────────────────────────────────────────────
@@ -201,6 +446,43 @@ const SIMULATED_ACCOUNT = /\/api\/(config|consume-fortune|refund-fortune|profile
 const BLOCKED_IMAGES = /\/api\/(img-proxy|bfl-kontext|image|grok-image|dashscope-image|visualize-flux|replicate)\b/;
 const PASSTHROUGH_NOOP = /\/api\/(geo|csp-report|beta-events)\b/;
 
+// ── THE OPENING PLANNER, IDENTIFIED BY ITS OPERATION NOT ITS ROUTE (Roman 2026-11-06) ────
+// MEASURED CAUSE OF THE STALL: the fixture below was selected by `body.role ===
+// 'OPENING_PLANNER'`. Routing that operation to a selected planner moves it to
+// /api/chatgpt-proxy under the PRIMARY_AUTHOR role (OPENING_PLANNER is not in the OpenAI
+// allowlist), so the role no longer matched, the schema-faithful `valid_plan` fixture was not
+// served, the operation got the ordinary synthetic reply, production's validators correctly
+// rejected it, and scene 1 never committed. The capture was testing the fixture mapping, not
+// the configuration.
+//
+// The operation is now recognised by the instruction it actually carries, which is the same
+// text whichever provider serves it — so ONE schema-faithful planning response answers ONE
+// operation regardless of route. Production validation is untouched and no plot content is
+// invented: the fixture is the same file as before.
+const OPENING_PLANNER_SIG = 'scene-structure planner for the OPENING scene';
+const isOpeningPlannerOp = (body) => {
+  if ((body && body.role) === 'OPENING_PLANNER') return true;
+  try {
+    return (body.messages || []).some((m) => String(m.content || '').indexOf(OPENING_PLANNER_SIG) !== -1);
+  } catch (_) { return false; }
+};
+
+// ── THE ARCHITECTURE SPINE, IDENTIFIED BY ITS OPERATION (Roman 2026-11-06) ────────────────
+// The spine call is matched by the instruction it carries, not by `/api/sol-scene-test`, not by
+// a request number and not by a role label — it travels with role:null, so a label match is not
+// even available. Both markers below are present ONLY in the architecture request: measured
+// against all three recorded bodies of run_2026-11-06T20-19-17-300Z_27690, the opening planner's
+// own 96,634-char prompt carries NEITHER (it quotes the spine's OUTPUT, not its instructions).
+// Matching on the instruction means one preserved reply answers one operation whatever route
+// serves it, which is the same rule the opening planner already uses above.
+const ARCH_SPINE_SIGS = ['CONTINUITY ARCHITECT', 'GRAVITATIONAL STRUCTURE'];
+const isArchitectureSpineOp = (body) => {
+  try {
+    const txt = (body.messages || []).map((m) => String(m.content || '')).join('\n');
+    return ARCH_SPINE_SIGS.every((s) => txt.indexOf(s) !== -1);
+  } catch (_) { return false; }
+};
+
 // ── THE READER HANDOFF ────────────────────────────────────────────────────────────────────
 const pagePath = (n) => OUT + '/NEXT_PAGE.txt';
 const actionPath = () => OUT + '/NEXT_ACTION.json';
@@ -216,9 +498,22 @@ async function awaitReaderChoice(sceneNo, published, controls) {
     if (fs.existsSync(actionPath())) {
       try {
         const j = JSON.parse(fs.readFileSync(actionPath(), 'utf8'));
-        if (typeof j.action === 'string') {
+        // `readHand` and `fateCardIndex` carry no action text, so the string test alone would
+        // reject them and the file would be re-read until the window expired.
+        if (typeof j.action === 'string' || j.readHand === true || typeof j.fateCardIndex === 'number') {
+          if (typeof j.action !== 'string') j.action = '';
           fs.writeFileSync(OUT + '/choice_scene' + sceneNo + '.json', JSON.stringify(j, null, 2));
-          return { action: j.action, dialogue: typeof j.dialogue === 'string' ? j.dialogue : '' };
+          return { action: j.action, dialogue: typeof j.dialogue === 'string' ? j.dialogue : '',
+                   // Two reader inputs that are NOT a say/do. `readHand` examines the deck
+                   // through its own gate and reports the hand, then waits again — so the card
+                   // is chosen from what was actually dealt, never predicted. `fateCardIndex`
+                   // clicks that card and takes the Say/Do it offers.
+                   readHand: j.readHand === true,
+                   fateCardIndex: (typeof j.fateCardIndex === 'number') ? j.fateCardIndex : null,
+                   // A Petition is the one reader input that is not a say/do. Optional; when
+                   // present it is sealed through the shipped modal BEFORE the turn is submitted,
+                   // which is the order a reader does it in.
+                   petition: typeof j.petition === 'string' ? j.petition : '' };
         }
       } catch (_) { /* half-written; try again */ }
     }
@@ -250,6 +545,194 @@ const readPublished = (page) => page.evaluate(() => ({
 export { MODEL_ROUTES, SIMULATED_ACCOUNT, BLOCKED_IMAGES, PASSTHROUGH_NOOP };
 
 // ══ PREFLIGHT — CONTACTS NO PROVIDER ═════════════════════════════════════════════════════
+// ── THE EDITOR'S OWN PRICER, FROM THE ROUTE ITSELF (Roman 2026-11-06) ────────────────────
+// api/cplus-editor.js owns the reservation arithmetic and the rate table for both of its
+// configurations. Importing them means the amount this runner holds is the amount that route
+// reserves, rather than a second copy that can drift. `general` is the configuration this run
+// forces for every repair pass, including on explicit drafts.
+// ── THE ISOLATED EDITOR HANDLER (Roman 2026-11-06) ───────────────────────────────────────
+// api/cplus-editor.js derives the account from a Supabase-verified token and its ledger has
+// `account_id uuid not null references auth.users(id)`, so this run's isolated session cannot
+// reach it over HTTP: a synthetic token fails verification and a synthetic id violates the key.
+// `createHandler({ createClient, fetch, env, log })` is injectable for exactly this, and
+// _cplus_editor_outgoing_capture.mjs already uses it the same way.
+//
+// WHAT IS STUBBED, AND WHAT IS NOT. Supabase is stubbed: admission returns `admitted`, the
+// account is the isolated test id, and no Postgres row is written. `fetch` is the REAL one, so
+// the upstream provider call is real and its receipt is real. Policy is set to price 0, which
+// `consume_fortunes_v3` skips entirely (api/cplus-editor.js: `if (priceFortunes > 0)`), so no
+// wallet is touched and no live pricing changes. Production authentication is untouched — this
+// handler exists only inside this process.
+//
+// THE COST OF IT, STATED: the durable Postgres operation ledger and its idempotency are NOT
+// exercised. Editor accounting for this run lives in this runner's ledger, not in the database.
+// ── THE LOCAL CREDENTIAL FILE, LOADED THE WAY THE DEV SERVER LOADS IT ────────────────────
+// (Roman 2026-11-13.) MEASURED ON THE PAID RUN: every C+ editor pass refused with HTTP 500
+// provider_not_configured — "the general editor configuration needs OPENAI_API_KEY". The key is
+// in .env.local and `vercel dev` loads it for the serverless functions, but this runner invokes
+// api/cplus-editor.js IN-PROCESS via createHandler, so the handler inherited THIS process's
+// environment, and `node` does not read .env.local. The credential existed and simply could not
+// be seen from here.
+//
+// So the file is loaded the same way other harnesses in this repo already read it
+// (_cplus_test_user.mjs reads .env.local directly). Three rules:
+//   · A REAL ENVIRONMENT VARIABLE ALWAYS WINS. Only names absent from process.env are filled in,
+//     so nothing a deployment or a shell already set is overwritten by a local file.
+//   · NO VALUE IS EVER LOGGED, returned or put on a command line. The report below names the
+//     KEYS loaded and nothing else, and presence is reported as a boolean.
+//   · MISSING FILE IS NOT FATAL. The editor route refuses on its own when a credential is
+//     absent, which is the correct behaviour and is already handled as a local refusal.
+(function _loadLocalEnvFile() {
+  try {
+    const f = ROOT + '/.env.local';
+    if (!fs.existsSync(f)) return;
+    const loaded = [];
+    for (const line of fs.readFileSync(f, 'utf8').split('\n')) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*"?([^"\r\n]*)"?\s*$/);
+      if (!m) continue;
+      const name = m[1];
+      if (process.env[name] != null && process.env[name] !== '') continue;   // the shell wins
+      process.env[name] = m[2].trim();
+      loaded.push(name);
+    }
+    if (loaded.length) {
+      console.log('[ENV] loaded ' + loaded.length + ' name(s) from .env.local (NAMES ONLY, no values): '
+        + loaded.join(', '));
+    }
+  } catch (e) {
+    console.log('[ENV] .env.local not loaded: ' + ((e && e.message) || e));
+  }
+})();
+
+// ── THE EDITOR'S OFFLINE ACCOUNTING, COUNTED RATHER THAN ASSERTED ───────────────────────
+// "the real handler never ran" has to be a NUMBER. These are incremented at the two boundaries
+// that matter — the handler invocation itself, and the handler's own outbound fetch — and both
+// are written to EDITOR_OFFLINE_PROOF.json at the end of the run.
+let _editorHandlerInvocations = 0;
+let _editorEgressAttempts = 0;
+const _editorEgress = [];            // { at, requested, sentTo, outcome }
+const ROOT_DIR = '/Users/romantsukerman/storybound-app';
+// Declared BEFORE the loader below assigns it: `let` is unreadable until its own declaration
+// runs, and the loader is ~350 lines earlier in the file.
+let _planOnlyValidator = null;
+const _SB_OFFLINE = !!process.env.SB_OFFLINE;
+// THE VALIDATOR IS A HARD DEPENDENCY OF PLAN-ONLY MODE. Without it the run could only report
+// that a scaffold "arrived", which is the thing this mode exists not to do.
+if (process.env.SB_PLAN_ONLY === '1') {
+  try {
+    const _v = await import('./_ft_plan_validator.mjs');
+    _planOnlyValidator = _v.validateContinuationPlan;
+    if (typeof _planOnlyValidator !== 'function') throw new Error('validateContinuationPlan is not a function');
+  } catch (e) {
+    throw new Error('SB_PLAN_ONLY=1 needs _ft_plan_validator.mjs and it did not load: '
+      + (e && e.message) + ' — refusing to start, because a planning run that cannot validate'
+      + ' would call an unvalidated scaffold accepted');
+  }
+}
+const _SB_MODEL_ORIGIN = process.env.SB_MODEL_ORIGIN || '';
+const _originIsLoopback = (o) => {
+  try {
+    const h = new URL(o).hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]';
+  } catch (_) { return false; }
+};
+// Installed ONLY when one of those two is set, so an ordinary run keeps the handler it had.
+const _editorFetchGuard = (_SB_OFFLINE || _SB_MODEL_ORIGIN) ? async function (u, init) {
+  const requested = String((u && u.url) || u || '');
+  _editorEgressAttempts += 1;
+  let sentTo = null, outcome = null;
+  // ── SB_EDITOR_DIRECT: LET THE EDITORS REACH THEIR PROVIDER UNTOUCHED ──────────────────
+  // The C+ editor builds an OpenAI-shaped request and fetches api.openai.com itself. Rewriting
+  // only its PATHNAME onto a loopback origin produced /v1/chat/completions against a local API
+  // that serves /api/* — two 404s on Scene 2, $0.013647 held, and no editor verdicts. When the
+  // run WANTS real editor passes, the honest thing is to let the request go where it was
+  // addressed and still record it. The planning replay and the model route are unaffected: they
+  // travel through SB_MODEL_ORIGIN, not through this guard.
+  // SB_OFFLINE OUTRANKS SB_EDITOR_DIRECT, ALWAYS. An offline run that also carries the direct
+  // flag — a launcher reused, a flag left set — must not place a billable call because of flag
+  // order. Offline is the stronger claim, so it is tested first and the direct branch below is
+  // unreachable while it holds.
+  if (_SB_OFFLINE && String(process.env.SB_EDITOR_DIRECT || '') === '1') {
+    outcome = 'refused_offline_overrides_direct';
+    _editorEgress.push({ at: new Date().toISOString(), requested, sentTo: null, outcome });
+    console.log('  ⊘ EDITOR EGRESS #' + _editorEgressAttempts + ' REFUSED: SB_OFFLINE overrides '
+      + 'SB_EDITOR_DIRECT — ' + requested + ' was NOT sent');
+    throw new Error('SB_OFFLINE overrides SB_EDITOR_DIRECT: the C+ editor handler attempted an '
+      + 'outbound request to ' + requested + ' — refused, nothing was sent');
+  }
+  if (String(process.env.SB_EDITOR_DIRECT || '') === '1') {
+    sentTo = requested;
+    outcome = 'direct_to_provider';
+    _editorEgress.push({ at: new Date().toISOString(), requested, sentTo, outcome });
+    console.log('  ⇒ EDITOR EGRESS #' + _editorEgressAttempts + ' ' + requested
+      + '  [DIRECT — this is a real, billable provider call]');
+    return globalThis.fetch(u, init);
+  }
+  if (_SB_MODEL_ORIGIN && _originIsLoopback(_SB_MODEL_ORIGIN)) {
+    // REDIRECTED, not refused: the handler runs for real and its request is observable at the
+    // local endpoint, which is strictly more informative than refusing it.
+    let p = '/';
+    try { p = new URL(requested).pathname; } catch (_) {}
+    sentTo = _SB_MODEL_ORIGIN + p;
+    outcome = 'redirected_to_loopback';
+    _editorEgress.push({ at: new Date().toISOString(), requested, sentTo, outcome });
+    console.log('  ⇢ EDITOR EGRESS #' + _editorEgressAttempts + ' ' + requested
+      + ' → ' + sentTo + '  [loopback]');
+    return globalThis.fetch(sentTo, init);
+  }
+  // SB_OFFLINE with no loopback origin: refuse. The handler sees a transport failure, which is
+  // the truthful thing for it to see — nothing was sent.
+  outcome = 'refused_offline';
+  _editorEgress.push({ at: new Date().toISOString(), requested, sentTo: null, outcome });
+  console.log('  ⊘ EDITOR EGRESS #' + _editorEgressAttempts + ' REFUSED (SB_OFFLINE): '
+    + requested + ' is not loopback');
+  throw new Error('SB_OFFLINE: the C+ editor handler attempted an outbound request to '
+    + requested + ' — refused, nothing was sent');
+} : null;
+
+let EDITOR_HANDLER = null;
+try {
+  const _edm = await import('./api/cplus-editor.js');
+  EDITOR_HANDLER = _edm.createHandler({
+    // THE HANDLER'S OWN EGRESS, GUARDED. `deps.fetch` is how api/cplus-editor.js takes its IO
+    // (line 430: `deps.fetch || globalThis.fetch`). Passing nothing here is what let an offline
+    // run place a real editor call: route interception cannot see an in-process fetch.
+    // undefined when neither SB_OFFLINE nor SB_MODEL_ORIGIN is set, so the default is unchanged.
+    fetch: _editorFetchGuard || undefined,
+    env: Object.assign({}, process.env, {
+      CPLUS_EDITOR_ENABLED: 'true',
+      CPLUS_EDITOR_PRICE_FORTUNES: '0',
+      CPLUS_EDITOR_DAILY_CAP: '60',
+      CPLUS_EDITOR_FORCE_CONFIG: 'general',
+      SUPABASE_URL: 'https://isolated.invalid',
+      SUPABASE_SERVICE_ROLE_KEY: 'isolated'
+    }),
+    log: { warn() {}, info() {}, error() {}, log() {} },
+    createClient: () => ({
+      // THE SAME ACCOUNT THE BROWSER SESSION MINTS. A second literal here made every client
+      // operation id name an account this handler's session did not, which the server rightly
+      // refused with operation_mismatch. One source of truth, imported, not retyped.
+      auth: { getUser: async () => ({ data: { user: { id: SB_TEST_ACCOUNT_ID } }, error: null }) },
+      from: () => ({
+        update: () => ({ eq: async () => ({ error: null }), error: null }),
+        insert: async () => ({ error: null }),
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) })
+      }),
+      rpc: async (fn) => (fn === 'cplus_editor_admit')
+        ? { data: [{ outcome: 'admitted', charged_fortunes: 0 }], error: null }
+        : { data: [{ ok: true }], error: null }
+    })
+  });
+} catch (_) { EDITOR_HANDLER = null; }
+
+let EDITOR_PRICER = null;
+try {
+  const _ed = await import('./api/cplus-editor.js');
+  const _cfg = _ed.editorConfigFor('general');
+  const _outCap = Math.min(_cfg.maxOutputTokens, Math.max(_cfg.floorOutputTokens, 1240));
+  EDITOR_PRICER = (chars) => _ed.reserveUsd(chars, _outCap, _cfg);
+} catch (_) { EDITOR_PRICER = null; }
+
 if (MODE === 'preflight') {
   const checks = [];
   const ck = (n, f) => { try { f(); checks.push(['ok', n]); } catch (e) { checks.push(['FAIL', n + ' :: ' + (e && e.message)]); } };
@@ -286,6 +769,36 @@ if (MODE === 'preflight') {
     assert.equal(roomy.allowed, true);
     assert(roomy.estimate > 0, 'the guard must price the call');
   });
+  // ── THE EDITOR SHARES THE RUN AUTHORIZATION, AND A REFUSAL STOPS THE CALL ─────────────
+  // Driven through the EDITOR ROUTE'S OWN reserveUsd — the same function the handler calls —
+  // so the figure checked here is the figure held at dispatch. The DRIVE ceiling cannot
+  // isolate this case (the architecture guard is checked earlier and costs more), so the
+  // decision is exercised directly.
+  ck('an editor call is priced by the route and refused when the run authorization cannot cover it', () => {
+    assert(EDITOR_PRICER, 'the editor pricer must be importable from api/cplus-editor.js');
+    const est = EDITOR_PRICER(37197);               // the captured repair-pass request size
+    assert(est > 0, 'the editor call must be priced, not zero-rated');
+    // The decision the handler makes, with the same comparison.
+    assert.equal(est <= 0.000001, false, 'an exhausted authorization must refuse the editor');
+    assert.equal(est <= 5.0, true, 'a funded authorization must admit it');
+    // And it must be the route's own arithmetic, not a local copy.
+    assert(Math.abs(est - 0.006516) < 0.000005, 'expected the route figure 0.006516, got ' + est);
+  });
+  ck('the refusal path reserves nothing — a blocked editor call cannot consume authorization', () => {
+    const src = fs.readFileSync(new URL(import.meta.url).pathname, 'utf8');
+    // The markers are ASSEMBLED rather than written literally, so this check cannot match its
+    // own source — which is how the two previous attempts passed the wrong segment.
+    const marker = 'EDITOR NOT' + ' DISPATCHED';
+    const i = src.indexOf(marker);
+    assert(i > 0, 'the editor refusal branch must exist and report itself');
+    // Walk back to the refusal record and forward to the local refusal response.
+    const start = src.lastIndexOf('requests.push', i);
+    const end = src.indexOf('route.ful' + 'fill', i);
+    assert(start > 0 && end > i, 'the refusal branch must record and then refuse locally');
+    const seg = src.slice(start, end);
+    assert.equal(/reserve\(/.test(seg), false, 'the refusal path must not call reserve()');
+    assert(/over_remaining_auth/.test(seg), 'the refusal must name the reason');
+  });
   // ── SETTLEMENT, DEMONSTRATED AGAINST THE REAL reconcile() PATH ─────────────────────────
   // Three cases the brief names, each driven through makeSettlement rather than described:
   // a charge BELOW its reservation, a charge ABOVE it, and an UNANSWERED request.
@@ -320,21 +833,40 @@ if (MODE === 'preflight') {
     assert(Math.abs(t.heldUnknown - 0.1329) < 1e-12, 'held $' + t.heldUnknown);
     assert(Math.abs(t.remaining - (3.0 - 0.1329)) < 1e-12, 'the allowance must not be refunded');
   });
-  ck('a CACHE-BEARING receipt is held, not settled as if it were all uncached', () => {
-    // UPDATED 2026-11-02. This used to assert `cached.settled === true` — that settle() would
-    // happily price the plain fields and the DISPATCH PATH was solely responsible for withholding
-    // them. That split is what let a real receipt through: the dispatch path tested only the READ
-    // fields, the measured Sol receipt carried `cache_write_tokens` instead, and $0.197876 was
-    // recorded as settled from an incomplete rate. settle() now refuses on its own.
+  ck('a CACHE-BEARING receipt settles ONLY where cache rates are published, and is held otherwise', () => {
+    // ── THIS CHECK WENT RED AND WAS REWRITTEN (Roman 2026-11-12). SAID PLAINLY. ────────────
+    // It asserted that a cache-bearing receipt for claude-haiku-5-5 or gpt-6.1-sol must NOT
+    // settle. That was right while this repo had no cache rates for either model — the rule
+    // being protected is "never present an incomplete calculation as a settled charge", and
+    // with no write rate, refusing WAS the complete answer.
+    //
+    // Both models now carry their published cache rates (Anthropic's own table for Haiku 5.5;
+    // api/cplus-editor.js for Sol's $2.50/MTok write), so refusing them would now mean holding
+    // real, priceable charges as "unknown" — the opposite of the accuracy the check exists for.
+    //
+    // THE RULE IS UNCHANGED AND IS STILL WHAT IS ASSERTED. What moved is which models satisfy
+    // it. So the check now pins BOTH sides: a model WITH rates settles AT THE WRITE RATE (so
+    // pricing writes as plain input is still red), and a model WITHOUT them still holds and
+    // still names the field.
     const read = settle({ input_tokens: 1000, output_tokens: 100,
       cache_read_input_tokens: 150000 }, 'claude-haiku-5-5');
-    assert.equal(read.settled, false, 'a cache-READ receipt must not settle');
-    assert.equal(read.holdExposure, true, 'and it must hold exposure rather than be dropped');
-    // THE EXACT SHAPE THAT SLIPPED THROUGH, asserted as a case and not as a description.
+    assert.equal(read.settled, true, 'Haiku 5.5 has published cache rates and must settle now');
+    assert.equal(read.tier, '<=100k', 'priced on INPUT tokens, which are 1000 here');
+    // 150,000 read tokens exceed input_tokens, so plainIn floors at 0 and the read rate carries it.
+    assert.equal(read.cachedInTok, 150000, 'the read tokens must be recognised');
+    // THE SHAPE THAT ONCE SLIPPED THROUGH, now asserted at the RIGHT price rather than refused.
     const write = settle({ prompt_tokens: 88558, completion_tokens: 2076, total_tokens: 90634,
       prompt_tokens_details: { cached_tokens: 0, cache_write_tokens: 88555 } }, 'gpt-6.1-sol');
-    assert.equal(write.settled, false, 'a cache-WRITE receipt must not settle either');
-    assert(/cache_write_tokens=88555/.test(write.why || ''), 'the refusal must name the field: ' + write.why);
+    assert.equal(write.settled, true, 'Sol\'s write rate is published and must be applied');
+    const wantWrite = (3 * 2e-6) + (88555 * 2.5e-6) + (2076 * 1e-5);
+    assert(Math.abs(write.usd - wantWrite) < 1e-9,
+      'writes must be priced at the WRITE rate, not as plain input: ' + write.usd + ' != ' + wantWrite);
+    // A MODEL WITH NO PUBLISHED CACHE RATES STILL HOLDS, and still names the field it saw.
+    const noRates = settle({ prompt_tokens: 88558, completion_tokens: 2076,
+      prompt_tokens_details: { cached_tokens: 0, cache_write_tokens: 88555 } }, 'grok-4.3');
+    assert.equal(noRates.settled, false, 'a model without cache rates must still refuse');
+    assert.equal(noRates.holdExposure, true, 'and must hold exposure rather than drop it');
+    assert(/cache_write_tokens=88555/.test(noRates.why || ''), 'the refusal must name the field: ' + noRates.why);
     // An authoritative provider cost still wins — refusing is the fallback, not a preference.
     const authoritative = settle({ cost_in_usd_ticks: 271993500,
       prompt_tokens_details: { cache_write_tokens: 500 } }, 'grok-4.3');
@@ -344,12 +876,14 @@ if (MODE === 'preflight') {
     const plain = settle({ prompt_tokens: 1000, completion_tokens: 100,
       prompt_tokens_details: { cached_tokens: 0 } }, 'gpt-6.1-sol');
     assert.equal(plain.settled, true, 'a plain receipt must still settle');
+    // THE LEDGER SIDE: an unpriceable cache receipt is still HELD at its reservation, never
+    // credited back and never counted as settled.
     const st = makeSettlement(3.0);
-    st.record({ stage: 'author', model: 'gpt-6.1-sol', estimate: 0.1329,
+    st.record({ stage: 'author', model: 'grok-4.3', estimate: 0.1329,
       usage: { prompt_tokens: 88558, completion_tokens: 2076,
         prompt_tokens_details: { cache_write_tokens: 88555 } } });
     const t = st.totals();
-    assert.equal(t.settled, 0, 'a cache-bearing receipt must not reach the settled total');
+    assert.equal(t.settled, 0, 'an unpriceable cache receipt must not reach the settled total');
     assert(Math.abs(t.heldUnknown - 0.1329) < 1e-12, 'it is HELD at its reservation: ' + t.heldUnknown);
   });
   ck('the reader handoff round-trips, and the page is the only thing handed over', () => {
@@ -366,8 +900,18 @@ if (MODE === 'preflight') {
     // authorized for THIRTEEN scenes plus one alternate scene 13, so the assertion now pins the
     // AUTHORIZED set rather than one historical configuration. Anything outside it still fails
     // loudly; this is not a licence for an arbitrary count.
-    assert(SCENES === 10 || SCENES === 13,
-      'SCENES=' + SCENES + ' is not an authorized shape (10 = the original run, 13 = the execution test)');
+    // TWENTY ADDED 2026-11-12, and it is the PRODUCT'S OWN figure, not a convenience: the
+    // literary Books declare "the complete Issue One — 20 scenes" in PREVIEW_CATALOG and charge
+    // 60 Fortunes for exactly that. The First Taste run was requested at that length. This list
+    // is still an allowlist — an arbitrary count still fails loudly.
+    // ONE ADDED 2026-11-13, AUTHORIZED. Roman: "Stop at Scene 1 and show me the whole page and
+    // its choice before continuing." A single-scene arm tests a repaired opening without
+    // committing to the other nineteen. It does NOT shorten the issue: SCENES bounds this
+    // RUNNER'S loop, while the issue plan is sized product-side from the story tier, so a
+    // 1-scene arm still plans the full 20-scene Issue One and simply stops after the opening.
+    assert(SCENES === 1 || SCENES === 10 || SCENES === 13 || SCENES === 20,
+      'SCENES=' + SCENES + ' is not an authorized shape (1 = one opening under test, 10 = the '
+      + 'original run, 13 = the execution test, 20 = one complete literary Issue One)');
     // The PAID shape is asserted, not whatever a provider-free arm set. If SB_RESUME_AFTER is in
     // the environment this check fails loudly rather than blessing a different configuration.
     assert.equal(RESUME_AFTER_SCENE, 5);
@@ -397,6 +941,17 @@ if (MODE === 'preflight') {
 // and measures REQUEST SIZES; its prose is worthless and is never presented as story evidence.
 // `run` sends the same sequence to real providers and needs an explicit ceiling.
 const DRIVE = MODE === 'drive';
+// ── WHICH BOOK THIS RUN PLAYS (Roman 2026-11-12) ─────────────────────────────────────────────
+// This runner was written against one Book and named it in eight places. The Literary
+// playthrough itself is Book-agnostic — it launches a shipped catalog entry, reads the published
+// page and submits reader actions — so the Book is a SELECTION, not a property of the runner.
+// SB_STARTER names the catalog id; the default is unchanged, so every existing invocation and
+// every preserved run keeps the behaviour it had.
+//
+// THE WORLD COMES FROM THE SELECTED ENTRY, never from a constant: the account setup used to pin
+// `picks.world = 'Fantasy'`, which for any other Book would have contradicted the entry the
+// launch itself applied.
+const STARTER_ID = process.env.SB_STARTER || 'starter_first_sacrifice';
 // RESUME-INTO. Continues a story this runner already paid for, from its preserved state, instead
 // of regenerating the scenes already on disk. The alternative is re-paying for every completed
 // scene after any client-side fault, which is how a budget gets spent on work already done.
@@ -419,6 +974,155 @@ if (!DRIVE && MODE !== 'run-resume') {
 // The two PRIMARY_AUTHOR legs of a scene (beat outline, then control extraction) are told apart
 // by their ORDER, not by substring matching on prompts that share a vocabulary. Reset per scene.
 let _paSeen = 0;
+// ── SB_PLAN_ONLY STATE ──────────────────────────────────────────────────────────────────
+// plannerOk is null until a planner reply has been classified: a scaffold dispatch requires it
+// to be TRUE, so "no planner reply yet" and "an unusable planner reply" both refuse.
+let _planOnlyPlannerSeen = false;      // a planner request was permitted through the gate
+let _planOnlyPlannerOk = null;         // null = unknown · true = usable plan · false = empty/truncated
+let _planOnlyPlannerWhy = '';
+let _planOnlyScaffoldSent = 0;         // exactly one attempt is permitted
+let _planOnlyVerdict = null;           // null | 'accepted' | 'rejected' — set ONLY by validation
+let _planOnlyFaults = [];
+let _planOnlyRefusals = [];
+// THE ACCEPTED STAGE AND THE READER'S MOVE, as the carry-in and the paid attempt fix them.
+// Supplied here rather than scraped, so the verdict cannot drift from the offline check.
+// ── THE ROSTER COMES FROM THE SAVE'S OWN LEDGER (Roman 2026-11-18) ──────────────────────
+// This was a hand-written stand-in, and it carried `role:producer` while the story's actual
+// producer is the primary-antagonist entity. So a scaffold grounded on the REAL ref failed four
+// times over — unknown_participant plus three unresolved_ref_acts — for naming the person the
+// ledger actually holds. A roster I typed is not the cast; the cast is in
+// storage.sb_saved_story → stateSnapshot._relationshipLedger.entities.
+//
+// The ISSUED spelling is used, not the ledger key: `ent:` is not an issuable ref kind, so the
+// stage carries `pc:self` and `named:<slug>` while the ledger keys are `pc` and `ent:roman tusk`.
+function _planOnlyRosterFromSave(stateFile) {
+  try {
+    const dump = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+    const storage = dump.storage || dump;
+    const saved = JSON.parse(String(storage['sb_saved_story'] || '{}'));
+    const snap = saved.stateSnapshot || saved.state || saved;
+    const ents = (snap._relationshipLedger && snap._relationshipLedger.entities) || {};
+    const issued = (ref, e) => {
+      if ((e || {}).anchorRole === 'pc' || ref === 'pc') return 'pc:self';
+      if (/^(pc:|named:|role:|plot:|cand:)/.test(ref)) return ref;
+      const lab = String((e || {}).label || '').trim();
+      return lab ? ('named:' + lab.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')) : ref;
+    };
+    const out = Object.keys(ents).map((ref) => {
+      const e = ents[ref] || {};
+      return { id: issued(ref, e), label: String(e.label || ''),
+        isPC: e.anchorRole === 'pc',
+        // The LI is offstage in this story's scene 2; everyone else the scene stages is present.
+        presence: e.anchorRole === 'li' ? 'OFFSTAGE_REFERENCED' : 'IN_PERSON' };
+    }).filter((x) => x.id && x.label);
+    if (out.length) {
+      say('  \u24d8 planning roster read from the save\u2019s relationship ledger: '
+        + out.map((x) => x.id.slice(0, 44) + '=' + x.label).join(' \u00b7 '));
+      return out;
+    }
+  } catch (e) {
+    say('  ! could not read the ledger from the save (' + (e && e.message) + ')');
+  }
+  return null;
+}
+const _PLAN_ONLY_ROSTER = (process.env.SB_PLAN_ONLY === '1' && RESUME_FROM
+  && _planOnlyRosterFromSave(RESUME_FROM)) || [
+  { id: 'pc:self', label: 'Dani MacBrayne', presence: 'IN_PERSON', isPC: true },
+  { id: 'named:helen_macbrayne', label: 'Helen MacBrayne', presence: 'IN_PERSON' },
+  { id: 'named:roman_tusk', label: 'Roman Tusk', presence: 'OFFSTAGE_REFERENCED' },
+];
+const _PLAN_ONLY_MOVE = {
+  readerAction: 'Escalate it \u2014 say the worst true thing in the room and let it land.',
+  readerDialogue: 'You want the version where I\u2019m the difficult one, Helen? Give them that one.',
+};
+const _PLAN_ONLY_OBJECTIVES = ['footage', 'gala'];
+function _planOnlyValidate(plan, finishReason) {
+  if (!_planOnlyValidator) throw new Error('the plan validator was not loaded');
+  return _planOnlyValidator(plan, Object.assign({
+    roster: _PLAN_ONLY_ROSTER,
+    // THE CAST, so a plot: ref is judged by whether it RESOLVES rather than by its prefix.
+    castRefs: _PLAN_ONLY_ROSTER.map((r) => ({ id: r.id, label: r.label })),
+    spineObjectives: _PLAN_ONLY_OBJECTIVES,
+    finishReason: finishReason || 'stop' }, _PLAN_ONLY_MOVE));
+}
+const _planOnlyIsPlannerReq = (t) => /SCENE-SPINE planner|You are the SCENE planner/.test(String(t || ''));
+const _planOnlyIsScaffoldReq = (t) => /causal_outline/.test(String(t || ''))
+  && /stage_contract|environment_anchor/.test(String(t || ''));
+// WHAT THE REPLY WAS. Called from the drive fixture site and from the live response site, so one
+// classification serves both and a fixture rehearsal has the same shape as a paid run.
+function _planOnlyObserve(o) {
+  if (process.env.SB_PLAN_ONLY !== '1') return;
+  // ── SB_PLAN_TEST_SKIP_OBSERVE=1 — REPRODUCE THE PAID FAILURE EXACTLY ──────────────────
+  // The paid run's planner reply was VALID and simply never observed, leaving the flag NULL.
+  // Serving a malformed reply instead sets it FALSE, which is a different state and a path that
+  // already worked. This skips the observation and nothing else, so the arm under test is the
+  // one that actually cost money.
+  if (process.env.SB_PLAN_TEST_SKIP_OBSERVE === '1') {
+    try {
+      const t = String((o && o.requestText) || '');
+      if (_planOnlyIsPlannerReq(t)) {
+        say('  \u2699 TEST: the planner reply is served but NOT observed \u2014 the classification'
+          + ' stays UNKNOWN, which is the state the paid run was in');
+        return;
+      }
+    } catch (_) {}
+  }
+  const reqText = String(o && o.requestText || '');
+  const bodyText = String(o && o.body || '');
+  let content = '', finish = '', refusal = '';
+  try {
+    const j = JSON.parse(bodyText);
+    content = String((j.choices && j.choices[0] && j.choices[0].message
+      && j.choices[0].message.content) || j.content || '');
+    // BOTH SHAPES. api/chatgpt-proxy.js normalises its reply to { content, usage, finish_reason,
+    // refusal } — finish_reason is a SIBLING of content, which it lifted out of choices[0]
+    // itself. Reading only the nested form meant a truncated reply whose JSON happened to parse
+    // was classified usable, which is the one thing this classifier exists to prevent.
+    finish = String(j.finish_reason
+      || (j.choices && j.choices[0] && (j.choices[0].finish_reason || j.choices[0].finishReason))
+      || '');
+    refusal = String(j.refusal
+      || (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.refusal)
+      || '');
+  } catch (_) { content = bodyText; }
+  if (_planOnlyIsPlannerReq(reqText) && _planOnlyPlannerOk === null) {
+    let plan = null;
+    try { plan = JSON.parse(content); }
+    catch (_) { try { plan = JSON.parse((content.match(/\{[\s\S]*\}/) || [''])[0]); } catch (__) { plan = null; } }
+    const hasPlan = !!(plan && (plan.state_change || plan.tactical_move || plan.forces_choice != null));
+    if (!content.trim()) { _planOnlyPlannerOk = false; _planOnlyPlannerWhy = 'the planner returned no content'; }
+    else if (refusal) { _planOnlyPlannerOk = false; _planOnlyPlannerWhy = 'the provider declined (refusal: ' + refusal.slice(0, 80) + ')'; }
+    else if (finish && finish !== 'stop') { _planOnlyPlannerOk = false; _planOnlyPlannerWhy = 'the planner reply was truncated (finish_reason=' + finish + ')'; }
+    else if (!hasPlan) { _planOnlyPlannerOk = false; _planOnlyPlannerWhy = 'the planner reply carries no plan (no state_change / tactical_move / forces_choice)'; }
+    else { _planOnlyPlannerOk = true; _planOnlyPlannerWhy = 'a usable plan'; }
+    say('  \u25c6 PLAN-ONLY: planner reply classified \u2014 '
+      + (_planOnlyPlannerOk ? 'USABLE' : 'UNUSABLE') + ': ' + _planOnlyPlannerWhy
+      + (_planOnlyPlannerOk ? ' \u2014 exactly ONE scaffold dispatch is now permitted'
+                            : ' \u2014 ZERO scaffold dispatches are permitted'));
+    return;
+  }
+  if (_planOnlyIsScaffoldReq(reqText) && _planOnlyVerdict === null) {
+    let plan = null;
+    try { plan = JSON.parse(content); }
+    catch (_) { try { plan = JSON.parse((content.match(/\{[\s\S]*\}/) || [''])[0]); } catch (__) { plan = null; } }
+    let res = null;
+    try {
+      res = _planOnlyValidate(plan, finish);
+    } catch (e) { res = { ok: false, faults: [{ code: 'validator_threw', why: String(e && e.message) }] }; }
+    _planOnlyVerdict = res.ok ? 'accepted' : 'rejected';
+    _planOnlyFaults = res.faults || [];
+    if (res.ok) {
+      say('  \u25c6 PLAN-ONLY: the scaffold reply VALIDATED \u2014 accepted. The run stops here;'
+        + ' no prose and no editor is dispatched.');
+      (res.notes || []).forEach((x) => say('      note: ' + x));
+    } else {
+      say('  \u2717 PLAN-ONLY: the scaffold reply is REJECTED \u2014 ' + _planOnlyFaults.length
+        + ' validation fault(s). The run ends here and reserves nothing for a correction retry,'
+        + ' for prose, or for either editor.');
+      _planOnlyFaults.forEach((f) => say('      [' + f.code + '] ' + f.why));
+    }
+  }
+}
 const _REPLAYING = !!(process.env.SB_REPLAY_RAW || process.env.SB_REPLAY_PLANNER
   || process.env.SB_REPLAY_OUTLINE || process.env.SB_REPLAY_CONTROL || process.env.SB_REPLAY_FALLBACK);
 if (_REPLAYING && MODE !== 'drive') {
@@ -437,7 +1141,16 @@ assert(CEILING > 0, 'dispatch requires an explicit ceiling argument — the ceil
 // double-count), a missing or unpriceable receipt KEEPS the reservation (exposure is never
 // released), and a dispatch that never answered is HELD. `remaining` is always
 // ceiling − settled − outstanding reservations − held.
-const settlement = makeSettlement(CEILING);
+// ── THE PRIOR POSITION, CARRIED FORWARD ───────────────────────────────────────────────────
+// The reconciled cumulative position this run inherits, from _reconcile_ledger.mjs over the
+// preserved bundle. Passed in rather than recomputed so this run's report shows the whole story
+// and not just its own slice — the defect that produced "remaining $2.148630" for a story that
+// had already spent $1.5.
+const settlement = makeSettlement(CEILING, {
+  calculated: Number(process.env.SB_PRIOR_CALCULATED || 0),
+  held: Number(process.env.SB_PRIOR_HELD || 0),
+  note: process.env.SB_PRIOR_NOTE || null,
+});
 const inflight = [];
 let settledTotal = 0, heldTotal = 0;
 const reserve = (estimate, stage, model) => {
@@ -473,9 +1186,42 @@ function reconcile(h, { usage, noResponse, why, model }) {
   return row;
 }
 const requests = [];          // every outgoing model request, for the measured quote
+// ── SB_NO_RETRY: WHAT HAS ALREADY BEEN SENT ──────────────────────────────────────────────
+// Keyed by path + role + requested model + body. Holds the reqId of the FIRST dispatch, so a
+// refusal can name which request it is a repeat of rather than just asserting that it is one.
+// Keyed by fingerprint. Each entry records whether the first request with that fingerprint has
+// FINISHED, and holds the response so a concurrent twin can be answered from it.
+const _sentFingerprints = new Map();
+// POST-PROSE EDITORIAL ROLES ONLY. These are the passes that run concurrently over a finished
+// draft, which is why two identical ones can be in flight at once. A prose author is deliberately
+// NOT here: two concurrent author calls sharing one reply would be a different decision.
+const _CONCURRENT_SHARE_ROLES = { SPECIALIST_RENDERER: 1, INTIMACY_SPECIALIST: 1 };
+const _SHARE_WAIT_MS = 300000;
+// Called by the first request once its outcome is known, so its twins stop waiting.
+function _fpSettle(key, result) {
+  if (!key) return;
+  const e = _sentFingerprints.get(key);
+  if (!e || e.done) return;
+  e.done = true;
+  e.result = result || null;
+  (e.waiters || []).forEach((fn) => { try { fn(e.result); } catch (_) {} });
+  e.waiters = [];
+}
+// Every call answered locally because the pinned opener was not yet confirmed. Reported at the
+// end so "nothing was sent before the pin was confirmed" is a list, not a claim.
+const _pinPendingAnswers = [];
+// ONCE-ONLY PLANNING OPERATIONS under SB_NO_RETRY. A second call for one of these is a REPLAN,
+// which carries a different payload and so is invisible to the byte-identical retry guard.
+const _planOpsServed = { opening_planner: 0, architecture_spine: 0, prose_author: 0 };
+const _noRetry = process.env.SB_NO_RETRY === '1';
 const replayLog = [];         // SB_REPLAY_BAD_NORM: what the normalization layer was made to return
 const verifierLog = [];       // SB_MILESTONE: the commit-verifier question asked and the verdict served
 let replayPlannerServed = 0;   // SB_REPLAY_PLANNER: which preserved planner reply to serve next
+let _offlineLocalAnswers = 0;     // offline replay: calls answered before any reservation
+let _offlineLocalAnswersEst = 0;  // what they WOULD have reserved
+let _offlineArtifact404 = 0;      // local 404s in a provider-blocked replay (zero spend)
+let _offlineArtifact404Est = 0;   // what they WOULD have reserved, reported separately
+let spineReuseServed = 0;      // SB_REUSE_SPINE: the preserved architecture reply answers the FIRST call only
 let remaining = CEILING;
 let halted = null;
 let registerStop = null;   // set by the pre-author register gate; sticky for the whole run
@@ -483,12 +1229,19 @@ let registerStop = null;   // set by the pre-author register gate; sticky for th
 // requirements are general-prose compatible. Without it every author dispatch stops as unknown,
 // which is the correct default: no existing field establishes voice compatibility.
 const DECLARED_GENERAL_PROSE = process.env.SB_GENERAL_PROSE === '1';
+// Scenes the register gate identified as explicit, so the manuscript can report which model
+// authored which scene rather than inferring it.
+const explicitRegisterScenes = [];
 // ── THE PRECONDITION GATE'S SCOPE AND ITS STICKY STOP ─────────────────────────────────────
 // Declared HERE, beside the other run-scope flags, rather than beside the pre-launch block far
 // below: the route handler is installed before that block runs, so reading a `const` declared
 // later would throw inside the handler on the first request. Same value, evaluated once.
 const FRESH_PLAN_ACTIVE = process.env.SB_FRESH_PLAN === '1';
 let prereqStop = null;    // set by the scaffold precondition gate; sticky for the whole run
+// Set by the FIRST dispatch that returns no HTTP response; refuses every later dispatch.
+let unrecoverableStop = null;
+let _plannerAccepted = false;      // SB_PLANNING_ONLY_ALLOWLIST: paid dispatch closes after the plan
+let _firstRefusedSaved = false;   // preserve the first refused payload, once
 
 // ── STRICT SOL — A TEST-ONLY STOP, DISCLOSED ───────────────────────────────────────────────
 // WHAT IT CHANGES: in this experiment only, a failed or unresolved Sol ARCHITECTURE call ends
@@ -515,6 +1268,61 @@ function _strictSolStop(code, why) {
   say('    ' + why);
   say('    (test-only: production\'s own fallback chain is unchanged; this stops THIS RUN before'
     + ' a replacement planner is paid for)');
+}
+
+// ── THE SPINE'S SHAPE, CHECKED WHEREVER THE SPINE COMES FROM (Roman 2026-11-06) ───────────
+// FOUND BY RUNNING IT: this check first lived inside the live-response branch, so a spine served
+// from disk returned before reaching it and was never validated at all. A gate that only
+// inspects one of the two ways a spine can arrive is not a gate. It lives here now and both
+// paths call it.
+//
+// THE NUMBERS ARE THE APPLICATION'S OWN. `_expectedIssueCount` (app.js:242143) reaches the
+// PROMPT and the output allowance and is never compared against the reply — which is how a
+// 2-issue spine was accepted, attached and reported as the plan. So the contract is read back
+// out of the REQUEST the application itself built: this asks exactly what the app asked for, and
+// the two cannot disagree.
+//
+// IT GATES SPEND, NOT PROSE. A failing reply is still preserved and still handed to the
+// application unchanged; what stops is the harness paying for the planner, the author and the
+// editorial stages behind a plan of the wrong shape. Nothing is retried and no second spine is
+// requested — a failure ends the run and is reported.
+// requestText must be the DECODED message text, not the raw POST body. Caught by running it: the
+// raw body is JSON, where the prompt's own quotes are escaped (`\"issueArcs\":`), so a pattern
+// written against the prompt matched nothing and the gate reported arcs=0 — failing CLOSED, which
+// is the right direction, but for the wrong reason. `rec.bodyText` is the joined message content.
+function _checkSpineShape(requestText, contentStr, rec, originLabel) {
+  if (!String(contentStr || '').trim()) return { ok: false, why: 'no content to check' };
+  const reqT = String(requestText || '');
+  const wantArcs = Number((reqT.match(/issueArcs\\?":\s*EXACTLY\s+(\d+)\s+entries/) || [])[1] || 0);
+  const wantScenes = Number((reqT.match(/sceneOutline\\?"\s+per\s+issue:\s*EXACTLY\s+(\d+)\s+entries/) || [])[1] || 0);
+  let arcs = null, outlines = [], err = null;
+  try {
+    const plan = JSON.parse(String(contentStr));
+    arcs = Array.isArray(plan.issueArcs) ? plan.issueArcs.length : null;
+    outlines = (plan.issueArcs || []).map((a) => (Array.isArray(a && a.sceneOutline) ? a.sceneOutline.length : null));
+  } catch (e) { err = 'the scaffold content is not parseable JSON (' + (e && e.message) + ')'; }
+  if (!err && (!wantArcs || !wantScenes)) {
+    err = 'the request did not state its own issue/scene contract (arcs=' + wantArcs
+      + ', scenes=' + wantScenes + '), so the reply cannot be checked against it';
+  } else if (!err && arcs !== wantArcs) {
+    err = 'the spine carries ' + arcs + ' issueArcs where the request demanded ' + wantArcs
+      + ' — this is the defect that produced a two-issue plan';
+  } else if (!err && outlines.some((n) => n !== wantScenes)) {
+    err = 'issue scene counts are [' + outlines.join(', ') + '] where the request demanded '
+      + wantScenes + ' per issue';
+  }
+  const shape = { origin: originLabel, wantArcs, wantScenesPerIssue: wantScenes,
+    gotArcs: arcs, gotScenesPerIssue: outlines, accepted: !err };
+  if (rec) rec.spineShape = shape;
+  _ledger('spine_shape', shape);
+  if (err) {
+    _strictSolStop('spine_shape_rejected', err + ' [' + originLabel + '] — stopping BEFORE any '
+      + 'downstream paid generation; the reply is preserved and no replacement spine is requested');
+    return { ok: false, why: err };
+  }
+  say('  ✓ SPINE SHAPE ACCEPTED (' + originLabel + '): ' + arcs + ' issue arcs x ' + wantScenes
+    + ' scenes each, as the request demanded (checked against the request, not assumed)');
+  return { ok: true, why: null };
 }
 // SB_FAULT=json502 | text502 | throw — verifies the failure recorder without any provider.
 const SB_FAULT = process.env.SB_FAULT || null;
@@ -602,6 +1410,12 @@ function _persistResponse(o) {
     _ledger('response', { reqId: o.reqId, scene: o.scene, role: o.role, status: o.status,
       dest: String(o.dest || '').replace(ORIGIN, ''), ms: o.ms, servedModel: served,
       receipt, artifact: name, bodyChars: String(o.body).length });
+    // THE LIVE OBSERVATION POINT. The same classifier runs for a fixture reply at the drive
+    // site, so a rehearsal and a paid run take the same decisions.
+    // THE OBSERVE CALL IS NOT HERE ANY MORE. This object carries `requestChars`, not the
+    // request text, so the classifier was handed '' and never recognised the planner reply —
+    // which is how a paid run bought prose in a planning-only mode. It is called from the
+    // dispatch site instead, where both the request and the reply are in scope.
     say('  ↳ response persisted: ' + name + '  (' + String(o.body).length + ' body chars, '
       + o.ms + 'ms, receipt ' + (receipt ? 'saved' : 'absent') + ')');
   } catch (e) {
@@ -615,7 +1429,288 @@ let plannerAttempts = 0;   // how many actually went to the wire
 let plannerSeen = 0;       // how many the production client tried to send
 const plannerRefused = [];
 let _lastFixturePlan = null;   // what the valid-plan fixture actually built, for the record
+// ── WHICH REQUESTS A TARGETED FIXTURE CLAIMS (Roman, authorized 2026-11-13) ─────────────────
+// Some SB_FAULT kinds answer ONE kind of request (aplot_saved only claims the A-plot generator;
+// the sol_* kinds only claim /api/sol-scene-test), while others — valid_plan above all — answer
+// whatever they are handed. Combining them therefore needs an ORDER and a CLAIM, not a merge:
+// each gated kind is offered the request first, and the last kind in the list is the default for
+// everything none of them claimed.
+//
+// Only the gated kinds need an entry. A kind absent from this table claims nothing and can only
+// ever be the default, which is what valid_plan already is.
+// WHICH BIBLE A REQUEST IS ASKING FOR, by the schema it instructs the model to return.
+// Measured from captured requests, not assumed: the PC generator is the only operation carrying
+// the seeded-protagonist canon block, and the LI generator is the only one asking for these two
+// output fields. Downstream prompts quote bible CONTENT freely; none of them asks for the
+// schema, which is what makes the schema the safe discriminator.
+// Each of these claims ONE operation by the opening instruction of its own generator. None is a
+// size test and none is a role test: role is shared (PRIMARY_AUTHOR covers the bibles, the pair
+// bond, the R-plot and the A-plot) and size drifts with the story.
+const _isCanonRotatorOp = (t) => /You revise physical-canon fields of a romance LI bible/.test(String(t || ''));
+const _isPairBondOp = (t) => /architect of WHY THIS PAIR/.test(String(t || ''));
+const _isRPlotOp = (t) => /You are designing an R-PLOT/.test(String(t || ''));
+// The three supporting passes that sit between the A-plot and the Scene 1 author, each claimed
+// by the opening line of its own generator. Their saved replies are replayed verbatim — the
+// compressor's reply was what made the original run "fall through to full A-plot block", and
+// substituting a different one would change what the author receives.
+const _isAplotCompressOp = (t) => /You are compressing the procedural A-plot/.test(String(t || ''));
+const _isWoundAuditOp = (t) => /WOUND→LI SWAP TEST|WOUND→LI SWAP TEST/.test(String(t || ''));
+const _isSubplotOp = (t) => /You are the SUBPLOT GENERATOR for Storybound/.test(String(t || ''));
+const _isPcBibleOp = (t) => /STARTER PC FOUNDATION/.test(String(t || ''));
+const _isLiBibleOp = (t) => !_isPcBibleOp(t)
+  && /secondary_anecdote_different_register/.test(String(t || ''))
+  && /desire_register_exemplars_cg/.test(String(t || ''));
+
+// A ONE-LINE FINGERPRINT OF WHAT AN UNMATCHED REQUEST WAS ASKING FOR, so a missing reply is
+// NAMED rather than guessed at from a stall.
+const _describeOp = (t, url) => {
+  const s = String(t || '');
+  const marks = [];
+  if (_isPcBibleOp(s)) marks.push('pc-body-bible');
+  if (_isLiBibleOp(s)) marks.push('li-body-bible');
+  if (_isCanonRotatorOp(s)) marks.push('physical-canon-rotator');
+  if (_isAplotCompressOp(s)) marks.push('a-plot-scene1-compressor');
+  if (_isWoundAuditOp(s)) marks.push('wound-swap-audit');
+  if (_isSubplotOp(s)) marks.push('subplot-generator');
+  if (_isPairBondOp(s)) marks.push('pair-bond-generator');
+  if (_isRPlotOp(s)) marks.push('r-plot-generator');
+  if (/A-PLOT GENERATOR/.test(s)) marks.push('a-plot');
+  if (s.indexOf(OPENING_PLANNER_SIG) !== -1) marks.push('opening-planner');
+  if (/signature_kink/.test(s)) marks.push('quotes-li-bible');
+  if (/psychologicalLock_li/.test(s)) marks.push('pair-bond');
+  if (/coreTension|relationshipQuestion/.test(s)) marks.push('r-plot');
+  if (/issueArcs|sceneOutline/.test(s)) marks.push('issue-spine');
+  return (url ? String(url).replace(/^https?:\/\/[^/]+/, '') : '(no url)')
+    + ' · ' + s.length + ' chars · markers[' + (marks.join(', ') || 'none recognised') + ']';
+};
+
+const _FAULT_CLAIMS = {
+  aplot_saved:        (t) => /A-PLOT GENERATOR/.test(String(t || '')),
+  // ── THE BIBLES ARE CLAIMED BY THEIR OWN OUTPUT SCHEMA (Roman, corrective 2026-11-13) ────
+  // MEASURED FAILURE OF THE FIRST VERSION: it claimed the LI bible on `signature_kink`, and the
+  // replay log then showed Roman's bible served FOUR times. `signature_kink` is LI material that
+  // DOWNSTREAM prompts quote — both A-plot legs carry it — so the claim reached past the
+  // generator and answered calls that were asking for something else entirely.
+  //
+  // The fix is to claim on what only the GENERATOR says: the fields it asks the model to RETURN.
+  // `secondary_anecdote_different_register` and `desire_register_exemplars_cg` appear in the LI
+  // bible request and its two fallback rungs (calls 2/4/6 of a captured launch) and in nothing
+  // else — not the A-plot, not the R-plot, not the pair bond. Both are required together so one
+  // field drifting out of the schema cannot silently widen the claim again.
+  bible_saved:        (t) => _isPcBibleOp(t) || _isLiBibleOp(t),
+  // RESTRICTED TO THE OPENING-PLANNER OPERATION, and to nothing that merely mentions it.
+  planner_saved:      (t) => String(t || '').indexOf(OPENING_PLANNER_SIG) !== -1,
+  canon_rotator_429:  (t) => _isCanonRotatorOp(t),
+  support_saved:      (t) => _isAplotCompressOp(t) || _isWoundAuditOp(t) || _isSubplotOp(t),
+  pairbond_saved:     (t) => _isPairBondOp(t),
+  rplot_saved:        (t) => _isRPlotOp(t),
+  aplot_timeout:      (t) => /A-PLOT GENERATOR/.test(String(t || '')),
+  sol_valid_plan:     (t, u) => /\/api\/sol-scene-test\b/.test(String(u || '')),
+  sol_empty_content:  (t, u) => /\/api\/sol-scene-test\b/.test(String(u || '')),
+  sol_missing_content:(t, u) => /\/api\/sol-scene-test\b/.test(String(u || '')),
+};
+
+// ── THE SB_REUSE_* FAMILY — AN ALREADY-PAID REPLY ON THE LIVE PATH (Roman 2026-11-13) ───────
+// WHY THIS EXISTS. Every saved-reply hook above lives inside `faultResponse`, and the dispatch
+// site is one branch: `SB_FAULT ? faultResponse(...) : route.fetch(...)`. So with SB_FAULT set
+// NOTHING reaches a provider, and with it unset NONE of these is consulted. There was no state
+// in which the foundations came off disk while the planner, the author and the editorial passes
+// went to their real providers — which is exactly what a Scene 1 rewrite needs.
+//
+// `SB_REUSE_SPINE` was the one hook ever built for that, and its comment says why it is named
+// outside the SB_REPLAY_* family: "it exists FOR the live run, replacing a single already-paid
+// call, while every other operation still goes to its real provider." This is that same thing,
+// generalised to the operations whose replies are already on disk. The REPLAY SAFETY gate is
+// untouched: these are SB_REUSE_*, not SB_REPLAY_*, and the distinction that gate protects — an
+// operation whose LIVE behaviour is under test may not be faked — still holds. The planner, the
+// author and the C+ passes have no entry here on purpose. They are the test.
+//
+// CLAIMED BY OPERATION, using the SAME predicates the fault arm uses, so a claim cannot drift
+// between the two paths. Served ONCE each: a second call for the same operation means the
+// application REJECTED the first, and answering it again would hide that, so it is refused at
+// the wire and the run halts naming the operation.
+const _REUSE_OPS = [
+  { env: 'SB_REUSE_PCBIBLE',    label: 'PC BODY BIBLE',          claims: (t) => _isPcBibleOp(t) },
+  { env: 'SB_REUSE_LIBIBLE',    label: 'LI BODY BIBLE',          claims: (t) => _isLiBibleOp(t) },
+  { env: 'SB_REUSE_ROTATOR',    label: 'PHYSICAL-CANON ROTATOR', claims: (t) => _isCanonRotatorOp(t) },
+  // THE CRISIS FUSER. It fires whenever the PC bible's current_crisis is not already "fused" —
+  // the pass that rewrites the catastrophe so the love interest is structurally load-bearing in
+  // it. It had no slot here because the saved First Taste bible arrived already fused, so no run
+  // had ever reached it; a fixture bible whose crisis names a neighbour rather than Roman tripped
+  // it immediately, and with nothing to serve the reply `stop_unmatched` halted the chain before
+  // the A-plot. One operation in the chain with no slot is one operation that cannot be replayed.
+  { env: 'SB_REUSE_CRISISFUSE', label: 'CRISIS FUSER',
+    claims: (t) => /You rewrite the CURRENT CRISIS of a billionaire-world romance heroine bible/.test(String(t || '')) },
+  { env: 'SB_REUSE_PAIRBOND',   label: 'PAIR BOND',              claims: (t) => _isPairBondOp(t) },
+  { env: 'SB_REUSE_RPLOT',      label: 'R-PLOT',                 claims: (t) => _isRPlotOp(t) },
+  { env: 'SB_REUSE_APLOT',      label: 'A-PLOT',                 claims: (t) => /A-PLOT GENERATOR/.test(String(t || '')) },
+  { env: 'SB_REUSE_COMPRESS',   label: 'A-PLOT COMPRESSOR',      claims: (t) => _isAplotCompressOp(t) },
+  { env: 'SB_REUSE_WOUNDAUDIT', label: 'WOUND-TO-LI SWAP TEST',  claims: (t) => _isWoundAuditOp(t) },
+  { env: 'SB_REUSE_SUBPLOT',    label: 'SUBPLOT GENERATOR',      claims: (t) => _isSubplotOp(t) },
+  // THE OPENING PLANNER. It had no slot here on purpose while it WAS the test — the comment above
+  // says so. It is no longer the test: the planner reply of 2026-11-16 (_ft_scene1_paid3) is saved
+  // and the open question is now what the AUTHOR receives. Replaying the planner verbatim is what
+  // lets the author request be captured without paying for a plan twice, and it is the same
+  // serve-once discipline as every other entry: a second planner call is a REPLAN and is refused.
+  { env: 'SB_REUSE_PLANNER',    label: 'OPENING PLANNER',        claims: (t) => isOpeningPlannerOp({ messages: [{ content: String(t || '') }] }) },
+  // ── THE SCENE 1 PROSE AUTHOR, CLAIMED BY ITS DECLARED OPERATION ─────────────────────────
+  // Every other arm claims on prompt TEXT. This one claims on `purpose=scene1_opening_prose`,
+  // the label the call site now puts on the body — which is the only identifier that cannot
+  // drift from the prompt. SB_REPLAY_AUTHOR exists but sits far below the reuse decision, so a
+  // replayed author request was still counted as a dispatch and reached the static server (404,
+  // measured). Serving it HERE means it is answered before the request can leave, exactly like
+  // the preserved planning replies, under the same serve-once discipline: a second author call
+  // is a retry and is refused by name.
+  { env: 'SB_REUSE_AUTHOR',     label: 'SCENE 1 PROSE AUTHOR',
+    claims: (t, b) => isScene1OpeningProse(b) },
+  // ── THE TWO CONTINUATION PLANNING LEGS, BY OPERATION ──────────────────────────────────
+  // Claimed on what the prompt ASKS FOR. Role cannot be used: the scene planner, the scaffold
+  // and the prose author are all PRIMARY_AUTHOR, and a role match handed the author a scaffold
+  // reply. These two patterns are the operations' own text and match nothing else in the turn.
+  { env: 'SB_REUSE_SCENE_PLANNER', label: 'CONTINUATION SCENE PLANNER',
+    claims: (t) => /You are the SCENE-SPINE planner|You are the SCENE planner/.test(String(t || '')) },
+  { env: 'SB_REUSE_SCAFFOLD',      label: 'CONTINUATION SCAFFOLD',
+    claims: (t) => /You define narrative skeletons for fiction scenes/.test(String(t || ''))
+      && /causal_outline/.test(String(t || '')) },
+];
+const _reuseState = {};        // env -> { served, file, label, status, bodyChars, receipt }
+for (const _op of _REUSE_OPS) {
+  if (process.env[_op.env]) _reuseState[_op.env] = { served: 0, label: _op.label,
+    file: String(process.env[_op.env]), status: null, bodyChars: 0, receipt: null };
+}
+
 async function faultResponse(kind, reqText, url) {
+  // ── A COMMA-SEPARATED SB_FAULT IS A PRIORITY LIST ──────────────────────────────────────
+  // Authorized to reach the Scene 1 author offline. Two existing fixtures are needed at once:
+  // `aplot_saved` replays the A-plot reply this project ALREADY PAID FOR (it invents nothing and
+  // is not re-billed), and `valid_plan` supplies an opening-planner reply production's own
+  // validators accept. Neither alone gets there — without the first the A-plot fails validation
+  // and the opening never builds; without the second the planner reply is refused.
+  //
+  // THIS ADDS NO FIXTURE AND CHANGES NO EXISTING ONE. It only decides which of the kinds already
+  // written answers a given request: each gated kind is asked whether it claims this one, in the
+  // order given, and the LAST kind is the default for everything unclaimed. A single-kind
+  // SB_FAULT takes none of this path and behaves exactly as before.
+  if (String(kind || '').indexOf(',') !== -1) {
+    const kinds = String(kind).split(',').map((k) => k.trim()).filter(Boolean);
+    for (const k of kinds.slice(0, -1)) {
+      const claims = _FAULT_CLAIMS[k];
+      if (claims && claims(reqText, url)) return await faultResponse(k, reqText, url);
+    }
+    return await faultResponse(kinds[kinds.length - 1], reqText, url);
+  }
+  // ── SB_FAULT=canon_rotator_429 — THE RATE LIMIT THE ORIGINAL RUN ACTUALLY GOT ──────────
+  // (Roman 2026-11-13.) The physical-canon variety rotator fired right after the LI bible and
+  // came back 429 in the parked run — and the run CARRIED ON past it. Replaying a success here
+  // would be inventing a reply the story never had, and would let the rotator overwrite the
+  // bible's physical canon in a capture that is supposed to reproduce the original conditions.
+  // So the saved rate-limit response is served with its own status: faithful, and already seen.
+  if (kind === 'canon_rotator_429') {
+    const src = String(process.env.SB_CANON_ROTATOR_429 || '');
+    // BOTH SMALL BIBLE-REWRITE OPS, one saved 429. The physical-canon rotator and the body-tell
+    // rewriter are two mistral calls that run back to back over the same bible, and BOTH returned
+    // `Rate limit exceeded` (code 1300) in the live run — so one saved 429 is the honest reply for
+    // either. Before this, the body-tell call was unclaimed, `stop_unmatched` halted on it, and
+    // the replay could never reach the A-plot it exists to inspect.
+    const _isBodyTellOp = (t) => /You rewrite \d+ body-tell field\(s\) for a romance heroine bible/
+      .test(String(t || ''));
+    if (src && (_isCanonRotatorOp(reqText) || _isBodyTellOp(reqText))) {
+      const rec = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const bytes = String(rec.bodyComplete || '{}');
+      say('  ↻ ' + (_isBodyTellOp(reqText) ? 'BODY-TELL REWRITER' : 'PHYSICAL-CANON ROTATOR')
+        + ' ← SAVED ' + (rec.status || 429) + ' ' + path.basename(src)
+        + ' — the reply the original run got, and carried on past');
+      return { status: () => Number(rec.status || 429), text: async () => bytes,
+        headers: () => ({ 'content-type': 'application/json', 'x-request-id': 'replayed-rotator-429' }) };
+    }
+    kind = 'stop_unmatched';
+  }
+  // ── SB_FAULT=pairbond_saved / rplot_saved — THE TWO REMAINING FOUNDATIONS ───────────────
+  // Both are PRIMARY_AUTHOR, like the bibles and the A-plot, so both are claimed by the opening
+  // instruction of their own generator rather than by role or order.
+  // ── SB_FAULT=support_saved — THE THREE PASSES BETWEEN THE A-PLOT AND THE AUTHOR ────────
+  // The A-plot Scene-1 compressor, the wound→LI swap-test audit and the subplot generator. Each
+  // is claimed by its own generator's opening instruction and answered with the reply the parked
+  // run already received, envelope-for-envelope: the compressor's is what made that run "fall
+  // through to full A-plot block", and inventing a different one would change what the Scene 1
+  // author is handed — which is the thing under test.
+  if (kind === 'support_saved') {
+    const pick = _isAplotCompressOp(reqText) ? ['A-PLOT COMPRESS', process.env.SB_COMPRESS_SAVED]
+      : _isWoundAuditOp(reqText) ? ['WOUND SWAP AUDIT', process.env.SB_WOUNDAUDIT_SAVED]
+      : _isSubplotOp(reqText) ? ['SUBPLOT GENERATOR', process.env.SB_SUBPLOT_SAVED] : null;
+    if (pick && pick[1]) {
+      const rec = JSON.parse(fs.readFileSync(String(pick[1]), 'utf8'));
+      const bytes = String(rec.bodyComplete || '{}');
+      say('  ↻ ' + pick[0] + ' ← SAVED reply ' + path.basename(String(pick[1])) + ' ('
+        + bytes.length + ' body bytes) — already billed; NOT re-paid');
+      return { status: () => Number(rec.status || 200), text: async () => bytes,
+        headers: () => ({ 'content-type': 'application/json', 'x-request-id': 'replayed-support' }) };
+    }
+    kind = 'stop_unmatched';
+  }
+  if (kind === 'pairbond_saved' || kind === 'rplot_saved') {
+    const isPb = (kind === 'pairbond_saved');
+    const src = String((isPb ? process.env.SB_PAIRBOND_SAVED : process.env.SB_RPLOT_SAVED) || '');
+    const claims = isPb ? _isPairBondOp(reqText) : _isRPlotOp(reqText);
+    if (src && claims) {
+      const rec = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const saved = JSON.parse(String(rec.bodyComplete || '{}'));
+      const body = JSON.stringify({ ok: true, content: String(saved.content || ''),
+        usage: saved.usage || { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        _replayedFrom: src });
+      say('  ↻ ' + (isPb ? 'PAIR BOND' : 'R-PLOT') + ' ← SAVED reply ' + path.basename(src)
+        + ' (' + String(saved.content || '').length + ' content chars) — already billed; NOT re-paid');
+      return { status: () => 200, text: async () => body,
+        headers: () => ({ 'content-type': 'application/json',
+          'x-request-id': isPb ? 'replayed-pairbond' : 'replayed-rplot' }) };
+    }
+    kind = 'stop_unmatched';
+  }
+  // ── SB_FAULT=stop_unmatched — NAME THE MISSING REPLY INSTEAD OF PAPERING OVER IT ────────
+  // (Roman, corrective 2026-11-13.) Used as the LAST kind in a priority list, this refuses to
+  // answer anything the earlier kinds did not claim. The previous terminal default was
+  // `valid_plan`, a Fantasy planner skeleton that answers whatever it is handed — so an
+  // operation with no saved reply was quietly given a reply for a different operation, discarded
+  // downstream, and surfaced only as a stall with no indication of WHICH reply was missing.
+  //
+  // Stopping here converts that into a named failure: the request's own operation fingerprint is
+  // logged and the attempt ends. An offline capture that cannot be completed should say what it
+  // lacks, not produce a plausible-looking transcript built on a substitution.
+  // ── SB_FAULT=delay_stub — HOW LONG CAN THIS RUNNER WAIT? (Roman 2026-11-15) ──────────────
+  // The A-plot died at 40.334s with a 445.556s client deadline and a 415.556s server window, and
+  // another call on the same preview finished in 93.9s. The Vercel invocation log for
+  // 2sg9p-1794734185304-f2f42ce95b8e shows the proxy starting and then nothing at all — no status,
+  // no duration — so the logs cannot say which side closed the connection.
+  //
+  // This holds a request open for SB_DELAY_MS and then answers it, so the question "does anything
+  // in this runner abandon a request at ~40s" can be answered without a provider.
+  //
+  // WHAT IT CANNOT PROVE, stated here so a result is not over-read: the stub answers from INSIDE
+  // the fault handler, so Playwright's `route.fetch` — the call that actually reported
+  // `read ETIMEDOUT` — is never exercised. Isolating that needs an HTTP endpoint that delays,
+  // which means a deploy or a second local server.
+  if (kind === 'delay_stub') {
+    const ms = Number(process.env.SB_DELAY_MS || 60000);
+    if (MODEL_ROUTES.test(url)) {
+      const _t0 = Date.now();
+      // `body` is not in scope in faultResponse — referencing it threw "Cannot access 'body'
+      // before initialization" and halted the probe. The URL is all this needs.
+      say('  ⏱ DELAY STUB: holding ' + url.replace(ORIGIN, '') + ' open for '
+        + (ms / 1000).toFixed(1) + 's before answering (no provider involved)');
+      await new Promise((r) => setTimeout(r, ms));
+      const _held = ((Date.now() - _t0) / 1000).toFixed(1);
+      say('  ⏱ DELAY STUB: answered after ' + _held + 's — the runner did NOT abandon it');
+      return { status: () => 429, text: async () => JSON.stringify({ object: 'error',
+        message: 'delay stub — no provider was contacted', type: 'delay_stub', code: '0' }),
+        headers: () => ({ 'content-type': 'application/json',
+          'x-request-id': 'delay-stub-' + _held + 's', 'x-sb-replayed': 'delay_stub' }) };
+    }
+  }
+  if (kind === 'stop_unmatched') {
+    const why = '[UNMATCHED OPERATION] no saved reply claims this request: ' + _describeOp(reqText, url);
+    try { say('  ✗ ' + why); } catch (_) {}
+    throw new Error(why);
+  }
   if (kind === 'throw') throw new Error('injected transport failure (no HTTP response)');
   // ── SB_FAULT=cache_receipt — THE ACCOUNTING HANDOFF, EXERCISED FOR REAL ─────────────────
   // Returns a 200 carrying the EXACT usage block the 2026-11-02 Sol author returned:
@@ -673,6 +1768,100 @@ async function faultResponse(kind, reqText, url) {
           'x-request-id': 'injected-' + kind }) };
     }
     kind = 'cache_receipt';   // every other leg behaves as the known-good arm
+  }
+  // ── SB_FAULT=aplot_timeout — THE MEASURED r3 FAILURE, REPRODUCED PROVIDER-FREE ──────────
+  // The A-plot returned no HTTP response and r4-r7 dispatched anyway. A control for that needs
+  // exactly this state: one named operation with no reply, everything before it answering
+  // normally, and then the question of whether anything after it leaves. Same shape as the
+  // sol_* legs above — targeted, with every other request taking the known-good body.
+  //
+  // MATCHED BY ITS INSTRUCTION, not by a role label: the A-plot travels as role
+  // STRUCTURE_GENERATOR on /api/proxy by default and as PRIMARY_AUTHOR on /api/chatgpt-proxy
+  // when a planner is selected, so a label match would miss it in exactly the configuration
+  // under test.
+  if (kind === 'aplot_timeout') {
+    if (/A-PLOT GENERATOR/.test(String(reqText || ''))) {
+      throw new Error('injected A-plot transit failure (no HTTP response)');
+    }
+    kind = 'cache_receipt';
+  }
+  // ── SB_FAULT=aplot_saved — THE SAVED A-PLOT REPLY, SERVED PROVIDER-FREE ─────────────────
+  // Roman asked for the corrections to be verified "using the saved requests and response".
+  // Proving that the accepted A-plot reaches the SPINE needs an A-plot that actually commits to
+  // state, and no synthetic shape satisfies the A-plot validator. So the A-plot request is
+  // answered with the PRESERVED reply from the failed attempt — the one whose 12,120 characters
+  // the chain called "empty" — and every other request takes the known-good body.
+  //
+  // It replays bytes that were already paid for and invents nothing. SB_APLOT_SAVED points at
+  // the saved response artifact; its `content` is passed through as the route's own envelope.
+  if (kind === 'aplot_saved') {
+    if (/A-PLOT GENERATOR/.test(String(reqText || ''))) {
+      const src = String(process.env.SB_APLOT_SAVED || '');
+      const rec = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const saved = JSON.parse(String(rec.bodyComplete || '{}'));
+      const body = JSON.stringify({ ok: true, content: String(saved.content || ''),
+        usage: saved.usage || { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        _replayedFrom: src });
+      say('  ↻ A-PLOT ← SAVED reply ' + path.basename(src) + ' ('
+        + String(saved.content || '').length + ' content chars) — already billed; NOT re-paid');
+      return { status: () => 200, text: async () => body,
+        headers: () => ({ 'content-type': 'application/json', 'x-request-id': 'replayed-aplot' }) };
+    }
+    kind = 'cache_receipt';
+  }
+  // ── SB_FAULT=bible_saved — THE SAVED BODY BIBLES, MATCHED BY OPERATION ──────────────────
+  // (Roman, authorized 2026-11-13.) The A-plot replay alone does not reach the Scene 1 author:
+  // the Body Bibles are generated first and, answered by a generic fixture, are DISCARDED
+  // ("generated but missing core fields"), which strands the R-plot and the opening.
+  //
+  // MATCHED BY OPERATION, NOT BY ROLE OR ORDER. Both bibles travel as PRIMARY_AUTHOR, and so do
+  // the pair bond, the R-plot and the A-plot, so a role test claims the wrong call and an order
+  // test breaks the moment a leg is added or retried. Each bible is identified by a marker that
+  // appears ONLY in its own request, measured from a captured request rather than assumed:
+  //   PC — 'STARTER PC FOUNDATION', the seeded-protagonist canon block
+  //   LI — 'signature_kink', a field only the love-interest schema asks for
+  // A request carrying neither is not a bible and is left for the next kind in the list.
+  if (kind === 'bible_saved') {
+    const t = String(reqText || '');
+    const isPc = /STARTER PC FOUNDATION/.test(t);
+    const isLi = !isPc && /signature_kink/.test(t);
+    const src = isPc ? String(process.env.SB_PCBIBLE_SAVED || '')
+      : (isLi ? String(process.env.SB_LIBIBLE_SAVED || '') : '');
+    if (src) {
+      const rec = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const saved = JSON.parse(String(rec.bodyComplete || '{}'));
+      const body = JSON.stringify({ ok: true, content: String(saved.content || ''),
+        usage: saved.usage || { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        _replayedFrom: src });
+      say('  ↻ ' + (isPc ? 'PC' : 'LI') + ' BODY BIBLE ← SAVED reply ' + path.basename(src)
+        + ' (' + String(saved.content || '').length + ' content chars) — already billed; NOT re-paid');
+      return { status: () => 200, text: async () => body,
+        headers: () => ({ 'content-type': 'application/json', 'x-request-id': 'replayed-bible' }) };
+    }
+    kind = 'cache_receipt';
+  }
+  // ── SB_FAULT=planner_saved — THIS BOOK'S OWN SAVED OPENING-PLANNER REPLY ────────────────
+  // The `valid_plan` fixture is a FANTASY skeleton ("carry the veil-canopy aside") built for a
+  // different Book; it answers whatever it is handed, which is how the bibles came to be given a
+  // planner reply. This serves the First Taste planner reply the parked run already paid for,
+  // VERBATIM — production's own Scene-1 skeleton validator then judges it exactly as it judged it
+  // live. If it no longer passes, the run says so rather than this fixture asserting it does.
+  if (kind === 'planner_saved') {
+    const src = String(process.env.SB_PLANNER_SAVED || '');
+    if (src && String(reqText || '').indexOf(OPENING_PLANNER_SIG) !== -1) {
+      const rec = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const bytes = String(rec.bodyComplete || '');
+      assert(bytes.length > 0, 'SB_PLANNER_SAVED names a record with no bodyComplete: ' + src);
+      say('  ↻ OPENING_PLANNER ← SAVED reply ' + path.basename(src) + ' (' + bytes.length
+        + ' body bytes) — already billed; NOT re-paid; production validates it');
+      // `x-sb-replayed` is the machine-readable form of the sentence above. Settlement reads it
+      // and books ZERO for this run while keeping the original receipt for reference, so a
+      // replayed reply can never again be counted as money spent here.
+      return { status: () => 200, text: async () => bytes,
+        headers: () => ({ 'content-type': 'application/json', 'x-request-id': 'replayed-planner',
+          'x-sb-replayed': 'planner_saved:' + path.basename(src) }) };
+    }
+    kind = 'cache_receipt';
   }
   if (kind === 'cache_receipt') {
     const body = JSON.stringify({
@@ -1030,6 +2219,39 @@ function synthReply(role, url, body, sceneNo) {
   // The beat is the ONLY thing that varies; nothing forces a validity flag and nothing copies
   // the selection function.
   {
+  // ── SB_PLAN_FIXTURE — THE THREE PLANNING CASES ───────────────────────────────────────
+  // empty_planner : the planner returns no content          → ZERO scaffold dispatches
+  // reject        : planner valid, scaffold = the SAVED Ministral reply, unchanged
+  // accept        : planner valid, scaffold = that same reply with its contradictions repaired
+  if (process.env.SB_PLAN_FIXTURE) {
+    const _case = String(process.env.SB_PLAN_FIXTURE);
+    const _asked = (body && body.messages || []).map((m) => String(m.content || '')).join('\n');
+    const _isPlanner = /SCENE-SPINE planner|You are the SCENE planner/.test(_asked);
+    const _isScaffold = /causal_outline/.test(_asked) && /stage_contract|environment_anchor/.test(_asked);
+    const _fx = (f) => JSON.parse(fs.readFileSync(ROOT_DIR + '/_ft_fixtures/' + f, 'utf8'));
+    if (_isPlanner) {
+      if (_case === 'empty_planner') {
+        say('  \u21bb PLAN FIXTURE (' + _case + '): the planner returns EMPTY content');
+        return asChat('');
+      }
+      if (_case === 'truncated_planner') {
+        // THE PROXY'S OWN ENVELOPE. finish_reason sits beside content, which is where
+        // api/chatgpt-proxy.js puts it after lifting it out of choices[0]. The content PARSES
+        // and carries a full-looking plan: only finish_reason says it was cut off.
+        const _plan = JSON.parse(fs.readFileSync(ROOT_DIR + '/_ft_fixtures/planner_valid.json', 'utf8'));
+        say('  \u21bb PLAN FIXTURE (' + _case + '): parseable plan, top-level finish_reason="length"');
+        return { content: JSON.stringify(_plan), usage: null, finish_reason: 'length', refusal: null };
+      }
+      say('  \u21bb PLAN FIXTURE (' + _case + '): a valid planner reply');
+      return asChat(JSON.stringify(_fx('planner_valid.json')));
+    }
+    if (_isScaffold) {
+      const f = (_case === 'accept') ? 'scaffold_accept.json' : 'scaffold_reject.json';
+      say('  \u21bb PLAN FIXTURE (' + _case + '): scaffold \u2190 ' + f
+        + (f === 'scaffold_reject.json' ? ' (the SAVED Ministral reply, unchanged)' : ''));
+      return asChat(JSON.stringify(_fx(f)));
+    }
+  }
     const askedSkel = (body && body.messages || []).map((m) => String(m.content || '')).join('\n');
     if (/You define narrative skeletons for fiction scenes/i.test(askedSkel)) {
       // SB_FIXTURE_LI_BEAT also accepts a PER-CALL SEQUENCE so a cross-scene transition can be
@@ -1077,6 +2299,13 @@ function synthReply(role, url, body, sceneNo) {
     }
   }
 
+  // ── THE STAGED CAST AND PLACE ARE SUPPLIED INPUTS WHEN GIVEN ───────────────────────────
+  // SB_STAGE_PRESENT="A,B"  SB_STAGE_LOCATION="where"  — absent, the First Sacrifice defaults
+  // below are unchanged, so every existing arm is unaffected.
+  const _stagePresent = String(process.env.SB_STAGE_PRESENT || '').trim()
+    ? String(process.env.SB_STAGE_PRESENT).split(',').map((x) => x.trim()).filter(Boolean)
+    : ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'];
+  const _stageLocation = String(process.env.SB_STAGE_LOCATION || '').trim() || 'the ritual clearing';
   {
     const askedText = (body && body.messages || []).map((m) => String(m.content || '')).join('\n');
     if (/tactical_move|state_change_precondition|stage_present|forces_choice/i.test(askedText)) {
@@ -1088,9 +2317,9 @@ function synthReply(role, url, body, sceneNo) {
         forces_choice: true,
         branch_a: 'She answers in full.', branch_b: 'She answers only what was asked.',
         event_slots: [],
-        stage_location: 'the ritual clearing',
+        stage_location: _stageLocation,
         stage_location_id: 'place:1',
-        stage_present: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
+        stage_present: _stagePresent,
         // SB_STAGE_AFFORDANCES=oversized makes the rendered directive far exceed the spine budget,
         // so the oversized-stage control exercises the real validator rather than arithmetic.
         stage_affordances: over === 'oversized'
@@ -1121,7 +2350,8 @@ function synthReply(role, url, body, sceneNo) {
         branch_a: 'She answers in full.', branch_b: 'She answers only what was asked.',
         event_slots: [],
         stage_location_id: 'place:1',
-        stage_present: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar'],
+        stage_location: _stageLocation,
+        stage_present: _stagePresent,
         stage_affordances: ['the stone bench', 'the spiralgrass', 'the gavel'],
         stage_changes: [],
         _synthetic: true,
@@ -1168,7 +2398,7 @@ function synthReply(role, url, body, sceneNo) {
   // block. Only one of those two differs by the RESPONSE, so this serves the preserved paid
   // body unchanged down the same production path. If extraction logs here, the response is not
   // what defeated it; if it stays silent, the response content is.
-  if (process.env.SB_REPLAY_AUTHOR && isAuthorRequest(JSON.stringify(body))) {
+  if (process.env.SB_REPLAY_AUTHOR && isAuthorRequest(JSON.stringify(body), body)) {
     try {
       const rec = JSON.parse(fs.readFileSync(process.env.SB_REPLAY_AUTHOR, 'utf8'));
       const inner = JSON.parse(rec.bodyComplete);
@@ -1263,9 +2493,388 @@ if (process.env.SB_PASS4_PEN_ON === '1') {
     window._penOff.applyStructuralCorrection = false;
   });
 }
+// ── THE SELECTED RUN CONFIGURATION REACHES THE PAGE (Roman, authorized 2026-11-06) ────────
+// SB_RUN_CONFIG carries one JSON object into `window._sbRunConfig`, which is the only thing the
+// production code consults for this run's model assignment. Installed as an INIT script so it is
+// present before app.js evaluates and survives the save/reopen reload — a reading pause cannot
+// drop the assignment and silently restore the Grok default. Unset, nothing is installed.
+const RUN_CONFIG = (() => {
+  const raw = process.env.SB_RUN_CONFIG;
+  if (!raw) return null;
+  const c = JSON.parse(raw);
+  for (const k of ['generalAuthorModel', 'plannerModel', 'architectureModel']) {
+    if (c[k] && /grok/i.test(String(c[k]))) {
+      throw new Error('SB_RUN_CONFIG.' + k + ' names a Grok model; this configuration selects '
+        + 'the GENERAL stages. Explicit authorship routes to Grok through the existing _hot '
+        + 'predicate and must not be set here.');
+    }
+  }
+  return c;
+})();
+// ── THE ACCEPTED CLOSING DILEMMA, SUPPLIED AS A DECLARED REPLAY INPUT ────────────────────
+// SB_CLOSING_DILEMMA carries the dilemma the product already accepted for this page, so a replay
+// can replace a RESOLVED closing beat without inventing one and without depending on state that
+// is not populated until later in the same builder. Absent, nothing is injected and the app's own
+// saved value is used.
+// ── A FIXED C+ CRAFT FIXTURE (SB_CPLUS_ACCEPT=1) ─────────────────────────────────────────
+// NO JUDGEMENT RULE. My previous stub picked any sentence in which the character looked like an
+// agent, and it credited Dani's "Show it to the right audience" frame with
+//   "'Dani left me,' Helen MacBrayne tells the camera, my mother..."
+// — Helen's dialogue, which delivers nothing of Dani's frame. A green "delivered" line proved
+// only that the mount can save a record.
+//
+// So the fixture is fixed and declared: Dani is assigned PRACTICED FACE, the draft contains
+// "I have a smile I use just for the screen.", and the stub returns a canned KEEP for exactly
+// that line through the NORMAL craft reply shape. The production parser
+// (validateSceneEditorReply) then does its own verbatim check, and the publication settle does
+// its own survival check. Nothing here decides whether the passage is good.
+if (process.env.SB_CPLUS_ACCEPT === '1') {
+  const CPLUS_FIXTURE_LINE = 'I have a smile I use just for the screen.';
+  const CPLUS_FIXTURE_FRAME = 'practiced-face';
+  const CPLUS_DROP_BEFORE_PUBLISH = process.env.SB_CPLUS_DROP_ACCEPTED === '1';
+  await ctx.addInitScript((cfg) => {
+    try {
+      window._sbCplusFixture = cfg;
+      // Force the fixture frame onto the PC so the canned KEEP matches a real assignment.
+      // NO FRAME PIN. Helen's draw is independent of it (verified: she gets Practiced Face with
+      // the pin on AND off), so a pin would mask a collapsed id. A fixed story id is used instead,
+      // where the PC and Helen genuinely draw different frames.
+      window._sbCplusStoryIdOverride = cfg.storyId || null;
+      // The draft must contain the line, or the production parser will correctly reject the
+      // KEEP as not verbatim. Injected into the prose the editor is shown, once.
+      // THE EDITOR DRAFT IS PLAIN TEXT, not HTML. The first version only matched `<p>`, so the
+      // line was never seeded, the craft request never contained it, and the fixture could not
+      // legitimately fire — which is why the captured POST had neither the id nor the line.
+      window.__sbCplusSeedDraft = function (prose) {
+        var s = String(prose || '');
+        if (s.indexOf(cfg.line) !== -1) return s;
+        if (/<p[^>]*>/i.test(s)) return s.replace(/(<p[^>]*>)/i, '$1' + cfg.line + ' ');
+        var nl = s.indexOf('\n\n');
+        if (nl > 0) return s.slice(0, nl) + '\n\n' + cfg.line + s.slice(nl);
+        return cfg.line + ' ' + s;
+      };
+    } catch (_) {}
+  }, { line: CPLUS_FIXTURE_LINE, frameId: CPLUS_FIXTURE_FRAME,
+       storyId: process.env.SB_CPLUS_STORY_ID || 'fx-14',
+       dropBeforePublish: CPLUS_DROP_BEFORE_PUBLISH });
+  say('  \u2713 C+ craft fixture armed: PRACTICED FACE for the PC, canned KEEP for "'
+    + CPLUS_FIXTURE_LINE + '"'
+    + (CPLUS_DROP_BEFORE_PUBLISH ? ' \u00b7 NEGATIVE CONTROL: the accepted line is removed before publication' : ''));
+}
+// ── SB_PRECACHE_PREVIEW — A SUGGESTION ALREADY IN THE CACHE BEFORE THE CLICK ────────────
+// Written through the app's OWN cache writer, so the entry is indistinguishable from one a real
+// suggestion call would have left. It is installed on the page and applied when the deck is
+// examined, which is the last moment before the reader can click a card.
+if (process.env.SB_PRECACHE_PREVIEW) {
+  let _pc = null;
+  try { _pc = JSON.parse(process.env.SB_PRECACHE_PREVIEW); } catch (_) { _pc = null; }
+  if (!_pc || !_pc.cardId) {
+    throw new Error('SB_PRECACHE_PREVIEW is not valid JSON with a cardId — refusing to start');
+  }
+  await ctx.addInitScript((pc) => {
+    try {
+      window.__sbPrecachePreview = pc;
+      // Applied lazily: state and the cache writer do not exist at init time.
+      window.__sbApplyPrecachePreview = function () {
+        try {
+          if (!window.state || typeof window._cacheFateCardPreview !== 'function') return false;
+          var turn = window.state.turnCount || 0;
+          window._cacheFateCardPreview(turn, pc.cardId, String(pc.action || ''), String(pc.dialogue || ''));
+          var c = window.state._sceneFateCardPreviews || {};
+          var hit = c[pc.cardId] || null;
+          try { console.log('[FATE:PRECACHE] seeded a suggestion for "' + pc.cardId + '" at turn '
+            + turn + ' through the app\'s own writer: ' + JSON.stringify(hit)); } catch (_) {}
+          return !!hit;
+        } catch (_) { return false; }
+      };
+    } catch (_) {}
+  }, _pc);
+  say('  \u2713 pre-cached suggestion armed for card "' + _pc.cardId + '": "'
+    + String(_pc.action || '').slice(0, 60) + '" / "' + String(_pc.dialogue || '').slice(0, 60) + '"');
+}
+if (process.env.SB_CLOSING_DILEMMA) {
+  await ctx.addInitScript((d) => { try { window._sbReplayClosingDilemma = d; } catch (_) {} },
+    String(process.env.SB_CLOSING_DILEMMA));
+  say('  \u2713 closing dilemma supplied as a replay input: "'
+    + String(process.env.SB_CLOSING_DILEMMA).slice(0, 90) + '"');
+}
+if (RUN_CONFIG) {
+  await ctx.addInitScript((cfg) => {
+    window._sbRunConfig = cfg;
+    // ── THE SPECULATIVE PRELOAD IS OFF FOR A SELECTED-AUTHOR RUN (Roman 2026-11-06) ────────
+    // MEASURED in the provider-free capture: alongside the Luna author call, a SECOND
+    // author-flagged dispatch of 471,970 chars went to /api/proxy requesting
+    // grok-4-1-fast-reasoning — on a scene whose state was ST1, intimacyPhase false,
+    // eroticMode ROMANTIC, so it was NOT the explicit branch. It is `preloadNextScene`, the
+    // speculative pre-render, which authors a scene ahead on the Grok path and discards it if
+    // the reader does something else. It would both defeat the selected configuration and add
+    // $0.188562 per scene for prose that may never publish.
+    //
+    // `window.__disableSpeculativePreload` is the EXISTING, documented off switch for exactly
+    // this case ("skips it for test runs"). Nothing new is built and no default changes: it is
+    // set only when a run configuration is selected.
+    window.__disableSpeculativePreload = true;
+    // ── THE THREE-ISSUE SPINE MUST ACTUALLY BE INVOKED (Roman 2026-11-06) ──────────────────
+    // IDENTIFIED BY CONTENT, not by role label: the issue spine is `_buildCGScaffold`, whose
+    // allowance is `_spineOutputAllowance(_modeKey, _expectedIssueCount)` — mode-aware, 20 rows
+    // per issue for literary. It is render-mode AGNOSTIC and its own comment says so ("it serves
+    // LITERARY just as well as CG"), so this is the literary planning operation, not a CG-only
+    // builder. My earlier doubt about that was wrong.
+    //
+    // WHY IT NEVER APPEARED IN A CAPTURE: `_shouldGenerateCGScaffold` DEFERS it for a literary
+    // Tier-0 Scene 1 — "no paid CG-authority call before first page" — a COST policy, not an
+    // ordering constraint. `window.__sbFundedSpineAtOpening` is the existing, documented
+    // override for exactly this ("EXPERIMENT-SCOPED FUNDED SPINE AT THE OPENING"), and its own
+    // comment notes every other cost guard still applies. No planning stage is added.
+    window.__sbFundedSpineAtOpening = true;
+  }, RUN_CONFIG);
+  say('SELECTED RUN CONFIGURATION: ' + JSON.stringify(RUN_CONFIG));
+  say('  speculative pre-render DISABLED for this run (existing __disableSpeculativePreload)');
+  say('  funded spine at opening SET by the run configuration — the planning route is MOVED');
+}
+
+// ── TWO LEVERS THAT USED TO BE REACHABLE ONLY BY INSTALLING A RUN CONFIGURATION ───────────
+// (Roman 2026-11-12.) The SB_RUN_CONFIG init script above sets THREE things at once: the model
+// assignment, `__disableSpeculativePreload`, and `__sbFundedSpineAtOpening`. The third one MOVES
+// THE PLANNING ROUTE — it lifts the Tier-0 deferral so the issue spine is generated before the
+// first page instead of after it. So a run that only wanted the pre-render off could not have it
+// without also changing the thing it was trying to measure.
+//
+// These two flags are now independent, and each is installed alone. Neither touches
+// `__sbFundedSpineAtOpening`; whether the spine defers is left exactly as production decides it.
+//
+//   SB_DISABLE_PRELOAD=1      — the documented off switch for the literary speculative
+//                               pre-render, and nothing else. The pre-render is a full extra
+//                               author generation of the next scene, discarded whenever the
+//                               reader does something else.
+//   SB_FORCE_HOT_OPENER=0     — restores the real weighted opening-temperature roll. On
+//                               localhost the product forces HOT_CRISIS for consistent test
+//                               runs ("set window._forceHotOpener=false to restore the roll");
+//                               a run meant to exercise the ordinary opening must opt out.
+//                               NOTE: this does NOT override the product's own forces — the
+//                               billionaire-onboarding force and HOT&FAST are checked before it
+//                               and still decide when they apply, which is correct.
+const DISABLE_PRELOAD = process.env.SB_DISABLE_PRELOAD === '1';
+const UNFORCE_HOT_OPENER = process.env.SB_FORCE_HOT_OPENER === '0';
+// ── SB_TEST_CLOSER_PASS=1 — ARM THE TEST-ONLY LUNA CLOSER ADAPTATION ──────────────────────
+// Off by default. With it unset the published ending is byte-for-byte what it is today, and the
+// extra call is never made. It arms `window.__sbTestCloserPass`, which the app checks at the
+// final closer assembly point AFTER the author and every editor have finished.
+const TEST_CLOSER_PASS = process.env.SB_TEST_CLOSER_PASS === '1';
+// SB_FORCE_OPENER AND SB_SEED_OPENER_HISTORY BELONG IN THIS CONDITION. They were not in it, so
+// setting either one ALONE installed nothing and the run proceeded with whatever the rotation
+// drew — which is how a paid run was launched believing mother_on_air was pinned while the bank
+// drew coproducer_walks.
+if (DISABLE_PRELOAD || UNFORCE_HOT_OPENER || TEST_CLOSER_PASS
+    || process.env.SB_FORCE_OPENER || process.env.SB_SEED_OPENER_HISTORY) {
+  await ctx.addInitScript((f) => {
+    if (f.preloadOff) window.__disableSpeculativePreload = true;
+    if (f.unforceHot) window._forceHotOpener = false;
+    if (f.closerPass) window.__sbTestCloserPass = true;
+    // SB_FORCE_OPENER pins which of the twelve openers is drawn, so an offline fixture set built
+    // around one opener is judged against that opener rather than against whichever one the
+    // device history happened to advance to.
+    if (f.forceOpener) window.__sbForceOpenerId = f.forceOpener;
+    // SB_SEED_OPENER_HISTORY puts a device history in place BEFORE the app boots, so a run can
+    // start from "this reader has already seen all twelve" without playing twelve stories. It
+    // writes the same key the app reads; nothing else about the rotation is stubbed.
+    if (f.seedOpenerHistory) {
+      try { localStorage.setItem('sb_bm_opener_history', f.seedOpenerHistory); } catch (_) {}
+    }
+  }, { preloadOff: DISABLE_PRELOAD, unforceHot: UNFORCE_HOT_OPENER, closerPass: TEST_CLOSER_PASS,
+       forceOpener: process.env.SB_FORCE_OPENER || '',
+       seedOpenerHistory: process.env.SB_SEED_OPENER_HISTORY || '' });
+  if (process.env.SB_SEED_OPENER_HISTORY) {
+    let _n = '?';
+    try { _n = String((JSON.parse(process.env.SB_SEED_OPENER_HISTORY).used || []).length); } catch (_) {}
+    say('OPENER HISTORY: seeded with ' + _n + ' committed opener id(s) on this device');
+  }
+  if (process.env.SB_FORCE_OPENER) say('OPENER: pinned to "' + process.env.SB_FORCE_OPENER
+    + '" (test hook) — the rotation is not consulted');
+  if (TEST_CLOSER_PASS) say('CLOSER PASS: ARMED (test-only) — Luna adapts the mandated closer after the editors;'
+    + ' the full stock ending is preserved for comparison and used as the fallback');
+  if (DISABLE_PRELOAD) say('SPECULATIVE PRE-RENDER: off (__disableSpeculativePreload) — installed ALONE');
+  if (UNFORCE_HOT_OPENER) say('OPENING TEMPERATURE: the dev HOT force is OFF (_forceHotOpener=false) — the roll decides');
+  if (!RUN_CONFIG) {
+    say('  planning route UNCHANGED: __sbFundedSpineAtOpening was NOT set by this path, so the'
+      + ' Tier-0 spine deferral is whatever production decides');
+  }
+}
 page = await ctx.newPage();   // `page` is declared above so the route handler can record routing evidence
 const consoleLines = [];
-page.on('console', (m) => consoleLines.push(m.text()));
+// ── SB_REQUIRE_LI_FROM_START=1 — STOP A 50/50 DRAW BEFORE IT COSTS ANYTHING ─────────────────
+// MEASURED while preparing the Scene 1 rewrite: `_liDeferWeight` is 0.50 for a modern world and
+// the per-story history does not carry between runs (each run gets a fresh profile), so EVERY
+// launch is a coin flip between FROM_START and DEFERRED. A DEFERRED draw is correct product
+// behaviour — the love interest is held back and the opening is reference-only by design — but
+// it cannot carry the accepted plan's live call, so a rewrite that draws it spends the author
+// call and measures nothing it was meant to.
+//
+// The draw is logged at pair-dynamic resolution, long before the planner and the author, and in
+// a run that reuses its foundations nothing has been billed by then. So this arms a halt on that
+// one line: the attempt ends immediately, having spent nothing, and says to run it again. It is
+// OPT-IN and it does not touch the roll — nothing is forced, nothing is weighted, and a deferred
+// story is not declared wrong. The run simply declines to pay for a test it cannot perform.
+const REQUIRE_LI_FROM_START = process.env.SB_REQUIRE_LI_FROM_START === '1';
+let liArrivalDrawn = null;
+// ── THE PINNED OPENER IS CONFIRMED FROM THE APP, NOT ASSUMED FROM THE ENV ───────────────
+// `_openerPinned` is what was asked for; `_openerSelected` is what the app actually chose, read
+// off its own log line; `_openerFromBible` is what the REUSED Body Bible was generated under,
+// derived from the bible's own crisis text. All three must agree before a pinned replay spends.
+const _openerPinned = String(process.env.SB_FORCE_OPENER || '').trim();
+let _openerSelected = null;
+let _openerConfirmed = false;
+
+// The twelve shapes, lifted from the LOCAL build by name. Used only as vocabulary for deriving
+// which opener a SAVED REPLY belongs to — that is a property of the file, not of the origin.
+const _bmOpenerTable = (() => {
+  try {
+    const src = fs.readFileSync(ROOT + '/public/app.js', 'utf8');
+    // ANCHOR ON THE DECLARATION, NOT THE FIRST MENTION. Keying on the first textual occurrence
+    // broke silently the moment a USE of the table was added earlier in the file than its
+    // declaration: the lift then took `[_oi]` instead of the twelve openers, the derivation
+    // returned null, and both Solo captures reported the bible opener as UNDETERMINED.
+    const at = src.indexOf('_BM_OPENERS_12 = [');
+    if (at === -1) return null;
+    const lb = src.indexOf('[', at);
+    let d = 0, end = -1;
+    for (let i = lb; i < src.length; i += 1) {
+      if (src[i] === '[') d += 1;
+      else if (src[i] === ']') { d -= 1; if (d === 0) { end = i; break; } }
+    }
+    if (end === -1) return null;
+    // eslint-disable-next-line no-new-func
+    return new Function('return ' + src.slice(lb, end + 1) + ';')();
+  } catch (_) { return null; }
+})();
+
+// MEASURED to discriminate: on the saved First Taste bible this scores mother_on_air at 82% and
+// the runner-up at 13% — a 69-point margin (_FT_BIBLE_OPENER_DERIVATION.json). A derivation that
+// is not decisive returns null rather than a guess, and a pinned replay then refuses to spend.
+const _OPENER_STOP = new Set(['her','his','she','and','the','that','with','from','into','onto',
+  'what','when','while','they','them','their','this','there','then','than','have','has','had',
+  'been','being','who','whom','will','would','could','should','must','does','done','about',
+  'after','before','over','under','again','just','like','make','makes','made','take','takes',
+  'goes','going','gone','come','comes','front','own','one','ones','someone','something',
+  'anything','everyone','nothing','person','people','instead','rather','himself','herself',
+  'itself','themselves','which','whose','where','because']);
+const _openerToks = (x) => Array.from(new Set(String(x).toLowerCase().replace(/[^a-z\s]/g, ' ')
+  .split(/\s+/).filter((w) => w.length >= 4 && !_OPENER_STOP.has(w))));
+function _deriveOpenerFromReply(file) {
+  if (!_bmOpenerTable || !file) return null;
+  let crisis = '';
+  try {
+    const rec0 = JSON.parse(fs.readFileSync(file, 'utf8'));
+    let b = String(rec0.bodyComplete || '');
+    try {
+      const j = JSON.parse(b);
+      let c = j.content;
+      if (Array.isArray(c)) c = c.map((x) => String((x && x.text) || '')).join('\n');
+      if (!c && Array.isArray(j.choices)) c = ((j.choices[0] || {}).message || {}).content || '';
+      b = c || b;
+    } catch (_) {}
+    try {
+      const bib = JSON.parse(b.slice(b.indexOf('{'), b.lastIndexOf('}') + 1));
+      const cc = bib.current_crisis || {};
+      crisis = [cc.event, cc.li_complication, cc.what_she_wants].filter(Boolean).join(' ');
+    } catch (_) { crisis = b; }
+  } catch (_) { return null; }
+  if (!crisis) return null;
+  const have = new Set(_openerToks(crisis));
+  const scored = _bmOpenerTable.map((o) => {
+    const t = _openerToks([o.disaster, o.present].join(' '));
+    const hit = t.filter((w) => have.has(w)).length;
+    return { id: o.id, score: t.length ? hit / t.length : 0 };
+  }).sort((a, b) => b.score - a.score);
+  const top = scored[0], next = scored[1] || { score: 0 };
+  // Decisive or nothing.
+  if (!top || top.score < 0.40 || (top.score - next.score) < 0.20) return null;
+  return { id: top.id, score: top.score, runnerUp: next.id || null, runnerUpScore: next.score };
+}
+const _openerFromBible = _deriveOpenerFromReply(process.env.SB_REUSE_PCBIBLE
+  ? (process.env.SB_REUSE_PCBIBLE.startsWith('/') ? process.env.SB_REUSE_PCBIBLE
+     : ROOT + '/' + process.env.SB_REUSE_PCBIBLE) : null);
+if (_openerFromBible) {
+  say('OPENER (saved bible): the reused PC Body Bible was generated under "'
+    + _openerFromBible.id + '" (' + Math.round(_openerFromBible.score * 100) + '% vs '
+    + Math.round(_openerFromBible.runnerUpScore * 100) + '% for ' + _openerFromBible.runnerUp
+    + ') — derived from its own crisis text, not from the environment');
+} else if (process.env.SB_REUSE_PCBIBLE) {
+  say('OPENER (saved bible): UNDETERMINED from the reused PC Body Bible — no opener scored '
+    + 'decisively. A pinned replay will refuse to spend rather than assume.');
+}
+function _openerStop(why) {
+  say('  \u2298 ' + why);
+  _ledger('opener_pin_mismatch', { pinned: _openerPinned || null, selected: _openerSelected,
+    fromBible: _openerFromBible ? _openerFromBible.id : null, why });
+  halted = halted || ('OPENER PIN: ' + why);
+  unrecoverableStop = unrecoverableStop || { code: 'opener_pin_mismatch',
+    reqId: 'pre-dispatch (the selection is logged before the first paid call)', why };
+}
+page.on('console', (m) => {
+  const t = m.text();
+  consoleLines.push(t);
+  // ── THE APP'S OWN REPORT OF WHAT IT SELECTED ───────────────────────────────────────────
+  // Read from the line the rotation already prints. Nothing is inferred from the environment,
+  // which is exactly the mistake that let an unpinned run be reported as pinned.
+  try {
+    // THREE FORMS, because the app announces the opener differently depending on how it got
+    // there. Keying on the draw form alone meant a PINNED run never confirmed its pin:
+    //   drawn    → [BM-OPENER] selected IN CODE: "<id>"
+    //   pinned   → [BM-OPENER] FORCED to "<id>" by a test hook
+    //   either   → [BM-OPENER:DIRECTIVE] "<id>" delivered as the only opener   ← authoritative
+    const _os = /\[BM-OPENER\]\s+selected IN CODE:\s+"([^"]+)"/.exec(t)
+      || /\[BM-OPENER\]\s+FORCED to\s+"([^"]+)"/.exec(t)
+      || /\[BM-OPENER:DIRECTIVE\]\s+"([^"]+)"\s+delivered/.exec(t);
+    // The DIRECTIVE names what was DELIVERED. If it contradicts what was announced earlier, the
+    // two layers disagree about the opener and neither can be trusted.
+    const _dir = /\[BM-OPENER:DIRECTIVE\]\s+"([^"]+)"\s+delivered/.exec(t);
+    if (_dir && _openerSelected && _dir[1] !== _openerSelected) {
+      _openerStop('the app announced opener "' + _openerSelected + '" but DELIVERED "'
+        + _dir[1] + '" to the model. The selection and the directive disagree, so the opener under test is not knowable. Refusing to spend.');
+    }
+    if (_os && !_openerSelected) {
+      _openerSelected = _os[1];
+      say('  \u29bf OPENER SELECTED BY THE APP: "' + _openerSelected + '"'
+        + (_openerPinned ? ('  (pinned: "' + _openerPinned + '")') : '  (no pin; the rotation decided)'));
+      if (_openerPinned && _openerSelected !== _openerPinned) {
+        _openerStop('SB_FORCE_OPENER asked for "' + _openerPinned + '" but the app selected "'
+          + _openerSelected + '". The pin did not take. Refusing to spend on a run whose opener '
+          + 'is not the one under test; nothing has been dispatched.');
+      } else if (_openerFromBible && _openerSelected !== _openerFromBible.id) {
+        _openerStop('the app selected "' + _openerSelected + '" but the reused PC Body Bible was '
+          + 'generated under "' + _openerFromBible.id + '". Carrying on would stamp the saved '
+          + 'crisis as if it came from the new draw and fuse two different openings. Refusing '
+          + 'before any paid dispatch.');
+      } else if (_openerPinned) {
+        _openerConfirmed = true;
+        say('    \u2713 opener pin CONFIRMED from the app\u2019s own selection'
+          + (_openerFromBible ? ' and consistent with the reused Body Bible' : ''));
+      }
+    }
+  } catch (_) {}
+  try {
+    const hit = /^\[LI-ARRIVAL\]\s+(FROM_START|DEFERRED)\b/.exec(t);
+    if (hit && !liArrivalDrawn) {
+      liArrivalDrawn = hit[1];
+      say('  ⚲ LI ARRIVAL DRAWN: ' + liArrivalDrawn + ' (a 50/50 roll on a modern world; it is not forced here)');
+      if (REQUIRE_LI_FROM_START && liArrivalDrawn === 'DEFERRED') {
+        const why = 'LI ARRIVAL DREW DEFERRED. This attempt requires FROM_START: a deferred love '
+          + 'interest is held out of the opening by design, so the accepted plan\'s live call '
+          + 'cannot be carried and the rewrite would measure nothing. Stopping now, before the '
+          + 'planner and the author. Nothing was generated and nothing new was billed — run it '
+          + 'again and the roll is independent.';
+        say('  ⊘ ' + why);
+        _ledger('li_arrival_deferred_stop', { drawn: liArrivalDrawn, why });
+        halted = halted || ('LI ARRIVAL: ' + why);
+        // The SAME sticky flag an unrecoverable transport failure sets, so every later dispatch
+        // is refused at the wire by the guard that already exists rather than a second one.
+        unrecoverableStop = unrecoverableStop
+          || { code: 'li_arrival_deferred', reqId: 'pre-dispatch (the draw is logged before the first call)', why };
+      }
+    }
+  } catch (_) {}
+});
 page.on('pageerror', (e) => consoleLines.push('[PAGEERROR] ' + (e && e.message)));
 await installSession(page, makeSession());
 await installEntitledProfileStub(page, { log: () => {} });
@@ -1296,31 +2905,411 @@ await page.route('**/*', async (route) => {
   // A MODEL CALL. Price it against the REMAINING authorization before it is allowed to leave.
   let body = {}; try { body = JSON.parse(req.postData() || '{}'); } catch (_) {}
   const raw = req.postData() || '';
-  // ── PROVIDER-FREE POLICY REFUSALS ARE NOT COSTS ─────────────────────────────────────────
-  // The conditional C+/E+ editor is disabled by configuration (CPLUS_EDITOR_PRICE_FORTUNES
-  // unset), so api/cplus-editor.js refuses server-side before any provider is contacted. The
-  // earlier quote still PRICED those calls at the grok-4.3 rate — 3.6c per continuation for a
-  // stage that cannot run. They are recorded as refusals and priced at zero.
+  // ── THE EDITOR IS A PAID MODEL CALL AND IS TREATED AS ONE ───────────────────────────────
+  // THIS COMMENT USED TO SAY the C+/E+ editor "is disabled by configuration
+  // (CPLUS_EDITOR_PRICE_FORTUNES unset), so api/cplus-editor.js refuses server-side before any
+  // provider is contacted", and the code below priced those calls at zero on that basis. BOTH
+  // ARE NOW FALSE: .env.local sets CPLUS_EDITOR_PRICE_FORTUNES=0 with CPLUS_EDITOR_DAILY_CAP=60
+  // and leaves CPLUS_EDITOR_ENABLED unset, which the route reads as true. Driving the route's
+  // own editorAdmission with that environment admits a general-prose pass on gpt-6-luna with a
+  // 6,000-token cap. Zero Fortunes to the reader is not zero dollars to us.
+  //
+  // The refusal is still handled — it is just no longer ASSUMED. Whether the route refuses is
+  // read from the route's own `_upstreamDispatched` flag after the call, which releases the
+  // reservation at zero when nothing left the machine.
   if (/cplus-editor/.test(url)) {
+    // ══ THE EDITOR SHARES THE RUN AUTHORIZATION ══════════════════════════════════════════
+    // EVERY editor call takes the SAME path as every other model call: calculate, check the
+    // REMAINING authorization, reserve on the one ledger, dispatch, settle from the returned
+    // usage, and leave an unresolved reservation held. The amount is computed by the editor
+    // ROUTE'S OWN reserveUsd with its own configured rates and its own outCap, so the figure
+    // the guard holds is the figure the server reserves. Counted ONCE: this handler sees one
+    // request per upstream editor call and reconciles exactly one hold for it.
+    //
+    // ── WHY IT IS NO LONGER GATED ON A RUN CONFIGURATION (Roman 2026-11-12) ────────────
+    // It used to require a run configuration AS WELL AS the pricer, so the reserve-and-settle
+    // path existed ONLY for a run that installed one. That is two unrelated things tied
+    // together, and the default side of it was the dangerous one: without SB_RUN_CONFIG every
+    // editor call fell through to `route.continue()` — straight to the real route, dispatched to
+    // gpt-6-luna, billed, with NO reservation, NO settlement, NO ledger row and nothing counted
+    // against the ceiling. The fall-through's own comment said "the real server issues its own
+    // refusal, at $0", which was true only while the route was unconfigured.
+    //
+    // Worse, SB_RUN_CONFIG also sets __sbFundedSpineAtOpening, so the only way to get the editor
+    // onto the ceiling was to MOVE THE PLANNING ROUTE — generating the issue spine before the
+    // first page instead of after it. Accounting correctness and the planning route are not the
+    // same decision and must not share a switch.
+    //
+    // The condition is now what it always meant: can this call be priced? If the route's own
+    // pricer is importable, the editor takes the same path as every other model call —
+    // calculate, check the REMAINING authorization, reserve on the one ledger, dispatch, settle
+    // from the returned usage, hold what does not resolve.
+    if (EDITOR_PRICER) {
+      const _edIn = raw.length;
+      const _edEst = EDITOR_PRICER(_edIn);
+      const _edAvail = remainingNow();
+      if (!(_edEst <= _edAvail)) {
+        // A REFUSED RESERVATION STOPS THE CALL LEAVING. Not a warning after the fact.
+        requests.push({ scene: sceneNoForReplies, url: '/api/cplus-editor', role: body.role || null,
+          model: 'gpt-6-luna', chars: _edIn, estimate: _edEst,
+          refused: 'over_remaining_authorization', remaining: _edAvail });
+        say('  ✗ EDITOR NOT DISPATCHED — $' + _edEst.toFixed(6) + ' exceeds the remaining $'
+          + _edAvail.toFixed(6) + ' of the run authorization. The draft publishes unedited.');
+        return route.fulfill({ status: 403, contentType: 'application/json',
+          body: JSON.stringify({ error: 'over_remaining_authorization', _runGuard: true }) });
+      }
+      const _edHold = reserve(_edEst, 'cplus-editor', 'gpt-6-luna');
+      // ── THE EDITOR ROUTE'S OWN FIELDS ARE RECORDED (Roman 2026-11-06) ───────────────────
+      // `bodyText` read body.messages, which this route does not use — it takes `system` and
+      // `user` — so every editor request recorded as empty text and WHICH pass had dispatched
+      // could not be checked from the artifacts at all. The operation id is recorded beside it
+      // because the id is what keeps the three passes from colliding; a claim that they are
+      // distinct should be readable off the capture rather than argued from source.
+      const _edRec = { scene: sceneNoForReplies, url: '/api/cplus-editor', role: body.role || null,
+        model: 'gpt-6-luna', chars: _edIn, estimate: _edEst, served: null, receipt: null,
+        operationId: (body && body.operationId) || null,
+        revisionId: (body && body.revisionId) || null,
+        obligations: (body && body.obligations) || null,
+        maxTokens: (body && body.maxTokens) != null ? body.maxTokens : null,
+        bodyText: [body && body.system, body && body.user]
+          .map((p) => (Array.isArray(p) ? p.join('\n') : String(p == null ? '' : p)))
+          .join('\n') };
+      requests.push(_edRec);
+      // SB_FAULT IS PROVIDER-BLOCKED WITH NO EXCEPTION, AND THAT INCLUDES THIS ROUTE.
+      // An SB_FAULT arm runs the LIVE code path with every provider answered locally; the editor
+      // handler is invoked in-process with a real fetch and now has a usable credential, so it
+      // must be held here exactly as drive holds it. Without this, a provider-free arm could
+      // place a real editor call — which is the one thing SB_FAULT promises cannot happen.
+      // ── SB_OFFLINE: ANSWERED LOCALLY, BEFORE THE REAL HANDLER IS INVOKED ─────────────
+      // Placed ahead of the DRIVE/SB_FAULT branch and ahead of the EDITOR_HANDLER call, so an
+      // offline run never reaches the handler. It differs from the DRIVE branch in one way that
+      // matters: DRIVE RETAINS the reservation as unresolved exposure, which is right for a
+      // fixture standing in for a dispatch that might have happened. Here nothing was sent and
+      // nothing could have billed, so the reservation is RELEASED — the same treatment the
+      // SB_OFFLINE refusal at the model dispatch site gives.
+      // ── A SCENE WHOSE EDITOR CALLS ARE ANSWERED LOCALLY (SB_EDITOR_LOCAL_SCENES) ─────
+      // Scoped by scene, so a paid Scene 2 run can refuse to re-pay for re-judging the Scene 1
+      // page it resumed from, while Scene 2's own editor call reaches the real handler. The
+      // reply is the same no-acceptance shape the offline branch uses, and the reservation is
+      // released because nothing left the machine.
+      {
+        const _localScenes = String(process.env.SB_EDITOR_LOCAL_SCENES || '')
+          .split(',').map((x) => x.trim()).filter(Boolean);
+        if (_localScenes.length && _localScenes.indexOf(String(sceneNoForReplies)) !== -1) {
+          _edRec.estimate = 0;
+          _edRec.sceneLocalAnswer = true;
+          try { _edHold.open = false; } catch (_) {}
+          _ledger('editor_scene_local_answer', { scene: sceneNoForReplies,
+            operationId: _edRec.operationId || null, chars: _edIn, wouldHaveReserved: _edEst,
+            localScenes: _localScenes,
+            why: 'SB_EDITOR_LOCAL_SCENES names this scene: the editor was answered locally before'
+              + ' the in-process handler was invoked. No provider was contacted and the'
+              + ' reservation was released. Scenes NOT listed reach the real handler.' });
+          say('  \u2298 EDITOR ANSWERED LOCALLY for scene ' + sceneNoForReplies
+            + ' (SB_EDITOR_LOCAL_SCENES=' + _localScenes.join(',') + ') \u2014 the real handler'
+            + ' was NOT invoked \u00b7 reservation of '
+            + _edEst.toFixed(6) + ' released, nothing held');
+          return route.fulfill({ status: 200, contentType: 'application/json',
+            body: JSON.stringify({ decision: 'keep', keptPassage: null, sceneLocal: true }) });
+        }
+      }
+      if (process.env.SB_OFFLINE) {
+        _edRec.estimate = 0;
+        _edRec.offlineAnsweredLocally = true;
+        try { _edHold.open = false; } catch (_) {}
+        _ledger('editor_offline_local_answer', { scene: sceneNoForReplies,
+          operationId: _edRec.operationId || null, chars: _edIn, wouldHaveReserved: _edEst,
+          editorHandlerInvocationsSoFar: _editorHandlerInvocations,
+          editorEgressAttemptsSoFar: _editorEgressAttempts,
+          why: 'SB_OFFLINE: answered locally before the in-process editor handler was invoked.'
+            + ' No provider was contacted and the reservation was released.' });
+        say('  ⊘ EDITOR ANSWERED LOCALLY (SB_OFFLINE) — the real handler was NOT invoked'
+          + ' (invocations so far: ' + _editorHandlerInvocations
+          + ', egress attempts so far: ' + _editorEgressAttempts + ')'
+          + ' · $' + _edEst.toFixed(6) + ' reservation released, nothing held');
+        // ── THE CANNED CRAFT KEEP GOES THROUGH THE NORMAL REPLY (Roman 2026-11-17) ───────
+        // The offline reply is `{decision:'keep', keptPassage:null}`, which the production
+        // parser correctly treats as NO acceptance. With SB_CPLUS_ACCEPT=1 the craft operation
+        // instead gets a real decisions payload in `content`, addressed to the cplusbeat:
+        // obligation ids actually present in THIS request — so validateSceneEditorReply runs its
+        // own verbatim check and supplies `keeps` itself. Nothing writes _cpRes.keeps directly.
+        if (process.env.SB_CPLUS_ACCEPT === '1') {
+          try {
+            // READ body.obligations DIRECTLY. The previous version regexed the raw JSON, and the
+            // pattern arrived double-escaped from the patch heredoc — `[^"'\\s,\\]}]` excludes the
+            // LITERAL characters \\ and s, so it could not match `cplusbeat:pc:self#...` and the
+            // fixture logged ids=0 on a request that carried both ids. The obligation list is
+            // the thing the editor is answering; nothing needs to be parsed out of text.
+            // body.obligations IS PRESENT AND HOLDS STRINGS, NOT OBJECTS. My filter tested
+            // `typeof o.id === 'string'` on each string, so every entry fell out and the fixture
+            // reported obligations=0 on a POST that carried both ids and the quote. Checked
+            // against the SAVED request this time rather than against a body I built myself.
+            const _obs = (body && Array.isArray(body.obligations)) ? body.obligations : [];
+            const _frameObs = _obs
+              .map((o) => (typeof o === 'string' ? o : (o && o.id) || ''))
+              .filter((id) => typeof id === 'string' && id.indexOf('cplusbeat:') === 0);
+            if (_frameObs.length) {
+              say('  \u24d8 craft obligations seen: ' + _frameObs.length + ' frame beat(s) ['
+                + _frameObs.join(', ') + ']');
+            }
+            // ONLY DANI'S PRACTICED FACE IS ANSWERED. Helen's beat is left unanswered on purpose,
+            // so 'a beat nobody accepted stays due' is tested in the same run as the positive.
+            const _ids = _frameObs.filter((id) => id === 'cplusbeat:pc:self#1@practiced-face');
+            const _reqTxt = String(raw || '');
+            const _line = 'I have a smile I use just for the screen.';
+            if (_ids.length && _reqTxt.indexOf(_line) !== -1) {
+              const _decisions = _ids.map((id) => ({ id: id, decision: 'keep',
+                keptPassage: _line,
+                why: 'she keeps a performance for the camera and knows who it is for' }));
+              say('  \u21bb CRAFT KEEP fixture: ' + _ids.length + ' obligation(s) answered with a'
+                + ' canned KEEP (the production parser still validates it verbatim)');
+              return route.fulfill({ status: 200, contentType: 'application/json',
+                body: JSON.stringify({ content: JSON.stringify({ decisions: _decisions }),
+                  _synthetic: true }) });
+            }
+            say('  \u24d8 craft KEEP fixture NOT applied: frame obligations=' + _frameObs.length
+              + ', Dani practiced-face targets=' + _ids.length
+              + ', line present in request=' + (_reqTxt.indexOf(_line) !== -1));
+          } catch (e) { say('  ! craft fixture failed: ' + (e && e.message)); }
+        }
+        return route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ decision: 'keep', keptPassage: null, _synthetic: true }) });
+      }
+      if (DRIVE || SB_FAULT) {
+        // Provider-free: the reservation is RETAINED as unresolved, exactly as a real call with
+        // no usable receipt would be. Nothing is settled from a fixture.
+        reconcile(_edHold, { usage: null, noResponse: true,
+          why: (DRIVE ? 'provider-free drive' : 'provider-free SB_FAULT arm')
+            + ': editor reserved and held, never dispatched', model: 'gpt-6-luna' });
+        say('  ⚖ EDITOR reserved $' + _edEst.toFixed(6) + ' against the run authorization'
+          + ' (held, provider-free' + (SB_FAULT ? ', SB_FAULT' : '') + ') — remaining $'
+          + remainingNow().toFixed(6));
+        return route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ decision: 'keep', keptPassage: null, _synthetic: true }) });
+      }
+      let _edResp = null, _edTxt = '', _edStatus = 200;
+      try {
+        if (!EDITOR_HANDLER) throw new Error('isolated editor handler unavailable');
+        // One invocation per upstream editor call, through the real handler.
+        const _res = { _s: 200, _b: null, status(c) { this._s = c; return this; },
+          json(o) { this._b = JSON.stringify(o); return this; },
+          setHeader() { return this; }, end(x) { this._b = x == null ? this._b : String(x); return this; } };
+        // COUNTED HERE, one line above the call, so the count cannot disagree with the call.
+        _editorHandlerInvocations += 1;
+        await EDITOR_HANDLER({ method: 'POST', headers: { authorization: 'Bearer isolated',
+          origin: 'http://localhost' }, body: body }, _res);
+        _edStatus = _res._s; _edTxt = _res._b || '';
+        _edResp = { status: () => _edStatus };
+      } catch (_edErr) {
+        reconcile(_edHold, { usage: null, noResponse: true,
+          why: 'editor transport failure: ' + String((_edErr && _edErr.message) || _edErr),
+          model: 'gpt-6-luna' });
+        say('  ✗ EDITOR transport failed — reservation RETAINED as unresolved');
+        return route.fulfill({ status: 502, contentType: 'application/json',
+          body: JSON.stringify({ error: 'editor_transport_failed' }) });
+      }
+      let _edJson = null; try { _edJson = JSON.parse(_edTxt); } catch (_) {}
+      const _edUsage = (_edJson && (_edJson.usage || (_edJson.receipt && _edJson.receipt.usage))) || null;
+      _edRec.served = (_edJson && (_edJson.model || _edJson.servedModel)) || null;
+      _edRec.receipt = _edUsage;
+      // ── WHAT THE EDITOR ROUTE ACTUALLY SAID (Roman 2026-11-07) ───────────────────────────
+      // MEASURED: 22 editor calls were reported as "empty reply" and held as unknown provider
+      // spending. They were HTTP 503 {"error":"policy_not_configured"} — a local refusal before
+      // any dispatch. This record kept only `served` and `receipt`, so the status and the error
+      // body were thrown away and a refusal was indistinguishable from a silent model.
+      _edRec.status = _edStatus;
+      _edRec.errorCode = (_edJson && _edJson.error) || null;
+      _edRec.errorDetail = (_edJson && _edJson.detail) || null;
+      _edRec.bodyExcerpt = String(_edTxt || '').slice(0, 400);
+      // The ROUTE declares this; it is the only party that knows. Absent (an older route) the
+      // outcome stays unknown and the reservation is retained, which is the safe direction.
+      _edRec.upstreamDispatched = (_edJson && typeof _edJson._upstreamDispatched === 'boolean')
+        ? _edJson._upstreamDispatched : null;
+      // ── A REFUSAL THAT NEVER LEFT IS NOT UNKNOWN EXPOSURE ────────────────────────────────
+      // Reconciled at ZERO, not held: the route states no provider was contacted, so there is
+      // nothing that could have billed. Genuinely unresolved outcomes — dispatched but no usable
+      // receipt, or a route that does not declare the flag — keep their reservation untouched.
+      if (_edRec.upstreamDispatched === false) {
+        _edRec.estimate = 0;
+        try { _edHold.open = false; } catch (_) {}
+        _ledger('editor_local_refusal', { scene: sceneNoForReplies, status: _edStatus,
+          errorCode: _edRec.errorCode, detail: _edRec.errorDetail,
+          operationId: _edRec.operationId || null, wouldHaveReserved: _edEst,
+          why: 'the route refused before any upstream dispatch; nothing could have been billed' });
+        say('  ⊘ EDITOR REFUSED LOCALLY (HTTP ' + _edStatus + ' ' + (_edRec.errorCode || '?')
+          + ') — no provider contacted, reservation released, NOT reported as an empty completion'
+          + (_edRec.errorDetail ? (' · ' + String(_edRec.errorDetail).slice(0, 110)) : ''));
+        return route.fulfill({ status: _edStatus, contentType: 'application/json', body: _edTxt });
+      }
+      // SETTLE FROM THE RETURNED USAGE. No usage means the reservation stays held — never
+      // credited back on the strength of a reply that carried no receipt.
+      reconcile(_edHold, { usage: _edUsage, noResponse: !_edUsage,
+        why: _edUsage ? null : 'editor reply carried no usage block', model: 'gpt-6-luna' });
+      say('  ⚖ EDITOR ' + (_edUsage ? 'settled from usage' : 'HELD (no receipt)')
+        + ' · served=' + (_edRec.served || '?') + ' · remaining $' + remainingNow().toFixed(6));
+      return route.fulfill({ status: _edStatus, contentType: 'application/json', body: _edTxt });
+    }
+    // ── UNREACHABLE UNLESS THE ROUTE'S OWN PRICER COULD NOT BE IMPORTED ─────────────────
+    // This branch used to be the DEFAULT, recording estimate: 0 with
+    // policyRefusal: 'editor_disabled_by_config' and then `route.continue()`-ing the call to a
+    // live route. It is now reached only when api/cplus-editor.js failed to import, i.e. when
+    // this call CANNOT BE PRICED — and an unpriceable dispatch is refused, never let through.
+    // That is the same fail-closed rule estimateUsd applies to an unpriced model: the guard
+    // refuses what it cannot bound rather than guessing a figure or hoping a server says no.
     requests.push({ scene: sceneNoForReplies, url: '/api/cplus-editor', role: body.role || null,
-      model: 'none', chars: raw.length, estimate: 0, policyRefusal: 'editor_disabled_by_config' });
-    if (DRIVE) {
-      return route.fulfill({ status: 403, contentType: 'application/json',
-        body: JSON.stringify({ error: 'policy_not_configured', _synthetic: true }) });
-    }
-    // SB_FAULT MUST MEAN PROVIDER-BLOCKED WITH NO EXCEPTION. This was the one `route.continue()`
-    // on the live path: it relies on the server refusing by config, which is true today but is a
-    // config value, not a guarantee. An injected-fault arm is used to verify accounting WITHOUT
-    // contacting anything, so it refuses here locally rather than trusting a remote refusal.
-    if (SB_FAULT) {
-      return route.fulfill({ status: 403, contentType: 'application/json',
-        body: JSON.stringify({ error: 'policy_not_configured', _faultArmLocalRefusal: true }) });
-    }
-    return route.continue();   // the real server issues its own refusal, at $0
+      model: 'gpt-6-luna', chars: raw.length, estimate: null,
+      refused: 'editor_pricer_unavailable',
+      why: 'api/cplus-editor.js could not be imported, so this call cannot be priced or '
+        + 'reserved against the ceiling. Refused rather than dispatched unmetered.' });
+    say('  ✗ EDITOR NOT DISPATCHED — the route\'s own pricer could not be imported, so the call '
+      + 'cannot be bounded. Refused; the draft publishes unedited.');
+    return route.fulfill({ status: 403, contentType: 'application/json',
+      body: JSON.stringify({ error: 'editor_pricer_unavailable', _runGuard: true }) });
   }
 
   // ── THE AUTHOR OVERRIDE, APPLIED HERE AND NOWHERE ELSE ──────────────────────────────────
-  const isAuthor = isAuthorRequest(raw);
+  const isAuthor = isAuthorRequest(raw, body);
+
+  // ── SB_PLANNING_ONLY_ALLOWLIST=1 — WHAT MAY DISPATCH, NOT WHAT MAY NOT ──────────────────
+  // THE FAILURE THIS REPLACES, measured: `SB_STOP_BEFORE_AUTHOR` keyed on the runner's existing
+  // `isAuthorRequest`, which tests for "SCENE CONTINUATION (HARD" or "PROTAGONIST OPENING BEAT
+  // (HARD". The Scene 1 opening author request carries NEITHER — it opens "═══ STORYBOUND
+  // ARCHITECTURE LAWS ═══" — so the test was false, the block never evaluated, and 274,889 chars
+  // of author request dispatched on a planning-only authorization. A denylist written against
+  // prompt wording fails exactly this way: the one payload it has to catch is the one nobody
+  // checked it against.
+  //
+  // So this is an ALLOWLIST of PLANNING OPERATIONS, each claimed by the same predicate the reuse
+  // family uses. Anything that is not a planning operation is refused before it is priced,
+  // whatever model serves it and whatever its prompt says. The prose author, every editor, every
+  // specialist renderer and every post-scene pass are refused because they are not on the list —
+  // not because of anything they contain.
+  if (process.env.SB_PLANNING_ONLY_ALLOWLIST === '1') {
+    // ── MATCHED ON THE GENERATOR'S OWN OPENING INSTRUCTION, IN THE HEAD OF THE REQUEST ────
+    // The first version of this list reused the predicates the REUSE family uses, and the check
+    // against the overspending run's own payloads caught the consequence immediately: every one
+    // of the 31 requests was permitted, the 274,889-char author payload included, because
+    // `_isLiBibleOp` matches field names (`secondary_anecdote_different_register`,
+    // `desire_register_exemplars_cg`) that DOWNSTREAM prompts quote. A whole-body test cannot
+    // tell a generator from something that cites the generator's output. That is the same
+    // over-match that once made the LI bible serve four times.
+    //
+    // An operation is identified by what its OWN generator says FIRST. Each signature below is
+    // the opening instruction observed in a real captured request, and every one of them falls
+    // inside the first 300 characters. The author payload's head is "═══ STORYBOUND ARCHITECTURE
+    // LAWS ═══", which matches none of them.
+    //
+    // AN UNRECOGNISED HEAD IS REFUSED. If a generator's opening wording ever changes, this run
+    // stops and names the request instead of letting prose through — the allowlist fails toward
+    // spending nothing.
+    // ── MATCH THE PROMPT TEXT, NOT THE POST BODY (fixed after the live run disagreed) ────
+    // `raw` is the raw POST body — it begins `{"messages":[{"role":"system","content":"…` — so a
+    // head anchored with `^` can NEVER match it, and every planning operation was refused on the
+    // live path. The offline check passed because `requests.json` stores the EXTRACTED prompt
+    // text (line 2737: the messages' contents joined), which is a different string from the one
+    // the code was testing. A check whose input has a different shape from the code's input
+    // proves nothing, and this is the third time that has bitten in this work — so the extraction
+    // happens HERE, once, and the check is pointed at this same function.
+    const _promptText = _allowlistPromptText(raw, body);
+    const _head = _promptText.slice(0, 300);
+    const _planOps = [
+      ['PC body bible', /DISTINGUISHING FEATURE \(anti-calcification ROTATION[\s\S]{0,120}this character's ONE memorable/],
+      ['LI body bible', /DISTINGUISHING FEATURE \(anti-calcification ROTATION[\s\S]{0,120}this love interest's ONE memorable/],
+      ['physical-canon rotator', /^You revise physical-canon fields of a romance LI bible/],
+      ['pair bond', /^You are the architect of WHY THIS PAIR/],
+      ['R-plot', /^You are designing an R-PLOT/],
+      ['R-plot editorial audit', /^You are an editorial auditor reviewing an R-plot/],
+      ['A-plot', /^You are the A-PLOT GENERATOR for Storybound/],
+      ['A-plot Scene-1 compressor', /^You are compressing the .{0,20}A-plot of a romance novel/],
+      ['wound-to-LI swap test', /^You are a story-structure auditor applying ONE test: the WOUND/],
+      ['subplot generator', /^You are the SUBPLOT GENERATOR for Storybound/],
+      ['architecture spine', /^You are a CONTINUITY ARCHITECT for a serialized/],
+      ['opening planner', new RegExp('^You are a ' + OPENING_PLANNER_SIG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))],
+    ];
+    const _headT = _head.replace(/^\s+/, '');
+    const _match = _planOps.filter((p) => { try { return p[1].test(_headT); } catch (_) { return false; } })[0];
+    // ONCE THE OPENING PLAN IS ACCEPTED, PAID DISPATCH IS CLOSED. The plan is the deliverable;
+    // anything the application wants after it is the next stage and is not authorized.
+    // ── PAID DISPATCH CLOSES WHEN THE PLAN IS ACCEPTED ───────────────────────────────────
+    // MEASURED in the overspending run's own order: r11 opening planner, r12 author, r13 SUBPLOT
+    // GENERATOR. The subplot is a planning operation, so an allowlist alone would permit it after
+    // the plan had already been accepted — and this run's deliverable IS the accepted plan.
+    // Anything the application wants afterwards belongs to the next stage. The planner request
+    // itself is of course still allowed through on the call that sets the flag.
+    const _wasAccepted = _plannerAccepted;
+    if (_match && _match[0] === 'opening planner') _plannerAccepted = true;
+    if (!_match || _wasAccepted) {
+      const why = 'PLANNING-ONLY: this run is authorized for the planning operations and nothing '
+        + 'else, so ' + (body.role || url.replace(ORIGIN, '')) + ' (' + raw.length + ' chars'
+        + ((body && body.model) ? ', ' + body.model : '') + ') was refused BEFORE it was priced. It is not on the '
+        + (_wasAccepted
+            ? ('planning allowlist' + (_match ? ' is closed: the opening plan has already been accepted, and "'
+                + _match[0] + '" belongs to the next stage' : ' and the opening plan has already been accepted'))
+            : 'planning allowlist')
+        + '. Nothing was reserved for it.';
+      requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
+        model: (body && body.model) || null, chars: raw.length, estimate: 0,
+        refusedByDiagnostic: why, bodyText: raw });
+      say('  ⊘ ' + why);
+      _ledger('planning_only_refused', { scene: sceneNoForReplies, role: body.role || null,
+        url: url.replace(ORIGIN, ''), chars: raw.length, plannerAccepted: _plannerAccepted, why });
+      // The first refusal preserves its payload: on a planning-only run the thing most worth
+      // reading is the author request that would have been paid for.
+      if (!_firstRefusedSaved) {
+        _firstRefusedSaved = true;
+        try {
+          fs.writeFileSync(OUT + '/FIRST_REFUSED_REQUEST.json', JSON.stringify({
+            statedPlainly: 'The first request this planning-only run refused, preserved unsent. No '
+              + 'reply was bought for it and nothing was reserved against the ceiling.',
+            role: body.role || null, url: url.replace(ORIGIN, ''), chars: raw.length,
+            model: (body && body.model) || null, body,
+          }, null, 2));
+          say('    ↳ preserved unsent: FIRST_REFUSED_REQUEST.json (' + raw.length + ' chars)');
+        } catch (e) { say('    ! could not preserve it: ' + e.message); }
+      }
+      halted = halted || why;
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    say('  ✓ planning operation permitted: ' + _match[0]);
+  }
+
+  // ── SB_STOP_BEFORE_AUTHOR=1 — BUY THE PLAN, NOT THE PROSE ────────────────────────────────
+  // Stage 1 runs the fresh R-plot, A-plot, spine and opening planner and then STOPS, so the
+  // accepted opening plan can be read before any prose is paid for. `SB_PLANNER_ONLY` is the
+  // wrong tool for that: it refuses every role except the first planner attempt, which would
+  // block the R-plot and the A-plot the plan is made of.
+  //
+  // This refuses exactly one thing — the PROSE AUTHOR — and refuses it BEFORE the guard prices
+  // it, so the author's reservation never opens and cannot move the peak. The sticky stop is set
+  // so the post-author chain cannot run either: nothing downstream of the author has an input.
+  if (process.env.SB_STOP_BEFORE_AUTHOR === '1' && isAuthor) {
+    const why = 'STOPPED BEFORE THE PROSE AUTHOR: the plan was bought, the prose was not. The '
+      + 'opening planner has answered and the accepted plan is on disk; this run is authorized for '
+      + 'planning only, so the author request was refused at the wire. Nothing was reserved for it '
+      + 'and nothing downstream of it will dispatch.';
+    requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
+      model: (body && body.model) || null, chars: raw.length, estimate: 0, refusedByDiagnostic: why,
+      bodyText: raw });
+    say('  ⊘ ' + why);
+    _ledger('stopped_before_author', { scene: sceneNoForReplies, role: body.role || null,
+      url: url.replace(ORIGIN, ''), chars: raw.length, why });
+    // THE REQUEST IS PRESERVED. It is the whole point of the verification: the outgoing author
+    // payload can be read for what it would have said without paying for a reply.
+    try {
+      fs.writeFileSync(OUT + '/AUTHOR_REQUEST_NOT_SENT.json', JSON.stringify({
+        statedPlainly: 'This is the Scene 1 author request as it WOULD have been sent. It was '
+          + 'refused at the wire under SB_STOP_BEFORE_AUTHOR, so no prose was generated and no '
+          + 'author call was billed. It is preserved so the outgoing payload can be read.',
+        chars: raw.length, role: body.role || null, url: url.replace(ORIGIN, ''),
+        model: (body && body.model) || null, body,
+      }, null, 2));
+      say('    ↳ the unsent author request is preserved: AUTHOR_REQUEST_NOT_SENT.json ('
+        + raw.length + ' chars)');
+    } catch (e) { say('    ! could not preserve the unsent author request: ' + e.message); }
+    halted = halted || why;
+    unrecoverableStop = unrecoverableStop || { code: 'stopped_before_author', reqId: null, why };
+    try { return await route.abort(); } catch (_) { return; }
+  }
 
   // ── THE EXPERIMENT'S PRECONDITION, ENFORCED BEFORE PAID DOWNSTREAM DISPATCH ─────────────
   // MEASURED 2026-11-02: the whole scaffold chain failed, the opening was generated anyway on the
@@ -1341,6 +3330,32 @@ await page.route('**/*', async (route) => {
   // a logic pass, another scaffold leg — still went to a real provider. The stop decides whether
   // the RUN continues, which is not a per-role question. In-flight calls are a separate matter:
   // they are already dispatched and are reconciled as exposure, not retroactively refused.
+  // ── AN UNRECOVERABLE FAILURE STOPS THE NEXT DISPATCH, NOT THE NEXT REPORT ───────────────
+  // MEASURED DEFECT: the A-plot (r3) timed out at the wire, `halted` was set, and r4-r7 — the
+  // three-issue spine, the opening staging planner, its repair retry and the opening author —
+  // ALL still left for real providers. `halted` was only a label on the final report; nothing
+  // consulted it before dispatching. So a required operation failed and the run went on paying
+  // for planning and authorship built on top of the hole it left.
+  //
+  // A dispatch that returns NO HTTP RESPONSE AT ALL is the trigger. That is deliberately not the
+  // same as an error status: the 429 on the body-tell sub-pass answered, production handled it,
+  // and the run was right to continue. A non-response is the case nothing can interpret — the
+  // call may or may not have billed, and whatever depended on it has no input.
+  //
+  // NOT SCOPED TO SB_FRESH_PLAN, unlike the gate below it: this is not about which experiment is
+  // running, it is about not buying work that rests on a failure. In-flight calls are a separate
+  // matter — already dispatched, reconciled as exposure, never retroactively refused.
+  if (unrecoverableStop) {
+    requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
+      model: 'none', chars: raw.length, estimate: 0,
+      refusedByUnrecoverable: unrecoverableStop.code });
+    _ledger('unrecoverable_refused', { scene: sceneNoForReplies, role: body.role || null,
+      url: url.replace(ORIGIN, ''), chars: raw.length, code: unrecoverableStop.code,
+      failedReqId: unrecoverableStop.reqId, why: unrecoverableStop.why });
+    say('  ⊘ refused (run stopped by an unrecoverable failure at request #'
+      + unrecoverableStop.reqId + '): ' + (body.role || url));
+    try { return await route.abort(); } catch (_) { return; }
+  }
   if (FRESH_PLAN_ACTIVE && prereqStop) {
     requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
       model: 'none', chars: raw.length, estimate: 0,
@@ -1398,7 +3413,8 @@ await page.route('**/*', async (route) => {
       snap = { readable: false, why: String((e && e.message) || e) };
     }
     // THE OPTIONS COME FROM THE MODE, through the same pure function the controls assert.
-    const verdict = scaffoldPrerequisite(snap, prerequisiteOptionsFor(MODE));
+    const verdict = scaffoldPrerequisite(snap,
+      prerequisiteOptionsFor(MODE, RUN_CONFIG && RUN_CONFIG.architectureModel));
     if (!verdict.ok) {
       prereqStop = verdict;
       halted = 'PREREQUISITE HALT at scene ' + sceneNoForReplies + ' before '
@@ -1413,13 +3429,122 @@ await page.route('**/*', async (route) => {
       try { return await route.abort(); } catch (_) { return; }
     }
     _ledger('prereq_ok', { scene: sceneNoForReplies, role: body.role || null, why: verdict.why,
-      snapshot: snap, prereqOptions: prerequisiteOptionsFor(MODE) });
+      snapshot: snap,
+      prereqOptions: prerequisiteOptionsFor(MODE, RUN_CONFIG && RUN_CONFIG.architectureModel) });
   }
 
   // ── REGISTER GATE: CONSULTED BEFORE ANY AUTHOR REQUEST IS DISPATCHED ──
   // STICKY. Once stopped, every later author request is refused too, so a client-side tier
   // fallback cannot slip a second author call through a different route after the stop.
   if (isAuthor) {
+    // ── THE PROSE REQUEST IS CONFIRMED BEFORE IT IS SENT (Roman 2026-11-17) ────────────────
+    // The deck change has never been in a DISPATCHED author request: the last two attempts died
+    // before one was built, so "the frame reaches the author" is still unverified. Confirming it
+    // after the fact would be confirming it after the money is gone, so the three elements are
+    // asserted HERE, at the gate, and a missing one refuses the dispatch with nothing spent.
+    //
+    // Matched on the request's own text, each against what the frame actually emits:
+    //   the deck beat      — the grip and the not-remembering, which now land MID-SCENE
+    //   hand continuity    — the WHICH HAND block, which makes the hand answerable later
+    //   the shorter closer — the exact literal the scene must end on
+    // SCOPED TO OPENINGS THAT USE THIS FRAME. The deck sequence is a Scene-1 onboarding frame,
+    // so the check applies where the app says that frame is in force and nowhere else: a
+    // continuation, or an opening in a story past the onboarding window, must not be refused for
+    // lacking a frame it was never given.
+    const _deckFrameInForce = isScene1OpeningProse(body)
+      && (body.deckFrameActive === true || body._sbDeckFrameActive === true);
+    if (!_deckFrameInForce && isAuthor) {
+      say('  \u25cb deck check not applicable to this request ('
+        + (isScene1OpeningProse(body)
+            ? 'Scene 1 prose, but the deck frame is not in force'
+            : 'not Scene 1 opening prose') + ')');
+    }
+    if (_deckFrameInForce) {
+      // ── THE BODY IS JSON, SO ITS NEWLINES ARE TWO CHARACTERS ────────────────────────────
+      // `raw` is the POST body as sent, where a prompt newline is the escape sequence \n, not a
+      // newline character. Eleven single-line patterns matched; the ONE that spanned a line break
+      // ("THIS page stops at\n      the choice") could not, and the gate refused a request whose
+      // text was perfectly correct. Decoding the escapes first makes every multi-line pattern
+      // test the prose the model will actually read.
+      const _authorTxt = String(raw)
+        .replace(/\\r\\n|\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, '\\');
+      // THE FOUR-BEAT ENDING SEQUENCE, MATCHED ON WHAT THE FRAME NOW EMITS. The earlier version
+      // of this gate checked the previous frame's wording and would have passed a request that
+      // carried the superseded end-only block, because it searched for one historical PHRASE
+      // rather than for the block's structure.
+      const _need = [
+        ['the ordered ending sequence', /THE ENDING SEQUENCE \(HARD/],
+        ['(1) the discovery, where the pressure lands', /\(1\) THE DISCOVERY[\s\S]{0,400}pressure actually LANDS/],
+        ['the grip sentence itself', /hand tightened around (?:my|your|his|her|their)[^.]{0,40}(?:tarot deck|bundle of cards)/i],
+        ['the not-remembering half', /didn['\u2019]t remember bringing it|bringing of it had already slipped/i],
+        ['which hand holds it', /say WHICH HAND holds it/i],
+        ['(2) the reach with the FREE hand', /\(2\) THE REACH, WITH THE FREE HAND/],
+        ['the reach uses the other hand', /the reach uses the OTHER, FREE hand/i],
+        ['reaching is not taking', /NOT taking it, NOT speaking into it/i],
+        ['(3) the decision stays open', /\(3\) THE DECISION STAYS OPEN/],
+        ['this page stops at the choice', /THIS page stops at\s*\n?\s*the choice|stops at the choice/i],
+        ['(4) the closer last', /\(4\) THE CLOSER, LAST/],
+        ['the shorter closer verbatim', /still felt the deck in (?:my|your|his|her|their) hand\. (?:Maybe|Perhaps)/i],
+      ];
+      // AND THE CONFLICTING INSTRUCTIONS MUST BE GONE. Presence alone was not enough: the captured
+      // request carried BOTH endings at once and my own audit passed it.
+      const _forbid = [
+        ['the superseded end-only closer wording', /toyed with the idea of letting the cards decide/i],
+        ['the old end-only structural note', /the hand-tightening is the protagonist['\u2019]s body reaching for the inherited/i],
+        ['the old body constraint that banned the deck before the closer', /deck stays OUT of the scene until the closer/i],
+        ['a second CLOSER \(HARD\) block', /CLOSER \(HARD\) \u2014 Scene 1 MUST END/],
+        ['a plan instruction that she TAKES the decisive instrument', /\b(?:takes|took|seizes|grabs|lifts|claims)\s+(?:the|her|his|their)\s+live microphone/i],
+        // THE ORIGINAL RESOLVED CLOSING BEAT, in the protagonist's own voice as the scene's last
+        // line: "I take the live microphone and tell the camera, ...". First person, so the
+        // third-person pattern above does not reach it, and the clause that follows resolves the
+        // consequence as well. This is the exact text the paid scaffold produced.
+        ['a CLOSING DECISION that resolves the choice in first person',
+          /CLOSING DECISION[^\n]{0,160}\b(?:I|we)\s+(?:take|took|seize|seized|grab|grabbed|lift|lifted|claim|claimed)\b/i],
+        ['a closing beat that announces the consequence as settled',
+          /no longer goes unanswered|version no longer stands/i],
+      ];
+      const _missing = _need.filter(([, rx]) => !rx.test(_authorTxt)).map(([label]) => label);
+      const _present = _forbid.filter(([, rx]) => rx.test(_authorTxt)).map(([label]) => label);
+      if (_present.length) _missing.push(...(_present.map((l) => 'CONFLICTING, still present: ' + l)));
+      if (_missing.length) {
+        requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''),
+          role: body.role || null, model: 'none', chars: raw.length, estimate: 0,
+          deckFrameRefusal: _missing.join('; ') });
+        halted = 'DECK FRAME MISSING from the prose request at scene ' + sceneNoForReplies
+          + ' — ' + _missing.join('; ');
+        say('  \u2717 ' + halted);
+        say('    (nothing was dispatched; the prose request does not carry the beat this run exists'
+          + ' to test, so it is refused BEFORE the spend rather than judged after it)');
+        try {
+          fs.writeFileSync(OUT + '/DECK_FRAME_REFUSED_scene' + sceneNoForReplies + '.json',
+            JSON.stringify({ missing: _missing, requestChars: raw.length,
+              statedPlainly: 'The author request was built but NOT sent: these elements of the '
+                + 'Scene 1 deck frame were absent from it.',
+              // THE DECODED PROMPT IS PRESERVED. Without it, diagnosing a refusal costs another
+              // replay — which is exactly what the first refusal cost.
+              closingDecisionBlock: (function () {
+                const m = _authorTxt.match(/CLOSING DECISION[\s\S]{0,700}/g);
+                return m ? m.map((x) => x.slice(0, 700)) : [];
+              })(),
+              endingSequenceBlock: (function () {
+                const m = _authorTxt.match(/THE ENDING SEQUENCE[\s\S]{0,2200}/);
+                return m ? m[0] : null;
+              })() }, null, 2));
+        } catch (_) {}
+        return route.fulfill({ status: 499, contentType: 'application/json',
+          body: JSON.stringify({ error: 'deck_frame_missing', missing: _missing }) });
+      }
+      say('  \u2713 PROSE REQUEST CONFIRMED before dispatch: the deck beat, the WHICH HAND'
+        + ' continuity rule and the shorter closer are all present ('
+        + raw.length + ' chars)');
+      try {
+        fs.writeFileSync(OUT + '/DECK_FRAME_CONFIRMED_scene' + sceneNoForReplies + '.json',
+          JSON.stringify({ confirmed: _need.map(([l]) => l), requestChars: raw.length }, null, 2));
+      } catch (_) {}
+    }
     if (registerStop) {
       requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
         model: 'none', chars: raw.length, estimate: 0, registerRefusal: registerStop.verdict + ':sticky' });
@@ -1432,7 +3557,27 @@ await page.route('**/*', async (route) => {
     try { snap = await page.evaluate(snapshotInPage(DECLARED_GENERAL_PROSE)); } catch (_) { snap = null; }
     // A snapshot that cannot be read is UNKNOWN, never a pass.
     const v = registerVerdict(snap);
-    if (v.verdict !== PROCEED) {
+    // ── AN EXPLICIT-REGISTER SCENE IS GROK'S, NOT A HALT (Roman, authorized 2026-11-06) ────
+    // The gate was written for a run with NO explicit-capable author: every verdict but PROCEED
+    // meant "nobody here may write this", so it stopped. This run HAS one — Grok authors
+    // explicit scenes by the app's own `_hot` predicate, and the block immediately below
+    // already stands aside for exactly that case. So the two non-PROCEED verdicts are no longer
+    // the same outcome:
+    //
+    //   STOP_EXPLICIT_REQUESTED — eligibility IS established and the answer is "not Luna".
+    //       The general-author override stands aside and the app routes it to Grok. Recorded
+    //       per scene so the manuscript can say which model wrote which scene.
+    //   STOP_UNKNOWN            — eligibility could not be established at all. Still halts.
+    //       An unreadable snapshot or an undeclared scope is not permission.
+    //
+    // NOTHING IS SUBSTITUTED SILENTLY. Luna is never swapped for Grok on a general scene; this
+    // only declines to halt on a scene the gate has positively identified as explicit.
+    if (v.verdict === STOP_EXPLICIT_REQUESTED) {
+      explicitRegisterScenes.push({ scene: sceneNoForReplies, reasons: v.reasons });
+      say('  ⇢ scene ' + sceneNoForReplies + ' is EXPLICIT register (' + v.reasons.join('; ')
+        + ') — recorded. The BASE-AUTHOR REQUIREMENT below still applies: an explicit'
+        + ' enhancement is a separate call and is outside this test.');
+    } else if (v.verdict !== PROCEED) {
       registerStop = v;
       halted = 'REGISTER HALT at scene ' + sceneNoForReplies + ': ' + v.verdict
         + ' — ' + v.reasons.join('; ');
@@ -1441,6 +3586,33 @@ await page.route('**/*', async (route) => {
       say('  ✗ ' + halted);
       try { return await route.abort(); } catch (_) { return; }
     }
+
+    // ── THE RESOLVED BASE AUTHOR MUST BE LUNA (Roman, authorized 2026-11-10) ──────────────
+    // ALIGNED WITH THE APP'S CURRENT ROUTING. The register note above says which REGISTER the
+    // scene is; it does not decide which model writes the base draft. Under the live
+    // architecture the base prose is the general author's and an explicit pass is a separate,
+    // later call on a finished draft. MEASURED in the scene-12 rehearsal: the register said
+    // "explicit", and the base-author dispatch the app actually made was gpt-6-luna carrying
+    // the full assignment — so standing aside on the strength of the register alone would have
+    // mis-described the run.
+    //
+    // This check therefore reads the DISPATCH, not the register: a base-author request on any
+    // model but the selected general author is REFUSED BEFORE IT LEAVES, and the run halts. It
+    // substitutes nothing, changes no story state, and leaves _mode1.routeToGrok exactly as the
+    // story set it. An explicit ENHANCEMENT call is not an isAuthorRequest, so it is untouched
+    // by this and stays outside this test.
+    const _baseWant = (RUN_CONFIG && RUN_CONFIG.generalAuthorModel) || 'gpt-6-luna';
+    const _baseGot = String(body.model || body.preferredModel || '');
+    if (_baseGot && _baseGot !== _baseWant) {
+      halted = 'BASE-AUTHOR MODEL at scene ' + sceneNoForReplies + ': requested ' + _baseGot
+        + ', this test requires ' + _baseWant;
+      requests.push({ scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
+        model: _baseGot, chars: raw.length, estimate: 0,
+        baseAuthorRefusal: _baseGot + '!=' + _baseWant });
+      say('  ✗ ' + halted + ' — refused before dispatch, nothing spent.');
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    if (_baseGot) say('  ✓ base author resolved to ' + _baseGot + ' (required: ' + _baseWant + ')');
   }
 
   // ── AUTHOR SELECTION, BY THE ROUTER, AT THE INTERCEPTED DISPATCH ────────────────────────
@@ -1491,6 +3663,9 @@ await page.route('**/*', async (route) => {
         promptChars: promptText.length,
         now: Date.now() + skewMs,
         evidence,
+        // The run's selected general author, if any. Passing it makes the router stand aside
+        // instead of choosing on cache economics — the Haiku override the capture caught.
+        selectedAuthorModel: (RUN_CONFIG && RUN_CONFIG.generalAuthorModel) || null,
       });
       routing = { author: out.decision.author.key, label: out.decision.author.label,
         reason: out.decision.reason,
@@ -1516,10 +3691,60 @@ await page.route('**/*', async (route) => {
         + '   [cache: ' + routing.cacheEvidence
         + (routing.spendingMaterial === null ? '' : ', spending: '
           + (routing.spendingMaterial ? 'material' : 'below chosen threshold')) + ']');
-      target = AUTHOR_OVERRIDE[routing.author] || null;
+      // THE ROUTER NO LONGER PICKS THE PROSE AUTHOR. Its cache evidence is still recorded above
+      // because it is measurement, but the assignment is Luna's and does not vary by scene
+      // position. `routing.author` named 'sol' or 'haiku', neither of which exists in the table
+      // any more; reading it would have yielded undefined and fallen through to the grok-4.3
+      // default below, silently routing prose to Grok.
+      // ── NO OVERRIDE FOR APP-ROUTED LUNA PROSE (Roman 2026-11-17) ───────────────────────
+      // This harness used to choose the prose author and price it from its own table. The app
+      // now routes Luna itself (public/model-routing.js, enforced at dispatch), so an override
+      // here is a second router competing with the first — and its pricing table is where the
+      // $NaN came from: I replaced the table's entries with a `Luna` label while CPT still held
+      // only { Haiku, Sol }, so `chars / CPT['Luna']` was NaN and the guard refused a request it
+      // could not price.
+      //
+      // Leaving target null sends this dispatch down the SHARED guard, which prices the ACTUAL
+      // outgoing POST from its own model and cap rather than from a label this file maintains.
+      target = null;
     }
   }
-  const model = target ? target.requested : (body.preferredModel || body.model || 'grok-4.3');
+  // ── NO SILENT FALLBACK TO GROK FOR A CREATIVE CALL ──────────────────────────────────────
+  // This line used to end `|| 'grok-4.3'`. That default is how an ordinary creative request could
+  // arrive at Grok without any decision being made: the moment a route table lookup missed, the
+  // prose author became Grok and the log would still read like a routing choice. Grok is reserved
+  // for explicitly routed intimacy, so a creative request with no resolved model is a STOP, not a
+  // guess. Non-creative roles keep the body's own model as before.
+  const _creativeOp = isAuthor || isArchitectureSpineOp(body) || isOpeningPlannerOp(body);
+  const model = target ? target.requested
+    : (body.preferredModel || body.model
+       || (_creativeOp ? '__UNRESOLVED_CREATIVE_MODEL__' : 'grok-4.3'));
+  if (model === '__UNRESOLVED_CREATIVE_MODEL__') {
+    throw new Error('a creative request resolved to NO model and the grok-4.3 default was refused '
+      + '— routing must assign this operation explicitly (see public/model-routing.js)');
+  }
+  // ── THE DESTINATION IS RESOLVED ONCE, HERE, AND NOWHERE ELSE (Roman 2026-11-15) ─────────
+  // IT WAS DERIVED TWICE AND BOTH DERIVATIONS WERE WRONG IN THE SAME WAY:
+  //     const dest = target ? (_modelOrigin + target.route) : url;
+  // "target" is non-null ONLY for an author override. The ordinary A-plot, the Mistral structure
+  // calls and every other role carry authorOverride: null, so SB_MODEL_ORIGIN never applied to
+  // them and they went to ORIGIN — the live preview, which forwards to the real provider. The
+  // probe that was meant to test loopback transport billed $0.00015585 at Mistral and left
+  // $0.635635 held at the preview, and the error it produced names the preview host.
+  //
+  // So the redirect is a property of the ROUTE, not of the override. Everything that reaches this
+  // point is a model route (checked above), so when SB_MODEL_ORIGIN is set EVERY model request is
+  // rewritten onto it, override or not. Path selection is unchanged: an override still goes to
+  // its own route, anything else keeps its own path.
+  const _modelOrigin = process.env.SB_MODEL_ORIGIN || ORIGIN;
+  const _routePath = target ? target.route
+    : (function () { try { return new URL(url).pathname; } catch (_) { return url; } })();
+  const dest = _modelOrigin + _routePath;
+  // LOOPBACK IS DECIDED BY THE PARSED HOST, not by whether an env var looks local. A string test
+  // on the env would pass for an origin that merely MENTIONS localhost.
+  const _destHost = (function () { try { return new URL(dest).hostname; } catch (_) { return ""; } })();
+  const _destIsLoopback = _destHost === 'localhost' || _destHost === '127.0.0.1'
+    || _destHost === '::1' || _destHost === '[::1]';
   const avail = remainingNow();
   // ── THE DIRECT SOL CALL MUST BE PRICED, NOT JUST CLASSIFIED (Roman 2026-11-02) ──────────
   // Adding /api/sol-scene-test to MODEL_ROUTES only made it REAL_PROVIDER. Its request is NOT
@@ -1537,7 +3762,21 @@ await page.route('**/*', async (route) => {
       })()
     : _isSolArch
       ? (function () {
-          const R = AUTHOR_OVERRIDE.sol.rate;                       // declared $2/$10 per MTok
+          // ── THE RATE COMES FROM THE MODEL THAT IS ACTUALLY GOING OUT (Roman 2026-11-06) ──
+          // This read AUTHOR_OVERRIDE.sol.rate unconditionally — Sol's $2/$10 per MTok — so a
+          // Luna architecture call was admitted at Sol pricing. MEASURED: the captured request
+          // was 51,147 chars with a 40,000 cap and priced $0.425574, which is exactly
+          // 12,787 x $2/M + 40,000 x $10/M. At the resolved model's own configured rates
+          // ($0.10/$0.50) the same request is ~$0.021279. A 20x over-estimate fails SAFE at the
+          // gate, but it is not the model's price and it made the quote's largest line a
+          // fiction.
+          //
+          // GUARD_RATES is _fsc_cost_guard's table — the same one every other stage prices
+          // from — so there is one rate table rather than a second copy here. An unpriced model
+          // keeps the old conservative behaviour: Sol's rate, which is the highest on this
+          // route, and the guard still refuses anything it cannot price downstream.
+          const _archModelOut = String((body && body.model) || '');
+          const R = GUARD_RATES[_archModelOut] || AUTHOR_OVERRIDE.sol.rate;
           const capOut = Number(body && body.max_completion_tokens) || 0;
           const inTokEst = Math.ceil(raw.length / 4);               // chars/4 — an ESTIMATE
           const est = inTokEst * R.in + capOut * R.out;
@@ -1548,7 +3787,8 @@ await page.route('**/*', async (route) => {
           }
           return { allowed: est <= avail, estimate: est,
             reason: est <= avail ? null : 'over_remaining_authorization',
-            detail: { stage: 'sol-architecture', inTokEst, capOut, rate: R } };
+            detail: { stage: 'sol-architecture', inTokEst, capOut, rate: R,
+              ratedAs: GUARD_RATES[_archModelOut] ? _archModelOut : 'gpt-6.1-sol (fallback: model unpriced)' } };
         })()
       : guardDispatch(body, { model, remainingAuthorization: avail });
   if (_isSolArch) {
@@ -1581,6 +3821,15 @@ await page.route('**/*', async (route) => {
   const rec = { scene: sceneNoForReplies, url: url.replace(ORIGIN, ''), role: body.role || null,
     requested: model, author: !!isAuthor, overrideTo: target ? target.label : null,
     chars: raw.length, estimate: g.estimate, served: null, receipt: null,
+    // ── THE OUTGOING ALLOWANCE IS RECORDED, NOT INFERRED (Roman 2026-11-06) ───────────────
+    // This record kept only message text, so verifying what allowance a call actually carried
+    // meant reading a SIZING log line and assuming the body matched it. That is how a planner
+    // dispatched at 2,921 was reported as a 9,000 call: the log printed the computed
+    // _SCAFFOLD_MAX_TOKENS and the body was never checked. Both field names are kept because
+    // the two routes take different ones, and the effort under both spellings.
+    maxTokens: (body && body.max_tokens) != null ? body.max_tokens : null,
+    maxCompletionTokens: (body && body.max_completion_tokens) != null ? body.max_completion_tokens : null,
+    reasoningEffort: (body && (body.reasoning_effort || body.reasoningEffort)) || null,
     bodyText: (body.messages || []).map((m) => String(m.content || '')).join('\n') };
   requests.push(rec);
   // ── AN IMMUTABLE ID, ALLOCATED BEFORE DISPATCH (2026-11-02) ──────────────────────────────
@@ -1588,9 +3837,15 @@ await page.route('**/*', async (route) => {
   // push is still synchronous, so two requests in flight at once can never share it. Reading
   // `requests.length` after an await — which is what the old naming did — is the bug.
   rec.reqId = requests.length;
+  // THE DESTINATION IS RECORDED ON EVERY REQUEST, BEFORE ANYTHING IS SENT. The previous ledger
+  // row carried only the app-side "url", so a run whose requests went somewhere other than the
+  // intended origin produced a ledger that could not show it — the transport probe's rows all
+  // read "/api/chatgpt-proxy" while the bytes went to the preview.
+  rec.dest = dest;
+  rec.destLoopback = _destIsLoopback;
   _ledger('dispatch', { reqId: rec.reqId, scene: sceneNoForReplies, role: body.role || null,
-    url: rec.url, requested: model, overrideTo: rec.overrideTo, chars: raw.length,
-    estimate: g.estimate, author: !!isAuthor });
+    url: rec.url, dest: dest, destLoopback: _destIsLoopback, requested: model,
+    overrideTo: rec.overrideTo, chars: raw.length, estimate: g.estimate, author: !!isAuthor });
   // ── A NON-DISPATCH IS NOT PRICED (Roman 2026-11-01) ──────────────────────────────────────
   // MEASURED: in the corrected replay this guard fired MID-SCENE — `SD_FALLBACK estimates
   // $Infinity` — and `route.abort()` made the application see a network failure on a specialist
@@ -1604,11 +3859,128 @@ await page.route('**/*', async (route) => {
   //   · the LIVE guard is untouched — a real dispatch is still refused over its authorization;
   //   · SD_FALLBACK is still UNPRICED. No price is invented for it, here or anywhere. The
   //     unpriced-model finding stands open against the live path, where it will still halt.
-  const _noDispatch = DRIVE;
+  // ── A REQUEST A REUSE HOOK WILL ANSWER IS A NON-DISPATCH, EXACTLY LIKE DRIVE ────────────
+  // MEASURED ON THE FIRST PAID REWRITE ATTEMPT, and it cost the attempt: the A-plot's
+  // RESERVATION is $0.632602, the guard prices and checks it BEFORE the reuse block further
+  // down can serve it from disk, and the run halted on a ceiling of $0.50 — refusing a call
+  // that was never going to leave the machine. The quote had modelled reused calls as never
+  // reserving, which is what the hook does; it is not what the GUARD did.
+  //
+  // So the decision moves to where the existing non-dispatch concept already lives. A request a
+  // hook will answer is priced for the record and NOT applied: no ceiling check, no reservation,
+  // no exposure. Only an UNSERVED entry counts — a second call for the same operation is the
+  // rejection case, and it must still reach the block below to be refused there by name.
+  const _willReuse = _REUSE_OPS.some((o) => process.env[o.env]
+      && _reuseState[o.env] && _reuseState[o.env].served === 0 && o.claims(raw, body))
+    || !!(process.env.SB_REUSE_SPINE && spineReuseServed === 0 && isArchitectureSpineOp(body));
+  const _noDispatch = DRIVE || _willReuse;
+  // ONE LINE PER REQUEST, NAMING THE DESTINATION AND WHETHER ANYTHING GOES THERE. Logged after
+  // the reuse decision on purpose: logged before it, two calls a preserved reply answered were
+  // printed as "[REMOTE]", which was true of the address and false about the traffic.
+  say('  → DEST #' + rec.reqId + ' ' + (body.role || 'model') + ' ' + raw.length + ' chars → '
+    + dest + (_destIsLoopback ? '  [loopback]' : '  [REMOTE]')
+    + (_noDispatch ? '  — NOT SENT (' + (DRIVE ? 'drive fixture' : 'preserved reply') + ')'
+      : (process.env.SB_OFFLINE && !_destIsLoopback && !SB_FAULT
+        ? '  — WILL BE REFUSED (SB_OFFLINE)' : '')));
+  if (_willReuse) {
+    say('  ⓘ estimate $' + String(g.estimate) + ' recorded and NOT applied — a preserved reply'
+      + ' answers this call, so it reserves nothing and is not measured against the ceiling');
+  }
   if (_noDispatch && !g.allowed) {
     say('  ⓘ estimate not applied (drive: answered by a local fixture, nothing dispatched) — '
       + (body.role || url) + ' estimate $' + String(g.estimate)
       + '; the live guard is unchanged and this model remains unpriced');
+  }
+  // ── THE PLANNING-ONLY ALLOWLIST DECIDES BEFORE THE CEILING DOES ───────────────────────
+  // A call this mode does not permit must be refused on those grounds, not left to trip the
+  // budget halt below — which would stop the run with a ceiling message about traffic that
+  // was never allowed, and let that traffic press on the authorization on its way out.
+  if (process.env.SB_PLAN_ONLY === '1') {
+    const _isScaffold = _planOnlyIsScaffoldReq(raw);
+    const _isPlanner = _planOnlyIsPlannerReq(raw);
+    // ── AN ALLOWLIST, NOT A LIST OF REFUSALS ──────────────────────────────────────────
+    // The previous shape ended in `return null` — permit — so anything the refusals did not
+    // anticipate was allowed. A prose request arriving before the scaffold took exactly that
+    // path. Here the only way to be dispatched is to BE one of three things.
+    const _SETUP_ROLES = { STRUCTURE_GENERATOR: 1, NORMALIZATION: 1, BACK_COVER_SYNOPSIS: 1,
+      STRATEGY_PASS: 1, PROMPT_PREPROCESSOR: 1 };
+    const _SETUP_MAX_CHARS = 60000;   // every observed setup call is under 15,000
+    const _planOnlyWhy = (() => {
+      if (/cplus-editor/.test(url)) return 'the C+ editor is not dispatched in a planning-only run';
+      if (_planOnlyVerdict === 'rejected') {
+        return 'the scaffold was REJECTED by validation (' + _planOnlyFaults.length
+          + ' fault(s)) and this run ends there';
+      }
+      if (_planOnlyVerdict === 'accepted') {
+        return 'the scaffold has been accepted and this run stops there';
+      }
+      // (a) THE SCENE PLANNER — once, and only before one has been seen.
+      if (_isPlanner) {
+        if (_planOnlyPlannerSeen) {
+          return 'one attempt per planning leg \u2014 the scene planner has already been dispatched';
+        }
+        return null;
+      }
+      // (b) THE SCAFFOLD — once, and only behind a planner reply classified USABLE.
+      if (_isScaffold) {
+        if (_planOnlyPlannerOk !== true) {
+          return 'no usable plan from the scene planner ('
+            + (_planOnlyPlannerWhy || (_planOnlyPlannerSeen
+                ? 'the reply was never classified' : 'the planner has not been dispatched'))
+            + '), so ZERO scaffold dispatches are permitted';
+        }
+        if (_planOnlyScaffoldSent >= 1) {
+          return 'one attempt per planning leg \u2014 the scaffold has already been dispatched once,'
+            + ' and a correction retry is not authorized';
+        }
+        return null;
+      }
+      // (c) THE KNOWN SETUP CALLS — by role, under a size bound, and only before the planner
+      //     has been classified. After that nothing but the scaffold has any business going out.
+      const _role = String((body && body.role) || '');
+      if (_SETUP_ROLES[_role] && raw.length <= _SETUP_MAX_CHARS) {
+        // THE PLANNER'S DISPATCH CLOSES THE SETUP WINDOW (Roman 2026-11-18).
+        // This closed on CLASSIFICATION, which leaves a window between the planner going out and
+        // its reply being classified in which a setup role could still be dispatched. Setup
+        // precedes planning by definition, so the planner leaving is the end of it.
+        if (_planOnlyPlannerSeen) {
+          return 'setup is finished \u2014 the scene planner has already been dispatched, so this '
+            + _role + ' call is no longer part of the run';
+        }
+        return null;
+      }
+      // (d) EVERYTHING ELSE. Named rather than described, so the trace says what was refused and
+      //     why it was not on the list.
+      return 'not on the planning-only allowlist: ' + (_role || 'no role')
+        + ' (' + raw.length + ' chars) is neither a known setup call, the scene planner, nor the'
+        + ' scaffold \u2014 a planning-only run dispatches nothing else'
+        + (_planOnlyPlannerSeen && _planOnlyPlannerOk !== true
+            ? ' (and the planner\u2019s reply is '
+              + (_planOnlyPlannerOk === false ? 'unusable' : 'UNCLASSIFIED, treated as unusable') + ')'
+            : '');
+    })();
+    if (_planOnlyWhy) {
+      rec.estimate = 0;
+      rec.planOnlyRefused = true;
+      _planOnlyRefusals.push({ reqId: rec.reqId, role: body.role || null,
+        chars: raw.length, wouldHaveEstimated: g.estimate, why: _planOnlyWhy });
+      _ledger('plan_only_refusal', { reqId: rec.reqId, role: body.role || null, url: rec.url,
+        chars: raw.length, wouldHaveEstimated: g.estimate, why: _planOnlyWhy });
+      say('  \u2298 PLAN-ONLY: refused ' + (body.role || url) + ' (' + raw.length + ' chars) \u2014 '
+        + _planOnlyWhy + ' \u00b7 $' + g.estimate.toFixed(6) + ' not reserved');
+      return route.fulfill({ status: 503, contentType: 'application/json',
+        body: JSON.stringify({ error: 'plan_only_mode', why: _planOnlyWhy }) });
+    }
+    if (_isPlanner) {
+      // SET WHEN IT GOES OUT, not when it comes back: the fail-closed rule above needs to know
+      // that a planner was dispatched even if its reply is never classified.
+      _planOnlyPlannerSeen = true;
+    }
+    if (_isScaffold) {
+      _planOnlyScaffoldSent += 1;
+      say('  \u25c6 PLAN-ONLY: scaffold dispatch ' + _planOnlyScaffoldSent
+        + ' of 1 permitted \u2014 its reply will be VALIDATED before anything is called accepted');
+    }
   }
   if (!g.allowed && !_noDispatch) {
     halted = 'BUDGET HALT at scene ' + sceneNoForReplies + ': ' + (body.role || url)
@@ -1616,7 +3988,193 @@ await page.route('**/*', async (route) => {
       + ' (settled $' + settledTotal.toFixed(6) + ' + held $' + heldTotal.toFixed(6)
       + ' + outstanding $' + outstanding().toFixed(6) + ')';
     say('  ✗ ' + halted);
+    // ── A CEILING THAT REFUSES ONE CALL MUST REFUSE THE REST (Roman 2026-11-13) ───────────
+    // MEASURED on the first paid rewrite attempt: the ceiling refused the A-plot, this branch
+    // aborted that one route, and THREE MORE CALLS then went to real providers — a mistral
+    // fallback rung, a proxy rung and a PRIMARY_AUTHOR. All three 502'd and left $0.003981 of
+    // unresolved exposure on a run that had already been stopped. `halted` was only a label on
+    // the final report; nothing consulted it before the next dispatch.
+    //
+    // The authorization is a property of the RUN, not of one call. Once it cannot cover a
+    // required dispatch, the run is over: this sets the same sticky flag an unrecoverable
+    // transport failure sets, so the guard that already exists refuses every later dispatch of
+    // every role. Calls already in flight are a separate matter — they are reconciled as
+    // exposure, never retroactively refused.
+    unrecoverableStop = unrecoverableStop || { code: 'budget_halt', reqId: rec.reqId,
+      why: halted + ' — the authorization cannot cover a required dispatch, so no further paid '
+        + 'dispatch is permitted for any role.' };
+    say('    ⊘ RUN STOPPED: no further provider dispatch will be permitted (sticky, every role)');
+    _ledger('budget_halt_stop', { reqId: rec.reqId, role: body.role || null, url: rec.url,
+      estimate: g.estimate, remaining: avail, why: unrecoverableStop.why });
     try { return await route.abort(); } catch (_) { return; }
+  }
+  // ── SB_NO_RETRY — A SECOND SEND OF THE SAME CALL IS REFUSED BEFORE IT IS PRICED ────────
+  // Checked here, ahead of the reservation, so a refused retry never reserves, never dispatches
+  // and never settles. Skipped for a non-dispatch: drive fixtures and the SB_REUSE_* family
+  // already enforce serve-once semantics of their own, and a reuse hook legitimately sees the
+  // same operation twice before refusing it by name.
+  // ── A PINNED REPLAY SENDS NOTHING UNTIL THE PIN IS CONFIRMED ──────────────────────────
+  // NO PRICE EXCEPTION. An earlier version of this gate let anything under $0.01 through, which
+  // meant a sub-cent call still left the machine on an unverified opener. The calls that fire
+  // before the rotation reports are ANSWERED HERE instead of dispatched or refused, so the run
+  // reaches the point where the app states its selection without sending anything.
+  //
+  // THE LOCAL ANSWER IS 429, WHICH IS WHAT THESE CALLS ALREADY GET. Measured in every preserved
+  // run: the two early STRUCTURE_GENERATOR calls to mistral-small-latest return 429 from the
+  // provider (_ft_scene1_paid requests 3 and 4 among them). This is not a fabricated success
+  // standing in for a real one — it is the status the provider has returned every time, and the
+  // pipeline degrades to ministral-8b exactly as it does live. No usage block, so settlement
+  // cannot price it; no reservation, so it books $0 where the paid run booked $0.001264.
+  if (_openerPinned && !_openerConfirmed && !_noDispatch) {
+    const _why = 'SB_FORCE_OPENER="' + _openerPinned + '" is in force and the app has not yet'
+      + ' stated its selection, so the pin is unconfirmed. Answered locally (HTTP 429, no usage)'
+      + ' rather than dispatched: ' + (body.role || rec.url) + ', ' + raw.length + ' chars,'
+      + ' would have reserved $' + g.estimate.toFixed(6) + '.';
+    rec.answeredLocallyPendingPin = true;
+    rec.estimate = 0;                        // nothing left the machine, so no exposure
+    _pinPendingAnswers.push({ reqId: rec.reqId, role: body.role || null, url: rec.url,
+      chars: raw.length, wouldHaveEstimated: g.estimate });
+    _ledger('opener_pin_pending_local_answer', { reqId: rec.reqId, role: body.role || null,
+      url: rec.url, dest: dest, chars: raw.length, wouldHaveEstimated: g.estimate, why: _why });
+    say('  \u2298 ' + _why);
+    return route.fulfill({ status: 429, contentType: 'application/json',
+      body: JSON.stringify({ object: 'error', type: 'opener_pin_unconfirmed',
+        message: 'answered locally by the runner: the pinned opener is not yet confirmed, so no'
+          + ' provider was contacted', _runGuard: true }) });
+  }
+  // ── SB_PLAN_ONLY: THE RUN ENDS AT THE ACCEPTED SCAFFOLD ───────────────────────────────
+  // Refused BEFORE any reservation, so a planning-only attempt cannot be billed for the prose
+  // author or the editors. The skeleton is identified by what the request ASKS FOR, because both
+  // planning legs carry role PRIMARY_AUTHOR and a role label can no longer tell them apart.
+  // APPLIED WHETHER OR NOT THIS DISPATCH WOULD HAVE BEEN REAL. `_noDispatch` is true in drive
+  // mode, and gating on it meant the stop could never be observed offline — the drive capture
+  // ran happily on into the 365,000-char author leg while reporting plan-only mode as armed.
+  // Refusing in drive mode costs nothing and makes the rehearsal the same shape as the live run.
+  // ── NO REPLAN: THE PLANNER AND THE SPINE GO OUT ONCE ──────────────────────────────────
+  // Checked ahead of the byte-identical guard because a replan is the case that guard cannot see:
+  // the second planner request is built from the rejection, so its bytes differ.
+  if (_noRetry && !_noDispatch) {
+    // ── A FALLBACK AUTHOR NEVER SENDS ──────────────────────────────────────────────────
+    // Refused outright rather than counted: a fallback author only exists because the primary
+    // author did not produce usable prose, and this run is not authorized to buy a second
+    // attempt at the scene from a different model.
+    if (String((body && body.role) || '') === 'FALLBACK_AUTHOR') {
+      const _whyFb = 'SB_NO_RETRY: FALLBACK_AUTHOR (' + raw.length + ' chars, ' + model + ') \u2014 '
+        + 'a fallback author is a second attempt at the same scene by a different model. This run '
+        + 'pays for ONE prose request. Refused BEFORE it was sent.';
+      rec.refusedByDiagnostic = _whyFb;
+      rec.estimate = 0;
+      _ledger('fallback_author_refused', { reqId: rec.reqId, role: body.role || null,
+        url: rec.url, dest: dest, chars: raw.length, requested: model,
+        wouldHaveEstimated: g.estimate, why: _whyFb });
+      say('  \u2298 ' + _whyFb);
+      unrecoverableStop = unrecoverableStop || { code: 'fallback_author_refused', reqId: rec.reqId,
+        why: _whyFb + ' No further dispatch is permitted for any role.' };
+      say('    \u2298 RUN STOPPED: no further dispatch will be permitted (sticky, every role)');
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    var _opName = null;
+    try {
+      if (isOpeningPlannerOp(body)) _opName = 'opening_planner';
+      else if (isArchitectureSpineOp(body)) _opName = 'architecture_spine';
+      // THE PROSE AUTHOR. `target` non-null means AUTHOR_OVERRIDE resolved a route, which is
+      // exactly what the verified capture recorded as operationClass author_override_Sol. Using
+      // that signal avoids isAuthorRequest, whose markers this request does not carry.
+      else if (target) _opName = 'prose_author';
+    } catch (_) { _opName = null; }
+    if (_opName) {
+      if (_planOpsServed[_opName] > 0) {
+        const _why = 'SB_NO_RETRY: this is dispatch #' + (_planOpsServed[_opName] + 1) + ' of the '
+          + _opName.replace(/_/g, ' ') + ' (' + raw.length + ' chars, ' + model + '). The first '
+          + 'one was already served, so this is a REPLAN after a rejected plan — a different '
+          + 'payload, which the byte-identical retry guard cannot see. Refused BEFORE it was sent.';
+        rec.refusedByDiagnostic = _why;
+        rec.replanOf = _opName;
+        rec.estimate = 0;
+        _ledger('replan_refused', { reqId: rec.reqId, operation: _opName,
+          attempt: _planOpsServed[_opName] + 1, role: body.role || null, url: rec.url,
+          dest: dest, chars: raw.length, requested: model,
+          wouldHaveEstimated: g.estimate, why: _why });
+        say('  ⊘ ' + _why);
+        unrecoverableStop = unrecoverableStop || { code: 'replan_refused', reqId: rec.reqId,
+          why: _why + ' No further dispatch is permitted for any role.' };
+        say('    ⊘ RUN STOPPED: no further dispatch will be permitted (sticky, every role)');
+        try { return await route.abort(); } catch (_) { return; }
+      }
+      // Counted only once the call is actually about to go out, for the same reason the retry
+      // fingerprint is: a request refused by the budget guard or the offline gate must not make
+      // the real first attempt look like a second one.
+      _planOpsServed[_opName] += 1;
+      say('  ⦿ PLANNING OP: ' + _opName.replace(/_/g, ' ') + ' dispatch 1 of 1 permitted'
+        + ' (a replan would be refused)');
+    }
+  }
+  if (_noRetry && !_noDispatch) {
+    const _fp = _crypto.createHash('sha256').update(
+      String(rec.url || '') + '\u0000' + String(body.role || '') + '\u0000'
+      + String(model || '') + '\u0000' + raw).digest('hex');
+    const _fpEntry = _sentFingerprints.get(_fp);
+    const _firstId = _fpEntry ? _fpEntry.reqId : undefined;
+    // ── CONCURRENT TWIN: SHARE, DO NOT REFUSE ─────────────────────────────────────────
+    // The first request has not finished, so nothing has failed and this is not a retry.
+    if (_fpEntry && !_fpEntry.done && _CONCURRENT_SHARE_ROLES[String((body && body.role) || '')]) {
+      const _whyShare = 'identical to request #' + _firstId + ', which is STILL IN FLIGHT \u2014 a '
+        + 'concurrent ' + (body.role || 'editorial') + ' twin, not a retry. Sharing that response '
+        + 'instead of dispatching a second paid call.';
+      say('  \u21c9 ' + _whyShare);
+      rec.sharedWith = _firstId;
+      rec.estimate = 0;                      // nothing is sent, so nothing is reserved
+      _ledger('concurrent_share_waiting', { reqId: rec.reqId, sharesWith: _firstId,
+        role: body.role || null, url: rec.url, chars: raw.length, why: _whyShare });
+      const _shared = await new Promise((resolve) => {
+        let _settled = false;
+        const _done = (r) => { if (!_settled) { _settled = true; resolve(r); } };
+        _fpEntry.waiters = _fpEntry.waiters || [];
+        _fpEntry.waiters.push(_done);
+        setTimeout(() => _done(null), _SHARE_WAIT_MS);
+      });
+      if (_shared && _shared.body != null) {
+        say('    \u21c9 shared request #' + _firstId + '\u2019s response with #' + rec.reqId
+          + ' (status ' + _shared.status + ', ' + String(_shared.body).length + ' body chars)'
+          + ' \u2014 $0 charged, no hold, run continues');
+        _ledger('concurrent_share_served', { reqId: rec.reqId, sharesWith: _firstId,
+          status: _shared.status, bodyChars: String(_shared.body).length });
+        return route.fulfill({ status: _shared.status,
+          headers: Object.assign({}, _shared.headers || {}, { 'x-sb-shared-with': String(_firstId) }),
+          body: String(_shared.body) });
+      }
+      // The first produced nothing usable. Abort this twin WITHOUT the sticky stop: the first
+      // request owns that outcome and its own stop already fired if one was warranted.
+      say('    \u2298 request #' + _firstId + ' produced no usable response, so there is nothing to'
+        + ' share \u2014 #' + rec.reqId + ' is abandoned without a second dispatch');
+      _ledger('concurrent_share_empty', { reqId: rec.reqId, sharesWith: _firstId });
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    if (_firstId !== undefined) {
+      const _why = 'SB_NO_RETRY: request #' + rec.reqId + ' is a byte-identical repeat of '
+        + 'request #' + _firstId + ' (' + (body.role || rec.url) + ', ' + raw.length + ' chars, '
+        + model + ') — refused BEFORE it was sent. A repeat of a call already dispatched is a '
+        + 'retry, and this run does not pay for the same call twice.';
+      rec.refusedByDiagnostic = _why;
+      rec.retryOf = _firstId;
+      rec.estimate = 0;                      // never dispatched, so no exposure
+      _ledger('retry_refused', { reqId: rec.reqId, retryOf: _firstId,
+        role: body.role || null, url: rec.url, dest: dest, chars: raw.length,
+        requested: model, wouldHaveEstimated: g.estimate, why: _why });
+      say('  ⊘ ' + _why);
+      // STICKY, like the budget halt and the transit stop. It refuses every LATER dispatch; it
+      // does not abort a page already generated, so a scene in hand still publishes.
+      unrecoverableStop = unrecoverableStop || { code: 'retry_refused', reqId: rec.reqId,
+        why: _why + ' No further dispatch is permitted for any role.' };
+      say('    ⊘ RUN STOPPED: no further dispatch will be permitted (sticky, every role)');
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    // RECORDED ONLY ONCE THE CALL IS ABOUT TO GO. Recording it earlier would make a request
+    // refused by the budget guard or the offline gate look like a first send, and the real
+    // first send would then be refused as its own retry.
+    _sentFingerprints.set(_fp, { reqId: rec.reqId, done: false, result: null, waiters: [] });
+    // Remembered so THIS invocation can settle the entry once its own outcome is known.
+    rec._fpKey = _fp;
   }
   // The reservation. This declaration was accidentally deleted when the planner-only block below
   // was inserted (the edit's anchor swallowed it), leaving `hold` undefined for the whole handler:
@@ -1624,6 +4182,36 @@ await page.route('**/*', async (route) => {
   // `ReferenceError: hold is not defined` AFTER a successful upstream call, losing the response.
   // Reserving an unpriceable estimate would make heldTotal Infinity and corrupt every
   // later figure, so a non-dispatch reserves nothing. Settlement in drive is already $0.
+  // ── A CONFIRMED OFFLINE REPLAY ANSWERS LOCALLY BEFORE IT RESERVES (Roman 2026-11-17) ────
+  // In a provider-blocked replay the app is served by _ft_static_server, which has no /api route.
+  // An unmatched model call was therefore RESERVED, dispatched, 404'd in ~2ms, and booked as
+  // unresolved exposure. MEASURED: 23 such calls held $0.099308 of a $0.10 authorization with
+  // $0.000000 settled, and the run died on a BUDGET HALT caused entirely by traffic that never
+  // left the machine.
+  //
+  // Reconciling that AFTER the fact was not enough — the hold is taken before the dispatch, so
+  // the money is already committed by the time a 404 comes back. The call is now answered HERE,
+  // before the reservation, with an explicit zero-cost record.
+  //
+  // SCOPED TO SB_OFFLINE, which is the flag that already fails closed at dispatch and is never
+  // set on a paid run. A REAL dispatch whose receipt is missing keeps its normal accounting:
+  // that is exposure and must stay visible.
+  if (_SB_OFFLINE && !_noDispatch) {
+    _offlineLocalAnswers = (_offlineLocalAnswers || 0) + 1;
+    _offlineLocalAnswersEst = (_offlineLocalAnswersEst || 0) + (g.estimate || 0);
+    rec.model = 'none';
+    rec.estimate = 0;
+    rec.settlement = { kind: 'zero', usd: 0, reserved: 0,
+      why: 'offline replay: answered locally before any reservation — no dispatch, no hold' };
+    rec.measuredUsd = 0;
+    rec.unresolvedExposure = false;
+    rec.offlineLocalAnswer = true;
+    say('  \u25cb answered LOCALLY (offline replay, nothing reserved): ' + (body.role || url)
+      + ' \u2014 would have estimated $' + Number(g.estimate || 0).toFixed(6));
+    return route.fulfill({ status: 503, contentType: 'application/json',
+      body: JSON.stringify({ error: 'provider_blocked_offline_replay',
+        note: 'answered by the harness before any reservation; zero cost' }) });
+  }
   const hold = reserve(_noDispatch ? 0 : g.estimate,
     rec.role || (isAuthor ? 'author' : 'model'), model);
 
@@ -1653,10 +4241,10 @@ await page.route('**/*', async (route) => {
         fs.writeFileSync(OUT + '/REQUEST_AS_SENT.json', JSON.stringify({
           label: 'NEW planner request built by production at ' + new Date().toISOString()
             + ' — NOT a reconstruction of the overwritten run',
-          // `dest` is declared further down in this handler, so the destination is derived here
-          // the same way rather than referenced before its declaration.
+          // THE RESOLVED destination, not a second derivation of it. The duplicate here was the
+          // other copy of the defect fixed above.
           url: url.replace(ORIGIN, ''),
-          dest: (target ? (ORIGIN + target.route) : url).replace(ORIGIN, ''),
+          dest: dest,
           role: body.role, requestedModel: model,
           chars: raw.length, estimateUsd: g.estimate,
           body,                                  // complete, every message, nothing truncated
@@ -1693,7 +4281,7 @@ await page.route('**/*', async (route) => {
   // (inside the $0.068312 settled), so reusing it buys nothing twice and invents nothing: the
   // bytes are the planner's own. Nothing else about the live path changes — the author, the
   // editorial stages and every other role still go to real providers.
-  if (process.env.SB_REPLAY_PLANNER && (body.role || '') === 'OPENING_PLANNER') {
+  if (process.env.SB_REPLAY_PLANNER && isOpeningPlannerOp(body)) {
     const files = String(process.env.SB_REPLAY_PLANNER).split(',').map(s => s.trim()).filter(Boolean);
     const pick = files[Math.min(replayPlannerServed, files.length - 1)];
     replayPlannerServed++;
@@ -1702,6 +4290,216 @@ await page.route('**/*', async (route) => {
       + ' (' + String(rec.bodyComplete || '').length + ' body bytes) — already billed in the failed run; NOT re-paid');
     reconcile(hold, { usage: null, why: 'reuse of a preserved, already-billed planner reply', model });
     return route.fulfill({ status: 200, contentType: 'application/json', body: String(rec.bodyComplete || '') });
+  }
+
+  // ── THE SB_REUSE_* FAMILY, SERVED HERE (see the table near _FAULT_CLAIMS) ────────────────
+  // Same shape as the spine block below, operation by operation: the reservation is closed
+  // WITHOUT a settlement row (nothing left the machine, so there is no charge and no unresolved
+  // exposure), `rec.estimate` is zeroed so the call contributes nothing to the peak, and the
+  // bytes go back verbatim with their own status — which is also how the physical-canon
+  // rotator's 429 is reproduced, since that is the reply the paid run actually received and
+  // carried on past.
+  for (const _op of _REUSE_OPS) {
+    const _src = String(process.env[_op.env] || '');
+    if (!_src || !_op.claims(raw, body)) continue;
+    const _st = _reuseState[_op.env];
+    // A SECOND CALL FOR THE SAME OPERATION MEANS THE FIRST REPLY WAS REJECTED. Answering it
+    // again would paper over the rejection and produce a transcript built on a reply the
+    // application had already discarded. So it stops, and says which operation.
+    if (_st.served > 0) {
+      const _why = _op.label + ': the application asked for this operation a SECOND time, which '
+        + 'means it REJECTED the preserved reply. Serving it again would hide that, so it is '
+        + 'refused at the wire — nothing left, nothing was billed.';
+      say('  ⊘ ' + _why);
+      rec.refusedByDiagnostic = _why;
+      rec.estimate = 0;
+      _ledger('reused_reply_rejected', { reqId: rec.reqId, url: rec.url, op: _op.label,
+        file: path.basename(_src), chars: raw.length, wouldHaveEstimated: g.estimate, why: _why });
+      halted = halted || ('REUSED REPLY REJECTED: ' + _why);
+      try { hold.open = false; } catch (_) {}
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    // A REQUIRED REPLY THAT IS MISSING OR EMPTY STOPS THE RUN RATHER THAN FALLING THROUGH TO A
+    // PROVIDER. Falling through would silently convert a reuse into a paid regeneration, which
+    // is the one thing this family exists to prevent.
+    let _pres = null, _bytes = '';
+    try {
+      _pres = JSON.parse(fs.readFileSync(_src, 'utf8'));
+      _bytes = String(_pres.bodyComplete || '');
+    } catch (_e) { _bytes = ''; }
+    if (!_bytes.length) {
+      const _why = _op.env + ' names a record this run cannot use (' + _src + ') — no bodyComplete. '
+        + 'Refusing at the wire instead of dispatching, so a missing reuse cannot become a charge.';
+      say('  ✗ ' + _why);
+      rec.refusedByDiagnostic = _why;
+      rec.estimate = 0;
+      _ledger('reused_reply_missing', { reqId: rec.reqId, url: rec.url, op: _op.label, file: _src, why: _why });
+      halted = halted || ('REUSED REPLY MISSING: ' + _why);
+      try { hold.open = false; } catch (_) {}
+      try { return await route.abort(); } catch (_) { return; }
+    }
+    // ── SB_CLEAR_PC_CRISIS=1 — THE RUN'S COPY ONLY, NEVER THE SAVED FILE ─────────────────
+    // WHY: the A-plot generator OBEYS `pcBodyBible.current_crisis` under the Single Crisis Law —
+    // "Scene 1 ALREADY OPENS ON THIS CRISIS (HARD) … YOUR A-PLOT MUST BE ONE FIRE WITH THIS
+    // CRISIS" — and it interpolates the event, the time since impact, the hottest emotion and
+    // the li_complication straight into the request. The saved bible's crisis is a REJECTED
+    // alternate opening (a masked gala where an emcee reads Dani's unsent letter to Callum) whose
+    // li_complication reads "She has never met Roman Tusk", because that field was authored
+    // BEFORE the pair bond existed. Reused as-is it would hand the fresh A-plot an opening that
+    // contradicts the pair bond this run exists to keep.
+    //
+    // It is stripped FROM THE BYTES BEING SERVED, so the application never sees it and the file
+    // on disk is not touched: `fs.readFileSync` above read it, nothing writes back. Every other
+    // field — appearance, tells, wound, wants, kink, the whole character — is passed through
+    // unchanged, because the character is what this run is reusing.
+    if (process.env.SB_CLEAR_PC_CRISIS === '1' && _op.env === 'SB_REUSE_PCBIBLE') {
+      try {
+        const _env = JSON.parse(_bytes);
+        const _raw0 = String(_env.content || '');
+        const _fence = _raw0.match(/```(?:json)?\s*([\s\S]*?)```/);
+        const _inner = _fence ? _fence[1] : _raw0;
+        const _bib = JSON.parse(_inner);
+        if (_bib && Object.prototype.hasOwnProperty.call(_bib, 'current_crisis')) {
+          const _dropped = _bib.current_crisis;
+          delete _bib.current_crisis;
+          _env.content = JSON.stringify(_bib);
+          _bytes = JSON.stringify(_env);
+          _st.crisisCleared = true;
+          try { fs.writeFileSync(OUT + '/PC_CRISIS_CLEARED.json', JSON.stringify({
+            statedPlainly: 'The reused PC Body Bible was served to THIS RUN with current_crisis '
+              + 'removed, so the fresh A-plot authors its own fire instead of inheriting a '
+              + 'rejected opening. The saved bible on disk is unchanged; only the bytes served '
+              + 'into this run were altered, and every other field was passed through.',
+            sourceFile: _src, droppedField: 'current_crisis', dropped: _dropped,
+            fieldsKept: Object.keys(_bib),
+          }, null, 2)); } catch (_) {}
+          say('  ✂ PC BODY BIBLE: current_crisis removed from the RUN\'S COPY ('
+            + String((_dropped && _dropped.event) || '').slice(0, 70) + '…) — the saved file is'
+            + ' untouched and every other field passed through → PC_CRISIS_CLEARED.json');
+        } else {
+          say('  ⓘ PC BODY BIBLE: no current_crisis field to remove');
+        }
+      } catch (e) {
+        // FAIL LOUD. Serving the bible WITH the stale crisis would quietly reintroduce the very
+        // premise this run is meant to be rid of, so the run stops instead.
+        const why = 'SB_CLEAR_PC_CRISIS could not parse the reused PC bible to remove '
+          + 'current_crisis (' + (e && e.message) + '). Refusing to serve it with the stale '
+          + 'crisis still in it.';
+        say('  ✗ ' + why);
+        halted = halted || why;
+        unrecoverableStop = unrecoverableStop || { code: 'pc_crisis_clear_failed', reqId: rec.reqId, why };
+        try { hold.open = false; } catch (_) {}
+        try { return await route.abort(); } catch (_) { return; }
+      }
+    }
+    _st.served++;
+    _st.status = Number(_pres.status || 200);
+    _st.bodyChars = _bytes.length;
+    _st.receipt = _pres.receipt || null;
+    _st.originalReqId = _pres.reqId || null;
+    _st.originalServedModel = _pres.servedModel || null;
+    try { hold.open = false; } catch (_) {}
+    rec.estimate = 0;
+    rec.servedFromPreserved = { file: _src, op: _op.label, bodyChars: _bytes.length,
+      originalReceipt: _pres.receipt || null, originalServedModel: _pres.servedModel || null,
+      originalReqId: _pres.reqId || null, newCharge: 0 };
+    _ledger('reply_reused', { reqId: rec.reqId, url: rec.url, op: _op.label,
+      file: path.basename(_src), status: _st.status, bodyChars: _bytes.length,
+      servedModel: _pres.servedModel || null, receipt: _pres.receipt || null, newCharge: 0,
+      why: 'already paid for in the source run; this attempt dispatched nothing here' });
+    say('  ↻ ' + _op.label + ' ← PRESERVED paid reply ' + path.basename(_src)
+      + ' (' + _bytes.length + ' body bytes, status ' + _st.status
+      + ', served by ' + (_pres.servedModel || '?') + ' when it was paid)'
+      + ' — REPLAYED, not regenerated; $0 new charge, no hold, and the real parser still decides');
+    return route.fulfill({ status: _st.status, contentType: 'application/json', body: _bytes });
+  }
+
+  // ── SB_REUSE_SPINE — ONE PRESERVED ARCHITECTURE REPLY, SERVED ONCE (Roman 2026-11-06) ────
+  // The instruction is to reuse the most recent successful spine rather than pay Luna to think
+  // one up a third time. So this serves the PRESERVED REPLY BYTES at the architecture boundary
+  // and lets the ordinary application path do everything else: app.js reads
+  // `_upstreamRaw.choices[0].message.content` from this body and hands it to the same parser,
+  // the same `_expectedIssueCount` / `sceneOutline` validation and the same attachment as a live
+  // reply. Nothing is inserted into the scaffold, no validator is bypassed and no replay
+  // framework is added — this is one predicate and one fulfil, the sibling of the planner branch
+  // above.
+  //
+  // NAMED OUTSIDE THE SB_REPLAY_* FAMILY ON PURPOSE. The REPLAY SAFETY gate near the top refuses
+  // to start when any SB_REPLAY_* var is set in a mode that can dispatch live, which is correct
+  // for those vars: each one stands in for an operation whose live behaviour is under test. This
+  // one is the opposite case — it exists FOR the live run, replacing a single already-paid call,
+  // while every other operation still goes to its real provider. A different name keeps that
+  // gate's meaning intact instead of weakening it.
+  //
+  // SERVED ONCE, AND A SECOND CALL IS REFUSED RATHER THAN DISPATCHED. A second architecture call
+  // is a different operation instance (a re-plan): answering it with the first one's bytes would
+  // be a fabrication, and letting it through would GENERATE A SPINE, which this run is directed
+  // not to do. So it is refused at the wire — nothing leaves, nothing is billed, the application
+  // sees a transport failure on its own planning call and the run reports that outcome.
+  if (process.env.SB_REUSE_SPINE && isArchitectureSpineOp(body)) {
+    if (spineReuseServed > 0) {
+      const why = 'a SECOND architecture call matched the spine operation; this run reuses one '
+        + 'preserved spine and is directed not to generate another, so it is refused at the wire';
+      say('  ⊘ ' + why);
+      rec.refusedByDiagnostic = why;
+      rec.estimate = 0;
+      _ledger('spine_second_call_refused', { reqId: rec.reqId, url: rec.url, chars: raw.length,
+        wouldHaveEstimated: g.estimate, why });
+      halted = halted || ('SPINE REFUSAL: ' + why);
+      try { hold.open = false; } catch (_) {}
+      try { return await route.abort(); } catch (_) { return; }
+    } else {
+      spineReuseServed++;
+      const src = String(process.env.SB_REUSE_SPINE);
+      const pres = JSON.parse(fs.readFileSync(src, 'utf8'));
+      const bodyBytes = String(pres.bodyComplete || '');
+      assert(bodyBytes.length > 0, 'SB_REUSE_SPINE names a record with no bodyComplete: ' + src);
+      // NOTHING LEFT THE MACHINE, SO NOTHING IS COMMITTED. The reservation is closed without a
+      // settlement row — the same handling the wire-refusal path uses — because pricing a call
+      // that was never dispatched would charge this authorization twice for one paid reply: the
+      // original is already carried in the prior attempt's calculated cost.
+      // THE SAME SHAPE GATE APPLIES TO A SPINE FROM DISK. FOUND BY RUNNING IT: when the check
+      // lived in the live-response branch, this path returned before reaching it, so a replayed
+      // spine of the wrong shape sailed through — a gate that inspects only one of the two ways
+      // a spine can arrive is not a gate.
+      try {
+        const _pj = JSON.parse(bodyBytes);
+        const _pu = (_pj && _pj._upstreamRaw) || _pj || {};
+        const _pc = (_pu.choices && _pu.choices[0]) || {};
+        _checkSpineShape(rec.bodyText, (_pc.message && _pc.message.content) || '', rec, 'preserved reply ' + path.basename(src));
+      } catch (_shapeEx) {
+        _strictSolStop('spine_shape_unreadable', 'the preserved reply could not be read for a '
+          + 'shape check (' + (_shapeEx && _shapeEx.message) + ')');
+      }
+      try { hold.open = false; } catch (_) {}
+      rec.estimate = 0;
+      rec.servedFromPreserved = { file: src, bodyChars: bodyBytes.length,
+        originalReceipt: pres.receipt || null, originalServedModel: pres.servedModel || null,
+        originalMs: pres.ms || null, originalReqId: pres.reqId || null };
+      _ledger('spine_reused', { reqId: rec.reqId, url: rec.url, file: path.basename(src),
+        bodyChars: bodyBytes.length, servedModel: pres.servedModel || null,
+        receipt: pres.receipt || null, newCharge: 0,
+        why: 'planning REPLAYED from a paid Luna result; this attempt dispatched nothing here' });
+      try {
+        fs.writeFileSync(OUT + '/SPINE_REUSED.json', JSON.stringify({
+          replayedFrom: src,
+          statedPlainly: 'The three-issue/arc spine for this run was NOT generated in this attempt. '
+            + 'It is the preserved reply of a previous PAID gpt-6-luna architecture call, served '
+            + 'at the architecture boundary and processed by the ordinary application parser and '
+            + 'validators. No spine was generated here and none was paid for here.',
+          originalRequestChars: pres.requestChars || null,
+          originalServedModel: pres.servedModel || null,
+          originalReceipt: pres.receipt || null,
+          originalMs: pres.ms || null,
+          bodyChars: bodyBytes.length,
+        }, null, 2));
+      } catch (_) {}
+      say('  ↻ ARCHITECTURE SPINE ← PRESERVED paid reply ' + path.basename(src)
+        + ' (' + bodyBytes.length + ' body bytes, served by ' + (pres.servedModel || '?')
+        + ', ' + (pres.ms || '?') + 'ms when it was paid) — REPLAYED, not regenerated;'
+        + ' $0 new charge and the real parser still decides');
+      return route.fulfill({ status: 200, contentType: 'application/json', body: bodyBytes });
+    }
   }
 
   if (DRIVE) {
@@ -1733,7 +4531,7 @@ await page.route('**/*', async (route) => {
       reconcile(hold, { usage: null, why: 'provider-free replay of a preserved planner reply', model });
       return route.fulfill({ status: 200, contentType: 'application/json', body: String(rec.bodyComplete || '') });
     }
-    if (DRIVE_GENERATE_OPENING && (body.role || '') === 'OPENING_PLANNER') {
+    if (DRIVE_GENERATE_OPENING && isOpeningPlannerOp(body)) {
       const fx = await faultResponse('valid_plan', raw);
       const fxBody = await fx.text();
       say('  ↻ OPENING_PLANNER ← valid_plan fixture (' + fxBody.length
@@ -1868,6 +4666,8 @@ await page.route('**/*', async (route) => {
       return route.fulfill({ status: r.__driveStatus, contentType: 'application/json',
         body: r.__driveBody || '{}' });
     }
+    // CLASSIFIED BEFORE IT IS SERVED, exactly as a live reply is at the persist site.
+    try { _planOnlyObserve({ requestText: raw, body: JSON.stringify(r), url: url }); } catch (_) {}
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(r) });
   }
 
@@ -1876,7 +4676,10 @@ await page.route('**/*', async (route) => {
   // no receipt, no served model, and a failed attempt vanished. route.fetch() performs the real
   // request, hands back the real response for accounting, and the page still receives it.
   try {
-    const dest = target ? (ORIGIN + target.route) : url;
+    // "dest", "_modelOrigin" and "_destIsLoopback" are resolved ONCE far above, before the
+    // dispatch ledger, so the destination that is logged is the destination that is used. This
+    // site used to re-derive it as (target ? _modelOrigin + target.route : url), which silently
+    // exempted every non-override role from SB_MODEL_ORIGIN.
     // REQUEST CONVERSION per destination. Sol's route REQUIRES max_completion_tokens (max_tokens
     // is an unsupported_parameter there) plus a label and the run budget; Haiku's route takes
     // max_tokens and lifts the system message itself.
@@ -1909,6 +4712,29 @@ await page.route('**/*', async (route) => {
       }
       sendBody = JSON.stringify(b);
     }
+    // ── THE SOL ROUTE'S OWN REQUIRED FIELDS, KEYED ON THE DESTINATION ──────────────────────
+    // These were injected only when the author override was labelled 'Sol'. That override is
+    // gone (Sol no longer writes prose), so nothing injected them any more — and the freshly
+    // routed STORY SPINE, which now goes to /api/sol-scene-test, would have been refused with
+    // `missing_run_budget: playthrough mode requires _sbRunBudgetUsd on every request`. Measured
+    // against the real handler, not predicted.
+    //
+    // Keyed on where the request is actually GOING, so it holds however the model was selected.
+    if (/\/api\/sol-scene-test\b/.test(String(rec.url || dest || ''))) {
+      try {
+        const sb = JSON.parse(sendBody || rawBody || '{}');
+        if (!sb._sbCallLabel) {
+          // A LABEL PER DISPATCH: the route's single-use claim stops a double charge under one
+          // label, and a legitimate retry must be separately auditable.
+          sb._sbCallLabel = 'playthrough_s' + sceneNoForReplies + '_' + Date.now();
+        }
+        if (sb._sbRunBudgetUsd == null) sb._sbRunBudgetUsd = Number(remainingNow().toFixed(6));
+        sendBody = JSON.stringify(sb);
+      } catch (e) {
+        throw new Error('a /api/sol-scene-test request could not be given its required run '
+          + 'budget and call label: ' + (e && e.message));
+      }
+    }
     // PLAYWRIGHT'S DEFAULT route.fetch TIMEOUT IS 30s, AND THAT WAS MINE, NOT THE PROVIDER'S.
     // The first live attempt died on it: the Sol route had already claimed its label and
     // dispatched upstream (the dev server logged "still running after 30s"), so the call very
@@ -1935,14 +4761,145 @@ await page.route('**/*', async (route) => {
     // undici's 300s headers/body timeout; nothing shorter intervenes. vercel.json sets no
     // maxDuration, app.js attaches no AbortController to the scaffold fetch, and page.evaluate
     // (which wraps the launch) carries no Playwright deadline.
-    const _dispatchTimeoutMs = (target || _isSolArch) ? 300000 : 120000;
+    // ── A 40,000-TOKEN ALLOWANCE NEEDS A DEADLINE THAT CAN REACH IT (Roman 2026-11-06) ──────
+    // The SAME defect the architecture call already hit, one operation over. The opening planner
+    // runs on /api/chatgpt-proxy, is not an author override and is not _isSolArch, so it was
+    // getting 120s. MEASURED on this configuration: the planner produced 9,000 reasoning tokens
+    // in 85,483ms (≈105 tok/s) and the spine 16,699 completion tokens in 178,295ms (≈94 tok/s).
+    // At that rate a 40,000-token allowance cannot be spent inside 120s — the client would give
+    // up at ~12,000 tokens and the generous headroom would be unreachable, reported as a transit
+    // failure rather than as what Luna did with it. Matched by OPERATION, like the fixture and
+    // the reuse rule above, so only this call's deadline moves.
+    //
+    // STILL A LIMIT, NOT A PROMISE, and still no retry: one dispatch, one deadline. It is also
+    // not the only deadline on this path — api/chatgpt-proxy.js calls OpenAI through plain
+    // `fetch` with no dispatcher, so undici's 300s headersTimeout applies INSIDE the route and a
+    // non-streaming completion that takes longer than that fails there whatever this allows.
+    const _isOpeningPlanner = isOpeningPlannerOp(body);
+    // ── THE DEADLINE IS DERIVED FROM THE ALLOWANCE THE CALL CARRIES ─────────────────────────
+    // The hand-picked 420000 was replaced because it was an extrapolation dressed as a limit.
+    // MEASURED on this configuration: 16,699 completion tokens in 178,295ms (~94 tok/s) and
+    // 9,000 in 85,483ms (~105 tok/s). 90 tok/s sits below both, so a window sized at
+    // allowance/90 + 60s of connection and queueing is derived from the slowest rate observed
+    // rather than guessed. It can only ever LENGTHEN: the floor is the 300s that long calls
+    // already had, and every other call keeps 120s exactly as before.
+    //
+    // 30s ABOVE THE ROUTE'S OWN WINDOW, on purpose. The routes size their transport the same way
+    // (api/chatgpt-proxy.js, api/sol-scene-test.js), so this sits just outside it — a call that
+    // runs out of time fails INSIDE the route, which records the upstream reason, instead of
+    // being cut off out here where only "no HTTP response" is knowable.
+    //
+    // ── DECIDED BY THE RESOLVED MODEL AND THE OUTGOING ALLOWANCE (Roman 2026-11-06) ────────
+    // MEASURED, TWICE, FROM THE SAME MISTAKE: this used to read `target || _isSolArch ||
+    // _isOpeningPlanner` — a list of operations I had already watched fail. Every other call
+    // kept the flat 120s, so on the next attempt the A-plot (16,000 on Luna) and the OPENING
+    // AUTHOR (16,000 on Luna) both died at exactly 120,003ms. The author had carried that
+    // allowance since the configuration was frozen; no attempt had ever reached it, so nothing
+    // exposed it. Naming operations could only ever catch the ones already known.
+    //
+    // So the question is no longer "which operation is this" but "what is actually going out":
+    // the model that will serve the call and the completion allowance it declares. A reasoning
+    // model spends that allowance on thinking before a single visible token appears, so the
+    // waiting budget has to cover it; a non-reasoning model does not and keeps its default. The
+    // model test is the SAME expression api/chatgpt-proxy.js uses to decide the allowance FIELD,
+    // so the harness and the route cannot disagree about what a reasoning call is.
+    //
+    // IT IS A WAITING BUDGET, NOT A COMPLETION TIME. 90 tok/s sits below every rate measured
+    // here (94 and 105), but a provider is free to be slower; exceeding the budget stays a
+    // transit failure, recorded, and now also stops the run. It can only LENGTHEN a deadline,
+    // never shorten one, and a call that is neither a reasoning call nor an author override
+    // keeps its 120s byte-identically.
+    // The model and allowance that will actually be sent — for an author override that is the
+    // rewritten target, not what the app asked for. The policy itself lives in
+    // _nf_run_reliability.mjs so it can be exercised without a run.
+    const _outModel = String((target ? target.requested : (body && body.model)) || model || '');
+    const _allowanceOut = target
+      ? Number(target.cap || 0)
+      : Number((body && (body.max_completion_tokens || body.max_tokens)) || 0);
+    // ── DOES THE PACKET FIT THE MODEL? CHECKED BEFORE DISPATCH (Roman 2026-11-07) ──────────
+    // MEASURED at scene 17: a 128,858-token packet went to gpt-4o-mini (128,000 context), was
+    // refused 400, and was RESENT — 129,252 tokens the second time. Two round trips that could
+    // not succeed, and the chain then fell onward. Nothing checked fit first.
+    //
+    // THE LIMITS ARE ONLY THE ONES A PROVIDER HAS STATED TO US. gpt-4o-mini's 128,000 is quoted
+    // verbatim in the saved 400 body. A model with no observed limit is NOT refused and NOT
+    // assigned a guessed ceiling — unknown stays unknown, and the dispatch proceeds as before.
+    //
+    // IT REFUSES; IT DOES NOT TRUNCATE. Silently cutting a packet would drop canon the author is
+    // required to honour, which is worse than a named refusal. The run halts here with the model,
+    // the measured size and the stated ceiling, so the fix is a routing or packet decision made
+    // with the numbers in hand rather than a guess.
+    const _CONTEXT_LIMIT_TOK = {
+      'gpt-4o-mini': 128000,   // stated verbatim in the saved scene-17 400 body
+      'gpt-4o': 128000,        // same family, same stated ceiling
+    };
+    const _fitLimit = _CONTEXT_LIMIT_TOK[_outModel];
+    if (_fitLimit) {
+      // chars/4 is this guard's own measured approximation for non-Claude families.
+      const _packetTok = Math.ceil(raw.length / 4) + Math.ceil(_allowanceOut * 0.0);
+      if (_packetTok > _fitLimit) {
+        const _why = 'packet is ~' + _packetTok + ' tokens for ' + _outModel + ', whose stated '
+          + 'context is ' + _fitLimit + ' — refused BEFORE dispatch rather than sent, refused and resent';
+        rec.refusedByDiagnostic = _why;
+        rec.estimate = 0;
+        rec.contextFit = { model: _outModel, packetTok: _packetTok, limitTok: _fitLimit };
+        _ledger('context_fit_refused', Object.assign({ reqId: rec.reqId, role: body.role || null,
+          url: rec.url, wouldHaveEstimated: g.estimate, why: _why }, rec.contextFit));
+        say('  ⊘ CONTEXT FIT: ' + _why);
+        try { hold.open = false; } catch (_) {}
+        try { return await route.abort(); } catch (_) { return; }
+      }
+    }
+    const _deadline = dispatchDeadlineMs({ outModel: _outModel, allowanceOut: _allowanceOut,
+      authorOverride: target ? target.label : null, solArchitecture: _isSolArch });
+    const _isReasoningCall = _deadline.reasoningCall === true;
+    const _dispatchTimeoutMs = _deadline.ms;
     // RECORDED, SO THE SELECTION IS OBSERVABLE RATHER THAN ASSERTED FROM SOURCE. A control reads
     // this off the ledger of a real (provider-blocked) run and fails if the architecture call is
     // ever handed the short deadline again.
     rec.dispatchTimeoutMs = _dispatchTimeoutMs;
-    rec.operationClass = _isSolArch ? 'sol_architecture' : (target ? 'author_override_' + target.label : 'other');
+    rec.operationClass = _isSolArch ? 'sol_architecture'
+      : (target ? 'author_override_' + target.label
+        : (_isReasoningCall ? 'reasoning_call' : (_isOpeningPlanner ? 'opening_planner' : 'other')));
+    // THE INPUTS TO THE DECISION ARE RECORDED, not just its output, so a control can check that
+    // the right calls were classified for the right reason rather than inferring it from a number.
+    rec.deadlineBasis = { outModel: _outModel, allowanceOut: _allowanceOut,
+      reasoningCall: _isReasoningCall, solArchitecture: _isSolArch,
+      authorOverride: target ? target.label : null };
     _ledger('dispatch_deadline', { reqId: rec.reqId, role: body.role || null,
-      url: rec.url, operationClass: rec.operationClass, timeoutMs: _dispatchTimeoutMs });
+      url: rec.url, operationClass: rec.operationClass, timeoutMs: _dispatchTimeoutMs,
+      basis: rec.deadlineBasis });
+    // ── OFFLINE MEANS OFFLINE, DECIDED HERE, WHERE THE BYTES LEAVE (Roman 2026-11-15) ─────
+    // THIS IS THE ONLY PLACE A MODEL REQUEST CAN REACH A PROVIDER. Everything that can answer a
+    // call locally — DRIVE fixtures, the SB_FAULT arm, the SB_REUSE_* family, SB_REPLAY_* and the
+    // preserved-reply hooks — has already returned by this line. So a request that arrives here
+    // is a request that is about to be dispatched for real, and SB_OFFLINE refuses it unless the
+    // destination is loopback.
+    //
+    // WHY A GATE AND NOT A CONVENTION: "providers blocked" was previously a property of how the
+    // run was INVOKED — set the reuse hooks for the calls you know about and hope the rest are
+    // covered. The transport probe set four reuse hooks and four other requests went out anyway.
+    // Fail-closed inverts it: the run has to prove each dispatch is local, and the three
+    // permitted outcomes are the three Roman named — replayed (returned above), sent to loopback,
+    // or refused.
+    if (process.env.SB_OFFLINE && !SB_FAULT && !_destIsLoopback) {
+      const _why = 'SB_OFFLINE: ' + (body.role || url) + ' (' + raw.length + ' chars) would have '
+        + 'been dispatched to ' + dest + ', which is not loopback and was not answered by a '
+        + 'preserved reply — refused unsent';
+      rec.refusedByDiagnostic = _why;
+      rec.estimate = 0;                        // nothing left the machine, so no exposure
+      _ledger('offline_refused', { reqId: rec.reqId, role: body.role || null, url: rec.url,
+        dest: dest, destHost: _destHost, chars: raw.length, wouldHaveEstimated: g.estimate,
+        why: _why });
+      say('  ⊘ ' + _why);
+      // The reservation is closed WITHOUT a settlement row: no charge, no unresolved exposure.
+      try { hold.open = false; } catch (_) {}
+      // STICKY, like the budget halt. One request that would have escaped means the offline
+      // guarantee is broken for the whole run, and the run must not go on producing more.
+      unrecoverableStop = unrecoverableStop || { code: 'offline_refusal', reqId: rec.reqId,
+        why: _why + ' — SB_OFFLINE is in force, so no further remote dispatch is permitted.' };
+      try { return await route.abort(); } catch (_) { return; }
+    }
     const resp = SB_FAULT ? await faultResponse(SB_FAULT, raw, url)
       : await route.fetch({ url: dest, method: 'POST', postData: sendBody,
       timeout: _dispatchTimeoutMs,
@@ -1960,12 +4917,168 @@ await page.route('**/*', async (route) => {
     _phase = 'response_received';
     rec.ms = Date.now() - _attemptStartedAt;
     _seen.body = text;
+    // A concurrent twin may be waiting on this exact response. Published here, as soon as the
+    // body is in hand and before any parsing or settlement can throw.
+    try { _fpSettle(rec._fpKey, { status: _status0, headers: _headers0, body: text }); } catch (_) {}
     // PERSIST EVERY RESPONSE NOW — before parsing, before settlement, before fulfilment, and
     // whatever the status. Nothing below this line can destroy the evidence by throwing.
     _persistResponse({ status: _status0, headers: _headers0, body: text, ms: rec.ms,
       role: body.role || null, url: url.replace(ORIGIN, ''), dest, model, rec,
       reqId: rec.reqId, requestChars: raw.length, scene: sceneNoForReplies });
+
+    // ── CLASSIFY THE REPLY HERE, WHERE THE REQUEST IS STILL IN SCOPE ────────────────────
+    // `raw` is the request body and `text` is the reply, both real at this point. This is the
+    // path the paid run took, and it is now the path that classifies.
+    try { _planOnlyObserve({ requestText: raw, body: text, url: url }); } catch (_) {}
+
+    // ── A DEAD FUNCTION RUNTIME STOPS THE RUN (Roman 2026-11-15) ────────────────────────────
+    // MEASURED: a live Scene 1 attempt sent SEVEN requests across gpt-6-luna, claude-haiku-5-5,
+    // grok-4.3 and gpt-6.1-sol, and every one came back 502 `NO_RESPONSE_FROM_FUNCTION` with
+    // `spawn EBADF` in the dev server log — the function child could not be created, so nothing
+    // reached a provider. The fallback chain treated each 502 as "this model failed, try the next
+    // one" and kept going, and each attempt left its reservation behind: $0.545445 held, which
+    // then triggered a budget halt on the A-plot. Seven attempts at an infrastructure fault that
+    // no other model can fix.
+    //
+    // This is not a provider error and there is nothing to fall back to, so the first confirmed
+    // one ends the run. The check is deliberately narrow: status 502 AND the platform's own
+    // marker in the body. A provider's own 502 does not carry that marker and still falls back.
+    if (_status0 === 502 && /NO_RESPONSE_FROM_FUNCTION/.test(String(text || ''))) {
+      const why = 'FUNCTION RUNTIME IS DEAD: ' + (body.role || url.replace(ORIGIN, ''))
+        + ' came back 502 NO_RESPONSE_FROM_FUNCTION — the platform could not run the function at'
+        + ' all, so no provider was contacted and nothing was billed. The run stops here rather'
+        + ' than walking the fallback chain: no other model can fix a runtime that will not start,'
+        + ' and each further attempt leaves a reservation behind that can budget-halt the run.';
+      // ── THE RESERVATION IS CARRIED UNLESS A LOG PROVES THE FUNCTION NEVER STARTED ──────
+      // A 502 NO_RESPONSE_FROM_FUNCTION does NOT by itself mean no money moved. It means the
+      // platform returned no response from the function — which is also what happens when the
+      // function starts, calls a provider, and then dies before returning. On the LOCAL dev
+      // server that distinction is readable: `spawn EBADF` in the dev log means the child was
+      // never created, so nothing upstream was contacted. On a PREVIEW there is no such log
+      // available here, so the honest position is that the charge is UNKNOWN and the reservation
+      // stands.
+      //
+      // Releasing it would under-report exposure on exactly the runs where the truth is unknown,
+      // which is the same error as calling a reservation a charge — in the direction that loses
+      // money quietly rather than loudly.
+      let _neverStarted = false, _evidence = 'no local dev log to consult (preview origin)';
+      try {
+        if (/^https?:\/\/localhost(?::\d+)?$/i.test(ORIGIN)) {
+          const _devLog = fs.readFileSync('_vercel_dev.log', 'utf8');
+          if (/spawn EBADF/.test(_devLog)) {
+            _neverStarted = true;
+            _evidence = 'the local dev log shows `spawn EBADF` — the function child was never'
+              + ' created, so nothing upstream was contacted';
+          } else {
+            _evidence = 'the local dev log shows no `spawn EBADF`, so the function may have'
+              + ' started and reached a provider before dying';
+          }
+        }
+      } catch (_) { _evidence = 'the local dev log could not be read'; }
+      say('  \u2298 ' + why);
+      say('    \u21b3 ' + (_neverStarted
+        ? 'NOT BILLABLE: ' + _evidence + '. The reservation is released.'
+        : 'CHARGE UNKNOWN: ' + _evidence + '. The reservation is CARRIED as exposure, and the'
+          + ' response is preserved for inspection.'));
+      _ledger('function_runtime_dead', { reqId: rec.reqId, role: body.role || null,
+        url: url.replace(ORIGIN, ''), status: _status0, origin: ORIGIN,
+        functionNeverStarted: _neverStarted, evidence: _evidence,
+        reservationCarried: !_neverStarted, estimate: (hold && hold.estimate) || null,
+        statedPlainly: _neverStarted
+          ? 'The function child was never created, so no upstream request was made and no charge'
+            + ' is possible. The reservation is released.'
+          : 'The platform returned no response from the function. Whether it reached a provider'
+            + ' first is NOT known from here, so this is treated as possible spend: the'
+            + ' reservation is carried and the response is preserved.' });
+      halted = halted || why;
+      unrecoverableStop = unrecoverableStop
+        || { code: 'function_runtime_dead', reqId: rec.reqId, why, charged: _neverStarted ? 'no' : 'unknown' };
+      // The response body is already on disk via _persistResponse above; nothing here discards it.
+      if (_neverStarted) { try { hold.open = false; } catch (_) {} }
+      try { return await route.abort(); } catch (_) { return; }
+    }
     rec.status = _status0;
+    // ── THE FRESH PLANNER IS JUDGED BEFORE THE AUTHOR IS PAID FOR (Roman 2026-11-13) ───────
+    // The whole point of the rewrite is that the opening plan carries the accepted row's LIVE
+    // exchange with the love interest physically absent. The planner is cheap (~$0.031) and the
+    // author is not (~$0.164), so the plan is read HERE, the moment it arrives, and the author
+    // is refused at the wire if the plan lost either property. Armed by
+    // SB_REQUIRE_LIVE_EXCHANGE=<LI name>; it reads the reply and changes nothing in it.
+    //
+    // TWO SEPARATE PROPERTIES, BOTH FROM THE PLANNER'S OWN WORDS:
+    //   physical absence — no staged row places him IN_PERSON, and the plan does not say he is
+    //                      in the room;
+    //   the live exchange — the plan must put him ON the channel. The paid opening's plan is the
+    //                      negative example and it is explicit: "Dani is the only person in the
+    //                      room; the call is on screen only", with a remembered-glass texture
+    //                      beat and a roster of one. A plan that says the call has ended, or
+    //                      that she is alone, has lost it.
+    // ── THE SHARED OPENING VALIDATOR DECIDES, AND THE ROW ARMS IT ──────────────────────────
+    // This gate used to be armed by SB_REQUIRE_LIVE_EXCHANGE=<love interest name> and asked only
+    // about HIM: is he on a channel, is he staged in the room. That missed the failure that
+    // actually shipped, where the live party was the GALA ORGANIZER and the love interest was
+    // correctly absent — the plan replaced her live refusal with "the organizer's LAST MESSAGE",
+    // the skeleton validator accepted it, and the author wrote a woman re-reading a text.
+    //
+    // So the ASSIGNED ROW arms it now, not an env var naming a person: if the row assigns a live
+    // exchange, the plan's beats must show the other party acting or speaking in real time and
+    // the protagonist answering. The love-interest name is still passed, because his physical
+    // absence is a separate property worth keeping, but it is no longer what triggers the check.
+    if (_status0 === 200 && String(rec.bodyText || '').indexOf(OPENING_PLANNER_SIG) !== -1
+        && (process.env.SB_VALIDATE_OPENING === '1' || process.env.SB_REQUIRE_LIVE_EXCHANGE)) {
+      let _plan = null, _planText = text;
+      try {
+        const _o = JSON.parse(text);
+        const _c = (_o && _o.choices && _o.choices[0] && _o.choices[0].message
+          && _o.choices[0].message.content) || (_o && _o.content) || '';
+        if (_c) {
+          _planText = String(_c);
+          const _f = _planText.match(/```(?:json)?\s*([\s\S]*?)```/);
+          try { _plan = JSON.parse(_f ? _f[1] : _planText); } catch (_) {}
+        }
+      } catch (_) {}
+      // The row the plan was asked to realise. SB_OPENING_ROW names it explicitly for a focused
+      // run; otherwise it is read from the request that was just sent, which is where the
+      // instruction quoted it verbatim.
+      let _rowTxt = String(process.env.SB_OPENING_ROW || '');
+      if (!_rowTxt) {
+        const _m = String(rec.bodyText || '').match(/assignment row for this scene reads: "([^"]+)"/);
+        if (_m) _rowTxt = _m[1];
+      }
+      const _v = validateOpeningPlan({ plan: _plan, planText: _planText, rowText: _rowTxt,
+        liName: String(process.env.SB_REQUIRE_LIVE_EXCHANGE || '').trim() });
+      const _faults = _v.faults;
+      try {
+        fs.writeFileSync(OUT + '/PLANNER_REPLY.json', JSON.stringify({
+          statedPlainly: _faults.length
+            ? 'The opening plan LOST a property its assigned row requires, so the author was '
+              + 'never dispatched. This is the plan exactly as the planner returned it.'
+            : 'The opening plan satisfied its assigned row, so the author was allowed to '
+              + 'proceed. This is the plan as returned.',
+          verdict: _v.verdict, assignedLiveExchange: _v.assignedLive || null,
+          rowValidatedAgainst: _rowTxt || null,
+          faults: _faults, evidence: _v.evidence, beats: _v.beats,
+          plan: _plan || _planText,
+        }, null, 2));
+      } catch (_) {}
+      if (_faults.length) {
+        const why = 'THE OPENING PLAN FAILED ITS OWN ROW: ' + _faults.join('; ')
+          + '. The author was NOT dispatched. The plan as returned is in PLANNER_REPLY.json.';
+        say('  \u2298 ' + why);
+        _ledger('opening_plan_rejected', { reqId: rec.reqId, faults: _faults,
+          assignedLiveExchange: _v.assignedLive || null, why });
+        halted = halted || why;
+        unrecoverableStop = unrecoverableStop
+          || { code: 'opening_plan_rejected', reqId: rec.reqId, why };
+      } else if (_v.assignedLive) {
+        say('  \u2713 THE OPENING PLAN KEEPS ITS LIVE EXCHANGE ("' + _v.assignedLive + '"): the other'
+          + ' party acts in ' + _v.evidence.beatsWhereOtherActs.join(', ') + ' and she answers in '
+          + _v.evidence.beatsWherePcResponds.join(', ') + ' — the author may proceed');
+      } else {
+        say('  \u2713 THE OPENING PLAN assigns no live exchange, so none can be lost — the author'
+          + ' may proceed (PLANNER_REPLY.json)');
+      }
+    }
     // Keep whatever is already in hand, so a later failure can report it instead of claiming
     // nothing arrived.
     try { _seen = { status: resp.status(), headers: resp.headers(), body: text }; } catch (_) {}
@@ -2040,6 +5153,28 @@ await page.route('**/*', async (route) => {
     // exactly what they cost. A provider cost field is used whenever present. Only a receipt we
     // must price from token counts is withheld when caching is in play, because this table prices
     // plain input and would overstate a cached call.
+    // ── A REPLAYED REPLY SETTLES AT ZERO IN THIS RUN ──────────────────────────────────────
+    // The body came off disk, so its `usage` and `cost_in_usd_ticks` belong to the run that
+    // actually bought it. Pricing them again invents spend: the capture run reported $0.031264
+    // against a $1.00 authorization for an opening-planner call that never left the machine, and
+    // the identical response id, created timestamp and cost field proved it was Stage 1's own
+    // reply. The original receipt is PRESERVED under `replayedReceipt` — it is still the best
+    // evidence of what that call cost when it was really made — and `receipt` is cleared so no
+    // arithmetic downstream can treat it as this run's charge.
+    const _replayedFrom = (_headers0 && (_headers0['x-sb-replayed'] || _headers0['X-Sb-Replayed'])) || '';
+    if (_replayedFrom) {
+      rec.replayed = String(_replayedFrom);
+      rec.replayedReceipt = rec.receipt || null;
+      rec.receipt = null;
+      rec.settledZeroBecauseReplayed = true;
+      say('  ⊘ NOT BILLED HERE: this reply was replayed from ' + rec.replayed
+        + ' — it settles at $0 in this run; its original receipt is preserved for reference');
+      _ledger('replayed_settles_zero', { reqId: rec.reqId, role: body.role || null,
+        url: url.replace(ORIGIN, ''), replayedFrom: rec.replayed,
+        originalReceipt: rec.replayedReceipt || null,
+        statedPlainly: 'A reply served from disk is not a charge in this run. The original '
+          + 'receipt is kept for reference; this run books zero.' });
+    }
     let usageForSettlement = rec.receipt;
     const hasProviderCost = !!(usageForSettlement
       && typeof usageForSettlement.cost_in_usd_ticks === 'number');
@@ -2076,11 +5211,46 @@ await page.route('**/*', async (route) => {
     // persisted, to prove the saved response and receipt survive an accounting failure.
     if (SB_FAULT === 'settle_throw') throw new Error('injected failure DURING settlement');
     _phase = 'settlement';
-    const row = reconcile(hold, { usage: usageForSettlement, model: rec.served || model });
-    rec.settlement = { kind: row.kind, usd: row.usd, reserved: g.estimate,
-      why: row.why || (rec.cacheSeen ? 'cache present — not priceable by this table' : null) };
-    rec.measuredUsd = row.kind === 'settled' ? row.usd : null;
-    rec.unresolvedExposure = row.kind !== 'settled';
+    // ── A LOCAL 404 IS A REPLAY ARTIFACT, NOT EXPOSURE (Roman 2026-11-17) ───────────────────
+    // In a provider-blocked replay the app is served by _ft_static_server, which has no /api
+    // routes, so every call the reuse table does not answer comes back 404 in ~2ms with no body
+    // and no receipt. The recorder correctly refused to call that "settled" and booked it as
+    // unresolved exposure — and the holds then ate the authorization: MEASURED on the replay of
+    // 2026-11-17, $0.097350 of a $0.099303 hold was thirteen 404s, with $0.000000 settled. The
+    // next reader of that line sees a $0.10 run almost exhausted by calls that never left the
+    // machine.
+    //
+    // So a local 404 with no body is reconciled as ZERO: no spend, no hold, no exposure. It is
+    // recorded as `local_404_replay_artifact` and counted separately in the offline ledger, so
+    // it is never confused with a real answer or a real charge. Scoped hard: offline/loopback
+    // only, status exactly 404, empty body. A 404 from a real provider route still books as
+    // exposure, and PRODUCTION proxy behaviour is untouched.
+    // TIGHTENED to SB_OFFLINE only (was `_destIsLoopback || _SB_OFFLINE`): vercel dev is also
+    // loopback, so on a PAID run a genuine 404 would have been zeroed. Exposure must stay visible.
+    const _isLocalReplay404 = (rec.status === 404)
+      && _SB_OFFLINE
+      && !(_seen && _seen.body && String(_seen.body).trim().length > 32);
+    if (_isLocalReplay404) {
+      reconcile(hold, { usage: null, why: 'local_404_replay_artifact', model });
+      rec.settlement = { kind: 'zero', usd: 0, reserved: 0,
+        why: 'local 404 in a provider-blocked replay: the static server has no /api route, so '
+          + 'nothing left this machine and nothing is owed' };
+      rec.measuredUsd = 0;
+      rec.unresolvedExposure = false;
+      rec.localReplayArtifact = true;
+      _offlineArtifact404 = (_offlineArtifact404 || 0) + 1;
+      _offlineArtifact404Est = (_offlineArtifact404Est || 0) + (g.estimate || 0);
+      // FALL THROUGH, do not return: the 404 still has to reach the application exactly as the
+      // static server sent it. An invented early return (`_seenResponse()`, which does not
+      // exist) would have thrown here on the first local 404 — caught by reading the code, not
+      // by the syntax check, which was happy with a call to a function that was never defined.
+    } else {
+      const row = reconcile(hold, { usage: usageForSettlement, model: rec.served || model });
+      rec.settlement = { kind: row.kind, usd: row.usd, reserved: g.estimate,
+        why: row.why || (rec.cacheSeen ? 'cache present — not priceable by this table' : null) };
+      rec.measuredUsd = row.kind === 'settled' ? row.usd : null;
+      rec.unresolvedExposure = row.kind !== 'settled';
+    }
     // ── ROUTING EVIDENCE IS SET BY A COMPLETED REQUEST, AND ONLY BY ONE ────────────────────
     // A 200 with a receipt updates the recorded prefix and timestamp; anything else is recorded
     // as an attempt that establishes nothing. The provider's own cached_tokens, when present, is
@@ -2123,6 +5293,7 @@ await page.route('**/*', async (route) => {
           + String(_solContent || '').length + ' chars) — app.js:240784 treats this as a Sol '
           + 'failure and falls through to a replacement planner, which is a different experiment');
       }
+      _checkSpineShape(rec.bodyText, _solContent, rec, 'live dispatch');
     }
     _phase = 'fulfil';
     // ── THE REROUTED RESPONSE MUST MEET THE CONSUMER'S CONTRACT (2026-11-01) ──────────────
@@ -2234,35 +5405,82 @@ await page.route('**/*', async (route) => {
       rec.failureArtifact = file;
       if (gotResponse) rec.bodyExcerpt = String(_seen.body).slice(0, 400);
     } catch (_) {}
+    // Tell any waiting twin there is nothing coming, rather than making it sit out _SHARE_WAIT_MS.
+    try { _fpSettle(rec._fpKey, null); } catch (_) {}
     halted = 'TRANSIT FAILURE at scene ' + sceneNoForReplies + ' on ' + (rec.role || url)
       + ': ' + rec.error + ' — the request may or may not have been billed';
     say('  ✗ ' + halted);
+    // STICKY FROM HERE. Setting `halted` alone let r4-r7 dispatch after r3 died; the stop has to
+    // be something the NEXT request consults. Recorded with the failing request's id so the
+    // refusals name what stopped them, and preserved by the same cleanup boundary as everything
+    // else — the settlement, the resumable state and the artifacts are still written on the way
+    // out. The first non-response wins; later ones cannot overwrite the cause.
+    // READ OFF `rec`, NOT OFF THE TRY BLOCK'S OWN CONSTS. Caught by running the control: the
+    // first version of this referenced `_dispatchTimeoutMs` and `_allowanceOut`, which are
+    // declared with `const` INSIDE the dispatch try and are therefore invisible here. That threw
+    // a ReferenceError inside the catch, so the stop was never set, the run died before the
+    // cleanup boundary, and neither requests.json nor the settlement was written — the very
+    // outcome this change exists to prevent. `rec` is outer-scoped and already carries both.
+    if (!unrecoverableStop) {
+      const _dl = rec.dispatchTimeoutMs || null;
+      unrecoverableStop = { code: 'transit_failure_no_response', reqId: rec.reqId,
+        scene: sceneNoForReplies, role: rec.role || null, url: url.replace(ORIGIN, ''),
+        requestedModel: model,
+        allowance: (rec.deadlineBasis && rec.deadlineBasis.allowanceOut) || null,
+        deadlineMs: _dl, ms: rec.ms, error: rec.error,
+        why: 'request #' + rec.reqId + ' (' + (rec.role || url) + ') returned no HTTP response '
+          + 'within ' + (_dl == null ? 'its deadline' : _dl + 'ms') + '. Whatever depended on it '
+          + 'has no input, and the call may or may not have billed, so no further paid dispatch '
+          + 'is permitted.' };
+      _ledger('unrecoverable_stop', unrecoverableStop);
+      say('    ⊘ RUN STOPPED: no further dispatch will be permitted (sticky, every role)');
+    }
     try { return await route.abort(); } catch (_) { return; }
   }
 });
 
 // ── LAUNCH, LITERARY ──────────────────────────────────────────────────────────────────────
-await page.goto(ORIGIN + '/', { waitUntil: 'domcontentloaded' });
+// ── THE 30s DEFAULT IS NO LONGER ENOUGH TO PARSE THE BUILD (Roman 2026-11-15) ──────────────
+// MEASURED: `page.goto: Timeout 30000ms exceeded` waiting for domcontentloaded, while the dev
+// server served every asset fast — `/` in 0.79s and app.js in 0.84s. The blocking step is not the
+// network, it is executing the bundle: public/app.js is now 26,045,200 bytes of synchronous
+// JavaScript, and domcontentloaded does not fire until it has run. Earlier runs in this session
+// succeeded, so the build has grown across Playwright's default while the work was being done.
+//
+// The dev server's /api/config returning 502 is a red herring here: the runner INTERCEPTS that
+// route and fulfils it locally, so the browser never sees it. I reported it as the cause once;
+// it was not.
+await page.goto(ORIGIN + '/', { waitUntil: 'domcontentloaded', timeout: 180000 });
 await page.waitForFunction(() => typeof window._launchStarterStory === 'function'
   && Array.isArray(window.STARTER_STORIES), null, { timeout: 120000 });
-const ov = await page.evaluate(() => {
+const ov = await page.evaluate((sid) => {
   if (typeof window._bakedScene1For === 'function') {
     window.__realBakedScene1For = window._bakedScene1For;
     window._bakedScene1For = function () { return null; };
   }
-  return { bakedStubbed: window._bakedScene1For('starter_first_sacrifice') === null,
-    catalogUntouched: (window.STARTER_STORIES || []).some(
-      (d) => d && d.id === 'starter_first_sacrifice' && d.render_mode === 'staged_story_mode') };
-});
-say('CG baked page stubbed for this tab: ' + ov.bakedStubbed
-  + ' · shipped CG catalog entry untouched: ' + ov.catalogUntouched);
+  const _entry = (window.STARTER_STORIES || []).filter((d) => d && d.id === sid)[0] || null;
+  return { bakedStubbed: window._bakedScene1For(sid) === null,
+    catalogUntouched: !!_entry,
+    renderMode: _entry ? (_entry.render_mode || 'literary (no render_mode)') : null };
+}, STARTER_ID);
+say('baked page stubbed for this tab: ' + ov.bakedStubbed + ' · Book: ' + STARTER_ID
+  + ' · shipped render_mode: ' + ov.renderMode
+  + ' · shipped catalog entry present and untouched: ' + ov.catalogUntouched);
 let RESUMED_FROM_DISK = null;
 if (RESUME_FROM) {
   // IMPORT THE PRESERVED STATE AND RESUME THROUGH THE REAL ENTRY. No story is launched and no
   // scene is regenerated: the pages already paid for are the pages we continue from.
   const dump = JSON.parse(fs.readFileSync(RESUME_FROM, 'utf8'));
   await page.evaluate((d) => { Object.keys(d).forEach((k) => { try { localStorage.setItem(k, d[k]); } catch (_) {} }); }, dump.storage);
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  // ── THE RESUME RELOAD NEEDS THE SAME BUDGET AS ITS NEIGHBOUR (Roman 2026-11-14) ─────────
+  // MEASURED: this reload took Playwright's 30s DEFAULT and timed out on the second resume of
+  // the same state, having succeeded on the first — "navigated to http://localhost:3000/" with
+  // domcontentloaded never firing. It is not a server fault (root 0.6s, app.js 26MB in 0.66s,
+  // /api/config 200 in 1.1s, all measured right after the failure). It is simply a marginal
+  // budget: the page parses a 26MB app.js and rehydrates 1.25MB of restored localStorage before
+  // DOMContentLoaded. The very next line already allows 120s for the same page to finish
+  // defining `continueStory`, so 30s here was the outlier rather than a considered figure.
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => typeof window.continueStory === 'function', null, { timeout: 120000 });
   RESUMED_FROM_DISK = await page.evaluate(async (sid) => {
     try { await window.continueStory(sid); } catch (e) { return { threw: e.message }; }
@@ -2274,10 +5492,91 @@ if (RESUME_FROM) {
   say('RESUMED FROM DISK through window.continueStory: ' + JSON.stringify(RESUMED_FROM_DISK));
   assert(!RESUMED_FROM_DISK.threw, 'resume threw: ' + RESUMED_FROM_DISK.threw);
   assert(RESUMED_FROM_DISK.pages > 0, 'the preserved state carried no pages');
+
+  // ── SB_RESTORE_PETITION_GATE: PUT BACK THE *UNFINISHED* GATE THE RESTORE CLEARED ────────
+  // app.js:129609 deliberately clears `_petitionFrameLandedAwaitingArm` on every restore, with
+  // a comment naming why (2026-06-09: a reopened story landed on Scene 2 trapped behind the
+  // Tempt zoom with no Submit). That is right for ordinary reopening and wrong for a test that
+  // must continue the turn the reader had actually reached: Scene 2 ended on the Petition Fate
+  // reveal, so the gate was pending when the save was written.
+  //
+  // So: re-raise ONLY that one pending flag and install the gate through the shipped arming
+  // function — never by hand. Completed onboarding is left exactly as saved: `_deckExamineFired`,
+  // `_petitionEmergenceFired`, `onboardingComplete`, `onboardingGiftGranted` and
+  // `first_tempt_fate_vision_triggered` are not written here, so nothing already finished is
+  // replayed. If the save says the petition emergence already FIRED, this does nothing at all.
+  if (String(process.env.SB_RESTORE_PETITION_GATE || '') === '1') {
+    // READ THE GATE OUT OF THE ORIGINAL SAVE, never assume it. The flag is restored only if the
+    // save actually carried it pending, and only if that save says the emergence had NOT fired.
+    // Hardcoding `true` would manufacture a gate on a save that never had one, which is a
+    // different test than continuing the turn the reader had reached.
+    const _savedGate = (() => {
+      try {
+        const snap = JSON.parse(String((dump.storage || {}).sb_saved_story || '{}')).stateSnapshot || {};
+        return { awaitingArm: snap._petitionFrameLandedAwaitingArm === true,
+          emergenceFired: !!snap._petitionEmergenceFired,
+          mandateApplied: !!snap._petitionMandateApplied,
+          pendingPetition: !!(snap.fate && snap.fate.pendingPetition) };
+      } catch (e) { return { readError: e.message }; }
+    })();
+    say('THE SAVE’S OWN GATE STATE: ' + JSON.stringify(_savedGate));
+    assert(!_savedGate.readError, 'could not read the gate out of the save: ' + _savedGate.readError);
+    assert(_savedGate.awaitingArm === true,
+      'SB_RESTORE_PETITION_GATE was asked for, but this save does not carry a PENDING petition '
+      + 'gate (_petitionFrameLandedAwaitingArm is not true) — refusing to manufacture one');
+    assert(_savedGate.emergenceFired === false,
+      'this save says the petition emergence already FIRED — restoring the gate would replay a '
+      + 'completed onboarding step');
+    const gate = await page.evaluate((saved) => {
+      const s = window.state || {};
+      const before = {
+        awaitingArm: !!s._petitionFrameLandedAwaitingArm,
+        emergenceFired: !!s._petitionEmergenceFired,
+        emergenceArmed: !!s._petitionEmergenceArmed,
+        deckExamineFired: !!s._deckExamineFired,
+        onboardingComplete: !!s.onboardingComplete,
+        pendingPetition: !!(s.fate && s.fate.pendingPetition),
+      };
+      if (before.emergenceFired) return { before, action: 'none: the petition emergence already fired in this save' };
+      // Mirror the SAVE, do not assert a value: this is only reached when the save itself said
+      // the gate was awaiting its arm and the emergence had not fired.
+      if (!saved || saved.awaitingArm !== true) {
+        return { before, action: 'none: the save did not carry a pending gate' };
+      }
+      s._petitionFrameLandedAwaitingArm = saved.awaitingArm;
+      let armed = false;
+      try {
+        if (typeof window._armLiteraryPetitionEmergence === 'function') {
+          window._armLiteraryPetitionEmergence();
+          armed = true;
+        }
+      } catch (e) { return { before, action: 'arm threw: ' + e.message }; }
+      const s2 = window.state || {};
+      return { before, action: armed ? 'armed through the shipped _armLiteraryPetitionEmergence' : 'arm fn missing',
+        after: {
+          awaitingArm: !!s2._petitionFrameLandedAwaitingArm,
+          emergenceArmed: !!s2._petitionEmergenceArmed,
+          deckExamineFired: !!s2._deckExamineFired,
+          onboardingComplete: !!s2.onboardingComplete,
+          pendingPetition: !!(s2.fate && s2.fate.pendingPetition),
+        }, fromSave: saved };
+    }, _savedGate);
+    say('PETITION GATE RESTORED: ' + JSON.stringify(gate));
+    fs.writeFileSync(OUT + '/PETITION_GATE_RESTORE.json', JSON.stringify(gate, null, 2));
+    assert(!/threw|missing/.test(String(gate.action)), 'the petition gate could not be armed: ' + gate.action);
+    if (gate.after) {
+      assert.equal(gate.after.deckExamineFired, gate.before.deckExamineFired,
+        'the restore must not change a COMPLETED onboarding step (deck examine)');
+      assert.equal(gate.after.onboardingComplete, gate.before.onboardingComplete,
+        'the restore must not change onboardingComplete');
+      assert.equal(gate.after.pendingPetition, false,
+        'arming must NOT seal a petition — the reader does that');
+    }
+  }
 }
-const def = RESUME_FROM ? null : await page.evaluate(() => (window.STARTER_STORIES || [])
-  .find((d) => d && d.id === 'starter_first_sacrifice') || null);
-if (!RESUME_FROM) assert(def, 'starter_first_sacrifice is not in the shipped catalog');
+const def = RESUME_FROM ? null : await page.evaluate((sid) => (window.STARTER_STORIES || [])
+  .find((d) => d && d.id === sid) || null, STARTER_ID);
+if (!RESUME_FROM) assert(def, STARTER_ID + ' is not in the shipped catalog');
 
 // ── THE PLAN MUST BE IN PLACE BEFORE THE LAUNCH (measured 2026-11-01) ─────────────────────
 // _launchStarterStory GENERATES SCENE 1 ITSELF. Injecting afterwards is too late by
@@ -2292,8 +5591,7 @@ if (!RESUME_FROM) assert(def, 'starter_first_sacrifice is not in the shipped cat
 const PRE_LAUNCH_PLAN = process.env.SB_SELECTED_PLAN
   ? JSON.parse(fs.readFileSync(process.env.SB_SELECTED_PLAN, 'utf8')) : null;
 if (!RESUME_FROM && PRE_LAUNCH_PLAN) {
-  const pre = await page.evaluate((plan) => {
-    const id = 'starter_first_sacrifice';
+  const pre = await page.evaluate(([plan, id]) => {
     const sp = (window.STARTER_PLANS || {})[id];
     const rowsBefore = (sp && Array.isArray(sp.scenes)) ? sp.scenes.length : 0;
     if (sp) { window.__withheldRows = sp.scenes; sp.scenes = []; }
@@ -2305,7 +5603,7 @@ if (!RESUME_FROM && PRE_LAUNCH_PLAN) {
     try { if (window.state) window.state.cgScaffold = injected; } catch (_) {}
     return { rowsBefore, rowsNow: (sp && sp.scenes) ? sp.scenes.length : null,
       seedStillRegistered: !!(window.STARTER_SEEDS && window.STARTER_SEEDS[id]) };
-  }, PRE_LAUNCH_PLAN);
+  }, [PRE_LAUNCH_PLAN, STARTER_ID]);
   say('PRE-LAUNCH: authored rows withheld ' + pre.rowsBefore + ' → ' + pre.rowsNow
     + ' · seed still registered: ' + pre.seedStillRegistered);
   assert(pre.rowsNow === 0, 'the authored rows were not withheld before launch');
@@ -2323,12 +5621,64 @@ if (!RESUME_FROM && PRE_LAUNCH_PLAN) {
 // ONE SOURCE. FRESH_PLAN_ACTIVE is declared early because the route handler needs it; this is
 // the same value under the name the pre-launch block already used, not a second switch.
 const FRESH_PLAN = FRESH_PLAN_ACTIVE;
+
+// ── THE RUN'S LOGS AND RECORD, DECLARED ABOVE THE BOUNDARY ────────────────────────────────
+// These five were declared just before the scene loop. The `finally` that writes the accounting
+// and the recoverable state reads sceneLog, deliveryLog and writeStoryRecord, so once the
+// boundary moved up to cover launch they had to move with it — a `const` or a function
+// declaration inside the try block is not visible in its own `finally`.
+const sceneLog = [];
+const deliveryLog = [];
+// THE STORY RECORD, keyed by scene number. Written to disk after every completed scene.
+const storyRecord = {};
+// Verdicts whose proposal identity could not be confirmed. Retained, never guessed onto a scene.
+const unassociatedAssessments = [];
+function writeStoryRecord(note) {
+  try {
+    const scenes = Object.keys(storyRecord).map(Number).sort((a, b) => a - b);
+    // A SCENE WITH NO ASSESSMENT IS MARKED UNASSESSED. The last scene of a run normally has none,
+    // because submitting scene N is what assesses scene N-1 — and buying one more scene purely to
+    // obtain a verdict is not a reason to spend.
+    scenes.forEach((k) => {
+      const r = storyRecord[String(k)];
+      if (!r.assessment) {
+        r.assessment = null;
+        // REPORTS WHAT IS ON RECORD, AND NOTHING MORE. "NOT APPLICABLE" implied the opening was
+        // exempt from assessment, and the fuller wording implied an assessment would or did
+        // follow. Neither is known from this record.
+        r.assessmentStatus = r.isOpening
+          ? 'No matching assessment recorded.'
+          : 'No matching assessment recorded. (Submitting the next scene is what runs a commit'
+            + ' pass; another scene was not purchased to obtain one.)';
+      } else { r.assessmentStatus = 'assessed'; }
+    });
+    fs.writeFileSync(OUT + '/STORY_RECORD.json', JSON.stringify({
+      note: note || 'written after each completed scene; partial results are preserved on failure',
+      scenes: scenes.map((k) => storyRecord[String(k)]),
+      unassociatedAssessments: unassociatedAssessments,
+    }, null, 2));
+  } catch (_) {}
+}
+
+// ══ THE FAILURE-PRESERVATION BOUNDARY ═════════════════════════════════════════════════════
+// IT NOW OPENS BEFORE LAUNCH. MEASURED: the post-launch provenance assertion threw, and I
+// reported that "the uncaught throw skipped the finally". That was wrong — the `finally` was
+// never ENTERED, because this `try` used to open AFTER the launch section, several hundred
+// lines below the assertion. So a run could pay for the bibles, the A-plot, the three-issue
+// spine and the opening planner, then die on a launch check and write no settlement and no
+// RESUMABLE_STATE.json at all: $0.048798 of real calls with no accounting and nothing to
+// resume from.
+//
+// Opening it here puts launch, the pre-launch withholding and every post-launch assertion
+// inside the same boundary, so an assertion failure still writes the accounting and the
+// recoverable state on its way out. It does NOT make the assertion survivable: the throw still
+// propagates after the `finally` runs, and the run still fails.
+try {
 if (!RESUME_FROM && FRESH_PLAN) {
   if (PRE_LAUNCH_PLAN) throw new Error('SB_FRESH_PLAN and SB_SELECTED_PLAN are mutually '
     + 'exclusive: one withholds the authored rows so the planner can invent a plot, the other '
     + 'installs a previously generated plan and suppresses generation.');
-  const pf = await page.evaluate(() => {
-    const id = 'starter_first_sacrifice';
+  const pf = await page.evaluate((id) => {
     const sp = (window.STARTER_PLANS || {})[id];
     const rowsBefore = (sp && Array.isArray(sp.scenes)) ? sp.scenes.length : 0;
     if (sp) { window.__withheldRows = sp.scenes; sp.scenes = []; }
@@ -2339,7 +5689,7 @@ if (!RESUME_FROM && FRESH_PLAN) {
     return { rowsBefore, rowsNow: (sp && sp.scenes) ? sp.scenes.length : null,
       seedStillRegistered: !!(window.STARTER_SEEDS && window.STARTER_SEEDS[id]),
       fundedSpine: window.__sbFundedSpineAtOpening === true };
-  });
+  }, STARTER_ID);
   say('PRE-LAUNCH FRESH-PLAN: rows ' + pf.rowsBefore + ' → ' + pf.rowsNow
     + ' · seed registered: ' + pf.seedStillRegistered + ' · funded spine: ' + pf.fundedSpine);
   assert(pf.rowsNow === 0, 'authored rows were not withheld BEFORE launch');
@@ -2389,22 +5739,66 @@ if (false) {
 // reload, so it discards this the way it discards everything in memory — and the first run
 // stalled at scene 6 for exactly that reason. None of it is narrative state: it is the entitled
 // account, the paid issue and the one-time consent a returning reader carries.
-const applyAccountSetup = () => page.evaluate(() => {
+const applyAccountSetup = () => page.evaluate((w) => {
   const s = window.state;
   s.profileId = 'playthrough-profile';
   s._bakedGenesisUnlocked = true; s.previewActive = false;
   s._issuePurchased = true; s._issuesPurchased = { 1: true };
   s.fortunes = 9999999; s.access = 'sub'; s.subscribed = true;
   s.hasSeenFortuneTurnDisclosure = true;
-  s.picks = s.picks || {}; s.picks.world = 'Fantasy';
+  s.picks = s.picks || {}; if (w) s.picks.world = w;
   if (!Array.isArray(s.scenes)) s.scenes = [];
   return { fortunes: s.fortunes, world: s.picks.world, issuePurchased: !!s._issuePurchased };
-});
+}, (def && def.world) || null);
 // COVERED TOO: the account setup runs AFTER the launch has already spent, so a failure here
 // loses evidence for calls that have already billed.
 try { await applyAccountSetup(); } catch (e) {
   await preserveLaunchEvidence('account_setup_failed: ' + ((e && e.message) || e));
   throw e;
+}
+
+// ── SB_EDITOR_PROBE=1 — EXERCISE THE EDITOR BRANCH, PROVIDER-FREE (Roman 2026-11-13) ──────
+// WHY IT HAS TO EXIST. The editor fires after a scene is authored, and a provider-free drive of
+// a Book with no authored plan cannot get that far: with every provider blocked the Bibles come
+// back empty, the R-plot reports "all tiers exhausted" and the A-plot fails validation. So the
+// one branch that decides whether every editor call is reserved and settled against the run
+// ceiling was unobservable in exactly the mode built for observing things without paying.
+//
+// This issues ONE well-formed editor request FROM THE PAGE, through the page's own fetch, so it
+// travels the same route handler every real editor call travels and takes the same branch. It
+// proves the accounting path, not the product's decision to call the editor.
+//
+// DRIVE ONLY, AND IT REFUSES TO RUN ANYWHERE ELSE. A paid run must not carry an extra call that
+// the story did not ask for, so this throws rather than quietly skipping if it is ever set on a
+// live mode — a silent skip is how a test-only flag ends up believed to have run.
+if (process.env.SB_EDITOR_PROBE === '1') {
+  // THE RESTRICTION IS "NO PAID CALL", NOT "DRIVE". It was written as drive-only because drive
+  // was the only state in which this extra call could not be billed. SB_OFFLINE is now another
+  // such state, and a stronger one: the editor's own egress is guarded, so the probe can be
+  // used to verify that guard in a LIVE mode — which is the only mode where the gap existed.
+  // Anything else is still refused loudly rather than silently skipped.
+  const _probeBlocked = DRIVE || !!process.env.SB_OFFLINE
+    || (_SB_MODEL_ORIGIN && _originIsLoopback(_SB_MODEL_ORIGIN));
+  if (!_probeBlocked) throw new Error('SB_EDITOR_PROBE is a provider-free verification probe and '
+    + 'must never add a call to a live run. It is permitted only where providers are provably '
+    + 'blocked: drive mode, SB_OFFLINE=1, or SB_MODEL_ORIGIN pointed at loopback. None is set.');
+  const _probe = await page.evaluate(async (acct) => {
+    const st = window.state || {};
+    const storyId = st.storyId || st._storyId || 'probe-story';
+    const scene = 4, revisionId = 'probe-rev-1';
+    const operationId = ['cplus-editor', acct, storyId, 'scene' + scene, revisionId, 'craft'].join(':');
+    try {
+      const r = await fetch('/api/cplus-editor', { method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ operationId, storyId, scene, revisionId,
+          contentClass: 'general', userId: acct,
+          system: 'You are an editor.', user: 'x'.repeat(30000), maxTokens: 1240 }) });
+      return { status: r.status, body: (await r.text()).slice(0, 200) };
+    } catch (e) { return { threw: String((e && e.message) || e) }; }
+  }, SB_TEST_ACCOUNT_ID);
+  say('EDITOR PROBE ('
+    + (DRIVE ? 'drive' : (process.env.SB_OFFLINE ? 'SB_OFFLINE' : 'loopback origin'))
+    + '): ' + JSON.stringify(_probe));
 }
 
 // ── THE SELECTED GENERATED PLAN IS AUTHORITATIVE (Roman, authorized 2026-10-31) ───────────
@@ -2511,8 +5905,7 @@ const applySelectedPlan = () => page.evaluate((plan) => {
 // This restores withholding and the funded flag, and DELIBERATELY DOES NOT touch
 // state.cgScaffold — the scaffold generated before the reload is the thing under test and must
 // be neither replaced nor regenerated.
-const restoreFreshPlanAfterReload = () => page.evaluate(() => {
-  const id = 'starter_first_sacrifice';
+const restoreFreshPlanAfterReload = () => page.evaluate((id) => {
   const sp = (window.STARTER_PLANS || {})[id];
   const rowsBefore = (sp && Array.isArray(sp.scenes)) ? sp.scenes.length : 0;
   if (sp) { window.__withheldRows = window.__withheldRows || sp.scenes; sp.scenes = []; }
@@ -2528,7 +5921,7 @@ const restoreFreshPlanAfterReload = () => page.evaluate(() => {
     seedAlive: !!(typeof window._activeSeed === 'function' && window._activeSeed(s2)),
     assignmentAfterReload: a ? { source: a.source, event: String(a.event || '').slice(0, 80) } : null,
   };
-});
+}, STARTER_ID);
 
 // ── EVIDENCE SURVIVES A LAUNCH FAILURE (2026-11-02) ───────────────────────────────────────
 // MEASURED: the post-launch assertion below sits OUTSIDE the main try/finally (which opens far
@@ -2598,7 +5991,7 @@ if (FRESH_PLAN && !RESUME_FROM) try {
   // The previous version asserted `_shouldGenerateCGScaffold === true` here, which is wrong by
   // construction: once the scaffold HAS been generated the gate correctly returns false (the
   // single-generation guard). Eligibility is not evidence. These checks read the result.
-  const fp = await page.evaluate(() => {
+  const fp = await page.evaluate((sid) => {
     const s2 = window.state || {};
     const sc = s2.cgScaffold || null;
     const rows = sc ? (sc.issueArcs || []).reduce((n, a) => n + ((a.sceneOutline || []).length), 0) : 0;
@@ -2611,10 +6004,10 @@ if (FRESH_PLAN && !RESUME_FROM) try {
       isSolArchitecture: !!(sc && sc._isSolArchitecture),
       assignment: a ? { source: a.source, event: String(a.event || '').slice(0, 90) } : null,
       seedAlive: !!(typeof window._activeSeed === 'function' && window._activeSeed(s2)),
-      authoredRowsStillWithheld: ((window.STARTER_PLANS || {})['starter_first_sacrifice'] || {}).scenes,
+      authoredRowsStillWithheld: ((window.STARTER_PLANS || {})[sid] || {}).scenes,
       firstWithheldEvent: withheld.length ? String(withheld[0].accomplishes || withheld[0].event || '').slice(0, 70) : null,
     };
-  });
+  }, STARTER_ID);
   say('POST-LAUNCH FRESH-PLAN: ' + JSON.stringify(fp));
   assert(fp.scaffoldPresent === true, 'no scaffold was generated — the run would use the authored plot');
   assert(fp.scaffoldRows > 0, 'the generated scaffold has no outline rows');
@@ -2626,14 +6019,18 @@ if (FRESH_PLAN && !RESUME_FROM) try {
   // Scoped by the SAME pure function the dispatch gate uses, for the same reason: in the
   // provider-blocked driver nothing can be Sol, because a synthetic fixture must not claim a
   // real model's identity. In every other mode this is required.
-  if (prerequisiteOptionsFor(MODE).requireSol) {
-    assert(fp.isSolArchitecture === true,
-      'the scaffold was served by ' + JSON.stringify(fp.servedBy || 'unrecorded')
-      + ', not Sol — that is a different planner than the one under test');
-  } else {
-    say('  (Sol identity not asserted: mode=' + MODE + ' is provider-blocked, servedBy='
-      + JSON.stringify(fp.servedBy) + ')');
-  }
+  // ── VERIFIED AGAINST THE SELECTED MODEL, IN EVERY MODE (Roman 2026-11-06) ──────────────
+  // This asserted `isSolArchitecture` and skipped itself entirely in the provider-blocked
+  // driver. Both halves were wrong: the configuration names the architecture model, so Sol was
+  // the wrong thing to require; and the mode that could have caught that was the one excused
+  // from checking. It now compares against whatever the run selected and is NEVER skipped —
+  // the driver accepts only its own declared synthetic identity, so a real provider that is
+  // not the selected one fails there too.
+  const _prov = verifyScaffoldProvenance(Object.assign({ servedBy: fp.servedBy },
+    prerequisiteOptionsFor(MODE, RUN_CONFIG && RUN_CONFIG.architectureModel)));
+  fp.provenance = _prov;
+  assert(_prov.ok === true, _prov.why);
+  say('  ✓ SCAFFOLD PROVENANCE (' + _prov.code + '): ' + _prov.why);
   assert((fp.authoredRowsStillWithheld || []).length === 0, 'authored rows came back after launch');
   assert(fp.seedAlive === true, 'seed canon was lost');
   assert(fp.assignment && fp.assignment.source !== 'scene-mission',
@@ -2724,6 +6121,304 @@ async function waitForCommit(targetCount, label) {
     + JSON.stringify(last) + '. Evidence preserved; not forcing state past it.');
 }
 
+// ── SEAL A PETITION THROUGH THE REAL MODAL, BEFORE THE TURN IS SUBMITTED ─────────────────
+// The reader handoff could only ever type into #actionInput and click Submit, so a Petition —
+// the one reader input that is NOT a say/do — had no way to be made. A `petition` field on
+// NEXT_ACTION.json now drives the SHIPPED controls: the deck's Petition option, #petitionInput,
+// #btnSealPetition. Nothing internal is called and no state is written by hand: if the app's own
+// validation, classification or per-scene limit refuses the wish, that refusal IS the result and
+// it is reported. `state.fate.pendingPetition` is read back afterwards as evidence, never set.
+async function sealPetition(wishText) {
+  const out = await page.evaluate(async (wish) => {
+    const r = { wish, opened: false, modalWasHidden: null, typed: null, sealClicked: false,
+                pendingAfter: null, toast: null, why: null };
+    const m = document.getElementById('petitionFateModal');
+    if (!m) { r.why = 'no #petitionFateModal in the page'; return r; }
+    r.modalWasHidden = m.classList.contains('hidden');
+    // Open it through the SHIPPED entry point. openPetitionZoom marks the petition CARD with
+    // .petition-zoomed; it does NOT unhide #petitionFateModal, so requiring that modal to become
+    // visible reported "the Petition control did not open the modal" on a page where the control
+    // was working. Measured: the seal succeeds with that modal still hidden. So the zoom is
+    // opened if it can be, the state is recorded, and the verdict is left to pendingPetition
+    // rather than to a visibility flag that does not mean what it looks like.
+    if (r.modalWasHidden && typeof window.openPetitionZoom === 'function') {
+      try { window.openPetitionZoom(); } catch (_) {}
+      await new Promise((x) => setTimeout(x, 500));
+    }
+    const _card = document.querySelector('.petition-fate-card');
+    r.cardZoomed = !!(_card && _card.classList.contains('petition-zoomed'));
+    r.opened = r.cardZoomed || !m.classList.contains('hidden');
+    const input = document.getElementById('petitionInput');
+    if (!input) { r.why = 'no #petitionInput'; return r; }
+    input.value = wish;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    r.typed = input.value;
+    const seal = document.getElementById('btnSealPetition');
+    if (!seal) { r.why = 'no #btnSealPetition'; return r; }
+    seal.click();
+    r.sealClicked = true;
+    await new Promise((x) => setTimeout(x, 600));
+    const p = (window.state && window.state.fate && window.state.fate.pendingPetition) || null;
+    r.pendingAfter = p ? { text: p.text, classification: p.classification, accepted: p.accepted } : null;
+    const t = document.querySelector('.toast, #toast');
+    r.toast = t ? String(t.textContent || '').trim().slice(0, 120) : null;
+    return r;
+  }, wishText);
+  say('  ⟐ PETITION through the real UI: ' + (out.pendingAfter
+    ? ('SEALED — state.fate.pendingPetition.text = "' + String(out.pendingAfter.text).slice(0, 70)
+       + '" (classification ' + out.pendingAfter.classification + ')')
+    : ('NOT SEALED — ' + (out.why || out.toast || 'the app refused it and set no pendingPetition'))));
+  return out;
+}
+
+// ── EXAMINE THE DECK, THEN READ THE HAND — THROUGH THE SHIPPED CONTROLS ──────────────────
+// WHY THIS IS NEEDED (Roman 2026-11-14): on a first story the deck closer arms a MANDATORY
+// Submit gate (`_installEmergenceSubmitGate`, app.js:246605) — Submit is blocked until the deck
+// has been examined, and clicking Submit RE-PRESENTS the "Examine the Cards" gate instead of
+// submitting. So `window.state.fateOptions` is [] not because the hand failed to deal but
+// because `_deckExamineFired` is false and the cards have not been revealed yet. The runner
+// could neither examine nor click a card, which means a freeform action would have been blocked
+// by that gate too.
+//
+// NOTHING IS FORCED. `dealFateCards` is never called with force, and it is not called directly
+// at all: the examine gate is fired the way the reader fires it, and the product deals the hand.
+// If a hand is ALREADY present it is kept as-is and nothing is triggered.
+async function examineAndReadHand() {
+  // THE PRE-CACHED SUGGESTION LANDS HERE, after the hand exists and before any click.
+  try {
+    const seeded = await page.evaluate(() => (typeof window.__sbApplyPrecachePreview === 'function')
+      ? window.__sbApplyPrecachePreview() : null);
+    if (seeded === true) say('  \u2713 pre-cached suggestion written into this turn\u2019s cache');
+    else if (seeded === false) say('  ! pre-cached suggestion could NOT be written (no state or no writer)');
+  } catch (_) {}
+  const out = await page.evaluate(async () => {
+    const r = { already: false, examineClicked: null, gatePresent: false, cards: [], fateOptions: null, mount: null };
+    const mountOf = () => {
+      try {
+        const s = window._sbActiveReaderSurface && window._sbActiveReaderSurface();
+        if (s && s.mount) { const m = document.getElementById(s.mount); if (m) return m; }
+      } catch (_) {}
+      return document.getElementById('cardMount');
+    };
+    const read = () => {
+      const m = mountOf();
+      r.mount = m ? (m.id || '(unnamed)') : null;
+      const els = m ? Array.from(m.querySelectorAll('.fate-card')) : [];
+      return els.map((el, i) => ({
+        index: el.dataset && el.dataset.cardIndex != null ? Number(el.dataset.cardIndex) : i,
+        locked: el.classList.contains('locked'),
+        title: (el.querySelector('.back h3') || {}).textContent || null,
+        desc: (el.querySelector('.back p') || {}).textContent || null,
+      }));
+    };
+    // 1. A hand that already exists is KEPT — but the gate still has to be satisfied.
+    //    MEASURED (Roman 2026-11-16): on a RESTORED save the hand is already mounted, so this
+    //    returned immediately with examineClicked=null, the examine GESTURE was never performed,
+    //    and the product then refused the submit:
+    //        [DECK:EXAMINE] gate shown below last line of prose
+    //        [DECK:EMERGENCE] Submit blocked — re-zoom + toast (free credit granted)
+    //    The gate does not track whether a hand EXISTS; it tracks whether the reader LOOKED. So
+    //    the hand is read and kept, and the examine control is still pressed when one is offered.
+    let cards = read();
+    if (cards.length) {
+      r.already = true; r.cards = cards;
+      r.fateOptions = (window.state && window.state.fateOptions) || null;
+      r.satisfiedGateWithHandPresent = false;
+    }
+    // 2. Fire the examine gate the way a reader does: its own control if present, else the
+    //    Submit button, which the gate re-presents itself on.
+    const findExamine = () => Array.from(document.querySelectorAll('button, a, [role="button"], .emergence-gate-btn'))
+      .filter((e) => /examine the cards?/i.test((e.textContent || '').trim()))
+      .filter((e) => e.offsetParent !== null)[0] || null;
+    let btn = findExamine();
+    r.gatePresent = !!btn;
+    if (!btn) {
+      const sub = document.getElementById('submitBtn');
+      if (sub) { sub.click(); await new Promise((x) => setTimeout(x, 900)); }
+      btn = findExamine();
+      r.gatePresent = !!btn;
+    }
+    if (btn) {
+      r.examineClicked = (btn.textContent || '').trim().slice(0, 40);
+      btn.click();
+      if (r.already) {
+        // The hand is already there; this press exists to satisfy the gate, not to deal.
+        r.satisfiedGateWithHandPresent = true;
+        await new Promise((x) => setTimeout(x, 900));
+      } else {
+        for (let i = 0; i < 25 && !read().length; i++) await new Promise((x) => setTimeout(x, 400));
+      }
+    }
+    r.cards = read();
+    r.fateOptions = (window.state && window.state.fateOptions) || null;
+    return r;
+  });
+  say('  ⟐ FATE HAND: ' + (out.already
+      ? ('a hand was already dealt and was kept'
+         + (out.satisfiedGateWithHandPresent
+            ? (' · examine gate satisfied via "' + out.examineClicked + '"')
+            : ' · NO examine control was offered (the gate may refuse the submit)'))
+      : (out.examineClicked ? ('examined via "' + out.examineClicked + '"') : 'no examine control was reachable'))
+    + ' · cards=' + out.cards.length + ' · mount=' + (out.mount || '(none)'));
+  out.cards.forEach((c) => say('      [' + c.index + '] ' + (c.locked ? 'LOCKED  ' : 'unlocked') + ' · '
+    + (c.title || '(untitled)') + (c.desc ? (' — ' + String(c.desc).slice(0, 90)) : '')));
+  return out;
+}
+
+// ── CLICK ONE CARD, AND TAKE THE SAY/DO IT OFFERS ────────────────────────────────────────
+// The card's own onclick fills the active turn inputs with a scene-aware Say/Do. This waits for
+// that to land and returns it verbatim — the offer is the product's, not the harness's.
+async function clickFateCard(index) {
+  const out = await page.evaluate(async (idx) => {
+    const r = { clicked: false, title: null, locked: null, action: '', dialogue: '', waited: 0 };
+    const mountOf = () => {
+      try {
+        const s = window._sbActiveReaderSurface && window._sbActiveReaderSurface();
+        if (s && s.mount) { const m = document.getElementById(s.mount); if (m) return m; }
+      } catch (_) {}
+      return document.getElementById('cardMount');
+    };
+    const m = mountOf();
+    const el = m ? m.querySelector('.fate-card[data-card-index="' + idx + '"]') : null;
+    if (!el) { r.why = 'no .fate-card with data-card-index=' + idx; return r; }
+    r.locked = el.classList.contains('locked');
+    if (r.locked) { r.why = 'that card is LOCKED — refusing to click it'; return r; }
+    r.title = (el.querySelector('.back h3') || {}).textContent || null;
+    el.click();
+    r.clicked = true;
+    const inputs = () => (typeof window._getActiveTurnInputs === 'function')
+      ? window._getActiveTurnInputs()
+      : { actInput: document.getElementById('actionInput'), diaInput: document.getElementById('dialogueInput') };
+    // ── THE SPARKLE PLACEHOLDER IS NOT THE OFFER (Roman 2026-11-14) ──────────────────────
+    // MEASURED, and it cost a submitted turn: `generateFatePreview` writes the clicked card's
+    // NAME plus an ellipsis into both boxes as a pulsing interim — "Temptation…", "Boundary…" —
+    // and its own comment says it is "Overwritten by" the real preview. The first version of
+    // this wait accepted any non-empty field, so it caught that interim on the first tick and
+    // submitted "Boundary…" as Dani's action AND her dialogue.
+    //
+    // So the placeholder is recognised and refused by shape: the card's title with an ellipsis,
+    // or a bare ellipsis. The wait then continues until the text CHANGES and STAYS changed, so a
+    // preview still streaming is not mistaken for a finished one.
+    const t = String(r.title || '').trim();
+    const isPlaceholder = (v) => {
+      const s = String(v || '').trim();
+      if (!s) return false;
+      if (/^[…\.]{1,3}$/.test(s)) return true;
+      const bare = s.replace(/[…]|\.{3}$/g, '').trim();
+      return !!t && bare.toLowerCase() === t.toLowerCase();
+    };
+    // Storybound's OWN fallback is a legitimate offer, not a failure: when there is no contextual
+    // preview the card ships its crafted defaults verbatim. Knowing them lets the offer be
+    // reported for what it is instead of being passed off as a generated preview.
+    const dflt = (() => {
+      try {
+        const o = (window.state && window.state.fateOptions) || [];
+        const d = o[idx] || null;
+        return d ? { action: String(d.action || ''), dialogue: String(d.dialogue || '') } : null;
+      } catch (_) { return null; }
+    })();
+    // ── STABLE AND NON-PLACEHOLDER IS NOT THE SAME AS *THIS CARD'S* OFFER ───────────────
+    // (Roman 2026-11-14.) A stability test would accept text left in the inputs by a previous
+    // card or a previous turn while THIS card's preview is still loading — it is steady and it
+    // is not a placeholder, so it passes, and the wrong Say/Do gets submitted. So the offer is
+    // VERIFIED against the app's own two signals instead of inferred from the fields:
+    //
+    //   LOADING   the generator adds `fate-preview-loading` to both inputs and removes it only
+    //             when the final text has been written. While that class is present, nothing is
+    //             final no matter how settled it looks.
+    //   CACHED    every generation path writes through `_cacheFateCardPreview(turnKey, cardId,
+    //             action, dialogue)` into `state._sceneFateCardPreviews`, keyed `_cacheKey ===
+    //             turnCount`. So the accepted text must EQUAL this card's entry for THIS turn.
+    //
+    // Together those make staleness impossible to mistake for an offer: old text cannot match a
+    // cache entry that does not exist yet, and a cache entry from an earlier turn is rejected by
+    // the key.
+    const cardId = (() => {
+      try {
+        const o = (window.state && window.state.fateOptions) || [];
+        return (o[idx] && o[idx].id) || null;
+      } catch (_) { return null; }
+    })();
+    r.cardId = cardId;
+    if (!cardId) { r.why = 'could not resolve the card id from state.fateOptions[' + idx + ']'; return r; }
+    const loading = () => {
+      const io = inputs();
+      return !!((io.actInput && io.actInput.classList.contains('fate-preview-loading'))
+        || (io.diaInput && io.diaInput.classList.contains('fate-preview-loading')));
+    };
+    const cached = () => {
+      try {
+        // THE COMMITTED OFFER FIRST. The product now PRESERVES a dealt grounded action and lets
+        // the preview phrase only the dialogue, so the inputs deliberately differ from the raw
+        // preview cache. Verifying against that cache would reject a correctly-preserved offer as
+        // "unusable" and refuse to submit — the anti-flicker guard turned against the fix. The
+        // product publishes what it actually committed; that is what gets verified.
+        const w = (window.state && window.state._sceneFateCardCommitted) || null;
+        if (w && w._cacheKey === ((window.state && window.state.turnCount) || 0) && w[cardId]) {
+          return w[cardId];
+        }
+        const c = (window.state && window.state._sceneFateCardPreviews) || null;
+        if (!c) return null;
+        if (c._cacheKey !== ((window.state && window.state.turnCount) || 0)) return null;
+        return c[cardId] || null;
+      } catch (_) { return null; }
+    };
+    for (let i = 0; i < 120; i++) {                      // up to 60s
+      if (loading()) { r.sawLoading = true; await new Promise((x) => setTimeout(x, 500)); continue; }
+      const cc = cached();
+      if (cc) {
+        const io = inputs();
+        const a = (io.actInput && io.actInput.value) || '';
+        const d = (io.diaInput && io.diaInput.value) || '';
+        const matches = (a === String(cc.action || '')) && (d === String(cc.dialogue || ''));
+        const noneIsPlaceholder = !isPlaceholder(a) && !isPlaceholder(d);
+        const hasSomething = !!(a.trim() || d.trim());
+        if (matches && noneIsPlaceholder && hasSomething) {
+          r.action = a; r.dialogue = d; r.waited = i * 500; r.usable = true;
+          r.oneFieldBlank = !(a.trim() && d.trim());     // Silence keeps its empty dialogue
+          r.verifiedAgainstCache = true;
+          r.source = (dflt && a === String(dflt.action || '')
+            && (d === String(dflt.dialogue || '') || !d.trim()))
+            ? 'storybound_card_default' : 'contextual_preview';
+          r.cardDefault = dflt;
+          return r;
+        }
+        r.lastMismatch = { fields: { action: a, dialogue: d }, cached: cc };
+      }
+      await new Promise((x) => setTimeout(x, 500));
+    }
+    const io2 = inputs();
+    r.action = (io2.actInput && io2.actInput.value) || '';
+    r.dialogue = (io2.diaInput && io2.diaInput.value) || '';
+    r.waited = 60000; r.usable = false; r.cardDefault = dflt;
+    r.why = 'no VERIFIED offer for card "' + cardId + '" landed within 60s'
+      + (r.sawLoading ? ' (the preview was seen loading)' : ' (no loading state was ever seen)')
+      + '. Cache entry for this turn: ' + JSON.stringify(cached())
+      + ' · fields: ' + JSON.stringify({ action: r.action, dialogue: r.dialogue })
+      + '. NOT submitting and NOT clicking again.';
+    return r;
+  }, index);
+  say('  ⟐ CARD CLICKED: [' + index + '] ' + (out.title || '(untitled)')
+    + (out.clicked ? '' : ' — NOT CLICKED: ' + (out.why || 'unknown')));
+  if (out.clicked) {
+    if (out.usable) {
+      say('      offer source   : ' + (out.source === 'storybound_card_default'
+        ? 'STORYBOUND\'S OWN CARD DEFAULT (no contextual preview was produced) — preserved verbatim'
+        : 'the contextual preview')
+        + (out.oneFieldBlank ? ' · one field is intentionally blank' : ''));
+      say('      offered action  : ' + (out.action || '(blank)'));
+      say('      offered dialogue: ' + (out.dialogue || '(blank)'));
+      say('      verified        : matched this card\'s cached Say/Do for this turn'
+        + ' (card id "' + (out.cardId || '?') + '")'
+        + (out.sawLoading ? ', after the loading state cleared' : ', no loading state was observed')
+        + ' · ' + out.waited + 'ms');
+    } else {
+      say('      ⊘ NO USABLE OFFER: ' + (out.why || 'unknown'));
+    }
+  }
+  return out;
+}
+
 // ── SUBMIT A READER CHOICE THROUGH THE NORMAL CONTROLS ────────────────────────────────────
 async function submitChoice(choice) {
   // THE APP OWNS THE BUTTON. The previous version set `b.disabled = false` before clicking,
@@ -2770,40 +6465,8 @@ async function waitForTurnIdle(label) {
     + JSON.stringify(last) + '. The advance lock was NOT cleared by this driver.');
 }
 
-// ── THE TEN SCENES ────────────────────────────────────────────────────────────────────────
-const sceneLog = [];
-const deliveryLog = [];
-// THE STORY RECORD, keyed by scene number. Written to disk after every completed scene.
-const storyRecord = {};
-// Verdicts whose proposal identity could not be confirmed. Retained, never guessed onto a scene.
-const unassociatedAssessments = [];
-function writeStoryRecord(note) {
-  try {
-    const scenes = Object.keys(storyRecord).map(Number).sort((a, b) => a - b);
-    // A SCENE WITH NO ASSESSMENT IS MARKED UNASSESSED. The last scene of a run normally has none,
-    // because submitting scene N is what assesses scene N-1 — and buying one more scene purely to
-    // obtain a verdict is not a reason to spend.
-    scenes.forEach((k) => {
-      const r = storyRecord[String(k)];
-      if (!r.assessment) {
-        r.assessment = null;
-        // REPORTS WHAT IS ON RECORD, AND NOTHING MORE. "NOT APPLICABLE" implied the opening was
-        // exempt from assessment, and the fuller wording implied an assessment would or did
-        // follow. Neither is known from this record.
-        r.assessmentStatus = r.isOpening
-          ? 'No matching assessment recorded.'
-          : 'No matching assessment recorded. (Submitting the next scene is what runs a commit'
-            + ' pass; another scene was not purchased to obtain one.)';
-      } else { r.assessmentStatus = 'assessed'; }
-    });
-    fs.writeFileSync(OUT + '/STORY_RECORD.json', JSON.stringify({
-      note: note || 'written after each completed scene; partial results are preserved on failure',
-      scenes: scenes.map((k) => storyRecord[String(k)]),
-      unassociatedAssessments: unassociatedAssessments,
-    }, null, 2));
-  } catch (_) {}
-}
-try {
+// (the `try` that used to open here now opens before the launch section, so launch and its
+//  post-launch assertions are covered by the same failure-preservation boundary)
   // ── SCENE 1 ─────────────────────────────────────────────────────────────────────────────
   // IN `run` IT IS GENERATED, for real, and the driver waits for a genuine commit.
   // IN `drive` IT IS MOUNTED through production's own scene door instead, and that is a
@@ -3089,15 +6752,67 @@ try {
     }
 
     pub = await readPublished(page);
-    const choice = await awaitReaderChoice(n - 1, pub.allContent, pub.controls);
+    let choice = await awaitReaderChoice(n - 1, pub.allContent, pub.controls);
+    // ── THE HAND IS READ, REPORTED, AND THEN WAITED ON AGAIN ─────────────────────────────
+    // A `readHand` answer is not a turn: it examines the deck through its own gate, writes the
+    // hand to disk, and asks again. So the card is chosen from what was actually dealt.
+    while (choice.readHand || choice.fateCardIndex !== null) {
+      if (choice.readHand) {
+        const hand = await examineAndReadHand();
+        try { fs.writeFileSync(OUT + '/FATE_HAND_scene' + (n - 1) + '.json', JSON.stringify({
+          statedPlainly: hand.cards.length
+            ? 'The hand as dealt by the product, read from the active reader mount. Nothing was '
+              + 'forced and nothing was re-dealt; a hand already present would have been kept.'
+            : 'No hand is available. The examine gate was not reachable or dealt nothing, so there '
+              + 'is no card to choose and none was invented.',
+          examinedVia: hand.examineClicked, handAlreadyPresent: hand.already,
+          gateWasPresent: hand.gatePresent, mount: hand.mount,
+          cards: hand.cards, stateFateOptions: hand.fateOptions,
+        }, null, 2)); } catch (_) {}
+        if (!hand.cards.length) say('  ⟐ no hand to choose from — pausing again rather than inventing a choice');
+      } else {
+        const picked = await clickFateCard(choice.fateCardIndex);
+        try { fs.writeFileSync(OUT + '/FATE_CARD_PICKED_scene' + (n - 1) + '.json', JSON.stringify(picked, null, 2)); } catch (_) {}
+        // ONLY A USABLE OFFER BECOMES A TURN. `usable` is set by the wait above only after the
+        // sparkle placeholder has been replaced and the text has stopped changing. An unusable
+        // result pauses WITHOUT submitting and WITHOUT clicking again — a second click would
+        // restart the preview and could commit a different card's text.
+        if (picked.clicked && picked.usable) {
+          choice = { action: picked.action, dialogue: picked.dialogue, petition: '',
+                     readHand: false, fateCardIndex: null, viaFateCard: picked.title,
+                     offerSource: picked.source, oneFieldBlank: !!picked.oneFieldBlank };
+          break;
+        }
+        say('  ⟐ no usable Say/Do offer — pausing without submitting and without clicking again');
+      }
+      choice = await awaitReaderChoice(n - 1, pub.allContent, pub.controls);
+    }
     say('\n── SCENE ' + n + ' ──');
+    if (choice.viaFateCard) say('  via fate card  : ' + choice.viaFateCard);
     say('  reader action  : ' + choice.action);
     say('  reader dialogue: ' + (choice.dialogue || '(none)'));
     sceneNoForReplies = n;
+    // The Petition is sealed FIRST, through the real modal, because that is the order a reader
+    // does it in: the wish is staged on the closing scene and resolves on the next submit.
+    let _petitionSealed = null;
+    if (choice.petition) {
+      _petitionSealed = await sealPetition(choice.petition);
+      try { fs.writeFileSync(OUT + '/PETITION_SEALED_scene' + (n - 1) + '.json',
+        JSON.stringify(_petitionSealed, null, 2)); } catch (_) {}
+      assert(_petitionSealed && _petitionSealed.pendingAfter,
+        'the Petition was not sealed through the UI (' + ((_petitionSealed && (_petitionSealed.why
+          || _petitionSealed.toast)) || 'no pendingPetition after the seal click') + ') — refusing to '
+        + 'continue, because a run that silently drops the wish cannot test whether it is delivered');
+    }
     const clicked = await submitChoice(choice);
     say('  submitted: ' + JSON.stringify(clicked));
     assert(clicked.btn, 'no #submitBtn — the literary controls are not mounted');
     assert(!clicked.modals.length, 'a modal intercepted the submit: ' + JSON.stringify(clicked.modals));
+    // ── BOTH ENDINGS, AFTER THE SAME FINISHED PASSAGE ──────────────────────────────────
+    // Written per scene when the closer pass is armed. The stock ending is the COMPLETE text the
+    // app composed before the adaptation replaced it — the real published ending, wish fragment
+    // included — so the comparison is two endings after one identical passage, with the scene
+    // generated once.
     // ── WHAT ACTUALLY REACHED EACH CONSUMER ────────────────────────────────────────────
     // Captured per scene so the chain is visible: the planner request, the author request, and
     // the durable action ledger — not just the helper's return value.
@@ -3144,6 +6859,51 @@ try {
       say('  [FIXTURE] identical-milestone assignment ' + JSON.stringify(fx));
     }
     const st = await waitForCommit(n, 'continuation ' + n);
+    // ── THE CLOSER COMPARISON, READ AFTER THE SCENE HAS COMMITTED ──────────────────────
+    // (Roman 2026-11-14.) This block used to sit BEFORE the submit, so it read
+    // state._sbCloserTest before the scene existed and reported "no mandated closer fired"
+    // on every scene — the instrumentation ran one step too early, which is worse than
+    // missing because it looked like a product answer.
+    //
+    // `body` is taken from the comparison record itself, so the final paragraphs and both
+    // endings come from ONE object. Reading the page separately would risk showing a body
+    // that is not the body the two endings were built on.
+    if (TEST_CLOSER_PASS) {
+      try {
+        const ct = await page.evaluate(() => {
+          const t = (window.state || {})._sbCloserTest || null;
+          return t ? { kind: t.kind, card: t.card, applied: t.applied, why: t.why,
+            finishReason: t.finishReason || null,
+            body: t.body || null, stockEnding: t.stockEnding || null,
+            adaptedEnding: t.adaptedEnding || null, teaching: t.teaching || null } : null;
+        });
+        if (ct) {
+          const tail = String(ct.body || "").trim().split(/\n{2,}/).slice(-4).join("\n\n");
+          fs.writeFileSync(OUT + "/CLOSER_TEST_scene" + n + ".json", JSON.stringify({
+            statedPlainly: ct.applied
+              ? "Luna's adaptation WAS published as this scene's final beat: it appeared exactly "
+                + "once and terminated the page, both checked. The stock ending below is the complete "
+                + "text the app had already composed, kept only for comparison."
+              : "Luna's adaptation was NOT published; the complete stock ending stands, and the page "
+                + "was left exactly as it was. The reason is in whyNotApplied.",
+            scene: n, card: ct.card, kind: ct.kind,
+            published: ct.applied ? "adapted" : "stock",
+            whyNotApplied: ct.applied ? null : (ct.why || null),
+            finishReason: ct.finishReason,
+            finalParagraphs: tail,
+            stockEnding: ct.stockEnding,
+            adaptedEnding: ct.adaptedEnding,
+            teaching: ct.teaching,
+            fullBody: ct.body,
+          }, null, 2));
+          say("  ⟐ CLOSER TEST scene " + n + " (" + (ct.card || "?") + "): published "
+            + (ct.applied ? "LUNA'S ADAPTATION" : "THE COMPLETE STOCK ENDING — " + (ct.why || "no adaptation returned"))
+            + " → CLOSER_TEST_scene" + n + ".json");
+        } else {
+          say("  ⟐ CLOSER TEST scene " + n + ": no mandated closer fired on this scene, so nothing was adapted");
+        }
+      } catch (e) { say("  ⚠ could not read the closer test: " + (e && e.message)); }
+    }
     if (halted) break;
     say('  committed: ' + JSON.stringify(st));
     // ── A SNAPSHOT PER COMMITTED SCENE (2026-11-01) ───────────────────────────────────────
@@ -3469,6 +7229,176 @@ try {
     say('\nRESUMABLE STATE preserved: ' + Object.keys(dump.storage).length + ' localStorage keys, '
       + (dump.storage['sb_saved_story'] || '').length + ' bytes of saved story, storyId '
       + dump.storyId);
+    // ── THE ACCEPTED PLAN AND ITS OWN BIBLES, PRESERVED TOGETHER (Roman 2026-11-06) ─────────
+    // They already persist — all three live in `stateSnapshot` inside sb_saved_story, which is
+    // what Continue reloads, and the bible ledger's migration branch backfills a 'committed'
+    // record from an existing bible rather than reading "no record" as "regenerate". This writes
+    // them out as ONE named artifact as well, so "the spine and the bibles that produced it" is
+    // auditable without digging through a multi-megabyte blob, and so a later run can be checked
+    // against the exact pair the accepted plan was built from.
+    try {
+      const _snap = JSON.parse(dump.storage['sb_saved_story'] || '{}').stateSnapshot || {};
+      const _arcs = (_snap.cgScaffold && _snap.cgScaffold.issueArcs) || [];
+      fs.writeFileSync(OUT + '/ACCEPTED_PLAN_AND_BIBLES.json', JSON.stringify({
+        storyId: dump.storyId,
+        storyLength: _snap.storyLength || null,
+        statedPlainly: 'The accepted spine and the character bibles it was built from, as they '
+          + 'stand at the end of this run. Continue reloads these same values; neither is '
+          + 'regenerated by reopening, and within the run the bible ledger reuses a committed '
+          + 'bible rather than refiring it.',
+        spine: _snap.cgScaffold || null,
+        issueArcCount: _arcs.length,
+        scenesPerIssue: _arcs.map((a) => ((a && a.sceneOutline) || []).length),
+        pcBodyBible: _snap.pcBodyBible || null,
+        liBodyBible: _snap.liBodyBible || null,
+        // ── THE GENERATED FOUNDATIONS (Roman 2026-11-12) ──────────────────────────────────
+        // The spine and the two Bibles were preserved; the four things BETWEEN them were not,
+        // and they are where a story's reasons live. Without them a reader of this artifact can
+        // see what the plan says and what the prose says, but not why either of them is what it
+        // is — which is precisely the judgement this run exists to make possible.
+        //
+        //   pairBond      WHY THIS PAIR: the psychological lock each turns in the other, the
+        //                 erotic register each unlocks, whyHer / whyHim, an irreplaceability
+        //                 proof per side, and the attraction engine. Generated by
+        //                 _generatePairBond from both Bibles; nothing in the seed supplies it.
+        //   pairDynamic   the romance engine the pair was classified into.
+        //   aPlot         the external plot: goal, named clock, antagonist, stakes, milestones.
+        //   rPlot         the relationship plan, generated BEFORE the A-plot in the inverted
+        //                 chain, so a missing one explains a thin A-plot rather than puzzling.
+        //
+        // Each is written as it stands at the end of the run, null when the stage did not
+        // produce one — a null here is evidence, not an omission.
+        pairBond: _snap.pairBond || null,
+        pairDynamic: _snap.pairDynamic || null,
+        aPlot: _snap.aPlot || null,
+        rPlot: _snap.rPlot || null,
+        foundationsPresent: {
+          pairBond: !!_snap.pairBond, pairDynamic: !!_snap.pairDynamic,
+          aPlot: !!_snap.aPlot, rPlot: !!_snap.rPlot,
+          pcBodyBible: !!_snap.pcBodyBible, liBodyBible: !!_snap.liBodyBible,
+          spine: !!_snap.cgScaffold,
+        },
+      }, null, 2));
+      say('  GENERATED FOUNDATIONS preserved: pairBond ' + (_snap.pairBond ? 'present' : 'ABSENT')
+        + ' · aPlot ' + (_snap.aPlot ? 'present' : 'ABSENT')
+        + ' · rPlot ' + (_snap.rPlot ? 'present' : 'ABSENT')
+        + ' · pairDynamic ' + (_snap.pairDynamic ? 'present' : 'ABSENT'));
+      say('  ACCEPTED PLAN + BIBLES preserved together: ' + _arcs.length + ' issue arc(s), scenes '
+        + '[' + _arcs.map((a) => ((a && a.sceneOutline) || []).length).join(', ') + '], pc bible '
+        + (_snap.pcBodyBible ? 'present' : 'ABSENT') + ', li bible '
+        + (_snap.liBodyBible ? 'present' : 'ABSENT') + ' → ACCEPTED_PLAN_AND_BIBLES.json');
+    } catch (e) {
+      say('  ⚠ could not extract the plan/bible pair (' + (e && e.message)
+        + ') — RESUMABLE_STATE.json still holds them');
+    }
+
+    // ── EVERY REUSED REPLY, ACCOUNTED FOR ONCE ───────────────────────────────────────────
+    // The claim this family makes is "each saved reply was used exactly once for its intended
+    // operation, at no new charge". That claim is checked here rather than asserted: an entry
+    // served twice cannot happen (the second call is refused at the wire), but one served ZERO
+    // times is a real outcome — the operation never fired, so the reply this run was handed went
+    // unused, and whatever it was meant to supply came from somewhere else.
+    // ── THE C+ EDITOR'S OFFLINE POSITION, AS NUMBERS ────────────────────────────────────
+    // Written on every run, so the absence of editor traffic is a recorded zero rather than a
+    // missing file. `handlerInvocations` counts the in-process api/cplus-editor.js calls this
+    // run made; `egressAttempts` counts that handler's own outbound fetches, which route
+    // interception cannot see and which SB_MODEL_ORIGIN could not redirect until the handler
+    // was given a guarded fetch.
+    try {
+      const _edReqs = requests.filter((r) => String(r.url || '').indexOf('cplus-editor') !== -1);
+      fs.writeFileSync(OUT + '/EDITOR_OFFLINE_PROOF.json', JSON.stringify({
+        statedPlainly: 'The C+ editor does not travel through route.fetch. It is invoked '
+          + 'in-process and does its own outbound fetch, so an offline run has to block it at '
+          + 'two places: the route block that answers it, and the handler\'s own egress. These '
+          + 'counts are taken at both boundaries.',
+        sbOffline: !!process.env.SB_OFFLINE,
+        sbModelOrigin: process.env.SB_MODEL_ORIGIN || null,
+        egressGuardInstalled: !!_editorFetchGuard,
+        editorRequestsSeen: _edReqs.length,
+        handlerInvocations: _editorHandlerInvocations,
+        egressAttempts: _editorEgressAttempts,
+        egress: _editorEgress,
+        requests: _edReqs.map((r) => ({ scene: r.scene, chars: r.chars,
+          estimate: r.estimate, operationId: r.operationId || null,
+          offlineAnsweredLocally: !!r.offlineAnsweredLocally,
+          refused: r.refused || null, status: r.status == null ? null : r.status,
+          served: r.served || null, receipt: r.receipt || null })),
+      }, null, 2));
+          if (_openerPinned) {
+        say('  OPENER PIN "' + _openerPinned + '": '
+          + (_openerConfirmed ? 'CONFIRMED from the app\u2019s own selection'
+             : 'NEVER CONFIRMED \u2014 the app did not state a selection')
+          + ' \u00b7 ' + _pinPendingAnswers.length + ' call(s) answered locally while unconfirmed'
+          + (_pinPendingAnswers.length
+             ? ' [' + _pinPendingAnswers.map((p) => (p.role || p.url)).join(', ') + ']' : '')
+          + ' \u00b7 $0 sent');
+      }
+  if (_edReqs.length || _editorHandlerInvocations || _editorEgressAttempts) {
+        say('  EDITOR: ' + _edReqs.length + ' request(s) seen · handler invoked '
+          + _editorHandlerInvocations + ' time(s) · handler egress attempts '
+          + _editorEgressAttempts + ' → EDITOR_OFFLINE_PROOF.json');
+      }
+    } catch (_) {}
+    try {
+      const _rk = Object.keys(_reuseState);
+      if (_rk.length) {
+        const _unused = _rk.filter((k) => _reuseState[k].served === 0);
+        fs.writeFileSync(OUT + '/REPLIES_REUSED.json', JSON.stringify({
+          statedPlainly: 'Each entry is an operation this run did NOT pay for. The reply was '
+            + 'served from the named file, which a previous run already paid for, and the '
+            + 'reservation was closed without a settlement row — so it contributes no charge and '
+            + 'no hold. The planner, the author and the C+ passes have no entry here on purpose: '
+            + 'they are what this run generated fresh.',
+          reused: _rk.map((k) => ({ env: k, op: _reuseState[k].label, file: _reuseState[k].file,
+            served: _reuseState[k].served, status: _reuseState[k].status,
+            bodyChars: _reuseState[k].bodyChars, originalReqId: _reuseState[k].originalReqId || null,
+            originalServedModel: _reuseState[k].originalServedModel || null,
+            originalReceipt: _reuseState[k].receipt || null, newCharge: 0 })),
+          servedExactlyOnce: _unused.length === 0,
+          neverServed: _unused.map((k) => ({ env: k, op: _reuseState[k].label })),
+        }, null, 2));
+        say('  REPLIES REUSED: ' + _rk.filter((k) => _reuseState[k].served === 1).length + ' of '
+          + _rk.length + ' served exactly once, $0 new charge and no hold for any of them'
+          + (_unused.length ? ' · ⚠ NEVER SERVED: ' + _unused.map((k) => _reuseState[k].label).join(', ') : '')
+          + ' → REPLIES_REUSED.json');
+        // ── UNUSED IS TWO DIFFERENT OUTCOMES, AND ONLY ONE OF THEM IS A FAULT ─────────────
+        // MEASURED: the wound-to-LI swap test fired on one offline path and not on another, and
+        // the subplot generator fired in the paid run but not in either replay. A stage that
+        // simply does not run on this path leaves its reply unused, and that is not a failure —
+        // there was nothing to answer. The failure is the other case: the stage DID run, this
+        // family's predicate did not claim it, and the call went to a provider instead, which is
+        // a silent paid regeneration of something already on disk. The two are told apart by
+        // asking the predicate about the requests this run actually recorded.
+        const _leaked = [];
+        for (const k of _unused) {
+          const op = _REUSE_OPS.filter((o) => o.env === k)[0];
+          if (!op) continue;
+          // A REFUSED RECORD IS NOT A CALL THAT RAN. The first paid attempt reported "REUSE
+          // MISSED A CALL THAT RAN: A-PLOT (r6)" when the A-plot had been refused by the budget
+          // guard and never left — a false accusation of the thing this check exists to catch.
+          // A record only counts as having run if it came back with a status.
+          const hit = (requests || []).filter((r) => {
+            try {
+              if (r.servedFromPreserved) return false;
+              if (r.refusedByDiagnostic || r.refused || r.refusedByUnrecoverable) return false;
+              if (r.status == null) return false;              // never dispatched, or no response
+              return op.claims(String(r.bodyText || ''), r);
+            } catch (_) { return false; }
+          })[0];
+          if (hit) _leaked.push({ env: k, op: op.label, reqId: hit.reqId || null, url: hit.url || '' });
+        }
+        if (_leaked.length) {
+          say('  ✗ REUSE MISSED A CALL THAT RAN: ' + _leaked.map((x) => x.op + ' (r' + x.reqId + ')').join(', '));
+          halted = halted || ('REUSE PREDICATE MISSED A LIVE CALL: ' + _leaked.map((x) => x.op
+            + ' at request ' + x.reqId + ' ' + x.url).join('; ') + ' — the operation ran and was '
+            + 'NOT answered from disk, so an already-paid reply was regenerated instead');
+        } else if (_unused.length) {
+          say('  ⓘ ' + _unused.map((k) => _reuseState[k].label).join(', ')
+            + ' did not run on this path, so the reply provided for it was not needed'
+            + ' — no request matching that operation was recorded, and nothing was regenerated');
+        }
+      }
+    } catch (e) { say('  ⚠ could not write the reuse report: ' + (e && e.message)); }
 
     // ── AND RELOADED THROUGH CONTINUE, IN A FRESH CONTEXT ────────────────────────────────
     const ctx2 = await browser.newContext();
@@ -3520,6 +7450,20 @@ try {
   say('  remaining authorization: $' + remainingNow().toFixed(6) + ' of $' + CEILING.toFixed(2)
     + '  (settled $' + settledTotal.toFixed(6) + ' · held $' + heldTotal.toFixed(6)
     + ' · outstanding reservations $' + outstanding().toFixed(6) + ')');
+  // ── LOCAL ANSWERS ARE REPORTED APART FROM REAL CHARGES (Roman 2026-11-17) ───────────────
+  // A provider-blocked replay answers some calls from preserved replies and 404s the rest. Both
+  // are $0 and neither is a provider answer, so they are stated on their own line rather than
+  // disappearing into a settled/held split that reads like spending.
+  if (_offlineLocalAnswers > 0) {
+    say('  offline ledger: ' + _offlineLocalAnswers + ' call(s) answered LOCALLY before any'
+      + ' reservation (would have estimated $' + _offlineLocalAnswersEst.toFixed(6) + ') —'
+      + ' no dispatch, no hold, no exposure');
+  }
+  if (_offlineArtifact404 > 0) {
+    say('  offline ledger: ' + _offlineArtifact404 + ' local 404 replay artifact(s) reconciled to ZERO'
+      + ' (would have reserved $' + _offlineArtifact404Est.toFixed(6) + ') — the static server has'
+      + ' no /api route, so nothing left this machine and nothing is owed');
+  }
   if (halted) say('  HALTED: ' + halted);
   await browser.close();
 }
