@@ -30,6 +30,7 @@
     // _ft_deck_act/LATEST/*.json, 1 file vs 0). Without it, "continuation scaffolds go to Luna"
     // was a decision with nothing to apply it to — my first implementation covered only openings.
     contScaffold:   { any: ['Reachability (HARD)'] },
+    contSkeleton:   { any: ['Define a narrative skeleton for the next scene:'] },
     prose:          { any: ['SCENE CONTINUATION (HARD', 'PROTAGONIST OPENING BEAT (HARD'] },
     // The closer adaptation is ordinary prose: Luna writes it.
     closer:         { any: ['CLOSER ADAPTATION', 'adapt the mandated closer'] },
@@ -49,23 +50,12 @@
   // `reasoning_effort` is forwarded. Sending `max_tokens` to a reasoning model gives it no
   // completion budget at all.
   //
-  // THE SPINE KEEPS ITS WORKING ENDPOINT. /api/sol-scene-test is the route that serves this
-  // operation today, with its own completion allowance; only the MODEL changes to Sol. My first
-  // pass moved it to /api/chatgpt-proxy, which swapped a working receiving contract for an
-  // untested one in the same edit that changed the model.
-  // THE TWO ENDPOINTS WANT OPPOSITE ALLOWANCE FIELDS, AND THE DIFFERENCE IS MEASURED:
-  //   /api/chatgpt-proxy  reads `max_tokens` FROM THE BODY and renames it to
-  //                       max_completion_tokens itself for a reasoning model
-  //                       (api/chatgpt-proxy.js: `max_completion_tokens: max_tokens`).
-  //                       Pre-renaming it client-side silently loses the call site's budget to
-  //                       the handler's own `max_tokens = 1500` default — measured: a scaffold
-  //                       that asked for 1800 went out with 1500.
-  //   /api/sol-scene-test REQUIRES max_completion_tokens and REFUSES max_tokens outright
-  //                       ('unsupported_parameter', measured).
-  // So the wire field is a property of the ROUTE, never a global rule.
+  // Production creative calls use the ordinary provider proxies. The isolated
+  // sol-scene-test endpoint is localhost-only and is never a production route.
+  // chatgpt-proxy reads max_tokens and translates it for reasoning models.
   var ROUTES = {
-    sol:  { model: 'gpt-6.1-sol', endpoint: '/api/sol-scene-test', label: 'Sol',
-            role: 'PRIMARY_AUTHOR', wireAllowance: 'max_completion_tokens' },
+    sol:  { model: 'gpt-6.1-sol', endpoint: '/api/chatgpt-proxy', label: 'Sol',
+            role: 'PRIMARY_AUTHOR', operation: 'story-spine', wireAllowance: 'max_tokens' },
     luna: { model: 'gpt-6-luna',  endpoint: '/api/chatgpt-proxy',  label: 'Luna',
             role: 'PRIMARY_AUTHOR', wireAllowance: 'max_tokens' },
     grok: { model: 'grok-4.3',    endpoint: '/api/proxy',          label: 'Grok',
@@ -80,6 +70,10 @@
     if (route.role && body.role !== route.role) {
       changes.push('role=' + route.role + ' (was ' + (body.role || '(none)') + ')');
       body.role = route.role;
+    }
+    if (route.operation && body.operation !== route.operation) {
+      body.operation = route.operation;
+      changes.push('operation=' + route.operation);
     }
     // THE ALLOWANCE TRAVELS IN THE FIELD THIS ROUTE READS, carrying whatever the call site
     // asked for. It is never dropped and never defaulted here: losing it to a handler default
@@ -97,7 +91,7 @@
     // temperature is left alone: each handler decides, and sol-scene-test omits it upstream.
     // THE RESPONSE FORMAT THE CONSUMER NEEDS. A scaffold is parsed as JSON by its consumer, so
     // the structured-output request must survive the reroute; prose must NOT be forced to JSON.
-    var wantsJson = (op === 'CONTINUATION_SCAFFOLD' || op === 'OPENING_SCAFFOLD'
+    var wantsJson = (op === 'CONTINUATION_SCAFFOLD' || op === 'CONTINUATION_SKELETON' || op === 'OPENING_SCAFFOLD'
                      || op === 'STORY_SPINE');
     if (wantsJson && !body.response_format) {
       body.response_format = { type: 'json_object' };
@@ -112,6 +106,7 @@
   // operation -> assignment. Order matters: the first match wins, and `intimacy` is tested before
   // `prose` because an intimate scene's request also carries the prose marker.
   var ASSIGNMENT = [
+    { op: 'CONTINUATION_SKELETON',  sig: 'contSkeleton',     route: 'luna' },
     { op: 'STORY_SPINE',            sig: 'spine',           route: 'sol'  },
     { op: 'INTIMACY',               sig: 'intimacy',        route: 'grok' },
     { op: 'OPENING_SCAFFOLD',       sig: 'openingScaffold', route: 'luna' },

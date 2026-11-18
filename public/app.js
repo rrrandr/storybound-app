@@ -106990,34 +106990,11 @@ ${(function(){ try { var _p = (typeof window._buildPlanningRomanceContext === 'f
 ${(function(){ try { var _i = (typeof window._sbBibleInteriorCompact === 'function') ? window._sbBibleInteriorCompact(state) : ''; return _i || ''; } catch (_) { return ''; } })()}
 ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'function') ? (_ffBuildRevealWithholdDirective(state) || '') : ''; } catch (_) { return ''; } })()}Return ONLY valid JSON. No markdown. No explanation.` }
       ];
-      // ═══ ROUTE — ADMISSION-ORDERED, NOT A SINGLE UNADMISSIBLE MODEL (Roman 2026-10-11) ═══════
-      // MEASURED DEFECT: this requested 'mistral-small-latest' unconditionally. The governor
-      // reserves UTF-8 BYTES + max_tokens, and the real captured request is ~21,900 bytes, so the
-      // reservation is ~25,700 against Small's recorded 20,000 TPM — over its ENTIRE minute, which
-      // means waiting can never admit it. api/mistral-proxy.js refuses and, by design, NEVER
-      // substitutes a model ("A refusal returns immediately with typed metadata so the caller
-      // decides what to do"). The caller did not decide: it returned no skeleton and CG continued
-      // with "scene proceeds WITHOUT a causal outline". An earlier report of mine claimed Ministral
-      // 8B served these calls — that was the ISSUE SPINE's calls, not this one. Withdrawn.
-      //
-      // ministral-8b-2512 is the route ALREADY AUTHORIZED for exactly this class: see the
-      // allowlist note in api/mistral-proxy.js, added because "the CG/OAS setup-phase generators
-      // … have real measured reservations (up to ~71,848) that exceed" Small's allowance. The
-      // governor remains the ONLY authority on admission — this is a caller-side candidate list,
-      // and every refusal is reported rather than swallowed.
-      //
-      // mistral-small-latest is deliberately NOT a candidate: at this payload size it is provably
-      // never admissible, so including it would spend a round-trip per scene on a guaranteed
-      // refusal. reasoning_effort is OMITTED for Ministral models, which do not accept it; the
-      // proxy's author-class default cannot fire here (it keys on the "STORYBOUND ARCHITECTURE
-      // LAWS" author prompt and on mistral-small, neither of which applies).
+      // Ordinary scaffolds belong to Luna, even without a test/run configuration.
+      // No automatic smaller-model fallback may silently change the scene's plan.
       var _SKEL_CANDIDATES = [
-        { model: 'ministral-8b-2512', url: '/api/mistral-proxy', role: 'PROMPT_PREPROCESSOR',
-          maxTokens: 3800,
-          why: 'tpm 625,000 / rps 3.13 — admits this reservation; the authorized setup-phase route' },
-        { model: 'ministral-3b-2512', url: '/api/mistral-proxy', role: 'PROMPT_PREPROCESSOR',
-          maxTokens: 3800,
-          why: 'tpm 1,300,000 / rps 12.5 — larger allowance; last resort before no scaffold' }
+        { model: 'gpt-6-luna', url: '/api/chatgpt-proxy', role: 'PRIMARY_AUTHOR',
+          maxTokens: 10000, effort: 'medium', why: 'production scaffold default' }
       ];
       // ── A SELECTED SKELETON MODEL PINS THIS CALL (Roman 2026-11-18) ──────────────────────
       // This dispatch had no configuration at all: whatever a run selected, the structured
@@ -107047,11 +107024,11 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
           try { console.log('[SKELETON:ROUTE] PINNED to ' + _skelSel + ' via ' + _skelUrl
             + ' as ' + _skelRole + ' at ' + _skelAllow + ' tokens'
             + (_SKEL_CANDIDATES[0].effort ? (', reasoning effort ' + _SKEL_CANDIDATES[0].effort) : '')
-            + ' \u2014 the Ministral candidates are NOT tried behind it'); } catch (_) {}
+            + ' \u2014 no fallback is tried behind it'); } catch (_) {}
         }
       } catch (_skelRcErr) {
         try { console.warn('[SKELETON:ROUTE] run-config read failed ('
-          + (_skelRcErr && _skelRcErr.message) + ') \u2014 the default Ministral candidates stand'); } catch (_) {}
+          + (_skelRcErr && _skelRcErr.message) + ') \u2014 the production Luna default stands'); } catch (_) {}
       }
       var _skelRouteLog = [];
       const result = await (async function () {
@@ -107075,7 +107052,9 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             });
             const _j = await _r.json();
             var _txt = String(_j.content || (_j.choices && _j.choices[0] && _j.choices[0].message && _j.choices[0].message.content) || '');
-            if (_r.ok && _txt) {
+            var _finish = _j.finish_reason || (_j.choices && _j.choices[0] && _j.choices[0].finish_reason);
+            var _refusal = _j.refusal || (_j.choices && _j.choices[0] && _j.choices[0].message && _j.choices[0].message.refusal);
+            if (_r.ok && _txt && _finish !== 'length' && !_refusal) {
               _skelRouteLog.push(_cand.model + ': SERVED');
               try { console.log('[SKELETON:ROUTE] ' + _skelRouteLog.join(' | ')); } catch (_) {}
               return _txt;
@@ -107083,7 +107062,8 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             // A GOVERNOR REFUSAL IS NOT A PROVIDER FAILURE. It means no call was made, so the
             // next candidate is tried. Anything else is reported and also falls through, because
             // a scene with no scaffold has no causal outline at all.
-            var _why = (_j && (_j.error || _j.code)) ? String(_j.error || _j.code) : ('http ' + _r.status);
+            var _why = _finish === 'length' ? 'truncated reply' : (_refusal ? 'provider refusal'
+              : ((_j && (_j.error || _j.code)) ? String(_j.error || _j.code) : ('http ' + _r.status)));
             _skelRouteLog.push(_cand.model + ': REFUSED (' + _why
               + (_j && _j.governor ? ', governor — no provider call made' : '')
               + (_j && _j.outcome ? ', outcome=' + _j.outcome : '')
@@ -107098,7 +107078,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       try { state._skeletonRouteLog = _skelRouteLog.slice(); } catch (_) {}
 
       if (!result || typeof result !== 'string') {
-          _skeletonGateBeacon('mistral_empty_or_non_string', { resultType: typeof result });
+          _skeletonGateBeacon('skeleton_empty_or_non_string', { resultType: typeof result });
           return null;
       }
       try {
@@ -148784,6 +148764,76 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       past: pastHits, present: presentHits };
   }
   window._sbNarrationTense = _sbNarrationTense;
+
+  // Both render modes use the same authored onboarding closer and tense decision.
+  function _sbBuildTemptCloser(st, pov, subject, possessive) {
+    st = st || {};
+    var _povS3 = pov || 'standard';
+    var _subjS3 = subject || 'she';
+    var _SubjS3 = _subjS3.charAt(0).toUpperCase() + _subjS3.slice(1);
+    var _possS3 = possessive || 'her';
+    var _closerS3;
+    // With no confident narration sample, retain the existing present-tense default.
+    var _tenseS3 = 'present';
+    try {
+      if (typeof _sbNarrationTense === 'function') {
+        // THE SOURCE MATTERS. `previousSceneLastLine` is the PREVIOUS CLOSER, which carries
+        // no narration verbs at all (measured: past 0 / present 0) and so reads as "present"
+        // on no evidence — using it as a fallback would silently reinstate the very bug this
+        // fixes. Prefer the prior scene's prose, then the scene text ring, both of which are
+        // real narration.
+        var _priorS3 = String(st._priorSceneText || '');
+        if (!_priorS3) {
+          try {
+            var _ringS3 = st._sceneTextRing || [];
+            for (var _ri = _ringS3.length - 1; _ri >= 0 && !_priorS3; _ri--) {
+              var _re = _ringS3[_ri];
+              _priorS3 = String((_re && (_re.text || _re)) || '');
+            }
+          } catch (_) {}
+        }
+        var _tnS3 = _sbNarrationTense(_priorS3);
+        // Only switch on a CONFIDENT reading. With no evidence either way the closer keeps
+        // the present-tense form it has always had, so a present-tense story is unaffected
+        // and a missing prior scene cannot flip the tense on noise.
+        _tenseS3 = _tnS3.confident ? _tnS3.tense : 'present';
+        console.log('[CLOSER:TENSE] narration reads ' + _tnS3.tense + ' (past ' + _tnS3.past
+          + ' / present ' + _tnS3.present + ', confident=' + _tnS3.confident + ', source='
+          + (_priorS3 ? (_priorS3.length + ' chars') : 'NONE') + ') \u2014 closer rendered in '
+          + _tenseS3);
+      }
+    } catch (_) {}
+    var _pastS3 = (_tenseS3 === 'past');
+    if (_povS3 === '1st' || _povS3 === 'first') {
+      _closerS3 = _pastS3
+        ? 'I realized the deck was still in my hand. As I slid Petition Fate back in, I noticed a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! The static shock reminded me to pay attention to the present…'
+        : 'I realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…';
+    } else if (_povS3 === '2nd' || _povS3 === 'second') {
+      _closerS3 = _pastS3
+        ? 'You realized the deck was still in your hand. As you slid Petition Fate back in, you noticed a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let you play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! The static shock reminded you to pay attention to the present…'
+        : 'You realize the deck is still in your hand. As you slide Petition Fate back in, you notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let you play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds you to pay attention to the present…';
+    } else if (_povS3 === 'author5th') {
+      _closerS3 = 'The deck was still in ' + _possS3 + ' hand. As ' + _subjS3 + ' slid Petition Fate back in, Fate let a red card surface in the otherwise-gold stack — "Tempt Fate," written in a thinner hand. ' + _SubjS3 + '\'s great-grandmother had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds — or up to them. The static shock that bit ' + _possS3 + ' fingertip was not, perhaps, accidental.';
+    } else if (_povS3 === 'environment4th') {
+      _closerS3 = 'The deck stayed in ' + _possS3 + ' hand. As Petition Fate slid back among its siblings, a flash of red caught ' + _possS3 + ' eye — "Tempt Fate," in a stack that had been gold a moment ago. Great-grandmother had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or, perhaps, up to them). The static shock that bit ' + _possS3 + ' finger insisted ' + _subjS3 + ' pay attention to the present.';
+    } else {
+      _closerS3 = _SubjS3 + ' realized the deck was still in ' + _possS3 + ' hand. As ' + _subjS3 + ' slid Petition Fate back in, ' + _subjS3 + ' noticed a flash of red in the otherwise gold stack — “Tempt Fate.” Great-grandma had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) The static shock that bit ' + _possS3 + ' finger reminded ' + _subjS3 + ' to pay attention to the present…';
+    }
+    return _closerS3;
+  }
+  window._sbBuildTemptCloser = _sbBuildTemptCloser;
+
+  // A persisted assignment is evidence only for the exact story, issue, and scene.
+  // Old saves without these stamps are left unjudged rather than blamed on a later page.
+  function _sbOmenAssignmentForScene(st, sceneNumber) {
+    var a = st && st._omenAssigned;
+    if (!a || !a.category || !a.storyId || a.storyId !== String(st.storyId || '')
+        || Number(a.issueIndexInRun) !== Number(st.issueIndexInRun || 1)
+        || !Number.isInteger(sceneNumber) || sceneNumber < 1
+        || a.scene !== sceneNumber) return null;
+    return a;
+  }
+  window._sbOmenAssignmentForScene = _sbOmenAssignmentForScene;
 
   var _LI_ADMIRE_AREAS = ['physical', 'social', 'capability'];
 
@@ -251412,26 +251462,11 @@ No text, no watermark, no UI elements, share-ready.`;
       && !(typeof window !== 'undefined' && window._solArchitectureOff === true);
     if (_solArchOn) {
       try {
-        // ── THE ARCHITECTURE MODEL AND ALLOWANCE ARE RUN-SETTABLE (Roman 2026-11-06) ──────
-        // This stage already had everything a reasoning model on an OpenAI route needs:
-        // max_completion_tokens, a pinned effort, no temperature, a single-use call label and a
-        // run budget. Only the model name and the allowance were literals. Both now read the
-        // selected run configuration, so the authorized twenty-scene run can put Luna here
-        // without a second dispatch path. Unset, the body is byte-identical to before.
-        //
-        // THE OUTGOING ALLOWANCE IS AUTHORITATIVE. `_scaffoldMaxTok` is the app's own figure
-        // (_spineOutputAllowance + portfolio). Where a run overrides it, THAT is the number
-        // sent and therefore the number to quote — the two cannot disagree, because there is
-        // one value and the request carries it.
+        // Select the model before calculating its allowance. The ordinary proxy
+        // enforces the named story-spine operation on the server.
         var _rcArch = (typeof window !== 'undefined'
           && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
-        // ── LUNA IS THE PRIMARY SPINE PLANNER (Roman 2026-11-09) ─────────────────────────
-        // The default was 'gpt-6.1-sol'. Luna was reachable only by a run override or as the
-        // tiered fallback after the Sol attempt failed — so the FIRST attempted model in the
-        // normal path was not the planner we had chosen. The default literal now names Luna.
-        // A deliberate override is untouched: _sbRunConfig.architectureModel still wins, so a
-        // run that wants Sol, or any other model, gets it by saying so.
-        var _archModel = (_rcArch && _rcArch.architectureModel) ? String(_rcArch.architectureModel) : 'gpt-6-luna';
+        var _archModel = (_rcArch && _rcArch.architectureModel) ? String(_rcArch.architectureModel) : 'gpt-6.1-sol';
         // AND THE ALLOWANCE FOLLOWS THE MODEL CLASS. _scaffoldMaxTok is a visible-OUTPUT estimate
         // (~175 tokens per row; 21,063 for a 20-row literary issue). On a gpt-6 model the route
         // forwards it as max_completion_tokens and reasoning bills INSIDE it — a measured median
@@ -251459,14 +251494,13 @@ No text, no watermark, no UI elements, share-ready.`;
           ? Number(_rcArch.architectureMaxTokens)
           : (_archIsSol ? Math.max(_SOL_ARCH_ALLOWANCE, _scaffoldMaxTok)
              : (_archIsReasoning ? Math.max(40000, _scaffoldMaxTok) : _scaffoldMaxTok));
-        var _solRes = await fetch('/api/sol-scene-test', {
+        var _solRes = await fetch('/api/chatgpt-proxy', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: _archModel,
+            role: 'PRIMARY_AUTHOR', operation: 'story-spine', model: _archModel,
             messages: _scaffoldMsgs,
-            // The route REQUIRES max_completion_tokens and refuses max_tokens outright; and a
-            // reasoning model rejects `temperature`, so it is deliberately not sent.
-            max_completion_tokens: _archAllow,
+            // The production proxy translates this allowance for reasoning models.
+            max_tokens: _archAllow,
             // ── THE SCAFFOLD EFFORT IS PINNED AND THEREFORE VERIFIABLE (Roman 2026-11-02) ──
             // A test proposal claimed reasoning_effort "medium" for this stage while the body
             // sent no effort field at all, so the call ran at the provider default and the
@@ -251476,26 +251510,27 @@ No text, no watermark, no UI elements, share-ready.`;
             reasoning_effort: (typeof window !== 'undefined'
               && typeof window._solArchReasoningEffort === 'string'
               && window._solArchReasoningEffort) ? window._solArchReasoningEffort : 'medium',
-            response_format: { type: 'json_object' },
-            _sbCallLabel: 'arch_spine_' + String((s && s.storyId) || 'nostory') + '_' + Date.now(),
-            _sbRunBudgetUsd: (typeof window !== 'undefined' && Number(window._solArchRunBudgetUsd) > 0)
-              ? Number(window._solArchRunBudgetUsd) : 0.30
+            response_format: { type: 'json_object' }
           })
         });
         var _solTxt = await _solRes.text();
         var _solJson = null; try { _solJson = JSON.parse(_solTxt); } catch (_) {}
         var _solUp = (_solJson && _solJson._upstreamRaw) || _solJson || {};
         var _solCh = (_solUp.choices && _solUp.choices[0]) || {};
-        raw = (_solCh.message && _solCh.message.content) || '';
+        raw = _solUp.content || (_solCh.message && _solCh.message.content) || '';
+        var _archFinish = _solUp.finish_reason || _solCh.finish_reason || null;
+        if (_archFinish === 'length' || _solUp.refusal || (_solCh.message && _solCh.message.refusal)) {
+          throw new Error('architecture reply unusable: ' + (_archFinish === 'length' ? 'truncated' : 'refused'));
+        }
         _scaffoldAttempts.push({ asked: _archModel, allowance: _archAllow, status: _solRes.status,
-          served: _solUp.model || null, finish: _solCh.finish_reason || null,
+          served: _solUp.model || null, finish: _archFinish,
           contentChars: String(raw || '').length });
         if (!_solRes.ok || !String(raw || '').trim()) {
           throw new Error('HTTP ' + _solRes.status + ' :: ' + String(_solTxt || '').slice(0, 180));
         }
         _scaffoldServedBy = _solUp.model || _archModel;
         try { console.log('[CG:SCAFFOLD] architecture SERVED BY ' + _scaffoldServedBy
-          + ' (asked ' + _archModel + ', allowance ' + _archAllow + ') · finish=' + (_solCh.finish_reason || '?')
+          + ' (asked ' + _archModel + ', allowance ' + _archAllow + ') · finish=' + (_archFinish || '?')
           + ' · ' + String(raw).length + ' chars'); } catch (_) {}
       } catch (_solArchErr) {
         raw = '';
@@ -259808,60 +259843,7 @@ If uncertain whether a term is anachronistic, err on the side of world-appropria
       var _subjS3 = _genderS3 === 'male' ? 'he' : (_genderS3 === 'non-binary' ? 'they' : 'she');
       var _SubjS3 = _subjS3.charAt(0).toUpperCase() + _subjS3.slice(1);
       var _possS3 = _genderS3 === 'male' ? 'his' : (_genderS3 === 'non-binary' ? 'their' : 'her');
-      var _closerS3;
-      // ── THE CLOSER FOLLOWS THE NARRATION'S TENSE (Roman 2026-11-18) ──────────────────
-      // These variants were selected by POV alone, and the 1st/2nd-person ones are written in
-      // the PRESENT. First Taste narrates in first-person PAST, so every scene using this
-      // closer broke tense at its last line — recorded on Scene 1 and again on Scene 3.
-      // The past forms below keep everything that is load-bearing: Petition Fate going back
-      // into the deck, the red "Tempt Fate" card surfacing in the gold stack, the
-      // great-grandmother line, the sword/blood-red sky/lightning image, the static shock, and
-      // the trailing ellipsis the card continues after the reader clicks Next.
-      var _tenseS3 = 'present';
-      try {
-        if (typeof _sbNarrationTense === 'function') {
-          // THE SOURCE MATTERS. `previousSceneLastLine` is the PREVIOUS CLOSER, which carries
-          // no narration verbs at all (measured: past 0 / present 0) and so reads as "present"
-          // on no evidence — using it as a fallback would silently reinstate the very bug this
-          // fixes. Prefer the prior scene's prose, then the scene text ring, both of which are
-          // real narration.
-          var _priorS3 = String(state._priorSceneText || '');
-          if (!_priorS3) {
-            try {
-              var _ringS3 = state._sceneTextRing || [];
-              for (var _ri = _ringS3.length - 1; _ri >= 0 && !_priorS3; _ri--) {
-                var _re = _ringS3[_ri];
-                _priorS3 = String((_re && (_re.text || _re)) || '');
-              }
-            } catch (_) {}
-          }
-          var _tnS3 = _sbNarrationTense(_priorS3);
-          // Only switch on a CONFIDENT reading. With no evidence either way the closer keeps
-          // the present-tense form it has always had, so a present-tense story is unaffected
-          // and a missing prior scene cannot flip the tense on noise.
-          _tenseS3 = _tnS3.confident ? _tnS3.tense : 'present';
-          console.log('[CLOSER:TENSE] narration reads ' + _tnS3.tense + ' (past ' + _tnS3.past
-            + ' / present ' + _tnS3.present + ', confident=' + _tnS3.confident + ', source='
-            + (_priorS3 ? (_priorS3.length + ' chars') : 'NONE') + ') \u2014 closer rendered in '
-            + _tenseS3);
-        }
-      } catch (_) {}
-      var _pastS3 = (_tenseS3 === 'past');
-      if (_povS3 === '1st' || _povS3 === 'first') {
-        _closerS3 = _pastS3
-          ? 'I realized the deck was still in my hand. As I slid Petition Fate back in, I noticed a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! The static shock reminded me to pay attention to the present…'
-          : 'I realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…';
-      } else if (_povS3 === '2nd' || _povS3 === 'second') {
-        _closerS3 = _pastS3
-          ? 'You realized the deck was still in your hand. As you slid Petition Fate back in, you noticed a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let you play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! The static shock reminded you to pay attention to the present…'
-          : 'You realize the deck is still in your hand. As you slide Petition Fate back in, you notice a flash of red in the otherwise gold stack. “Tempt Fate.” Great-grandma never let you play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds you to pay attention to the present…';
-      } else if (_povS3 === 'author5th') {
-        _closerS3 = 'The deck was still in ' + _possS3 + ' hand. As ' + _subjS3 + ' slid Petition Fate back in, Fate let a red card surface in the otherwise-gold stack — "Tempt Fate," written in a thinner hand. ' + _SubjS3 + '\'s great-grandmother had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds — or up to them. The static shock that bit ' + _possS3 + ' fingertip was not, perhaps, accidental.';
-      } else if (_povS3 === 'environment4th') {
-        _closerS3 = 'The deck stayed in ' + _possS3 + ' hand. As Petition Fate slid back among its siblings, a flash of red caught ' + _possS3 + ' eye — "Tempt Fate," in a stack that had been gold a moment ago. Great-grandmother had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or, perhaps, up to them). The static shock that bit ' + _possS3 + ' finger insisted ' + _subjS3 + ' pay attention to the present.';
-      } else {
-        _closerS3 = _SubjS3 + ' realized the deck was still in ' + _possS3 + ' hand. As ' + _subjS3 + ' slid Petition Fate back in, ' + _subjS3 + ' noticed a flash of red in the otherwise gold stack — “Tempt Fate.” Great-grandma had never let ' + _subjS3 + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) The static shock that bit ' + _possS3 + ' finger reminded ' + _subjS3 + ' to pay attention to the present…';
-      }
+      var _closerS3 = _sbBuildTemptCloser(state, _povS3, _subjS3, _possS3);
       state._sceneThreeMandatedCloser = _closerS3;
       lines.push(
         'SCENE 3 MANDATED FRAME (HARD — overrides every other instruction about opening / closing beats):\n' +
@@ -315766,7 +315748,7 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
             // A mismatch is a finding for the next prompt — nothing here rewrites the omen,
             // because a validator that can edit prose is a second author.
             try {
-              var _omAs = state._omenAssigned;
+              var _omAs = _sbOmenAssignmentForScene(state, 1);
               if (_omAs && _omAs.category && typeof _sbOmenChannelAudit === 'function') {
                 var _omV = _sbOmenChannelAudit(String(_publishedForLedger || ''), _omAs.category);
                 if (_omV && _omV.ok === false) {
@@ -344776,7 +344758,9 @@ FATE CARD ADAPTATION (CRITICAL):
               // omen (an applause track thinning to silence). Nothing noticed, because nothing
               // kept the assignment past the console line.
               try {
-                state._omenAssigned = { scene: Number(state.turnCount || 0) + 1,
+                state._omenAssigned = { storyId: String(state.storyId || ''),
+                  issueIndexInRun: Number(state.issueIndexInRun || 1),
+                  scene: _sceneBeingBuilt(state),
                   outcome: _omenKey, temperature: _omenTemp, pressure: _omenPressure,
                   category: _omenCat || null, at: new Date().toISOString() };
               } catch (_) {}
@@ -345302,18 +345286,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
             // Petition flag too so the progression can never re-stash Petition.
             if (_petitionResolved && !state._petitionMandateApplied) state._petitionMandateApplied = true;
             try { console.log('[SCENE-FRAME] Stashing Scene 3 (Tempt) mandate frame'); } catch (_) {}
-            let _closerS3;
-            if (_povLM === '1st' || _povLM === 'first') {
-              _closerS3 = 'I realize the deck is still in my hand. As I slide Petition Fate back in, I notice a flash of red in the otherwise gold stack. “Tempt Fate.” Grandma never let me play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds me I need to pay attention to the present…';
-            } else if (_povLM === '2nd' || _povLM === 'second') {
-              _closerS3 = 'You realize the deck is still in your hand. As you slide Petition Fate back in, you notice a flash of red in the otherwise gold stack. “Tempt Fate.” Grandma never let you play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) Ow! Static shock reminds you to pay attention to the present…';
-            } else if (_povLM === 'author5th') {
-              _closerS3 = 'The deck was still in ' + _possLM + ' hand. As ' + _subjLM + ' slid Petition Fate back in, Fate let a red card surface in the otherwise-gold stack — "Tempt Fate," written in a thinner hand. ' + _SubjLM + '\'s grandmother had never let ' + _subjLM + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds — or up to them. The static shock that bit ' + _possLM + ' fingertip was not, perhaps, accidental.';
-            } else if (_povLM === 'environment4th') {
-              _closerS3 = 'The deck stayed in ' + _possLM + ' hand. As Petition Fate slid back among its siblings, a flash of red caught ' + _possLM + ' eye — "Tempt Fate," in a stack that had been gold a moment ago. Grandmother had never let ' + _subjLM + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or, perhaps, up to them). The static shock that bit ' + _possLM + ' finger insisted ' + _subjLM + ' pay attention to the present.';
-            } else {
-              _closerS3 = _SubjLM + ' realized the deck was still in ' + _possLM + ' hand. As ' + _subjLM + ' slid Petition Fate back in, ' + _subjLM + ' noticed a flash of red in the otherwise gold stack — “Tempt Fate.” Grandma had never let ' + _subjLM + ' play with that one. A sword raised to a blood-red sky, lightning arcing down from the clouds (or maybe arcing up?) The static shock that bit ' + _possLM + ' finger reminded ' + _subjLM + ' to pay attention to the present…';
-            }
+            var _closerS3 = _sbBuildTemptCloser(state, _povLM, _subjLM, _possLM);
             state._sceneThreeMandatedCloser = _closerS3;
             // Scene 3 has a STRUCTURAL opener (invoke-Petition arc), not a
             // verbatim one — so only the closer is deterministically enforced.
@@ -352146,6 +352119,7 @@ ABSOLUTE RULES:
               }
             } catch (_) {}
             try { state._cplusRenderedPage = pageContent; } catch (_) {}
+            var _omenPublishedSceneC = _sceneBeingBuilt(state);
             StoryPagination.addPage(pageContent, true, undefined,
               { cpAttemptId: (typeof _pageAttemptC !== 'undefined' ? _pageAttemptC : null) });
             // ── THE C+ BEAT LEDGER IS SETTLED HERE TOO (Roman 2026-11-17) ─────────────────
@@ -352217,7 +352191,7 @@ ABSOLUTE RULES:
             // A mismatch is a finding for the next prompt — nothing here rewrites the omen,
             // because a validator that can edit prose is a second author.
             try {
-              var _omAs = state._omenAssigned;
+              var _omAs = _sbOmenAssignmentForScene(state, _omenPublishedSceneC);
               if (_omAs && _omAs.category && typeof _sbOmenChannelAudit === 'function') {
                 var _omV = _sbOmenChannelAudit(String(state._cplusRenderedPage || pageContent || '' || ''), _omAs.category);
                 if (_omV && _omV.ok === false) {

@@ -521,6 +521,7 @@ Output only the mythic kernel. Prose realization is deferred.`
 
     const normalizedResponse = {
       ok: true,
+      model: data.model || null, // actual upstream model for routing provenance
       content: content,                              // raw string from model
       ...(parsedContent || {}),                       // spread parsed fields if JSON
       canonical_instruction: parsedContent?.canonical_instruction ?? content,

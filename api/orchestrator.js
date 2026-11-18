@@ -490,8 +490,8 @@ function createEmptyESD() {
  *
  * WHY THIS EXISTS. A role is coarse: PRIMARY_AUTHOR carries story logic, normalization, vetoes,
  * the ESD pass and both planners, so admitting a model to that role admits it to all of them.
- * gpt-6.1-sol was authorized for exactly two once-per-story planning calls — the initial A-plot
- * and the initial R-plot — and this narrows the server permission to those, so a future client
+ * gpt-6.1-sol is permitted for once-per-story planning — the initial A-plot,
+ * initial R-plot, and architecture spine — and this narrows the server permission to those, so a future client
  * change cannot route per-scene work to it without a deliberate edit here.
  *
  * FAIL CLOSED. A scoped model whose request declares NO operation is refused: an undeclared
@@ -499,7 +499,7 @@ function createEmptyESD() {
  * caller is unchanged.
  */
 const MODEL_OPERATION_SCOPE = {
-  'gpt-6.1-sol': ['aplot-initial', 'rplot-initial'],
+  'gpt-6.1-sol': ['aplot-initial', 'rplot-initial', 'story-spine'],
 };
 
 function validateModelForRole(model, role, operation) {
