@@ -1277,6 +1277,13 @@
     var transport = !!r.transportError;
     var retriesLeft = Number(r.retriesLeft || 0);
 
+    // Text can accompany a refusal or a completion-limit stop. Neither is a finished draft.
+    if (r.policyRefusal || r.finishReason === 'refusal' || r.finishReason === 'content_filter') {
+      return { verdict: 'balk', advance: true, reason: 'provider_refusal' };
+    }
+    if (r.finishReason === 'length' || r.finishReason === 'max_tokens') {
+      return { verdict: 'balk', advance: true, reason: 'completion_limit' };
+    }
     if (r.ok && r.hasContent) return { verdict: 'success', advance: false };
     // Content present but empty is a provider outcome, not weak writing: an empty completion is
     // a failure to produce, and on a reasoning model it usually means the allowance was spent on

@@ -5582,6 +5582,11 @@ ${_pcInteriorLock}`;
             || null;
           cls = window._sbClassifyProseAttempt({ ok: resp.ok,
             hasContent: !!String(text || '').trim(), status: resp.status,
+            finishReason: (data && (data.finish_reason || data.stop_reason))
+              || (data && data.choices && data.choices[0] && data.choices[0].finish_reason) || null,
+            policyRefusal: !!((data && data.refusal)
+              || (data && data.choices && data.choices[0] && data.choices[0].message
+                && data.choices[0].message.refusal)),
             bodyText: (data && data.error) || '', retriesLeft: 0 });
         } catch (e) {
           cls = window._sbClassifyProseAttempt({ transportError: true, retriesLeft: 0 });
@@ -5662,10 +5667,12 @@ ${_pcInteriorLock}`;
         try { _selData = await _selResp.json(); } catch (_) {}
         _selText = (_selData && _selData.choices && _selData.choices[0] && _selData.choices[0].message
           && _selData.choices[0].message.content) || (_selData && _selData.content) || null;
-        var _selFinish = (_selData && _selData.choices && _selData.choices[0]
-          && (_selData.choices[0].finish_reason || _selData.choices[0].finishReason)) || null;
-        var _selRefusal = (_selData && _selData.choices && _selData.choices[0]
-          && _selData.choices[0].message && _selData.choices[0].message.refusal) || null;
+        var _selFinish = (_selData && (_selData.finish_reason || _selData.finishReason))
+          || (_selData && _selData.choices && _selData.choices[0]
+            && (_selData.choices[0].finish_reason || _selData.choices[0].finishReason)) || null;
+        var _selRefusal = (_selData && _selData.refusal)
+          || (_selData && _selData.choices && _selData.choices[0]
+            && _selData.choices[0].message && _selData.choices[0].message.refusal) || null;
         // ── REASONING AND VISIBLE OUTPUT ARE SEPARATE FACTS (Roman 2026-11-11) ──────────────
         // On this model class both come out of ONE allowance, so "2,000 completion tokens" can
         // mean a full answer or nothing at all. The scene-16 stall looked like a mystery in the
@@ -5706,7 +5713,13 @@ ${_pcInteriorLock}`;
               : 'status ' + _selResp.status + ' · finish ' + (_selFinish || '?')
                 + ' · refusal ' + (_selRefusal ? 'yes' : 'no'))); } catch (_) {}
         }
-        if (String(_selText || '').trim()) {
+        // Classify the provider outcome before accepting any text, including partial text.
+        var _cls0 = window._sbClassifyProseAttempt({
+          ok: _selResp.ok, hasContent: !!String(_selText || '').trim(), status: _selResp.status,
+          policyRefusal: !!_selRefusal, finishReason: _selFinish,
+          bodyText: (_selData && _selData.error) || '', retriesLeft: 0 });
+        _sbAuthorshipNote(_selAuthor, _cls0);
+        if (_cls0.verdict === 'success') {
           _sbAuthorshipFinish(_selAuthor, 'success');
           return { text: _selText, provider: 'openai', model: _selAuthor, attempts: attempts,
             selectedAuthor: true, authorship: _sbAuthorship,
@@ -5722,12 +5735,6 @@ ${_pcInteriorLock}`;
         // be handed the same bad request), and weak writing (never examined here). A truncated
         // reply is treated as exhaustion of the completion budget, which IS a provider outcome on
         // a model that bills reasoning inside the allowance.
-        var _cls0 = window._sbClassifyProseAttempt({
-          ok: _selResp.ok, hasContent: !!String(_selText || '').trim(), status: _selResp.status,
-          policyRefusal: !!_selRefusal,
-          bodyText: (_selData && _selData.error) || (_selFinish === 'length' ? 'empty_completion' : ''),
-          retriesLeft: 0 });
-        _sbAuthorshipNote(_selAuthor, _cls0);
         if (!_cls0.advance) {
           _sbAuthorshipFinish(null, _cls0.verdict, _cls0.reason);
           return { text: null, provider: 'openai', model: _selAuthor, attempts: attempts,
