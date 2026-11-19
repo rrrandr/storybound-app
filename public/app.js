@@ -346,6 +346,13 @@ async function waitForSupabaseSDK(timeoutMs = 2000) {
 
   // Singleton Supabase Client
   let sb = null;
+  if (window.SB_REQUEST_AUTH) {
+    window.fetch = window.SB_REQUEST_AUTH.authenticatedFetch(window.fetch.bind(window), async function () {
+      if (!sb || !sb.auth || !sb.auth.getSession) return null;
+      var result = await sb.auth.getSession();
+      return result && result.data && result.data.session;
+    }, function () { return window.state && window.state.storyId; }, window.location.origin);
+  }
   let _supabaseProfileId = null; // Set by ensureAnonSession, used for snapshot persistence
   if (window.supabase && SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY) {
     try {
@@ -12072,7 +12079,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     }
   }
 
-  function consumeFortuneFavorCharge() {
+  async function consumeFortuneFavorCharge() {
     // Returns true if a free charge was consumed (spotlight first, then universal, then pioneer)
     const ff = state.fortuneFavor;
     // Story-scoped spotlight charge (consumed first)
@@ -12081,28 +12088,22 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       console.log('[FORTUNE_FAVOR] Spotlight Tempt charge consumed (story-scoped)');
       return true;
     }
-    // Account-level universal bonus charge (now a durable profile column —
-    // includes the monthly subscription grant). Decrement locally AND persist
-    // server-side so it doesn't re-hydrate to the granted value on reload
-    // (which would be infinite Tempt Fates). Fire-and-forget; the local
-    // decrement is the source of truth for this session.
-    if ((state.bonus_tempt_charges || 0) > 0) {
-      state.bonus_tempt_charges--;
-      console.log(`[FORTUNE_FAVOR] Universal Tempt charge consumed (remaining: ${state.bonus_tempt_charges})`);
-      // VISIBLE to the player (Roman 2026-06-08): a free Tempt charge was spent
-      // INSTEAD of 60F — without this the deduction looked like it silently
-      // failed (and the 60F surcharge correctly does not apply to a free charge).
-      try { if (typeof showToast === 'function') showToast('✦ Free Tempt Fate charge used — ' + state.bonus_tempt_charges + ' left. No Fortunes charged.'); } catch (_) {}
-      try {
-        if (_supabaseProfileId) {
-          fetch('/api/consume-tempt-charge', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: _supabaseProfileId })
-          }).catch(function(){});
-        }
-      } catch (_) {}
-      return true;
+    // The server confirms the atomic decrement before this invocation gets a free charge.
+    if ((state.bonus_tempt_charges || 0) > 0 && _supabaseProfileId) {
+      var resp = await fetch('/api/consume-tempt-charge', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: _supabaseProfileId, operationId: 'tempt:' + crypto.randomUUID() })
+      });
+      var result = await resp.json();
+      if (!resp.ok) {
+        if (typeof showToast === 'function') showToast('Could not confirm your free charge. Please try again.');
+        throw new Error(result.error || 'tempt_charge_not_confirmed');
+      }
+      state.bonus_tempt_charges = result.bonus_tempt_charges || 0;
+      if (result.ok) {
+        if (typeof showToast === 'function') showToast('✦ Free Tempt Fate charge used — ' + state.bonus_tempt_charges + ' left. No Fortunes charged.');
+        return true;
+      }
     }
     // Pioneer Bonus — world-scoped free Tempt Fate (from Premium World upgrade)
     if (typeof hasPioneerTemptFate === 'function' && hasPioneerTemptFate()) {
@@ -26619,7 +26620,7 @@ window._reflowSceneDialogueLLM = _reflowSceneDialogueLLM;
       // Mark applied (advances the build-side progression) AND flag that this
       // freshly-landed frame's scene should arm its emergence on mount — so the
       // scroll/zoom is tied to the scene that actually carries the closer.
-      if (frame.kind === 'petition') { state._petitionMandateApplied = true; state._petitionFrameLandedAwaitingArm = true; }
+      if (frame.kind === 'petition') { state._petitionMandateApplied = true; state._petitionOnboardingRequired = true; state._petitionFrameLandedAwaitingArm = true; }
       else if (frame.kind === 'tempt') { state._temptMandateApplied = true; state._temptFrameLandedAwaitingArm = true; }
       return out;
     } catch (_) { return text; }
@@ -91520,6 +91521,7 @@ Return ONLY valid JSON:
       state._nilRupturePressure = 0;
       state._nilRuptureLastSignalScene = null;
       state._nilRuptureVectorPressure = {};
+      state._petitionOnboardingRequired = false; // New stories never inherit an unfinished wish obligation.
       state._petitionEmergenceFired = false;  // One-shot Scene 2 Petition unlock-emergence animation flag
       state._petitionEmergenceArmed = false;  // True once scroll-trigger / intercept is installed
       state._temptEmergenceFired = false;     // One-shot Scene 3 Tempt Fate unlock-emergence animation flag
@@ -129666,7 +129668,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     var _liveSubscribed = state.subscribed;
     var _liveRealSubscribed = state._realSubscribed;
     var _liveTier = state.tier;
+    try { if (state._petitionEmergenceSubmitGateCleanup) state._petitionEmergenceSubmitGateCleanup(); } catch (_) {}
     if(data.stateSnapshot) Object.assign(state, data.stateSnapshot);
+    // Account snapshots may come from web; platform policy always wins on this device.
+    _applyContentRegister();
     // TRACK A: HISTORICAL-RECORD MIGRATION AT LOAD (Roman 2026-09-27). Runs immediately after the
     // snapshot lands and before anything reads a scene, so old and new records coexist under one
     // addressing scheme for the rest of the session. It assigns a provenance-marked uid and revision 0,
@@ -129697,14 +129702,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           + state.ffContract.cast.length + ' cast records stamped'); } catch (_) {} }
       }
     } catch (_) {}
-    // Onboarding emergence gates (Scene-2 Petition / Scene-3 Tempt examine) are
-    // LIVE-PLAY one-shots; never re-arm them on a reopened story. Any 'awaiting-
-    // arm' flag that lingered in the snapshot would re-fire the gate on restore —
-    // Roman 2026-06-09: a reopened story landed on Scene 2 trapped behind the Tempt
-    // zoom with no Submit. Clear the pending arm flags + any stranded gate class so
-    // resume lands cleanly on the live scene. (The *EmergenceFired one-shots stay as
-    // saved, so completed onboarding is never replayed.)
-    state._petitionFrameLandedAwaitingArm = false;
+    // Restore the obligation, not a stranded animation. Fired means the animation ran;
+    // it does NOT mean a wish was sealed. Only Scene 2 can still owe this onboarding wish.
+    var _restoredPageCount = Array.isArray(data.storyPages) ? data.storyPages.length : 0;
+    var _sealedPetition = !!(state.fate && state.fate.pendingPetition && String(state.fate.pendingPetition.text || '').trim());
+    var _petitionStillRequired = _restoredPageCount === 2 && !_sealedPetition &&
+      !!(state._petitionOnboardingRequired || state._petitionMandateApplied ||
+         state._petitionFrameLandedAwaitingArm || state._petitionEmergenceArmed);
+    state._petitionOnboardingRequired = _petitionStillRequired;
+    state._petitionFrameLandedAwaitingArm = _petitionStillRequired;
+    state._petitionEmergenceArmed = false;
+    state._petitionEmergenceSubmitGateCleanup = null;
     state._temptFrameLandedAwaitingArm = false;
     state._deckExamineArmed = false;
     try { document.body.classList.remove('examine-card-gate-active'); } catch (_) {}
@@ -129821,6 +129829,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             if (typeof StoryPagination.goToPage === 'function') StoryPagination.goToPage(_resumePageCount - 1, false);
             if (typeof showReaderPage === 'function') showReaderPage(2);
         }
+    }
+
+    if (state._petitionOnboardingRequired && typeof window._armLiteraryPetitionEmergence === 'function') {
+      window._armLiteraryPetitionEmergence();
     }
 
     // RESUME LORE DECORATION (Roman 2026-07-13, Root 3): the ledger (state._loreLedger) rides
@@ -249424,7 +249436,11 @@ No text, no watermark, no UI elements, share-ready.`;
       _installEmergenceSubmitGate({
         btnId: 'gnSubmitBtn',
         cardType: 'petition',
-        isCommittedFn: function() { return !!(state.fate && state.fate.pendingPetition); },
+        isCommittedFn: function() {
+        var sealed = !!(state.fate && state.fate.pendingPetition && String(state.fate.pendingPetition.text || '').trim());
+        if (sealed) state._petitionOnboardingRequired = false;
+        return sealed;
+      },
         reopenFn: function() { if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(); },
         toastMsg: 'Give Petition Fate a try — for free.'
       });
@@ -249668,18 +249684,19 @@ No text, no watermark, no UI elements, share-ready.`;
   // Idempotent: re-arming on page back/forward is safe (returns early
   // if already armed AND if scroll listener still installed).
   function _armLiteraryPetitionEmergence() {
-    if (state._petitionEmergenceFired) return;
-    if (state._petitionEmergenceArmed) return; // installer already ran
+    if (state._petitionEmergenceArmed && typeof state._petitionEmergenceSubmitGateCleanup === 'function') return;
     state._petitionEmergenceArmed = true;
-
-    _installLiteraryScrollTrigger({
-      cardType: 'petition',
-      fireFn: _fireLiteraryPetitionEmergence
-    });
+    if (!state._petitionEmergenceFired) {
+      _installLiteraryScrollTrigger({ cardType: 'petition', fireFn: _fireLiteraryPetitionEmergence });
+    }
     _installEmergenceSubmitGate({
       btnId: 'submitBtn',
       cardType: 'petition',
-      isCommittedFn: function() { return !!(state.fate && state.fate.pendingPetition); },
+      isCommittedFn: function() {
+        var sealed = !!(state.fate && state.fate.pendingPetition && String(state.fate.pendingPetition.text || '').trim());
+        if (sealed) state._petitionOnboardingRequired = false;
+        return sealed;
+      },
       reopenFn: function() { if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(); },
       toastMsg: 'Give Petition Fate a try — for free.'
     });
@@ -284073,7 +284090,7 @@ Generate the synopsis now.` }
           if (typeof showToast === 'function') showToast('Fate takes nothing — this one was on the house.');
           showTemptShudder();
           setTimeout(() => updateTemptFateSparkle(), 100);
-      } else if (consumeFortuneFavorCharge()) {
+      } else if (await consumeFortuneFavorCharge()) {
           usedFreeCharge = true;
           // Free charge consumed — skip cost/confirm/deduction
           showTemptShudder();

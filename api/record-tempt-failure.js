@@ -1,3 +1,4 @@
+import requestAuth from './_request-auth.js';
 import { createClient } from '@supabase/supabase-js';
 
 // Record a scene-gen failure and conditionally grant +1 Tempt Fate charge.
@@ -25,12 +26,15 @@ export default async function handler(req, res) {
       : 'https://storybound.love';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const account = await requestAuth.requireAccount(req, res);
+  if (!account) return;
 
-  const { userId, storyId, sceneIdx, reason } = req.body || {};
+  const userId = account.id;
+  const { storyId, sceneIdx, reason } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'userId required' });
   if (!storyId || typeof storyId !== 'string') {
     return res.status(400).json({ error: 'storyId required' });

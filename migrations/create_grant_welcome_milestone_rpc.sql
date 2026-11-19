@@ -72,4 +72,5 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.grant_welcome_milestone(uuid, text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.grant_welcome_milestone(uuid, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.grant_welcome_milestone(uuid, text) TO service_role;

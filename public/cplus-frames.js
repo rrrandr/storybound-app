@@ -369,18 +369,23 @@
     var s = String(passage || '');
     var first = String((rec && rec.name) || '').split(/\s+/)[0];
     var esc = first.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Named only as the content of someone else's clause → a mention, not agency.
-    if (first && new RegExp('\\b(?:whether|that|if|about|how|why)\\s+(?:[^.]{0,40}?\\s)?'
-        + esc + '\\b', 'i').test(s)) {
-      // unless the SAME passage also has them acting in a main clause
-      if (!new RegExp('(?:^|[.!?]\\s+)' + esc + '\\s+[a-z]', '').test(s)) return false;
-    }
-    var pcFirstPerson = !!(opts && opts.pcFirstPerson)
-      && String((rec && rec.role) || '').toLowerCase().indexOf('pc') !== -1;
-    if (pcFirstPerson && /(^|[^a-z])I\s+[a-z]|(^|\s)my\s+[a-z]/.test(s)) return true;
-    if (first && new RegExp('(?:^|[.!?\u201c"]\\s*)' + esc + '\\s+[a-z]', '').test(s)) return true;
-    if (first && new RegExp('\\b' + esc + '\\s+(?:had|has|was|is|would|could|never|always)\\b', 'i').test(s)
-        && !new RegExp('\\b(?:whether|that|if|about|how|why)\\s+(?:[^.]{0,40}?\\s)?' + esc, 'i').test(s)) return true;
+    var pc = !!(opts && opts.pcFirstPerson) && String((rec && rec.role) || '').toLowerCase().indexOf('pc') !== -1;
+    // First-person narration is not automatically first-person agency: "My mother ..."
+    // and "before I could ..." cannot establish that the PC performed the accepted action.
+    if (pc && /(?:^|[.!?]\s+["“]?|[,;]\s*|\b(?:and|but)\s+)I\s+[a-z]/i.test(s)) return true;
+    if (!first) return false;
+    var rest = String((rec && rec.name) || '').split(/\s+/).slice(1)
+      .map(function (part) { return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('\\s+');
+    // A surname must not be mistaken for the verb in "Helen MacBrayne's portrait".
+    var subject = rest ? '(?:' + esc + '\\s+' + rest + "(?!['’])|" + esc + '(?!\\s+' + rest + "\\b)(?!['’]))"
+      : esc + "(?!['’])";
+    var main = new RegExp('(?:^|[.!?]\\s+["“]?|[,;]\\s*|\\b(?:and|but|then|as|while)\\s+)' + subject + '(?:,\\s*[^,.!?]{1,50},)?\\s+[a-z]', 'i');
+    if (main.test(s)) return true;
+    // Perception complements describe an observed action, unlike "wondered whether Helen ...".
+    if (new RegExp('\\b(?:watched|saw|heard|noticed)\\s+' + subject + '\\s+[a-z]', 'i').test(s)) return true;
+    // A named person's body/posture can introduce a subsequent action by that person.
+    // Keep the co-reference within this sentence and require an actual pronoun-led clause.
+    if (new RegExp('(?:^|[.!?]\\s+)' + esc + "['’]s\\b[^.!?]*\\b(?:as|while|then|and)\\s+(?:she|he|they)\\s+[a-z]", 'i').test(s)) return true;
     return false;
   }
 

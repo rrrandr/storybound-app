@@ -1,3 +1,4 @@
+import requestAuth from './_request-auth.js';
 /**
  * =============================================================================
  * STORYBOUND SPECIALIST RENDERER PROXY — GROK ENDPOINT
@@ -252,7 +253,7 @@ export default async function handler(req, res) {
   const allowedOrigin = origin === 'https://storybound.love' || origin === 'https://www.storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -261,6 +262,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  if (!await requestAuth.requireModelAccess(req, res)) return;
+
 
   const XAI_API_KEY = process.env.XAI_API_KEY;
 

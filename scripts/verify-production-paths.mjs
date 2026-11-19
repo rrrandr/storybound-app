@@ -64,6 +64,14 @@ const oldEnv = process.env.VERCEL_ENV;
 process.env.OPENAI_API_KEY = 'offline-contract-placeholder';
 process.env.VERCEL_ENV = 'production';
 let forwarded = 0;
+// This suite isolates the upstream body contract after admission. The full verified-session
+// and real-SQL admission boundary is exercised over HTTP by verify-audit-fixes.mjs.
+const requestAuth = require('../api/_request-auth.js');
+const oldAdmission = requestAuth.requireModelAccess;
+requestAuth.requireModelAccess = async function(req) {
+ assert.equal(req.headers.authorization, 'Bearer admitted-contract-fixture');
+ return {id:'contract-fixture'};
+};
 const proxy = require('../api/chatgpt-proxy.js');
 globalThis.fetch = async (url, init) => {
  forwarded++;
@@ -78,7 +86,7 @@ globalThis.fetch = async (url, init) => {
 };
 try {
  const res={code:null,result:null,setHeader(){},status(n){this.code=n;return this;},json(x){this.result=x;return this;},end(){}};
- await proxy({method:'POST',headers:{host:'storybound.example'},body:spineBody},res);
+ await proxy({method:'POST',headers:{host:'storybound.example',authorization:'Bearer admitted-contract-fixture'},body:spineBody},res);
  assert.equal(res.code,200,JSON.stringify(res.result));
  assert.equal(res.result.content,'{"spine":"accepted"}');
  assert.equal(res.result.model,'gpt-6.1-sol');
@@ -93,6 +101,7 @@ try {
  assert.throws(()=>vm.runInNewContext(consumer,{_solJson:{...res.result,refusal:'declined'}}),/refused/);
  pass('production handler admits the spine and its real consumer reads the normalized response');
 } finally {
+ requestAuth.requireModelAccess = oldAdmission;
  globalThis.fetch=originalFetch;
  if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;
  if(oldEnv===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=oldEnv;

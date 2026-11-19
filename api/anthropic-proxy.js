@@ -1,3 +1,4 @@
+const { requireModelAccess } = require('./_request-auth.js');
 /**
  * ISOLATED ANTHROPIC ROUTE — calibration only. NOT part of Storybound orchestration.
  *
@@ -57,6 +58,8 @@ const MIN_THINKING_BUDGET = 1024;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  if (!await requireModelAccess(req, res)) return;
+
 
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_API_KEY) {

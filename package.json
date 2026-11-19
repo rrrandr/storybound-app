@@ -10,16 +10,18 @@
     "verify:economy": "node scripts/verify-starter-economy.mjs",
     "verify:files": "node scripts/verify-runtime-files.mjs",
     "verify:security": "node scripts/verify-fortune-security.mjs",
-    "harness:browser": "node node_modules/playwright-core/cli.js install chromium"
+    "harness:browser": "node node_modules/playwright-core/cli.js install chromium",
+    "verify:audit": "node --experimental-vm-modules scripts/verify-audit-fixes.mjs && node scripts/verify-audit-browser.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "micro": "^10.0.1",
     "stripe": "^20.3.1",
-    "vercel": "^62.4.0",
-    "undici": "^6.28.0"
+    "undici": "^6.28.0",
+    "vercel": "^62.4.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "playwright-core": "1.63.0"
   }
 }

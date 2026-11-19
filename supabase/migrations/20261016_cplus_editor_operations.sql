@@ -142,7 +142,7 @@ create trigger cplus_editor_stamp_settled_trg
 --
 -- `entitlement` says WHICH of two different things was established, and they are not equivalent:
 --   'authoritative' — an existing ownership record names this account (story_library_versions
---                     .author_id, the canonical completed-book mapping the issue-claim route
+--                     .profile_id, the canonical completed-book mapping the issue-claim route
 --                     uses; or public.stories.author_user_id).
 --   'registered'    — NO ownership record exists, so this is a new local draft and the story id
 --                     was REGISTERED to this account on first contact. That is registration, NOT
@@ -244,13 +244,13 @@ begin
 
   -- ── AUTHORITATIVE OWNERSHIP, where a record exists ───────────────────────────────────────
   -- story_library_versions is the canonical completed-book mapping (id = the client's story id,
-  -- author_id = owner), which is what api/claim-issue-number.js checks. public.stories is also
+  -- profile_id = owner), as defined by the deployed completed-book schema. public.stories is also
   -- consulted; the app does not write it, but a row there is still authoritative if present.
   -- Looked up through to_regclass so a deployment missing either table does not error.
   -- The comparison is ::text on both sides: an uncast uuid = text comparison RAISES on a
   -- non-uuid client id, which would turn every pass into a 500 instead of a decision.
   if to_regclass('public.story_library_versions') is not null then
-    execute 'select author_id from public.story_library_versions where id::text = $1'
+    execute 'select profile_id from public.story_library_versions where id::text = $1'
       into v_owner using p_story_id;
   end if;
   if v_owner is null and to_regclass('public.stories') is not null then

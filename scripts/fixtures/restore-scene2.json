@@ -1,0 +1,14 @@
+{
+ "storyId":"audit-restore-story", "title":"Restore boundary fixture", "render_mode":"literary",
+ "storyPages":["<p>I kept the deck.</p>","<p>I had a wish to make. The deck waited in my hand.</p>"],
+ "storyPageUids":["audit-page-1","audit-page-2"],
+ "stateSnapshot":{
+  "storyId":"audit-restore-story","turnCount":1,"mode":"solo","currentEngine":"literary",
+  "contentMode":"full","contentRegister":"FULL_WEB","render_mode":"literary",
+  "protagonistName":"Dani MacBrayne","loveInterestName":"Roman Tusk",
+  "_petitionMandateApplied":true,"_petitionFrameLandedAwaitingArm":true,
+  "_petitionEmergenceArmed":false,"_petitionEmergenceFired":false,
+  "_deckExamineFired":true,"onboardingComplete":true,
+  "fate":{"pendingPetition":null},"picks":{"tone":"romantic"}
+ }
+}
