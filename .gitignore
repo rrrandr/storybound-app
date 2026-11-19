@@ -19,3 +19,11 @@ supabase/.temp/
 # Local environment backups may contain credentials.
 .env.local.*
 .env.*.local.*
+
+# A QA browser profile holds a live Supabase session: access and refresh tokens that
+# authenticate as a real entitled account. It belongs OUTSIDE the repository, and the
+# canonical location is ~/.storybound-qa-profile. These lines are a second guard in case a
+# harness ever recreates one in the tree; they are not the primary protection.
+_ft_qa_profile/
+*_qa_profile/
+*_browser_profile/

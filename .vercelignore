@@ -24,7 +24,16 @@
 **/LATEST
 api/config.json
 api/config.json.save
-api/config
+# A bare `api/config` line was removed here. It protected nothing: there is no api/config
+# directory, and api/config.json already has its own line above. It is also a trap one character
+# away from excluding api/config.js, the route the client reads supabaseUrl/supabaseAnonKey from
+# and without which no Supabase client is built and sign-in is impossible.
+#
+# It is NOT the cause of a local /api/config 404 seen on 2026-11-19. Under gitignore semantics
+# `api/config` matches a path component named exactly `config`, never `config.js` -- proven with
+# git as the oracle in _ft_vercelignore_regression.mjs, which also keeps that line as a control.
+# A `vercel dev` restart in the same step was an unseparated second variable and is the more
+# likely fix. Deployed production was never affected (www answers 200).
 
 # Local diagnostics and schema/example source are not production endpoints.
 api/diag-mock.js
