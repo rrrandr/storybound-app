@@ -129522,6 +129522,21 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     }
 
+    // A saved free opening predating issue entry is not an issue receipt. Ask
+    // before reopening it; an already purchased issue continues without charge.
+    var entryState=data.stateSnapshot;
+    if(entryState&&entryState._bakedOpeningMounted&&!entryState._bakedGenesisUnlocked&&entryState._issuePurchaseStatus!=='paid'){
+      var entryPkg=window._bakedScene1For&&window._bakedScene1For(entryState._starterId);
+      if(entryPkg){
+        var resumedReceipt=await _requestIssueEntry({title:entryPkg.title,format:entryPkg.format,starterId:entryState._starterId,storyId:data.storyId,issueIndex:1});
+        if(!resumedReceipt){window.showScreen('vaultLibraryScreen');return;}
+        entryState._starterIssueReceipt=resumedReceipt;entryState._issuePurchaseStatus='paid';entryState._issuePurchaseIssueIndex=1;
+        entryState._issuePurchaseOpId=resumedReceipt.operationId;entryState._issuePurchasedAmount=resumedReceipt.amount;
+        entryState._issuePurchaseContext='issue_purchase_'+resumedReceipt.format;entryState.previewActive=false;entryState.previewContinued=true;
+        if(!entryState.storyLength||entryState.storyLength==='taste')entryState.storyLength='fling';
+      }
+    }
+
     state.storyId = data.storyId || makeStoryId();
     localStorage.setItem('sb_current_story_id', state.storyId);
     syncCurrentStoryPass();
@@ -162273,9 +162288,19 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._mountBakedImageOccurrences = _mountBakedImageOccurrences;
 
+  function _bindBakedOpeningRegion(pkg) {
+    var region=pkg&&pkg.emitted&&pkg.emitted.openState&&pkg.emitted.openState.region;
+    if(!region||state.turnCount>0)return;
+    state._authoredOpeningRegion={storyId:state.storyId,region:region};
+    state.fantasyRegion=region;state._fatelandsOriginLocation=region;state._fatelandsCurrentLocation=region;
+    state._fantasyCoreEntropy=state._fantasyCoreEntropy||{};state._fantasyCoreEntropy.fantasy_region_focus=region;
+    state._fantasyRegionOverrideApplied=true;state._regionSource='authored_opening';
+  }
+
   function _mountBakedCGOpening(pkg) {
     if(!pkg||pkg.format!=='cg'||!window.SB_BAKED_CG_READER)return;
     var host=document.getElementById('storyText');if(!host)return;
+    _bindBakedOpeningRegion(pkg); // Also migrate old saved openings before their map can appear.
     var completed=!!state._bakedCGReadingComplete,resumeBeat=state._bakedCGBeatIndex||0;
     document.body.classList.toggle('baked-cg-reading',!completed);
     var handoff=document.getElementById('bakedOASHandoff');if(handoff)handoff.hidden=!completed;
@@ -162333,13 +162358,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (!state.backCoverSynopsis) state.backCoverSynopsis = pkg.synopsis;
       }
       state._bakedEmitted = em;
-      var declaredRegion=em.openState&&em.openState.region;
-      state._authoredOpeningRegion=declaredRegion?{storyId:state.storyId,region:declaredRegion}:null;
-      if(declaredRegion){
-        state.fantasyRegion=declaredRegion;state._fatelandsOriginLocation=declaredRegion;state._fatelandsCurrentLocation=declaredRegion;
-        state._fantasyCoreEntropy=state._fantasyCoreEntropy||{};state._fantasyCoreEntropy.fantasy_region_focus=declaredRegion;
-        state._fantasyRegionOverrideApplied=true;state._regionSource='authored_opening';
-      }
+      _bindBakedOpeningRegion(pkg);
       state._bakedScene1Version = pkg.version;
       // Packaged ambient tag — read by the classifier override so mounting the
       // free scene never fires the Grok ambient call.

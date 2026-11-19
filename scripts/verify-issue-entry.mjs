@@ -53,6 +53,15 @@ try{
  await page.evaluate(async id=>window.continueStory(id),paidId);assert.equal(await page.locator('#bakedOASHandoff').isVisible(),true);
  assert.equal(await page.evaluate(()=>state._bakedCGBeatIndex),count-1);assert.equal(providers.length,0);pass('the full CG opening reaches its encounter, and a reopen preserves that completed position without generation');
 
+ // An old saved opening lacks the authored-region stamp. Reopening migrates
+ // only its opening location, while unpaid old previews still need consent.
+ await page.evaluate(()=>{let s=JSON.parse(localStorage.getItem('sb_saved_story'));delete s.stateSnapshot._authoredOpeningRegion;s.stateSnapshot.fantasyRegion='vaelryns_reach';s.stateSnapshot._fatelandsCurrentLocation='vaelryns_reach';localStorage.setItem('sb_saved_story',JSON.stringify(s));});
+ await page.evaluate(async id=>window.continueStory(id),paidId);assert.equal(await page.evaluate(()=>state.fantasyRegion),'the_veilwood');
+ const paidSave=await page.evaluate(()=>localStorage.getItem('sb_saved_story'));
+ await page.evaluate(()=>{let s=JSON.parse(localStorage.getItem('sb_saved_story'));s.stateSnapshot._issuePurchaseStatus=null;s.stateSnapshot._starterIssueReceipt=null;s.stateSnapshot._bakedGenesisUnlocked=false;localStorage.setItem('sb_saved_story',JSON.stringify(s));window.__legacyResume=window.continueStory(s.storyId);});
+ await page.locator('#issuePurchaseModal').waitFor({state:'visible'});assert.equal(await page.locator('#issuePurchaseConfirm').isDisabled(),true);assert.equal(await balance(),70);await page.locator('#issuePurchaseCancel').click();await page.evaluate(()=>window.__legacyResume);
+ await page.evaluate(s=>localStorage.setItem('sb_saved_story',s),paidSave);await page.evaluate(async id=>window.continueStory(id),paidId);
+ pass('old paid saves recover Veilwood; old unpaid openings require consent and cancel without a debit');
  // A committed payment with a lost response must recover after a reload even
  // when its deduction leaves less than the price of another issue.
  dropNextPurchase=true;await launch(page,'starter_glass_house');await page.locator('#issuePurchaseConfirm').click();
