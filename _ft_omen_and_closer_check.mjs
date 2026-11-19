@@ -74,7 +74,7 @@ ck('empty text keeps the existing present default',
 
 console.log('\n5. THE CLOSER THE FIX NOW PRODUCES');
 // Lift the two first-person variants straight out of the shipped selection block.
-const block = cut("      if (_povS3 === '1st' || _povS3 === 'first') {", "      } else if (_povS3 === '2nd'");
+const block = cut("    if (_povS3 === '1st' || _povS3 === 'first') {", "    } else if (_povS3 === '2nd'");
 const variants = (block.match(/'([^']*Tempt Fate[^']*)'/g) || []).map((x) => x.slice(1, -1));
 ck('both first-person variants are present in the source', variants.length === 2, String(variants.length));
 const past = variants.find((v) => /I realized/.test(v));
