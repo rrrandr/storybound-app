@@ -617,13 +617,13 @@ ok(/INSERT INTO public\.fortune_operations[\s\S]{0,400}'succeeded'/.test(rpc),
 ok(/IF v_fortunes < p_amount THEN[\s\S]{0,400}RETURN QUERY SELECT 'insufficient'/.test(rpc),
   'an insufficient balance records nothing');
 ok(codeOf(app).includes('_postFortuneCharge'), 'every charge goes through the authenticated poster');
-eq((codeOf(app).match(/fetch\('\/api\/consume-fortune'/g) || []).length, 1,
+eq((codeOf(app).match(/fetch\(chargeEndpoint,/g) || []).length, 1,
   'exactly one place issues the charge request');
 
 
 console.log('\n── the client charges only through the authenticated poster ──');
 ok(codeOf(app).includes('function _postFortuneCharge('), 'the authenticated poster exists');
-eq((codeOf(app).match(/fetch\('\/api\/consume-fortune'/g) || []).length, 1,
+eq((codeOf(app).match(/fetch\(chargeEndpoint,/g) || []).length, 1,
   'exactly one place issues the charge request');
 {
   const poster = app.slice(app.indexOf('async function _postFortuneCharge('),

@@ -173,7 +173,7 @@
       // Dohkar → Profer; offices Chayr → Provast → First Dohkar; Julian = Provast, next for First Dohkar, per Roman). Lenses: Lirael = OPEN VEIN, Julian = SPELLBINDER (Roman 2026-09-10). REAL CG SHAPE: ~20 beats (conversation + inner thought + description) over
       // 4 dramatic images + 1–4 character intro images. Beats 1–5 of Roman's sequence are this page; beats 6–7 (Julian's
       // public interrogation, the Dohkar's interruption, run-or-remain) are the OAS, carried by `oasHandoff` below.
-      version: '1.8.1-editorial-twist-recovery',
+      version: '1.8.2-cg-opening',
       placeholder: false,
       format: 'cg',
       title: 'The First Sacrifice',
@@ -193,15 +193,14 @@
       // consumed by the structured renderer (_mountImageOccurrence, app.js) instead of text markup.
       // ASSETS: the real underlying generated images. 4 solo intro portraits + ONE shared 2x2
       // interaction sheet (NOT 4 independent dramatic images) — matches the real production default
-      // contract (_renderOneShotSheet). `url` is null until the scene is actually rendered (not yet
-      // authorized — see the packet's fate_card_lifecycle_correction-style disclosure convention);
-      // the structured renderer resolves to nothing when url is absent, never a placeholder image.
+      // contract (_renderOneShotSheet). These versioned assets ship with the starter;
+      // opening this book never requests new character or scene artwork.
       imageAssets: [
-        { id: "intro_lirael", kind: "intro", label: "Lirael", url: null },
-        { id: "intro_seren", kind: "intro", label: "Seren", url: null },
-        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: null },
-        { id: "intro_julian", kind: "intro", label: "Julian", url: null },
-        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 interaction sheet (d1-d4)", url: null },
+        { id: "intro_lirael", kind: "intro", label: "Lirael", url: "/assets/First-Sacrifice/lirael-v1.png" },
+        { id: "intro_seren", kind: "intro", label: "Seren", url: "/assets/First-Sacrifice/seren-v1.png" },
+        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: "/assets/First-Sacrifice/dohkar-v1.png" },
+        { id: "intro_julian", kind: "intro", label: "Julian", url: "/assets/First-Sacrifice/julian-v1.png" },
+        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 interaction sheet (d1-d4)", url: "/assets/First-Sacrifice/interaction-sheet-v1.png" },
       ],
       // OCCURRENCES: keyed by the SAME strings already used in beats[].image / images[].id above —
       // the locked 20-beat template (see _first_sacrifice_source_packet.json
@@ -302,6 +301,7 @@
         ledgerLine: "Seren’s wish twisted, then inexplicably straightened. Lirael found the lost deck in her sash. Her broken band and sudden boon prompted family cries of “Wish thief!” and demands for punishment; the Dohkar charged her. Julian put The Answer in her right hand to question her.",
         sceneSummary: "At her First Sacrifice, Seren abandoned the rehearsed wish and spent it on her supervisor Lirael — “so that Lirael may find the one she lost” — blurred to spare her. Lirael sensed the misalignment and then the wish actually TWISTED; a hand stopped and the Dohkar went still. Lirael tore her mouth-band away, moved toward Seren, and called her name. Only then did she sense the wish unexpectedly STRAIGHTEN. The Dohkar lifted his head, but no one explained the change. Afterward Lirael reached to tighten the family sash she was wearing for the first time, felt a weight in its hip fold, and drew out her great-grandmother’s tarot deck, lost since her father went and long believed to have gone with him. She had not known it was there. Nothing was conjured or visibly magical. Seren’s family angrily spoke the inference: “We all felt it twist,” then it straightened and Lirael found a boon. They cried “Wish thief!” and demanded punishment. Their allegation draws on the observed sequence and Lirael’s broken protocol; it does not establish that she made a wish or reveal what actually caused the recovery. The Dohkar then charged her with shaping the wish for her own benefit and interfering in the rite; her qualification and the career she imagined are in jeopardy. No punishment has been imposed. Julian stepped in from the edge, said she was aligned with her belief in her own innocence, and put The Answer — the Institution’s, in his keeping — in her right hand to question her publicly. The recovered deck is in her left. THE FIXED PAGE ENDS at his “What have you to say?” and her temptation to let the cards decide. The OAS handoff plans the intimate interrogation, the Dohkar’s interruption, the exchange about a formal inquiry, and the run-or-remain decision. Treat those later events as completed only when the actual OAS record delivers them; this package alone does not establish that they have occurred. Nobody has identified the cause of the recovery.",
         openState: {
+          region: 'the_veilwood',
           location: 'the Veilwood ceremony clearing — crimson spiralgrass, white weeping-willow veil-canopy',
           timeOfDay: 'dawn',
           presentCast: ['Lirael', 'Seren', 'Julian', 'the presiding Dohkar', 'the assembled First Favored family and guests'],

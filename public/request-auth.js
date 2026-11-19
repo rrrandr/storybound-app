@@ -1,7 +1,7 @@
 // Attach the current session only to Storybound's own protected endpoints.
 (function () {
   function authenticatedFetch(fetchImpl, getSession, getStoryId, origin) {
-    var paths = /^\/api\/(?:proxy|chatgpt-proxy|mistral-proxy|deepseek-proxy|gemini-proxy|anthropic-proxy|refund-fortune|billing-portal|consume-tempt-charge|record-tempt-failure|grant-welcome-milestone|record-legal-acceptance)$/;
+    var paths = /^\/api\/(?:proxy|chatgpt-proxy|mistral-proxy|deepseek-proxy|gemini-proxy|anthropic-proxy|purchase-issue|refund-fortune|billing-portal|consume-tempt-charge|record-tempt-failure|grant-welcome-milestone|record-legal-acceptance)$/;
     return async function (input, init) {
       var url = new URL(typeof input === 'string' ? input : (input.url || String(input)), origin);
       if (url.origin !== origin || !paths.test(url.pathname)) return fetchImpl(input, init);

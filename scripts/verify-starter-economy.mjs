@@ -198,19 +198,19 @@ eq(CATALOG.starter_the_first_taste.bakedUnlockPrice, 60, 'First Taste: baked ope
 eq(CATALOG.starter_the_first_taste.previewPrice, 0,      'First Taste: the baked opening itself is free');
 eq(CATALOG.starter_glass_house.bakedUnlockPrice, 60,     'Glass House: baked opening continues for 60F');
 eq(CATALOG.starter_glass_house.previewPrice, 0,          'Glass House: the baked opening itself is free');
-eq(CATALOG.starter_famous_fate.previewPrice, 15,         'Famous Fate: 15F trial');
-eq(CATALOG.starter_famous_fate.previewStop.at, 3,        'Famous Fate: the trial is exactly three scenes');
+eq(CATALOG.starter_famous_fate.previewPrice, 0, 'Famous Fate: no separately charged trial');
+ok(!CATALOG.starter_famous_fate.previewStop, 'Famous Fate: no trial stop inside the bought issue');
 eq(CATALOG.starter_famous_fate.continuationPrice, 60,    'Famous Fate: 60F continuation');
-eq(CATALOG.starter_first_sacrifice.bakedUnlockPrice, 15, 'First Sacrifice: 15F one-on-one');
-eq(CATALOG.starter_first_sacrifice.bakedUnlockKind, 'oas', 'First Sacrifice: the gate buys the OAS, not the issue');
+eq(CATALOG.starter_first_sacrifice.bakedUnlockPrice, 130, 'First Sacrifice: the whole CG issue costs 130F');
+eq(CATALOG.starter_first_sacrifice.bakedUnlockKind, 'issue', 'First Sacrifice: one purchase includes the opening encounter');
 eq(CATALOG.starter_first_sacrifice.continuationPrice, 130, 'First Sacrifice: 130F complete CG issue');
 ok(!('stub' in CATALOG.starter_first_sacrifice), 'First Sacrifice: the stub:true free pass is gone');
 for (const [id, p] of Object.entries(CATALOG)) {
   eq(p.continuationPrice, ISSUE_PRICING[p.format].fortuneCost, `${id}: a continuation is the whole issue at list price`);
 }
 // The wallet is sized for exactly these two orders.
-eq(15 + 15 + 60, 90, 'wallet: trial + one-on-one + one continuation == 90F');
-eq(60 + 15 + 15, 90, 'wallet: continuation first, then both openings == 90F');
+eq(90-60,30,'welcome gift covers one Literary issue with 30F remaining');
+eq(130-90,40,'welcome gift leaves a clearly quoted 40F CG shortfall');
 
 console.log('\n── the 90F grant ──');
 const migration = readFileSync(join(ROOT, 'supabase', 'migrations', '20260830_gift_90_fortunes.sql'), 'utf8');
@@ -255,16 +255,10 @@ console.log('\n── rendering a baked Scene 1 is free ──');
   ok(!/consumeFortune|_chargePreviewSlice|_chargeFortunesAtomic/.test(c), 'the baked mount contains no charge call');
   ok(!/fetch\(/.test(c), 'the baked mount issues no request of its own');
   const launch = app.slice(app.indexOf('  async function _launchStarterStory('), app.indexOf('  function _showVaultLibraryEmpty'));
-  ok(/if \(!_bakedPkg\) \{[\s\S]*?_chargePreviewSlice\('preview'\)/.test(launch),
-    'the launch charges an opening ONLY when there is no baked scene');
-  // No Book with a baked opening may carry a preview-slice charge — that charge
-  // fires on the launch path, i.e. at render time. (First Sacrifice's 15F lives
-  // in bakedUnlockPrice and is taken later, at the OAS handoff.)
-  for (const id of ['starter_the_first_taste', 'starter_glass_house', 'starter_first_sacrifice']) {
-    eq(CATALOG[id].previewPrice || 0, 0, `${id}: nothing is charged to render its baked scene`);
-  }
-  eq(CATALOG.starter_first_sacrifice.bakedUnlockPrice, 15,
-    'First Sacrifice: its 15F is defined once, in bakedUnlockPrice');
+  ok(launch.indexOf('await _requestIssueEntry(')<launch.indexOf('resetForNewStory()'),
+    'whole-issue consent occurs before reset, mounting, or generation');
+  for (const id of Object.keys(CATALOG)) eq(CATALOG[id].previewPrice,0,`${id}: no separate preview charge`);
+  eq(CATALOG.starter_first_sacrifice.bakedUnlockPrice,130,'First Sacrifice: 130F is the single issue price');
 }
 { // a refused atomic charge must not touch either balance
   const { api, env, srv } = sandbox(60);
@@ -282,20 +276,12 @@ console.log('\n── rendering a baked Scene 1 is free ──');
   eq(srv.balance, 90, 'a 0F charge leaves the wallet untouched');
 }
 
-console.log('\n── Famous Fate: 15F trial, once ──');
+console.log('\n── retired trial is inert ──');
 {
-  const { api, env, srv } = sandbox(90, { state: { previewActive: true, previewProductId: 'starter_famous_fate' } });
-  const first = await api._chargePreviewSlice('preview');
-  ok(first === true, 'the trial charge succeeds');
-  eq(srv.balance, 75, 'exactly 15F leaves the wallet');
-  eq(srv.requests[0].amount, 15, 'the server was asked for 15F');
-  const again = await api._chargePreviewSlice('preview');
-  ok(again === true, 'a retry still reports success');
-  eq(srv.balance, 75, 'a retry does NOT charge a second time (idempotent by operationId)');
-  eq(env.state.fortunes, 75, 'the client balance matches the server');
+ const {api,srv}=sandbox(90,{state:{previewActive:true,previewProductId:'starter_famous_fate'}});
+ await api._chargePreviewSlice('preview');eq(srv.balance,90,'legacy Famous Fate trial state takes no extra Fortunes');eq(srv.requests.length,0,'no trial purchase request');
 }
-
-console.log('\n── First Sacrifice: 15F one-on-one, once ──');
+console.log('\n── historic OAS operation remains idempotent for old saves ──');
 {
   const { api, env, srv } = sandbox(90);
   const r1 = await api._chargeFortunesAtomic(15, 'baked_unlock_oas', '_bakedUnlockOp');
@@ -322,7 +308,7 @@ for (const id of ['starter_the_first_taste', 'starter_glass_house']) {
   await api._chargePreviewSlice('preview');
   const r = await api._chargePreviewSlice('continuation');
   ok(r === true, 'Famous Fate: continuation succeeds after the trial');
-  eq(srv.balance, 15, 'Famous Fate: 90 − 15 − 60 = 15F left');
+  eq(srv.balance,30,'Famous Fate: 90 − 60 = 30F left, with no separate trial');
 }
 
 console.log('\n── the CG issue is 130F, atomic, with a dynamic shortfall ──');
@@ -435,6 +421,16 @@ function gateSandbox(starterId, balance, opts = {}) {
     ${fnSource('resolveNextScenePrice')}
     ${fnSource('_resolvePreviewContinuationTier')}
     ${fnSource('_finalizePreviewContinuation')}
+    function makeStoryId(){return 'fixture-story';}
+    // This suite exercises legacy saved-book gates and atomic wallet behavior.
+    // Consent UI is driven through the real browser in verify-issue-entry.mjs.
+    async function _requestIssueEntry(opts){
+      const amount=ISSUE_PRICING[opts.format].fortuneCost;
+      if(state.fortunes<amount)return false;
+      const result=await _postFortuneCharge({userId:_supabaseProfileId,amount,context:'issue_'+opts.kind+'_'+opts.format,operationId:'issue-'+opts.issueIndex,storyId:opts.storyId});
+      if(!result.resp.ok)return false;state.fortunes=result.data.fortunesRemaining;
+      return {storyId:opts.storyId,amount,operationId:'issue-'+opts.issueIndex};
+    }
     ${fnSource('_chargeIssuePurchase')}
     ${fnSource('_postFortuneCharge')}
     ${fnSource('_activePreviewProduct')}
@@ -596,18 +592,14 @@ console.log('\n── nothing is persisted until the whole purchase has landed �
     'a successful unlock clears the persisted operation id');
 }
 
-{ // CG must NOT finalize — it stays a preview until its 130F issue
-  const { api, env, srv } = gateSandbox('starter_first_sacrifice', 90);
-  const blocked = api._bakedGenesisGate(function () { env.calls.resumed++; });
-  ok(blocked === true, 'First Sacrifice: the OAS gate blocks and takes over');
-  await new Promise(r => setTimeout(r, 0));
-
-  eq(srv.balance, 75, 'First Sacrifice: exactly 15F charged for the one-on-one');
-  eq(env.state.previewActive, true, 'First Sacrifice: STAYS a preview (the 130F issue is unbought)');
-  eq(env.state.previewContinued, false, 'First Sacrifice: not marked continued');
-  ok(env.state._issuePurchaseStatus !== 'paid', 'First Sacrifice: Issue One is NOT marked paid');
-  eq(env.state.storyLength, 'taste', 'First Sacrifice: keeps its preview shape');
-  eq(env.calls.resumed, 1, 'First Sacrifice: the OAS still opens');
+{ // An old unpurchased CG opening adopts the whole-issue gate too.
+  const {api,env,srv}=gateSandbox('starter_first_sacrifice',200);
+  ok(api._bakedGenesisGate(()=>env.calls.resumed++),'CG saved opener gates initialization');
+  await new Promise(r=>setTimeout(r,0));
+  eq(srv.balance,70,'CG saved opener purchases one 130F issue');
+  eq(env.state._issuePurchaseStatus,'paid','CG issue marked paid');
+  eq(env.state.previewActive,false,'CG trial retired');
+  eq(env.calls.resumed,1,'encounter resumes after initialization');
 }
 
 console.log('\n── the server idempotency contract ──');
@@ -1298,7 +1290,7 @@ ok(/IF v_fortunes < p_amount THEN[\s\S]{0,400}RETURN QUERY SELECT 'insufficient'
 ok(/_acct/.test(codeOf(app)) && /baked_unlock_' \+ _acct/.test(codeOf(app)),
   'the local recovery key is scoped to the authenticated account');
 ok(codeOf(app).includes('_postFortuneCharge'), 'every charge goes through the authenticated poster');
-eq((codeOf(app).match(/fetch\('\/api\/consume-fortune'/g) || []).length, 1,
+eq((codeOf(app).match(/fetch\(chargeEndpoint,/g) || []).length, 1,
   'exactly one place issues the charge request');
 
 console.log('\n── no scene-by-scene CG path remains ──');

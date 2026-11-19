@@ -1,0 +1,36 @@
+{
+  "purpose": "Baked CG starter illustrations; no runtime generation on open",
+  "tool": "image_gen",
+  "assets": [
+    {
+      "path": "public/assets/First-Sacrifice/dohkar-v1.png",
+      "sha256": "77b13c2d0f1e97b020e2c595272c607d96bc6739176cf2ff938fd999547ee5f3",
+      "prompt": "The older presiding Dohkar, gray hair, blue-gray skin and plain dark robes without a family sash, in the Veilwood ceremony clearing.",
+      "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
+    },
+    {
+      "path": "public/assets/First-Sacrifice/interaction-sheet-v1.png",
+      "sha256": "82aa97bf150393fd186fba476493806d1f14b4e9a0b48911ad537e8dd1a7cbdd",
+      "prompt": "A consistent 2x2 cinematic scene sheet: public ceremony; Seren speaking to Lirael; Lirael removes the mouth band and reacts; Julian stands beside her holding The Answer. White willow canopy and crimson spiralgrass. No text, visible magical blast or physical harm.",
+      "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
+    },
+    {
+      "path": "public/assets/First-Sacrifice/julian-v1.png",
+      "sha256": "953ade7e72709ad7d902564d9655a2c1f10597803b9e4223ad0f0154574e2d67",
+      "prompt": "Adult Julian, long black hair, slate-blue skin, dark ceremonial robes and healed left wrist scar. Reserved authority in the Veilwood.",
+      "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
+    },
+    {
+      "path": "public/assets/First-Sacrifice/lirael-v1.png",
+      "sha256": "ff558c267db8e9996cfed1f4fea0763f251d14928eef8df3aabb5683252473bc",
+      "prompt": "Adult Lirael, silver hair, lavender-blue skin, violet star pupils, luminous Weave-Script on her forearms, opaque pale ritual robes, family sash and thin mouth band. In a white-willow ceremony clearing with crimson spiralgrass.",
+      "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
+    },
+    {
+      "path": "public/assets/First-Sacrifice/seren-v1.png",
+      "sha256": "cd460ac1d93f5e737aae37745cb6c571a180ffb3cfd26958910c38702aa950f1",
+      "prompt": "Seren, sixteen, aqua skin and coral hair, fully clothed in modest ceremony robes, kneeling in the Veilwood. No harm or sexualization.",
+      "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
+    }
+  ]
+}

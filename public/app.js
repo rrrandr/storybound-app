@@ -91521,6 +91521,8 @@ Return ONLY valid JSON:
       state._nilRupturePressure = 0;
       state._nilRuptureLastSignalScene = null;
       state._nilRuptureVectorPressure = {};
+      document.body.classList.remove('baked-cg-reading');
+      state._bakedCGBeatIndex=0;state._bakedCGReadingComplete=false;state._authoredOpeningRegion=null;state._starterIssueReceipt=null;
       state._petitionOnboardingRequired = false; // New stories never inherit an unfinished wish obligation.
       state._petitionEmergenceFired = false;  // One-shot Scene 2 Petition unlock-emergence animation flag
       state._petitionEmergenceArmed = false;  // True once scroll-trigger / intercept is installed
@@ -94480,12 +94482,9 @@ The scene carries the weight of something almost chosen. There should be a quiet
   // ISSUE PRICING (CANONICAL — server should mirror these constants if/when
   // a server-side validator is added). Issue = the purchase unit. A story is
   // a sequence of issues; each issue is a fixed number of scenes; each issue
-  // is purchased separately. Taste tier is exempt (handcrafted free pilots).
+  // is purchased separately. Starters use the same whole-issue contract.
   // ═══════════════════════════════════════════════════════════════════════════
-  var ISSUE_PRICING = {
-    literary: { scenesPerIssue: 20, fortuneCost: 60 },   // Roman 2026-06-21: 40 → 60F
-    cg:       { scenesPerIssue: 10, fortuneCost: 130 }    // Roman 2026-06-21: 100 → 130F
-  };
+  var ISSUE_PRICING = window.SB_ISSUE_COMMERCE.ISSUE_PRICING;
   var ISSUE_TIER_COUNT = {
     literary: { fling: 2, affair: 3, soulmates: 5 },
     cg:       { fling: 2, affair: 4, soulmates: 6 }
@@ -94537,79 +94536,19 @@ The scene carries the weight of something almost chosen. There should be a quiet
   window._spineOutputAllowance = _spineOutputAllowance;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PREVIEW CATALOG (Preview onboarding — see docs/preview-onboarding-plan.md)
-  // A Preview is the FRONT SLICE of a story's Issue One, sold at a reduced entry
-  // price with an early cliffhanger inserted; canonical (scenes are kept), and
-  // continuing resumes the SAME story to finish Issue One. Pure data/config —
-  // the engine reads a descriptor, never `if (format === …)`. New formats ship
-  // as data only. Keyed by BOOK/product id (two literary previews coexist).
-  //
-  // INVARIANT 1 (price split): previewPrice + continuationPrice === Issue One cost
-  //   (ISSUE_PRICING[format].fortuneCost). Asserted at load below.
-  // INVARIANT 2 (one continuation, ever): a Preview has a single continuation that
-  //   finishes Issue One, then normal issue pricing forever. No nested previews —
-  //   there is no field for a second stage; previewActive clears on continuation.
-  //
-  // previewStop is a DISCRIMINATED UNION:
-  //   { type:'scene', at:N }                     — stop after scene N (literary / FF)
-  //   { type:'oas_interrupt', scene, before }    — stop mid-scene in the OAS loop (CG)
-  // CG's oas_interrupt is STUBBED for now (stub:true) — CG previews do not yet stop
-  // (they fall through to the existing behavior); literary + Famous Fate are live.
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ── STARTER PRICING (Roman 2026-08-30) ─────────────────────────────────────
-  // Three prices per starter Book, and they are INDEPENDENT purchases, not a
-  // split of one price:
-  //
-  //   bakedUnlockPrice  what the reader pays at the gate that ends the free
-  //                     baked Scene 1. For a literary Book this IS the whole
-  //                     remaining issue (60F, one unit). For the CG Book it is
-  //                     the 15F live one-on-one, and the issue is bought later.
-  //   previewPrice      the paid TRIAL for a Book with no baked opening —
-  //                     Famous Fate only (15F for its three generated scenes).
-  //   continuationPrice the complete remaining issue, at list price, bought as
-  //                     ONE unit. Never sold scene-by-scene, never partial.
-  //
-  // NOTE ON TOTALS: a trial is additive, not a discount off the issue. A full
-  // Famous Fate Issue One is 15 + 60 = 75F; a full First Sacrifice Issue One is
-  // 15 (OAS) + 130 (issue) = 145F, which is deliberately more than the 90F
-  // signup grant — the CG Book expects a top-up. The old rule (opening +
-  // continuation == issue price) is retired; see the invariant below for what
-  // replaced it.
-  //
-  // THE 90F WALLET is designed to permit either order, exactly:
-  //   15 (FF trial) + 15 (OAS) + 60 (one literary/FF continuation) = 90
-  //   60 (one literary/FF continuation) + 15 + 15                  = 90
+  // STARTER ISSUE CATALOG. All four starters sell a whole issue after explicit
+  // consent. Static authored openings and their illustrations cost no provider
+  // calls; their reading access is included in that issue purchase. These old
+  // field names remain for compatibility with previously saved previews.
+  // A 90F welcome gift covers a 60F Literary issue; CG costs 130F and shows the
+  // exact shortfall before the reader can buy. No separate 15F trial/OAS fee.
   var PREVIEW_CATALOG = {
-    // Baked opening, free to read. The gate at the first Say/Do buys the whole
-    // remaining issue in one unit.
-    starter_the_first_taste: { format: 'literary', bakedUnlockPrice: 60, bakedUnlockKind: 'issue',
-      previewPrice: 0, continuationPrice: 60, continuationResume: { type: 'scene', from: 2 },
-      previewLabel: 'A literary Book.', sceneCountLabel: 'the complete Issue One \u2014 20 scenes' },
-
-    starter_glass_house: { format: 'literary', bakedUnlockPrice: 60, bakedUnlockKind: 'issue',
-      previewPrice: 0, continuationPrice: 60, continuationResume: { type: 'scene', from: 2 },
-      previewLabel: 'A literary Book.', sceneCountLabel: 'the complete Issue One \u2014 20 scenes' },
-
-    // Famous Fate has NO baked opening (the player names the world), so its
-    // opening is a paid trial: 15F for the first three generated scenes.
-    starter_famous_fate: { format: 'literary', previewPrice: 15,
-      previewStop: { type: 'scene', at: 3 }, continuationPrice: 60,
-      continuationResume: { type: 'scene', from: 4 },
-      previewLabel: 'A Famous Fate trial.', sceneCountLabel: '3 scenes' },
-
-    // CG. Baked Scene 1 (5 placeholder panels) is free; 15F buys the live OAS
-    // at the handoff; the cut at OAS beat 8 offers the complete CG issue at its
-    // 130F list price. `stub` is GONE (2026-08-30) — that flag was the only
-    // thing making this Book free.
-    // previewPrice is 0, NOT 15: the 15F is defined once, by bakedUnlockPrice,
-    // and taken once, by the gate at the OAS handoff. Carrying the same number
-    // in both fields would let the launch path's preview-slice charge take it a
-    // second time, and would drift the moment either field was edited alone.
-    starter_first_sacrifice: { format: 'cg', bakedUnlockPrice: 15, bakedUnlockKind: 'oas',
-      previewPrice: 0, previewStop: { type: 'oas_interrupt', scene: 1, at: 8, before: 'satisfaction' },
-      continuationPrice: 130, continuationResume: { type: 'scene', from: 2 },
-      previewLabel: 'A cinematic Book.', sceneCountLabel: '1 cinematic scene + the live one-on-one' }
+    starter_the_first_taste: { format:'literary', bakedUnlockPrice:60, bakedUnlockKind:'issue', previewPrice:0, continuationPrice:60, continuationResume:{type:'scene',from:2}, previewLabel:'A Literary issue.', sceneCountLabel:'Issue One — 20 scenes' },
+    starter_glass_house: { format:'literary', bakedUnlockPrice:60, bakedUnlockKind:'issue', previewPrice:0, continuationPrice:60, continuationResume:{type:'scene',from:2}, previewLabel:'A Literary issue.', sceneCountLabel:'Issue One — 20 scenes' },
+    starter_famous_fate: { format:'literary', previewPrice:0, continuationPrice:60, continuationResume:{type:'scene',from:2}, previewLabel:'A Famous Fate issue.', sceneCountLabel:'Issue One — 20 scenes' },
+    starter_first_sacrifice: { format:'cg', bakedUnlockPrice:130, bakedUnlockKind:'issue', previewPrice:0, continuationPrice:130, continuationResume:{type:'scene',from:2}, previewLabel:'A Cinegraphic issue.', sceneCountLabel:'Issue One — 10 scenes' }
   };
+
   window.PREVIEW_CATALOG = PREVIEW_CATALOG;
 
   // Load-time invariant check (INVARIANT 1). Logs loudly on a mispriced product
@@ -94637,8 +94576,8 @@ The scene carries the weight of something almost chosen. There should be a quiet
         if (hasBaked && typeof p.bakedUnlockPrice !== 'number') {
           console.error('[PRICING] INVARIANT 2 — ' + k + ' has a baked Scene 1 but no bakedUnlockPrice');
         }
-        if (!hasBaked && !(p.previewPrice > 0)) {
-          console.error('[PRICING] INVARIANT 2 — ' + k + ' has no baked Scene 1 and no paid trial');
+        if (!hasBaked && p.continuationPrice !== issue.fortuneCost) {
+          console.error('[PRICING] INVARIANT 2 — ' + k + ' must offer the full issue before generation');
         }
         // 3. Rendering a baked Scene 1 is free. Always.
         if (hasBaked && p.previewPrice) {
@@ -94736,63 +94675,9 @@ The scene carries the weight of something almost chosen. There should be a quiet
   // A non-preview / stubbed starter falls through to a direct launch.
   function _showPreviewConfirmModal(starterDef, onBegin) {
     if (!starterDef) return;
-    var prod = PREVIEW_CATALOG[starterDef.id];
-    // onBegin lets a caller (e.g. Famous Fate) run its OWN start on confirm instead
-    // of the default literary _launchStarterStory.
-    if (!prod || prod.stub) { if (typeof onBegin === 'function') onBegin(); else if (typeof _launchStarterStory === 'function') _launchStarterStory(starterDef); return; }
-    try {
-      var iconHTML = (typeof _fortuneIconHTML === 'function') ? _fortuneIconHTML() : '✦';
-      if (!document.getElementById('previewConfirmModalStyle')) {
-        var st = document.createElement('style'); st.id = 'previewConfirmModalStyle';
-        st.textContent = '#previewConfirmModal{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(8,6,12,.9);backdrop-filter:blur(6px)}'
-          + '#previewConfirmModal.show{display:flex}'
-          + '#previewConfirmModal .pc-card{max-width:440px;width:88%;background:#13101a;border:1px solid rgba(212,175,110,.4);border-radius:14px;padding:30px 28px;text-align:center;color:#efe6d6;box-shadow:0 18px 60px rgba(0,0,0,.6)}'
-          + '#previewConfirmModal .pc-eyebrow{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:#d4af6e;margin:0 0 10px}'
-          + '#previewConfirmModal .pc-title{font-size:23px;font-weight:600;margin:0 0 6px}'
-          + '#previewConfirmModal .pc-kind{font-size:14px;font-style:italic;color:#c9bfa8;margin:0 0 18px}'
-          + '#previewConfirmModal .pc-scenes{font-size:15px;letter-spacing:.02em;color:#efe6d6;margin:0 0 4px}'
-          + '#previewConfirmModal .pc-cost{font-size:16px;color:#efe6d6;margin:0 0 14px}'
-          + '#previewConfirmModal .pc-cost b{color:#e8c884;font-weight:700}'
-          + '#previewConfirmModal .pc-note{font-size:13px;line-height:1.5;color:#a99f8b;margin:0 auto 22px;max-width:330px}'
-          + '#previewConfirmModal .pc-begin{display:block;width:100%;padding:14px 18px;border:0;border-radius:9px;background:linear-gradient(135deg,#d4af6e,#b8893f);color:#1a1206;font-weight:700;font-size:15px;cursor:pointer}'
-          + '#previewConfirmModal .pc-cancel{margin-top:12px;background:none;border:0;color:#8f8672;font-size:13px;cursor:pointer;text-decoration:underline}'
-          + '#previewConfirmModal .fortune-icon-inline{height:.92em;vertical-align:-.11em}';
-        document.head.appendChild(st);
-      }
-      var modal = document.getElementById('previewConfirmModal');
-      if (!modal) {
-        modal = document.createElement('div'); modal.id = 'previewConfirmModal';
-        modal.innerHTML = '<div class="pc-card" role="dialog" aria-modal="true">'
-          + '<div class="pc-eyebrow" id="pcEyebrow">Genesis</div>'
-          + '<h3 class="pc-title" id="pcTitle"></h3>'
-          + '<div class="pc-kind" id="pcKind"></div>'
-          + '<div class="pc-scenes" id="pcScenes"></div>'
-          + '<p class="pc-note">Your journey continues in this same story when you complete Issue One.</p>'
-          + '<button class="pc-begin" id="pcBeginBtn"></button>'
-          + '<button class="pc-cancel" id="pcCancelBtn">Not yet</button>'
-          + '</div>';
-        document.body.appendChild(modal);
-        modal.querySelector('#pcCancelBtn').addEventListener('click', function () { modal.classList.remove('show'); });
-        modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('show'); });
-      }
-      var price = prod.previewPrice || 0;
-      modal.querySelector('#pcTitle').textContent = starterDef.title || 'Genesis';
-      modal.querySelector('#pcKind').textContent = 'The opening chapters of this story.';
-      modal.querySelector('#pcScenes').textContent = prod.sceneCountLabel || '';
-      // Re-bind Begin each open so it targets the CURRENT starterDef (no listener stacking).
-      var oldBtn = modal.querySelector('#pcBeginBtn');
-      var beginBtn = oldBtn.cloneNode(false); oldBtn.parentNode.replaceChild(beginBtn, oldBtn);
-      beginBtn.innerHTML = 'Proceed — ' + price + iconHTML;
-      beginBtn.addEventListener('click', function () {
-        modal.classList.remove('show');
-        if (typeof onBegin === 'function') { onBegin(); return; }
-        if (typeof _launchStarterStory === 'function') _launchStarterStory(starterDef);
-      });
-      modal.classList.add('show');
-    } catch (e) {
-      try { console.warn('[PREVIEW-CONFIRM] failed, launching directly:', e && e.message); } catch (_) {}
-      if (typeof _launchStarterStory === 'function') _launchStarterStory(starterDef);
-    }
+    // World selection may precede the purchase; story content and generation may not.
+    if (typeof onBegin === 'function') onBegin();
+    else _launchStarterStory(starterDef);
   }
   window._showPreviewConfirmModal = _showPreviewConfirmModal;
 
@@ -95469,7 +95354,7 @@ The scene carries the weight of something almost chosen. There should be a quiet
   window._getIssuePricing = _getIssuePricing;
 
   function _getActiveIssuePricing() {
-    return _getIssuePricing(_isCGRenderMode() ? 'cg' : 'literary');
+    return _getIssuePricing(_isCGRenderMode() || state.storyModality === 'cinematic' ? 'cg' : 'literary');
   }
   window._getActiveIssuePricing = _getActiveIssuePricing;
 
@@ -95598,27 +95483,9 @@ The scene carries the weight of something almost chosen. There should be a quiet
   }
   window.buildSceneEndingDilemmaDirective = buildSceneEndingDilemmaDirective;
 
-  // True when the story is on a non-Taste tier (issue pricing applies).
+  // All reader stories use issue pricing, including legacy saved tiers.
   function _issuePricingApplies() {
-    var tier = String((state && state.storyLength) || '').toLowerCase();
-    // INVERTED DEFAULT (Roman 2026-06-08 — kills the recurring "still charged 1F
-    // per scene despite paying 40F upfront"): ONLY the Taste starters (and legacy
-    // 'starter') are per-scene / free-tier. EVERYTHING else is issue-priced — the
-    // issue is paid up front, every scene within it is FREE. Crucially this now
-    // includes an EMPTY / UNKNOWN tier: storyLength resets to '' for non-starters
-    // (the corridor pick owns it) and an un-restored snapshot or mid-story reset
-    // can leave it empty at submit. The old logic returned false for empty tier →
-    // the per-scene charge fired on top of the paid issue. Defaulting unknown →
-    // issue-priced makes that overcharge impossible: a non-Taste story can never
-    // be charged per-scene even if storyLength OR _issuePurchaseStatus is lost.
-    // (A genuine starter always carries tier 'taste' — it never resets to empty —
-    // so this never makes a per-scene starter free by mistake.)
-    // PREVIEW: a preview story is a taste-tier starter, but its scenes are paid
-    // by the preview slice (previewPrice), NOT per-scene. So a preview is
-    // issue-priced-style (scenes free within the slice). Dormant until launch
-    // sets state.previewActive.
-    if (state && state.previewActive) return true;
-    if (tier === 'taste' || tier === 'starter') return false;
+    // Every reader story is sold by issue, including legacy Taste/unknown tiers.
     return true;
   }
   window._issuePricingApplies = _issuePricingApplies;
@@ -129799,7 +129666,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // boot-time restore (no storyId) and the Library-click restore (with storyId). Ordinary
     // literary stories are unaffected — same _isStagedMode() predicate and same 'gnReader' target
     // the existing intimacy-mount resume path already uses (~app.js:181791).
-    if (typeof _isStagedMode === 'function' && _isStagedMode()) {
+    if (typeof _isStagedMode === 'function' && _isStagedMode() && !state._bakedOpeningOnGame) {
       window.showScreen('gnReader');
     } else {
       window.showScreen('game');
@@ -129835,6 +129702,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       window._armLiteraryPetitionEmergence();
     }
 
+    if(state._bakedOpeningMounted && state._bakedOpeningOnGame){
+      var resumePkg=_bakedPkgForActiveStory();if(resumePkg&&resumePkg.format==='cg'){_mountBakedOASHandoff(resumePkg);_mountBakedCGOpening(resumePkg);}
+    }
     // RESUME LORE DECORATION (Roman 2026-07-13, Root 3): the ledger (state._loreLedger) rides
     // along in the snapshot (cleanState = {...state}) and is restored above, but the saved scene
     // HTML was mounted un-decorated — formatStory's gen-time decorator never runs on the resume
@@ -130801,11 +130671,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       // ── Fortunes & Pricing ──
       { category: 'Fortunes & Pricing', question: 'What are Fortunes?',
-        answer: 'Fortunes are Storybound\'s currency. You spend them to unlock story Issues — fixed blocks of scenes — and on extras like Petition and Tempt Fate cards, saved character looks, and premium features. You\'re charged per Issue, not per scene: once you\'ve bought an Issue, reading and advancing within it is free. Every new account begins with a gift of 90 Fortunes on its shelf — enough to try the paid openings and complete one full Issue.' },
+        answer: 'Fortunes are Storybound\'s currency. You spend them to unlock story Issues — fixed blocks of scenes — and on extras like Petition and Tempt Fate cards, saved character looks, and premium features. You\'re charged per Issue, not per scene: once you\'ve bought an Issue, reading and advancing within it is free. Every new account begins with a gift of 90 Fortunes on its shelf — enough for a complete 60-Fortune Literary Issue, with 30 left. A 130-Fortune Cinegraphic Issue needs 40 more.' },
       { category: 'Fortunes & Pricing', question: 'How much does a story cost?',
-        answer: 'Stories are bought one Issue at a time — a fixed block of scenes at a flat price — so you only pay for as far as you actually read. A Literary Issue is 20 scenes for 60 Fortunes; a Cinegraphic Issue is 10 scenes for 130 Fortunes (it generates art, which costs more). Every Book opens with a hand-written first scene you can read for free. Continue from it and you buy the complete Issue One as a single purchase, then each Issue after that. When you reach the end of an Issue, you can buy the next one to keep going or stop there.' },
+        answer: 'Stories are bought one Issue at a time — a fixed block of scenes at a flat price — so you only pay for as far as you actually read. A Literary Issue is 20 scenes for 60 Fortunes; a Cinegraphic Issue is 10 scenes for 130 Fortunes (it generates art, which costs more). Opening a starter Book shows its Issue One price and your balance. Only confirming the purchase spends Fortunes and opens the story. The purchase includes its opening and every scene in that Issue; there is no separate trial or encounter fee. When you reach the end of an Issue, you can buy the next one to keep going or stop there.' },
       { category: 'Fortunes & Pricing', question: 'How do I earn Fortunes?',
-        answer: 'Every new account starts with a gift of 90 Fortunes. The first scene of every Book is free to read; you spend Fortunes to continue. You also earn a bonus for returning the next day, and a confirmed bug report earns +1 Fortune.' },
+        answer: 'Every new account starts with a gift of 90 Fortunes. Your gift can be used for the four starter Books in your Private Library. A Literary Issue costs 60 Fortunes; a Cinegraphic Issue costs 130. You confirm the full Issue price before anything is deducted. You also earn a bonus for returning the next day, and a confirmed bug report earns +1 Fortune.' },
       { category: 'Fortunes & Pricing', question: 'What\'s a Subscription?',
         answer: 'Subscriptions are monthly plans (Storied, Favored, Chosen) that give you a regular Fortune allowance plus tier-specific perks like premium prose models and faster image generation. You can see current tiers in the Vault > Treasury.' },
       { category: 'Fortunes & Pricing', question: 'Can I get a refund?',
@@ -161439,7 +161309,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
       var iconHTML = (typeof _fortuneIconHTML === 'function') ? _fortuneIconHTML() : '✦';
       modal.querySelector('#suTitle').innerHTML =
-        'Get <b>90 Fortunes' + iconHTML + '</b> free — more than enough to enter this story — just by logging in.';
+        'Get <b>90 Fortunes' + iconHTML + '</b> free when you create your account. Sign in to see your balance and this Book’s Issue price.';
       modal.querySelector('#suNote').textContent = (opts.context === 'famous_fate')
         ? 'Your world and character are remembered. Sign in and pick up right where you left off.'
         : 'Your place in this Book is kept. Sign in and you land exactly here, with the scene you just read still open.';
@@ -161586,6 +161456,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
    */
   function _bakedGenesisGate(onUnlocked) {
     if (!_bakedGenesisLocked()) return false;
+    if(state._issuePurchaseStatus==='paid' && state._issuePurchaseIssueIndex===1){
+      _unlockBakedGenesis('issue-already-purchased').then(function(ok){if(ok&&typeof onUnlocked==='function')onUnlocked();});
+      return true;
+    }
 
     // Logged out: the account IS the unlock. No charge conversation at all.
     //
@@ -161608,7 +161482,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // separate purchase at the OAS cut.
     var prod = (typeof PREVIEW_CATALOG !== 'undefined') ? PREVIEW_CATALOG[state._starterId] : null;
     var price = prod && typeof prod.bakedUnlockPrice === 'number' ? prod.bakedUnlockPrice : 0;
-    var kind  = (prod && prod.bakedUnlockKind) || 'issue';
+    var kind = 'issue';
     var label = (kind === 'oas') ? 'The one-on-one' : 'The complete Issue One';
 
     console.log('[BAKED:GATE] signed in — ' + label + ' at ' + price + 'F (starter=' + state._starterId + ')');
@@ -161704,8 +161578,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       goBtn.addEventListener('click', function () { modal.classList.remove('show'); onConfirm(); });
       modal.classList.add('show');
     } catch (e) {
-      console.warn('[BAKED:GATE] confirm modal failed, charging directly:', e && e.message);
-      onConfirm();
+      console.warn('[BAKED:GATE] confirmation unavailable; nothing charged:', e && e.message);
     }
   }
   window._showBakedUnlockConfirm = _showBakedUnlockConfirm;
@@ -161961,32 +161834,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     StoryPagination.addPage(formatStory(displayBody), true);
     try { _sceneLedgerCommit(state, { kind: 'baked', sceneNumber: 1, event: (pkg && pkg.emitted && (pkg.emitted.ledgerLine || pkg.emitted.sceneSummary)) ? String(pkg.emitted.ledgerLine || pkg.emitted.sceneSummary).slice(0, 300) : null, /* ledgerLine = the package's ≤300-char committed record; sceneSummary is the fuller orientation (SEED CONTINUITY) */ pageUid: StoryPagination.getCurrentPageUid() }); } catch (_) {}   // 2026-09-10: the ledger names what the fixed opening established
 
-    // ── BAKED IMAGE OCCURRENCES (Roman 2026-09-19) — structured DOM path, NEVER markup-in-text ──
-    // The reading copy above carries only [bracket] TEXT plates (harmless plain text, unchanged).
-    // Real images mount separately, through the dedicated structured renderer, into their OWN host
-    // container — never spliced into the prose passed to formatStory/StoryPagination. Fire-and-
-    // forget: an unrendered package (every real package today, until art is baked) resolves zero
-    // occurrences and mounts nothing, by design — see _mountBakedImageOccurrences.
-    if (isCG && pkg.imageOccurrences && typeof _mountBakedImageOccurrences === 'function') {
-      try {
-        var _bakedImgHost = document.getElementById('bakedSceneImages');
-        if (!_bakedImgHost) {
-          var _storyHost = document.getElementById('storyContent') || document.getElementById('gnPanelDisplay');
-          if (_storyHost) {
-            _bakedImgHost = document.createElement('div');
-            _bakedImgHost.id = 'bakedSceneImages';
-            _storyHost.insertBefore(_bakedImgHost, _storyHost.firstChild);
-          }
-        } else {
-          _bakedImgHost.innerHTML = '';
-        }
-        if (_bakedImgHost) {
-          _mountBakedImageOccurrences(pkg, _bakedImgHost).then(function (mounted) {
-            console.log('[BAKED-IMG] mounted ' + mounted.length + ' occurrence(s): ' + mounted.join(', '));
-          });
-        }
-      } catch (e) { console.warn('[BAKED-IMG] mount failed:', e && e.message); }
-    }
+    // Structured illustrations are mounted by the beat reader below. They never
+    // enter the prose/history projection or trigger an image-generation call.
 
     // ── DISPLAY NOW, COMMIT AT UNLOCK ──
     // The scene is on screen but NOT committed to story state: turnCount stays
@@ -162009,7 +161858,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     state._bakedOpeningOnGame = true;   // the baked opening (and its one-on-one / interruption) live on the game screen until a generated staged scene takes over
     window.showScreen('game');
     showReaderPage(2);
-    if (!state._titlePageShown) showTitlePage();
+    state._titlePageShown = true; // A purchased opening starts on its actual first beat.
     if (window.dealFateCards) window.dealFateCards();
     if (window.initFateCards) window.initFateCards();
     try { var _sb = document.getElementById('submitBtn'); if (_sb) _sb.disabled = false; } catch (_) {}
@@ -162039,6 +161888,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // has been committed.
     // Mount stamp — proof for the post-sign-in restore that the Book actually
     // came up, so it can drop its one-shot recovery marker only on success.
+    if(isCG)_mountBakedCGOpening(pkg);
     state._bakedScene1MountedAt = Date.now();
     try { if (typeof logEvent === 'function') logEvent('baked_scene1_opened', { starterId: def.id, version: pkg.version }); } catch (_) {}
   }
@@ -162423,6 +162273,23 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._mountBakedImageOccurrences = _mountBakedImageOccurrences;
 
+  function _mountBakedCGOpening(pkg) {
+    if(!pkg||pkg.format!=='cg'||!window.SB_BAKED_CG_READER)return;
+    var host=document.getElementById('storyText');if(!host)return;
+    var completed=!!state._bakedCGReadingComplete,resumeBeat=state._bakedCGBeatIndex||0;
+    document.body.classList.toggle('baked-cg-reading',!completed);
+    var handoff=document.getElementById('bakedOASHandoff');if(handoff)handoff.hidden=!completed;
+    var reader=window.SB_BAKED_CG_READER.mount({host:host,pkg:pkg,mountOccurrence:_mountImageOccurrence,
+      onChange:function(index){state._bakedCGBeatIndex=index;},
+      onComplete:function(){
+        state._bakedCGReadingComplete=true;document.body.classList.remove('baked-cg-reading');
+        var entrance=document.getElementById('bakedOASHandoff');if(entrance){entrance.hidden=false;entrance.scrollIntoView({behavior:'smooth'});}
+        try{saveStorySnapshot();}catch(_){}
+      }});
+    if(reader&&resumeBeat)reader.show(resumeBeat);
+  }
+  window._mountBakedCGOpening=_mountBakedCGOpening;
+
   function _bakedCGBody(pkg, withPlates) {
     var out = [];
     if (Array.isArray(pkg.beats) && pkg.beats.length) {
@@ -162466,6 +162333,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (!state.backCoverSynopsis) state.backCoverSynopsis = pkg.synopsis;
       }
       state._bakedEmitted = em;
+      var declaredRegion=em.openState&&em.openState.region;
+      state._authoredOpeningRegion=declaredRegion?{storyId:state.storyId,region:declaredRegion}:null;
+      if(declaredRegion){
+        state.fantasyRegion=declaredRegion;state._fatelandsOriginLocation=declaredRegion;state._fatelandsCurrentLocation=declaredRegion;
+        state._fantasyCoreEntropy=state._fantasyCoreEntropy||{};state._fantasyCoreEntropy.fantasy_region_focus=declaredRegion;
+        state._fantasyRegionOverrideApplied=true;state._regionSource='authored_opening';
+      }
       state._bakedScene1Version = pkg.version;
       // Packaged ambient tag — read by the classifier override so mounting the
       // free scene never fires the Grok ambient call.
@@ -162504,9 +162378,24 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
    * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
    */
   let _starterStoryLaunching = false;
-  async function _launchStarterStory(starterDef) {
+  async function _launchStarterStory(starterDef, issueReceipt) {
     if (_starterStoryLaunching) return;
+    var selected=starterDef||STARTER_STORY;
+    if(!issueReceipt){
+      var saved=null;try{saved=JSON.parse(localStorage.getItem('sb_saved_story')||'null');}catch(_){}
+      var ownedId=null;try{ownedId=localStorage.getItem('sb_starter_owned:'+(_supabaseProfileId||state.profileId)+':'+selected.id);}catch(_){}
+      if(ownedId&&(!saved||saved.storyId!==ownedId))saved=await loadStoryData(ownedId);
+      var prior=saved&&saved.stateSnapshot&&saved.stateSnapshot._starterIssueReceipt;
+      if(prior&&prior.accountId===(_supabaseProfileId||state.profileId)&&prior.starterId===selected.id&&saved.stateSnapshot._issuePurchaseStatus==='paid'){
+        await window.continueStory(saved.storyId);return;
+      }
+      var receipt=await _requestIssueEntry({title:selected.title,format:(PREVIEW_CATALOG[selected.id]||{}).format||'literary',starterId:selected.id,issueIndex:1});
+      if(receipt)return _launchStarterStory(selected,receipt);
+      return;
+    }
     _starterStoryLaunching = true;
+    if(typeof window._exitLibraryConcierge==='function')window._exitLibraryConcierge();
+    if(typeof window._closeConciergePanel==='function')window._closeConciergePanel();
     const def = starterDef || STARTER_STORY;
     console.log('[STARTER] Launching "' + def.title + '"');
 
@@ -162686,7 +162575,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       state.access = 'free';
 
       // Generate story ID
-      state.storyId = (typeof makeStoryId === 'function') ? makeStoryId() : 'starter_' + Date.now();
+      state.storyId = issueReceipt.storyId;
+      state._starterIssueReceipt = issueReceipt;
+      state._issuePurchaseStatus='paid';state._issuePurchaseIssueIndex=1;state._issuePurchaseOpId=issueReceipt.operationId;
+      state._issuePurchasedAmount=issueReceipt.amount;state._issuePurchaseContext='issue_purchase_'+issueReceipt.format;
+      state.renderMode=issueReceipt.format==='cg'?'staged_story_mode':'literary';
+      state.storyModality=issueReceipt.format==='cg'?'cinematic':'literary';
+      state.currentEngine=issueReceipt.format==='cg'?'graphic':'literary';
+      if(!state.storyLength||state.storyLength==='taste'||state.storyLength==='starter')state.storyLength='fling';
+      state.picks.length=state.storyLength;
+      state.previewActive=false;state.previewContinued=true;
 
       // ── PREVIEW ACTIVATION (Preview onboarding) ──
       // Literary + Famous Fate starters are PREVIEWS: the front slice of Issue One.
@@ -162701,7 +162599,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // charge-on-open behavior.
       var _prevProd = PREVIEW_CATALOG[def.id];
       var _bakedPkg = (typeof window._bakedScene1For === 'function') ? window._bakedScene1For(def.id) : null;
-      if (_prevProd && !_prevProd.stub) {
+      if (_prevProd && !_prevProd.stub && !issueReceipt) {
         state.previewActive = true;
         state.previewProductId = def.id;
         state.previewContinued = false;
@@ -162740,6 +162638,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         if (!state.world && def.world) state.world = def.world;
         if (!state.worldSubtype && def.worldSubtype) state.worldSubtype = def.worldSubtype;
         _renderBakedScene1(def, _bakedPkg);
+        try { if(typeof saveStorySnapshot==='function')await saveStorySnapshot(); }catch(_){}
+        try{var confirmedSave=JSON.parse(localStorage.getItem('sb_saved_story')||'null');if(confirmedSave&&confirmedSave.storyId===issueReceipt.storyId&&confirmedSave.stateSnapshot._issuePurchaseStatus==='paid'){localStorage.setItem('sb_starter_owned:'+issueReceipt.accountId+':'+def.id,issueReceipt.storyId);if(issueReceipt.recoveryKey)localStorage.removeItem(issueReceipt.recoveryKey);}}catch(_){}
         _starterStoryLaunching = false;
         stopLoading();
         return;
@@ -164147,39 +164047,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   const _SCENE_PRICE_TABLE_GN       = { ST1: 3, ST2: 3, ST3: 4, ST4: 3, ST5: 3, ST6: 3 };
 
   function resolveNextScenePrice(s) {
-      s = s || window.state || {};
-      const turnCount = s.turnCount || 0;
-      const cap = (typeof _getTeaseSceneCap === 'function' ? _getTeaseSceneCap() : 20);
-
-      // ── ISSUE PRICING SHORT-CIRCUIT ──
-      // Non-Taste premium tiers (Fling/Affair/Soulmates) are covered by
-      // the per-issue purchase (ISSUE_PRICING). Per-scene cost is zero;
-      // the Submit button shows no cost label within an active issue,
-      // and on the last scene of the issue swaps to a "Continue to Issue
-      // X.{N+1} (##F)" CTA. _SCENE_PRICE_TABLE_LITERARY / _GN below are
-      // unreachable for premium tiers but kept for Taste fallback.
-      const _len = s.storyLength || 'taste';
-      if (_len && _len !== 'taste' && _len !== 'starter') return 0;
-
-      // Free-credit short-circuits — preserved exactly from prior pricing.
-      if (s.freeTasteCreditApplied && turnCount < cap) return 0;
-      if (typeof isTeaseTier === 'function' && isTeaseTier() && _len === 'taste' && turnCount < cap) return 0;
-
-      const isGN = s.currentEngine === 'graphic';
-
-      // Scene 1 fast path: literary 1F, GN 2F. Defensive against missing
-      // storyturn during initial setup.
-      if (turnCount <= 1) return isGN ? 2 : 1;
-
-      // Per-mode lookup. Default to ST1 row for any storyturn we don't
-      // explicitly recognize (ST7+, edge phases, missing state).
-      const st = s.storyturn || 'ST1';
-      const table = isGN ? _SCENE_PRICE_TABLE_GN : _SCENE_PRICE_TABLE_LITERARY;
-      let price = (st in table) ? table[st] : table.ST1;
-
-      // Hard cap belt-and-suspenders.
-      if (price > 5) price = 5;
-      return price;
+    // The issue purchase covers every scene. Entry/continuation shows the issue price.
+    return 0;
   }
   window.resolveNextScenePrice = resolveNextScenePrice;
 
@@ -164595,7 +164464,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       console.warn('[FORTUNE] no session token — charge not attempted');
       return { resp: { ok: false, status: 401 }, data: { error: 'authentication_required' } };
     }
-    var resp = await fetch('/api/consume-fortune', { method: 'POST', headers: headers, body: JSON.stringify(body) });
+    var chargeEndpoint = /^issue_(purchase|continuation)_(literary|cg)$/.test(body.context || '') ? '/api/purchase-issue' : '/api/consume-fortune';
+    var resp = await fetch(chargeEndpoint, { method: 'POST', headers: headers, body: JSON.stringify(body) });
     var data = null;
     try { data = await resp.json(); } catch (_) { data = {}; }
     return { resp: resp, data: data };
@@ -164695,77 +164565,50 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window._finalizePreviewContinuation = _finalizePreviewContinuation;
 
-  async function _chargeIssuePurchase(kind /* 'start' | 'continuation' */) {
-    if (!_issuePricingApplies()) return true;  // Taste — free, nothing to charge
-    // Alt POV editions are paid up front (see _beginAltPOVEdition). Per-
-    // issue charges are suppressed for the entire alt POV run so we don't
-    // double-charge.
-    if (_isAltPOVEdition()) return true;
-    // PREVIEW: Issue One of a preview story is financed by the dedicated preview
-    // slice path (_chargePreviewSlice), NOT the normal per-issue charge. Suppress
-    // the normal Issue-1 charge while a preview is active. After continuation,
-    // previewActive is false and Issue 1 is marked 'paid', so the normal
-    // idempotency check below covers scenes 11-20; Issue 2 onward are untouched.
-    if (state && state.previewActive && _currentIssueIndex() === 1) return true;
-    var issueIdx = _currentIssueIndex();
-    // Already paid for THIS issue? Idempotent short-circuit.
-    if (state._issuePurchaseStatus === 'paid' && state._issuePurchaseIssueIndex === issueIdx) {
-      return true;
-    }
-    var pricing = _getActiveIssuePricing();
-    var mode = _isCGRenderMode() ? 'cg' : 'literary';
-    var amount = pricing.fortuneCost;
-    var context = 'issue_' + (kind === 'continuation' ? 'continuation' : 'purchase') + '_' + mode;
-    // Reuse opId across retries for the same issue; fresh opId per new issue.
-    var opId = state._issuePurchaseOpId;
-    if (!opId || state._issuePurchaseIssueIndex !== issueIdx) {
-      opId = (crypto && crypto.randomUUID)
-        ? crypto.randomUUID()
-        : (context + '_' + Date.now() + '_' + Math.random().toString(36).slice(2));
-      state._issuePurchaseOpId = opId;
-      state._issuePurchaseIssueIndex = issueIdx;
-      state._issuePurchasedAmount = amount;
-      state._issuePurchaseContext = context;
-      state._issuePurchaseStatus = null;
-    }
-    if ((state.fortunes || 0) < amount) {
-      console.warn('[ISSUE-PURCHASE] insufficient fortunes (have ' + (state.fortunes || 0) + ', need ' + amount + ')');
+  async function _requestIssueEntry(opts) {
+    var account = _supabaseProfileId || state.profileId;
+    if (!account) {
+      if (typeof _showStarterUnlockModal === 'function') _showStarterUnlockModal();
       return false;
     }
-    // DEV BYPASS (localhost QA only): fake the issue purchase locally so paid
-    // issues are testable without a real Supabase balance / Stripe webhook.
-    // Strictly gated to QA host + _devBypass — never fires in production.
-    if (window._devBypass && typeof _isQaHost === 'function' && _isQaHost()) {
-      state.fortunes = (state.fortunes || 0) - amount;
-      state._issuePurchaseStatus = 'paid';
-      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
-      console.log('%c[DEV] Issue purchase faked locally: -' + amount + 'F (issue=' + issueIdx + ') → ' + state.fortunes, 'color:#ffd700');
-      return true;
+    var mode = window.SB_ISSUE_COMMERCE.format(opts.format);
+    var key = 'sb_issue_entry:' + account + ':' + (opts.starterId || opts.storyId) + ':' + opts.issueIndex;
+    var pending = null;
+    try { pending = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
+    if (!pending || pending.accountId !== account || pending.format !== mode) {
+      pending = {accountId:account,format:mode,storyId:opts.storyId || makeStoryId(),operationId:crypto.randomUUID()};
+      localStorage.setItem(key,JSON.stringify(pending));
     }
-    try {
-      var _r = await _postFortuneCharge({
-        userId: _supabaseProfileId,
-        amount: amount,
-        context: context,
-        operationId: opId,
-        storyId: state.storyId || null
-      });
-      var resp = _r.resp, data = _r.data;
-      if (!resp.ok) {
-        if (data.fortunesRemaining != null) state.fortunes = data.fortunesRemaining;
-        console.warn('[ISSUE-PURCHASE] server declined:', data.error);
-        return false;
+    return window.SB_ISSUE_COMMERCE.purchase({
+      title:opts.title,format:mode,issueIndex:opts.issueIndex,storyId:pending.storyId,accountId:account,balance:state.fortunes,retryPending:!!pending.attempted,
+      onTopUp:function(){if(typeof openFortunePurchaseModal==='function')openFortunePurchaseModal();},
+      charge:async function(amount){
+        pending.attempted=true;localStorage.setItem(key,JSON.stringify(pending));
+        var result=await _postFortuneCharge({userId:account,amount:amount,context:'issue_'+(opts.kind==='continuation'?'continuation':'purchase')+'_'+mode,
+          operationId:pending.operationId,storyId:pending.storyId,metadata:{starterId:opts.starterId||null,issueIndex:opts.issueIndex}});
+        if(result.data && result.data.fortunesRemaining!=null)state.fortunes=result.data.fortunesRemaining;
+        if(window.updateFortuneDisplay)window.updateFortuneDisplay();
+        if(!result.resp.ok)throw new Error((result.data&&result.data.error)||'The issue purchase could not be confirmed.');
+        return Object.assign({},pending,{amount:amount,issueIndex:opts.issueIndex,starterId:opts.starterId||null,recoveryKey:key});
       }
-      if (data.fortunesRemaining != null) state.fortunes = data.fortunesRemaining;
-      state._issuePurchaseStatus = 'paid';
-      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
-      console.log('[ISSUE-PURCHASE] charged ' + amount + 'F (' + context + ', issue=' + issueIdx + ', opid=' + opId + ')');
-      try { if (typeof logEvent === 'function') logEvent('issue_purchase', { amount: amount, context: context, issueIndex: issueIdx }); } catch (_) {}
-      return true;
-    } catch (e) {
-      console.error('[ISSUE-PURCHASE] charge failed:', e);
-      return false;
-    }
+    });
+  }
+  window._requestIssueEntry = _requestIssueEntry;
+
+  async function _chargeIssuePurchase(kind) {
+    if (_isAltPOVEdition()) return true;
+    var issueIdx=_currentIssueIndex();
+    if(state._issuePurchaseStatus==='paid' && state._issuePurchaseIssueIndex===issueIdx)return true;
+    state.storyId=state.storyId||makeStoryId();
+    var mode=_isCGRenderMode()||state.storyModality==='cinematic'?'cg':'literary';
+    var receipt=await _requestIssueEntry({title:state.immutableTitle||state.storyTitle||'Your story',format:mode,
+      issueIndex:issueIdx,storyId:state.storyId,kind:kind});
+    if(!receipt)return false;
+    state.storyId=receipt.storyId;state._issuePurchaseOpId=receipt.operationId;state._issuePurchaseIssueIndex=issueIdx;
+    state._issuePurchasedAmount=receipt.amount;state._issuePurchaseContext='issue_'+(kind==='continuation'?'continuation':'purchase')+'_'+mode;
+    state._issuePurchaseStatus='paid';state.previewActive=false;state.previewContinued=true;
+    if(!state.storyLength||state.storyLength==='taste'||state.storyLength==='starter')state.storyLength='fling';
+    return true;
   }
   window._chargeIssuePurchase = _chargeIssuePurchase;
 
@@ -166105,7 +165948,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // reads as a subtitle under "Enter Your Story": "Issue X.{N} ({##}F)".
       // Taste tier and unset-storyLength fall through to the legacy
       // free / per-scene path.
-      var _modalityCost = (state.storyModality === 'cinematic') ? 4 : 1;
+      var _modalityCost = _getIssuePricing(state.storyModality === 'cinematic' ? 'cg' : 'literary').fortuneCost;
       var _issueAppliesBegin = (typeof _issuePricingApplies === 'function') && _issuePricingApplies();
       // At the Enter Your Story stage the user hasn't necessarily picked
       // render mode yet — state.renderMode is unset until story commit.
@@ -166119,25 +165962,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           ? _getIssuePricing(_beginModeIsCG ? 'cg' : 'literary')
           : null;
       var _issueIdxBegin = _issueAppliesBegin && (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
-      // GENESIS PREVIEW: the begin button charges the preview SLICE price (10✦ FF /
-      // 30✦ literary / 15✦ CG), not the full issue cost or the legacy 1✦. Resolve it
-      // and show that number. For FF the preview isn't ACTIVATED until handleBeginStory,
-      // so at the button stage read the pending flag (_ffPreviewPending → FF Genesis price).
-      var _genesisBeginPrice = null;
-      try {
-        if (state && state._ffPreviewPending && typeof PREVIEW_CATALOG !== 'undefined' && PREVIEW_CATALOG.starter_famous_fate) {
-          _genesisBeginPrice = PREVIEW_CATALOG.starter_famous_fate.previewPrice;
-        } else if (state && state.previewActive && !state.previewContinued && typeof _activePreviewProduct === 'function') {
-          var _apGen = _activePreviewProduct();
-          if (_apGen) _genesisBeginPrice = _apGen.previewPrice;
-        }
-      } catch (_) {}
       ['beginCostDisplay', 'coverBeginCostDisplay'].forEach(function(el_id) {
           var el = $(el_id);
           if (!el) return;
-          if (_genesisBeginPrice != null) {
-              _renderBeginCost(el, _genesisBeginPrice, false);
-          } else if (_issueAppliesBegin && _issuePricingBegin) {
+          if (_issueAppliesBegin && _issuePricingBegin) {
               // Per-issue subtitle. Block + scaled font reads as a sub-line
               // under the main "Enter Your Story" label. X is a literal
               // placeholder character (the anthology number isn't claimed
@@ -166149,7 +165977,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               // (lacquered #080808) and carries the same drop-shadow gloss
               // stack the "Enter Your Story" / numeral text use, so the icon
               // reads as one engraved mark with the price. Mode-aware:
-              // 40F literary / 100F CG resolved live from state.storyModality.
+              // 60F literary / 130F CG resolved live from state.storyModality.
               el.innerHTML = '<span class="begin-issue-sub">Issue X.' + _issueIdxBegin + ' <span class="begin-issue-cost"><span class="begin-issue-paren">(</span><span class="begin-issue-num">' + _issuePricingBegin.fortuneCost + '</span><span class="begin-issue-fortune-icon" aria-hidden="true"></span><span class="begin-issue-paren">)</span></span></span>';
           } else {
               _renderBeginCost(el, _isTasteFreeBegin ? 0 : _modalityCost, _isTasteFreeBegin);
@@ -193424,7 +193252,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // under each modality option) — no swap needed here. Legacy
     // #modalityDescription element is gone.
 
-    // Refresh CTA cost pill — Cinegraphic costs 4F, Literary costs 1F.
+    // Refresh the whole-issue price for the selected format.
     if (typeof window.updateFortuneDisplay === 'function') {
       window.updateFortuneDisplay();
     }
@@ -296791,22 +296619,7 @@ var _APPR_FIELDS = [
     // otherwise FF's real storyLength would charge a FULL issue (60✦) instead of
     // the 10✦ preview slice. Literary previews are already active by this point
     // (set in _launchStarterStory). Durable flag survives the FF pipeline resets.
-    if (state._ffPreviewPending && state.fateMode === 'famous_fate' && !state.previewActive) {
-      state.previewActive = true;
-      state.previewProductId = 'starter_famous_fate';
-      state.previewContinued = false;
-      var _ffSliceOk = await _chargePreviewSlice('preview');
-      state._ffPreviewPending = false;
-      state._ffPreviewConfirmed = false;
-      if (!_ffSliceOk) {
-        // ATOMIC: nothing charged, no scene generated, trial not started.
-        var _ffNeed = ((typeof PREVIEW_CATALOG !== 'undefined' && PREVIEW_CATALOG.starter_famous_fate) || {}).previewPrice || 15;
-        state.previewActive = false;
-        state.previewProductId = null;
-        if (typeof _showFortuneShortfall === 'function') _showFortuneShortfall(_ffNeed, 'The Famous Fate trial');
-        return;
-      }
-    }
+    if(state._ffPreviewPending){state._ffPreviewPending=false;state.previewActive=false;state.previewProductId=null;}
 
     // Ultimate safety net: never launch a story with an unset Story Pull /
     // Story Polarity. Fill-if-missing only — a resumed/loaded story keeps its
@@ -329130,6 +328943,11 @@ ${buildVisualContinuityDirective()}`
         if (_retry <= 40) { setTimeout(function () { _runFatelandsLoupe(frontispieceEl, _retry); }, 100); return; }
       }
     } catch (_) {}
+    var openingRegion=state._authoredOpeningRegion;
+    if(openingRegion&&openingRegion.storyId===state.storyId&&!(state.turnCount>0)){
+      state.fantasyRegion=openingRegion.region;state._fatelandsCurrentLocation=openingRegion.region;
+      state._fantasyRegionOverrideApplied=true;state._regionSource='authored_opening';
+    }
     // ── Region Resolution Cascade ──
     // Priority 1: worldCustomText (explicit user override)
     // Priority 2: ancestry-based routing
@@ -367431,7 +367249,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       'Every non-experimental book in the Forbidden Library is free to read.\n' +
       'If asked the difference: one shelf is theirs to continue, the other is theirs only to witness.\n\n' +
       'FREE ACCESS (what every visitor begins with):\n' +
-      'The Library starts with four Books, one per format: \u201CThe First Taste\u201D and \u201CGlass House\u201D (literary), \u201CYour Favorite Book, Movie, or Show\u201D (Famous Fate), and \u201CThe First Sacrifice\u201D (cinegraphic). Opening a Book is FREE \u2014 every Book begins with a hand-written first scene that costs nothing to read; continuing past it is what costs Fortunes. The Forbidden Library is free to read (non-experimental books). When asked about content, state these facts directly.\n\n' +
+      'The Library starts with four Books, one per format: \u201CThe First Taste\u201D and \u201CGlass House\u201D (literary), \u201CYour Favorite Book, Movie, or Show\u201D (Famous Fate), and \u201CThe First Sacrifice\u201D (cinegraphic). Opening a starter Book shows its full Issue price before purchase: Literary 60 Fortunes for 20 scenes; Cinegraphic 130 for 10. The reader must confirm before any Fortunes are deducted. New accounts receive 90 Fortunes once; a CG Issue therefore needs a 40-Fortune top-up. The Forbidden Library is free to read (non-experimental books). When asked about content, state these facts directly.\n\n' +
       'Fortune tokens are the club\u2019s currency. Whispers are how the reader speaks to the story. Fate Cards reshape what happens next. Tempt Fate risks something precious. Petition Fate bends destiny. God Mode lets the reader take the pen.\n' +
       'The Vault is the member\u2019s private alcove, opened by the keyhole. The Account section inside the Vault is where the visitor manages Fortune Reserves and standing.\n' +
       'Fortune Reserves provide a steady supply of Fortunes. Stories are read in Issues \u2014 fixed blocks of scenes bought with Fortunes \u2014 so continuing a story means unlocking its next Issue.\n' +
@@ -368511,7 +368329,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (/\b(read|reading)\b/i.test(q)) {
         return '\u201CAnything in the Forbidden Library is yours to read\u2014every story there is open, except the experimental books. Your own shelf starts with four Books, one per format: \u201CThe First Taste\u201D and \u201CThe First Sacrifice,\u201D \u201CYour Favorite Book, Movie, or Show,\u201D and \u201CGlass House.\u201D Each opens with its Genesis\u2014the opening chapters\u2014which you unlock with the Fortunes Fate placed on your shelf.\u201D';
       }
-      return '\u201CYou begin with four Books on your shelf, one per format: \u201CThe First Taste\u201D and \u201CThe First Sacrifice,\u201D \u201CYour Favorite Book, Movie, or Show,\u201D and \u201CGlass House.\u201D Each opens with its Genesis\u2014the opening chapters\u2014unlocked with your gifted Fortunes; continue a story you love by completing Issue One, then the Issues after. Beyond that, the Forbidden Library is free to read.\u201D';
+      return '\u201CYou begin with four Books on your shelf, one per format: \u201CThe First Taste\u201D and \u201CThe First Sacrifice,\u201D \u201CYour Favorite Book, Movie, or Show,\u201D and \u201CGlass House.\u201D Opening a Book shows its Issue One price. Your 90 gifted Fortunes can buy a complete 60-Fortune Literary Issue; Cinegraphic costs 130. Confirming buys the whole Issue, including its opening. Continue with a new Issue when you finish it. Beyond that, the Forbidden Library is free to read.\u201D';
     }
 
     // ── WHAT IS [BOOK] ABOUT / TELL ME ABOUT [BOOK] queries ──
@@ -369745,10 +369563,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         keyhole: 'TOPIC SEED (visitor is asking about the ornate keyhole icon — usually in a corner — and what it opens): The keyhole opens the VAULT MENU, Storybound\'s main navigation hub. From the Vault the visitor reaches: Account (sign-in, subscription, Fortunes balance), Stories (Saved Stories, Saved Story Shapes, Story Appearance, Characters/Looks), Sound & Music, FAQ, and Report an Issue. The keyhole is the "settings" button for the whole app, styled as an ornate Storybound keyhole to fit the mood. Tap it to enter, tap the X (upper right) to close. The Vault overlay does not pause any active story — it floats over whatever screen the visitor was on.',
         sparkles: 'TOPIC SEED (visitor is asking about the gold sparkles / dust / firefly effects floating around the screen): Sparkles are atmospheric effects that signal a MOMENT — usually when a Fate card has been activated, when a card is unlocking, when a beat completes, when the visitor is about to make a meaningful choice, or when the world is responding to a Petition or Tempt. They are visual cues, not buttons — there is nothing to click on the sparkles themselves. They appear gold because gold is Storybound\'s color for Fate / agency / consequence. Brighter, more clustered sparkles usually mean a higher-stakes moment is unfolding. They are decorative and emotional, not numeric — there is no "sparkle score".',
         fortunes_icon: 'TOPIC SEED (visitor asked about the yellow F that looks like a lightning bolt — the visual symbol, not the pricing question): That symbol IS the Fortunes icon. Storybound renders the Fortunes currency mark as a stylized "F" shaped like a lightning bolt. It is NOT a separate currency, NOT a power-up, NOT a status badge — it is simply how Fortunes are written wherever a cost or balance appears (e.g. "40F" on an Issue purchase button, the small chip showing the visitor\'s remaining balance, "5F" cost on a Look-Again button). Anywhere the visitor sees a number followed by that bolt-shaped F, that number is a Fortunes amount. After answering THIS question (what the symbol is), the visitor can find their live balance in Vault → Treasury and the full Fortunes explanation in the FAQ ("What are Fortunes?"). Do NOT redirect to Stories — this is a currency-symbol question.',
-        fortunes_value: 'TOPIC SEED (visitor is asking about the most cost-efficient / cheapest / best-value way to ACQUIRE Fortunes — this is a pricing-OPTIMIZATION question, not "what are Fortunes" and not "explain the tiers"): There are two acquisition paths.\n\n  1. ONE-TIME FORTUNE PACK — the 20-Fortune pack at $3 (about $0.15 per Fortune). Best for visitors who just want to try something specific without a recurring commitment.\n\n  2. SUBSCRIPTION — three monthly tiers, each grants a Fortune allowance: Storied 100 / month, Favored 200 / month (also unlocks Couple mode + 1 monthly Tempt Fate charge), Chosen 400 / month (also unlocks 3 monthly Tempt charges + premium-prose / faster-image perks). For a visitor who reads more than ~one Issue per month, the per-Fortune cost on any subscription tier is meaningfully lower than the one-time pack — that is the canonical "most cost-efficient" path.\n\nRecommendation framing the Concierge can offer:\n  • Curious / casual — read the free opening scenes, spend the 90-Fortune gift continuing the one you liked, then a 20-Fortune pack if needed.\n  • Regular reader (an Issue or more per month) — a subscription is almost always cheaper per Fortune.\n  • Heavy reader, wants Couple mode or Tempt Fate — Favored or Chosen.\n\nDo NOT assert specific subscription dollar prices in this answer — the canonical, current per-tier price is in Vault → Treasury, where the visitor can see the live numbers and compare. Numbers verified in code: 20-Fortune pack $3; monthly Fortune grants 100 / 200 / 400 for Storied / Favored / Chosen. The new-account gift of 90 Fortunes is the on-ramp — enough to try the paid openings and complete one full Issue. Avoid promotional / salesy tone — describe the trade-off, recommend by usage pattern, point to Treasury for the exact prices.',
-        fortunes_explain: 'TOPIC SEED: Fortunes are Storybound\'s currency. Stories are bought in ISSUES — a fixed block of scenes at a flat price (a Literary Issue is 20 scenes for 60 Fortunes; a Cinegraphic Issue is 10 scenes for 130 Fortunes) — NOT per scene. Advancing within an Issue you have already unlocked is free; you buy the next Issue when you reach the end of one. Subscriptions grant monthly Fortunes; every new account begins with a gift of 90 Fortunes (the first scene of every Book is free to read; Fortunes are for continuing). For exact current numbers, defer to the FAQ KNOWLEDGE below and point the visitor to the Vault → FAQ ("How much does a story cost?", "What are Fortunes?") and Vault → Treasury for live balances and tiers.',
+        fortunes_value: 'TOPIC SEED (visitor is asking about the most cost-efficient / cheapest / best-value way to ACQUIRE Fortunes — this is a pricing-OPTIMIZATION question, not "what are Fortunes" and not "explain the tiers"): There are two acquisition paths.\n\n  1. ONE-TIME FORTUNE PACK — the 20-Fortune pack at $3 (about $0.15 per Fortune). Best for visitors who just want to try something specific without a recurring commitment.\n\n  2. SUBSCRIPTION — three monthly tiers, each grants a Fortune allowance: Storied 100 / month, Favored 200 / month (also unlocks Couple mode + 1 monthly Tempt Fate charge), Chosen 400 / month (also unlocks 3 monthly Tempt charges + premium-prose / faster-image perks). For a visitor who reads more than ~one Issue per month, the per-Fortune cost on any subscription tier is meaningfully lower than the one-time pack — that is the canonical "most cost-efficient" path.\n\nRecommendation framing the Concierge can offer:\n  • Curious / casual — compare the starter Books and their Issue prices, then use the 90-Fortune gift toward a complete Issue: 60 Literary or 130 Cinegraphic. Buy extra Fortunes only if needed.\n  • Regular reader (an Issue or more per month) — a subscription is almost always cheaper per Fortune.\n  • Heavy reader, wants Couple mode or Tempt Fate — Favored or Chosen.\n\nDo NOT assert specific subscription dollar prices in this answer — the canonical, current per-tier price is in Vault → Treasury, where the visitor can see the live numbers and compare. Numbers verified in code: 20-Fortune pack $3; monthly Fortune grants 100 / 200 / 400 for Storied / Favored / Chosen. The new-account gift of 90 Fortunes is the on-ramp — enough for a complete 60-Fortune Literary Issue, with 30 left. A 130-Fortune Cinegraphic Issue needs 40 more. Avoid promotional / salesy tone — describe the trade-off, recommend by usage pattern, point to Treasury for the exact prices.',
+        fortunes_explain: 'TOPIC SEED: Fortunes are Storybound\'s currency. Stories are bought in ISSUES — a fixed block of scenes at a flat price (a Literary Issue is 20 scenes for 60 Fortunes; a Cinegraphic Issue is 10 scenes for 130 Fortunes) — NOT per scene. Advancing within an Issue you have already unlocked is free; you buy the next Issue when you reach the end of one. Subscriptions grant monthly Fortunes; every new account begins with a gift of 90 Fortunes (used toward whole Issues after explicit price confirmation). For exact current numbers, defer to the FAQ KNOWLEDGE below and point the visitor to the Vault → FAQ ("How much does a story cost?", "What are Fortunes?") and Vault → Treasury for live balances and tiers.',
         storypass_explain: 'TOPIC SEED: There is no longer a "Storypass" — the old $3-per-story pass has been RETIRED. Stories are now bought in ISSUES: a fixed block of scenes unlocked with Fortunes (a Literary Issue is 20 scenes for 60 Fortunes; a Cinegraphic Issue is 10 scenes for 130 Fortunes). To keep reading, the visitor buys the next Issue when they reach the end of the current one — there is no per-scene charge. If a visitor mentions "Storypass" or a "$3 pass", let them know plainly that it has been replaced by Issues, and point them to the Vault → FAQ ("How do Issues and issue numbers work?", "How much does a story cost?").',
-        subscription_explain: 'TOPIC SEED: Membership tiers are Storied, Favored, and Chosen. Each grants a monthly Fortune allowance — Storied 100, Favored 200, Chosen 400 — which the visitor spends on story Issues (fixed blocks of scenes) and extras like Fate cards. Higher tiers add perks: Favored unlocks Couple mode and 1 monthly Tempt Fate charge; Chosen grants 3 monthly Tempt Fate charges plus premium-prose / faster-image perks. The Forbidden Library is free to read without a membership, and every new account receives a gift of 90 Fortunes; the first scene of every Book is free to read. For current prices and live balances, point the visitor to the Vault → Treasury (and the FAQ → "What\'s a Subscription?").',
+        subscription_explain: 'TOPIC SEED: Membership tiers are Storied, Favored, and Chosen. Each grants a monthly Fortune allowance — Storied 100, Favored 200, Chosen 400 — which the visitor spends on story Issues (fixed blocks of scenes) and extras like Fate cards. Higher tiers add perks: Favored unlocks Couple mode and 1 monthly Tempt Fate charge; Chosen grants 3 monthly Tempt Fate charges plus premium-prose / faster-image perks. The Forbidden Library is free to read without a membership, and every new account receives a gift of 90 Fortunes; every starter Issue shows its full price before the reader confirms a purchase. For current prices and live balances, point the visitor to the Vault → Treasury (and the FAQ → "What\'s a Subscription?").',
         book_two: 'TOPIC SEED: After a story ends, the reader can start Book 2 — a continuation with the same characters and world but a fresh narrative arc. Book 2 resets the story turn (emotional progression) while keeping character relationships intact.',
         issue_numbering: 'TOPIC SEED (visitor asked about issue numbers / what the ".1" means / how the number is secured): A cover number looks like "Glass House #12.1". The first part (#12) is the story\'s permanent number for its world flavor — while the story is in progress the cover shows a placeholder "#?", and when the visitor FINISHES the story it claims and locks their number, bound to their account and never reassigned. The part after the dot is which Issue they are on within that story: ".1" is the opening Issue, and it counts up each time they buy another (.1, .2, .3). A Book still in its Genesis shows a "Genesis" badge and carries no number until Issue One is complete. Do NOT mention any reserved numbers or a fixed starting number — there is none.',
         forbidden_renamed: 'TOPIC SEED (visitor noticed their OWN story shows a DIFFERENT character name in the Forbidden Library): NEVER say the book was written by someone else — it IS theirs. Explain: the Forbidden Library is anonymized, so when a finished story is published there, the protagonist and love interest are given new generated names (their "Dani" might appear as "Selka Vey") and real-world details are scrubbed — this protects the visitor\'s identity while others read it as a published work. Their PRIVATE copy in the Vault keeps the names they chose. If they claimed a casting credit, the cover still marks the performance as theirs ("Starring [them] as [the new name]"). Reassure: nothing was lost or taken — the public edition is simply the anonymized canon.',
