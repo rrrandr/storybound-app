@@ -25,3 +25,10 @@
 api/config.json
 api/config.json.save
 api/config
+
+# Local diagnostics and schema/example source are not production endpoints.
+api/diag-mock.js
+api/diag-slow.js
+api/sol-scene-test.js
+api/*.sql
+api/config.example.json

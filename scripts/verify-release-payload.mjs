@@ -8,9 +8,11 @@ const input=process.argv[2];
 assert.ok(input,'Usage: node scripts/verify-release-payload.mjs <vercel-deploy-dry.json>');
 const payload=JSON.parse(fs.readFileSync(input,'utf8'));
 const files=new Set(payload.files.map(x=>x.path));
-const tracked=execFileSync('git',['ls-files','-z','public','api','lib','config','package.json','package-lock.json','vercel.json'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
+const localOnly = name => /^api\/(?:diag-(?:mock|slow)\.js|sol-scene-test\.js|config\.example\.json|[^/]+\.sql)$/.test(name);
+const tracked=execFileSync('git',['ls-files','-z','public','api','lib','config','package.json','package-lock.json','vercel.json'],{cwd:root,encoding:'utf8'}).split('\0').filter(name=>name && !localOnly(name));
 for(const name of tracked)assert.ok(files.has(name),'Runtime file missing from upload: '+name);
 for(const name of files){
+ assert.ok(!localOnly(name),'Diagnostic or migration file in upload: '+name);
  assert.ok(/^(public\/|api\/|lib\/|config\/|package(?:-lock)?\.json$|vercel\.json$|\.vercelignore$)/.test(name),'Unexpected upload: '+name);
  assert.ok(!/(^|\/)\.env(?:\.|$)|(?:^|\/)LATEST$|\.log$|\.bak(?:\.|-|$)/.test(name),'Local artifact in upload: '+name);
 }
