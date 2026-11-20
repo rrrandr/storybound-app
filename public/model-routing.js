@@ -66,6 +66,27 @@
   // report exactly what it had to correct.
   function conform(body, route, op) {
     var changes = [];
+    if (op === 'FAMOUS_FATE_TEXT') {
+      // Provider adapters use messages, or system+user/prompt. Preserve all text
+      // when moving to the OpenAI transport rather than sending an empty request.
+      if (!Array.isArray(body.messages)) {
+        body.messages = [];
+        if (body.system) body.messages.push({role: 'system', content: body.system});
+        if (body.user || body.prompt) body.messages.push({role: 'user', content: body.user || body.prompt});
+        changes.push('messages=provider text');
+      } else if (body.system) {
+        body.messages.unshift({role: 'system', content: body.system});
+        delete body.system;
+        changes.push('moved system into messages');
+      }
+      // These calls previously budgeted visible tokens for non-reasoning models.
+      // Luna's combined allowance must also cover reasoning. Larger task-specific
+      // budgets (including the 32k plot plans) remain intact.
+      var allowance = Number(body.max_tokens || body.max_completion_tokens) || 0;
+      if (allowance < 10000) { body.max_tokens = 10000; changes.push('max_tokens=10000 (reasoning headroom)'); }
+      if (!body.reasoning_effort) { body.reasoning_effort = 'medium'; changes.push('reasoning_effort=medium'); }
+      if ('preferredModel' in body) { delete body.preferredModel; changes.push('dropped preferredModel'); }
+    }
     if (body.model !== route.model) { changes.push('model=' + route.model); body.model = route.model; }
     if (route.role && body.role !== route.role) {
       changes.push('role=' + route.role + ' (was ' + (body.role || '(none)') + ')');
@@ -97,7 +118,7 @@
       body.response_format = { type: 'json_object' };
       changes.push('response_format=json_object');
     }
-    if (!wantsJson && body.response_format && body.response_format.type === 'json_object') {
+    if (op !== 'FAMOUS_FATE_TEXT' && !wantsJson && body.response_format && body.response_format.type === 'json_object') {
       delete body.response_format; changes.push('dropped response_format (prose is not JSON)');
     }
     return changes;
@@ -137,12 +158,26 @@
     return false;
   }
 
-  // THE RESOLVER. Returns null when the request is not one of the three creative operations —
-  // a normaliser, a synopsis pass or a validator keeps whatever it asked for. This function
-  // decides nothing by role and nothing by endpoint.
-  function resolve(url, body) {
+  // Famous Fate supplies its active mode at dispatch. Other stories keep the
+  // established operation-specific policy; their utility calls are untouched.
+  function resolve(url, body, context) {
     var txt = bodyText(body);
     if (!txt) return null;
+    // Famous Fate reader defaults apply to EVERY text operation, including setup,
+    // canon extraction, bibles, audits and suggestions. No test configuration is
+    // required. The actual story mode, not a stale famousFate object, owns scope.
+    if (context && context.fateMode === 'famous_fate') {
+      var spine = body.operation === 'story-spine';
+      var explicit = body.operation === 'explicit-intimacy'
+        || (context.explicitIntimacy === true
+          && /^(INTIMACY_SPECIALIST|SD_RENDERER|SD_FALLBACK)$/.test(body.role || ''));
+      var key = spine ? 'sol' : (explicit ? 'grok' : 'luna');
+      var fr = ROUTES[key];
+      return { op: spine ? 'STORY_SPINE' : (explicit ? 'INTIMACY' : 'FAMOUS_FATE_TEXT'),
+        model: fr.model, endpoint: fr.endpoint, label: fr.label, role: fr.role,
+        route: fr, famousFate: true, wasModel: body.model || body.preferredModel || null,
+        wasRole: body.role || null, wasEndpoint: url || null };
+    }
     for (var i = 0; i < ASSIGNMENT.length; i++) {
       if (matches(txt, SIGS[ASSIGNMENT[i].sig])) {
         var r = ROUTES[ASSIGNMENT[i].route];

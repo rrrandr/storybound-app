@@ -6734,7 +6734,7 @@ ${_pcInteriorLock}`;
       if (!r.ok) return { ok: false, status: r.status, json: async function () { return {}; } };
       var d = await r.json();
       var content = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
-      return { ok: true, status: 200, json: async function () { return { content: content, usage: (d && d.usage) || null, _orchestration: { model: 'mistral-small-latest' } }; } };
+      return { ok: true, status: 200, json: async function () { return { content: content, usage: (d && d.usage) || null, _orchestration: (d && d._orchestration) || { model: 'mistral-small-latest' } }; } };
     } catch (e) { return { ok: false, status: 0, json: async function () { return {}; } }; }
   }
   window._setupMistralPost = _setupMistralPost;
@@ -6911,7 +6911,7 @@ ${_pcInteriorLock}`;
         body: JSON.stringify(_ob3) });
       if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw _tierErr('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : ''), { provider: 'openai', model: model, httpStatus: r3.status, hadContent: false }); }
       var d3 = await r3.json();
-      return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, _orchestration: { model: model } };
+      return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, finish_reason: d3 && d3.finish_reason, refusal: d3 && d3.refusal, _orchestration: (d3 && d3._orchestration) || { model: model } };
     }
     if (provider === 'anthropic') {
       // ISOLATED ROUTE. Storybound's normal orchestration redirects Anthropic model names to
@@ -6953,6 +6953,10 @@ ${_pcInteriorLock}`;
       { tier: 'fallback', provider: 'grok',    model: 'grok-4-1-fast-reasoning' },
       { tier: 'terminal', provider: 'openai',  model: opts.terminalModel || 'gpt-4o-mini' }
     ];
+    if (state.fateMode === 'famous_fate') {
+      tiers = [{tier: 'primary', provider: 'openai', model: 'gpt-6-luna', reasoning_effort: 'medium'}];
+      maxTokens = Math.max(10000, maxTokens);
+    }
     // ATTEMPT LOG (Roman, corrective follow-up #10, 2026-09-15) — one entry per PHYSICAL request
     // this operation makes, win or lose, carrying exactly what a named infrastructure-failure
     // record needs to preserve: a synthetic but stable requestId (roleTag#attemptNumber, the SAME
@@ -6992,6 +6996,12 @@ ${_pcInteriorLock}`;
         var _nf = (t.noFallback != null) ? t.noFallback : opts.noFallback;
         if (_nf) _tierExtra = Object.assign(_tierExtra || {}, { noFallback: true });
         var result = await _tieredProviderDispatch(t.provider, t.model, messages, maxTokens, temperature, _tierExtra);
+        if (state.fateMode === 'famous_fate' && result
+            && (result.finish_reason === 'length' || result.refusal)) {
+          try { _recordProxyTextCost(result, t.model, 'wasted'); } catch (_) {}
+          throw _tierErr(result.refusal ? 'provider refused the operation' : 'provider reply was truncated',
+            {provider: t.provider, model: t.model, httpStatus: 200, hadContent: !!result.content});
+        }
         var hadContent = !!(result && result.content && String(result.content).trim());
         if (!hadContent) throw _tierErr(t.provider + ' returned empty content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: false });
         if (validateContent && !validateContent(result.content)) throw _tierErr(t.provider + ' returned unparsable content', { provider: t.provider, model: t.model, httpStatus: 200, hadContent: true });
@@ -63756,7 +63766,11 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
         }
         var parsed = null;
         try { parsed = JSON.parse(init.body); } catch (_) { return _origFetch(input, init); }
-        var r = window.SB_MODEL_ROUTING.resolve(url, parsed);
+        var r = window.SB_MODEL_ROUTING.resolve(url, parsed, {
+          fateMode: state.fateMode,
+          explicitIntimacy: state._explicitEmbodimentAuthorized === true
+            || state.explicitEmbodimentAuthorized === true
+        });
         if (!r) return _origFetch(input, init);
         // EVERY RESOLUTION IS STATED, INCLUDING "no change". Logging only on change made silence
         // ambiguous: a capture with zero [ROUTE] lines was consistent BOTH with the wrapper never
@@ -68509,9 +68523,20 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
           // chain (_ensureRPlot, which returns an existing plan untouched), so every request this
           // tier makes IS initial generation.
           operation: 'rplot-initial',
-          tiers: [
-            { tier: 'primary', provider: 'openai', model: 'gpt-6.1-sol', reasoning_effort: 'medium' }
-          ],
+          // Famous Fate uses Luna for plot plans; other stories retain their
+          // existing Sol default. An explicit run selection still names one rung.
+          tiers: (function () {
+            var _rcR = (typeof window !== 'undefined'
+              && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
+            var _rSel = (_rcR && _rcR.structureModel
+              && !/grok/i.test(String(_rcR.structureModel)))
+              ? String(_rcR.structureModel) : (state.fateMode === 'famous_fate' ? 'gpt-6-luna' : 'gpt-6.1-sol');
+            if (_rcR && _rcR.structureModel && _rSel !== 'gpt-6.1-sol') {
+              try { console.log('[R-PLOT] initial planner PINNED to ' + _rSel
+                + ' by _sbRunConfig.structureModel — still one rung, still no fallback behind it'); } catch (_) {}
+            }
+            return [{ tier: 'primary', provider: 'openai', model: _rSel, reasoning_effort: 'medium' }];
+          })(),
           // ── THE ALLOWANCE COVERS REASONING AS WELL AS THE PLAN (Roman 2026-11-08) ─────
           // api/chatgpt-proxy.js sends this as `max_completion_tokens` for a gpt-6 model, and
           // on that model reasoning is billed INSIDE the completion. So this is a TOTAL budget
@@ -71063,10 +71088,27 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     // has always used. Sol's server permission is scoped to 'aplot-initial' anyway, so this is not
     // merely a preference — the carry-forward request would be refused if it asked for Sol.
     var _isInitialAPlot = !opts.force;
+    // A/R plot planning shares one explicit selection. Famous Fate defaults
+    // to Luna, leaving Sol for its story spine. No secondary author is queued.
+    var _rcStruct = (typeof window !== 'undefined'
+      && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
+    var _structSel = (_rcStruct && _rcStruct.structureModel
+      && !/grok/i.test(String(_rcStruct.structureModel))) ? String(_rcStruct.structureModel) : '';
+    var _structRung = _structSel
+      ? (/sol/i.test(_structSel) ? _SOL : (/luna/i.test(_structSel) ? _LUNA : null))
+      : null;
+    if (_structSel && !_structRung) {
+      try { console.warn('[A-PLOT] _sbRunConfig.structureModel="' + _structSel + '" names no'
+        + ' known A-plot provider (Sol, Luna) — keeping the default rung.'); } catch (_) {}
+    } else if (_structRung && _structRung !== _SOL) {
+      try { console.log('[A-PLOT] initial planner PINNED to ' + _structRung.name
+        + ' by _sbRunConfig.structureModel — still one rung, still no fallback behind it'); } catch (_) {}
+    }
+    var _initialRung = _structRung || (state.fateMode === 'famous_fate' ? _LUNA : _SOL);
     var _legacyChain = [_LUNA, _PROVIDERS[2], _PROVIDERS[0], _PROVIDERS[1], _PROVIDERS[3]];
-    var _defaultChain = (_SOL && _isInitialAPlot) ? [_SOL] : _legacyChain;
-    var _orderedProviders = ((_SOL && _isInitialAPlot) ? [_SOL]
-      : (_isAdultFlavor ? _chainForAdult : _defaultChain)).filter(Boolean);
+    var _defaultChain = (_initialRung && _isInitialAPlot) ? [_initialRung] : _legacyChain;
+    var _orderedProviders = (state.fateMode === 'famous_fate' ? [_LUNA] : ((_initialRung && _isInitialAPlot) ? [_initialRung]
+      : (_isAdultFlavor ? _chainForAdult : _defaultChain))).filter(Boolean);
     if (!_isInitialAPlot) {
       try { console.log('[A-PLOT] FORCED regeneration (carry-forward / story-length upgrade) — this'
         + ' is NOT initial generation, so it keeps its prior routing: the health-aware ladder, not'
@@ -169616,8 +169658,8 @@ If a scene begins drifting into another world's pressure model, correct it back 
   // independent validator that surgically repairs violations. FF-only.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Shared Grok JSON helper (one fetch + tolerant parse). reasoning:true → the
-  // thinking model (recall/judgment); false → non-reasoning (cheaper checks).
+  // Shared Famous Fate JSON helper. Luna is the reader default, with combined
+  // reasoning/output headroom and no fallback to the legacy Grok branch.
   async function _ffGrokJSON(sys, usr, opts) {
     opts = opts || {};
     var model = opts.reasoning ? 'grok-4-1-fast-reasoning' : 'grok-4-1-fast-non-reasoning';
@@ -169628,11 +169670,11 @@ If a scene begins drifting into another world's pressure model, correct it back 
     // inherited from a visible-output cap. Observed Luna reasoning draws in this project were
     // 4,188 / 8,191 / 11,357 / 13,824 tokens, and a 9,000 allowance on a short-JSON planner
     // exhausted on reasoning alone — so a short classifier still needs five figures of headroom.
-    // These are ESTIMATES from those draws, not calibration. Absent a run config, unchanged.
+    // These are estimates from those draws. Luna is also the no-config reader default.
     var _ffSel = (typeof window !== 'undefined'
       && (window._sbRunConfig || (window.state && window.state._sbRunConfig))) || null;
     var _ffSelModel = (_ffSel && _ffSel.generalAuthorModel && !/grok/i.test(String(_ffSel.generalAuthorModel)))
-      ? String(_ffSel.generalAuthorModel) : null;
+      ? String(_ffSel.generalAuthorModel) : 'gpt-6-luna';
     if (_ffSelModel) {
       try {
         var _ffRes = await fetch('/api/chatgpt-proxy', {
@@ -169649,6 +169691,10 @@ If a scene begins drifting into another world's pressure model, correct it back 
         if (!_ffRes.ok) { try { console.warn('[FF-CONTRACT] ' + (opts.label || '') + ' (selected ' + _ffSelModel + ') HTTP ' + _ffRes.status); } catch (_) {} return null; }
         var _ffData = await _ffRes.json();
         try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(_ffData, _ffSelModel, opts.costCat || 'setup'); } catch (_) {}
+        var _ffChoice = _ffData && _ffData.choices && _ffData.choices[0];
+        if ((_ffData && (_ffData.refusal || _ffData.finish_reason === 'length'))
+            || (_ffChoice && (_ffChoice.finish_reason === 'length'
+              || (_ffChoice.message && _ffChoice.message.refusal)))) return null;
         var _ffRaw = (_ffData && _ffData.choices && _ffData.choices[0] && _ffData.choices[0].message && _ffData.choices[0].message.content) || (_ffData && _ffData.content) || '';
         _ffRaw = String(_ffRaw || '').replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
         try { return JSON.parse(_ffRaw); }

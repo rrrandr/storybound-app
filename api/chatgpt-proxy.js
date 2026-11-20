@@ -535,6 +535,9 @@ Output only the mythic kernel. Prose realization is deferred.`
         timestamp: new Date().toISOString()
       },
       // Preserve usage metadata for token accounting
+      // Provider-neutral routing also serves older renderer/extractor consumers
+      // that still read the standard Chat Completions envelope.
+      choices: data.choices,
       usage: data.usage || null,
       // ── WHY THE CONTENT IS EMPTY, NOT JUST THAT IT IS (Roman 2026-11-06) ────────────────
       // This normalizer collapsed every unusable reply to `content: ''`, so a report had to
