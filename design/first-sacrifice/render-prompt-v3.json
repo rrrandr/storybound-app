@@ -1,0 +1,8 @@
+{
+  "tool": "image_gen",
+  "mode": "built-in",
+  "editTarget": "public/assets/First-Sacrifice/interaction-sheet-v1.png",
+  "output": "public/assets/First-Sacrifice/interaction-sheet-accusing-v3.png",
+  "use": "lower two quadrants only; original upper quadrants and four original portraits are reused unchanged",
+  "prompt": "Edit the ORIGINAL First Sacrifice scene sheet supplied here, not any later sheer-clothing variation.\n\nKeep the UPPER TWO PANELS unchanged. In the LOWER TWO PANELS ONLY, change the BACKGROUND CROWD and the presiding Dohkar to be visibly ANGRY AND ACCUSING Lirael. Several adult faces behind her turn toward her with furrowed brows, tense jaws and open mouths arguing or shouting accusations. Include a few clear pointing hands directed at Lirael and one raised open hand of protest. The older Dohkar on the right is sternly challenging and charging her. No physical attack, weapons added to the crowd, injuries or violence.\n\nPreserve Lirael and Julian in the foreground exactly: their original faces, hair, skin, poses, props, clothing and original fabric opacity. Lirael's mouth covering is removed in both lower panels; she holds it in the lower-left panel. Julian is protective in the lower-right panel, not part of the accusing crowd. All tunics remain the ORIGINAL opaque garments; do not add sheer torso fabric or change anyone's outfit. Seren remains fully clothed in her original opaque outfit.\n\nRetain the same four-panel 2x2 composition, thin central gutters, warm dawn palette, Veilwood setting, camera angles and painterly style. Change ONLY the crowd's and Dohkar's expressions and accusing gestures in the lower half. No text, captions, lettering or watermark."
+}

@@ -202633,7 +202633,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'figures each have their own full head of hair too. (Sparse or bald scalps are a WISH-DEBT tell in ' +
       'this world and belong ONLY to a character explicitly written as a heavy wisher — never the default, ' +
       'never a crowd.)',
-    // Adult translucency and the separate opaque child wardrobe share one
+    // Original covered tunics and the separate opaque child wardrobe share one
     // direction across species contracts, scene sheets and introduction prompts.
     attire: window.SB_FIRST_FAVORED_VISUALS.attire,
     // ── WEAVE-SCRIPT — on ALL of them, not just the protagonist ──
@@ -202729,7 +202729,7 @@ No text, no watermark, no UI elements, share-ready.`;
         '- FACE: sculpted and striking — strong clean jawline, full lips, high fine-boned cheekbones. Ethereal supermodel beauty.\n' +
         '- SKIN SURFACE: smooth and luminous beneath the exotic hue, with faint internal Weave-Script glow (slow-moving calligraphy patterns).\n' +
         '- FORM (state only what IS — the silhouette stays clean): skin is a continuous, soft, unbroken surface across face and body. Foreheads, brows, and temples are bare, smooth skin. The head keeps an ordinary human silhouette with a normal hairline. The single diamond shape belongs ONLY to the pupil inside each eye; every other surface is plain smooth skin.\n' +
-        '- FABRIC: adult gossamer is translucent and light-catching, with natural gravity-driven folds and integrated coverage described above; minors wear fully opaque fabric throughout.\n' +
+        '- FABRIC: fine light-catching drapery with natural folds and opaque coverage across torso, hips and seat; minors wear fully opaque fabric throughout.\n' +
         '- BUILD: ADULTS are tall, athletic and strikingly well-proportioned, with toned musculature. MINORS have age-appropriate proportions and neutral framing, never the adult body or attraction treatment.\n' +
         '- HANDS: never fully still — continuous subtle non-repeating motion.\n' +
         '- BLOOD / ICHOR (whenever wounded or bleeding, in ANY scene — a ritual, an accident, combat): First Favored bleed QUICKSILVER — bright liquid MIRROR-SILVER metal that beads and runs like mercury; NEVER red.',

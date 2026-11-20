@@ -173,7 +173,7 @@
       // Dohkar → Profer; offices Chayr → Provast → First Dohkar; Julian = Provast, next for First Dohkar, per Roman). Lenses: Lirael = OPEN VEIN, Julian = SPELLBINDER (Roman 2026-09-10). REAL CG SHAPE: ~20 beats (conversation + inner thought + description) over
       // 4 dramatic images + 1–4 character intro images. Beats 1–5 of Roman's sequence are this page; beats 6–7 (Julian's
       // public interrogation, the Dohkar's interruption, run-or-remain) are the OAS, carried by `oasHandoff` below.
-      version: '1.8.3-sheer-veilweave',
+      version: '1.8.4-original-wardrobe-reactions',
       placeholder: false,
       format: 'cg',
       title: 'The First Sacrifice',
@@ -192,22 +192,23 @@
       // ── BAKED-IMAGE-PRECEDENT PLUMBING (Roman 2026-09-19) — generic starter-package capability,
       // consumed by the structured renderer (_mountImageOccurrence, app.js) instead of text markup.
       // ASSETS: the real underlying generated images. 4 solo intro portraits + ONE shared 2x2
-      // interaction sheet (NOT 4 independent dramatic images) — matches the real production default
-      // contract (_renderOneShotSheet). These versioned assets ship with the starter;
+      // original interaction sheet plus a reactions revision used ONLY for d3-d4. The
+      // original d1-d2 quadrants and four portraits remain byte-identical. These assets ship with the starter;
       // opening this book never requests new character or scene artwork.
       imageAssets: [
-        { id: "intro_lirael", kind: "intro", label: "Lirael", url: "/assets/First-Sacrifice/lirael-v2.png" },
-        { id: "intro_seren", kind: "intro", label: "Seren", url: "/assets/First-Sacrifice/seren-v2.png" },
-        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: "/assets/First-Sacrifice/dohkar-v2.png" },
-        { id: "intro_julian", kind: "intro", label: "Julian", url: "/assets/First-Sacrifice/julian-v2.png" },
-        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 interaction sheet (d1-d4)", url: "/assets/First-Sacrifice/interaction-sheet-v2.png" },
+        { id: "intro_lirael", kind: "intro", label: "Lirael", url: "/assets/First-Sacrifice/lirael-v1.png" },
+        { id: "intro_seren", kind: "intro", label: "Seren", url: "/assets/First-Sacrifice/seren-v1.png" },
+        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: "/assets/First-Sacrifice/dohkar-v1.png" },
+        { id: "intro_julian", kind: "intro", label: "Julian", url: "/assets/First-Sacrifice/julian-v1.png" },
+        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 original interaction sheet (d1-d2)", url: "/assets/First-Sacrifice/interaction-sheet-v1.png" },
+        { id: "interaction_sheet_reactions", kind: "sheet", label: "Scene 1 angry crowd (d3-d4)", url: "/assets/First-Sacrifice/interaction-sheet-accusing-v3.png" },
       ],
       // OCCURRENCES: keyed by the SAME strings already used in beats[].image / images[].id above —
       // the locked 20-beat template (see _first_sacrifice_source_packet.json
       // scene1_beat_number_template) already fixes which of these 9 keys each of the 20 beats uses;
       // this table is what turns that already-locked key into a real asset + treatment + (for a
       // sheet) quadrant. The 4 intro keys are 'full' occurrences of their own solo asset. d1-d4 are
-      // 'quadrant' occurrences of the ONE shared interaction_sheet_1 asset — 4 occurrences, 1 asset.
+      // quadrant occurrences. d1-d2 use the original sheet; d3-d4 use its angry-crowd revision.
       // dohkar_interruption is a 9th OCCURRENCE (not a 9th asset): the Dohkar's later interruption
       // reuses his existing intro_dohkar asset at a tighter 'close' camera treatment — zero new
       // generation, wired via oasHandoff.interruptionPortrait below.
@@ -218,8 +219,8 @@
         intro_julian: { assetId: "intro_julian", treatment: "full" },
         d1: { assetId: "interaction_sheet_1", treatment: "quadrant", quadrant: 0 },
         d2: { assetId: "interaction_sheet_1", treatment: "quadrant", quadrant: 1 },
-        d3: { assetId: "interaction_sheet_1", treatment: "quadrant", quadrant: 2 },
-        d4: { assetId: "interaction_sheet_1", treatment: "quadrant", quadrant: 3 },
+        d3: { assetId: "interaction_sheet_reactions", treatment: "quadrant", quadrant: 2 },
+        d4: { assetId: "interaction_sheet_reactions", treatment: "quadrant", quadrant: 3 },
         dohkar_interruption: { assetId: "intro_dohkar", treatment: "close" },
       },
       beats: [

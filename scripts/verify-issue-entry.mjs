@@ -58,11 +58,11 @@ try{
   const beat=baked.beats[i];await page.waitForFunction(key=>{const img=document.querySelector('.baked-cg-reader img');return img?.dataset.occurrenceKey===key&&img.complete&&img.naturalWidth>0;},beat.image);
   if(await page.locator('.baked-cg-typing').count())await page.locator('.baked-cg-copy').click();
   assert.equal(await page.locator('.baked-cg-text').innerText(),beat.text);seen.add(await page.locator('.baked-cg-reader img').getAttribute('data-asset-id'));
-  if(beat.image==='intro_julian')assert.match(await page.locator('.baked-cg-reader img').getAttribute('src'),/julian-v2\.png$/);
+  if(beat.image==='intro_julian')assert.match(await page.locator('.baked-cg-reader img').getAttribute('src'),/julian-v1\.png$/);
   if(process.env.SB_ENTRY_EVIDENCE&&(i===6||i===15)){await page.locator('.baked-cg-copy').evaluate(el=>Promise.all(el.getAnimations().map(a=>a.finished)));await page.screenshot({path:process.env.SB_ENTRY_EVIDENCE+'/beat-'+i+'.png'});}
   if(i<count-1)await page.locator('.baked-cg-next').click();
  }
- assert.equal(seen.size,5);pass('all 21 authored beats preserve their exact text and load the five versioned portraits/sheet, including approved Julian');
+ assert.equal(seen.size,6);pass('all 21 text beats load the original portraits/early panels and the revised angry-crowd panels');
  const future=await page.evaluate(()=>{
    const v={background:'the Veilwood ceremony clearing',pc_wardrobe:'gossamer Veilweave tunic',other_characters_present:[{name:'Julian',species:'First Favored'},{name:'Seren',species:'First Favored',age:16}]};
    const phases=[{beat:'Seren speaks to Lirael.'},{beat:'Lirael removes the ribbon.'},{beat:'The crowd points angrily at Lirael.'},{beat:'Julian stands beside Lirael.'}];
@@ -70,9 +70,9 @@ try{
    const compact=window._buildSheetPromptV2(v,phases,0,{}),intro=window._buildIntroPortraitPrompt({name:'Julian',species:'First Favored'},'li',v,{combat:false,cleanAnchor:true});
    return {full,compact,intro,species:window._STAGED_SPECIES_CONTRACTS.first_favored.identityBlock};
  });
- for(const [kind,prompt]of Object.entries(future)){assert.match(prompt,/semi-transparent gossamer tunic/,'adult wardrobe missing from '+kind);assert.match(prompt,/fully OPAQUE/,'child wardrobe missing from '+kind);}
+ for(const [kind,prompt]of Object.entries(future)){assert.match(prompt,/COVERED TORSO/,'adult wardrobe missing from '+kind);assert.match(prompt,/fully OPAQUE/,'child wardrobe missing from '+kind);}
  assert.match(future.compact,/PAIRS of TWO slender stalks/);assert.doesNotMatch(future.compact,/ALWAYS wearing the flowing gossamer VEILWEAVE/);
- pass('real full-sheet, compact-sheet, introduction and species prompts deliver the shared adult translucency and opaque child wardrobe');
+ pass('real full-sheet, compact-sheet, introduction and species prompts deliver the restored covered adult wardrobe and opaque child clothing');
  await page.locator('.baked-cg-next').click();assert.equal(await page.locator('#bakedOASHandoff').isVisible(),true);
  await page.evaluate(async id=>window.continueStory(id),paidId);assert.equal(await page.locator('#bakedOASHandoff').isVisible(),true);
  assert.equal(await page.evaluate(()=>state._bakedCGBeatIndex),count-1);assert.equal(providers.length,0);pass('the full CG opening reaches its encounter, and a reopen preserves that completed position without generation');
