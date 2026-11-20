@@ -203,7 +203,22 @@ export function makeSettlement(ceilingUsd, prior) {
   return {
     get rows() { return rows.slice(); },
     get prior() { return Object.assign({}, PRIOR); },
-    record({ stage, model, estimate, usage, noResponse, why }) {
+    record({ stage, model, estimate, usage, noResponse, why, fallback }) {
+      if (fallback && Array.isArray(fallback.attempts) && fallback.attempts.length <= 2
+          && fallback.attempts.every(a => (a.knownCostUsd === null || (Number.isFinite(a.knownCostUsd) && a.knownCostUsd >= 0)) && Number.isFinite(a.heldUsd) && a.heldUsd >= 0)) {
+        let known = 0, held = 0;
+        for (const [index, attempt] of fallback.attempts.entries()) {
+          if (attempt.knownCostUsd !== null) {
+            known += attempt.knownCostUsd;
+            rows.push({stage:stage + ':attempt' + (index + 1), model:attempt.model, kind:'settled', usd:attempt.knownCostUsd, source:'server_provider_usage', detail:attempt});
+          }
+          if (attempt.heldUsd > 0) {
+            held += attempt.heldUsd;
+            rows.push({stage:stage + ':attempt' + (index + 1), model:attempt.model, kind:'heldUnknown', usd:null, estimate:attempt.heldUsd, why:attempt.reason || 'missing receipt'});
+          }
+        }
+        return {stage,model:fallback.servedModel || model,kind:held > 0 ? 'heldUnknown' : 'settled',usd:known,heldUsd:held,attempts:fallback.attempts};
+      }
       if (noResponse) {
         rows.push({ stage, model, kind: 'heldUnknown', usd: null, estimate, why: why || 'no response' });
         return rows[rows.length - 1];

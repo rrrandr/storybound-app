@@ -1,3 +1,4 @@
+const { fetchWithModelFallback, primaryUsage } = require('./_model-fallback.js');
 const { requireModelAccess } = require('./_request-auth.js');
 /**
  * =============================================================================
@@ -272,7 +273,7 @@ module.exports = async function handler(req, res) {
     // ==========================================================================
 
     let _effortUsed = null;
-    const mistralResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    const mistralResponse = await fetchWithModelFallback('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -303,7 +304,7 @@ module.exports = async function handler(req, res) {
         _effortUsed = effort;
         return JSON.stringify(body);
       })()
-    });
+    }, { operation: req.body.operation, explicit: role === 'SD_FALLBACK', noFallback: req.body._noFallback === true, fetch, env: process.env });
 
     const responseText = await mistralResponse.text();
 
@@ -332,7 +333,7 @@ module.exports = async function handler(req, res) {
       //        RETAIN; the reservation expires with the window.
       // The conservative direction here is to keep charging, so an ambiguous failure costs us
       // a little headroom rather than costing the account a limit breach.
-      const _st = mistralResponse.status;
+      const _st = data._fallback?.attempts?.[0]?.status || mistralResponse.status;
       const _provenUnspent = _st === 429 || _st === 400 || _st === 401 || _st === 403 || _st === 404 || _st === 422;
       if (_admitted && _provenUnspent) {
         try { await _gov.release({ opId: _opId, reason: 'provider_' + _st }); }
@@ -352,7 +353,8 @@ module.exports = async function handler(req, res) {
         error: data.error?.message || 'Mistral API request failed',
         provider_status: mistralResponse.status,
         governor: false,               // the provider refused this, not the governor
-        details: data
+        details: data,
+        _fallback: data && data._fallback || null,
       });
     }
 
@@ -374,7 +376,7 @@ module.exports = async function handler(req, res) {
       ...data,
       _orchestration: {
         role,
-        model: requestedModel,
+        model: data._fallback?.servedModel || requestedModel,
         provider: 'mistral',
         reasoning_effort: _effortUsed,
         // CACHE OBSERVABILITY (Roman 2026-08-21): the proxy previously discarded usage
@@ -398,7 +400,7 @@ module.exports = async function handler(req, res) {
     // unknown usage is never treated as zero usage.
     if (_gov && _admitted) {
       try {
-        const _rec = await _gov.reconcile({ opId: _opId, usage: data.usage || null });
+        const _rec = await _gov.reconcile({ opId: _opId, usage: primaryUsage(data) });
         console.log(`[MISTRAL-PROXY] quota reconcile op=${_opId} released=${_rec.released} held=${_rec.held} exact=${_rec.exact}`);
       } catch (e) { console.warn('[MISTRAL-PROXY] reconcile failed:', e && e.message); }
     }

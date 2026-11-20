@@ -80,8 +80,8 @@
           : s._sceneCostAcc;
       if (acc && typeof acc.addText === 'function') {
         // Prefer caller-supplied model; fall back to data.model if echoed.
-        const mdl = modelName || data.model || 'default';
-        acc.addText(mdl, data.usage);
+        const mdl = data._fallback?.servedModel || modelName || data.model || 'default';
+        acc.addText(mdl, data.usage, profileLabel || 'main', data._fallback || null);
         // Flag Grok use for scene-type classification at finalize time. Any
         // grok-* model in this scene marks the scene as 'grok' regardless of
         // other models also called. Cleared per-scene in app.js.
@@ -6845,6 +6845,7 @@ dialogue: <elevated dialogue>`;
     // channel, not a return-type change, so both existing callers (the opener + the turn handler,
     // which only ever consume the returned text) keep working unmodified.
     var attempts = [];
+    var lastServerModel = null, lastServerAttempts = null;
     function _recordAttempt(rec) {
       attempts.push(rec);
       try { if (typeof window !== 'undefined' && window.state) window.state._lastOASAuthorAttempts = attempts.slice(); } catch (_) {}
@@ -6854,6 +6855,8 @@ dialogue: <elevated dialogue>`;
       catch (_) { return false; }
     }
     function _recordCost(data, model) {
+      lastServerModel = data?._fallback?.servedModel || model;
+      lastServerAttempts = data?._fallback?.attempts || null;
       try { if (typeof window !== 'undefined' && typeof window._recordProxyTextCost === 'function') window._recordProxyTextCost(data, model, roleTag); } catch (_) {}
     }
     function _recordCache(data) {
@@ -7052,6 +7055,8 @@ dialogue: <elevated dialogue>`;
     }
     function _oasServed(model) {
       if (!_oasRec) return;
+      model = lastServerModel || model;
+      _oasRec.serverAttempts = lastServerAttempts;
       _oasRec.servedModel = model; _oasRec.authoredBy = model;
       if (_oasRec.attempts.length > 1) {
         const first = _oasRec.attempts[0];
@@ -7150,7 +7155,7 @@ dialogue: <elevated dialogue>`;
 
     // THE AUTHORIZED CHAIN, in the order this platform's route gives. A `__defect` result stops
     // everything: nothing was authored and no other model would fare differently.
-    for (const rung of _oasRoute.chain) {
+    for (const rung of _oasRoute.chain.slice(0, 1)) {
       if (rung === 'luna') {
         const r = await _callLunaOAS();
         if (r && r.__defect) return null;
@@ -7171,39 +7176,8 @@ dialogue: <elevated dialogue>`;
       }
     }
 
-    if (preferReasoning) {
-      // Depth-first bounded TAIL, unchanged except that the reasoning Grok rung above has
-      // already been attempted by the authorized chain — so it is not repeated here.
-      console.log('[OAS-LLM] Mode: REASONING (depth chain tail)');
-      text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
-      if (text) { _oasServed('grok-4-1-fast-non-reasoning'); return text; }
-      text = await _callDeepSeek('deepseek-v4-pro', 30000);
-      if (text) { _oasServed('deepseek-v4-pro'); return text; }
-      text = await _callMistral();
-      if (text) { _oasServed('mistral-small-latest'); return text; }
-      text = await _callGPTFallback();
-      if (text) _oasServed('gpt-4o-mini');
-      return text;
-    }
-    // Speed-first bounded TAIL (default). The Grok rung of the authorized chain has already run
-    // above, so this continues from the next provider rather than re-dispatching it.
-    console.log('[OAS-LLM] Mode: FAST (speed chain tail)');
-    // Mistral-Small @180 was the OAS primary (validated 2026-06-25: best content + ~9x cheaper
-    // than Medium; the 180 cap fixed over-writing). It is now a TAIL rung rather than the
-    // primary, because the platform decides the primary: Grok on the website, Luna on restricted
-    // platforms. It keeps its kill-switch and its place in the line.
-    if ((typeof window === 'undefined') || window._oasSmallEnabled !== false) {
-      text = await _callMistral();
-      if (text) { _oasServed('mistral-small-latest'); return text; }
-    }
-    text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', GROK_TIMEOUT_MS);
-    if (text) return text;
-    text = await _callDeepSeek('deepseek-v4-flash', 15000);
-    if (text) return text;
-    text = await _callMistral();
-    if (text) return text;
-    text = await _callGPTFallback();
-    return text;
+    // The server has already tried the authorized backup. No second client chain.
+    return null;
   }
 
   async function callGrokIntimateFate(messages, options = {}) {

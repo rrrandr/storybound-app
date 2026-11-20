@@ -1160,10 +1160,10 @@ const reserve = (estimate, stage, model) => {
 };
 const outstanding = () => inflight.filter((h) => h.open).reduce((n, h) => n + h.estimate, 0);
 const remainingNow = () => CEILING - settledTotal - heldTotal - outstanding();
-function reconcile(h, { usage, noResponse, why, model }) {
+function reconcile(h, { usage, noResponse, why, model, fallback }) {
   h.open = false;
   const row = settlement.record({ stage: h.stage, model: model || h.model,
-    estimate: h.estimate, usage, noResponse, why });
+    estimate: h.estimate, usage, noResponse, why, fallback });
   // APPENDED AS IT HAPPENS. The summary totals were only written in the finally block, so an
   // uncaught throw left no accounting at all and the figures had to be rebuilt by hand
   // afterwards — a reconstruction, not a record.
@@ -1178,6 +1178,7 @@ function reconcile(h, { usage, noResponse, why, model }) {
     settlementWhy: row.why || null,
     usageReceived: !!row.usageReceived,
     cacheFieldsSeen: row.cacheFieldsSeen || null });
+  if (fallback && row.attempts) { settledTotal += row.usd || 0; heldTotal += row.heldUsd || 0; return row; }
   if (row.kind === 'settled') { settledTotal += row.usd; return row; }
   // NOT SETTLED. The reservation stands in for the charge — it is not released, and it is not
   // claimed as an exact amount either. A cache-bearing receipt we cannot price correctly lands
@@ -3144,7 +3145,7 @@ await page.route('**/*', async (route) => {
       // SETTLE FROM THE RETURNED USAGE. No usage means the reservation stays held — never
       // credited back on the strength of a reply that carried no receipt.
       reconcile(_edHold, { usage: _edUsage, noResponse: !_edUsage,
-        why: _edUsage ? null : 'editor reply carried no usage block', model: 'gpt-6-luna' });
+        why: _edUsage ? null : 'editor reply carried no usage block', model: _edRec.served || 'gpt-6-luna', fallback: _edJson && _edJson._fallback });
       say('  ⚖ EDITOR ' + (_edUsage ? 'settled from usage' : 'HELD (no receipt)')
         + ' · served=' + (_edRec.served || '?') + ' · remaining $' + remainingNow().toFixed(6));
       return route.fulfill({ status: _edStatus, contentType: 'application/json', body: _edTxt });
@@ -5136,7 +5137,8 @@ await page.route('**/*', async (route) => {
     // PROVIDER-CONFIRMED IDENTITY, kept distinct from what was requested.
     try {
       const j = JSON.parse(text);
-      rec.served = (j._orchestration && (j._orchestration.resolvedModel || j._orchestration.model))
+      rec.fallback = j._fallback || null;
+      rec.served = j._fallback?.servedModel || (j._orchestration && (j._orchestration.resolvedModel || j._orchestration.model))
         || j.model || (j._upstreamRaw && j._upstreamRaw.model) || null;
       const u = (j.usage) || (j._upstreamRaw && j._upstreamRaw.usage) || null;
       if (u) rec.receipt = u;
@@ -5245,7 +5247,7 @@ await page.route('**/*', async (route) => {
       // exist) would have thrown here on the first local 404 — caught by reading the code, not
       // by the syntax check, which was happy with a call to a function that was never defined.
     } else {
-      const row = reconcile(hold, { usage: usageForSettlement, model: rec.served || model });
+      const row = reconcile(hold, { usage: usageForSettlement, model: rec.served || model, fallback: rec.fallback });
       rec.settlement = { kind: row.kind, usd: row.usd, reserved: g.estimate,
         why: row.why || (rec.cacheSeen ? 'cache present — not priceable by this table' : null) };
       rec.measuredUsd = row.kind === 'settled' ? row.usd : null;

@@ -1,3 +1,4 @@
+import fallbackPolicy from './public/model-fallback-policy.js';
 // PRE-DISPATCH COST GUARD. Provider-free, no network.
 //
 // The $0.06 sub-cap was breached because the runner checked cost AFTER dispatch. Cost is only
@@ -203,6 +204,15 @@ export function resolveModel(requested, url, body) {
 
 export function estimateUsd(body, model, url) {
   const res = resolveModel(model || (body && body.model), url, body);
+  if (body && body._noFallback !== true && fallbackPolicy.profiles[res.model]) {
+    const chain = fallbackPolicy.plan(res.model, body.messages || [],
+      Number(body.max_completion_tokens || body.max_tokens) || UNKNOWN_MAX_TOKENS,
+      {operation:body.operation,explicit:body.contentClass==='explicit'||body.role==='INTIMACY_SPECIALIST'||body.role==='SD_FALLBACK'});
+    return {bounded:chain.bounded, estimate:chain.reservedUsd, model:res.model,
+      resolvedBy:res.how+'; includes the server backup', primaryEstimate:chain.primaryEstimate,
+      backupEstimate:chain.backupEstimate, fallbackPlan:chain};
+  }
+
   const chars = (body.messages || []).reduce((n, m) => n + String(m.content || '').length, 0);
   // THE DENSER CLAUDE 5 TOKENIZER. chars/4.0 held for Grok, Mistral and Haiku 4.5 (the same frozen
   // 345,504-char prompt billed 87,110 input tokens => 3.97 chars/token). The Claude 5 family uses

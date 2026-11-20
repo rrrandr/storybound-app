@@ -1,3 +1,4 @@
+import fallbackApi from './_model-fallback.js';
 import { createClient as sbCreateClient } from '@supabase/supabase-js';
 import { editionForRequest } from './_edition.js';
 
@@ -316,7 +317,7 @@ export function editorAdmission(input) {
     // THE RESERVATION, priced from the request we are actually about to send, at THIS
     // configuration's rates. Reasoning output is billed as output by both providers, so the
     // ceiling assumes it.
-    reservedUsd: reserveUsd(system.length + user.length, outCap, cfg) };
+    reservedUsd: fallbackApi.policy.plan(cfg.model, [{role:'system',content:system},{role:'user',content:user}], outCap, {explicit: String(body.contentClass) === 'explicit'}).reservedUsd };
 }
 
 export function reserveUsd(inputChars, outCap, cfg) {
@@ -525,7 +526,7 @@ export function createHandler(deps = {}) {
     if (adm.outcome === 'replay') {
       // THE WHOLE STORED OUTCOME, truncation flag and status included. Omitting truncated let a
       // replayed partial reply look complete.
-      return res.status(200).json({ ok: adm.existing_status === 'settled', replayed: true,
+      return res.status(200).json({ ok: !!adm.existing_reply && adm.existing_truncated !== true, replayed: true,
         status: adm.existing_status, content: adm.existing_reply || null,
         truncated: adm.existing_truncated === true,
         usage: { prompt_tokens: adm.existing_usage_in, completion_tokens: adm.existing_usage_out },
@@ -566,7 +567,7 @@ export function createHandler(deps = {}) {
       charged = priceFortunes;
     }
 
-    // ── ONE UPSTREAM CALL. No fallback chain, no retry, no second model. ─────────────────────
+    // ── ONE LOGICAL PASS: primary plus one already-reserved server backup. ───────────────────
     let status = 0, body = null, failure = null;
     const t0 = Date.now();
     try {
@@ -575,16 +576,18 @@ export function createHandler(deps = {}) {
       // Completions rejects `max_tokens` outright, so a shared field name would have made every
       // general-prose call a 400.
       const upstreamBody = { model: cfg.model,
-        messages: [{ role: 'system', content: system }, { role: 'user', content: user }] };
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+        response_format: {type:'json_object'} };
       upstreamBody[cfg.capField] = outCap;
       if (cfg.effort) upstreamBody.reasoning_effort = cfg.effort;
       _upstreamDispatched = true;   // from here on, a provider MAY have been billed
-      const upstream = await doFetch(cfg.url, {
+      const upstream = await fallbackApi.fetchWithModelFallback(cfg.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${providerKey}` },
         body: JSON.stringify(upstreamBody),
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
-      });
+      }, { fetch: doFetch, env, log, explicit: contentClass === 'explicit',
+        maxCostUsd: reservedUsd, timeoutMs: Math.floor((UPSTREAM_TIMEOUT_MS - 10000) / 2) });
       status = upstream.status;
       body = await upstream.json().catch(() => null);
     } catch (e) {
@@ -596,23 +599,28 @@ export function createHandler(deps = {}) {
     const content = (choice && choice.message && choice.message.content) || null;
     const truncated = !!(choice && choice.finish_reason === 'length');
     const u = normalizeUsage(body && body.usage, cfg);
-    const settled = status === 200 && !!content && u.ok;
+    const fallback = body && body._fallback;
+    const usable = status === 200 && !!content && !truncated && !(choice && choice.message && choice.message.refusal);
+    const retained = fallback ? fallback.heldUsd : (u.ok ? 0 : reservedUsd);
+    const settled = usable && u.ok && retained === 0;
+    const knownCost = fallback ? fallback.knownCostUsd : (u.ok ? u.usd : null);
+    const costBasis = fallback ? JSON.stringify({kind:'model-attempts', ...fallback}) : (u.ok ? u.basis : null);
 
     // ── SETTLE. An unknown outcome RETAINS the priced reservation. ───────────────────────────
     const { error: setErr } = await supabase.from('cplus_editor_operations').update({
       status: settled ? 'settled' : 'unresolved',
-      reply: content, truncated,
+      reply: usable ? content : null, truncated,
       usage_in: u.ok ? u.inTok : null,
       usage_out: u.ok ? u.outTok : null,
       usage_reasoning: u.ok ? u.reasoning : null,
-      cost_usd: u.ok ? u.usd : null,
-      cost_basis: u.ok ? u.basis : null,
+      cost_usd: knownCost,
+      cost_basis: costBasis,
       charged_fortunes: charged,
       // Settled → nothing retained. Unresolved → the full reservation stays held, because an
       // exposure that disappears from the ledger is an unmeasured one.
-      retained_usd: settled ? 0 : reservedUsd,
+      retained_usd: settled ? 0 : retained,
       http_status: status, latency_ms: ms,
-      refusal: settled ? null : (failure || u.why || `status ${status}`
+      refusal: settled ? null : (failure || fallback?.reason || u.why || `status ${status}`
         + (content ? '' : ', no content'))
     }).eq('operation_id', operationId);
 
@@ -625,16 +633,17 @@ export function createHandler(deps = {}) {
         detail: setErr.message, retainedUsd: reservedUsd, retryable: false,
         // The content is returned anyway when we have it: the money was spent either way, and
         // discarding a good reply because the bookkeeping write failed wastes it twice.
-        content: settled ? content : null, truncated });
+        content: usable ? content : null, truncated });
     }
 
-    if (!settled) {
+    if (!usable) {
       log.warn(`[cplus-editor] unresolved op=${operationId} status=${status} `
         + `${failure || u.why || ''} — $${reservedUsd.toFixed(6)} retained`);
       return res.status(status >= 400 ? status : 502).json({
         ok: false, status, error: 'editor_unresolved',
         detail: failure || u.why || null, truncated,
-        chargedFortunes: charged, retainedUsd: reservedUsd,
+        chargedFortunes: charged, retainedUsd: retained,
+        _fallback: fallback || null,
         retryable: false      // the caller publishes the original prose; it never retries
       });
     }
@@ -645,8 +654,9 @@ export function createHandler(deps = {}) {
       entitlement: adm.entitlement || null,
       usage: { prompt_tokens: u.inTok, completion_tokens: u.completion,
         reasoning_tokens: u.reasoning, billed_output_tokens: u.outTok },
-      costUsd: u.usd, costBasis: u.basis, reservedUsd,
-      chargedFortunes: charged, model: cfg.model, contentClass, latencyMs: ms });
+      costUsd: knownCost, costBasis, reservedUsd, retainedUsd: retained,
+      settlementStatus: settled ? 'settled' : 'unresolved', _fallback: fallback || null,
+      chargedFortunes: charged, model: fallback?.servedModel || cfg.model, contentClass, latencyMs: ms });
   };
 }
 

@@ -1,3 +1,4 @@
+import fallbackApi from './_model-fallback.js';
 // ── THE EDITION DECISION IS MADE ONCE, SERVER-SIDE, AND PUBLISHED HERE (Roman 2026-11-08) ────
 // A shared module (api/_edition.js), not a reimplementation: the same function decides what the
 // server will PRODUCE in api/cplus-editor.js. Reimplementing it in either place is how the two
@@ -28,6 +29,7 @@ export default function handler(req, res) {
     has_PROXY_URL: !!process.env.PROXY_URL,
     has_IMAGE_PROXY_URL: !!process.env.IMAGE_PROXY_URL,
     has_XAI_API_KEY: !!process.env.XAI_API_KEY,
+    modelBackups: fallbackApi.configuredPairs(process.env),
     // ── WHICH EDITION THIS CLIENT MAY RECEIVE ────────────────────────────────────────────────
     // 'base' or 'enhanced', decided from the deployment variables AND this request's own Origin.
     // The client stores it and uses it to pick which stored text to display; it never decides

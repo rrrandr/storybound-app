@@ -62,7 +62,7 @@ const ctx=vm.createContext({process:{env},console:quiet,fetch:fakeFetch,setTimeo
 function loadCjs(file){const m={exports:{}};const source=fs.readFileSync(root+'/api/'+file,'utf8');vm.runInContext('(function(require,module,exports){'+source+'\n})',ctx,{filename:file})((spec)=>spec==='@supabase/supabase-js'?{createClient}:spec==='./_request-auth.js'?auth:require(root+'/api/'+spec),m,m.exports);return m.exports;}
 const auth=loadCjs('_request-auth.js');
 async function loadEsm(file){const mod=new vm.SourceTextModule(fs.readFileSync(root+'/api/'+file,'utf8'),{context:ctx,identifier:file});await mod.link(async spec=>{
- const value=spec==='@supabase/supabase-js'?{createClient}:spec==='./_request-auth.js'?{default:auth}:spec==='../lib/stripe.js'?{stripe}:spec==='./_sanitize-injection.js'?{default:require(root+'/api/_sanitize-injection.js')}:null;
+ const value=spec==='@supabase/supabase-js'?{createClient}:spec==='./_request-auth.js'?{default:auth}:spec==='../lib/stripe.js'?{stripe}:spec==='./_model-fallback.js'?{default:require(root+'/api/_model-fallback.js')}:spec==='./_sanitize-injection.js'?{default:require(root+'/api/_sanitize-injection.js')}:null;
  assert.ok(value,'unmocked import '+spec);return new vm.SyntheticModule(Object.keys(value),function(){for(const[k,v]of Object.entries(value))this.setExport(k,v)},{context:ctx});
  });await mod.evaluate();return mod.namespace.default;}
 const handlers={};

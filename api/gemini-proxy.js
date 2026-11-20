@@ -1,3 +1,4 @@
+const { fetchWithModelFallback } = require('./_model-fallback.js');
 const { requireModelAccess } = require('./_request-auth.js');
 /**
  * =============================================================================
@@ -163,13 +164,13 @@ module.exports = async function handler(req, res) {
       geminiBody.generationConfig.responseMimeType = 'application/json';
     }
 
-    const geminiResponse = await fetch(
+    const geminiResponse = await fetchWithModelFallback(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(geminiBody)
-      }
+      }, { operation: req.body.operation, noFallback: req.body._noFallback === true, fetch, env: process.env }
     );
 
     const responseText = await geminiResponse.text();
@@ -189,7 +190,8 @@ module.exports = async function handler(req, res) {
       console.error('[GEMINI-PROXY] Gemini API error:', data);
       return res.status(geminiResponse.status).json({
         error: data.error?.message || 'Gemini API request failed',
-        details: data
+        details: data,
+        _fallback: data._fallback || null
       });
     }
 
@@ -220,6 +222,7 @@ module.exports = async function handler(req, res) {
     } : null;
 
     const normalizedResponse = {
+      _fallback: data._fallback || null,
       choices: [{
         message: {
           role: 'assistant',
@@ -230,7 +233,7 @@ module.exports = async function handler(req, res) {
       usage,
       _orchestration: {
         role,
-        model,
+        model: data._fallback?.servedModel || model,
         provider: 'gemini',
         timestamp: new Date().toISOString()
       }

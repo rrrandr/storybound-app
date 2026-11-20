@@ -1,56 +1,10 @@
+const { fetchWithModelFallback } = require('./_model-fallback.js');
 const { requireModelAccess } = require('./_request-auth.js');
-/**
- * ISOLATED ANTHROPIC ROUTE — calibration only. NOT part of Storybound orchestration.
- *
- * WHY THIS EXISTS AND WHY IT IS SEPARATE (Roman 2026-09-24):
- * Storybound's normal orchestration redirects Anthropic model names to Mistral, so a calibration
- * that went through the usual path would silently measure a different vendor's model and file the
- * result under "Claude Haiku". That is the exact class of silent substitution this session has
- * already been bitten by twice (the proxy's author-class reasoning default, and every grok-* alias
- * resolving to 4.3). This route is deliberately NOT reachable from any production caller: nothing
- * in public/app.js routes here except the canon-auditor calibration's explicit single-tier pin.
- *
- * It is narrow on purpose:
- *   - a hard model allowlist; anything else is refused, never silently swapped;
- *   - extended thinking is EXPLICIT — the caller asks for it and the response reports what was
- *     actually served, so "thinking was enabled" is evidence, not an assumption;
- *   - the API key is read from env and never logged, echoed, or returned.
+/** Production Anthropic transport for Haiku/Sonnet and explicit calibration calls.
+ * Primary/backup selection is owned by _model-fallback.js. Calibration callers
+ * may opt out with _noFallback; ordinary reader requests recover automatically.
  */
-
-// Only models this calibration is allowed to measure. A name outside this list is refused rather
-// than resolved to something else — the whole point of the route.
-const ALLOWED_ANTHROPIC_MODELS = [
-  'claude-haiku-4-5-20251001',   // Claude Haiku 4.5 — canon-auditor calibration candidate
-  'claude-sonnet-5-5',           // Claude Sonnet 5.5 — literary author comparison arm.
-  // Claude Haiku 5.5 — RE-ADMITTED 2026-10-26 for the ten-scene literary continuation test
-  // (Sol opening, Haiku continuations). Re-admitted on the facts this file already recorded when
-  // it was removed: it is the CURRENT Haiku, it SUPPORTS `effort` (4.5 does not), thinking counts
-  // toward max_tokens so max_tokens bounds total billable output, and it is priced by prompt
-  // length — $0.10/$0.50 per MTok up to 100,000 input tokens, $0.50/$2.50 above it. The test's
-  // packets measure ~165k input tokens, so the ABOVE-100k tier applies. Send `effort`, leave
-  // thinking_budget_tokens unset. REMOVE AGAIN once that test is reported, as before.
-  'claude-haiku-5-5'
-  // claude-haiku-5-5 was admitted here on 2026-10-22 for ONE authorized six-writer ABC
-  // comparison and REMOVED once it was reported. Recorded for the next time it is asked for:
-  // it is the CURRENT Haiku (4.5 above is legacy) and, unlike 4.5, it SUPPORTS the `effort`
-  // parameter — Haiku 4.5 is not in that parameter's supported-model list at all. Adaptive
-  // thinking, documented default effort 'medium', and thinking counts toward max_tokens, so
-  // max_tokens bounds total billable output: send `effort` and leave thinking_budget_tokens
-  // unset. It is the one current model priced by prompt length — $0.10/MTok in and $0.50/MTok
-  // out up to 100,000 input tokens, $0.50/$2.50 above it.
-  // Measured once at 33,837 input chars / cap 3,000 / effort medium: $0.0020647.
-  // claude-opus-5-5 was admitted here on 2026-10-22 for ONE authorized ABC writing comparison
-  // and REMOVED once it was reported. Recorded for the next time it is asked for: Opus 5.5 uses
-  // ADAPTIVE thinking, so thinking.type 'enabled' + budget_tokens returns a 400 on Claude 4.7 and
-  // later; this route must send `effort` (-> output_config.effort) and leave `thinking` off. Its
-  // documented default effort is 'medium', and max_tokens bounds thinking + visible output.
-  // Measured once at 30,745 input chars / cap 2,500: $0.0867240.
-  // NOTE, and it differs from Haiku 4.5: Sonnet 5.5 has ADAPTIVE thinking (docs default effort
-  // `high`), and the manual thinking.type 'enabled' + budget_tokens mode this route implements is
-  // documented as NOT ACCEPTED on models after the 4.6 generation. So a caller must leave
-  // thinking_budget_tokens unset for this model; the route already omits the field when it is,
-  // which is the only configuration that reaches Sonnet 5.5 without an upstream rejection.
-];
+const ALLOWED_ANTHROPIC_MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5', 'claude-haiku-5-5'];
 
 // Extended thinking has a documented floor of 1024 budget tokens, and max_tokens must exceed the
 // budget or the answer has no room left after thinking.
@@ -198,7 +152,7 @@ module.exports = async (req, res) => {
       if (temperature != null) body.temperature = Number(temperature);
     }
 
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    const upstream = await fetchWithModelFallback('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -206,7 +160,7 @@ module.exports = async (req, res) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify(body)
-    });
+    }, { operation: req.body.operation, noFallback: req.body._noFallback === true, fetch, env: process.env });
 
     const text = await upstream.text();
     let data;
@@ -225,7 +179,8 @@ module.exports = async (req, res) => {
       return res.status(upstream.status).json({
         error: (data && data.error && data.error.message) || 'Anthropic API request failed',
         provider_status: upstream.status,
-        details: data
+        details: data,
+        _fallback: data && data._fallback || null,
       });
     }
 
@@ -254,12 +209,13 @@ module.exports = async (req, res) => {
       _upstreamRequestId: upstream.headers.get('request-id')
         || upstream.headers.get('anthropic-request-id') || null,
       content: contentText,
+      _fallback: data._fallback || null,
       thinking: thinkingText || null,
       usage: data.usage || null,
       stop_reason: data.stop_reason || null,
       _orchestration: {
         role: role || null,
-        provider: 'anthropic',
+        provider: data._fallback?.servedModel ? (data._fallback.servedModel.startsWith('gpt-') ? 'openai' : 'anthropic') : 'anthropic',
         // The model the PROVIDER says it served, not the one we asked for.
         model: data.model || String(model),
         // WHAT WAS ASKED FOR. Reporting `thinking_enabled: false` merely because no manual

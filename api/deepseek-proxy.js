@@ -1,3 +1,4 @@
+const { fetchWithModelFallback } = require('./_model-fallback.js');
 const { requireModelAccess } = require('./_request-auth.js');
 /**
  * =============================================================================
@@ -91,7 +92,7 @@ module.exports = async function handler(req, res) {
 
     console.log(`[DEEPSEEK-PROXY] Role: ${role}, Model: ${requestedModel}`);
 
-    const dsResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const dsResponse = await fetchWithModelFallback('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -103,7 +104,7 @@ module.exports = async function handler(req, res) {
         temperature,
         max_tokens
       })
-    });
+    }, { operation: req.body.operation, explicit: role === 'SD_FALLBACK', noFallback: req.body._noFallback === true, fetch, env: process.env });
 
     const responseText = await dsResponse.text();
 
@@ -122,7 +123,8 @@ module.exports = async function handler(req, res) {
       console.error('[DEEPSEEK-PROXY] DeepSeek API error:', data);
       return res.status(dsResponse.status).json({
         error: data.error?.message || 'DeepSeek API request failed',
-        details: data
+        details: data,
+        _fallback: data && data._fallback || null,
       });
     }
 
@@ -138,7 +140,7 @@ module.exports = async function handler(req, res) {
       ...data,
       _orchestration: {
         role,
-        model: requestedModel,
+        model: data._fallback?.servedModel || requestedModel,
         provider: 'deepseek',
         timestamp: new Date().toISOString()
       }

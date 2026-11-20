@@ -1,3 +1,4 @@
+const { fetchWithModelFallback } = require('./_model-fallback.js');
 const { requireModelAccess } = require('./_request-auth.js');
 /**
  * =============================================================================
@@ -448,7 +449,7 @@ Output only the mythic kernel. Prose realization is deferred.`
         console.warn(`[CHATGPT-PROXY] could not widen the transport window (${_agentErr && _agentErr.message}) — sending with the default ~${DEFAULT_TRANSPORT_MS}ms; a ${_declaredOut}-token allowance may be cut off by the transport rather than by the model`);
       }
     }
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', _fetchOpts);
+    const openaiResponse = await fetchWithModelFallback('https://api.openai.com/v1/chat/completions', _fetchOpts, { operation, noFallback: req.body._noFallback === true, fetch, env: process.env });
 
     const responseText = await openaiResponse.text();
 
@@ -469,7 +470,8 @@ Output only the mythic kernel. Prose realization is deferred.`
       console.error('[CHATGPT-PROXY] OpenAI API error:', data);
       return res.status(openaiResponse.status).json({
         error: data.error?.message || 'OpenAI API request failed',
-        details: data
+        details: data,
+        _fallback: data && data._fallback || null,
       });
     }
 
@@ -530,7 +532,7 @@ Output only the mythic kernel. Prose realization is deferred.`
       canonical_instruction: parsedContent?.canonical_instruction ?? content,
       _orchestration: {
         role: role,
-        model: requestedModel,
+        model: data._fallback?.servedModel || requestedModel,
         tier_used: tier_used,
         timestamp: new Date().toISOString()
       },
@@ -538,6 +540,7 @@ Output only the mythic kernel. Prose realization is deferred.`
       // Provider-neutral routing also serves older renderer/extractor consumers
       // that still read the standard Chat Completions envelope.
       choices: data.choices,
+      _fallback: data._fallback || null,
       usage: data.usage || null,
       // ── WHY THE CONTENT IS EMPTY, NOT JUST THAT IT IS (Roman 2026-11-06) ────────────────
       // This normalizer collapsed every unusable reply to `content: ''`, so a report had to

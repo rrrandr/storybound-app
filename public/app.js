@@ -5535,96 +5535,7 @@ ${_pcInteriorLock}`;
       } catch (_) {}
     }
 
-    // ── THE CHAIN AFTER LUNA: HAIKU, THEN GROK ────────────────────────────────────────────────
-    // Each rung is attempted AT MOST ONCE per dispatch, so nothing cycles. Each carries its own
-    // provider contract — route, allowance field, allowance, effort and deadline — because they
-    // do not share one, and each rung's CONTEXT LIMIT is checked BEFORE dispatch so an oversized
-    // packet is skipped with a recorded reason rather than sent and misread as a balk.
-    //
-    // EVERY RUNG RECEIVES THE SAME REQUEST. `messages` is passed through untouched: the same
-    // story assignment, the same canon, the same platform limits. A fallback changes who writes,
-    // never what they were asked to write — and never which EDITION may be delivered, which is
-    // decided separately at display from the platform.
-    async function _sbRunAuthorFallback(msgs, callerMaxTokens, tag, firstBalkReason) {
-      var chars = 0;
-      try { (msgs || []).forEach(function (m) { chars += String((m && m.content) || '').length; }); }
-      catch (_) {}
-      var chain = (window._sbProseChain || []).filter(function (r) { return r.id !== 'luna'; });
-      for (var i = 0; i < chain.length; i++) {
-        var rung = chain[i];
-        var fit = window._sbRungFits(rung, chars);
-        if (!fit.fits) {
-          _sbAuthorship.attempts.push({ model: rung.model, skipped: 'context_precaution',
-            promptTokensEstimated: fit.promptTokensEstimated,
-            limitAssumed: fit.limit, limitBasis: fit.limitBasis,
-            reason: 'ESTIMATED ~' + fit.promptTokensEstimated + ' tok (chars / '
-              + fit.charsPerToken + ' — not a tokenizer count) against an ASSUMED limit of '
-              + fit.limit + '. Skipped BEFORE dispatch as a PRECAUTION: not a provider refusal, '
-              + 'not a balk, costs nothing, and the chain advances.' });
-          try { console.warn('[AUTHOR-FALLBACK] skipping ' + rung.model + ' as a PRECAUTION — '
-            + 'estimated ~' + fit.promptTokensEstimated + ' tok vs an assumed ' + fit.limit
-            + ' limit (' + fit.limitBasis + '). No provider was contacted.'); } catch (_) {}
-          continue;
-        }
-        var t0 = Date.now(), body, resp = null, data = null, text = null, cls = null;
-        if (rung.id === 'haiku') {
-          // ANTHROPIC HAS NO response_format PARAMETER. A 'json' operation therefore relies on
-          // the prompt's own "return ONLY JSON" instruction on this rung, which the CG prompts
-          // already carry. Stated rather than assumed: this rung is the weakest of the three on
-          // schema compliance, and the CG validator is what catches a violation.
-          body = { model: rung.model, messages: msgs, max_tokens: rung.cap, effort: rung.effort };
-        } else {
-          body = { role: rung.role, preferredModel: rung.model, model: rung.model,
-            messages: msgs, max_tokens: rung.cap, temperature: temperature };
-          if (_isJsonContract) body.response_format = { type: 'json_object' };
-        }
-        try {
-          resp = await fetch(rung.url, { method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-          try { data = await resp.json(); } catch (_) {}
-          text = (data && data.choices && data.choices[0] && data.choices[0].message
-            && data.choices[0].message.content)
-            || (data && typeof data.content === 'string' && data.content)
-            || (data && Array.isArray(data.content) && data.content[0] && data.content[0].text)
-            || null;
-          cls = window._sbClassifyProseAttempt({ ok: resp.ok,
-            hasContent: !!String(text || '').trim(), status: resp.status,
-            finishReason: (data && (data.finish_reason || data.stop_reason))
-              || (data && data.choices && data.choices[0] && data.choices[0].finish_reason) || null,
-            policyRefusal: !!((data && data.refusal)
-              || (data && data.choices && data.choices[0] && data.choices[0].message
-                && data.choices[0].message.refusal)),
-            bodyText: (data && data.error) || '', retriesLeft: 0 });
-        } catch (e) {
-          cls = window._sbClassifyProseAttempt({ transportError: true, retriesLeft: 0 });
-        }
-        attempts.push({ tier: 'fallback', provider: rung.id, model: rung.model,
-          ok: !!(cls && cls.verdict === 'success'), status: resp && resp.status,
-          allowance: rung.cap, effort: rung.effort || null,
-          contentChars: String(text || '').length, ms: Date.now() - t0 });
-        _sbAuthorshipNote(rung.model, cls);
-        try { console.log('[AUTHOR-FALLBACK] ' + rung.model + ' → ' + (cls && cls.verdict)
-          + (cls && cls.reason ? ' (' + cls.reason + ')' : '')); } catch (_) {}
-        if (cls && cls.verdict === 'success') {
-          try { if (typeof _recordProxyTextCost === 'function') {
-            _recordProxyTextCost(data, rung.model, tag); } } catch (_) {}
-          _sbAuthorshipFinish(rung.model, 'success', firstBalkReason);
-          return { text: text, provider: rung.id, model: rung.model, attempts: attempts,
-            selectedAuthor: false, fellBackFrom: _sbAuthorship.intendedModel,
-            fallbackReason: firstBalkReason, authorship: _sbAuthorship,
-            cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
-        }
-        if (cls && !cls.advance) {
-          // A DEFECT STOPS THE CHAIN. The next provider would receive the same bad request.
-          _sbAuthorshipFinish(null, 'defect', cls.reason);
-          return { text: null, provider: rung.id, model: rung.model, attempts: attempts,
-            failed: true, failure: cls.reason, authorship: _sbAuthorship,
-            cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
-        }
-      }
-      return null;   // every rung balked or was skipped; the caller reports exhaustion
-    }
-
+    // The server owns the primary/backup pair; the browser never adds another chain.
     if (_selAuthor) {
       // `_rcAuth` is null whenever the prose author is the DEFAULT rather than a selected
       // override, so every read of it is guarded — without this the default path threw on
@@ -5727,8 +5638,10 @@ ${_pcInteriorLock}`;
           bodyText: (_selData && _selData.error) || '', retriesLeft: 0 });
         _sbAuthorshipNote(_selAuthor, _cls0);
         if (_cls0.verdict === 'success') {
-          _sbAuthorshipFinish(_selAuthor, 'success');
-          return { text: _selText, provider: 'openai', model: _selAuthor, attempts: attempts,
+          var _servedAuthor = (_selData && _selData._fallback && _selData._fallback.servedModel) || _selAuthor;
+          _sbAuthorship.serverAttempts = (_selData && _selData._fallback && _selData._fallback.attempts) || null;
+          _sbAuthorshipFinish(_servedAuthor, 'success');
+          return { text: _selText, provider: /^claude-/.test(_servedAuthor) ? 'anthropic' : 'openai', model: _servedAuthor, attempts: attempts,
             selectedAuthor: true, authorship: _sbAuthorship,
             cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
         }
@@ -5749,8 +5662,6 @@ ${_pcInteriorLock}`;
             failure: _cls0.reason || (_selRefusal ? 'refusal' : 'empty_completion'),
             cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
         }
-        var _fb = await _sbRunAuthorFallback(messages, maxTokens, roleTag, _cls0.reason);
-        if (_fb) return _fb;
         _sbAuthorshipFinish(null, 'exhausted', _cls0.reason);
         return { text: null, provider: 'openai', model: _selAuthor, attempts: attempts,
           selectedAuthor: true, failed: true, authorship: _sbAuthorship,
@@ -5764,10 +5675,6 @@ ${_pcInteriorLock}`;
         // rejects is the provider being unreachable.
         var _clsT = window._sbClassifyProseAttempt({ transportError: true, retriesLeft: 0 });
         _sbAuthorshipNote(_selAuthor, _clsT, String((_selErr && _selErr.message) || _selErr));
-        if (_clsT.advance) {
-          var _fbT = await _sbRunAuthorFallback(messages, maxTokens, roleTag, _clsT.reason);
-          if (_fbT) return _fbT;
-        }
         _sbAuthorshipFinish(null, _clsT.verdict, _clsT.reason);
         return { text: null, provider: 'openai', model: _selAuthor, attempts: attempts,
           selectedAuthor: true, failed: true, failure: 'transport', authorship: _sbAuthorship,
@@ -5791,66 +5698,15 @@ ${_pcInteriorLock}`;
         if (gText) {
           try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(gData, grokModel, roleTag); } catch (_) {}
           var _gCache = _classifyGrokCacheObservation(gData && gData.usage);
-          return { text: gText, provider: 'grok', model: grokModel, attempts: attempts,
+          return { text: gText, provider: /^mistral/.test(gData?._fallback?.servedModel || '') ? 'mistral' : 'grok', model: gData?._fallback?.servedModel || grokModel, attempts: attempts,
                    cache: { eligible: cacheEligible, observed: _gCache.observed, cachedTokens: _gCache.cachedTokens, promptTokens: _gCache.promptTokens } };
         }
       }
     } catch (gErr) { attempts.push({ tier: 1, provider: 'grok', model: grokModel, ok: false, error: String(gErr && gErr.message) }); }
 
-    // ── TIER 2: ministral-8b-2512 — ONLY if the static admission check passes for this exact
-    // prompt. Never Mistral Small. ──
-    if (noFallback) {
-      attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false,
-        skipped: true, reason: 'noFallback: single-provider comparison arm' });
-      attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: false,
-        skipped: true, reason: 'noFallback: single-provider comparison arm' });
-      var _nfErr = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] the Grok arm produced no text and '
-        + 'fallback is disabled for this comparison arm — reported as a FAILED ARM, not substituted');
-      _nfErr._attempts = attempts;
-      _nfErr._noFallbackArm = true;
-      throw _nfErr;
-    }
-    var admission = _ministral8bGovernorAdmits(messages, maxTokens);
-    if (admission.admits) {
-      try {
-        var mT0 = Date.now();
-        var mResp = await fetch('/api/mistral-proxy', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'ministral-8b-2512', messages: messages, max_tokens: maxTokens, temperature: temperature })
-        });
-        var mGovernorRefused = !mResp.ok && await _isGovernorRefusal(mResp);
-        attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: mResp.ok, status: mResp.status, governorRefused: mGovernorRefused, reserve: admission.reserve, limitTpm: admission.limitTpm, ms: Date.now() - mT0 });
-        if (mResp.ok) {
-          var mData = await mResp.json();
-          var mText = (mData && mData.choices && mData.choices[0] && mData.choices[0].message && mData.choices[0].message.content) || (mData && mData.content) || null;
-          if (mText) {
-            try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(mData, 'ministral-8b-2512', roleTag); } catch (_) {}
-            return { text: mText, provider: 'ministral', model: 'ministral-8b-2512', attempts: attempts, cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
-          }
-        }
-      } catch (mErr) { attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false, error: String(mErr && mErr.message), reserve: admission.reserve, limitTpm: admission.limitTpm }); }
-    } else {
-      attempts.push({ tier: 2, provider: 'ministral', model: 'ministral-8b-2512', ok: false, skipped: true, reason: 'static reservation ' + admission.reserve + ' exceeds ' + admission.limitTpm + ' TPM — never dispatched', reserve: admission.reserve, limitTpm: admission.limitTpm });
-      try { console.warn('[FULL-SCENE-AUTHOR:' + roleTag + '] ministral-8b-2512 skipped (not dispatched) — reservation ' + admission.reserve + ' exceeds its ' + admission.limitTpm + ' TPM allowance'); } catch (_) {}
-    }
-
-    // ── TIER 3 (terminal): gpt-4o — only after both above genuinely failed. ──
-    if (!window.StoryboundOrchestration || typeof window.StoryboundOrchestration.callChatGPT !== 'function') {
-      var _noOrch = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] all tiers exhausted (orchestration unavailable for terminal fallback)');
-      _noOrch._attempts = attempts;
-      throw _noOrch;
-    }
-    try {
-      var oText = await window.StoryboundOrchestration.callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: maxTokens, temperature: temperature });
-      var oTextStr = (typeof oText === 'string') ? oText : ((oText && oText.content) || null);
-      attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: !!oTextStr });
-      if (oTextStr) return { text: oTextStr, provider: 'openai', model: 'gpt-4o', attempts: attempts, cache: { eligible: null, observed: 'n/a', cachedTokens: null, promptTokens: null } };
-    } catch (oErr) { attempts.push({ tier: 3, provider: 'openai', model: 'gpt-4o', ok: false, error: String(oErr && oErr.message) }); }
-
-    var _term = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] all 3 tiers genuinely failed — Grok, ministral-8b-2512' + (admission.admits ? '' : ' (skipped, oversized)') + ', and gpt-4o');
-    _term._attempts = attempts;
-    try { console.error(_term.message + ' — ' + JSON.stringify(attempts)); } catch (_) {}
-    throw _term;
+    var pairError = new Error('[FULL-SCENE-AUTHOR:' + roleTag + '] primary and server backup exhausted');
+    pairError._attempts = attempts;
+    throw pairError;
   }
   window._authorFullScenePolicy = _authorFullScenePolicy;
 
@@ -6532,8 +6388,8 @@ ${_pcInteriorLock}`;
           textCost: 0,
           imageCost: 0,
           breakdown: { text: [], image: [] }, // optional debug breakdown
-          addText(model, usage, category) {
-              const c = estimateTextCost(model, usage);
+          addText(model, usage, category, priced) {
+              const c = priced && typeof priced.knownCostUsd === 'number' ? priced.knownCostUsd : estimateTextCost(model, usage);
               try {
                   const _pt = (usage && (usage.prompt_tokens || usage.input_tokens)) || 0;
                   const _d = (usage && (usage.prompt_tokens_details || usage.input_tokens_details)) || {};
@@ -6548,11 +6404,11 @@ ${_pcInteriorLock}`;
               // when derived from TEXT_PRICING. Raw `usage` is already preserved verbatim below —
               // together these let any downstream reader tell a ground-truth cost from a derived
               // one, and re-derive/audit either way.
-              const costSource = (usage && typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) ? 'provider_ticks' : 'estimated';
+              const costSource = priced ? 'server_attempt_receipts' : (usage && typeof usage.cost_in_usd_ticks === 'number' && usage.cost_in_usd_ticks > 0) ? 'provider_ticks' : 'estimated';
               // Roman 2026-06-02: category lets the finalize line split one-time
               // STORY-SETUP (bibles / r-plot / a-plot — amortized across the run)
               // from per-SCENE prose and AUDIT instrumentation overhead.
-              if (c > 0) this.breakdown.text.push({ model, usage, cost: c, costSource, category: category || 'main' });
+              if (c > 0 || priced) this.breakdown.text.push({ model, usage, cost: c, costSource, category: category || 'main', attempts: priced && priced.attempts, heldUsd: priced && priced.heldUsd || 0 });
               // Roman 2026-06-03: scene-audit hook — records TTFT + call count.
               try { _auditOnTextCall(model, usage, category || 'main'); } catch (_) {}
           },
@@ -6652,7 +6508,7 @@ ${_pcInteriorLock}`;
   //             'audit' (per-scene instrumentation) | 'scene' | 'wasted'.
   function _recordProxyTextCost(data, fallbackModel, category) {
       try {
-          if (!data || !data.usage) return;
+          if (!data || (!data.usage && !data._fallback)) return;
           var model = (data._orchestration && data._orchestration.model) || fallbackModel || 'default';
           try {
               var _served = data.model || '';
@@ -6661,7 +6517,7 @@ ${_pcInteriorLock}`;
                     + ' (cost priced at requested rates)');
           } catch (_) {}
           var acc = _ensureSceneCostAcc();
-          if (acc) acc.addText(model, data.usage, category || 'setup');
+          if (acc) acc.addText(model, data.usage || {}, category || 'setup', data._fallback || null);
           // Lightweight last-model ledger so Famous Fate beta reports can attach
           // which model produced text (state holds no per-scene model otherwise).
           try {
@@ -6857,7 +6713,7 @@ ${_pcInteriorLock}`;
         var d = await r.json();
         var rawContent = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
         var flat = _flattenProviderContent(rawContent);
-        return { content: flat.text, thinking: flat.thinking, usage: (d && d.usage) || null,
+        return { content: flat.text, thinking: flat.thinking, usage: (d && d.usage) || null, _fallback: (d && d._fallback) || null,
           // The effort the PROXY reports having sent — not the one we asked for. They differ when
           // the proxy applies its author-class default, and only the proxy's number is evidence.
           reasoningEffort: (d && d._orchestration && d._orchestration.reasoning_effort) || null,
@@ -6885,7 +6741,7 @@ ${_pcInteriorLock}`;
       var d2 = await r2.json();
       var _raw2 = (d2 && d2.choices && d2.choices[0] && d2.choices[0].message && d2.choices[0].message.content) || (d2 && d2.content) || '';
       var _flat2 = _flattenProviderContent(_raw2);
-      return { content: _flat2.text, thinking: _flat2.thinking, usage: (d2 && d2.usage) || null,
+      return { content: _flat2.text, thinking: _flat2.thinking, usage: (d2 && d2.usage) || null, _fallback: (d2 && d2._fallback) || null,
         resolvedModel: (d2 && d2._orchestration && d2._orchestration.resolvedModel) || null,
         upstreamAttempts: (d2 && d2._orchestration && typeof d2._orchestration.upstreamAttempts === 'number')
           ? d2._orchestration.upstreamAttempts : null,
@@ -6911,7 +6767,7 @@ ${_pcInteriorLock}`;
         body: JSON.stringify(_ob3) });
       if (!r3.ok) { var eb3 = await r3.text().catch(function () { return ''; }); throw _tierErr('chatgpt-proxy HTTP ' + r3.status + (eb3 ? ' ' + eb3.slice(0, 200) : ''), { provider: 'openai', model: model, httpStatus: r3.status, hadContent: false }); }
       var d3 = await r3.json();
-      return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, finish_reason: d3 && d3.finish_reason, refusal: d3 && d3.refusal, _orchestration: (d3 && d3._orchestration) || { model: model } };
+      return { content: (d3 && d3.content) || '', usage: (d3 && d3.usage) || null, _fallback: (d3 && d3._fallback) || null, finish_reason: d3 && d3.finish_reason, refusal: d3 && d3.refusal, _orchestration: (d3 && d3._orchestration) || { model: model } };
     }
     if (provider === 'anthropic') {
       // ISOLATED ROUTE. Storybound's normal orchestration redirects Anthropic model names to
@@ -6926,7 +6782,7 @@ ${_pcInteriorLock}`;
       var d4 = await r4.json();
       var _flat4 = _flattenProviderContent((d4 && d4.content) || '');
       return { content: _flat4.text, thinking: (d4 && d4.thinking) || _flat4.thinking,
-        usage: (d4 && d4.usage) || null,
+        usage: (d4 && d4.usage) || null, _fallback: (d4 && d4._fallback) || null,
         reasoningEffort: (d4 && d4._orchestration && d4._orchestration.thinking_enabled) ? 'extended-thinking' : null,
         _orchestration: (d4 && d4._orchestration) || { model: model } };
     }
@@ -6957,6 +6813,8 @@ ${_pcInteriorLock}`;
       tiers = [{tier: 'primary', provider: 'openai', model: 'gpt-6-luna', reasoning_effort: 'medium'}];
       maxTokens = Math.max(10000, maxTokens);
     }
+    // Each HTTP handler owns primary + backup; never stack the old client ladder.
+    tiers = tiers.slice(0, 1);
     // ATTEMPT LOG (Roman, corrective follow-up #10, 2026-09-15) — one entry per PHYSICAL request
     // this operation makes, win or lose, carrying exactly what a named infrastructure-failure
     // record needs to preserve: a synthetic but stable requestId (roleTag#attemptNumber, the SAME
@@ -71109,6 +70967,7 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     var _defaultChain = (_initialRung && _isInitialAPlot) ? [_initialRung] : _legacyChain;
     var _orderedProviders = (state.fateMode === 'famous_fate' ? [_LUNA] : ((_initialRung && _isInitialAPlot) ? [_initialRung]
       : (_isAdultFlavor ? _chainForAdult : _defaultChain))).filter(Boolean);
+    _orderedProviders = _orderedProviders.slice(0, 1);
     if (!_isInitialAPlot) {
       try { console.log('[A-PLOT] FORCED regeneration (carry-forward / story-length upgrade) — this'
         + ' is NOT initial generation, so it keeps its prior routing: the health-aware ladder, not'

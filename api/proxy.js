@@ -1,3 +1,5 @@
+import fallbackApi from './_model-fallback.js';
+const { fetchWithModelFallback } = fallbackApi;
 import requestAuth from './_request-auth.js';
 /**
  * =============================================================================
@@ -362,6 +364,8 @@ export default async function handler(req, res) {
       modelChain = [modelChain.includes(_pin) ? _pin : modelChain[0]];
       console.log(`[SPECIALIST-PROXY] _noFallback — chain reduced to ONE entry: ${modelChain[0]}`);
     }
+    // One primary; the server adapter owns the single cross-provider backup.
+    modelChain = modelChain.slice(0, 1);
     const preferredModel = req.body && req.body.preferredModel;
     // A preferredModel that is allowlisted but NOT in this role's chain used to be silently
     // ignored — the calibration asked for grok-4.7, the guard failed quietly, and the default
@@ -465,14 +469,14 @@ export default async function handler(req, res) {
       // Bound this attempt so a HUNG upstream advances the chain instead of waiting forever.
       const _callStart = Date.now();
       const _ac = new AbortController();
-      const _timer = setTimeout(() => _ac.abort(), _xaiTimeoutMs);
+      const _timer = _noFallback ? setTimeout(() => _ac.abort(), _xaiTimeoutMs) : null;
       try {
-        xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+        xaiResponse = await fetchWithModelFallback('https://api.x.ai/v1/chat/completions', {
           method: 'POST',
           headers: _xaiHeaders,
           body: JSON.stringify(_xaiBody),
-          signal: _ac.signal
-        });
+          ...(_noFallback ? {signal: _ac.signal} : {})
+        }, { operation: req.body.operation, explicit: true, noFallback: _noFallback, fetch, env: process.env, timeoutMs: Math.min(_xaiTimeoutMs, max_tokens <= 3000 ? 18000 : 120000) });
         responseText = await xaiResponse.text();
       } catch (fetchErr) {
         clearTimeout(_timer);
@@ -512,7 +516,8 @@ export default async function handler(req, res) {
         console.error('[SPECIALIST-PROXY] Non-retryable status — failing fast.');
         return res.status(xaiResponse.status).json({
           error: (data && data.error && data.error.message) || 'xAI API request failed',
-          details: data
+          details: data,
+        _fallback: data && data._fallback || null
         });
       }
       // Otherwise: retryable. Continue to next model in chain.
@@ -589,7 +594,7 @@ export default async function handler(req, res) {
         // substitution when it is nothing of the kind. The RESOLVED model is what was billed and
         // what answered, so it is reported alongside — and an experiment can finally prove which
         // model served it.
-        model: (typeof _resolvedModelUsed !== 'undefined' && _resolvedModelUsed) || selectedModel,
+        model: data._fallback?.servedModel || (typeof _resolvedModelUsed !== 'undefined' && _resolvedModelUsed) || selectedModel,
         chainEntry: selectedModel,
         resolvedModel: (typeof _resolvedModelUsed !== 'undefined' && _resolvedModelUsed) || null,
         reasoningEffort: (typeof _resolvedEffortUsed !== 'undefined' && _resolvedEffortUsed) || null,
