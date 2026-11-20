@@ -32,5 +32,37 @@
       "prompt": "Seren, sixteen, aqua skin and coral hair, fully clothed in modest ceremony robes, kneeling in the Veilwood. No harm or sexualization.",
       "style": "Painterly fantasy visual novel, consistent character identities and Veilwood palette. Authored starter prose and species sheet are the references."
     }
-  ]
+  ],
+  "revision": "1.8.3-sheer-veilweave",
+  "approvedJulianSource": "/Users/romantsukerman/.codex/generated_images/01a03459-e325-7511-8dc6-0db7946ca726/exec-c8ead2e1-5ae2-4cd6-b629-2348d83a89db.png",
+  "renderLimit": "Dohkar sheer-torso generation was rejected twice; the shipped fallback has an opaque torso and sheer sleeves. Seren remains fully opaque.",
+  "assetsV2": [
+    {
+      "path": "public/assets/First-Sacrifice/julian-v2.png",
+      "sha256": "5ad755173501bac27d792d0c5d60ea8b6fc32a05c1a2f73b5b29a796bd1690a4"
+    },
+    {
+      "path": "public/assets/First-Sacrifice/lirael-v2.png",
+      "sha256": "65a2ab9f496678bbe70e41f7acd197f2af5d204e0705a9c3208ce2838cc4f918"
+    },
+    {
+      "path": "public/assets/First-Sacrifice/seren-v2.png",
+      "sha256": "f98a597f486e46bd0d4d4d34f526c30196f444956501e28aeb909d25269632d3"
+    },
+    {
+      "path": "public/assets/First-Sacrifice/dohkar-v2.png",
+      "sha256": "8d272d88f912af0570c92209857f2fdb8ad560bb81b5e267c3c1e6432da65885"
+    },
+    {
+      "path": "public/assets/First-Sacrifice/interaction-sheet-v2.png",
+      "sha256": "35cad460b65fd6978f757466a548162dc288219ad9bc3d410aa4397d2a867388"
+    }
+  ],
+  "sceneReactions": {
+    "d1": "formal ceremony; covering on",
+    "d2": "wish; covering on",
+    "d3": "covering removed; angry accusing crowd",
+    "d4": "covering removed; crowd still angry and accusing; Julian protective"
+  },
+  "approvedJulianSha256": "5ad755173501bac27d792d0c5d60ea8b6fc32a05c1a2f73b5b29a796bd1690a4"
 }

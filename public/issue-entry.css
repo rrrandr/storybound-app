@@ -5,3 +5,12 @@ body:has(.baked-cg-reader) #pageNavControls{margin:16px 0 8px}
 .issue-purchase-card [hidden]{display:none!important}
 
 .baked-cg-title{font-size:1.5rem;text-align:center;color:#dbc28d;margin:0 0 18px}
+/* The baked opening follows CG beat pacing without the generation pipeline. */
+.baked-cg-text-wrap{display:grid}.baked-cg-text-wrap::before{content:attr(data-full-text);white-space:pre-line;visibility:hidden;pointer-events:none;grid-area:1/1}.baked-cg-text{grid-area:1/1;white-space:pre-line}.baked-cg-copy{cursor:pointer}.baked-cg-copy .baked-cg-speaker[hidden]{display:none!important}.baked-cg-beat-in{animation:bakedBeatIn .35s ease-out both}.baked-cg-typing .baked-cg-text::after{content:'▏';opacity:.6;animation:stagedTypewriterCaret .9s step-end infinite}@keyframes bakedBeatIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.baked-cg-beat-in,.baked-cg-typing .baked-cg-text::after{animation:none}}
+
+.baked-cg-stage{display:grid;isolation:isolate}.baked-cg-stage>.baked-cg-figure{grid-area:1/1}.baked-cg-copy.staged-beat-reader{position:relative;grid-area:1/1;align-self:end;left:auto;right:auto;bottom:auto;margin:0;background:linear-gradient(transparent,rgba(9,7,13,.88) 16%,rgba(9,7,13,.96));padding:32px 24px 18px;box-sizing:border-box}.baked-cg-copy[data-kind=exposition]{font-style:italic;letter-spacing:.015em}.baked-cg-stage .baked-cg-figure img{height:65vh;max-height:760px}@media(max-width:600px){.baked-cg-copy.staged-beat-reader{padding:28px 14px 16px}.baked-cg-stage .baked-cg-figure img{height:65vh}}
+/* The opening uses its own encounter entrance after the final beat. */
+body:has(.baked-cg-reader) #game .say-do-grid,body:has(.baked-cg-reader) #pageNavControls,body:has(.baked-cg-reader) #fateCardHeader,body:has(.baked-cg-reader) #fateOwnHandsLabel,body:has(.baked-cg-reader) #fateSpecialCards{display:none!important}
+.baked-cg-copy.staged-beat-reader{font-size:clamp(.95rem,1.05vw,1.08rem);line-height:1.65;font-weight:400;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+
+#storyText.baked-cg-active>:not(#bakedCGMount){display:none!important}

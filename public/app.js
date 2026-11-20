@@ -91522,6 +91522,7 @@ Return ONLY valid JSON:
       state._nilRuptureLastSignalScene = null;
       state._nilRuptureVectorPressure = {};
       document.body.classList.remove('baked-cg-reading');
+      _clearBakedCGReader();
       state._bakedCGBeatIndex=0;state._bakedCGReadingComplete=false;state._authoredOpeningRegion=null;state._starterIssueReceipt=null;
       state._petitionOnboardingRequired = false; // New stories never inherit an unfinished wish obligation.
       state._petitionEmergenceFired = false;  // One-shot Scene 2 Petition unlock-emergence animation flag
@@ -129537,6 +129538,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     }
 
+    _clearBakedCGReader();
     state.storyId = data.storyId || makeStoryId();
     localStorage.setItem('sb_current_story_id', state.storyId);
     syncCurrentStoryPass();
@@ -144359,7 +144361,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // VISUAL CANON — locked appearance so the author never infers it. Species block =
       // First Favored canon (→ future CANON registry); per-character = seed-specific anchors.
       visualCanon: {
-        'First Favored': ['barefoot', 'gossamer / Veilweave attire (never cloaks or boots) — EVERY First Favored is dressed, adults and children alike; the tunic is the SOLE GARMENT (unlined, nothing beneath it), and in CG the gossamer blooms to soft luminous white over the torso, hips and seat', 'a full head of thick, lush, glossy hair on EVERY one of them (a bald or sparse scalp is a wish-debt tell and belongs only to a character written that way — never the crowd)', 'each figure reads as TWO colours: a saturated exotic skin hue and a clearly different, contrasting or complementary hair hue — no one is a single colour head to toe', 'a MANY-HUED people: across any gathering the skin hues DIFFER from one another — navy, teal, aqua, emerald, violet, amethyst, maroon, ruby, orange, amber, yellow, slate, grey, pearl, obsidian', 'THE CLEARING IS NOT SCENERY. The crimson spiralgrass grows here BECAUSE First Sacrifices have been witnessed on this ground — generations of offerings changed the soil, and the colour is the record. The ritual site has a relationship to Fate; the ground remembers what the assembly is about to do. Every environmental detail must reveal something about Fate, First Favored culture, sacrifice, or history. A detail that only supplies texture (a resin scent, a pleasant light, a drifting sound) is DECORATION and must be cut or given a job. Ask of each one: what does the reader now know that they did not know before?', 'visible Weave-Script on the skin of EVERY First Favored present, background figures included, each in their own colour — but NEVER as decoration or a light effect. Every single time it appears it must SPELL ONE SPECIFIC FEELING belonging to ONE named person: say whose, and what it says. If you cannot name whose feeling it is, leave it off the page. No general flicker, no colour for its own sake, and it NEVER reacts to the wish, the rite, or a misalignment — only to what a person feels', 'strikingly, unmistakably beautiful in the First Favored way — ON AN ADULT. Applied to a CHILD of the rite this means a lovely, healthy, well-kept child and nothing else: never glamour, never allure, never a framing that invites admiration of her body. It is a species trait, not a licence'],
+        'First Favored': ['barefoot', window.SB_FIRST_FAVORED_VISUALS.attire, 'a full head of thick, lush, glossy hair on EVERY one of them (a bald or sparse scalp is a wish-debt tell and belongs only to a character written that way — never the crowd)', 'each figure reads as TWO colours: a saturated exotic skin hue and a clearly different, contrasting or complementary hair hue — no one is a single colour head to toe', 'a MANY-HUED people: across any gathering the skin hues DIFFER from one another — navy, teal, aqua, emerald, violet, amethyst, maroon, ruby, orange, amber, yellow, slate, grey, pearl, obsidian', 'THE CLEARING IS NOT SCENERY. The crimson spiralgrass grows here BECAUSE First Sacrifices have been witnessed on this ground — generations of offerings changed the soil, and the colour is the record. The ritual site has a relationship to Fate; the ground remembers what the assembly is about to do. Every environmental detail must reveal something about Fate, First Favored culture, sacrifice, or history. A detail that only supplies texture (a resin scent, a pleasant light, a drifting sound) is DECORATION and must be cut or given a job. Ask of each one: what does the reader now know that they did not know before?', 'visible Weave-Script on the skin of EVERY First Favored present, background figures included, each in their own colour — but NEVER as decoration or a light effect. Every single time it appears it must SPELL ONE SPECIFIC FEELING belonging to ONE named person: say whose, and what it says. If you cannot name whose feeling it is, leave it off the page. No general flicker, no colour for its own sake, and it NEVER reacts to the wish, the rite, or a misalignment — only to what a person feels', 'strikingly, unmistakably beautiful in the First Favored way — ON AN ADULT. Applied to a CHILD of the rite this means a lovely, healthy, well-kept child and nothing else: never glamour, never allure, never a framing that invites admiration of her body. It is a species trait, not a licence'],
         Julian: ['AN ADULT MAN of middle years, drawn and read as such in every panel — visibly older than the PC, never a youth',
           'First Favored (NOT human): a saturated exotic SKIN hue (deep slate-blue) — never a human skin tone', 'LONG black hair, falling well past the jaw to the shoulders — heavy and loose enough to CURTAIN his face when he lowers his head, which is how the concealed / mystery-man framings work; he always has this full head of long dark hair (never shaved, never cropped, never bald)', 'the long black hair CONTRASTS the slate-blue skin — he reads as two colours, never one', 'silver Weave-Script visible on the skin', 'sheer gossamer tunic like every First Favored — NEVER heavy robes, vestments, a mantle, or human clothing, and never bare-chested (even seen from behind: exotic slate-blue skin + silver Weave-Script above the gossamer, not a robed back)', 'small rounded human ears', 'a scar over the left wrist', 'always stands too still'],
         PC: ['AN ADULT WOMAN, drawn and read as a grown woman in every panel — never a teenager, never aged down toward the graduant she is supervising. She is the one responsible adult in the frame and must look it',
@@ -162297,15 +162299,25 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     state._fantasyRegionOverrideApplied=true;state._regionSource='authored_opening';
   }
 
+  function _clearBakedCGReader() {
+    if(window.SB_BAKED_CG_READER&&window.SB_BAKED_CG_READER.unmount)window.SB_BAKED_CG_READER.unmount();
+    var old=document.getElementById('bakedCGMount');if(old)old.remove();
+    var story=document.getElementById('storyText');if(story)story.classList.remove('baked-cg-active');
+    document.body.classList.remove('baked-cg-reading');
+  }
+
   function _mountBakedCGOpening(pkg) {
     if(!pkg||pkg.format!=='cg'||!window.SB_BAKED_CG_READER)return;
-    var host=document.getElementById('storyText');if(!host)return;
+    var storyHost=document.getElementById('storyText');if(!storyHost)return;
+    var host=document.getElementById('bakedCGMount');if(!host){host=document.createElement('div');host.id='bakedCGMount';storyHost.appendChild(host);}
+    storyHost.classList.add('baked-cg-active');
+    storyHost.dataset.beatCount=String((pkg.beats||[]).length);
     _bindBakedOpeningRegion(pkg); // Also migrate old saved openings before their map can appear.
     var completed=!!state._bakedCGReadingComplete,resumeBeat=state._bakedCGBeatIndex||0;
     document.body.classList.toggle('baked-cg-reading',!completed);
     var handoff=document.getElementById('bakedOASHandoff');if(handoff)handoff.hidden=!completed;
     var reader=window.SB_BAKED_CG_READER.mount({host:host,pkg:pkg,mountOccurrence:_mountImageOccurrence,
-      onChange:function(index){state._bakedCGBeatIndex=index;},
+      onChange:function(index){state._bakedCGBeatIndex=index;storyHost.dataset.beatIndex=String(index);},
       onComplete:function(){
         state._bakedCGReadingComplete=true;document.body.classList.remove('baked-cg-reading');
         var entrance=document.getElementById('bakedOASHandoff');if(entrance){entrance.hidden=false;entrance.scrollIntoView({behavior:'smooth'});}
@@ -182283,6 +182295,7 @@ ${(typeof _ffBuildRevealWithholdDirective === 'function') ? _ffBuildRevealWithho
       // ── GEOGRAPHY (region-specific) ──
       if (opts.includeRegion !== false) {
           var _regionRules = {
+              'veilwood': window.SB_FIRST_FAVORED_VISUALS.veilwood,
               'ashen_verge': 'ASHEN VERGE: Reality stretched and layered. Heat-haze distortion in air. Buildings/terrain may exist in multiple states simultaneously. Militarized frontier. Fortifications visible.',
               'thornwild': 'THORNWILD: Trees grow in UNNATURAL GEOMETRIC PATTERNS. Permanent twilight. Spectral boundaries visible between trunks. The forest rejects construction — no buildings, only growth.',
               'pulse_point': 'PULSE POINT: Circular harbor city with spiral shell layout. Layered wooden docks. Meridian Spire (tidal/celestial tracking tower). Maritime trade bustle.',
@@ -199354,7 +199367,7 @@ No text, no watermark, no UI elements, share-ready.`;
         'WORLD: VEILWOOD (Fatelands, First Favored heartland). The environment is canonical:\n' +
         '- Towering BRAIDED DOUBLE-HELIX tree trunks (spiralbound) with woven rope-like bark texture\n' +
         '- DENSE CASCADING WHITE FOLIAGE curtains hanging from the canopy\n' +
-        '- DEEP CRIMSON curling groundcover (red spiralgrass) carpeting the forest floor\n' +
+        '- DEEP CRIMSON spiralgrass: every growth is TWO separately visible stalks braided together, carpeting the forest floor\n' +
         '- Small AMBER-GOLD MOTES (lumenweave) drifting between canopy layers like suspended embers\n' +
         '- Diffused pale-gold light filtered through the white curtain foliage',
       antiDefault:
@@ -202620,28 +202633,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'figures each have their own full head of hair too. (Sparse or bald scalps are a WISH-DEBT tell in ' +
       'this world and belong ONLY to a character explicitly written as a heavy wisher — never the default, ' +
       'never a crowd.)',
-    // ── ATTIRE — presence, the "sole garment" term, and the CG modesty gradient ──
-    // VOCABULARY IS LOAD-BEARING HERE. Every body noun below is one that survives
-    // sanitizeImagePrompt untouched (torso / hips / seat / shoulders / back are
-    // tailoring-and-life-drawing words). The obvious words are NOT usable: the
-    // sanitizer DELETES "breasts", "buttocks", "cleavage" and "crotch" outright and
-    // rewrites "chest"→"torso", which would leave this sentence ungrammatical on the
-    // wire. "Seat" is the tailor's term for the same area and passes clean.
-    //
-    // THE SOLE-GARMENT TERM: to say "gossamer and nothing else" without a trigger
-    // word, state it as GARMENT CONSTRUCTION — unlined, single-layer, next-to-skin,
-    // sole garment. That is wardrobe vocabulary a render model follows precisely,
-    // and it carries no token any moderation layer objects to.
-    attire:
-      'ATTIRE (HARD — every First Favored is DRESSED, adults and children alike): each wears a flowing ' +
-      'gossamer TUNIC or ROBE — sheer, translucent, weightless drapery with natural gravity-driven folds ' +
-      'that softens the outline rather than hiding it. CONSTRUCTION: the tunic is the SOLE GARMENT — ' +
-      'UNLINED and SINGLE-LAYER, worn next to the skin, with no shift, chemise, under-tunic or second ' +
-      'layer of any kind beneath it; the drape falls straight to the skin. That single layer is therefore ' +
-      'doing all the covering, so: CG MODESTY RENDER — where the gossamer crosses the TORSO, HIPS and ' +
-      'SEAT the fabric BLOOMS into a soft luminous WHITE OMBRÉ — opaque, light-filled white at the centre, ' +
-      'feathering back out to sheer at the edges — and that bloom stays unbroken. The garment covers on ' +
-      'EVERY figure in frame, foreground and background, children above all.',
+    // Adult translucency and the separate opaque child wardrobe share one
+    // direction across species contracts, scene sheets and introduction prompts.
+    attire: window.SB_FIRST_FAVORED_VISUALS.attire,
     // ── WEAVE-SCRIPT — on ALL of them, not just the protagonist ──
     weave:
       'WEAVE-SCRIPT (HARD — on EVERY First Favored, not only the protagonist): luminous calligraphic ' +
@@ -202735,8 +202729,8 @@ No text, no watermark, no UI elements, share-ready.`;
         '- FACE: sculpted and striking — strong clean jawline, full lips, high fine-boned cheekbones. Ethereal supermodel beauty.\n' +
         '- SKIN SURFACE: smooth and luminous beneath the exotic hue, with faint internal Weave-Script glow (slow-moving calligraphy patterns).\n' +
         '- FORM (state only what IS — the silhouette stays clean): skin is a continuous, soft, unbroken surface across face and body. Foreheads, brows, and temples are bare, smooth skin. The head keeps an ordinary human silhouette with a normal hairline. The single diamond shape belongs ONLY to the pupil inside each eye; every other surface is plain smooth skin.\n' +
-        '- FABRIC: gossamer, translucent, weightless drapery with natural gravity-driven folds — sheer and light-catching, NEVER opaque white or heavy cloth.\n' +
-        '- BUILD: Olympic-supermodel physique — tall, athletic, flawlessly proportioned (not bulky, not thin). Idealized attractive sexual proportions, exaggerated toward desirability but always within the bounds of real attractiveness: firm, full breasts and glutes on female figures (up to ~DD, never larger or grotesque); toned musculature with a porn-star-plausible endowment on male figures (never horse-like).\n' +
+        '- FABRIC: adult gossamer is translucent and light-catching, with natural gravity-driven folds and integrated coverage described above; minors wear fully opaque fabric throughout.\n' +
+        '- BUILD: ADULTS are tall, athletic and strikingly well-proportioned, with toned musculature. MINORS have age-appropriate proportions and neutral framing, never the adult body or attraction treatment.\n' +
         '- HANDS: never fully still — continuous subtle non-repeating motion.\n' +
         '- BLOOD / ICHOR (whenever wounded or bleeding, in ANY scene — a ritual, an accident, combat): First Favored bleed QUICKSILVER — bright liquid MIRROR-SILVER metal that beads and runs like mercury; NEVER red.',
       // Positive-only reinforcement. Image models ignore "NOT/NEVER" and fixate on the
@@ -202744,7 +202738,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // only what the anatomy IS. (Field name kept for its consumers.)
       antiDefault:
         'Skin is an exotic saturated hue and hair is a SECOND, clearly different exotic hue — every figure reads as two distinct colours, never one colour head to toe. ' +
-        'Every figure wears a full head of thick glossy hair and a gossamer tunic as its sole unlined layer, the fabric blooming to soft luminous white over the torso, hips and seat. ' +
+        'Every figure wears a full head of thick glossy hair. ' + _FF_LOOK.attire + ' ' +
         'Luminous Weave-Script traces the skin of every First Favored in frame, crowd included. Pupils are four-pointed concave ' +
         'diamonds in a vivid luminous color distinct from the iris. Ears are small, rounded, human-shaped, close to the skull. Skin stays ' +
         'luminous with Weave-Script glow. Keep crosshatching within shadow zones.'
@@ -235165,6 +235159,13 @@ No text, no watermark, no UI elements, share-ready.`;
       }
     } catch (_) {}
 
+    // Apply wardrobe from the actual in-frame species, including before a
+    // resumed story has rebuilt its optional species-contract cache.
+    var _wardrobeOthers=visualState&&visualState.other_characters_present;
+    var _wardrobeFavored=/favor|favour/i.test(String(state._playerSpecies||(state.picks&&state.picks.pcSpecies)||''))
+      ||(Array.isArray(_wardrobeOthers)&&_wardrobeOthers.some(function(o){return /favor|favour/i.test(String(o&&o.species||''));}));
+    if(_wardrobeFavored&&!_cgIsCombatScene(visualState,[]))prompt+='\n'+_FF_LOOK.attire;
+    if(state.fantasyRegion==='the_veilwood'||/veilwood/i.test(String(visualState&&visualState.background||'')))prompt+='\n'+window.SB_FIRST_FAVORED_VISUALS.veilwood;
     return prompt;
   }
   window._buildStagedHeroPrompt = _buildStagedHeroPrompt;
@@ -239558,7 +239559,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try { sceneTxt = (typeof _sheetSceneText === 'function') ? _sheetSceneText(visualState, phases) : bg; } catch (_) { sceneTxt = bg; }
     var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
     var hasKwisheen = /kwisheen/i.test(sceneTxt) || others.some(function (o) { return /kwisheen/i.test(String((o && o.species) || '')); });
-    var isVeilweave = /veilweave/i.test(sceneTxt + ' ' + String((visualState && visualState.pc_wardrobe) || ''));
+    var isVeilweave = _cgIsCombatScene(visualState, phases) && /veilweave/i.test(sceneTxt + ' ' + String((visualState && visualState.pc_wardrobe) || ''));
     var isVeilwood = s.fantasyRegion === 'the_veilwood' || /veilwood/i.test(bg + ' ' + String((s._stagedRegionContract && s._stagedRegionContract.regionLabel) || ''));
     var gTxt = function (g) { g = String(g || '').toLowerCase(); return g === 'male' ? 'a man (he/him)' : g === 'female' ? 'a woman (she/her)' : ''; };
     // Reconnect the shot planner the full builder uses — the compact assembly was bypassing it, so
@@ -239569,12 +239570,12 @@ No text, no watermark, no UI elements, share-ready.`;
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dense ornament. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal comic panels with thin gutters. NO lettering, captions, speech balloons, or SFX text anywhere in the image.');
     L.push('CAMERA IS A CONSEQUENCE OF BLOCKING: every panel below states its BLOCKING first — the spatial relationship of the figures (who is centred/encircled, who advances, who flanks, who owns the foreground, who is trapped) — then the CAMERA that photographs that blocking. Solve the blocking, then shoot it. A CENTERED figure is CORRECT when the beat calls for it (e.g. surrounded / at bay) — PROVIDED the camera is doing something dramatic (high overhead, worm\'s-eye, through an opponent\'s shoulder, long-lens compression, tilted frame). What is forbidden in EVERY panel is the flat eye-level medium "catalog" shot — the squared-up tripod view of a figure standing to attention. Obey each panel\'s BLOCKING and CAMERA; no two panels share the same composition.');
-    if (isVeilwood) L.push('SETTING (every panel): the VEILWOOD — pale WHITE trees grown as MATED PAIRS (two trunks braided around each other, NEVER brown, never one single trunk), long WHITE weeping-willow canopy, ground of deep-CRIMSON grass in twisted mated braids. Luminous and otherworldly, never a generic green/brown forest.');
+    if (isVeilwood) L.push(window.SB_FIRST_FAVORED_VISUALS.veilwood);
     else if (bg) L.push('SETTING (every panel): ' + bg + '.');
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
     L.push('(Reference-matching governs WHAT each character looks like — face, hair, skin, wardrobe, weapon — NOT where the camera sits or where they stand. A character stays fully recognizable while OFF-CENTER, cropped at the edge, seen from below or above, or partly behind a foreground element; being recognizable does NOT require a centered, eye-level, full-body hero shot.)');
     var pcLine = '  • ' + pcName + ' — ' + (gTxt(pcGender) ? gTxt(pcGender) + ', ' : '');
-    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build, ALWAYS wearing the flowing gossamer VEILWEAVE (his signature garment — in EVERY panel, never plain clothes, never armour; see below).' : ((pcSpecies || 'human') + '.');
+    pcLine += /favor|favour/.test(pcSpecies) ? ('a First Favored: retain established colouring and identity; wearing ' + (isVeilweave ? 'the combat Veilweave described below.' : 'the light gossamer tunic described below.')) : ((pcSpecies || 'human') + '.');
     L.push(pcLine);
     others.forEach(function (o) {
       if (!o || !o.name) return;
@@ -239582,6 +239583,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var desc = (reg && reg.desc) ? reg.desc : (String(o.species || '') + (o.wardrobe ? ', ' + o.wardrobe : ''));
       L.push('  • ' + o.name + ' — ' + (gTxt(o.gender) ? gTxt(o.gender) + ', ' : '') + desc + '.');
     });
+    if (!isVeilweave && (/favor|favour/.test(pcSpecies)||others.some(function(o){return /favor|favour/.test(String(o&&o.species||''));}))) L.push(_FF_LOOK.attire);
     if (isVeilweave) {
       L.push('VEILWEAVE (' + pcName + '): a long hooded MANY-LAYERED flowing GOSSAMER cloak of impossibly fine translucent veil-cloth, threaded with thin iridescent FILAMENT that catches warm GOLD glints at the crossings (like glowing leaf-veins), draping in soft layers; NEVER a FISHNET, a tight net/mesh on the skin, a bodysuit, catsuit, latex or spandex; the SOLE GARMENT — unlined, single-layer, worn next to the skin with nothing beneath it, and BAREFOOT; the layered gossamer reads OPAQUE across the torso, hips and seat and gradient-fades to sheer (luminous where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
       L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Keep this canonical silhouette — TWO OPPOSING QUESTION-MARK HOOKS — clearly recognizable in every panel. It is a wish-reshaped weapon, so small variation is fine (hook depth, shaft length, blade width may differ slightly panel to panel); but it must ALWAYS read as THE ANSWER and NEVER become a different WEAPON CLASS — never a trident, spear, axe, or plain sword, and never a single hook + a spear/trident point. No visible magic/transformation VFX.');
@@ -241502,7 +241504,7 @@ No text, no watermark, no UI elements, share-ready.`;
         L.push('Wears the VEILWEAVE (the COMBAT garment) — a long hooded MANY-LAYERED flowing GOSSAMER cloak threaded with thin iridescent FILAMENT (warm GOLD glints at the crossings, like glowing leaf-veins), the SOLE GARMENT — unlined, single-layer, worn next to the skin with no shift or under-layer beneath it — and BAREFOOT; the layered gossamer gathers OPAQUE across the torso, hips and seat, blooming to a soft luminous WHITE OMBRÉ that covers, then feathering back to sheer. NOT a fishnet, net or mesh catsuit. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
         L.push('Carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
       } else {
-        L.push('Wears the gossamer TUNIC the First Favored favour for ALL non-combat occasions — a flowing, fine, translucent-edged robe/tunic worn as the SOLE GARMENT (unlined, single-layer, nothing beneath it), the fabric blooming to a soft luminous WHITE OMBRÉ over the torso, hips and seat and feathering back to sheer; BAREFOOT (feet visible); visible WEAVE-SCRIPT tracing the skin. NOT the combat Veilweave (COMBAT-ONLY), NOT armour, NOT afterimages.');
+        L.push(_FF_LOOK.attire + ' Non-combat gossamer tunic; barefoot. No combat afterimages.');
         L.push('UNARMED — empty hands. Does NOT carry The Answer (it is only drawn when a battle is imminent, or borne in the First Sacrifice rite by the WISHER, never idly).');
       }
     }

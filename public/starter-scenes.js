@@ -173,7 +173,7 @@
       // Dohkar → Profer; offices Chayr → Provast → First Dohkar; Julian = Provast, next for First Dohkar, per Roman). Lenses: Lirael = OPEN VEIN, Julian = SPELLBINDER (Roman 2026-09-10). REAL CG SHAPE: ~20 beats (conversation + inner thought + description) over
       // 4 dramatic images + 1–4 character intro images. Beats 1–5 of Roman's sequence are this page; beats 6–7 (Julian's
       // public interrogation, the Dohkar's interruption, run-or-remain) are the OAS, carried by `oasHandoff` below.
-      version: '1.8.2-cg-opening',
+      version: '1.8.3-sheer-veilweave',
       placeholder: false,
       format: 'cg',
       title: 'The First Sacrifice',
@@ -186,8 +186,8 @@
         { id: "intro_julian", kind: "intro", label: "Julian", subject: "Julian" },
         { id: "d1", kind: "dramatic", label: "Image 1", subject: "the rite begins — Seren kneeling before Lirael in the dawn clearing" },
         { id: "d2", kind: "dramatic", label: "Image 2", subject: "the wish — Seren speaks it; Lirael tears the band and moves" },
-        { id: "d3", kind: "dramatic", label: "Image 3", subject: "the charge — the assembly turns; the presiding Dohkar names Lirael" },
-        { id: "d4", kind: "dramatic", label: "Image 4", subject: "The Answer — Julian closes her hands around it before them all" },
+        { id: "d3", kind: "dramatic", label: "Image 3", subject: "the charge — the angry assembly points at and accuses Lirael; the presiding Dohkar charges her" },
+        { id: "d4", kind: "dramatic", label: "Image 4", subject: "The Answer — Julian closes her hands around it while the angry crowd accuses Lirael" },
       ],
       // ── BAKED-IMAGE-PRECEDENT PLUMBING (Roman 2026-09-19) — generic starter-package capability,
       // consumed by the structured renderer (_mountImageOccurrence, app.js) instead of text markup.
@@ -196,11 +196,11 @@
       // contract (_renderOneShotSheet). These versioned assets ship with the starter;
       // opening this book never requests new character or scene artwork.
       imageAssets: [
-        { id: "intro_lirael", kind: "intro", label: "Lirael", url: "/assets/First-Sacrifice/lirael-v1.png" },
-        { id: "intro_seren", kind: "intro", label: "Seren", url: "/assets/First-Sacrifice/seren-v1.png" },
-        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: "/assets/First-Sacrifice/dohkar-v1.png" },
-        { id: "intro_julian", kind: "intro", label: "Julian", url: "/assets/First-Sacrifice/julian-v1.png" },
-        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 interaction sheet (d1-d4)", url: "/assets/First-Sacrifice/interaction-sheet-v1.png" },
+        { id: "intro_lirael", kind: "intro", label: "Lirael", url: "/assets/First-Sacrifice/lirael-v2.png" },
+        { id: "intro_seren", kind: "intro", label: "Seren", url: "/assets/First-Sacrifice/seren-v2.png" },
+        { id: "intro_dohkar", kind: "intro", label: "The presiding Dohkar", url: "/assets/First-Sacrifice/dohkar-v2.png" },
+        { id: "intro_julian", kind: "intro", label: "Julian", url: "/assets/First-Sacrifice/julian-v2.png" },
+        { id: "interaction_sheet_1", kind: "sheet", label: "Scene 1 interaction sheet (d1-d4)", url: "/assets/First-Sacrifice/interaction-sheet-v2.png" },
       ],
       // OCCURRENCES: keyed by the SAME strings already used in beats[].image / images[].id above —
       // the locked 20-beat template (see _first_sacrifice_source_packet.json
@@ -245,9 +245,9 @@
           text: "She abandoned the practiced wish. She knew the rule; she had recited it back to me for months. In front of the whole assembly she spent her First Sacrifice on me instead. Seren could not help herself: even her one wish had to be about what a caring person she was, and she had to be seen being it. I knew what she was doing before the words finished. I have never in my life been able to keep a feeling off my face, and it has taught me exactly what one looks like when it has been arranged there. At least she spared me some embarrassment by blurring the wound instead of naming it. “So that Lirael may find the one she lost.” It was the beautiful mistake." },
         { idx: 10, kind: "narration", speaker: null, image: "d2",
           text: "I heard it the instant the words left her: not a wrong note but a loose one, a wish described too gently to bind. Then the wish twisted. I could feel the misalignment deepen. A Weave-Script stuttered on a guest’s throat. One hand stopped mid-gesture. The Dohkar went still." },
-        { idx: 11, kind: "narration", speaker: null, image: "d2",
+        { idx: 11, kind: "narration", speaker: null, image: "d3",
           text: "I was sealed. I was forbidden to interfere. Intervening now would look like exactly what it would look like, because the wish was about me. I tore the band away and moved toward her anyway." },
-        { idx: 12, kind: "dialogue", speaker: "Lirael", image: "d2",
+        { idx: 12, kind: "dialogue", speaker: "Lirael", image: "d3",
           text: "“Seren —” The first word I had spoken aloud since the sash went on, and it was already too late to be anything but evidence. She looked up at me, pleased, and then puzzled that I was not." },
         { idx: 13, kind: "narration", speaker: null, image: "d3",
           text: "Nothing flared. Then the wish straightened. I felt it as distinctly as I had felt it twist, and the Dohkar lifted his head. I had torn a strip of cloth and said my ward’s name. I had no explanation for this." },

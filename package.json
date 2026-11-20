@@ -8,6 +8,7 @@
     "verify:sacred": "node scripts/sacred-figure-guard/test.js",
     "verify:baked": "node scripts/verify-baked-scene1.mjs",
     "verify:economy": "node scripts/verify-starter-economy.mjs",
+    "verify:sacrifice-art": "node scripts/verify-first-sacrifice-art.mjs",
     "verify:entry": "node --experimental-vm-modules scripts/verify-issue-entry.mjs",
     "verify:files": "node scripts/verify-runtime-files.mjs",
     "verify:security": "node scripts/verify-fortune-security.mjs",
